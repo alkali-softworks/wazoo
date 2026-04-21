@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "Agregar Reproductor",
+    "toggle_layout": "Alternar Diseño",
+    "toggle_files": "Alternar Archivos",
+    "search": "Buscar",
+    "settings": "Configuración",
+    "help": "Ayuda",
+    "quit": "Salir",
+    "loading": "Cargando...",
+    "all": "Todo"
+  },
+  "app": {
+    "drag_to_move": "Arrastrar para Mover",
+    "x_to_quit": "X para Salir"
+  },
+  "wazoo": {
+    "welcome": "Bienvenido a Wazoo",
+    "no_folders_msg": "Parece que aún no has añadido ninguna carpeta de medios, o tus carpetas están vacías.",
+    "listing_files": "Listando archivos...",
+    "loading_progress": "Cargando... {percent}% ({total} archivos)",
+    "open_settings_to_add": "Abrir Configuración para Añadir Carpetas",
+    "no_files_found": "No se encontraron archivos",
+    "query_in_folder": "Consulta: \"{query}\" en {folder}",
+    "try_another_search": "Probar Otra Búsqueda",
+    "search_error": "Error de búsqueda: {error}",
+    "no_files_found_in": "No se encontraron archivos en {folder}",
+    "total_files": "{total} Archivos en total",
+    "more_than_before": "{diff} Más que antes",
+    "less_than_before": "{diff} Menos que antes",
+    "scroll_mode_unmuted": "Modo de Desplazamiento reactivado",
+    "global_mode_muted": "Modo Global silenciado",
+    "global_mode_unmuted": "Modo Global reactivado",
+    "set_players_count": "Establecido en {count} reproductor{suffix}",
+    "layout_row": "Diseño de fila",
+    "layout_grid": "Diseño de cuadrícula",
+    "layout_column": "Diseño de columna",
+    "scroll_mode_enabled": "Modo de desplazamiento activado",
+    "scroll_mode_disabled": "Modo de desplazamiento desactivado",
+    "added": "Añadido: {name}"
+  },
+  "settings": {
+    "title": "Configuración",
+    "window_opacity": "Opacidad de la Ventana",
+    "media_folders": "Carpetas de Medios",
+    "scan_folders": "Escanear Carpetas",
+    "add_folder": "Añadir Carpeta",
+    "total_videos": "Total de videos: {count}",
+    "adding_media_notice": "Añadir medios a través de la red requiere tiempo para analizar los metadatos del video."
+  },
+  "search": {
+    "folder": "Carpeta:",
+    "placeholder": "Buscar...",
+    "multiple_folders": "{count} carpetas"
+  },
+  "help": {
+    "title": "Atajos de Teclado",
+    "shortcuts": {
+      "toggle_help": "Alternar Ayuda",
+      "toggle_scroll": "Alternar Modo de Desplazamiento Infinito",
+      "toggle_file_picker": "Alternar Selector de Archivos",
+      "add_player": "Añadir Reproductor",
+      "remove_player": "Eliminar Reproductor",
+      "focus_next": "Enfocar Siguiente Reproductor",
+      "toggle_layout": "Alternar Diseño",
+      "toggle_subtitles": "Alternar Subtítulos",
+      "prev_next_frame": "Cuadro Anterior / Siguiente",
+      "play_pause": "Reproducir / Pausar",
+      "prev_next_video": "Video Anterior / Siguiente",
+      "seek_back_forward": "Retroceder / Avanzar",
+      "toggle_play_mode": "Alternar Modo de Reproducción",
+      "toggle_mute": "Alternar Silencio",
+      "adjust_volume": "Ajustar Volumen",
+      "search_videos": "Buscar Videos",
+      "fullscreen": "Pantalla Completa",
+      "close_app": "Cerrar Aplicación",
+      "move_window": "Mover Ventana"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "Buscar videos..."
+  },
+  "player": {
+    "muted": "Silenciado",
+    "unmuted": "Reactivado",
+    "subtitles_enabled": "Subtítulos activados",
+    "subtitles_disabled": "Subtítulos desactivados",
+    "hevc_title": "Video HEVC ({codec})",
+    "hevc_description": "Chromium no admite el códec de vídeo HEVC. Este vídeo requiere conversión a AV1 / H.264.",
+    "convert_now": "Convertir ahora",
+    "skip_to_next": "Pasar al siguiente ({countdown}s)",
+    "end_of_playlist": "Fin de la lista de reproducción",
+    "starting_conversion": "Iniciando conversión...",
+    "starting_subtitle_extraction": "Extrayendo subtítulos..."
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "Добавить плеер",
+    "toggle_layout": "Переключить макет",
+    "toggle_files": "Переключить файлы",
+    "search": "Поиск",
+    "settings": "Настройки",
+    "help": "Справка",
+    "quit": "Выход",
+    "loading": "Загрузка...",
+    "all": "Все"
+  },
+  "app": {
+    "drag_to_move": "Перетащите для перемещения",
+    "x_to_quit": "X для выхода"
+  },
+  "wazoo": {
+    "welcome": "Добро пожаловать в Wazoo",
+    "no_folders_msg": "Похоже, вы еще не добавили медиа-папки или ваши папки пусты.",
+    "listing_files": "Составление списка файлов...",
+    "loading_progress": "Загрузка... {percent}% ({total} файлов)",
+    "open_settings_to_add": "Открыть настройки для добавления папок",
+    "no_files_found": "Файлы не найдены",
+    "query_in_folder": "Запрос: \"{query}\" в {folder}",
+    "try_another_search": "Попробовать другой поиск",
+    "search_error": "Ошибка поиска: {error}",
+    "no_files_found_in": "Файлы в {folder} не найдены",
+    "total_files": "Всего файлов: {total}",
+    "more_than_before": "На {diff} больше, чем раньше",
+    "less_than_before": "На {diff} меньше, чем раньше",
+    "scroll_mode_unmuted": "Звук в режиме прокрутки включен",
+    "global_mode_muted": "Глобальный режим без звука",
+    "global_mode_unmuted": "Глобальный режим со звуком",
+    "set_players_count": "Установлено {count} плеер(ов){suffix}",
+    "layout_row": "Строчный макет",
+    "layout_grid": "Сеточный макет",
+    "layout_column": "Столбчатый макет",
+    "scroll_mode_enabled": "Режим прокрутки включен",
+    "scroll_mode_disabled": "Режим прокрутки выключен",
+    "added": "Добавлено: {name}"
+  },
+  "settings": {
+    "title": "Настройки",
+    "window_opacity": "Прозрачность окна",
+    "media_folders": "Медиа-папки",
+    "scan_folders": "Сканировать папки",
+    "add_folder": "Добавить папку",
+    "total_videos": "Всего видео: {count}",
+    "adding_media_notice": "Добавление медиафайлов по сети занимает время, так как требуется анализ метаданных видео."
+  },
+  "search": {
+    "folder": "Папка:",
+    "placeholder": "Поиск...",
+    "multiple_folders": "{count} папок"
+  },
+  "help": {
+    "title": "Горячие клавиши",
+    "shortcuts": {
+      "toggle_help": "Показать/скрыть справку",
+      "toggle_scroll": "Переключить режим бесконечной прокрутки",
+      "toggle_file_picker": "Показать/скрыть выбор файлов",
+      "add_player": "Добавить плеер",
+      "remove_player": "Удалить плеер",
+      "focus_next": "Фокус на следующий плеер",
+      "toggle_layout": "Переключить макет",
+      "toggle_subtitles": "Переключить субтитры",
+      "prev_next_frame": "Предыдущий / следующий кадр",
+      "play_pause": "Воспроизведение / пауза",
+      "prev_next_video": "Предыдущее / следующее видео",
+      "seek_back_forward": "Перемотка назад / вперед",
+      "toggle_play_mode": "Переключить режим воспроизведения",
+      "toggle_mute": "Переключить звук",
+      "adjust_volume": "Регулировка громкости",
+      "search_videos": "Поиск видео",
+      "fullscreen": "Полноэкранный режим",
+      "close_app": "Закрыть приложение",
+      "move_window": "Переместить окно"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "Поиск видео..."
+  },
+  "player": {
+    "muted": "Звук выключен",
+    "unmuted": "Звук включен",
+    "subtitles_enabled": "Субтитры включены",
+    "subtitles_disabled": "Субтитры выключены",
+    "hevc_title": "Видео HEVC ({codec})",
+    "hevc_description": "Chromium не поддерживает видеокодек HEVC. Это видео требует конвертации в AV1 / H.264.",
+    "convert_now": "Конвертировать сейчас",
+    "skip_to_next": "Перейти к следующему ({countdown}с)",
+    "end_of_playlist": "Конец плейлиста",
+    "starting_conversion": "Начало конвертации...",
+    "starting_subtitle_extraction": "Извлечение субтитров..."
+  }
+}

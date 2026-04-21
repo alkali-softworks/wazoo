@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "Tambah Pemutar",
+    "toggle_layout": "Ganti Tata Letak",
+    "toggle_files": "Tampilkan/Sembunyikan Berkas",
+    "search": "Cari",
+    "settings": "Pengaturan",
+    "help": "Bantuan",
+    "quit": "Keluar",
+    "loading": "Memuat...",
+    "all": "Semua"
+  },
+  "app": {
+    "drag_to_move": "Seret untuk memindahkan",
+    "x_to_quit": "Tekan X untuk keluar"
+  },
+  "wazoo": {
+    "welcome": "Selamat datang di Wazoo",
+    "no_folders_msg": "Sepertinya Anda belum menambahkan folder media, atau folder Anda kosong.",
+    "listing_files": "Mendaftar berkas...",
+    "loading_progress": "Memuat... {percent}% ({total} berkas)",
+    "open_settings_to_add": "Buka Pengaturan untuk Menambahkan Folder",
+    "no_files_found": "Berkas tidak ditemukan",
+    "query_in_folder": "Pencarian: \"{query}\" di {folder}",
+    "try_another_search": "Coba pencarian lain",
+    "search_error": "Kesalahan pencarian: {error}",
+    "no_files_found_in": "Berkas tidak ditemukan di {folder}",
+    "total_files": "Total {total} berkas",
+    "more_than_before": "{diff} lebih banyak dari sebelumnya",
+    "less_than_before": "{diff} lebih sedikit dari sebelumnya",
+    "scroll_mode_unmuted": "Mode Gulir Suara Aktif",
+    "global_mode_muted": "Mode Global Senyap",
+    "global_mode_unmuted": "Mode Global Suara Aktif",
+    "set_players_count": "Diatur ke {count} pemutar{suffix}",
+    "layout_row": "Tata letak baris",
+    "layout_grid": "Tata letak kisi",
+    "layout_column": "Tata letak kolom",
+    "scroll_mode_enabled": "Mode gulir aktif",
+    "scroll_mode_disabled": "Mode gulir nonaktif",
+    "added": "Ditambahkan: {name}"
+  },
+  "settings": {
+    "title": "Pengaturan",
+    "window_opacity": "Opasitas Jendela",
+    "media_folders": "Folder Media",
+    "scan_folders": "Pindai Folder",
+    "add_folder": "Tambah Folder",
+    "total_videos": "Total Video: {count}",
+    "adding_media_notice": "Menambahkan media melalui jaringan membutuhkan waktu untuk menganalisis metadata video."
+  },
+  "search": {
+    "folder": "Folder:",
+    "placeholder": "Cari...",
+    "multiple_folders": "{count} folder"
+  },
+  "help": {
+    "title": "Pintasan Keyboard",
+    "shortcuts": {
+      "toggle_help": "Tampilkan/Sembunyikan Bantuan",
+      "toggle_scroll": "Ganti Mode Gulir Tak Terbatas",
+      "toggle_file_picker": "Tampilkan/Sembunyikan Pemilih Berkas",
+      "add_player": "Tambah Pemutar",
+      "remove_player": "Hapus Pemutar",
+      "focus_next": "Fokus ke Pemutar Berikutnya",
+      "toggle_layout": "Ganti Tata Letak",
+      "toggle_subtitles": "Ganti Subtitel",
+      "prev_next_frame": "Bingkai Sebelumnya / Berikutnya",
+      "play_pause": "Putar / Jeda",
+      "prev_next_video": "Video Sebelumnya / Berikutnya",
+      "seek_back_forward": "Mundur / Maju",
+      "toggle_play_mode": "Ganti Mode Putar",
+      "toggle_mute": "Ganti Senyap",
+      "adjust_volume": "Sesuaikan Volume",
+      "search_videos": "Cari Video",
+      "fullscreen": "Layar Penuh",
+      "close_app": "Tutup Aplikasi",
+      "move_window": "Pindahkan Jendela"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "Cari video..."
+  },
+  "player": {
+    "muted": "Senyap",
+    "unmuted": "Suara aktif",
+    "subtitles_enabled": "Subtitel aktif",
+    "subtitles_disabled": "Subtitel nonaktif",
+    "hevc_title": "Video HEVC ({codec})",
+    "hevc_description": "Chromium tidak mendukung codec video HEVC. Video ini memerlukan konversi ke AV1 / H.264.",
+    "convert_now": "Konversi Sekarang",
+    "skip_to_next": "Lewati ke Berikutnya ({countdown}d)",
+    "end_of_playlist": "Akhir dari Daftar Putar",
+    "starting_conversion": "Memulai konversi...",
+    "starting_subtitle_extraction": "Mengekstrak subtitle..."
+  }
+}

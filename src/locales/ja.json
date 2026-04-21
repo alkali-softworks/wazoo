@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "プレイヤーを追加",
+    "toggle_layout": "レイアウトを切り替え",
+    "toggle_files": "ファイルを切り替え",
+    "search": "検索",
+    "settings": "設定",
+    "help": "ヘルプ",
+    "quit": "終了",
+    "loading": "読み込み中...",
+    "all": "すべて"
+  },
+  "app": {
+    "drag_to_move": "ドラッグして移動",
+    "x_to_quit": "Xで終了"
+  },
+  "wazoo": {
+    "welcome": "Wazooへようこそ",
+    "no_folders_msg": "メディアフォルダがまだ追加されていないか、フォルダが空のようです。",
+    "listing_files": "ファイルをリストアップ中...",
+    "loading_progress": "読み込み中... {percent}% ({total} ファイル)",
+    "open_settings_to_add": "設定を開いてフォルダを追加",
+    "no_files_found": "ファイルが見つかりません",
+    "query_in_folder": "クエリ: \"{query}\" フォルダ: {folder}",
+    "try_another_search": "別の検索を試す",
+    "search_error": "検索エラー: {error}",
+    "no_files_found_in": "{folder} 内にファイルが見つかりません",
+    "total_files": "合計 {total} ファイル",
+    "more_than_before": "前回より {diff} 多い",
+    "less_than_before": "前回より {diff} 少ない",
+    "scroll_mode_unmuted": "スクロールモードのミュート解除",
+    "global_mode_muted": "グローバルモード ミュート",
+    "global_mode_unmuted": "グローバルモード ミュート解除",
+    "set_players_count": "{count} プレイヤーに設定{suffix}",
+    "layout_row": "行レイアウト",
+    "layout_grid": "グリッドレイアウト",
+    "layout_column": "列レイアウト",
+    "scroll_mode_enabled": "スクロールモード有効",
+    "scroll_mode_disabled": "スクロールモード無効",
+    "added": "追加しました: {name}"
+  },
+  "settings": {
+    "title": "設定",
+    "window_opacity": "ウィンドウの不透明度",
+    "media_folders": "メディアフォルダ",
+    "scan_folders": "フォルダをスキャン",
+    "add_folder": "フォルダを追加",
+    "total_videos": "合計ビデオ数: {count}",
+    "adding_media_notice": "ネットワーク経由でメディアを追加する場合、動画のメタデータを解析するのに時間がかかります。"
+  },
+  "search": {
+    "folder": "フォルダー:",
+    "placeholder": "検索...",
+    "multiple_folders": "{count} フォルダー"
+  },
+  "help": {
+    "title": "キーボードショートカット",
+    "shortcuts": {
+      "toggle_help": "ヘルプの切り替え",
+      "toggle_scroll": "無限スクロールモードの切り替え",
+      "toggle_file_picker": "ファイルピッカーの切り替え",
+      "add_player": "プレイヤーを追加",
+      "remove_player": "プレイヤーを削除",
+      "focus_next": "次のプレイヤーにフォーカス",
+      "toggle_layout": "レイアウトを切り替え",
+      "toggle_subtitles": "字幕の切り替え",
+      "prev_next_frame": "前のフレーム / 次のフレーム",
+      "play_pause": "再生 / 一時停止",
+      "prev_next_video": "前のビデオ / 次のビデオ",
+      "seek_back_forward": "シーク (戻る / 進む)",
+      "toggle_play_mode": "再生モードの切り替え",
+      "toggle_mute": "ミュートの切り替え",
+      "adjust_volume": "音量調節",
+      "search_videos": "ビデオを検索",
+      "fullscreen": "全画面表示",
+      "close_app": "アプリを閉じる",
+      "move_window": "ウィンドウを移動"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "ビデオを検索..."
+  },
+  "player": {
+    "muted": "ミュート",
+    "unmuted": "ミュート解除",
+    "subtitles_enabled": "字幕有効",
+    "subtitles_disabled": "字幕無効",
+    "hevc_title": "HEVCビデオ ({codec})",
+    "hevc_description": "ChromiumはHEVCビデオコーデックをサポートしていません。このビデオはAV1 / H.264への変換が必要です。",
+    "convert_now": "今すぐ変換",
+    "skip_to_next": "次へスキップ ({countdown}秒)",
+    "end_of_playlist": "プレイリストの最後",
+    "starting_conversion": "変換を開始しています...",
+    "starting_subtitle_extraction": "字幕を抽出中..."
+  }
+}

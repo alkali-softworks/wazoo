@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "प्लेयर जोड़ें",
+    "toggle_layout": "लेआउट बदलें",
+    "toggle_files": "फ़ाइलें दिखाएं/छिपाएं",
+    "search": "खोजें",
+    "settings": "सेटिंग्स",
+    "help": "सहायता",
+    "quit": "बंद करें",
+    "loading": "लोड हो रहा है...",
+    "all": "सभी"
+  },
+  "app": {
+    "drag_to_move": "स्थानांतरित करने के लिए खींचें",
+    "x_to_quit": "बंद करने के लिए X दबाएं"
+  },
+  "wazoo": {
+    "welcome": "Wazoo में आपका स्वागत है",
+    "no_folders_msg": "ऐसा लगता है कि आपने अभी तक कोई मीडिया फ़ोल्डर नहीं जोड़ा है, या आपके फ़ोल्डर खाली हैं।",
+    "listing_files": "फ़ाइलों की सूची बनाई जा रही है...",
+    "loading_progress": "लोड हो रहा है... {percent}% ({total} फ़ाइलें)",
+    "open_settings_to_add": "फ़ोल्डर जोड़ने के लिए सेटिंग्स खोलें",
+    "no_files_found": "कोई फ़ाइल नहीं मिली",
+    "query_in_folder": "खोज: {folder} में \"{query}\"",
+    "try_another_search": "दूसरी खोज का प्रयास करें",
+    "search_error": "खोज त्रुटि: {error}",
+    "no_files_found_in": "{folder} में कोई फ़ाइल नहीं मिली",
+    "total_files": "कुल {total} फ़ाइलें",
+    "more_than_before": "पहले से {diff} अधिक",
+    "less_than_before": "पहले से {diff} कम",
+    "scroll_mode_unmuted": "स्क्रॉल मोड अनम्यूट किया गया",
+    "global_mode_muted": "ग्लोबल मोड म्यूट किया गया",
+    "global_mode_unmuted": "ग्लोबल मोड अनम्यूट किया गया",
+    "set_players_count": "{count} प्लेयर पर सेट किया गया{suffix}",
+    "layout_row": "रो लेआउट",
+    "layout_grid": "ग्रिड लेआउट",
+    "layout_column": "कॉलम लेआउट",
+    "scroll_mode_enabled": "स्क्रॉल मोड सक्षम",
+    "scroll_mode_disabled": "स्क्रॉल मोड अक्षम",
+    "added": "जोड़ा गया: {name}"
+  },
+  "settings": {
+    "title": "सेटिंग्स",
+    "window_opacity": "विंडो पारदर्शिता",
+    "media_folders": "मीडिया फ़ोल्डर",
+    "scan_folders": "फ़ोल्डर स्कैन करें",
+    "add_folder": "फ़ोल्डर जोड़ें",
+    "total_videos": "कुल वीडियो: {count}",
+    "adding_media_notice": "नेटवर्क पर मीडिया जोड़ने में वीडियो मेटाडेटा का विश्लेषण करने में समय लगता है।"
+  },
+  "search": {
+    "folder": "फ़ोल्डर:",
+    "placeholder": "खोजें...",
+    "multiple_folders": "{count} फ़ोल्डर्स"
+  },
+  "help": {
+    "title": "कीबोर्ड शॉर्टकट",
+    "shortcuts": {
+      "toggle_help": "सहायता दिखाएं/छिपाएं",
+      "toggle_scroll": "अनंत स्क्रॉल मोड बदलें",
+      "toggle_file_picker": "फ़ाइल चयनकर्ता दिखाएं/छिपाएं",
+      "add_player": "प्लेयर जोड़ें",
+      "remove_player": "प्लेयर निकालें",
+      "focus_next": "अगले प्लेयर पर ध्यान दें",
+      "toggle_layout": "लेआउट बदलें",
+      "toggle_subtitles": "उपशीर्षक बदलें",
+      "prev_next_frame": "पिछला / अगला फ्रेम",
+      "play_pause": "चलाएं / रोकें",
+      "prev_next_video": "पिछला / अगला वीडियो",
+      "seek_back_forward": "पीछे / आगे बढ़ें",
+      "toggle_play_mode": "प्ले मोड बदलें",
+      "toggle_mute": "म्यूट बदलें",
+      "adjust_volume": "वॉल्यूम समायोजित करें",
+      "search_videos": "वीडियो खोजें",
+      "fullscreen": "फुलस्क्रीन",
+      "close_app": "ऐप बंद करें",
+      "move_window": "विंडो ले जाएं"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "वीडियो खोजें..."
+  },
+  "player": {
+    "muted": "म्यूट",
+    "unmuted": "अनम्यूट",
+    "subtitles_enabled": "उपशीर्षक सक्षम",
+    "subtitles_disabled": "उपशीर्षक अक्षम",
+    "hevc_title": "HEVC वीडियो ({codec})",
+    "hevc_description": "क्रोमियम HEVC वीडियो कोडेक का समर्थन नहीं करता है। इस वीडियो को AV1 / H.264 में बदलने की आवश्यकता है।",
+    "convert_now": "अभी बदलें",
+    "skip_to_next": "अगले पर जाएँ ({countdown}से)",
+    "end_of_playlist": "प्लेलिस्ट का अंत",
+    "starting_conversion": "रूपांतरण शुरू हो रहा है...",
+    "starting_subtitle_extraction": "सबटाइटल निकाले जा रहे हैं..."
+  }
+}

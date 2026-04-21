@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "إضافة لاعب",
+    "toggle_layout": "تبديل التخطيط",
+    "toggle_files": "تبديل الملفات",
+    "search": "بحث",
+    "settings": "الإعدادات",
+    "help": "مساعدة",
+    "quit": "خروج",
+    "loading": "جاري التحميل...",
+    "all": "الكل"
+  },
+  "app": {
+    "drag_to_move": "اسحب للتحريك",
+    "x_to_quit": "اضغط X للخروج"
+  },
+  "wazoo": {
+    "welcome": "مرحباً بك في Wazoo",
+    "no_folders_msg": "يبدو أنك لم تضف أي مجلدات وسائط بعد، أو أن مجلداتك فارغة.",
+    "listing_files": "جاري سرد الملفات...",
+    "loading_progress": "جاري التحميل... {percent}% ({total} ملفات)",
+    "open_settings_to_add": "افتح الإعدادات لإضافة مجلدات",
+    "no_files_found": "لم يتم العثور على ملفات",
+    "query_in_folder": "البحث: \"{query}\" في {folder}",
+    "try_another_search": "جرب بحثاً آخر",
+    "search_error": "خطأ في البحث: {error}",
+    "no_files_found_in": "لم يتم العثور على ملفات في {folder}",
+    "total_files": "إجمالي الملفات: {total}",
+    "more_than_before": "أكثر بـ {diff} من ذي قبل",
+    "less_than_before": "أقل بـ {diff} من ذي قبل",
+    "scroll_mode_unmuted": "تم إلغاء كتم وضع التمرير",
+    "global_mode_muted": "الوضع العام مكتوم",
+    "global_mode_unmuted": "الوضع العام غير مكتوم",
+    "set_players_count": "تم الضبط على {count} لاعب{suffix}",
+    "layout_row": "تخطيط الصف",
+    "layout_grid": "تخطيط الشبكة",
+    "layout_column": "تخطيط العمود",
+    "scroll_mode_enabled": "وضع التمرير مفعل",
+    "scroll_mode_disabled": "وضع التمرير معطل",
+    "added": "تمت إضافة: {name}"
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "window_opacity": "شفافية النافذة",
+    "media_folders": "مجلدات الوسائط",
+    "scan_folders": "مسح المجلدات",
+    "add_folder": "إضافة مجلد",
+    "total_videos": "إجمالي الفيديوهات: {count}",
+    "adding_media_notice": "تستغرق إضافة الوسائط عبر الشبكة وقتاً لتحليل البيانات الوصفية للفيديو."
+  },
+  "search": {
+    "folder": "مجلد:",
+    "placeholder": "بحث...",
+    "multiple_folders": "{count} مجلدات"
+  },
+  "help": {
+    "title": "اختصارات لوحة المفاتيح",
+    "shortcuts": {
+      "toggle_help": "تبديل المساعدة",
+      "toggle_scroll": "تبديل وضع التمرير اللانهائي",
+      "toggle_file_picker": "تبديل منتقي الملفات",
+      "add_player": "إضافة لاعب",
+      "remove_player": "إزالة لاعب",
+      "focus_next": "التركيز على اللاعب التالي",
+      "toggle_layout": "تبديل التخطيط",
+      "toggle_subtitles": "تبديل الترجمة",
+      "prev_next_frame": "الإطار السابق / التالي",
+      "play_pause": "تشغيل / إيقاف مؤقت",
+      "prev_next_video": "الفيديو السابق / التالي",
+      "seek_back_forward": "خلف / أمام",
+      "toggle_play_mode": "تبديل وضع التشغيل",
+      "toggle_mute": "تبديل الكتم",
+      "adjust_volume": "ضبط الصوت",
+      "search_videos": "بحث عن فيديوهات",
+      "fullscreen": "ملء الشاشة",
+      "close_app": "إغلاق التطبيق",
+      "move_window": "تحريك النافذة"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "البحث عن فيديوهات..."
+  },
+  "player": {
+    "muted": "مكتوم",
+    "unmuted": "غير مكتوم",
+    "subtitles_enabled": "الترجمة مفعلة",
+    "subtitles_disabled": "الترجمة معطلة",
+    "hevc_title": "فيديو HEVC ({codec})",
+    "hevc_description": "متصفح كروميوم لا يدعم ترميز الفيديو HEVC. يتطلب هذا الفيديو التحويل إلى AV1 / H.264.",
+    "convert_now": "حول الآن",
+    "skip_to_next": "تخطي إلى التالي ({countdown}ث)",
+    "end_of_playlist": "نهاية قائمة التشغيل",
+    "starting_conversion": "بدء التحويل...",
+    "starting_subtitle_extraction": "جاري استخراج الترجمة..."
+  }
+}

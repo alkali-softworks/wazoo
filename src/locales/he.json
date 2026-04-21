@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "הוסף נגן",
+    "toggle_layout": "החלף פריסה",
+    "toggle_files": "הצג/הסתר קבצים",
+    "search": "חיפוש",
+    "settings": "הגדרות",
+    "help": "עזרה",
+    "quit": "יציאה",
+    "loading": "טוען...",
+    "all": "הכל"
+  },
+  "app": {
+    "drag_to_move": "גרור להזזה",
+    "x_to_quit": "לחץ X ליציאה"
+  },
+  "wazoo": {
+    "welcome": "ברוכים הבאים ל-Wazoo",
+    "no_folders_msg": "נראה שעדיין לא הוספת תיקיות מדיה, או שהתיקיות שלך ריקות.",
+    "listing_files": "מונה קבצים...",
+    "loading_progress": "טוען... {percent}% ({total} קבצים)",
+    "open_settings_to_add": "פתח הגדרות להוספת תיקיות",
+    "no_files_found": "לא נמצאו קבצים",
+    "query_in_folder": "חיפוש: \"{query}\" ב-{folder}",
+    "try_another_search": "נסה חיפוש אחר",
+    "search_error": "שגיאת חיפוש: {error}",
+    "no_files_found_in": "לא נמצאו קבצים ב-{folder}",
+    "total_files": "סך הכל {total} קבצים",
+    "more_than_before": "{diff} יותר מקודם",
+    "less_than_before": "{diff} פחות מקודם",
+    "scroll_mode_unmuted": "מצב גלילה עם קול",
+    "global_mode_muted": "מצב גלובלי מושתק",
+    "global_mode_unmuted": "מצב גלובלי עם קול",
+    "set_players_count": "הוגדר ל-{count} נגנים{suffix}",
+    "layout_row": "פריסת שורות",
+    "layout_grid": "פריסת רשת",
+    "layout_column": "פריסת עמודות",
+    "scroll_mode_enabled": "מצב גלילה פעיל",
+    "scroll_mode_disabled": "מצב גלילה כבוי",
+    "added": "נוסף: {name}"
+  },
+  "settings": {
+    "title": "הגדרות",
+    "window_opacity": "שקיפות חלון",
+    "media_folders": "תיקיות מדיה",
+    "scan_folders": "סרוק תיקיות",
+    "add_folder": "הוסף תיקייה",
+    "total_videos": "סך הכל סרטונים: {count}",
+    "adding_media_notice": "הוספת מדיה דרך הרשת דורשת זמן כדי לנתח את המטא-נתונים של הווידאו."
+  },
+  "search": {
+    "folder": "תיקייה:",
+    "placeholder": "חיפוש...",
+    "multiple_folders": "{count} תיקיות"
+  },
+  "help": {
+    "title": "קיצורי מקלדת",
+    "shortcuts": {
+      "toggle_help": "הצג/הסתר עזרה",
+      "toggle_scroll": "החלף מצב גלילה אינסופית",
+      "toggle_file_picker": "הצג/הסתר בחירת קבצים",
+      "add_player": "הוסף נגן",
+      "remove_player": "הסר נגן",
+      "focus_next": "התמקד בנגן הבא",
+      "toggle_layout": "החלף פריסה",
+      "toggle_subtitles": "החלף כתוביות",
+      "prev_next_frame": "פריים קודם / הבא",
+      "play_pause": "נגן / השהה",
+      "prev_next_video": "סרטון קודם / הבא",
+      "seek_back_forward": "קפוץ אחורה / קדימה",
+      "toggle_play_mode": "החלף מצב נגינה",
+      "toggle_mute": "השתק/בטל השתקה",
+      "adjust_volume": "כוונן עוצמת קול",
+      "search_videos": "חפש סרטונים",
+      "fullscreen": "מסך מלא",
+      "close_app": "סגור אפליקציה",
+      "move_window": "הזז חלון"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "חפש סרטונים..."
+  },
+  "player": {
+    "muted": "מושתק",
+    "unmuted": "קול פעיל",
+    "subtitles_enabled": "כתוביות פעילות",
+    "subtitles_disabled": "כתוביות כבויות",
+    "hevc_title": "וידאו HEVC ({codec})",
+    "hevc_description": "דפדפן Chromium אינו תומך במקודד וידאו HEVC. וידאו זה דורש המרה ל-AV1 / H.264.",
+    "convert_now": "המר עכשיו",
+    "skip_to_next": "דלג לבא ({countdown}ש')",
+    "end_of_playlist": "סוף רשימת ההשמעה",
+    "starting_conversion": "מתחיל המרה...",
+    "starting_subtitle_extraction": "מחלץ כתוביות..."
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "Add Player",
+    "toggle_layout": "Toggle Layout",
+    "toggle_files": "Toggle Files",
+    "search": "Search",
+    "settings": "Settings",
+    "help": "Help",
+    "quit": "Quit",
+    "loading": "Loading...",
+    "all": "All"
+  },
+  "app": {
+    "drag_to_move": "Drag to Move",
+    "x_to_quit": "X to Quit"
+  },
+  "wazoo": {
+    "welcome": "Welcome to Wazoo",
+    "no_folders_msg": "It looks like you haven't added any media folders yet, or your folders are empty.",
+    "listing_files": "Listing files...",
+    "loading_progress": "Loading... {percent}% ({total} files)",
+    "open_settings_to_add": "Open Settings to Add Folders",
+    "no_files_found": "No files found",
+    "query_in_folder": "Query: \"{query}\" in {folder}",
+    "try_another_search": "Try Another Search",
+    "search_error": "Search error: {error}",
+    "no_files_found_in": "No files found in {folder}",
+    "total_files": "{total} Total files",
+    "more_than_before": "{diff} More than before",
+    "less_than_before": "{diff} Less than before",
+    "scroll_mode_unmuted": "Scroll Mode Unmuted",
+    "global_mode_muted": "Global Mode Muted",
+    "global_mode_unmuted": "Global Mode Unmuted",
+    "set_players_count": "Set to {count} player{suffix}",
+    "layout_row": "Row layout",
+    "layout_grid": "Grid layout",
+    "layout_column": "Column layout",
+    "scroll_mode_enabled": "Scroll mode enabled",
+    "scroll_mode_disabled": "Scroll mode disabled",
+    "added": "Added: {name}"
+  },
+  "settings": {
+    "title": "Settings",
+    "window_opacity": "Window Opacity",
+    "media_folders": "Media Folders",
+    "scan_folders": "Scan Folders",
+    "add_folder": "Add Folder",
+    "total_videos": "Total Videos: {count}",
+    "adding_media_notice": "Adding media over the network takes time to probe video metadata."
+  },
+  "search": {
+    "folder": "Folder:",
+    "placeholder": "Search...",
+    "multiple_folders": "{count} folders"
+  },
+  "help": {
+    "title": "Keyboard Shortcuts",
+    "shortcuts": {
+      "toggle_help": "Toggle Help",
+      "toggle_scroll": "Toggle Infinite Scroll Mode",
+      "toggle_file_picker": "Toggle File Picker",
+      "add_player": "Add Player",
+      "remove_player": "Remove Player",
+      "focus_next": "Focus Next Player",
+      "toggle_layout": "Toggle Layout",
+      "toggle_subtitles": "Toggle Subtitles",
+      "prev_next_frame": "Previous / Next Frame",
+      "play_pause": "Play / Pause",
+      "prev_next_video": "Previous / Next Video",
+      "seek_back_forward": "Seek Back / Forward",
+      "toggle_play_mode": "Toggle Play Mode",
+      "toggle_mute": "Toggle Mute",
+      "adjust_volume": "Adjust Volume",
+      "search_videos": "Search Videos",
+      "fullscreen": "Fullscreen",
+      "close_app": "Close App",
+      "move_window": "Move Window"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "Search videos..."
+  },
+  "player": {
+    "muted": "Muted",
+    "unmuted": "Unmuted",
+    "subtitles_enabled": "Subtitles enabled",
+    "subtitles_disabled": "Subtitles disabled",
+    "hevc_title": "HEVC Video ({codec})",
+    "hevc_description": "Chromium does not support the HEVC video codec. This video requires conversion to AV1 / H.264.",
+    "convert_now": "Convert Now",
+    "skip_to_next": "Skip to Next ({countdown}s)",
+    "end_of_playlist": "End of Playlist",
+    "starting_conversion": "Starting conversion...",
+    "starting_subtitle_extraction": "Extracting subtitles..."
+  }
+}

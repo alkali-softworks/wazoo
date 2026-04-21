@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "คุณผู้เล่นเพิ่ม",
+    "toggle_layout": "สลับเค้าโครง",
+    "toggle_files": "สลับการแสดงไฟล์",
+    "search": "ค้นหา",
+    "settings": "การตั้งค่า",
+    "help": "ช่วยเหลือ",
+    "quit": "ออก",
+    "loading": "กำลังโหลด...",
+    "all": "ทั้งหมด"
+  },
+  "app": {
+    "drag_to_move": "ลากเพื่อย้าย",
+    "x_to_quit": "กด X เพื่อออก"
+  },
+  "wazoo": {
+    "welcome": "ยินดีต้อนรับสู่ Wazoo",
+    "no_folders_msg": "ดูเหมือนว่าคุณยังไม่ได้เพิ่มโฟลเดอร์สื่อหรือโฟลเดอร์ของคุณว่างเปล่า",
+    "listing_files": "กำลังแสดงรายการไฟล์...",
+    "loading_progress": "กำลังโหลด... {percent}% ({total} ไฟล์)",
+    "open_settings_to_add": "เปิดการตั้งค่าเพื่อเพิ่มโฟลเดอร์",
+    "no_files_found": "ไม่พบไฟล์",
+    "query_in_folder": "ค้นหา: \"{query}\" ใน {folder}",
+    "try_another_search": "ลองค้นหาอีกครั้ง",
+    "search_error": "ข้อผิดพลาดในการค้นหา: {error}",
+    "no_files_found_in": "ไม่พบไฟล์ใน {folder}",
+    "total_files": "รวม {total} ไฟล์",
+    "more_than_before": "มากกว่าเดิม {diff}",
+    "less_than_before": "น้อยกว่าเดิม {diff}",
+    "scroll_mode_unmuted": "เปิดเสียงโหมดเลื่อน",
+    "global_mode_muted": "ปิดเสียงทั้งหมด",
+    "global_mode_unmuted": "เปิดเสียงทั้งหมด",
+    "set_players_count": "ตั้งค่าเป็น {count} ผู้เล่น{suffix}",
+    "layout_row": "เค้าโครงแถว",
+    "layout_grid": "เค้าโครงตาราง",
+    "layout_column": "เค้าโครงคอลัมน์",
+    "scroll_mode_enabled": "เปิดใช้งานโหมดเลื่อน",
+    "scroll_mode_disabled": "ปิดใช้งานโหมดเลื่อน",
+    "added": "เพิ่มแล้ว: {name}"
+  },
+  "settings": {
+    "title": "การตั้งค่า",
+    "window_opacity": "ความโปร่งใสของหน้าต่าง",
+    "media_folders": "โฟลเดอร์สื่อ",
+    "scan_folders": "สแกนโฟลเดอร์",
+    "add_folder": "เพิ่มโฟลเดอร์",
+    "total_videos": "วิดีโอทั้งหมด: {count}",
+    "adding_media_notice": "การเพิ่มสื่อผ่านเครือข่ายต้องใช้เวลาในการวิเคราะห์ข้อมูลเมตาของวิดีโอ"
+  },
+  "search": {
+    "folder": "โฟลเดอร์:",
+    "placeholder": "ค้นหา...",
+    "multiple_folders": "{count} โฟลเดอร์"
+  },
+  "help": {
+    "title": "ปุ่มลัดคีย์บอร์ด",
+    "shortcuts": {
+      "toggle_help": "สลับการแสดงความช่วยเหลือ",
+      "toggle_scroll": "สลับโหมดเลื่อนไม่สิ้นสุด",
+      "toggle_file_picker": "สลับการเลือกไฟล์",
+      "add_player": "เพิ่มผู้เล่น",
+      "remove_player": "ลบผู้เล่น",
+      "focus_next": "โฟกัสผู้เล่นถัดไป",
+      "toggle_layout": "สลับเค้าโครง",
+      "toggle_subtitles": "สลับคำบรรยาย",
+      "prev_next_frame": "เฟรมก่อนหน้า / ถัดไป",
+      "play_pause": "เล่น / หยุดชั่วคราว",
+      "prev_next_video": "วิดีโอก่อนหน้า / ถัดไป",
+      "seek_back_forward": "ย้อนกลับ / ไปข้างหน้า",
+      "toggle_play_mode": "สลับโหมดการเล่น",
+      "toggle_mute": "สลับการปิดเสียง",
+      "adjust_volume": "ปรับระดับเสียง",
+      "search_videos": "ค้นหาวิดีโอ",
+      "fullscreen": "เต็มหน้าจอ",
+      "close_app": "ปิดแอป",
+      "move_window": "ย้ายหน้าต่าง"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "ค้นหาวิดีโอ..."
+  },
+  "player": {
+    "muted": "ปิดเสียงแล้ว",
+    "unmuted": "เปิดเสียงแล้ว",
+    "subtitles_enabled": "เปิดใช้งานคำบรรยาย",
+    "subtitles_disabled": "ปิดใช้งานคำบรรยาย",
+    "hevc_title": "วิดีโอ HEVC ({codec})",
+    "hevc_description": "Chromium ไม่รองรับตัวถอดรหัสวิดีโอ HEVC วิดีโอนี้ต้องแปลงเป็น AV1 / H.264",
+    "convert_now": "แปลงตอนนี้",
+    "skip_to_next": "ข้ามไปยังถัดไป ({countdown}ว)",
+    "end_of_playlist": "สิ้นสุดรายการเล่น",
+    "starting_conversion": "กำลังเริ่มการแปลง...",
+    "starting_subtitle_extraction": "กำลังแยกคำบรรยาย..."
+  }
+}
