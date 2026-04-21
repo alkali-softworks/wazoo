@@ -96,11 +96,6 @@ async function removeFolder(folder: string) {
   await scanFolders()
 }
 
-function toggleRunServer(checked: boolean) {
-  log('toggleRunServer', checked)
-  settingsStore.setRunServer(checked)
-}
-
 watch(() => props.isOpen, async (isOpen) => {
   if (isOpen) {
 

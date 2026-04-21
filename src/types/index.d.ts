@@ -29,15 +29,6 @@ export interface ISettings {
   language: 'en' | 'es' | 'ja' | 'zh' | 'fr' | 'de' | 'ru' | 'it' | 'pt' | 'ko' | 'hi' | 'bn' | 'ar' | 'id' | 'he' | 'th'
 }
 
-
-
-export type FormValidation = {
-  status?: number
-  message?: string
-  errors?: { [key: string]: string }
-  data?: any
-}
-
 export interface IVideoResult {
   success?: boolean
   error?: string

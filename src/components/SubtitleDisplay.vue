@@ -7,13 +7,6 @@ interface Subtitle {
   text: string
 }
 
-interface ASSFormatLine {
-  Start: number
-  End: number
-  Text: string
-  [key: string]: any
-}
-
 const props = defineProps({
   subtitleContent: {
     type: String,

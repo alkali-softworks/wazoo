@@ -15,10 +15,8 @@ const show = (msg: string, duration: number) => {
   }, duration);
 };
 
-// Expose the show function to parent components
 defineExpose({ show });
 
-// Cleanup on unmount
 onUnmounted(() => {
   if (timeoutId) clearTimeout(timeoutId);
 });
