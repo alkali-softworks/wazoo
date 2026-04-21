@@ -2,7 +2,6 @@ import Store from 'electron-store'
 
 const defaults = {
   settings: {
-    runServer: false,
     defaultVolume: 1.0,
     lastQuery: '',
     lastFolder: '',

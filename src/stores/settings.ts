@@ -1,12 +1,11 @@
 import { defineStore } from 'pinia'
 import { toRaw } from 'vue'
 import { ISettings } from '@/types'
-import api from '@/lib/apiClient'
 import { log } from '@/lib/utils'
+
 
 export const useSettingsStore = defineStore('settings', {
   state: (): ISettings & { _modified: Set<string> } => ({
-    runServer: false,
     defaultVolume: 1.0,
     lastQuery: null,
     lastFolder: null,
@@ -30,7 +29,7 @@ export const useSettingsStore = defineStore('settings', {
       if (window.electron) {
         settings = await window.electron.invoke('get-settings')
       } else {
-        settings = await api.get('/settings')
+        throw new Error('Electron is required')
       }
       log('settings', settings)
 
@@ -48,7 +47,7 @@ export const useSettingsStore = defineStore('settings', {
         if (window.electron) {
           cleanSettings = await window.electron.invoke('get-settings') as ISettings
         } else {
-          cleanSettings = await api.get('/settings') as ISettings
+          throw new Error('Electron is required')
         }
 
         // Only update the modified fields
@@ -65,7 +64,7 @@ export const useSettingsStore = defineStore('settings', {
         if (window.electron) {
           await window.electron.invoke('save-settings', settingsToSave)
         } else {
-          await api.post('/settings', settingsToSave)
+          throw new Error('Electron is required')
         }
 
         // Clear modified flags after successful save
@@ -144,11 +143,7 @@ export const useSettingsStore = defineStore('settings', {
       await this.saveSettings()
     },
 
-    async setRunServer(v: boolean): Promise<void> {
-      this.runServer = v
-      this._modified.add('runServer')
-      await this.saveSettings()
-    },
+
 
     async setLastQuery(query: string | null, folder: string | string[] | null): Promise<void> {
       this.lastQuery = query

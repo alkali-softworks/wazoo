@@ -2,7 +2,6 @@
 declare global {
   interface Window {
     appConfig: { host: string, api: number }
-    lorebaseWindowId: string
     electron: {
       invoke: (channel: string, ...args: any[]) => Promise<any>
       on: (channel: string, callback: (...args: any[]) => void) => void
@@ -15,7 +14,6 @@ declare global {
 }
 
 export interface ISettings {
-  runServer: boolean
   defaultVolume: number
   lastQuery: string | null
   lastFolder: string | string[] | null
@@ -31,10 +29,7 @@ export interface ISettings {
   language: 'en' | 'es' | 'ja' | 'zh' | 'fr' | 'de' | 'ru' | 'it' | 'pt' | 'ko' | 'hi' | 'bn' | 'ar' | 'id' | 'he' | 'th'
 }
 
-export type ApiConfig = {
-  port: number
-  baseUrl: string
-}
+
 
 export type FormValidation = {
   status?: number

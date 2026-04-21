@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { usePlayerStore } from '@/stores/player'
 import { useI18n } from 'vue-i18n'
-import apiClient from '@/lib/apiClient'
+
 
 const props = defineProps<{
   id: number
@@ -14,7 +14,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'found-converted': [newPath: string]
-  'start-stream': [streamUrl: string]
+
 }>()
 
 const playerStore = usePlayerStore()
@@ -55,17 +55,7 @@ const stopCountdown = () => {
   }
 }
 
-const handleStream = () => {
-  stopCountdown()
-  // Build stream URL natively targeting the api node
-  const baseUrl = apiClient.baseUrl()
-  const encodedPath = encodeURIComponent(cleanPath.value)
-  const startTime = props.initialTime || 0
-  
-  const streamUrl = `${baseUrl}/stream?path=${encodedPath}&start=${startTime}`
-  
-  emit('start-stream', streamUrl)
-}
+
 
 const handleConvert = async () => {
   stopCountdown()
@@ -146,9 +136,6 @@ onUnmounted(() => {
         <p class="conversion-text">{{ conversionOutput }}</p>
       </div>
       <div v-else class="hevc-actions">
-        <button class="stream-btn" @click="handleStream">
-          Stream (Instant)
-        </button>
         <button class="convert-btn" @click="handleConvert">
           {{ t('player.convert_now') }}
         </button>
@@ -232,20 +219,7 @@ onUnmounted(() => {
   background: #059669;
 }
 
-.stream-btn {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.2s;
-}
 
-.stream-btn:hover {
-  background: #2563eb;
-}
 
 .skip-btn {
   background: rgba(255, 255, 255, 0.1);
