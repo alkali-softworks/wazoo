@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch } from 'vue';
+import { onUnmounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const isElectron = window.electron !== undefined

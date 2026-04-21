@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { usePlayerStore } from '@/stores/player'
 import { useI18n } from 'vue-i18n'
-
 
 const props = defineProps<{
   id: number
@@ -14,7 +13,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'found-converted': [newPath: string]
-
 }>()
 
 const playerStore = usePlayerStore()
@@ -29,8 +27,6 @@ const totalDuration = ref(0)
 const progressPercent = ref(0)
 
 const cleanPath = computed(() => props.src.replace(/^file:\/\//, ''))
-
-// We no longer need checkConverted here as Player.vue handles it before rendering
 
 const startCountdown = () => {
   countdown.value = 5
@@ -54,8 +50,6 @@ const stopCountdown = () => {
     countdownInterval.value = null
   }
 }
-
-
 
 const handleConvert = async () => {
   stopCountdown()

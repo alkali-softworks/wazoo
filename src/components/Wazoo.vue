@@ -7,7 +7,6 @@ import { useAppState } from '@/stores/app'
 import { useI18n } from 'vue-i18n'
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 import Player from '@/components/Player.vue'
-
 import MenuModal from '@/components/MenuModal.vue'
 import SettingsModal from '@/components/SettingsModal.vue'
 import SearchModal from '@/components/SearchModal.vue'
@@ -17,14 +16,12 @@ import FilePicker from '@/components/FilePicker.vue'
 import { log, debounce } from '@/lib/utils'
 import { FileQuestion, FolderOpen, Loader2 } from 'lucide-vue-next'
 
-
 const settingsStore = useSettingsStore()
 await settingsStore.loadSettings()
 const playerStore = usePlayerStore()
 const appState = useAppState()
 const { t } = useI18n()
 
-// Non-reactive state
 const state = {
   searchQuery: '',
   searchFolder: 'All' as string | string[],
@@ -106,8 +103,6 @@ async function handleSearch(query: string, folder: string | string[]) {
   queryFiles(query, folder)
   settingsStore.setLastQuery(query, folder)
 }
-
-
 
 async function queryFiles(query: string, folder: string | string[]) {
   appState.setInitialLoad(true)

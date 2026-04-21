@@ -29,7 +29,6 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
 });
 
-
 const shortcuts = computed(() => [
   { key: '?', description: t('help.shortcuts.toggle_help') },
   { key: '5', description: t('help.shortcuts.toggle_scroll') },
