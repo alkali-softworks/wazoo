@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "添加播放器",
+    "toggle_layout": "切换布局",
+    "toggle_files": "切换文件",
+    "search": "搜索",
+    "settings": "设置",
+    "help": "帮助",
+    "quit": "退出",
+    "loading": "加载中...",
+    "all": "全部"
+  },
+  "app": {
+    "drag_to_move": "拖动以移动",
+    "x_to_quit": "按 X 退出"
+  },
+  "wazoo": {
+    "welcome": "欢迎使用 Wazoo",
+    "no_folders_msg": "似乎您还没有添加任何媒体文件夹，或者您的文件夹是空的。",
+    "listing_files": "正在列出文件...",
+    "loading_progress": "正在加载... {percent}% ({total} 个文件)",
+    "open_settings_to_add": "打开设置以添加文件夹",
+    "no_files_found": "未找到文件",
+    "query_in_folder": "查询: \"{query}\" 在 {folder} 中",
+    "try_another_search": "尝试其他搜索",
+    "search_error": "搜索错误: {error}",
+    "no_files_found_in": "在 {folder} 中未找到文件",
+    "total_files": "共 {total} 个文件",
+    "more_than_before": "比之前多 {diff} 个",
+    "less_than_before": "比之前少 {diff} 个",
+    "scroll_mode_unmuted": "滚动模式已取消静音",
+    "global_mode_muted": "全局模式已静音",
+    "global_mode_unmuted": "全局模式已取消静音",
+    "set_players_count": "已设置为 {count} 个播放器{suffix}",
+    "layout_row": "行布局",
+    "grid_layout": "网格布局",
+    "layout_column": "列布局",
+    "scroll_mode_enabled": "滚动模式已启用",
+    "scroll_mode_disabled": "滚动模式已禁用",
+    "added": "已添加：{name}"
+  },
+  "settings": {
+    "title": "设置",
+    "window_opacity": "窗口不透明度",
+    "media_folders": "媒体文件夹",
+    "scan_folders": "扫描文件夹",
+    "add_folder": "添加文件夹",
+    "total_videos": "视频总数: {count}",
+    "adding_media_notice": "通过网络添加媒体需要时间来解析视频元数据。"
+  },
+  "search": {
+    "folder": "文件夹:",
+    "placeholder": "搜索...",
+    "multiple_folders": "{count} 个文件夹"
+  },
+  "help": {
+    "title": "键盘快捷键",
+    "shortcuts": {
+      "toggle_help": "切换帮助",
+      "toggle_scroll": "切换无限滚动模式",
+      "toggle_file_picker": "切换文件选择器",
+      "add_player": "添加播放器",
+      "remove_player": "移除播放器",
+      "focus_next": "聚焦下一个播放器",
+      "toggle_layout": "切换布局",
+      "toggle_subtitles": "切换字幕",
+      "prev_next_frame": "上一帧 / 下一帧",
+      "play_pause": "播放 / 暂停",
+      "prev_next_video": "上一个 / 下一个视频",
+      "seek_back_forward": "后退 / 前进",
+      "toggle_play_mode": "切换播放模式",
+      "toggle_mute": "切换静音",
+      "adjust_volume": "调节音量",
+      "search_videos": "搜索视频",
+      "fullscreen": "全屏",
+      "close_app": "关闭应用",
+      "move_window": "移动窗口"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "搜索视频..."
+  },
+  "player": {
+    "muted": "已静音",
+    "unmuted": "已取消静音",
+    "subtitles_enabled": "字幕已启用",
+    "subtitles_disabled": "字幕已禁用",
+    "hevc_title": "HEVC 视频 ({codec})",
+    "hevc_description": "Chromium 不支持 HEVC 视频解码。此视频需要转换为 AV1 / H.264。",
+    "convert_now": "立即转换",
+    "skip_to_next": "跳过并播放下一个 ({countdown}秒)",
+    "end_of_playlist": "播放列表已结束",
+    "starting_conversion": "正在开始转换...",
+    "starting_subtitle_extraction": "正在提取字幕..."
+  }
+}

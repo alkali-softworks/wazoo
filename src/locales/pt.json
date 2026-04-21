@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "Adicionar reprodutor",
+    "toggle_layout": "Alternar layout",
+    "toggle_files": "Alternar arquivos",
+    "search": "Pesquisar",
+    "settings": "Configurações",
+    "help": "Ajuda",
+    "quit": "Sair",
+    "loading": "Carregando...",
+    "all": "Tudo"
+  },
+  "app": {
+    "drag_to_move": "Arraste para mover",
+    "x_to_quit": "X para sair"
+  },
+  "wazoo": {
+    "welcome": "Bem-vindo ao Wazoo",
+    "no_folders_msg": "Parece que você ainda não adicionou nenhuma pasta de mídia ou suas pastas estão vazias.",
+    "listing_files": "Listando arquivos...",
+    "loading_progress": "Carregando... {percent}% ({total} arquivos)",
+    "open_settings_to_add": "Abrir configurações para adicionar pastas",
+    "no_files_found": "Nenhum arquivo encontrado",
+    "query_in_folder": "Consulta: \"{query}\" em {folder}",
+    "try_another_search": "Tentar outra pesquisa",
+    "search_error": "Erro de pesquisa: {error}",
+    "no_files_found_in": "Nenhum arquivo encontrado em {folder}",
+    "total_files": "{total} arquivos no total",
+    "more_than_before": "{diff} a mais do que antes",
+    "less_than_before": "{diff} a menos do que antes",
+    "scroll_mode_unmuted": "Modo de rolagem com som",
+    "global_mode_muted": "Modo global mudo",
+    "global_mode_unmuted": "Modo global com som",
+    "set_players_count": "Definido para {count} reprodutor(es){suffix}",
+    "layout_row": "Layout em linha",
+    "layout_grid": "Layout em grade",
+    "layout_column": "Layout em coluna",
+    "scroll_mode_enabled": "Modo de rolagem ativado",
+    "scroll_mode_disabled": "Modo de rolagem desativado",
+    "added": "Adicionado: {name}"
+  },
+  "settings": {
+    "title": "Configurações",
+    "window_opacity": "Opacidade da janela",
+    "media_folders": "Pastas de mídia",
+    "scan_folders": "Escanear pastas",
+    "add_folder": "Adicionar pasta",
+    "total_videos": "Total de vídeos: {count}",
+    "adding_media_notice": "A adição de mídia pela rede leva tempo para analisar os metadados do vídeo."
+  },
+  "search": {
+    "folder": "Pasta:",
+    "placeholder": "Pesquisar...",
+    "multiple_folders": "{count} pastas"
+  },
+  "help": {
+    "title": "Atalhos de teclado",
+    "shortcuts": {
+      "toggle_help": "Alternar ajuda",
+      "toggle_scroll": "Alternar modo de rolagem infinita",
+      "toggle_file_picker": "Alternar selecionador de arquivos",
+      "add_player": "Adicionar reprodutor",
+      "remove_player": "Remover reprodutor",
+      "focus_next": "Focar próximo reprodutor",
+      "toggle_layout": "Alternar layout",
+      "toggle_subtitles": "Alternar legendas",
+      "prev_next_frame": "Quadro anterior / Próximo quadro",
+      "play_pause": "Reproduzir / Pausar",
+      "prev_next_video": "Vídeo anterior / Próximo vídeo",
+      "seek_back_forward": "Retroceder / Avançar",
+      "toggle_play_mode": "Alternar modo de reprodução",
+      "toggle_mute": "Alternar mudo",
+      "adjust_volume": "Ajustar volume",
+      "search_videos": "Pesquisar vídeos",
+      "fullscreen": "Tela cheia",
+      "close_app": "Fechar aplicativo",
+      "move_window": "Mover janela"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "Pesquisar vídeos..."
+  },
+  "player": {
+    "muted": "Mudo",
+    "unmuted": "Com som",
+    "subtitles_enabled": "Legendas ativadas",
+    "subtitles_disabled": "Legendas desativadas",
+    "hevc_title": "Vídeo HEVC ({codec})",
+    "hevc_description": "O Chromium não suporta o codec de vídeo HEVC. Este vídeo requer conversão para AV1 / H.264.",
+    "convert_now": "Converter agora",
+    "skip_to_next": "Pular para o próximo ({countdown}s)",
+    "end_of_playlist": "Fim da lista de reprodução",
+    "starting_conversion": "Iniciando conversão...",
+    "starting_subtitle_extraction": "Extraindo legendas..."
+  }
+}

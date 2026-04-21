@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "প্লেয়ার যোগ করুন",
+    "toggle_layout": "লেআউট পরিবর্তন করুন",
+    "toggle_files": "ফাইল দেখান/লুকান",
+    "search": "অনুসন্ধান",
+    "settings": "সেটিংস",
+    "help": "সাহায্য",
+    "quit": "বন্ধ করুন",
+    "loading": "লোড হচ্ছে...",
+    "all": "সব"
+  },
+  "app": {
+    "drag_to_move": "সরানোর জন্য টেনে আনুন",
+    "x_to_quit": "বন্ধ করতে X চাপুন"
+  },
+  "wazoo": {
+    "welcome": "Wazoo-তে স্বাগতম",
+    "no_folders_msg": "মনে হচ্ছে আপনি এখনও কোনো মিডিয়া ফোল্ডার যোগ করেননি, অথবা আপনার ফোল্ডারগুলো খালি।",
+    "listing_files": "ফাইলের তালিকা তৈরি করা হচ্ছে...",
+    "loading_progress": "লোড হচ্ছে... {percent}% ({total}টি ফাইল)",
+    "open_settings_to_add": "ফোল্ডার যোগ করতে সেটিংস খুলুন",
+    "no_files_found": "কোনো ফাইল পাওয়া যায়নি",
+    "query_in_folder": "অনুসন্ধান: {folder}-এ \"{query}\"",
+    "try_another_search": "অন্য অনুসন্ধানের চেষ্টা করুন",
+    "search_error": "অনুসন্ধান ত্রুটি: {error}",
+    "no_files_found_in": "{folder}-এ কোনো ফাইল পাওয়া যায়নি",
+    "total_files": "মোট {total}টি ফাইল",
+    "more_than_before": "আগের চেয়ে {diff} বেশি",
+    "less_than_before": "আগের চেয়ে {diff} কম",
+    "scroll_mode_unmuted": "স্ক্রোল মোড আনমিউট করা হয়েছে",
+    "global_mode_muted": "গ্লোবাল মোড মিউট করা হয়েছে",
+    "global_mode_unmuted": "গ্লোবাল মোড আনমিউট করা হয়েছে",
+    "set_players_count": "{count} জন প্লেয়ারে সেট করা হয়েছে{suffix}",
+    "layout_row": "রো লেআউট",
+    "layout_grid": "গ্রিড লেআউট",
+    "layout_column": "কলাম লেআউট",
+    "scroll_mode_enabled": "স্ক্রোল মোড সক্ষম",
+    "scroll_mode_disabled": "স্ক্রোল মোড অক্ষম",
+    "added": "যোগ করা হয়েছে: {name}"
+  },
+  "settings": {
+    "title": "সেটিংস",
+    "window_opacity": "উইন্ডোর অস্বচ্ছতা",
+    "media_folders": "মিডিয়া ফোল্ডার",
+    "scan_folders": "ফোল্ডার স্ক্যান করুন",
+    "add_folder": "ফোল্ডার যোগ করুন",
+    "total_videos": "মোট ভিডিও: {count}",
+    "adding_media_notice": "নেটওয়ার্কের মাধ্যমে মিডিয়া যোগ করার সময় ভিডিও মেটাডেটা বিশ্লেষণ করতে কিছু সময় লাগে।"
+  },
+  "search": {
+    "folder": "ফোল্ডার:",
+    "placeholder": "অনুসন্ধান...",
+    "multiple_folders": "{count} টি ফোল্ডার"
+  },
+  "help": {
+    "title": "কীবোর্ড শর্টকাট",
+    "shortcuts": {
+      "toggle_help": "সাহায্য দেখান/লুকান",
+      "toggle_scroll": "অনন্ত স্ক্রোল মোড পরিবর্তন করুন",
+      "toggle_file_picker": "ফাইল নির্বাচক দেখান/লুকান",
+      "add_player": "প্লেয়ার যোগ করুন",
+      "remove_player": "প্লেয়ার সরান",
+      "focus_next": "পরবর্তী প্লেয়ারে ফোকাস করুন",
+      "toggle_layout": "লেআউট পরিবর্তন করুন",
+      "toggle_subtitles": "সাবটাইটেল পরিবর্তন করুন",
+      "prev_next_frame": "আগের / পরের ফ্রেম",
+      "play_pause": "প্লে / পজ",
+      "prev_next_video": "আগের / পরের ভিডিও",
+      "seek_back_forward": "পিছনে / সামনে যান",
+      "toggle_play_mode": "প্লে মোড পরিবর্তন করুন",
+      "toggle_mute": "মিউট পরিবর্তন করুন",
+      "adjust_volume": "ভলিউম ঠিক করুন",
+      "search_videos": "ভিডিও খুঁজুন",
+      "fullscreen": "ফুলস্ক্রিন",
+      "close_app": "অ্যাপ বন্ধ করুন",
+      "move_window": "উইন্ডো সরান"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "ভিডিও খুঁজুন..."
+  },
+  "player": {
+    "muted": "মিউট",
+    "unmuted": "আনমিউট",
+    "subtitles_enabled": "সাবটাইটেল সক্ষম",
+    "subtitles_disabled": "সাবটাইটেল অক্ষম",
+    "hevc_title": "HEVC ভিডিও ({codec})",
+    "hevc_description": "ক্রোমিয়াম HEVC ভিডিও কোডেক সমর্থন করে না। এই ভিডিওটি AV1 / H.264 এ রূপান্তর করা প্রয়োজন।",
+    "convert_now": "এখনই রূপান্তর করুন",
+    "skip_to_next": "পরবর্তীতে যান ({countdown}সে)",
+    "end_of_playlist": "প্লেলিস্টের শেষ",
+    "starting_conversion": "রূপান্তর শুরু হচ্ছে...",
+    "starting_subtitle_extraction": "সাবটাইটেল এক্সট্রাক্ট করা হচ্ছে..."
+  }
+}

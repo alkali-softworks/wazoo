@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "Aggiungi lettore",
+    "toggle_layout": "Cambia layout",
+    "toggle_files": "Mostra/Nascondi file",
+    "search": "Cerca",
+    "settings": "Impostazioni",
+    "help": "Aiuto",
+    "quit": "Esci",
+    "loading": "Caricamento...",
+    "all": "Tutti"
+  },
+  "app": {
+    "drag_to_move": "Trascina per spostare",
+    "x_to_quit": "X per uscire"
+  },
+  "wazoo": {
+    "welcome": "Benvenuto in Wazoo",
+    "no_folders_msg": "Sembra che tu non abbia ancora aggiunto cartelle multimediali o che le tue cartelle siano vuote.",
+    "listing_files": "Elenco dei file...",
+    "loading_progress": "Caricamento... {percent}% ({total} file)",
+    "open_settings_to_add": "Apri impostazioni per aggiungere cartelle",
+    "no_files_found": "Nessun file trovato",
+    "query_in_folder": "Query: \"{query}\" in {folder}",
+    "try_another_search": "Prova un'altra ricerca",
+    "search_error": "Errore di ricerca: {error}",
+    "no_files_found_in": "Nessun file trovato in {folder}",
+    "total_files": "{total} file totali",
+    "more_than_before": "{diff} in più rispetto a prima",
+    "less_than_before": "{diff} in meno rispetto a prima",
+    "scroll_mode_unmuted": "Audio attivo in modalità scorrimento",
+    "global_mode_muted": "Modalità globale muta",
+    "global_mode_unmuted": "Modalità globale audio attivo",
+    "set_players_count": "Impostato su {count} lettore{suffix}",
+    "layout_row": "Layout a righe",
+    "layout_grid": "Layout a griglia",
+    "layout_column": "Layout a colonne",
+    "scroll_mode_enabled": "Modalità scorrimento abilitata",
+    "scroll_mode_disabled": "Modalità scorrimento disabilitata",
+    "added": "Aggiunto: {name}"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "window_opacity": "Opacità finestra",
+    "media_folders": "Cartelle multimediali",
+    "scan_folders": "Scansiona cartelle",
+    "add_folder": "Aggiungi cartella",
+    "total_videos": "Video totali: {count}",
+    "adding_media_notice": "L'aggiunta di file multimediali tramite rete richiede tempo per analizzare i metadati del video."
+  },
+  "search": {
+    "folder": "Cartella:",
+    "placeholder": "Cerca...",
+    "multiple_folders": "{count} cartelle"
+  },
+  "help": {
+    "title": "Scorciatoie da tastiera",
+    "shortcuts": {
+      "toggle_help": "Mostra/Nascondi aiuto",
+      "toggle_scroll": "Cambia modalità scorrimento infinito",
+      "toggle_file_picker": "Mostra/Nascondi selettore file",
+      "add_player": "Aggiungi lettore",
+      "remove_player": "Rimuovi lettore",
+      "focus_next": "Passa al lettore successivo",
+      "toggle_layout": "Cambia layout",
+      "toggle_subtitles": "Cambia sottotitoli",
+      "prev_next_frame": "Fotogramma precedente / successivo",
+      "play_pause": "Play / Pausa",
+      "prev_next_video": "Video precedente / successivo",
+      "seek_back_forward": "Indietro / Avanti",
+      "toggle_play_mode": "Cambia modalità riproduzione",
+      "toggle_mute": "Attiva/Disattiva muto",
+      "adjust_volume": "Regola volume",
+      "search_videos": "Cerca video",
+      "fullscreen": "Schermo intero",
+      "close_app": "Chiudi app",
+      "move_window": "Sposta finestra"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "Cerca video..."
+  },
+  "player": {
+    "muted": "Muto",
+    "unmuted": "Audio attivo",
+    "subtitles_enabled": "Sottotitoli abilitati",
+    "subtitles_disabled": "Sottotitoli disabilitati",
+    "hevc_title": "Video HEVC ({codec})",
+    "hevc_description": "Chromium non supporta il codec video HEVC. Questo video richiede la conversione in AV1 / H.264.",
+    "convert_now": "Converti ora",
+    "skip_to_next": "Passa al prossimo ({countdown}s)",
+    "end_of_playlist": "Fine della playlist",
+    "starting_conversion": "Inizio conversione...",
+    "starting_subtitle_extraction": "Estrazione sottotitoli..."
+  }
+}

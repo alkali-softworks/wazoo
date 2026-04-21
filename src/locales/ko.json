@@ -1,0 +1,96 @@
+{
+  "common": {
+    "add_player": "플레이어 추가",
+    "toggle_layout": "레이아웃 전환",
+    "toggle_files": "파일 창 전환",
+    "search": "검색",
+    "settings": "설정",
+    "help": "도움말",
+    "quit": "종료",
+    "loading": "로딩 중...",
+    "all": "전체"
+  },
+  "app": {
+    "drag_to_move": "드래그하여 이동",
+    "x_to_quit": "X를 눌러 종료"
+  },
+  "wazoo": {
+    "welcome": "Wazoo에 오신 것을 환영합니다",
+    "no_folders_msg": "미디어 폴더가 아직 추가되지 않았거나 폴더가 비어 있는 것 같습니다.",
+    "listing_files": "파일 목록을 불러오는 중...",
+    "loading_progress": "로딩 중... {percent}% ({total}개 파일)",
+    "open_settings_to_add": "설정을 열어 폴더 추가",
+    "no_files_found": "파일을 찾을 수 없습니다",
+    "query_in_folder": "검색어: \"{query}\" (폴더: {folder})",
+    "try_another_search": "다른 검색 시도",
+    "search_error": "검색 오류: {error}",
+    "no_files_found_in": "{folder}에서 파일을 찾을 수 없습니다",
+    "total_files": "총 {total}개 파일",
+    "more_than_before": "이전보다 {diff}개 증가",
+    "less_than_before": "이전보다 {diff}개 감소",
+    "scroll_mode_unmuted": "스크롤 모드 음소거 해제됨",
+    "global_mode_muted": "전체 음소거됨",
+    "global_mode_unmuted": "전체 음소거 해제됨",
+    "set_players_count": "{count}개 플레이어로 설정됨{suffix}",
+    "layout_row": "가로 레이아웃",
+    "layout_grid": "그리드 레이아웃",
+    "layout_column": "세로 레이아웃",
+    "scroll_mode_enabled": "스크롤 모드 활성화됨",
+    "scroll_mode_disabled": "스크롤 모드 비활성화됨",
+    "added": "추가됨: {name}"
+  },
+  "settings": {
+    "title": "설정",
+    "window_opacity": "창 투명도",
+    "media_folders": "미디어 폴더",
+    "scan_folders": "폴더 스캔",
+    "add_folder": "폴더 추가",
+    "total_videos": "총 비디오 수: {count}",
+    "adding_media_notice": "네트워크를 통해 미디어를 추가하면 비디오 메타데이터를 분석하는 데 시간이 걸립니다."
+  },
+  "search": {
+    "folder": "폴더:",
+    "placeholder": "검색...",
+    "multiple_folders": "{count}개 폴더"
+  },
+  "help": {
+    "title": "단축키",
+    "shortcuts": {
+      "toggle_help": "도움말 토글",
+      "toggle_scroll": "무한 스크롤 모드 토글",
+      "toggle_file_picker": "파일 선택기 토글",
+      "add_player": "플레이어 추가",
+      "remove_player": "플레이어 제거",
+      "focus_next": "다음 플레이어로 포커스",
+      "toggle_layout": "레이아웃 전환",
+      "toggle_subtitles": "자막 토글",
+      "prev_next_frame": "이전 / 다음 프레임",
+      "play_pause": "재생 / 일시정지",
+      "prev_next_video": "이전 / 다음 비디오",
+      "seek_back_forward": "뒤로 / 앞으로 탐색",
+      "toggle_play_mode": "재생 모드 전환",
+      "toggle_mute": "음소거 토글",
+      "adjust_volume": "볼륨 조절",
+      "search_videos": "비디오 검색",
+      "fullscreen": "전체 화면",
+      "close_app": "앱 종료",
+      "move_window": "창 이동"
+    }
+  },
+  "file_picker": {
+    "search_placeholder": "비디오 검색..."
+  },
+  "player": {
+    "muted": "음소거됨",
+    "unmuted": "음소거 해제됨",
+    "subtitles_enabled": "자막 활성화됨",
+    "subtitles_disabled": "자막 비활성화됨",
+    "hevc_title": "HEVC 비디오 ({codec})",
+    "hevc_description": "Chromium은 HEVC 비디오 코덱을 지원하지 않습니다. 이 비디오는 AV1 / H.264로 변환이 필요합니다.",
+    "convert_now": "지금 변환",
+    "skip_to_next": "다음으로 건너뛰기 ({countdown}초)",
+    "end_of_playlist": "재생 목록의 끝",
+    "starting_conversion": "변환을 시작하는 중...",
+    "starting_subtitle_extraction": "자막 추출 중..."
+  }
+}
