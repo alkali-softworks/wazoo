@@ -7,7 +7,7 @@ import { useAppState } from '@/stores/app'
 import { useI18n } from 'vue-i18n'
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 import Player from '@/components/Player.vue'
-//import bobClient from '@/lib/bobClient'
+
 import MenuModal from '@/components/MenuModal.vue'
 import SettingsModal from '@/components/SettingsModal.vue'
 import SearchModal from '@/components/SearchModal.vue'
@@ -107,15 +107,7 @@ async function handleSearch(query: string, folder: string | string[]) {
   settingsStore.setLastQuery(query, folder)
 }
 
-// async function queryFiles(query: string, folder: string) {
-//   const res = await bobClient.get<IVideoList>('?q=' + query + '&folder=' + folder)
-//   const videos = res.map((item) => bobClient.baseUrl() + item[0])
-//   const codecs = res.map((item) => item[1])
-//   videoTotals(videos.length, folder)
-//   playerStore.clearVideos()
-//   playerStore.addVideos(videos)
-//   playerStore.addCodecs(codecs)
-// }
+
 
 async function queryFiles(query: string, folder: string | string[]) {
   appState.setInitialLoad(true)

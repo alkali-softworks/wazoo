@@ -6,7 +6,7 @@ import { useI18n } from 'vue-i18n'
 import SubtitleDisplay from '@/components/SubtitleDisplay.vue'
 import HevcOverlay from '@/components/HevcOverlay.vue'
 import { formatTime, formatVideoTitle, formatVideoFolder } from '@/lib/utils'
-import apiClient from '@/lib/apiClient'
+
 import { 
   Volume2 as VolumeIcon,
   VolumeX as VolumeOffIcon,
@@ -61,9 +61,7 @@ const showNotice = inject('showNotice') as (message: string) => void
 
 const internalSrc = ref(props.src)
 const isResolvingSrc = ref(false)
-const isStreaming = ref(false)
-const streamStartTime = ref(0)
-const realDuration = ref(0)
+
 const isHevc = computed(() => {
   if (isResolvingSrc.value) return false
   if (internalSrc.value !== props.src) return false
@@ -142,14 +140,7 @@ const videoController = {
   },
   seek: (seconds: number) => {
     safeVideoOperation(video => {
-      if (isStreaming.value) {
-        const newTime = state.videoTime + seconds;
-        const clampedNewTime = Math.max(0, Math.min(newTime, realDuration.value));
-        state.videoTime = clampedNewTime;
-        debouncedStreamSeek(clampedNewTime);
-      } else {
-        video.currentTime = video.currentTime + seconds
-      }
+      video.currentTime = video.currentTime + seconds
       overlayController.show()
     })
   },
@@ -230,46 +221,7 @@ const handleFoundConverted = (newPath: string) => {
   })
 }
 
-let seekTimeout: ReturnType<typeof setTimeout> | null = null
 
-const debouncedStreamSeek = (newTime: number) => {
-  if (seekTimeout) clearTimeout(seekTimeout)
-  seekTimeout = setTimeout(() => {
-    const cleanPath = props.src.replace(/^file:\/\//, '')
-    const encodedPath = encodeURIComponent(cleanPath)
-    streamStartTime.value = newTime
-    const streamUrl = `${apiClient.baseUrl()}/stream?path=${encodedPath}&start=${newTime}&t=${Date.now()}`
-    
-    log('Debounced seeking stream to:', newTime)
-    internalSrc.value = streamUrl
-    nextTick(() => {
-      safeVideoOperation(v => {
-        v.load()
-        if (playing.value) v.play().catch(() => {})
-      })
-    })
-  }, 500)
-}
-
-const handleStartStream = async (streamUrl: string) => {
-  log('Switching to streaming video:', streamUrl)
-  
-  isStreaming.value = true
-  streamStartTime.value = props.initialTime || 0
-  
-  const cleanPath = props.src.replace(/^file:\/\//, '')
-  realDuration.value = await window.electron.invoke('get-video-duration', cleanPath)
-  state.videoDuration = realDuration.value
-  
-  internalSrc.value = streamUrl
-  
-  nextTick(() => {
-    safeVideoOperation(v => {
-      v.load()
-      if (playing.value) v.play().catch(() => {})
-    })
-  })
-}
 
 const checkConverted = async (path: string) => {
   try {
@@ -291,9 +243,6 @@ const checkConverted = async (path: string) => {
 const resolveSource = async (src: string) => {
   log('Resolving source:', src)
   isResolvingSrc.value = true
-  isStreaming.value = false
-  streamStartTime.value = 0
-  realDuration.value = 0
   
   try {
     const converted = await checkConverted(src)
@@ -337,18 +286,8 @@ const handleVideoEvent = (event: Event) => {
 
 const handleTimeUpdate = () => {
   safeVideoOperation(video => {
-    if (state.isScrubbing && isStreaming.value) {
-      // Don't let the background stream fight with the visual scrubber while dragging!
-      return
-    }
-    
-    if (isStreaming.value) {
-      state.videoTime = streamStartTime.value + video.currentTime
-      state.videoDuration = realDuration.value
-    } else {
-      state.videoTime = video.currentTime
-      state.videoDuration = video.duration
-    }
+    state.videoTime = video.currentTime
+    state.videoDuration = video.duration
     //emitStateChange()
   })
 }
@@ -398,14 +337,8 @@ const progressBarController = {
     const percent = (clickPosition / rect.width) * 100
 
     safeVideoOperation(video => {
-      if (isStreaming.value) {
-        const newTime = (percent / 100) * realDuration.value;
-        state.videoTime = newTime; // visually simulate progress instantly
-        debouncedStreamSeek(newTime);
-      } else {
-        if (video.duration) {
-          video.currentTime = (percent / 100) * video.duration
-        }
+      if (video.duration) {
+        video.currentTime = (percent / 100) * video.duration
       }
     })
   }
@@ -719,7 +652,7 @@ defineExpose({
       :title="formattedTitle"
       :initial-time="props.initialTime"
       @found-converted="handleFoundConverted"
-      @start-stream="handleStartStream"
+
     />
   </div>
 </template>

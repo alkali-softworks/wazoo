@@ -5,13 +5,12 @@ import { setupIpcHandlers } from '@/main/ipcHandlers'
 import { electronStore } from '@/main/store'
 import { client } from '@/server/db/connection'
 import { ffmpegManager } from '@/main/ffmpegManager'
-import { createApiServer } from '@/server'
-import { API_CONFIG } from '@/server/config'
+
 
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined
 declare const MAIN_WINDOW_VITE_NAME: string
 let mainWindow: BrowserWindow | null = null
-let apiServerRef: any = null
+
 let isQuitting = false
 
 function log(...args: any[]) {
@@ -106,34 +105,9 @@ if (started) {
 }
 
 app.whenReady().then(async () => {
-  // const settings = electronStore.get('settings')
-  // if (settings.runServer) {
-  apiServerRef = await createApiServer()
-  apiServerRef.start()
-  // }
 
 
-  // 1. Completely disable the GPU sandbox so it can touch the Mesa drivers
-  // app.commandLine.appendSwitch('disable-gpu-sandbox');
 
-  // // 2. Force the hardware acceleration pipeline on
-  // app.commandLine.appendSwitch('ignore-gpu-blocklist');
-  // app.commandLine.appendSwitch('enable-gpu-rasterization');
-  // app.commandLine.appendSwitch('enable-zero-copy');
-  // app.commandLine.appendSwitch('enable-accelerated-video-decode');
-
-  // // 3. Inject the HEVC and VA-API feature flags
-  // app.commandLine.appendSwitch(
-  //   'enable-features',
-  //   'PlatformHEVCDecoderSupport,VaapiVideoDecoder,VaapiIgnoreDriverChecks,Vulkan'
-  // );
-
-  // // 4. Tell Chromium to auto-detect if you are running Wayland or X11
-  // app.commandLine.appendSwitch('ozone-platform-hint', 'auto');
-
-
-  console.log(' Electron Runtime Path:', process.execPath)
-  console.log(' GPU FEATURE STATUS:', app.getGPUFeatureStatus())
 
   Menu.setApplicationMenu(null)
   mainWindow = createMainWindow()
@@ -151,14 +125,10 @@ app.on('before-quit', async (event) => {
   ffmpegManager.killAll()
 
   try {
-    if (apiServerRef) {
-      log('Closing DB before quit...')
-      client.close()
-      await apiServerRef.stop()
-      apiServerRef = null
-    }
+    log('Closing DB before quit...')
+    client.close()
   } catch (err) {
-    console.error('Failed to stop API server:', err)
+    console.error('Failed to close DB:', err)
   }
 
   // Initiate a graceful app quit
