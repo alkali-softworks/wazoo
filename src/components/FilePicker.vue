@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { formatVideoTitle, cleanName } from '@/lib/utils'
+import { formatVideoTitle, cleanName, isGenericFolder } from '@/lib/utils'
 import { usePlayerStore } from '@/stores/player'
 import { useI18n } from 'vue-i18n'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -26,17 +26,9 @@ const folderStructure = computed(() => {
     const segments = file.replace('file://', '').split(/[\\\/]/).filter(Boolean)
 
     let folderName = segments[segments.length - 2] || 'Other'
-    const genericPatterns = [
-      /^Season\s+\d+/i,
-      /^OVA\s+\d+/i,
-      /^Specials?$/i,
-      /^Disc\s+\d+/i,
-      /^Vol(ume)?\s+\d+/i,
-      /^\d+$/
-    ]
-
     let folderPath = ''
-    if (genericPatterns.some(p => p.test(folderName)) && segments.length >= 3) {
+    
+    if (isGenericFolder(folderName) && segments.length >= 3) {
       folderPath = `${cleanName(segments[segments.length - 3])}: ${cleanName(folderName)}`
     } else {
       folderPath = cleanName(folderName)
