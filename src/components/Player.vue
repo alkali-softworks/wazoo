@@ -5,7 +5,7 @@ import { usePlayerStore } from '@/stores/player'
 import { useI18n } from 'vue-i18n'
 import SubtitleDisplay from '@/components/SubtitleDisplay.vue'
 import HevcOverlay from '@/components/HevcOverlay.vue'
-import { formatTime, formatVideoTitle, formatVideoFolder } from '@/lib/utils'
+import { formatTime, formatVideoTitle, formatVideoFolder, formatDescriptiveTitle } from '@/lib/utils'
 
 import { 
   Volume2 as VolumeIcon,
@@ -94,7 +94,7 @@ const state = reactive<PlayerState>({
 })
 
 // Computed properties
-const formattedTitle = computed(() => formatVideoTitle(props.src))
+const formattedTitle = computed(() => formatDescriptiveTitle(props.src))
 const formattedFolder = computed(() => formatVideoFolder(props.src))
 const videoVolumePercent = computed(() => state.videoVolume * 100)
 const currentTime = computed(() => formatTime(state.videoTime))

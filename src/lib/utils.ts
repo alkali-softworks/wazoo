@@ -71,10 +71,42 @@ export function cleanName(name: string): string {
     .replace(/[-.\s]+$/, '')
 }
 
+export const isGenericFolder = (name: string): boolean => {
+  const n = name.trim()
+  const patterns = [
+    /^Season\s+\d+/i,
+    /^Series\s+\d+/i,
+    /^S\d+$/i,
+    /^OVA\s+\d+/i,
+    /^Specials?$/i,
+    /^Extras?$/i,
+    /^Movies?$/i,
+    /^Disc\s+\d+/i,
+    /^Vol(ume)?\s+\d+/i,
+    /^\d+$/
+  ]
+  return patterns.some(p => p.test(n))
+}
+
 export const formatVideoFolder = (url: string): string => {
   // Handle both Windows and Unix-style paths
   const segments = url.split(/[/\\]/)
-  let folderName = segments[segments.length - 2] || ''
+  if (segments.length < 2) return ''
+  
+  let folderIndex = segments.length - 2
+  let folderName = segments[folderIndex] || ''
+  
+  // If the folder name looks like a Season folder, go up one more level
+  if (isGenericFolder(folderName) && folderIndex > 0) {
+    folderIndex--
+    folderName = segments[folderIndex] || folderName
+  }
+
+  // Don't return drive letters or root paths
+  if (folderName.includes(':') || folderName === '/' || folderName === '') {
+    return ''
+  }
+  
   return cleanName(folderName)
 }
 
@@ -91,6 +123,21 @@ export const formatVideoTitle = (url: string): string => {
     .replace(/\(S\d+\)/, '') // Removes "(S01)" pattern
 
   return cleanName(withoutEpisodeNum)
+}
+
+export const formatDescriptiveTitle = (url: string): string => {
+  const title = formatVideoTitle(url)
+  const folder = formatVideoFolder(url)
+  
+  if (folder && folder.toLowerCase() !== title.toLowerCase()) {
+    // If the title starts with the folder name, don't repeat it
+    if (title.toLowerCase().startsWith(folder.toLowerCase())) {
+      return title
+    }
+    return `${folder} — ${title}`
+  }
+  
+  return title
 }
 
 export function debounce<T extends (...args: any[]) => void>(func: T, delay: number) {
