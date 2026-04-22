@@ -63,11 +63,13 @@ export function cleanName(name: string): string {
   cleaned = cleaned.replace(/\s+/g, ' ')
 
   // Remove trailing group name or dash (e.g., -VXT, -HDS)
-  cleaned = cleaned.replace(/-\w+$/, '')
+  // Only remove if it's all uppercase and at least 2 characters
+  cleaned = cleaned.replace(/-[A-Z0-9]{2,}$/, '')
 
-  // Final trim and cleanup of trailing punctuation
+  // Final trim and cleanup of leading/trailing punctuation
   return cleaned
     .trim()
+    .replace(/^[-.\s]+/, '')
     .replace(/[-.\s]+$/, '')
 }
 
@@ -117,9 +119,8 @@ export const formatVideoTitle = (url: string): string => {
   // Remove file extension
   const withoutExtension = fileName.replace(/\.[^/.]+$/, '')
 
-  // Remove episode numbering patterns
+  // Remove redundant episode numbering patterns (optional tags only)
   const withoutEpisodeNum = withoutExtension
-    .replace(/(\d+x\d+) - /, '') // Removes "1x21 - " pattern
     .replace(/\(S\d+\)/, '') // Removes "(S01)" pattern
 
   return cleanName(withoutEpisodeNum)
