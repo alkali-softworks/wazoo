@@ -820,7 +820,7 @@ defineExpose({
         'normal-mode': !isScrollMode,
         'row-layout': isRowLayout,
         'grid-layout': isGridLayout,
-        [`players-${playerStore.players.length}`]: isGridLayout
+        [`players-${playerStore.players.length}`]: true
       }">
     <div v-for="player in playerStore.players" 
         :key="player.id" 
@@ -939,6 +939,7 @@ defineExpose({
   overflow: visible;
   gap: 0;
   height: auto;
+  min-height: 100vh;
 }
 
 .players-grid.scroll-mode {
@@ -1023,6 +1024,21 @@ defineExpose({
   aspect-ratio: 16/9;
   width: 100%;
   height: auto;
+  background: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.grid-layout .player-container video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.players-1 .player-container video {
+  object-fit: contain;
 }
 
 .scan-toast {
