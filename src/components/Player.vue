@@ -662,7 +662,12 @@ defineExpose({
 .player-container {
   position: relative;
   width: 100%;
+  height: 100%;
   cursor: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: black;
 }
 
 .player-focused {
@@ -676,7 +681,10 @@ defineExpose({
 /* Video element */
 video {
   width: 100%;
-  height: auto;
+  height: 100%;
+  max-height: 100vh;
+  object-fit: cover;
+  display: block;
 }
 
 /* Title overlay */
