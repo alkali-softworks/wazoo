@@ -514,6 +514,7 @@ async function checkPlayerFill() {
     ) as HTMLElement
     if (newPlayerEl) {
       newPlayerEl.style.transform = `translateY(${newY}px)`
+      newPlayerEl.style.height = `${guessedHeight}px` // Set initial height
       newPlayerEl.style.zIndex = Math.floor(newY).toString()
     }
     
@@ -582,6 +583,7 @@ function recalculateScrollPositions() {
 
     state.playerPositions.set(player.id, currentTop)
     playerEl.style.transform = `translateY(${currentTop}px)`
+    playerEl.style.height = `${effectiveHeight}px` // Update real height
     playerEl.style.zIndex = Math.floor(currentTop).toString()
 
     currentTop += effectiveHeight // Advance top by effective height
@@ -670,6 +672,7 @@ async function toggleScrollMode() {
       const playerEl = document.querySelector(`[data-player-id="${id}"]`) as HTMLElement
       if (playerEl) {
         playerEl.style.transform = `translateY(${position}px)`
+        playerEl.style.height = `${state.playerHeights.get(id) || window.innerHeight / 2}px`
         playerEl.style.zIndex = Math.floor(position).toString()
       }
     })
@@ -692,6 +695,7 @@ async function toggleScrollMode() {
     const players = document.querySelectorAll('.player-container') as NodeListOf<HTMLElement>
     players.forEach((player) => {
       player.style.transform = ''
+      player.style.height = ''
       player.style.zIndex = ''
     })
     showNotice(t('wazoo.scroll_mode_disabled'))
@@ -959,7 +963,7 @@ defineExpose({
 .scroll-mode .player-container {
   position: absolute;
   width: 100%;
-  /* height: 50vh; */ /* Height is now dynamic */
+  height: 50vh;
   top: 0;
   left: 0;
 }

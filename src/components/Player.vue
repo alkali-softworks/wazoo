@@ -118,7 +118,7 @@ const videoMimeType = computed(() => {
 // Utility functions
 const safeVideoOperation = (operation: (video: HTMLVideoElement) => void) => {
   if (!videoRef.value) {
-    console.warn('Video element not available')
+    // console.warn('Video element not available')
     return
   }
   operation(videoRef.value)
