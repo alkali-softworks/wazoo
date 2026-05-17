@@ -69,10 +69,37 @@ Wazoo is built for everyone, with full localization support for **16+ languages*
 
 ---
 
-## 🚀 Getting Started
+## 📦 Pre-Built Desktop Executables
+
+For a quick and effortless setup without compiling from source, you can download the latest pre-compiled desktop versions directly from GitHub:
+
+*   **Windows (`.exe` Installer)**: Go to **Actions** → Select the latest successful **Build and Release Desktop App** run → Download `wazoo-build-windows-latest` under **Artifacts**, or download the setup from **Releases**.
+*   **macOS (`.zip` App Bundle)**: Download `wazoo-build-macos-latest` from **Artifacts** or **Releases**.
+*   **Linux (`.deb` / `.rpm` packages)**: Download `wazoo-build-ubuntu-latest` from **Artifacts** or **Releases**.
+
+### ⚡ How to Trigger a Fresh Build on GitHub:
+1. Push your code changes to the `main` or `master` branch.
+2. Go to the **Actions** tab on your GitHub repository.
+3. Select **Build and Release Desktop App** from the left sidebar.
+4. Click the **Run workflow** dropdown on the right, select your branch, and click **Run workflow**.
+5. Once completed (~2-3 minutes), scroll down to the **Artifacts** section of that run to download the ready-to-use Windows `.exe` installer!
+
+### 🏷️ Automating Official Releases:
+Whenever you tag a new version (e.g. `v1.0.0`) and push it to GitHub:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+The workflow will automatically compile the app for all platforms and publish the binaries directly to the GitHub **Releases** page!
+
+---
+
+## 🚀 Local Development & Building from Source
+
+If you want to run the engine in development mode or build a package locally:
 
 ### Prerequisites
-* [Node.js](https://nodejs.org/) (v18 or higher)
+* [Node.js](https://nodejs.org/) (v20 or higher recommended)
 
 ### Installation
 1. Clone the repository:
@@ -84,9 +111,13 @@ Wazoo is built for everyone, with full localization support for **16+ languages*
    ```bash
    npm install
    ```
-3. Run in development mode:
+3. Run the development environment:
    ```bash
    npm run dev
+   ```
+4. Build / Package locally (for your current operating system):
+   ```bash
+   npm run package
    ```
 
 ---
