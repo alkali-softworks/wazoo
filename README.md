@@ -42,24 +42,6 @@ Wazoo is built for everyone, with full localization support for **16+ languages*
 
 ---
 
-## ⌨️ Pro Keyboard Shortcuts
-
-| Key | Action |
-| :--- | :--- |
-| `?` | Toggle Help Menu |
-| `5` | Toggle Infinity Scroll Mode |
-| `h` | Show/Hide File Picker |
-| `n` / `x` | Add or Remove Player |
-| `l` | Cycle Layouts (Column → Row → Grid) |
-| `space` | Global Play/Pause |
-| `↓` / `↑` | Previous / Next Video |
-| `←` / `→` | Seek Back / Forward |
-| `m` | Global Mute Toggle |
-| `j` / `/` | Open Search |
-| `Alt + Drag` | Move Window |
-
----
-
 ## 🛠️ Technology Stack
 
 * **Frontend:** Vue 3, Vite, Pinia, Tailwind CSS
