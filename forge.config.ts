@@ -32,8 +32,16 @@ const config: ForgeConfig = {
       setupIcon: './public/icon.ico'
     }),
     new MakerZIP({}, ['darwin']),
-    new MakerRpm({}),
-    new MakerDeb({})
+    new MakerRpm({
+      options: {
+        bin: 'Wazoo'
+      }
+    }),
+    new MakerDeb({
+      options: {
+        bin: 'Wazoo'
+      }
+    })
   ],
   plugins: [
     new VitePlugin({
