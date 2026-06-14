@@ -1,64 +1,79 @@
 name: Nightly Release
 
-# Trigger the workflow on every push to the main branch
 on:
   push:
     branches:
       - main
 
-# Explicitly grant contents:write permission to allow the GITHUB_TOKEN to create/update releases
 permissions:
   contents: write
 
 jobs:
-  release:
-    name: Build and Publish Nightly Release
-    runs-on: ubuntu-latest
+  # -------------------------------------------------------------
+  # STAGE 1: Build all platforms in parallel
+  # -------------------------------------------------------------
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-2022, macos-latest]
 
     steps:
-      # Step 1: Checkout the source code from the repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: Set up Node.js environment
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm' # Automatically caches node_modules to make runs faster
+          cache: 'npm'
 
-      # Step 3: Install dependencies
-      # Using 'npm ci' ensures reproducible builds based exactly on your lockfile
       - name: Install Dependencies
         run: npm ci
 
-      # Step 4: Run Electron Forge Compilation
-      # This compiles the source and runs your packageAfterCopy hooks for native modules
-      - name: Build and Package App
-        run: npm run make # Assumes 'make' points to 'electron-forge make' in package.json
+      - name: Build and Package Electron App
+        run: npm run make
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 5: Create or update the rolling nightly release
-      # We use ncipollo/release-action to recreate the release/tag and overwrite binary assets.
-      - name: Update Nightly Release
+      # Save the installers temporarily so Stage 2 can harvest them
+      - name: Upload Local Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wazoo-build-${{ matrix.os }}
+          path: out/make/**/*
+          retention-days: 1
+
+  # -------------------------------------------------------------
+  # STAGE 2: Combine everything into one single public release
+  # -------------------------------------------------------------
+  publish:
+    name: Publish Public Nightly Release
+    needs: build # Wait for all 3 matrix builds to successfully finish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Download every asset compiled in Stage 1 into a local folder
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: final-assets
+          pattern: wazoo-build-*
+          merge-multiple: true # Flattens them into one clean directory
+
+      - name: Update Public Nightly Release
         uses: ncipollo/release-action@v1
         with:
-          # Target the fixed tag named 'nightly'
           tag: "nightly"
-          # Set the release title to "Nightly Development Build"
           name: "Nightly Development Build"
-          # Release description details
           body: |
             This is an automated nightly development build.
             Built from commit: ${{ github.sha }}
-          # Set prerelease to true so users know it is a bleeding-edge build
           prerelease: true
-          # Allow updating the existing release with new artifacts
           allowUpdates: true
-          # Recreate the release on each run to clean up and overwrite old binary assets
-          recreateRelease: true
-          # Upload files from Electron Forge's output directory recursively
-          artifacts: "out/make/**/*" 
-          # Pass the GITHUB_TOKEN with write permissions
+          recreateRelease: true # Fresh overwrite of the single target landing page
+          artifacts: "final-assets/**/*"
           token: ${{ secrets.GITHUB_TOKEN }}
