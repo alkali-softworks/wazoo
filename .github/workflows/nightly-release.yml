@@ -1,0 +1,64 @@
+name: Nightly Release
+
+# Trigger the workflow on every push to the main branch
+on:
+  push:
+    branches:
+      - main
+
+# Explicitly grant contents:write permission to allow the GITHUB_TOKEN to create/update releases
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and Publish Nightly Release
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the source code from the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm' # Automatically caches node_modules to make runs faster
+
+      # Step 3: Install dependencies
+      # Using 'npm ci' ensures reproducible builds based exactly on your lockfile
+      - name: Install Dependencies
+        run: npm ci
+
+      # Step 4: Run Electron Forge Compilation
+      # This compiles the source and runs your packageAfterCopy hooks for native modules
+      - name: Build and Package App
+        run: npm run make # Assumes 'make' points to 'electron-forge make' in package.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 5: Create or update the rolling nightly release
+      # We use ncipollo/release-action to recreate the release/tag and overwrite binary assets.
+      - name: Update Nightly Release
+        uses: ncipollo/release-action@v1
+        with:
+          # Target the fixed tag named 'nightly'
+          tag: "nightly"
+          # Set the release title to "Nightly Development Build"
+          name: "Nightly Development Build"
+          # Release description details
+          body: |
+            This is an automated nightly development build.
+            Built from commit: ${{ github.sha }}
+          # Set prerelease to true so users know it is a bleeding-edge build
+          prerelease: true
+          # Allow updating the existing release with new artifacts
+          allowUpdates: true
+          # Recreate the release on each run to clean up and overwrite old binary assets
+          recreateRelease: true
+          # Upload files from Electron Forge's output directory recursively
+          artifacts: "out/make/**/*" 
+          # Pass the GITHUB_TOKEN with write permissions
+          token: ${{ secrets.GITHUB_TOKEN }}
