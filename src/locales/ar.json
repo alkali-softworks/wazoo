@@ -37,7 +37,9 @@
     "layout_column": "تخطيط العمود",
     "scroll_mode_enabled": "وضع التمرير مفعل",
     "scroll_mode_disabled": "وضع التمرير معطل",
-    "added": "تمت إضافة: {name}"
+    "added": "تمت إضافة: {name}",
+    "no_players": "لا يوجد مشغلون نشطون",
+    "no_players_msg": "اضغط على 'N' لإضافة مشغل، أو انقر بزر الماوس الأيمن لفتح القائمة."
   },
   "settings": {
     "title": "الإعدادات",

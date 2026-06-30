@@ -37,7 +37,9 @@
     "layout_column": "列布局",
     "scroll_mode_enabled": "滚动模式已启用",
     "scroll_mode_disabled": "滚动模式已禁用",
-    "added": "已添加：{name}"
+    "added": "已添加：{name}",
+    "no_players": "无活动播放器",
+    "no_players_msg": "按 'N' 添加播放器，或右键单击打开菜单。"
   },
   "settings": {
     "title": "设置",

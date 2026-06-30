@@ -37,7 +37,9 @@
     "layout_column": "Layout a colonne",
     "scroll_mode_enabled": "Modalità scorrimento abilitata",
     "scroll_mode_disabled": "Modalità scorrimento disabilitata",
-    "added": "Aggiunto: {name}"
+    "added": "Aggiunto: {name}",
+    "no_players": "Nessun lettore attivo",
+    "no_players_msg": "Premi 'N' per aggiungere un lettore, o fai clic destro per aprire il menu."
   },
   "settings": {
     "title": "Impostazioni",

@@ -37,7 +37,9 @@
     "layout_column": "Layout em coluna",
     "scroll_mode_enabled": "Modo de rolagem ativado",
     "scroll_mode_disabled": "Modo de rolagem desativado",
-    "added": "Adicionado: {name}"
+    "added": "Adicionado: {name}",
+    "no_players": "Nenhum reprodutor ativo",
+    "no_players_msg": "Pressione 'N' para adicionar um reprodutor, ou clique com o botão direito para abrir o menu."
   },
   "settings": {
     "title": "Configurações",

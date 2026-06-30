@@ -37,7 +37,9 @@
     "layout_column": "פריסת עמודות",
     "scroll_mode_enabled": "מצב גלילה פעיל",
     "scroll_mode_disabled": "מצב גלילה כבוי",
-    "added": "נוסף: {name}"
+    "added": "נוסף: {name}",
+    "no_players": "אין נגנים פעילים",
+    "no_players_msg": "לחץ על 'N' כדי להוסיף נגן, או קליק ימני לפתיחת התפריט."
   },
   "settings": {
     "title": "הגדרות",

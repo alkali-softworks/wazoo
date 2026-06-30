@@ -14,7 +14,7 @@ import HelpModal from '@/components/HelpModal.vue'
 import Notice from '@/components/Notice.vue'
 import FilePicker from '@/components/FilePicker.vue'
 import { log, debounce } from '@/lib/utils'
-import { FileQuestion, FolderOpen, Loader2 } from 'lucide-vue-next'
+import { FileQuestion, FolderOpen, Loader2, Tv } from 'lucide-vue-next'
 
 const settingsStore = useSettingsStore()
 await settingsStore.loadSettings()
@@ -818,6 +818,16 @@ defineExpose({
     <button class="retry-btn" @click="openSearchModal">{{ t('wazoo.try_another_search') }}</button>
   </div>
 
+  <div v-if="playerStore.players.length === 0 && !showSetup && !appState.initialLoad && !showNoResults" class="no-results-container">
+    <Tv class="w-16 h-16 text-muted-foreground mb-4 opacity-50" />
+    <h2 class="text-xl font-bold mb-2">{{ t('wazoo.no_players') }}</h2>
+    <p class="text-muted-foreground mb-4 text-center max-w-md">
+      {{ t('wazoo.no_players_msg') }}
+    </p>
+    <button class="retry-btn" @click="addNewPlayer">{{ t('common.add_player') }}</button>
+  </div>
+
+
   <div class="players-grid" 
       :class="{ 
         'scroll-mode': isScrollMode, 
@@ -974,21 +984,24 @@ defineExpose({
 
 .players-grid.grid-layout {
   display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 4px;
   width: 100%;
+  height: 100vh;
+  gap: 4px;
 }
 
 .grid-layout.players-1 {
   grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
 }
 
 .grid-layout.players-2 {
   grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: 1fr;
 }
 
 .grid-layout.players-3 {
   grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
 }
 .grid-layout.players-3 .player-container:first-child {
   grid-column: span 2;
@@ -996,38 +1009,44 @@ defineExpose({
 
 .grid-layout.players-4 {
   grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
 }
 
 .grid-layout.players-5 {
   grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
 }
 
 .grid-layout.players-6 {
   grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
 }
 
 .grid-layout.players-7 {
   grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
 }
 
 .grid-layout.players-8 {
   grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
 }
 
 .grid-layout.players-9 {
   grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
 }
 
 .grid-layout.players-10,
 .grid-layout.players-11,
 .grid-layout.players-12 {
   grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
 }
 
 .grid-layout .player-container {
-  aspect-ratio: 16/9;
   width: 100%;
-  height: auto;
+  height: 100%;
   background: black;
   display: flex;
   align-items: center;

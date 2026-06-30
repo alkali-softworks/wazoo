@@ -37,7 +37,9 @@
     "layout_column": "कॉलम लेआउट",
     "scroll_mode_enabled": "स्क्रॉल मोड सक्षम",
     "scroll_mode_disabled": "स्क्रॉल मोड अक्षम",
-    "added": "जोड़ा गया: {name}"
+    "added": "जोड़ा गया: {name}",
+    "no_players": "कोई सक्रिय प्लेयर नहीं",
+    "no_players_msg": "प्लेयर जोड़ने के लिए 'N' दबाएं, या मेनू खोलने के लिए राइट-क्लिक करें।"
   },
   "settings": {
     "title": "सेटिंग्स",

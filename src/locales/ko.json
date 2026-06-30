@@ -37,7 +37,9 @@
     "layout_column": "세로 레이아웃",
     "scroll_mode_enabled": "스크롤 모드 활성화됨",
     "scroll_mode_disabled": "스크롤 모드 비활성화됨",
-    "added": "추가됨: {name}"
+    "added": "추가됨: {name}",
+    "no_players": "활성 플레이어 없음",
+    "no_players_msg": "플레이어를 추가하려면 'N'을 누르거나, 마우스 오른쪽 버튼을 클릭하여 메뉴를 여십시오."
   },
   "settings": {
     "title": "설정",

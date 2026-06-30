@@ -37,7 +37,9 @@
     "layout_column": "列レイアウト",
     "scroll_mode_enabled": "スクロールモード有効",
     "scroll_mode_disabled": "スクロールモード無効",
-    "added": "追加しました: {name}"
+    "added": "追加しました: {name}",
+    "no_players": "アクティブなプレイヤーはありません",
+    "no_players_msg": "「N」キーを押してプレイヤーを追加するか、右クリックでメニューを開きます。"
   },
   "settings": {
     "title": "設定",
