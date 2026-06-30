@@ -6,6 +6,18 @@ Forget the play button. Just open Wazoo and let your media collection become the
 
 ---
 
+## 📦 Pre-Built Desktop Executables
+
+For a quick and effortless setup without compiling from source, you can download the latest pre-compiled desktop versions directly from the [Nightly Releases Page](https://github.com/alkali-softworks/wazoo/releases/tag/nightly/):
+
+*   **Windows (`.exe` Installer)**: [Wazoo-1.0.0.Setup.exe](https://github.com/alkali-softworks/wazoo/releases/download/nightly/Wazoo-1.0.0.Setup.exe)
+*   **macOS (`.zip` App Bundle)**: [Wazoo-darwin-arm64-1.0.0.zip](https://github.com/alkali-softworks/wazoo/releases/download/nightly/Wazoo-darwin-arm64-1.0.0.zip) (Apple Silicon arm64)
+*   **Linux (`.deb` Package)**: [wazoo-desktop_1.0.0_amd64.deb](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-desktop_1.0.0_amd64.deb)
+*   **Linux (`.rpm` Package)**: [wazoo-desktop-1.0.0-1.x86_64.rpm](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-desktop-1.0.0-1.x86_64.rpm)
+*   **NuGet Package**: [wazoo_desktop-1.0.0-full.nupkg](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo_desktop-1.0.0-full.nupkg)
+
+---
+
 ## 🧠 The Philosophy: "Zero-Choice Viewing"
 
 Wazoo was born from a simple problem: **digital fatigue.** We spend more time scrolling through thumbnails than actually watching our media. 
@@ -20,7 +32,7 @@ Wazoo flips the script. Instead of making you "pick," it creates a **continuous,
 ## ✨ Key Features
 
 ### 🖼️ Ambient Orchestration
-Wazoo isn't a traditional player; it's a visual environment. Run multiple videos simultaneously in **Grid**, **Row**, or **Column** layouts. It automatically handles the flow, creating a dynamic media dashboard that stays active in the background of your workspace.
+Wazoo isn't a traditional player; it's a visual environment. Run multiple videos simultaneously in **Grid**, **Row**, or **Column** layouts. It automatically handles the layout, creating a dynamic media dashboard that stays active in the background of your workspace.
 
 ### 🌊 The Infinity Stream
 Experience your local library as a living river of content. The **Scroll Mode** provides a vertical feed that plays videos at random indices while scrolling at a constant rate. With smooth audio cross-fading based on visibility, it transforms your hard drive into a curated, non-stop stream of inspiration.
@@ -39,42 +51,6 @@ Wazoo is built for everyone, with full localization support for **16+ languages*
 *   **Multi-Lingual:** Support for English, Spanish, French, German, Japanese, Chinese, Hindi, Russian, and many more.
 *   **Glassmorphism UI:** A sleek, semi-transparent interface that feels alive in any language.
 *   **Alt-Drag Navigation:** Quickly move the window anywhere on your screen with a simple Alt+Drag.
-
----
-
-## 🛠️ Technology Stack
-
-* **Frontend:** Vue 3, Vite, Pinia, Tailwind CSS
-* **Desktop:** Electron, Electron Forge
-* **Database:** Drizzle ORM + Better-SQLite3
-* **Processing:** FFmpeg (Optional Transcoding)
-
----
-
-## 📦 Pre-Built Desktop Executables
-
-For a quick and effortless setup without compiling from source, you can download the latest pre-compiled desktop versions directly from GitHub:
-
-*   **Windows (`.exe` Installer)**: Go to **Actions** → Select the latest successful **Build and Release Desktop App** run → Download `wazoo-build-windows-latest` under **Artifacts**, or download the setup from **Releases**.
-*   **macOS (`.zip` App Bundle)**: Download `wazoo-build-macos-latest` from **Artifacts** or **Releases**.
-*   **Linux (`.deb` / `.rpm` packages)**: Download `wazoo-build-ubuntu-latest` from **Artifacts** or **Releases**.
-
-### ⚡ How to Trigger a Fresh Build on GitHub:
-1. Push your code changes to the `main` or `master` branch.
-2. Go to the **Actions** tab on your GitHub repository.
-3. Select **Build and Release Desktop App** from the left sidebar.
-4. Click the **Run workflow** dropdown on the right, select your branch, and click **Run workflow**.
-5. Once completed (~2-3 minutes), scroll down to the **Artifacts** section of that run to download the ready-to-use Windows `.exe` installer!
-
-### 🏷️ Automating Official Releases:
-Whenever you tag a new version (e.g. `v1.0.0`) and push it to GitHub:
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-The workflow will automatically compile the app for all platforms and publish the binaries directly to the GitHub **Releases** page!
-
----
 
 ## 🚀 Local Development & Building from Source
 
