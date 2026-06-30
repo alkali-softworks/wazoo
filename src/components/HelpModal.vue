@@ -48,8 +48,7 @@ const shortcuts = computed(() => [
   { key: 'j OR /', description: t('help.shortcuts.search_videos') },
   { key: 'f OR F11', description: t('help.shortcuts.fullscreen') },
   { key: 'Alt + X', description: t('help.shortcuts.close_app') },
-  { key: 'Alt + Drag', description: t('help.shortcuts.move_window') },
-  { key: 'd', description: t('help.shortcuts.dad_joke') },
+  { key: 'Alt + Drag', description: t('help.shortcuts.move_window') }
 ]);
 </script>
 
