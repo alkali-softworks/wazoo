@@ -48,8 +48,7 @@ Don't let codec limitations slow you down. Chrome has trouble with HEVC, but Waz
 ### 🌍 Global by Design
 Wazoo is built for everyone, with full localization support for **16+ languages**:
 *   **RTL Ready:** Native support for Arabic and Hebrew with automatic layout mirroring.
-*   **Multi-Lingual:** Support for English, Spanish, French, German, Japanese, Chinese, Hindi, Russian, and many more.
-*   **Glassmorphism UI:** A sleek, semi-transparent interface that feels alive in any language.
+*   **Multi-Lingual:** Support for English, Spanish, French, German, Japanese, Chinese, Hindi, Russian & more.
 *   **Alt-Drag Navigation:** Quickly move the window anywhere on your screen with a simple Alt+Drag.
 
 ## 🚀 Local Development & Building from Source
