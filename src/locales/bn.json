@@ -37,7 +37,9 @@
     "layout_column": "কলাম লেআউট",
     "scroll_mode_enabled": "স্ক্রোল মোড সক্ষম",
     "scroll_mode_disabled": "স্ক্রোল মোড অক্ষম",
-    "added": "যোগ করা হয়েছে: {name}"
+    "added": "যোগ করা হয়েছে: {name}",
+    "no_players": "কোনো সক্রিয় প্লেয়ার নেই",
+    "no_players_msg": "একটি প্লেয়ার যোগ করতে 'N' চাপুন, অথবা মেনু খুলতে ডান-ক্লিক করুন।"
   },
   "settings": {
     "title": "সেটিংস",

@@ -37,7 +37,9 @@
     "layout_column": "Diseño de columna",
     "scroll_mode_enabled": "Modo de desplazamiento activado",
     "scroll_mode_disabled": "Modo de desplazamiento desactivado",
-    "added": "Añadido: {name}"
+    "added": "Añadido: {name}",
+    "no_players": "Sin reproductores activos",
+    "no_players_msg": "Presione 'N' para agregar un reproductor, o haga clic derecho para abrir el menú."
   },
   "settings": {
     "title": "Configuración",

@@ -37,7 +37,9 @@
     "layout_column": "Column layout",
     "scroll_mode_enabled": "Scroll mode enabled",
     "scroll_mode_disabled": "Scroll mode disabled",
-    "added": "Added: {name}"
+    "added": "Added: {name}",
+    "no_players": "No active players",
+    "no_players_msg": "Press 'N' to add a player, or right-click to open the menu."
   },
   "settings": {
     "title": "Settings",

@@ -37,7 +37,9 @@
     "layout_column": "Tata letak kolom",
     "scroll_mode_enabled": "Mode gulir aktif",
     "scroll_mode_disabled": "Mode gulir nonaktif",
-    "added": "Ditambahkan: {name}"
+    "added": "Ditambahkan: {name}",
+    "no_players": "Tidak ada pemutar aktif",
+    "no_players_msg": "Tekan 'N' untuk menambahkan pemutar, atau klik Indonesian untuk membuka menu."
   },
   "settings": {
     "title": "Pengaturan",

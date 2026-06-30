@@ -37,7 +37,9 @@
     "layout_column": "Disposition en colonne",
     "scroll_mode_enabled": "Mode défilement activé",
     "scroll_mode_disabled": "Mode défilement désactivé",
-    "added": "Ajouté : {name}"
+    "added": "Ajouté : {name}",
+    "no_players": "Aucun lecteur actif",
+    "no_players_msg": "Appuyez sur 'N' pour ajouter un lecteur, ou faites un clic droit pour ouvrir le menu."
   },
   "settings": {
     "title": "Paramètres",

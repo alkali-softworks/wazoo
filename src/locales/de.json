@@ -37,7 +37,9 @@
     "layout_column": "Spalten-Layout",
     "scroll_mode_enabled": "Scroll-Modus aktiviert",
     "scroll_mode_disabled": "Scroll-Modus deaktiviert",
-    "added": "Hinzugefügt: {name}"
+    "added": "Hinzugefügt: {name}",
+    "no_players": "Keine aktiven Player",
+    "no_players_msg": "Drücken Sie 'N', um einen Player hinzuzufügen, oder machen Sie einen Rechtsklick, um das Menü zu öffnen."
   },
   "settings": {
     "title": "Einstellungen",
