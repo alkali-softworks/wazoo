@@ -1041,9 +1041,22 @@ defineExpose({
   object-fit: cover;
 }
 
-.players-1 .player-container video {
-  object-fit: contain;
+.players-grid.players-1 {
+  height: 100vh !important;
 }
+
+.players-1 .player-container {
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: auto !important;
+}
+
+.players-1 .player-container video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
 
 .scan-toast {
   position: fixed;
