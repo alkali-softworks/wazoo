@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-2022, macos-latest]
+        os: [ubuntu-latest, windows-2022, macos-latest, macos-13]
 
     steps:
       - name: Checkout Repository
@@ -50,7 +50,7 @@ jobs:
   # -------------------------------------------------------------
   publish:
     name: Publish Public Nightly Release
-    needs: build # Wait for all 3 matrix builds to successfully finish
+    needs: build # Wait for all matrix builds to successfully finish
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository

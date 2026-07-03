@@ -11,7 +11,8 @@ Forget the play button. Just open Wazoo and let your media collection become the
 For a quick and effortless setup without compiling from source, you can download the latest pre-compiled desktop versions directly from the [Nightly Releases Page](https://github.com/alkali-softworks/wazoo/releases/tag/nightly/):
 
 *   **Windows (`.exe` Installer)**: [Wazoo-1.0.0.Setup.exe](https://github.com/alkali-softworks/wazoo/releases/download/nightly/Wazoo-1.0.0.Setup.exe)
-*   **macOS (`.zip` App Bundle)**: [Wazoo-darwin-arm64-1.0.0.zip](https://github.com/alkali-softworks/wazoo/releases/download/nightly/Wazoo-darwin-arm64-1.0.0.zip) (Apple Silicon arm64)
+*   **macOS (`.zip` App Bundle - Apple Silicon)**: [Wazoo-darwin-arm64-1.0.0.zip](https://github.com/alkali-softworks/wazoo/releases/download/nightly/Wazoo-darwin-arm64-1.0.0.zip) (Apple Silicon arm64)
+*   **macOS (`.zip` App Bundle - Intel)**: [Wazoo-darwin-x64-1.0.0.zip](https://github.com/alkali-softworks/wazoo/releases/download/nightly/Wazoo-darwin-x64-1.0.0.zip) (Intel x64)
 *   **Linux (`.deb` Package)**: [wazoo-desktop_1.0.0_amd64.deb](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-desktop_1.0.0_amd64.deb)
 *   **Linux (`.rpm` Package)**: [wazoo-desktop-1.0.0-1.x86_64.rpm](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-desktop-1.0.0-1.x86_64.rpm)
 *   **NuGet Package**: [wazoo_desktop-1.0.0-full.nupkg](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo_desktop-1.0.0-full.nupkg)
