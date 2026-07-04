@@ -13,7 +13,7 @@ const defaults = {
     },
     windowOpacity: 1.0,
     queryStates: {},
-    mediaFolders: ['']
+    mediaFolders: [] as string[]
   }
 }
 

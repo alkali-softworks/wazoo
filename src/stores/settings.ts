@@ -33,6 +33,10 @@ export const useSettingsStore = defineStore('settings', {
       }
       log('settings', settings)
 
+      if (settings && settings.mediaFolders) {
+        settings.mediaFolders = settings.mediaFolders.filter((f: string) => f && f.trim() !== '')
+      }
+
       this.$patch(settings)
       this._modified.clear() // Reset modified tracking after load
     },
@@ -106,14 +110,14 @@ export const useSettingsStore = defineStore('settings', {
     },
 
     async setMediaFolders(folders: string[]): Promise<void> {
-      this.mediaFolders = folders
+      this.mediaFolders = folders.filter((f: string) => f && f.trim() !== '')
       this._modified.add('mediaFolders')
       await this.saveSettings()
     },
 
     async addMediaFolder(folder: string): Promise<void> {
-      if (!this.mediaFolders.includes(folder)) {
-        this.mediaFolders = [...this.mediaFolders, folder]
+      if (folder && folder.trim() !== '' && !this.mediaFolders.includes(folder)) {
+        this.mediaFolders = [...this.mediaFolders.filter((f: string) => f && f.trim() !== ''), folder]
         this._modified.add('mediaFolders')
         await this.saveSettings()
       }

@@ -173,9 +173,9 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
     return new Promise((resolve) => {
       try {
         const settings = electronStore.get('settings')
-        const folders = settings.mediaFolders || []
+        const folders = (settings.mediaFolders || []).filter((f: string) => f && f.trim() !== '')
 
-        if (folders.length < 1 || folders[0] === '') {
+        if (folders.length < 1) {
           log('no folders to scan');
           resolve({ success: false, error: 'No folders selected' })
           return
