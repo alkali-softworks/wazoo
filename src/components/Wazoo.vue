@@ -709,12 +709,12 @@ async function toggleScrollMode() {
 
 // --- END OF SCROLL FUNCTIONS ---
 
-function resetPlayerFlipTimer(playerId: number, delayMs = 20000) {
+function resetPlayerFlipTimer(playerId: number, delayMs = 45000) {
   if (!isFlipMode.value) return
   clearPlayerFlipTimer(playerId)
   const timer = setTimeout(() => {
     playerStore.playNextVideo(playerId)
-    resetPlayerFlipTimer(playerId, 20000)
+    resetPlayerFlipTimer(playerId, 45000)
   }, delayMs)
   flipTimers.set(playerId, timer)
 }
@@ -747,7 +747,7 @@ function toggleFlipMode() {
       }
 
       // Stagger initial delays across players so they don't all flip at once
-      const initialDelay = count > 1 ? Math.round(((index + 1) / count) * 20000) : 20000
+      const initialDelay = count > 1 ? Math.round(((index + 1) / count) * 45000) : 45000
       resetPlayerFlipTimer(player.id, initialDelay)
     })
     showNotice(t('wazoo.flip_mode_enabled'))
@@ -774,11 +774,11 @@ watch(
     newVal.forEach((item) => {
       const prevSrc = oldMap.get(item.id)
       if (prevSrc !== undefined && prevSrc !== item.src) {
-        // Video changed (e.g. manually advanced) -> reset 20s count for this player
-        resetPlayerFlipTimer(item.id, 20000)
+        // Video changed (e.g. manually advanced) -> reset 45s count for this player
+        resetPlayerFlipTimer(item.id, 45000)
       } else if (prevSrc === undefined) {
-        // New player added -> start 20s count for it
-        resetPlayerFlipTimer(item.id, 20000)
+        // New player added -> start 45s count for it
+        resetPlayerFlipTimer(item.id, 45000)
       }
     })
   },
