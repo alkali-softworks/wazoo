@@ -37,6 +37,8 @@
     "layout_column": "কলাম লেআউট",
     "scroll_mode_enabled": "স্ক্রোল মোড সক্ষম",
     "scroll_mode_disabled": "স্ক্রোল মোড অক্ষম",
+    "flip_mode_enabled": "ফ্লিপ মোড সক্ষম",
+    "flip_mode_disabled": "ফ্লিপ মোড নিষ্ক্রিয়",
     "added": "যোগ করা হয়েছে: {name}",
     "no_players": "কোনো সক্রিয় প্লেয়ার নেই",
     "no_players_msg": "একটি প্লেয়ার যোগ করতে 'N' চাপুন, অথবা মেনু খুলতে ডান-ক্লিক করুন।"
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "সাহায্য দেখান/লুকান",
       "toggle_scroll": "অনন্ত স্ক্রোল মোড পরিবর্তন করুন",
+      "toggle_flip": "ফ্লিপ মোড পরিবর্তন করুন",
       "toggle_file_picker": "ফাইল নির্বাচক দেখান/লুকান",
       "add_player": "প্লেয়ার যোগ করুন",
       "remove_player": "প্লেয়ার সরান",

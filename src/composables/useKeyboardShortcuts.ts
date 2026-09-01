@@ -15,6 +15,7 @@ export function useKeyboardShortcuts(options: {
   setNPlayers: (n: number) => void,
   toggleLayout: () => void,
   toggleScrollMode: () => void,
+  toggleFlipMode: () => void,
   showNotice: (msg: string) => void,
   addNewPlayer: () => void,
   globalUnmute: () => void,
@@ -126,6 +127,12 @@ export function useKeyboardShortcuts(options: {
     if (e.key === '5' && e.type === 'keydown') {
       e.preventDefault()
       options.toggleScrollMode()
+      return
+    }
+
+    if (e.key === '6' && e.type === 'keydown') {
+      e.preventDefault()
+      options.toggleFlipMode()
       return
     }
 

@@ -37,6 +37,8 @@
     "layout_column": "列レイアウト",
     "scroll_mode_enabled": "スクロールモード有効",
     "scroll_mode_disabled": "スクロールモード無効",
+    "flip_mode_enabled": "フリップモード有効",
+    "flip_mode_disabled": "フリップモード無効",
     "added": "追加しました: {name}",
     "no_players": "アクティブなプレイヤーはありません",
     "no_players_msg": "「N」キーを押してプレイヤーを追加するか、右クリックでメニューを開きます。"
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "ヘルプの切り替え",
       "toggle_scroll": "無限スクロールモードの切り替え",
+      "toggle_flip": "フリップモードの切り替え",
       "toggle_file_picker": "ファイルピッカーの切り替え",
       "add_player": "プレイヤーを追加",
       "remove_player": "プレイヤーを削除",

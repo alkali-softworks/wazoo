@@ -37,6 +37,8 @@
     "layout_column": "تخطيط العمود",
     "scroll_mode_enabled": "وضع التمرير مفعل",
     "scroll_mode_disabled": "وضع التمرير معطل",
+    "flip_mode_enabled": "وضع التقليب مفعل",
+    "flip_mode_disabled": "وضع التقليب معطل",
     "added": "تمت إضافة: {name}",
     "no_players": "لا يوجد مشغلون نشطون",
     "no_players_msg": "اضغط على 'N' لإضافة مشغل، أو انقر بزر الماوس الأيمن لفتح القائمة."
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "تبديل المساعدة",
       "toggle_scroll": "تبديل وضع التمرير اللانهائي",
+      "toggle_flip": "تبديل وضع التقليب",
       "toggle_file_picker": "تبديل منتقي الملفات",
       "add_player": "إضافة لاعب",
       "remove_player": "إزالة لاعب",

@@ -37,6 +37,8 @@
     "layout_column": "เค้าโครงคอลัมน์",
     "scroll_mode_enabled": "เปิดใช้งานโหมดเลื่อน",
     "scroll_mode_disabled": "ปิดใช้งานโหมดเลื่อน",
+    "flip_mode_enabled": "เปิดใช้งานโหมดพลิก",
+    "flip_mode_disabled": "ปิดใช้งานโหมดพลิก",
     "added": "เพิ่มแล้ว: {name}",
     "no_players": "ไม่มีเครื่องเล่นที่ใช้งานอยู่",
     "no_players_msg": "กด 'N' เพื่อเพิ่มเครื่องเล่น หรือคลิกขวาเพื่อเปิดเมนู"
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "สลับการแสดงความช่วยเหลือ",
       "toggle_scroll": "สลับโหมดเลื่อนไม่สิ้นสุด",
+      "toggle_flip": "สลับโหมดพลิก",
       "toggle_file_picker": "สลับการเลือกไฟล์",
       "add_player": "เพิ่มผู้เล่น",
       "remove_player": "ลบผู้เล่น",

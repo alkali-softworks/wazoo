@@ -37,6 +37,8 @@
     "layout_column": "Diseño de columna",
     "scroll_mode_enabled": "Modo de desplazamiento activado",
     "scroll_mode_disabled": "Modo de desplazamiento desactivado",
+    "flip_mode_enabled": "Modo de volteo activado",
+    "flip_mode_disabled": "Modo de volteo desactivado",
     "added": "Añadido: {name}",
     "no_players": "Sin reproductores activos",
     "no_players_msg": "Presione 'N' para agregar un reproductor, o haga clic derecho para abrir el menú."
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "Alternar Ayuda",
       "toggle_scroll": "Alternar Modo de Desplazamiento Infinito",
+      "toggle_flip": "Alternar Modo de Volteo",
       "toggle_file_picker": "Alternar Selector de Archivos",
       "add_player": "Añadir Reproductor",
       "remove_player": "Eliminar Reproductor",

@@ -32,6 +32,7 @@ onUnmounted(() => {
 const shortcuts = computed(() => [
   { key: '?', description: t('help.shortcuts.toggle_help') },
   { key: '5', description: t('help.shortcuts.toggle_scroll') },
+  { key: '6', description: t('help.shortcuts.toggle_flip') },
   { key: 'h', description: t('help.shortcuts.toggle_file_picker') },
   { key: 'n', description: t('help.shortcuts.add_player') },
   { key: 'x', description: t('help.shortcuts.remove_player') },

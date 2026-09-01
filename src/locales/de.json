@@ -37,6 +37,8 @@
     "layout_column": "Spalten-Layout",
     "scroll_mode_enabled": "Scroll-Modus aktiviert",
     "scroll_mode_disabled": "Scroll-Modus deaktiviert",
+    "flip_mode_enabled": "Flip-Modus aktiviert",
+    "flip_mode_disabled": "Flip-Modus deaktiviert",
     "added": "Hinzugefügt: {name}",
     "no_players": "Keine aktiven Player",
     "no_players_msg": "Drücken Sie 'N', um einen Player hinzuzufügen, oder machen Sie einen Rechtsklick, um das Menü zu öffnen."
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "Hilfe umschalten",
       "toggle_scroll": "Unendlichen Scroll-Modus umschalten",
+      "toggle_flip": "Flip-Modus umschalten",
       "toggle_file_picker": "Dateiauswahl umschalten",
       "add_player": "Player hinzufügen",
       "remove_player": "Player entfernen",

@@ -37,6 +37,8 @@
     "layout_column": "Tata letak kolom",
     "scroll_mode_enabled": "Mode gulir aktif",
     "scroll_mode_disabled": "Mode gulir nonaktif",
+    "flip_mode_enabled": "Mode balik aktif",
+    "flip_mode_disabled": "Mode balik nonaktif",
     "added": "Ditambahkan: {name}",
     "no_players": "Tidak ada pemutar aktif",
     "no_players_msg": "Tekan 'N' untuk menambahkan pemutar, atau klik Indonesian untuk membuka menu."
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "Tampilkan/Sembunyikan Bantuan",
       "toggle_scroll": "Ganti Mode Gulir Tak Terbatas",
+      "toggle_flip": "Ganti Mode Balik",
       "toggle_file_picker": "Tampilkan/Sembunyikan Pemilih Berkas",
       "add_player": "Tambah Pemutar",
       "remove_player": "Hapus Pemutar",

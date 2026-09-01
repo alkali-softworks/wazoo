@@ -38,6 +38,8 @@ const state = {
 const isRowLayout = ref(false)
 const isGridLayout = ref(false)
 const isScrollMode = ref(false)
+const isFlipMode = ref(false)
+const flipTimers = new Map<number, ReturnType<typeof setTimeout>>()
 const showWazooControls = ref(true)
 const showMenuModal = ref(false)
 const showSettingsModal = ref(false)
@@ -189,12 +191,15 @@ function handleVideoEvent(evt: {
       //log('loadedmetadata calling Saving query state')
       playerStore.saveQueryState()
     }
-    if (isScrollMode.value) {
+    if (isScrollMode.value || isFlipMode.value) {
       // Seek to random position
       if (evt.videoRef && isFinite(evt.videoRef.duration)) {
         const randomTime = Math.random() * evt.videoRef.duration
         evt.videoRef.currentTime = randomTime
       }
+    }
+
+    if (isScrollMode.value) {
 
       const playerRef = playerStore.getPlayerRef(evt.playerId)
       if (playerRef) {
@@ -704,6 +709,82 @@ async function toggleScrollMode() {
 
 // --- END OF SCROLL FUNCTIONS ---
 
+function resetPlayerFlipTimer(playerId: number, delayMs = 20000) {
+  if (!isFlipMode.value) return
+  clearPlayerFlipTimer(playerId)
+  const timer = setTimeout(() => {
+    playerStore.playNextVideo(playerId)
+    resetPlayerFlipTimer(playerId, 20000)
+  }, delayMs)
+  flipTimers.set(playerId, timer)
+}
+
+function clearPlayerFlipTimer(playerId: number) {
+  const timer = flipTimers.get(playerId)
+  if (timer) {
+    clearTimeout(timer)
+    flipTimers.delete(playerId)
+  }
+}
+
+function clearAllFlipTimers() {
+  flipTimers.forEach((timer) => clearTimeout(timer))
+  flipTimers.clear()
+}
+
+function toggleFlipMode() {
+  isFlipMode.value = !isFlipMode.value
+  if (isFlipMode.value) {
+    clearAllFlipTimers()
+    const players = playerStore.players
+    const count = players.length
+    players.forEach((player, index) => {
+      // Seek current video to random time position
+      const playerRef = playerStore.getPlayerRef(player.id)
+      const videoObj = playerRef?.getVideoObject()
+      if (videoObj && isFinite(videoObj.duration) && videoObj.duration > 0) {
+        videoObj.currentTime = Math.random() * videoObj.duration
+      }
+
+      // Stagger initial delays across players so they don't all flip at once
+      const initialDelay = count > 1 ? Math.round(((index + 1) / count) * 20000) : 20000
+      resetPlayerFlipTimer(player.id, initialDelay)
+    })
+    showNotice(t('wazoo.flip_mode_enabled'))
+  } else {
+    clearAllFlipTimers()
+    showNotice(t('wazoo.flip_mode_disabled'))
+  }
+}
+
+watch(
+  () => playerStore.players.map((p) => ({ id: p.id, src: p.src })),
+  (newVal, oldVal) => {
+    if (!isFlipMode.value) return
+    const oldMap = new Map((oldVal || []).map((item) => [item.id, item.src]))
+    const currentIds = new Set(newVal.map((item) => item.id))
+
+    // Clean up timers for removed players
+    for (const id of flipTimers.keys()) {
+      if (!currentIds.has(id)) {
+        clearPlayerFlipTimer(id)
+      }
+    }
+
+    newVal.forEach((item) => {
+      const prevSrc = oldMap.get(item.id)
+      if (prevSrc !== undefined && prevSrc !== item.src) {
+        // Video changed (e.g. manually advanced) -> reset 20s count for this player
+        resetPlayerFlipTimer(item.id, 20000)
+      } else if (prevSrc === undefined) {
+        // New player added -> start 20s count for it
+        resetPlayerFlipTimer(item.id, 20000)
+      }
+    })
+  },
+  { deep: true }
+)
+
 useKeyboardShortcuts({
   showSearchModal,
   showMenuModal,
@@ -715,6 +796,7 @@ useKeyboardShortcuts({
   setNPlayers,
   toggleLayout,
   toggleScrollMode,
+  toggleFlipMode,
   showNotice,
   addNewPlayer,
   globalUnmute,
@@ -768,6 +850,7 @@ onBeforeUnmount(() => {
   if (state.scrollInterval) {
     cancelAnimationFrame(state.scrollInterval)
   }
+  clearAllFlipTimers()
   window.removeEventListener('resize', handleResize)
   playerStore.saveQueryState()
 })

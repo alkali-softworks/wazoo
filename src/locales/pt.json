@@ -37,6 +37,8 @@
     "layout_column": "Layout em coluna",
     "scroll_mode_enabled": "Modo de rolagem ativado",
     "scroll_mode_disabled": "Modo de rolagem desativado",
+    "flip_mode_enabled": "Modo de inversão ativado",
+    "flip_mode_disabled": "Modo de inversão desativado",
     "added": "Adicionado: {name}",
     "no_players": "Nenhum reprodutor ativo",
     "no_players_msg": "Pressione 'N' para adicionar um reprodutor, ou clique com o botão direito para abrir o menu."
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "Alternar ajuda",
       "toggle_scroll": "Alternar modo de rolagem infinita",
+      "toggle_flip": "Alternar modo de inversão",
       "toggle_file_picker": "Alternar selecionador de arquivos",
       "add_player": "Adicionar reprodutor",
       "remove_player": "Remover reprodutor",

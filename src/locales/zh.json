@@ -37,6 +37,8 @@
     "layout_column": "列布局",
     "scroll_mode_enabled": "滚动模式已启用",
     "scroll_mode_disabled": "滚动模式已禁用",
+    "flip_mode_enabled": "翻转模式已启用",
+    "flip_mode_disabled": "翻转模式已禁用",
     "added": "已添加：{name}",
     "no_players": "无活动播放器",
     "no_players_msg": "按 'N' 添加播放器，或右键单击打开菜单。"
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "切换帮助",
       "toggle_scroll": "切换无限滚动模式",
+      "toggle_flip": "切换翻转模式",
       "toggle_file_picker": "切换文件选择器",
       "add_player": "添加播放器",
       "remove_player": "移除播放器",

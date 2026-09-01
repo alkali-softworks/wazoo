@@ -37,6 +37,8 @@
     "layout_column": "פריסת עמודות",
     "scroll_mode_enabled": "מצב גלילה פעיל",
     "scroll_mode_disabled": "מצב גלילה כבוי",
+    "flip_mode_enabled": "מצב היפוך פעיל",
+    "flip_mode_disabled": "מצב היפוך מבוטל",
     "added": "נוסף: {name}",
     "no_players": "אין נגנים פעילים",
     "no_players_msg": "לחץ על 'N' כדי להוסיף נגן, או קליק ימני לפתיחת התפריט."
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "הצג/הסתר עזרה",
       "toggle_scroll": "החלף מצב גלילה אינסופית",
+      "toggle_flip": "החלף מצב היפוך",
       "toggle_file_picker": "הצג/הסתר בחירת קבצים",
       "add_player": "הוסף נגן",
       "remove_player": "הסר נגן",

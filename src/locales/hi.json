@@ -37,6 +37,8 @@
     "layout_column": "कॉलम लेआउट",
     "scroll_mode_enabled": "स्क्रॉल मोड सक्षम",
     "scroll_mode_disabled": "स्क्रॉल मोड अक्षम",
+    "flip_mode_enabled": "फ्लिप मोड सक्षम",
+    "flip_mode_disabled": "फ्लिप मोड अक्षम",
     "added": "जोड़ा गया: {name}",
     "no_players": "कोई सक्रिय प्लेयर नहीं",
     "no_players_msg": "प्लेयर जोड़ने के लिए 'N' दबाएं, या मेनू खोलने के लिए राइट-क्लिक करें।"
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "सहायता दिखाएं/छिपाएं",
       "toggle_scroll": "अनंत स्क्रॉल मोड बदलें",
+      "toggle_flip": "फ्लिप मोड बदलें",
       "toggle_file_picker": "फ़ाइल चयनकर्ता दिखाएं/छिपाएं",
       "add_player": "प्लेयर जोड़ें",
       "remove_player": "प्लेयर निकालें",

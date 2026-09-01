@@ -37,6 +37,8 @@
     "layout_column": "Column layout",
     "scroll_mode_enabled": "Scroll mode enabled",
     "scroll_mode_disabled": "Scroll mode disabled",
+    "flip_mode_enabled": "Flip mode enabled",
+    "flip_mode_disabled": "Flip mode disabled",
     "added": "Added: {name}",
     "no_players": "No active players",
     "no_players_msg": "Press 'N' to add a player, or right-click to open the menu."
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "Toggle Help",
       "toggle_scroll": "Toggle Infinite Scroll Mode",
+      "toggle_flip": "Toggle Flip Mode",
       "toggle_file_picker": "Toggle File Picker",
       "add_player": "Add Player",
       "remove_player": "Remove Player",

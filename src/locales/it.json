@@ -37,6 +37,8 @@
     "layout_column": "Layout a colonne",
     "scroll_mode_enabled": "Modalità scorrimento abilitata",
     "scroll_mode_disabled": "Modalità scorrimento disabilitata",
+    "flip_mode_enabled": "Modalità ribaltamento abilitata",
+    "flip_mode_disabled": "Modalità ribaltamento disabilitata",
     "added": "Aggiunto: {name}",
     "no_players": "Nessun lettore attivo",
     "no_players_msg": "Premi 'N' per aggiungere un lettore, o fai clic destro per aprire il menu."
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "Mostra/Nascondi aiuto",
       "toggle_scroll": "Cambia modalità scorrimento infinito",
+      "toggle_flip": "Cambia modalità ribaltamento",
       "toggle_file_picker": "Mostra/Nascondi selettore file",
       "add_player": "Aggiungi lettore",
       "remove_player": "Rimuovi lettore",

@@ -37,6 +37,8 @@
     "layout_column": "Disposition en colonne",
     "scroll_mode_enabled": "Mode défilement activé",
     "scroll_mode_disabled": "Mode défilement désactivé",
+    "flip_mode_enabled": "Mode retournement activé",
+    "flip_mode_disabled": "Mode retournement désactivé",
     "added": "Ajouté : {name}",
     "no_players": "Aucun lecteur actif",
     "no_players_msg": "Appuyez sur 'N' pour ajouter un lecteur, ou faites un clic droit pour ouvrir le menu."
@@ -60,6 +62,7 @@
     "shortcuts": {
       "toggle_help": "Afficher/Masquer l'aide",
       "toggle_scroll": "Basculer le mode défilement infini",
+      "toggle_flip": "Basculer le mode retournement",
       "toggle_file_picker": "Afficher/Masquer le sélecteur de fichiers",
       "add_player": "Ajouter un lecteur",
       "remove_player": "Supprimer un lecteur",
