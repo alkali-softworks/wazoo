@@ -57,6 +57,12 @@ jobs:
         with:
           name: wazoo-build-${{ matrix.os }}
           path: |
+            dist/electron/**/*.exe
+            dist/electron/**/*.zip
+            dist/electron/**/*.deb
+            dist/electron/**/*.rpm
+            dist/electron/**/*.AppImage
+            dist/electron/**/*.dmg
             out/make/**/*.exe
             out/make/**/*.zip
             out/make/**/*.deb
@@ -68,6 +74,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            dist/electron/**/*.exe
+            dist/electron/**/*.zip
+            dist/electron/**/*.deb
+            dist/electron/**/*.rpm
+            dist/electron/**/*.AppImage
+            dist/electron/**/*.dmg
             out/make/**/*.exe
             out/make/**/*.zip
             out/make/**/*.deb

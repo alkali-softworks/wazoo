@@ -1,20 +1,16 @@
 import { app, BrowserWindow, Menu } from 'electron'
 import path from 'node:path'
-import started from 'electron-squirrel-startup'
 import { setupIpcHandlers } from '@/main/ipcHandlers'
 import { electronStore } from '@/main/store'
 import { client } from '@/server/db/connection'
 import { ffmpegManager } from '@/main/ffmpegManager'
 
-
-declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined
-declare const MAIN_WINDOW_VITE_NAME: string
+const isDev = !app.isPackaged || process.env.NODE_ENV === 'development'
 let mainWindow: BrowserWindow | null = null
 
 let isQuitting = false
 
 function log(...args: any[]) {
-  const isDev = process.env.NODE_ENV === 'development'
   if (isDev) {
     console.log(...args)
   }
@@ -57,18 +53,15 @@ export function createMainWindow() {
     app.quit()
   })
 
+  const devServerUrl = process.env.MAIN_WINDOW_VITE_DEV_SERVER_URL || 'http://localhost:5173'
 
-
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL)
+  if (isDev) {
+    mainWindow.loadURL(devServerUrl)
+    mainWindow.webContents.openDevTools()
   } else {
     mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+      path.join(__dirname, '../renderer/main_window/index.html')
     )
-  }
-
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.webContents.openDevTools()
   }
 
   setupSecurityHeaders(mainWindow)
@@ -98,10 +91,6 @@ function setupSecurityHeaders(mainWindow: BrowserWindow) {
       callback({ responseHeaders })
     }
   )
-}
-
-if (started) {
-  app.quit()
 }
 
 app.whenReady().then(async () => {

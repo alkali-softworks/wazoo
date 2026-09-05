@@ -17,7 +17,10 @@ const defaults = {
   }
 }
 
-export const electronStore = new Store({
+const StoreConstructor = (Store as any).default || Store
+
+export const electronStore = new StoreConstructor({
+  name: 'config',
   defaults
 }) as any
 

@@ -42,7 +42,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wazoo-build-${{ matrix.os }}
-          path: out/make/**/*
+          path: |
+            dist/electron/**/*
+            out/make/**/*
           retention-days: 1
 
   # -------------------------------------------------------------

@@ -1,0 +1,59 @@
+/**
+ * electron-builder configuration for Wazoo
+ */
+{
+  "$schema": "https://json.schemastore.org/electron-builder.json",
+  "appId": "com.alkalisoftworks.wazoo",
+  "productName": "Wazoo",
+  "directories": {
+    "output": "dist/electron",
+    "buildResources": "public"
+  },
+  "files": [
+    ".vite/**/*",
+    "package.json",
+    "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+    "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+    "!**/node_modules/*.d.ts",
+    "!**/node_modules/.bin"
+  ],
+  "asar": true,
+  "asarUnpack": [
+    "**/node_modules/ffmpeg-static/**",
+    "**/node_modules/ffprobe-static/**"
+  ],
+  "extraResources": [
+    {
+      "from": "default.db",
+      "to": "default.db"
+    }
+  ],
+  "win": {
+    "icon": "public/icon.ico",
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "installerIcon": "public/icon.ico",
+    "uninstallerIcon": "public/icon.ico",
+    "deleteAppDataOnUninstall": false
+  },
+  "linux": {
+    "icon": "public/icon.png",
+    "target": ["AppImage", "deb", "rpm"],
+    "category": "AudioVideo",
+    "syncDesktopName": true,
+    "synopsis": "Ambient media engine for non-stop viewing"
+  },
+  "mac": {
+    "icon": "public/icon.png",
+    "target": ["dmg", "zip"],
+    "category": "public.app-category.entertainment"
+  }
+}
