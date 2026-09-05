@@ -386,43 +386,58 @@ const volumeBarController = {
 const subtitleController = {
   async load() {
     try {
-      const srtFileName = props.src.replace(/\.[^/.]+$/, ".srt")
       const cleanPath = props.src.replace(/^file:\/\//, '')
-      const cleanSrtPath = srtFileName.replace(/^file:\/\//, '')
+      let subPath: string | null = null
 
-      // 1. Check if the .srt file exists on disk
-      const exists = await window.electron.invoke('file-exists', cleanSrtPath)
-      
-      if (!exists) {
-        // 2. If not, check if the video has internal subtitles
-        const { hasSubtitles } = await window.electron.invoke('check-video-subs', cleanPath)
-        
-        if (hasSubtitles) {
-          showNotice(t('player.starting_subtitle_extraction'))
-          const extractRes = await window.electron.invoke('extract-subtitles', cleanPath)
+      // 1. Check for existing subtitle files (.ass, .ssa, .srt, .vtt)
+      if (window.electron?.invoke) {
+        const findRes = await window.electron.invoke('find-subtitles', cleanPath)
+        if (findRes?.found && findRes.path) {
+          subPath = findRes.path
+        }
+
+        // 2. If not found, check if the video has internal subtitles
+        if (!subPath) {
+          const { hasSubtitles } = await window.electron.invoke('check-video-subs', cleanPath)
           
-          if (!extractRes.success) {
-            log('Extraction failed:', extractRes.error)
-            state.subtitleData = ''
+          if (hasSubtitles) {
+            showNotice(t('player.starting_subtitle_extraction'))
+            const extractRes = await window.electron.invoke('extract-subtitles', cleanPath)
+            
+            if (extractRes?.success && extractRes.outputPath) {
+              subPath = extractRes.outputPath
+              log('Subtitles extracted to:', extractRes.outputPath)
+            } else {
+              log('Extraction failed:', extractRes?.error)
+            }
+          }
+        }
+
+        // 3. Read subtitle file via IPC (immune to URL encoding issues)
+        if (subPath) {
+          const readRes = await window.electron.invoke('read-subtitle-file', subPath)
+          if (readRes?.success && typeof readRes.content === 'string') {
+            state.subtitleData = readRes.content
             return
           }
-          log('Subtitles extracted to:', extractRes.outputPath)
-        } else {
-          state.subtitleData = ''
-          return
         }
       }
 
-      // 3. Load the (newly extracted or already existing) subtitle file
-      const response = await fetch(srtFileName)
-      
-      if (!response.ok) {
-        state.subtitleData = ''
-        return
+      // Fallback: try direct fetch for .ass, .ssa, .srt, .vtt if IPC is unavailable
+      const baseName = props.src.replace(/\.[^/.]+$/, '')
+      for (const ext of ['.ass', '.ssa', '.srt', '.vtt']) {
+        try {
+          const response = await fetch(`${baseName}${ext}`)
+          if (response.ok) {
+            state.subtitleData = await response.text()
+            return
+          }
+        } catch {
+          // continue fallback loop
+        }
       }
-      
-      state.subtitleData = await response.text()
 
+      state.subtitleData = ''
     } catch (error) {
       log('Error loading subtitles:', error)
       state.subtitleData = ''
@@ -435,6 +450,7 @@ const subtitleController = {
     showNotice(state.subtitlesEnabled ? t('player.subtitles_enabled') : t('player.subtitles_disabled'))
   }
 }
+
 
 // Lifecycle hooks
 onMounted(() => {
@@ -611,8 +627,9 @@ defineExpose({
 
     <!-- Subtitles -->
     <SubtitleDisplay
-      v-if="state.subtitlesEnabled"
+      :video-element="videoRef"
       :subtitle-content="state.subtitleData"
+      :enabled="state.subtitlesEnabled"
       :current-time="state.videoTime"
     />
 

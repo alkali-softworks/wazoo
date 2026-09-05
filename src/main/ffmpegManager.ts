@@ -116,6 +116,27 @@ class FFmpegManager {
     }
   }
 
+  public async getSubtitleInfo(filePath: string): Promise<{ hasSubtitles: boolean; codec?: string } | null> {
+    try {
+      const ffprobePath = this.getFfprobePath();
+      const output = execFileSync(ffprobePath, [
+        '-v', 'error',
+        '-show_entries', 'stream=codec_name,codec_type',
+        '-of', 'json',
+        filePath
+      ], { encoding: 'utf-8' });
+      const data = JSON.parse(output);
+      const subStream = data.streams?.find((s: any) => s.codec_type === 'subtitle');
+      if (subStream) {
+        return { hasSubtitles: true, codec: subStream.codec_name };
+      }
+      return { hasSubtitles: false };
+    } catch (error) {
+      console.error('Failed to probe subtitle info:', error);
+      return null;
+    }
+  }
+
   public async extractSubtitles(inputPath: string, outputPath: string): Promise<void> {
     const ffmpegPath = this.getFfmpegPath();
     // Extract the first subtitle stream (index 0 of subtitle streams)
@@ -141,4 +162,5 @@ class FFmpegManager {
 }
 
 export const ffmpegManager = new FFmpegManager();
+
 

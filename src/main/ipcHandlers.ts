@@ -128,18 +128,81 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
     }
   })
 
+  ipcMain.handle('find-subtitles', async (_, videoPath: string) => {
+    try {
+      const parsed = path.parse(videoPath)
+      const dir = parsed.dir
+      const baseName = parsed.name
+      
+      const extensions = ['.ass', '.ssa', '.srt', '.vtt']
+      
+      // 1. Direct match: baseName.ass, baseName.ssa, baseName.srt, baseName.vtt
+      for (const ext of extensions) {
+        const candidate = path.join(dir, `${baseName}${ext}`)
+        try {
+          await fs.promises.access(candidate, fs.constants.F_OK)
+          return { found: true, path: candidate, ext }
+        } catch {
+          // File does not exist
+        }
+      }
+
+      // 2. Language/named variants: e.g. baseName.en.ass, baseName.eng.ass, baseName.en.srt
+      try {
+        const files = await fs.promises.readdir(dir)
+        for (const ext of extensions) {
+          const match = files.find(f => 
+            f.startsWith(`${baseName}.`) && f.endsWith(ext)
+          )
+          if (match) {
+            const candidate = path.join(dir, match)
+            return { found: true, path: candidate, ext }
+          }
+        }
+      } catch (err) {
+        console.error('Error scanning directory for subtitles:', err)
+      }
+
+      return { found: false }
+    } catch (error) {
+      console.error('Error finding subtitles:', error)
+      return { found: false }
+    }
+  })
+
   ipcMain.handle('extract-subtitles', async (_, inputPath: string) => {
     try {
       const parsed = path.parse(inputPath)
-      const outputPath = path.join(parsed.dir, `${parsed.name}.srt`)
-      
+      const subInfo = await ffmpegManager.getSubtitleInfo(inputPath)
+      const codec = subInfo?.codec?.toLowerCase() || ''
+
+      // If the subtitle codec is ASS or SSA, preserve styling by extracting as .ass!
+      let ext = '.srt'
+      if (codec === 'ass' || codec === 'ssa') {
+        ext = '.ass'
+      } else if (codec === 'webvtt') {
+        ext = '.vtt'
+      }
+
+      const outputPath = path.join(parsed.dir, `${parsed.name}${ext}`)
       await ffmpegManager.extractSubtitles(inputPath, outputPath)
-      return { success: true, outputPath }
+      return { success: true, outputPath, ext }
     } catch (error) {
       console.error('Error extracting subtitles:', error)
       return { success: false, error: error instanceof Error ? error.message : String(error) }
     }
   })
+
+  ipcMain.handle('read-subtitle-file', async (_, filePath: string) => {
+    try {
+      const content = await fs.promises.readFile(filePath, 'utf-8')
+      return { success: true, content }
+    } catch (error) {
+      console.error('Error reading subtitle file:', error)
+      return { success: false, error: error instanceof Error ? error.message : String(error) }
+    }
+  })
+
 
   ipcMain.handle('search-videos', async (_, query: string, folder: string) => {
     try {
