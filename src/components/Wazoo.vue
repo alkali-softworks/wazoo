@@ -808,7 +808,10 @@ setInterval(() => {
   playerStore.players.forEach((player) => {
     const videoObject = player.ref?.getVideoObject()
     if (!videoObject) return
-    //if (videoObject.paused) return
+    if (videoObject.paused) {
+      player.ref?.setLastTime(videoObject.currentTime)
+      return
+    }
 
     // compare time with last time
     //log('UNSTUCK CHECKER:', player.ref?.getLastTime(), videoObject.currentTime)

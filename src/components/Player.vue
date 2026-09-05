@@ -529,8 +529,8 @@ defineExpose({
   getMuted: () => state.videoMuted,
   getSrc: () => props.src,
   getVideoObject: () => videoRef.value,
-  getLastTime: () => state.videoTime,
-  setLastTime: (n:number) => state.videoTime = n,
+  getLastTime: () => state.lastVideoTime,
+  setLastTime: (n:number) => state.lastVideoTime = n,
 })
 </script>
 

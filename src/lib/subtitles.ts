@@ -128,7 +128,7 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Arial,56,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3.2,1.5,2,60,60,50,1
+Style: Default,Arial,56,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3.2,1.5,2,60,60,60,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -138,9 +138,63 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 }
 
 /**
+ * Adjusts bottom-aligned styles in ASS/SSA scripts to ensure a comfortable lower buffer,
+ * preventing subtitles from being covered by playback controls or progress bars.
+ */
+export function ensureBottomBuffer(assText: string, minMarginPercent = 0.055): string {
+  let playResY = 1080
+  const resMatch = assText.match(/PlayResY\s*:\s*(\d+)/i)
+  if (resMatch) {
+    playResY = parseInt(resMatch[1], 10) || 1080
+  }
+  const minMargin = Math.round(playResY * minMarginPercent)
+
+  const lines = assText.split('\n')
+  let inStyles = false
+  let formatFields: string[] = []
+
+  return lines.map(line => {
+    const trimmed = line.trim()
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      inStyles = trimmed === '[V4+ Styles]' || trimmed === '[V4 Styles]'
+      formatFields = []
+      return line
+    }
+    if (inStyles) {
+      if (trimmed.startsWith('Format:')) {
+        formatFields = trimmed.slice(7).split(',').map(s => s.trim().toLowerCase())
+        return line
+      }
+      if (trimmed.startsWith('Style:') && formatFields.length > 0) {
+        const colonIdx = line.indexOf(':')
+        const prefix = line.slice(0, colonIdx + 1)
+        const styleContent = line.slice(colonIdx + 1)
+        const parts = styleContent.split(',')
+        const alignIdx = formatFields.indexOf('alignment')
+        const marginVIdx = formatFields.indexOf('marginv')
+
+        if (alignIdx !== -1 && marginVIdx !== -1 && parts.length === formatFields.length) {
+          const align = parts[alignIdx].trim()
+          // In ASS (V4+), alignments 1, 2, 3 are bottom-aligned.
+          // In SSA (V4), alignments 1, 2, 3 are also bottom-aligned.
+          if (['1', '2', '3'].includes(align) || !align) {
+            const currentMarginV = parseInt(parts[marginVIdx].trim(), 10) || 0
+            if (currentMarginV < minMargin) {
+              parts[marginVIdx] = ` ${minMargin}`
+              return prefix + parts.join(',')
+            }
+          }
+        }
+      }
+    }
+    return line
+  }).join('\n')
+}
+
+/**
  * Normalizes subtitle content to ASS format regardless of input (ASS, SSA, SRT, WebVTT).
  */
-export function normalizeSubtitles(content: string): string {
+export function normalizeSubtitles(content: string, options?: { minBottomMarginPercent?: number }): string {
   if (!content || typeof content !== 'string') return ''
 
   let clean = content.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim()
@@ -155,13 +209,13 @@ export function normalizeSubtitles(content: string): string {
     if (!clean.includes('[V4+ Styles]') && !clean.includes('[V4 Styles]')) {
       const defaultStyles = `[V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Arial,56,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3.2,1.5,2,60,60,50,1
+Style: Default,Arial,56,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3.2,1.5,2,60,60,60,1
 
 `
       if (clean.includes('[Events]')) {
-        clean = clean.replace('[Events]', `${defaultStyles}[Events]`)
+        clean = clean.replace('[Events]', defaultStyles + '[Events]')
       } else {
-        clean = defaultStyles + clean
+        clean = clean + '\n\n' + defaultStyles
       }
     }
 
@@ -173,7 +227,8 @@ Style: Default,Arial,56,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100
       }
     }
 
-    return clean
+    const minMarginPercent = options?.minBottomMarginPercent ?? 0.055
+    return ensureBottomBuffer(clean, minMarginPercent)
   }
 
   return srtToAss(clean)

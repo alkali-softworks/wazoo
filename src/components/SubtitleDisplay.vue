@@ -8,10 +8,12 @@ const props = withDefaults(defineProps<{
   videoElement?: HTMLVideoElement | null
   enabled?: boolean
   currentTime?: number
+  bottomBuffer?: number
 }>(), {
   videoElement: null,
   enabled: true,
-  currentTime: 0
+  currentTime: 0,
+  bottomBuffer: 16
 })
 
 const containerRef = ref<HTMLDivElement | null>(null)
@@ -90,6 +92,7 @@ defineExpose({
     ref="containerRef" 
     class="subtitle-overlay"
     :class="{ 'hidden': !props.enabled }"
+    :style="{ '--subtitle-bottom-buffer': `${props.bottomBuffer}px` }"
   />
 </template>
 
@@ -107,5 +110,12 @@ defineExpose({
 
 .subtitle-overlay.hidden {
   display: none;
+}
+
+/* Ensure bottom-aligned subtitles have a guaranteed physical lower buffer
+   so the video progress bar and controls never occlude subtitles at any window size */
+:deep(.ASS-dialogue[style*="--ass-align-v: 100%"]),
+:deep(.ASS-dialogue[style*="--ass-align-v:100%"]) {
+  margin-top: calc(-1 * var(--subtitle-bottom-buffer, 16px)) !important;
 }
 </style>
