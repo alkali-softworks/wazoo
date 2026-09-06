@@ -38,11 +38,30 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rpm fakeroot dpkg
 
+      - name: Disable Spotlight Indexing (macOS)
+        if: runner.os == 'macOS'
+        run: sudo mdutil -a -i off || true
+
       - name: Install Dependencies
         run: npm ci
 
       - name: Build and Package Electron App
-        run: npm run make
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            npm run make && break || {
+              if [ $i -lt 3 ]; then
+                echo "Build failed on attempt $i, retrying in 5s..."
+                if [ "$RUNNER_OS" = "macOS" ]; then
+                  hdiutil info 2>/dev/null | grep -o '/dev/disk[0-9]*' | xargs -I {} hdiutil detach -force {} 2>/dev/null || true
+                fi
+                sleep 5
+              else
+                echo "Build failed after 3 attempts."
+                exit 1
+              fi
+            }
+          done
 
       # Save the installers temporarily so Stage 2 can harvest them
       - name: Upload Local Artifacts

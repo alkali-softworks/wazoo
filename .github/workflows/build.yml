@@ -43,6 +43,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y rpm fakeroot dpkg
 
+      - name: Disable Spotlight Indexing (macOS)
+        if: runner.os == 'macOS'
+        run: sudo mdutil -a -i off || true
+
       - name: Install Dependencies
         run: npm install
 
@@ -50,7 +54,22 @@ jobs:
         run: npm run rebuild
 
       - name: Run Package & Make
-        run: npm run make
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            npm run make && break || {
+              if [ $i -lt 3 ]; then
+                echo "Build failed on attempt $i, retrying in 5s..."
+                if [ "$RUNNER_OS" = "macOS" ]; then
+                  hdiutil info 2>/dev/null | grep -o '/dev/disk[0-9]*' | xargs -I {} hdiutil detach -force {} 2>/dev/null || true
+                fi
+                sleep 5
+              else
+                echo "Build failed after 3 attempts."
+                exit 1
+              fi
+            }
+          done
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
