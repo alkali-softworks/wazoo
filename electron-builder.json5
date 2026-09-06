@@ -53,7 +53,7 @@
     "synopsis": "Ambient media engine for non-stop viewing"
   },
   "mac": {
-    "icon": "public/icon.png",
+    "icon": "public/icon.icns",
     "target": ["dmg", "zip"],
     "category": "public.app-category.entertainment"
   }
