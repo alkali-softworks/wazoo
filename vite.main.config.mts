@@ -18,8 +18,8 @@ export default defineConfig({
     chunkSizeWarningLimit: 3000,
     lib: {
       entry: {
-        main: path.resolve(__dirname, 'src/main/main.ts'),
-        scanner: path.resolve(__dirname, 'src/main/scanner.ts')
+        main: path.resolve(__dirname, 'src/electron/main.ts'),
+        scanner: path.resolve(__dirname, 'src/electron/scanner.ts')
       },
       formats: ['cjs']
     },

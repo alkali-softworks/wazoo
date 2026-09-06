@@ -16,7 +16,7 @@ export default defineConfig({
     outDir: '.vite/build',
     emptyOutDir: false,
     lib: {
-      entry: path.resolve(__dirname, 'src/main/preload.ts'),
+      entry: path.resolve(__dirname, 'src/electron/preload.ts'),
       formats: ['cjs']
     },
     rollupOptions: {

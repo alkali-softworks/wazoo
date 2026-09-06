@@ -1,9 +1,9 @@
 import { app, BrowserWindow, Menu } from 'electron'
 import path from 'node:path'
-import { setupIpcHandlers } from '@/main/ipcHandlers'
-import { electronStore } from '@/main/store'
+import { setupIpcHandlers } from '@/electron/ipcHandlers'
+import { electronStore } from '@/electron/store'
 import { client } from '@/server/db/connection'
-import { ffmpegManager } from '@/main/ffmpegManager'
+import { ffmpegManager } from '@/electron/ffmpegManager'
 
 const isDev = !app.isPackaged || process.env.NODE_ENV === 'development'
 let mainWindow: BrowserWindow | null = null

@@ -8,7 +8,7 @@ import { Worker } from 'worker_threads'
 import path from 'path'
 import fs from 'fs'
 import { searchVideos, getAllVideos, getVideoCount, clearVideos } from '@/server/db/models/videoModel'
-import { ffmpegManager } from '@/main/ffmpegManager'
+import { ffmpegManager } from '@/electron/ffmpegManager'
 
 let currentScanId = 0
 
@@ -119,7 +119,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
     try {
       const db = (await import('@/server/db/connection')).default
       const { VideoTable } = await import('@/server/db/schema')
-      
+
       const res = await db.select().from(VideoTable).where(eq(VideoTable.path, filePath)).limit(1)
       return { success: true, hasSubtitles: res[0]?.has_subtitles || false }
     } catch (error) {
@@ -133,9 +133,9 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
       const parsed = path.parse(videoPath)
       const dir = parsed.dir
       const baseName = parsed.name
-      
+
       const extensions = ['.ass', '.ssa', '.srt', '.vtt']
-      
+
       // 1. Direct match: baseName.ass, baseName.ssa, baseName.srt, baseName.vtt
       for (const ext of extensions) {
         const candidate = path.join(dir, `${baseName}${ext}`)
@@ -151,7 +151,7 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
       try {
         const files = await fs.promises.readdir(dir)
         for (const ext of extensions) {
-          const match = files.find(f => 
+          const match = files.find(f =>
             f.startsWith(`${baseName}.`) && f.endsWith(ext)
           )
           if (match) {
