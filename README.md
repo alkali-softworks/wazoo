@@ -90,4 +90,4 @@ This project is licensed under the MIT License - Do whatever you want with it (b
 
 ---
 
-<p align="center">Made with ❤️ by <a href="mailto:contact@alkalisoftworks.com">Alkali Softworks</a></p>
+<p align="center">Made with ❤️ by <a href="https://alkalisoftworks.com/">Alkali Softworks</a></p>

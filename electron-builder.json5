@@ -55,6 +55,7 @@
   "mac": {
     "icon": "public/icon.icns",
     "target": ["dmg", "zip"],
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
     "category": "public.app-category.entertainment"
   }
 }

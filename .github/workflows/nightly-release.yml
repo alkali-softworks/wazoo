@@ -69,8 +69,14 @@ jobs:
         with:
           name: wazoo-build-${{ matrix.os }}
           path: |
-            dist/electron/**/*
-            out/make/**/*
+            dist/electron/*.exe
+            dist/electron/*.zip
+            dist/electron/*.deb
+            dist/electron/*.rpm
+            dist/electron/*.AppImage
+            dist/electron/*.dmg
+            dist/electron/*.blockmap
+          if-no-files-found: warn
           retention-days: 1
 
   # -------------------------------------------------------------
@@ -80,6 +86,8 @@ jobs:
     name: Publish Public Nightly Release
     needs: build # Wait for all matrix builds to successfully finish
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -92,6 +100,20 @@ jobs:
           pattern: wazoo-build-*
           merge-multiple: true # Flattens them into one clean directory
 
+      # Inspect and prune any inadvertently created directories
+      - name: Prepare Final Assets
+        run: |
+          echo "=== Downloaded Artifacts ==="
+          ls -lh final-assets/
+          find final-assets -mindepth 1 -type d -exec rm -rf {} + || true
+
+      # Delete previous release and tag so the landing page is cleanly recreated without orphaned assets
+      - name: Reset Nightly Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete nightly --yes --cleanup-tag || true
+
       - name: Update Public Nightly Release
         uses: ncipollo/release-action@v1
         with:
@@ -102,6 +124,6 @@ jobs:
             Built from commit: ${{ github.sha }}
           prerelease: true
           allowUpdates: true
-          recreateRelease: true # Fresh overwrite of the single target landing page
-          artifacts: "final-assets/**/*"
+          replacesArtifacts: true
+          artifacts: "final-assets/*"
           token: ${{ secrets.GITHUB_TOKEN }}

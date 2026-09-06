@@ -76,16 +76,13 @@ jobs:
         with:
           name: wazoo-build-${{ matrix.os }}
           path: |
-            dist/electron/**/*.exe
-            dist/electron/**/*.zip
-            dist/electron/**/*.deb
-            dist/electron/**/*.rpm
-            dist/electron/**/*.AppImage
-            dist/electron/**/*.dmg
-            out/make/**/*.exe
-            out/make/**/*.zip
-            out/make/**/*.deb
-            out/make/**/*.rpm
+            dist/electron/*.exe
+            dist/electron/*.zip
+            dist/electron/*.deb
+            dist/electron/*.rpm
+            dist/electron/*.AppImage
+            dist/electron/*.dmg
+            dist/electron/*.blockmap
           if-no-files-found: warn
 
       - name: Create and Upload Release Assets
@@ -93,15 +90,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/electron/**/*.exe
-            dist/electron/**/*.zip
-            dist/electron/**/*.deb
-            dist/electron/**/*.rpm
-            dist/electron/**/*.AppImage
-            dist/electron/**/*.dmg
-            out/make/**/*.exe
-            out/make/**/*.zip
-            out/make/**/*.deb
-            out/make/**/*.rpm
+            dist/electron/*.exe
+            dist/electron/*.zip
+            dist/electron/*.deb
+            dist/electron/*.rpm
+            dist/electron/*.AppImage
+            dist/electron/*.dmg
+            dist/electron/*.blockmap
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
