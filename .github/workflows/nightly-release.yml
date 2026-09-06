@@ -15,7 +15,10 @@ jobs:
   build:
     name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    env:
+      GYP_MSVS_VERSION: 2022
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-2022, macos-latest, macos-15-intel]
 
@@ -29,13 +32,17 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - name: Install System Dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm fakeroot dpkg
+
       - name: Install Dependencies
         run: npm ci
 
       - name: Build and Package Electron App
         run: npm run make
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Save the installers temporarily so Stage 2 can harvest them
       - name: Upload Local Artifacts
