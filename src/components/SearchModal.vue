@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onUnmounted, computed } from 'vue';
 import { Button } from '@/components/ui/button'
+import {
+  TagsInput,
+  TagsInputInput,
+  TagsInputItem,
+  TagsInputItemDelete,
+  TagsInputItemText,
+} from '@/components/ui/tags-input'
 import { Search as SearchIcon } from 'lucide-vue-next'
 import { log } from '@/lib/utils'
 import { useSettingsStore } from '@/stores/settings'
@@ -9,10 +16,9 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n();
 
 const settingsStore = useSettingsStore();
-const inputRef = ref<HTMLInputElement | null>(null)
-const segments = ref<Set<string>>(new Set());
-const selectedSegmentIndex = ref(-1); 
-const segmentElements = ref<Map<number, HTMLElement>>(new Map());
+const inputRef = ref<any>(null);
+const segments = ref<string[]>([]);
+const currentInputText = ref('');
 
 const props = defineProps<{
   isOpen: boolean;
@@ -25,7 +31,6 @@ const selectedFolders = ref<string[]>(
     ? (Array.isArray(props.folderPref) ? props.folderPref : [props.folderPref]) 
     : []
 );
-const searchQuery = ref('')
 
 const isAllSelected = computed(() => selectedFolders.value.length === 0);
 
@@ -59,9 +64,22 @@ const setFolder = (folder: string | string[]) => {
 }
 
 const setQuery = (query: string) => {
+  if (!query) {
+    segments.value = [];
+    currentInputText.value = '';
+    return;
+  }
   const newSegments = query.split(',').map(s => s.trim()).filter(Boolean);
-  segments.value = new Set(newSegments);
-  searchQuery.value = '';
+  segments.value = Array.from(new Set(newSegments));
+  currentInputText.value = '';
+}
+
+watch(segments, () => {
+  currentInputText.value = '';
+});
+
+const onInputChange = (e: Event) => {
+  currentInputText.value = (e.target as HTMLInputElement).value;
 }
 
 const handleKeyDown = (e: KeyboardEvent) => {
@@ -69,66 +87,27 @@ const handleKeyDown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
     e.preventDefault();
     props.onClose();
-  } else if (e.key === ',' && searchQuery.value.trim()) {
-    segments.value.add(searchQuery.value.trim());
-    searchQuery.value = '';
-    e.preventDefault();
   } else if (e.key === 'Enter') {
-    handleSearch();
-  } else if (e.key === 'ArrowDown' && selectedSegmentIndex.value === -1) {
-    if (segments.value.size > 0) {
-      selectedSegmentIndex.value = 0;
-      e.preventDefault();
-      nextTick(() => {
-        segmentElements.value.get(0)?.focus();
-      });
-    }
-  }
-}
-
-const handleSegmentKeyDown = (e: KeyboardEvent, segment: string, index: number) => {
-  if (e.key === 'Backspace' || e.key === 'Delete') {
     e.preventDefault();
-    removeSegment(segment);
-    if (index > 0) {
-      selectedSegmentIndex.value = index - 1;
-      segmentElements.value.get(index - 1)?.focus();
-    } else {
-      selectedSegmentIndex.value = -1;
-      inputRef.value?.focus();
-    }
-
-  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-    e.preventDefault();
-    if (index > 0) {
-      selectedSegmentIndex.value = index - 1;
-      segmentElements.value.get(index - 1)?.focus();
-    } else {
-      selectedSegmentIndex.value = -1;
-      inputRef.value?.focus();
-    }
-
-  } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-    e.preventDefault();
-    if (index < segments.value.size - 1) {
-      selectedSegmentIndex.value = index + 1;
-      segmentElements.value.get(index + 1)?.focus();
-    } else {
-      selectedSegmentIndex.value = -1;
-      inputRef.value?.focus();
-    }
-  } else if (e.key === 'Enter') {
     handleSearch();
   }
 }
 
 function handleSearch() {
-  if (searchQuery.value.trim() !== '') {
-    segments.value.add(searchQuery.value.trim());
+  const comp = inputRef.value as any;
+  const el = comp?.$el ?? comp;
+  const inputEl = el instanceof HTMLInputElement ? el : el?.querySelector?.('input');
+  const inputVal = inputEl ? inputEl.value : currentInputText.value;
+  const pending = (inputVal || currentInputText.value || '').trim();
+  if (pending && !segments.value.includes(pending)) {
+    segments.value.push(pending);
   }
-  searchQuery.value = '';
+  if (inputEl) {
+    inputEl.value = '';
+  }
+  currentInputText.value = '';
   
-  const fullQuery = Array.from(segments.value).join(', ');
+  const fullQuery = segments.value.join(', ');
   log('fullQuery:', fullQuery);
   
   // Pass the folder value into the emit
@@ -139,11 +118,24 @@ function handleSearch() {
 }
 
 function removeSegment(segment: string) {
-  segments.value.delete(segment);
+  const index = segments.value.indexOf(segment);
+  if (index !== -1) {
+    segments.value.splice(index, 1);
+  }
 }
-function handleBlur(index:number) {
-  if (selectedSegmentIndex.value === index)
-  selectedSegmentIndex.value = -1
+
+const focusInput = () => {
+  const comp = inputRef.value as any;
+  if (comp?.focus) {
+    comp.focus();
+  } else {
+    const el = comp?.$el ?? comp;
+    if (el instanceof HTMLInputElement) {
+      el.focus();
+    } else if (el?.querySelector) {
+      el.querySelector('input')?.focus();
+    }
+  }
 }
 
 defineExpose({
@@ -155,14 +147,11 @@ watch(() => props.isOpen, async (isOpen) => {
   if (isOpen) {
     window.addEventListener('keydown', handleKeyDown);
     await nextTick();
-    inputRef.value?.focus();
-    selectedSegmentIndex.value = -1;
-    segmentElements.value.clear();
+    focusInput();
   } else {
     window.removeEventListener('keydown', handleKeyDown);
-    segmentElements.value.clear();
   }
-});
+}, { immediate: true });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
@@ -195,33 +184,30 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="flex gap-2">
-          <input
-            ref="inputRef"
-            v-model="searchQuery"
-            type="text"
-            :placeholder="t('search.placeholder')"
-            class="flex-1 h-10 px-3 py-2 rounded-md border border-input bg-background text-lg ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            @keydown="handleKeyDown"
-          />
+        <div class="flex gap-2 items-center">
+          <TagsInput
+            v-model="segments"
+            :add-on-paste="true"
+            class="flex-1 min-h-10 bg-[#2a2a2a] border border-[#3f3f3f] rounded-md px-3 py-1.5 focus-within:border-[#4f4f4f] focus-within:ring-2 focus-within:ring-[rgba(255,255,255,0.1)] transition-colors"
+          >
+            <TagsInputItem
+              v-for="item in segments"
+              :key="item"
+              :value="item"
+              class="bg-[#3a3a3a] border border-[#4f4f4f] text-white hover:bg-[#444] transition-colors rounded px-2 py-0.5 text-sm"
+            >
+              <TagsInputItemText class="text-sm" />
+              <TagsInputItemDelete class="text-zinc-400 hover:text-white" />
+            </TagsInputItem>
+            <TagsInputInput
+              ref="inputRef"
+              :placeholder="segments.length === 0 ? t('search.placeholder') : ''"
+              class="text-base min-h-7 placeholder:text-zinc-500 text-white"
+              @input="onInputChange"
+              @keydown.enter="handleKeyDown"
+            />
+          </TagsInput>
           <Button @click="handleSearch"><SearchIcon class="w-4 h-4" /></Button>
-        </div>
-        
-        <div v-if="segments.size" class="segments-container">
-          <div v-for="(segment, index) in segments" 
-            :key="segment" 
-            class="segment"
-            :class="{ 'segment-selected': index === selectedSegmentIndex }"
-            tabindex="0"
-            :ref="(el) => { if (el) segmentElements.set(index, el as HTMLElement) }"
-            @keydown="(e) => handleSegmentKeyDown(e, segment, index)"
-            @focus="selectedSegmentIndex = index"
-            @blur="handleBlur(index)"
-            @click="selectedSegmentIndex = index">
-            {{ segment }}
-            <button class="remove-segment" 
-              @click.stop="removeSegment(segment)">×</button>
-          </div>
         </div>
       </div>
     </div>
@@ -293,58 +279,5 @@ onUnmounted(() => {
 
 .folder-checkbox {
   display: none;
-}
-
-input {
-  background: #2a2a2a;
-  color: white;
-  border: 1px solid #3f3f3f;
-}
-
-input:focus {
-  border-color: #4f4f4f;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
-}
-
-input::placeholder {
-  color: #666;
-}
-
-.segments-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.segment {
-  background: #2a2a2a;
-  border: 1px solid #3f3f3f;
-  border-radius: 4px;
-  padding: 4px 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  outline: none;
-}
-
-.segment-selected {
-  background: #3a3a3a;
-  border-color: #5f5f5f;
-}
-
-.remove-segment {
-  background: none;
-  border: none;
-  color: #666;
-  cursor: pointer;
-  padding: 0 2px;
-  font-size: 16px;
-  line-height: 1;
-}
-
-.remove-segment:hover {
-  color: #fff;
 }
 </style>
