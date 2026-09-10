@@ -1,6 +1,6 @@
 import db from '@/server/db/connection'
 import { VideoTable } from '@/server/db/schema'
-import { and, or, not, like, sql } from 'drizzle-orm'
+import { and, or, not, like, sql, eq } from 'drizzle-orm'
 import { log } from '@/lib/utils'
 
 export async function searchVideos(queryStr: string, folder: string | string[]) {
@@ -78,4 +78,9 @@ export async function addVideo(name: string, path: string) {
 
 export async function clearVideos() {
   return await db.delete(VideoTable)
+}
+
+export async function checkVideoSubs(filePath: string) {
+  const res = await db.select().from(VideoTable).where(eq(VideoTable.path, filePath)).limit(1)
+  return res[0]?.has_subtitles || false
 }

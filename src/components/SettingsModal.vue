@@ -52,9 +52,12 @@ async function addFolder() {
   if (window.electron) {
     const result = await window.electron.invoke('select-folder')
     if (result) {
-      await settingsStore.addMediaFolder(result)
-      log('starting scan...')
-      await scanFolders()
+      const folders = (Array.isArray(result) ? result : [result]).filter(Boolean)
+      if (folders.length > 0) {
+        await settingsStore.addMediaFolders(folders)
+        log('starting scan...')
+        await scanFolders()
+      }
     }
   }
 }

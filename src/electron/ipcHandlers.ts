@@ -1,13 +1,12 @@
 import { BrowserWindow, ipcMain, globalShortcut, dialog, app } from 'electron'
 import { spawn, execSync, exec, execFile } from 'child_process'
-import { eq } from 'drizzle-orm'
 import { promisify } from 'util'
 import { electronStore } from './store'
 import { log } from '@/lib/utils'
 import { Worker } from 'worker_threads'
 import path from 'path'
 import fs from 'fs'
-import { searchVideos, getAllVideos, getVideoCount, clearVideos } from '@/server/db/models/videoModel'
+import { searchVideos, getAllVideos, getVideoCount, checkVideoSubs } from '@/server/db/models/videoModel'
 import { ffmpegManager } from '@/electron/ffmpegManager'
 
 let currentScanId = 0
@@ -58,12 +57,12 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
 
   ipcMain.handle('select-folder', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
-      properties: ['openDirectory'],
+      properties: ['openDirectory', 'multiSelections'],
       title: 'Select Media Folder'
     })
 
     if (!result.canceled && result.filePaths.length > 0) {
-      return result.filePaths[0]
+      return result.filePaths
     }
     return null
   })
@@ -117,11 +116,8 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
 
   ipcMain.handle('check-video-subs', async (_, filePath: string) => {
     try {
-      const db = (await import('@/server/db/connection')).default
-      const { VideoTable } = await import('@/server/db/schema')
-
-      const res = await db.select().from(VideoTable).where(eq(VideoTable.path, filePath)).limit(1)
-      return { success: true, hasSubtitles: res[0]?.has_subtitles || false }
+      const hasSubtitles = await checkVideoSubs(filePath)
+      return { success: true, hasSubtitles }
     } catch (error) {
       console.error('Error checking video subs:', error)
       return { success: false, hasSubtitles: false }

@@ -115,12 +115,20 @@ export const useSettingsStore = defineStore('settings', {
       await this.saveSettings()
     },
 
-    async addMediaFolder(folder: string): Promise<void> {
-      if (folder && folder.trim() !== '' && !this.mediaFolders.includes(folder)) {
-        this.mediaFolders = [...this.mediaFolders.filter((f: string) => f && f.trim() !== ''), folder]
+    async addMediaFolders(folders: string[]): Promise<void> {
+      const validFolders = Array.from(
+        new Set(folders.map((f: string) => f && f.trim()).filter((f): f is string => !!f))
+      )
+      const toAdd = validFolders.filter((f: string) => !this.mediaFolders.includes(f))
+      if (toAdd.length > 0) {
+        this.mediaFolders = [...this.mediaFolders.filter((f: string) => f && f.trim() !== ''), ...toAdd]
         this._modified.add('mediaFolders')
         await this.saveSettings()
       }
+    },
+
+    async addMediaFolder(folder: string): Promise<void> {
+      await this.addMediaFolders([folder])
     },
 
     async removeMediaFolder(folder: string): Promise<void> {
