@@ -117,8 +117,10 @@ watch(() => props.isOpen, async (isOpen) => {
 })
 
 
+let lastVideoCountUpdate = 0
+
 onMounted(() => {
-  window.electron.on('scan-progress', (data: { 
+  window.electron.on('scan-progress', async (data: { 
       processed: number,
       total: number,
       percent: number,
@@ -128,6 +130,15 @@ onMounted(() => {
   ) => {
     if (localScanId === data.scanId) {
       appState.setScanProgress(true, data.percent, data.total, data.name)
+
+      const now = Date.now()
+      if (now - lastVideoCountUpdate >= 5000) {
+        lastVideoCountUpdate = now
+        const countResult = await window.electron.invoke('get-video-count')
+        if (countResult?.success) {
+          videoCount.value = countResult.count
+        }
+      }
     }
   })
 })

@@ -54,6 +54,46 @@ const showScanToast = ref(false)
 const scanToastMessage = ref('')
 let scanToastTimeout: ReturnType<typeof setTimeout> | null = null
 
+let progressiveUpdateTimeout: ReturnType<typeof setTimeout> | null = null
+let lastProgressiveUpdateTime = 0
+const PROGRESSIVE_DEBOUNCE_MS = 5000
+
+function scheduleProgressiveUpdate() {
+  if (!appState.isScanning) return
+  if (progressiveUpdateTimeout) return
+
+  const now = Date.now()
+  const timeSinceLast = now - lastProgressiveUpdateTime
+  const delay = Math.max(0, PROGRESSIVE_DEBOUNCE_MS - timeSinceLast)
+
+  progressiveUpdateTimeout = setTimeout(async () => {
+    progressiveUpdateTimeout = null
+    if (appState.isScanning) {
+      lastProgressiveUpdateTime = Date.now()
+      await queryFiles(state.searchQuery, state.searchFolder, true)
+    }
+  }, delay || PROGRESSIVE_DEBOUNCE_MS)
+}
+
+function clearProgressiveUpdate() {
+  if (progressiveUpdateTimeout) {
+    clearTimeout(progressiveUpdateTimeout)
+    progressiveUpdateTimeout = null
+  }
+  lastProgressiveUpdateTime = 0
+}
+
+async function handleScanEnd() {
+  clearProgressiveUpdate()
+  await queryFiles(state.searchQuery, state.searchFolder, false)
+}
+
+watch(() => appState.isScanning, (isScanning) => {
+  if (!isScanning) {
+    clearProgressiveUpdate()
+  }
+})
+
 watch(() => appState.lastVideoScanned, (newVal) => {
   console.log('lastVideoScanned', newVal)
   if (newVal) {
@@ -63,6 +103,8 @@ watch(() => appState.lastVideoScanned, (newVal) => {
     scanToastTimeout = setTimeout(() => {
       showScanToast.value = false
     }, 2000)
+
+    scheduleProgressiveUpdate()
   }
 })
 
@@ -106,24 +148,37 @@ async function handleSearch(query: string, folder: string | string[]) {
   settingsStore.setLastQuery(query, folder)
 }
 
-async function queryFiles(query: string, folder: string | string[]) {
-  appState.setInitialLoad(true)
+async function queryFiles(query: string, folder: string | string[], isProgressive = false) {
+  if (!isProgressive) {
+    appState.setInitialLoad(true)
+  }
   appState.setQuery(query)
   const result = await window.electron.invoke('search-videos', query, toRaw(folder)) as IVideoResult
   if (result.success) {
     const videos = result.videos.map(v => `file://${v.path}`)
     const codecs = result.videos.map(v => v.codec)
-    await videoTotals(videos.length, folder)
-    playerStore.clearVideos()
-    playerStore.addVideos(videos, codecs)
+    await videoTotals(videos.length, folder, isProgressive)
+    playerStore.setVideos(videos, codecs)
   } else {
-    showNotice(t('wazoo.search_error', { error: result.error }))
+    if (!isProgressive) {
+      showNotice(t('wazoo.search_error', { error: result.error }))
+    }
   }
-  appState.setInitialLoad(false)
+  if (!isProgressive) {
+    appState.setInitialLoad(false)
+  }
 }
 
-async function videoTotals(videosLength: number, folder: string | string[]){
+async function videoTotals(videosLength: number, folder: string | string[], isProgressive = false){
   state.totalVideos = videosLength
+
+  if (isProgressive) {
+    if (state.totalVideos > 0) {
+      showNoResults.value = false
+      showSetup.value = false
+    }
+    return
+  }
 
   // Check for zero results
   if (state.totalVideos === 0) {
@@ -967,7 +1022,7 @@ defineExpose({
   <SettingsModal 
     :is-open="showSettingsModal" 
     :on-close="() => showSettingsModal = false"
-    @scan-end="() => { handleSearch(state.searchQuery, state.searchFolder) }"
+    @scan-end="handleScanEnd"
   />
 
   <HelpModal 
@@ -977,7 +1032,8 @@ defineExpose({
 
   <Transition name="fade">
     <div v-if="showScanToast" class="scan-toast">
-      {{ t('wazoo.added', { name: scanToastMessage }) }}
+      <span class="scan-toast-title">{{ t('wazoo.added', { name: scanToastMessage }) }}</span>
+      <span class="scan-toast-percent">{{ appState.scanProgress }}%</span>
     </div>
   </Transition>
 
@@ -1167,17 +1223,34 @@ defineExpose({
   bottom: 0;
   left: 0;
   width: 100%;
+  box-sizing: border-box;
   background: rgba(0, 0, 0, 0.6);
   color: #fff;
-  text-align: center;
-  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 24px;
   z-index: 9999;
   font-size: 24px;
   backdrop-filter: blur(4px);
+  border-radius: 8px;
+}
+
+.scan-toast-title {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  border-radius: 8px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.scan-toast-percent {
+  flex-shrink: 0;
+  margin-left: 16px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  opacity: 0.9;
 }
 
 .fade-enter-active,

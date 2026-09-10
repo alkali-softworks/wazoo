@@ -155,6 +155,27 @@ export const usePlayerStore = defineStore('player', {
       })
     },
 
+    setVideos(videos: string[], codecs: string[]): void {
+      this.videos = [...videos]
+      this.codecs = [...codecs]
+
+      // Update players: Only change video if the current one is NO LONGER in the list
+      this.players.forEach((player: PlayerMeta) => {
+        const currentVideoStillExists = player.src && this.videos.includes(player.src)
+
+        if (!currentVideoStillExists) {
+          // If the video is gone (or player was empty), pick a new one
+          this.playNextVideo(player.id)
+        } else if (player.src) {
+          // Sync codec if it's missing or wrong
+          const index = this.videos.indexOf(player.src)
+          if (index !== -1) {
+            player.codec = this.codecs[index] || ''
+          }
+        }
+      })
+    },
+
     addCodecs(codecs: string[]): void {
       this.codecs.push(...codecs)
     },
