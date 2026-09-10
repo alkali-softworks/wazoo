@@ -19,9 +19,9 @@ function isVideoFile(filename: string): boolean {
 export function cleanVideoName(filename: string): string {
   const cleaned = filename
     .replace(/\[.*?\]/g, ' ')
-    .replace(/[\._]/g, ' ')
+    .replace(/[._]/g, ' ')
     .replace(/\s{2,}/g, ' ')
-    .replace(/^[\-\s]+|[\-\s]+$/g, '')
+    .replace(/^[-\s]+|[-\s]+$/g, '')
     .trim()
 
   return cleaned || filename
@@ -159,7 +159,8 @@ async function processConcurrently<T>(
 }
 
 if (parentPort) {
-  let currentScanId = { value: 0 }
+  const currentScanId = { value: 0 }
+  let client: any = null
   let db: any = null
 
   parentPort.on('message', async (message) => {
@@ -170,13 +171,10 @@ if (parentPort) {
       currentScanId.value = scanId
 
       try {
-        if (!db) {
-          const client = new Database(dbPath)
+        if (!client) {
+          client = new Database(dbPath)
           db = drizzle(client)
         }
-
-        // Clear existing videos
-        db.delete(VideoTable).run()
 
         // Check if ffprobe is valid before starting
         try {
@@ -198,8 +196,71 @@ if (parentPort) {
 
         if (currentScanId.value !== scanId) return
 
+        // Deduplicate discovered videos by path
+        const uniqueDiscoveredMap = new Map<string, { name: string, path: string }>()
+        for (const video of allVideos) {
+          if (!uniqueDiscoveredMap.has(video.path)) {
+            uniqueDiscoveredMap.set(video.path, video)
+          }
+        }
+        const uniqueVideos = Array.from(uniqueDiscoveredMap.values())
+        const diskPaths = new Set(uniqueVideos.map(v => v.path))
+
+        // Query existing videos in the database
+        const existingRows = client.prepare('SELECT id, path FROM Video').all() as { id: number, path: string }[]
+        const existingPathMap = new Map<string, number>()
+        const duplicateIds: number[] = []
+
+        for (const row of existingRows) {
+          if (existingPathMap.has(row.path)) {
+            duplicateIds.push(row.id)
+          } else {
+            existingPathMap.set(row.path, row.id)
+          }
+        }
+
+        // Prune historical duplicate entries if any
+        if (duplicateIds.length > 0) {
+          const deleteStmt = client.prepare('DELETE FROM Video WHERE id = ?')
+          const pruneDupes = client.transaction((ids: number[]) => {
+            for (const id of ids) deleteStmt.run(id)
+          })
+          pruneDupes(duplicateIds)
+        }
+
+        // Prune stale records whose files no longer exist on disk
+        const staleIds: number[] = []
+        for (const [existingPath, id] of existingPathMap.entries()) {
+          if (!diskPaths.has(existingPath)) {
+            staleIds.push(id)
+          }
+        }
+
+        if (staleIds.length > 0) {
+          const deleteStmt = client.prepare('DELETE FROM Video WHERE id = ?')
+          const pruneStale = client.transaction((ids: number[]) => {
+            for (const id of ids) deleteStmt.run(id)
+          })
+          pruneStale(staleIds)
+          console.log(`Pruned ${staleIds.length} stale video entries from database`)
+        }
+
+        // Filter for only new videos that require probing and inserting
+        const newVideos = uniqueVideos.filter(v => !existingPathMap.has(v.path))
+
+        if (newVideos.length === 0) {
+          if (currentScanId.value === scanId) {
+            parentPort?.postMessage({
+              type: 'scan-progress',
+              payload: { processed: 0, total: 0, scanId, name: '' }
+            })
+            parentPort?.postMessage({ type: 'scan-complete', payload: { scanId } })
+          }
+          return
+        }
+
         await processConcurrently(
-          allVideos,
+          newVideos,
           8, // Safer limit: max 8 concurrent ffprobe process spawning blocks
           async (video) => {
             // Sniff the codec right before inserting into SQLite

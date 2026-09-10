@@ -967,7 +967,6 @@ defineExpose({
   <SettingsModal 
     :is-open="showSettingsModal" 
     :on-close="() => showSettingsModal = false"
-    @scan-start="() => { playerStore.clearVideos() }"
     @scan-end="() => { handleSearch(state.searchQuery, state.searchFolder) }"
   />
 
