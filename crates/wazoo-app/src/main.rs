@@ -112,7 +112,12 @@ impl WazooApp {
         let db = Database::open(config_mgr.database_path())
             .expect("Failed to initialize SQLite database");
 
-        let videos = db.get_all_videos().unwrap_or_default();
+        let videos: Vec<VideoRecord> = db
+            .get_all_videos()
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|v| v.path.starts_with("http") || std::path::Path::new(&v.path).exists())
+            .collect();
         let scroll_engine = ScrollEngine::new(settings.window_bounds.height as f32);
 
         let mut app = Self {
@@ -200,22 +205,25 @@ impl WazooApp {
     }
 
     fn add_player_internal(&mut self) -> Option<PlayerId> {
-        let video_rec = self.get_next_video_rec(None)?;
-
         let id = self.next_player_id;
         self.next_player_id += 1;
 
-        match self.create_video_handle(id, &video_rec.path, &video_rec.name) {
-            Ok(mut handle) => {
-                handle.set_muted(self.settings.is_global_muted);
-                self.players.push(handle);
-                Some(id)
-            }
-            Err(err) => {
-                log::error!("Failed to create VideoHandle for {}: {}", video_rec.path, err);
-                None
+        for _ in 0..3 {
+            if let Some(video_rec) = self.get_next_video_rec(None) {
+                match self.create_video_handle(id, &video_rec.path, &video_rec.name) {
+                    Ok(mut handle) => {
+                        handle.set_muted(self.settings.is_global_muted);
+                        handle.set_subtitles_visible(self.subtitles_enabled);
+                        self.players.push(handle);
+                        return Some(id);
+                    }
+                    Err(err) => {
+                        log::error!("Failed to create VideoHandle for {}: {}", video_rec.path, err);
+                    }
+                }
             }
         }
+        None
     }
 
     pub fn title(&self) -> String {
@@ -282,11 +290,15 @@ impl WazooApp {
             }
             Message::NextVideo(id) => {
                 let curr_path = self.players.iter().find(|p| p.id == id).map(|p| p.state.path.clone());
-                if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
-                    if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
-                        new_handle.set_muted(self.settings.is_global_muted);
-                        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
-                            *p = new_handle;
+                for _ in 0..3 {
+                    if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
+                        if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
+                            new_handle.set_muted(self.settings.is_global_muted);
+                            new_handle.set_subtitles_visible(self.subtitles_enabled);
+                            if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                                *p = new_handle;
+                            }
+                            break;
                         }
                     }
                 }
@@ -299,11 +311,15 @@ impl WazooApp {
             Message::PrevVideoFocused => {
                 if let Some(id) = self.focused_player_id() {
                     let curr_path = self.players.iter().find(|p| p.id == id).map(|p| p.state.path.clone());
-                    if let Some(prev_rec) = self.get_prev_video_rec(curr_path.as_deref()) {
-                        if let Ok(mut new_handle) = self.create_video_handle(id, &prev_rec.path, &prev_rec.name) {
-                            new_handle.set_muted(self.settings.is_global_muted);
-                            if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
-                                *p = new_handle;
+                    for _ in 0..3 {
+                        if let Some(prev_rec) = self.get_prev_video_rec(curr_path.as_deref()) {
+                            if let Ok(mut new_handle) = self.create_video_handle(id, &prev_rec.path, &prev_rec.name) {
+                                new_handle.set_muted(self.settings.is_global_muted);
+                                new_handle.set_subtitles_visible(self.subtitles_enabled);
+                                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                                    *p = new_handle;
+                                }
+                                break;
                             }
                         }
                     }

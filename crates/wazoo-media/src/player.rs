@@ -155,6 +155,11 @@ impl VideoHandle {
             } else {
                 file_path
             };
+            if !clean_path.starts_with("http://") && !clean_path.starts_with("https://") && !std::path::Path::new(clean_path).exists() {
+                mpv_ffi::mpv_render_context_free(render_ctx);
+                mpv_ffi::mpv_terminate_destroy(mpv);
+                return Err(format!("Media file does not exist: {clean_path}"));
+            }
             let normalized_path = clean_path.replace('\\', "/");
             let cmd = CString::new(format!("loadfile \"{}\"", normalized_path.replace('"', "\\\"")))
                 .map_err(|e| e.to_string())?;
@@ -243,6 +248,7 @@ impl VideoHandle {
                 let mut size = [self.render_width as i32, self.render_height as i32];
                 let format = CString::new("rgb0").unwrap();
                 let mut stride = (self.render_width * 4) as usize;
+                let mut block_target_time: c_int = 0;
                 let mut render_params = [
                     mpv_ffi::MpvRenderParam {
                         type_: mpv_ffi::MPV_RENDER_PARAM_SW_SIZE,
@@ -261,6 +267,10 @@ impl VideoHandle {
                         data: self.pixel_buffer.as_mut_ptr() as *mut c_void,
                     },
                     mpv_ffi::MpvRenderParam {
+                        type_: mpv_ffi::MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME,
+                        data: &mut block_target_time as *mut c_int as *mut c_void,
+                    },
+                    mpv_ffi::MpvRenderParam {
                         type_: mpv_ffi::MPV_RENDER_PARAM_INVALID,
                         data: std::ptr::null_mut(),
                     },
@@ -268,9 +278,17 @@ impl VideoHandle {
 
                 let err = mpv_ffi::mpv_render_context_render(self.render_ctx, render_params.as_mut_ptr());
                 if err == 0 {
-                    for chunk in self.pixel_buffer.chunks_exact_mut(4) {
-                        chunk[3] = 255;
+                    mpv_ffi::mpv_render_context_report_swap(self.render_ctx);
+
+                    let num_pixels = (self.render_width * self.render_height) as usize;
+                    let u32_slice: &mut [u32] = std::slice::from_raw_parts_mut(
+                        self.pixel_buffer.as_mut_ptr() as *mut u32,
+                        num_pixels,
+                    );
+                    for p in u32_slice.iter_mut() {
+                        *p |= 0xFF000000;
                     }
+
                     self.current_frame = iced::widget::image::Handle::from_rgba(
                         self.render_width,
                         self.render_height,

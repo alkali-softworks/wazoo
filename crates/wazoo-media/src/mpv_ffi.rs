@@ -39,6 +39,7 @@ pub const MPV_EVENT_PROPERTY_CHANGE: c_int = 22;
 // Render param types
 pub const MPV_RENDER_PARAM_INVALID: c_int = 0;
 pub const MPV_RENDER_PARAM_API_TYPE: c_int = 1;
+pub const MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME: c_int = 12;
 pub const MPV_RENDER_PARAM_SW_SIZE: c_int = 17;
 pub const MPV_RENDER_PARAM_SW_FORMAT: c_int = 18;
 pub const MPV_RENDER_PARAM_SW_STRIDE: c_int = 19;
@@ -84,6 +85,7 @@ extern "C" {
         params: *mut MpvRenderParam,
     ) -> c_int;
     pub fn mpv_render_context_render(ctx: *mut MpvRenderContext, params: *mut MpvRenderParam) -> c_int;
+    pub fn mpv_render_context_report_swap(ctx: *mut MpvRenderContext);
     pub fn mpv_render_context_update(ctx: *mut MpvRenderContext) -> u64;
     pub fn mpv_render_context_free(ctx: *mut MpvRenderContext);
 }
