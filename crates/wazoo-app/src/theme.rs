@@ -404,3 +404,42 @@ pub fn welcome_card_style(_theme: &Theme) -> container::Style {
         ..Default::default()
     }
 }
+
+// Bookmark Item Button Style
+pub fn bookmark_item_button_style(_theme: &Theme, status: button::Status) -> button::Style {
+    let bg = match status {
+        button::Status::Hovered => Color::from_rgba(0.22, 0.22, 0.22, 0.85),
+        button::Status::Pressed => Color::from_rgba(0.16, 0.16, 0.16, 0.95),
+        _ => Color::from_rgba(0.13, 0.13, 0.13, 0.65),
+    };
+    button::Style {
+        background: Some(Background::Color(bg)),
+        text_color: Color::WHITE,
+        border: Border {
+            radius: 6.0.into(),
+            width: 1.0,
+            color: Color::from_rgba(1.0, 1.0, 1.0, 0.08),
+        },
+        shadow: Shadow::default(),
+        ..Default::default()
+    }
+}
+
+// Primary Action Button Style
+pub fn primary_button_style(_theme: &Theme, status: button::Status) -> button::Style {
+    let bg = match status {
+        button::Status::Hovered => Color::from_rgb(0.3, 0.78, 0.58),
+        button::Status::Pressed => Color::from_rgb(0.2, 0.65, 0.45),
+        _ => COLOR_PRIMARY,
+    };
+    button::Style {
+        background: Some(Background::Color(bg)),
+        text_color: Color::from_rgb(0.06, 0.06, 0.06),
+        border: Border {
+            radius: 6.0.into(),
+            ..Default::default()
+        },
+        shadow: Shadow::default(),
+        ..Default::default()
+    }
+}

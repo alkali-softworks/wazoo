@@ -97,5 +97,25 @@ mod tests {
         let json_legacy = r#"{"window_bounds":{"x":0,"y":0,"width":1280,"height":720},"window_opacity":1.0,"media_folders":[],"player_count":1,"layout":"grid","playback_mode":"normal","scroll_speed":1.0,"is_global_muted":true,"last_query":"","last_folder":"All"}"#;
         let legacy_settings: WazooSettings = serde_json::from_str(json_legacy).unwrap();
         assert!(legacy_settings.session_videos.is_empty());
+        assert!(legacy_settings.bookmarks.is_empty());
+    }
+
+    #[test]
+    fn test_bookmarks_serialization() {
+        let mut settings = WazooSettings::default();
+        settings.bookmarks.push(crate::models::Bookmark {
+            name: "Sci-Fi / Episode 01".to_string(),
+            query: "scifi".to_string(),
+            path: "/media/scifi/ep01.mp4".to_string(),
+            position_secs: 125.4,
+        });
+
+        let json = serde_json::to_string(&settings).unwrap();
+        let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.bookmarks.len(), 1);
+        assert_eq!(deserialized.bookmarks[0].name, "Sci-Fi / Episode 01");
+        assert_eq!(deserialized.bookmarks[0].query, "scifi");
+        assert_eq!(deserialized.bookmarks[0].path, "/media/scifi/ep01.mp4");
+        assert_eq!(deserialized.bookmarks[0].position_secs, 125.4);
     }
 }

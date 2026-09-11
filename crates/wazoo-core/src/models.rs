@@ -77,6 +77,14 @@ pub struct VideoSession {
     pub volume: f64,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Bookmark {
+    pub name: String,
+    pub query: String,
+    pub path: String,
+    pub position_secs: f64,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WazooSettings {
     pub window_bounds: WindowBounds,
@@ -95,6 +103,8 @@ pub struct WazooSettings {
     pub buffer_size_mb: u32,
     #[serde(default)]
     pub session_videos: Vec<VideoSession>,
+    #[serde(default)]
+    pub bookmarks: Vec<Bookmark>,
 }
 
 impl Default for WazooSettings {
@@ -113,6 +123,7 @@ impl Default for WazooSettings {
             buffer_duration_secs: 10,
             buffer_size_mb: 64,
             session_videos: Vec::new(),
+            bookmarks: Vec::new(),
         }
     }
 }
