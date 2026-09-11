@@ -1,7 +1,7 @@
 mod format;
 mod theme;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::time::Duration;
 use iced::{
     keyboard::{key::Named, Key},
@@ -60,6 +60,9 @@ pub struct WazooApp {
     is_shuffle_mode: bool,
     hovered_player_id: Option<PlayerId>,
     subtitles_enabled: bool,
+    loading_player_ids: HashSet<PlayerId>,
+    loading_player_ticks: HashMap<PlayerId, usize>,
+    spinner_ticks: u32,
 }
 
 #[derive(Debug, Clone)]
@@ -196,6 +199,9 @@ impl WazooApp {
             is_shuffle_mode: true,
             hovered_player_id: None,
             subtitles_enabled: true,
+            loading_player_ids: HashSet::new(),
+            loading_player_ticks: HashMap::new(),
+            spinner_ticks: 0,
         };
 
         // Initialize players based on settings
@@ -279,6 +285,8 @@ impl WazooApp {
                         handle.set_muted(self.settings.is_global_muted);
                         handle.set_subtitles_visible(self.subtitles_enabled);
                         self.players.push(handle);
+                        self.loading_player_ids.insert(id);
+                        self.loading_player_ticks.insert(id, 0);
                         return Some(id);
                     }
                     Err(err) => {
@@ -335,23 +343,8 @@ impl WazooApp {
                     }
                 }
 
-                // If any modal is open, Escape closes it
-                if self.show_search_modal
-                    || self.show_settings_modal
-                    || self.show_help_modal
-                    || self.show_menu_modal
-                    || self.show_dropdown_menu
-                    || self.show_file_picker
-                {
-                    if key == Key::Named(Named::Escape) {
-                        self.show_search_modal = false;
-                        self.show_settings_modal = false;
-                        self.show_help_modal = false;
-                        self.show_menu_modal = false;
-                        self.show_dropdown_menu = false;
-                        self.show_file_picker = false;
-                        return Task::none();
-                    }
+                if key == Key::Named(Named::Escape) {
+                    return self.update(Message::EscapePressed);
                 }
 
                 match key {
@@ -361,7 +354,6 @@ impl WazooApp {
                     Key::Named(Named::ArrowLeft) => return self.update(Message::SeekRelativeFocused(-5.0)),
                     Key::Named(Named::ArrowRight) => return self.update(Message::SeekRelativeFocused(5.0)),
                     Key::Named(Named::Tab) => return self.update(Message::CycleFocusedPlayer),
-                    Key::Named(Named::Escape) => return self.update(Message::EscapePressed),
                     Key::Character(s) => match s.as_str() {
                         "f" | "F" | "j" | "J" | "/" => return self.update(Message::OpenSearchModal),
                         "s" | "S" => return self.update(Message::ToggleShuffleMode),
@@ -442,6 +434,8 @@ impl WazooApp {
             }
             Message::PlayFileInFocused(path) => {
                 if let Some(id) = self.focused_player_id() {
+                    self.loading_player_ids.insert(id);
+                    self.loading_player_ticks.insert(id, 0);
                     let title = format::format_video_title(&path);
                     if let Ok(mut handle) = self.create_video_handle(id, &path, &title) {
                         handle.set_muted(self.settings.is_global_muted);
@@ -488,6 +482,8 @@ impl WazooApp {
                     self.focused_player_idx = pos;
                     self.focus_border_ticks = 40;
                 }
+                self.loading_player_ids.insert(id);
+                self.loading_player_ticks.insert(id, 0);
                 let curr_path = self.players.iter().find(|p| p.id == id).map(|p| p.state.path.clone());
                 for _ in 0..3 {
                     if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
@@ -511,6 +507,8 @@ impl WazooApp {
             Message::PrevVideoFocused => {
                 self.focus_border_ticks = 40;
                 if let Some(id) = self.focused_player_id() {
+                    self.loading_player_ids.insert(id);
+                    self.loading_player_ticks.insert(id, 0);
                     let curr_path = self.players.iter().find(|p| p.id == id).map(|p| p.state.path.clone());
                     for _ in 0..3 {
                         if let Some(prev_rec) = self.get_prev_video_rec(curr_path.as_deref()) {
@@ -659,6 +657,8 @@ impl WazooApp {
                 self.toast_time_remaining = 2;
             }
             Message::CycleLayout => {
+                self.show_dropdown_menu = false;
+                self.show_menu_modal = false;
                 self.settings.layout = match self.settings.layout {
                     LayoutMode::Grid => LayoutMode::Row,
                     LayoutMode::Row => LayoutMode::Column,
@@ -936,12 +936,23 @@ impl WazooApp {
                 self.toast_time_remaining = 2;
             }
             Message::EscapePressed => {
-                self.show_help_modal = false;
-                self.show_search_modal = false;
-                self.show_settings_modal = false;
-                self.show_menu_modal = false;
-                self.show_dropdown_menu = false;
-                self.show_file_picker = false;
+                if self.show_help_modal
+                    || self.show_search_modal
+                    || self.show_settings_modal
+                    || self.show_menu_modal
+                    || self.show_dropdown_menu
+                    || self.show_file_picker
+                {
+                    self.show_help_modal = false;
+                    self.show_search_modal = false;
+                    self.show_settings_modal = false;
+                    self.show_menu_modal = false;
+                    self.show_dropdown_menu = false;
+                    self.show_file_picker = false;
+                } else {
+                    self.show_menu_modal = true;
+                    self.show_dropdown_menu = false;
+                }
             }
             Message::AnimationTick => {
                 if self.settings.playback_mode == PlaybackMode::Scroll {
@@ -964,6 +975,7 @@ impl WazooApp {
                 }
             }
             Message::VideoFrameTick => {
+                self.spinner_ticks = self.spinner_ticks.wrapping_add(1);
                 if self.player_overlay_ticks > 0 {
                     self.player_overlay_ticks -= 1;
                 }
@@ -971,10 +983,27 @@ impl WazooApp {
                     self.focus_border_ticks -= 1;
                 }
                 for p in &mut self.players {
-                    p.update_frame();
+                    if p.update_frame() {
+                        self.loading_player_ids.remove(&p.id);
+                        self.loading_player_ticks.remove(&p.id);
+                    }
                 }
             }
             Message::WatchdogTick => {
+                // Auto-clear loading state if it exceeds 10 seconds to avoid indefinite spinner
+                let stale_loading: Vec<PlayerId> = self.loading_player_ticks.iter_mut()
+                    .filter_map(|(&id, ticks)| {
+                        *ticks += 1;
+                        if *ticks >= 10 { Some(id) } else { None }
+                    })
+                    .collect();
+                for id in stale_loading {
+                    self.loading_player_ids.remove(&id);
+                    self.loading_player_ticks.remove(&id);
+                }
+                self.loading_player_ids.retain(|id| self.players.iter().any(|p| p.id == *id));
+                self.loading_player_ticks.retain(|id, _| self.players.iter().any(|p| p.id == *id));
+
                 let mut finished_ids = Vec::new();
                 let mut stuck_ids = Vec::new();
 
@@ -1010,6 +1039,8 @@ impl WazooApp {
             Message::FlipModeTick => {
                 if self.settings.playback_mode == PlaybackMode::Flip && !self.players.is_empty() {
                     let rand_id = self.players[rand::random::<usize>() % self.players.len()].id;
+                    self.loading_player_ids.insert(rand_id);
+                    self.loading_player_ticks.insert(rand_id, 0);
                     let _ = self.update(Message::NextVideo(rand_id));
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == rand_id) {
                         p.seek_random();
@@ -1077,6 +1108,14 @@ impl WazooApp {
         };
 
         let mut root_stack_children: Vec<Element<'_, Message>> = vec![main_content];
+
+        // 1.5. Dropdown backdrop for dismissal when clicking outside
+        if self.show_dropdown_menu {
+            root_stack_children.push(Element::from(
+                mouse_area(container(Space::new()).width(Length::Fill).height(Length::Fill))
+                    .on_press(Message::CloseDropdownMenu),
+            ));
+        }
 
         // 2. Sliding Titlebar & Dropdown Menu Overlay
         if self.show_titlebar {
@@ -1391,11 +1430,59 @@ impl WazooApp {
 
         let opacity = self.current_opacity();
         let video_widget = p.view(opacity);
-
-        // Overlays show when mouse is active or video paused
-        let show_overlay = is_hovered || !p.state.is_playing || self.player_overlay_ticks > 0;
-
         let mut stack_children: Vec<Element<'a, Message>> = vec![video_widget];
+
+        let is_loading = self.loading_player_ids.contains(&player_id);
+
+        if is_loading {
+            let angle = (self.spinner_ticks * 12) % 360;
+            let spinner_svg = format!(
+                r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none">
+<circle cx="18" cy="18" r="14" stroke="rgba(255,255,255,0.15)" stroke-width="3"/>
+<path d="M18 4 A14 14 0 0 1 32 18" stroke="#42b883" stroke-width="3" stroke-linecap="round" transform="rotate({} 18 18)"/>
+</svg>"##,
+                angle
+            );
+
+            let loading_card = container(
+                column![
+                    svg(svg::Handle::from_memory(spinner_svg.into_bytes()))
+                        .width(Length::Fixed(40.0))
+                        .height(Length::Fixed(40.0)),
+                    text("Loading video...")
+                        .size(13)
+                        .color(iced::Color::from_rgb(0.9, 0.9, 0.9)),
+                ]
+                .spacing(12)
+                .align_x(Alignment::Center),
+            )
+            .padding([16, 24])
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(0.08, 0.08, 0.08, 0.88))),
+                border: iced::Border {
+                    radius: 12.0.into(),
+                    width: 1.0,
+                    color: iced::Color::from_rgba(0.26, 0.72, 0.51, 0.4),
+                },
+                shadow: iced::Shadow {
+                    color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5),
+                    offset: iced::Vector::new(0.0, 4.0),
+                    blur_radius: 16.0,
+                },
+                ..Default::default()
+            });
+
+            let loading_layer = container(loading_card)
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center_x(Length::Fill)
+                .center_y(Length::Fill);
+
+            stack_children.push(Element::from(loading_layer));
+        }
+
+        // Overlays show when mouse is active or video paused or player is loading
+        let show_overlay = is_hovered || !p.state.is_playing || self.player_overlay_ticks > 0 || is_loading;
 
         if show_overlay {
             // 1. Top-Left Title Pill (Matches Electron Player.vue)
@@ -1513,12 +1600,20 @@ impl WazooApp {
             .width(Length::Fill)
             .style(theme::controls_overlay_style);
 
-            let overlays_column = column![
-                Space::new().height(Length::Fixed(20.0)),
-                top_row,
-                Space::new().height(Length::Fill),
-                bottom_overlay,
-            ]
+            let overlays_column = if is_loading {
+                column![
+                    Space::new().height(Length::Fixed(20.0)),
+                    top_row,
+                    Space::new().height(Length::Fill),
+                ]
+            } else {
+                column![
+                    Space::new().height(Length::Fixed(20.0)),
+                    top_row,
+                    Space::new().height(Length::Fill),
+                    bottom_overlay,
+                ]
+            }
             .width(Length::Fill)
             .height(Length::Fill);
 
@@ -1700,13 +1795,7 @@ impl WazooApp {
         .padding(20)
         .style(theme::modal_card_style);
 
-        container(card)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .center_x(Length::Fill)
-            .center_y(Length::Fill)
-            .style(theme::modal_backdrop_style)
-            .into()
+        Self::wrap_modal_with_backdrop(card, Message::CloseSearchModal)
     }
 
     fn view_settings_modal(&self) -> Element<'_, Message> {
@@ -1815,17 +1904,12 @@ impl WazooApp {
             .padding(20)
             .style(theme::modal_card_style);
 
-        container(card)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .center_x(Length::Fill)
-            .center_y(Length::Fill)
-            .style(theme::modal_backdrop_style)
-            .into()
+        Self::wrap_modal_with_backdrop(card, Message::CloseSettingsModal)
     }
 
     fn view_help_modal(&self) -> Element<'_, Message> {
         let shortcuts = [
+            ("Esc", "Toggle Menu / Close Modal"),
             ("?", "Toggle Help"),
             ("5", "Toggle Scroll Mode"),
             ("6", "Toggle Flip Mode"),
@@ -1888,13 +1972,7 @@ impl WazooApp {
         .padding(20)
         .style(theme::modal_card_style);
 
-        container(card)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .center_x(Length::Fill)
-            .center_y(Length::Fill)
-            .style(theme::modal_backdrop_style)
-            .into()
+        Self::wrap_modal_with_backdrop(card, Message::CloseHelpModal)
     }
 
     fn view_menu_modal(&self) -> Element<'_, Message> {
@@ -1925,11 +2003,61 @@ impl WazooApp {
         .padding(16)
         .style(theme::modal_card_style);
 
-        container(card)
+        Self::wrap_modal_with_backdrop(card, Message::CloseMenuModal)
+    }
+
+    fn wrap_modal_with_backdrop<'a>(
+        card: container::Container<'a, Message>,
+        on_close: Message,
+    ) -> Element<'a, Message> {
+        let backdrop_top = mouse_area(
+            container(Space::new())
+                .width(Length::Fill)
+                .height(Length::FillPortion(1)),
+        )
+        .on_press(on_close.clone());
+
+        let backdrop_bottom = mouse_area(
+            container(Space::new())
+                .width(Length::Fill)
+                .height(Length::FillPortion(1)),
+        )
+        .on_press(on_close.clone());
+
+        let backdrop_left = mouse_area(
+            container(Space::new())
+                .width(Length::FillPortion(1))
+                .height(Length::Fill),
+        )
+        .on_press(on_close.clone());
+
+        let backdrop_right = mouse_area(
+            container(Space::new())
+                .width(Length::FillPortion(1))
+                .height(Length::Fill),
+        )
+        .on_press(on_close);
+
+        let center_row = row![
+            backdrop_left,
+            card,
+            backdrop_right,
+        ]
+        .align_y(Alignment::Center)
+        .width(Length::Fill)
+        .height(Length::Shrink);
+
+        let modal_layout = column![
+            backdrop_top,
+            center_row,
+            backdrop_bottom,
+        ]
+        .width(Length::Fill)
+        .height(Length::Fill);
+
+        container(modal_layout)
             .width(Length::Fill)
             .height(Length::Fill)
-            .center_x(Length::Fill)
-            .center_y(Length::Fill)
             .style(theme::modal_backdrop_style)
             .into()
     }

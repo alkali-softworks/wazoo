@@ -175,15 +175,11 @@ impl VideoHandle {
                 .map_err(|e| e.to_string())?;
             mpv_ffi::mpv_command_string(mpv, cmd.as_ptr());
 
-            // Wait briefly for file to load so metadata (duration, streams) is populated
-            let deadline = Instant::now() + Duration::from_millis(2000);
-            while Instant::now() < deadline {
-                let event = mpv_ffi::mpv_wait_event(mpv, 0.05);
-                if !event.is_null() {
-                    let eid = (*event).event_id;
-                    if eid == mpv_ffi::MPV_EVENT_FILE_LOADED || eid == mpv_ffi::MPV_EVENT_END_FILE {
-                        break;
-                    }
+            // Non-blocking pump of initial events so the UI thread is not frozen
+            while !mpv.is_null() {
+                let event = mpv_ffi::mpv_wait_event(mpv, 0.0);
+                if event.is_null() || (*event).event_id == mpv_ffi::MPV_EVENT_NONE {
+                    break;
                 }
             }
 
