@@ -487,11 +487,7 @@ impl WazooApp {
                 self.window_id = Some(win_id);
                 self.player_overlay_ticks = 120; // 2 seconds delay before hiding controls
 
-                let drawer_width = 420.0;
-                let window_w = self.settings.window_bounds.width as f32;
-                let inside_file_drawer = self.show_file_picker && pos.x >= (window_w - drawer_width).max(0.0);
-
-                if (pos.y < 35.0 && !inside_file_drawer) || self.show_dropdown_menu {
+                if pos.y < 35.0 || self.show_dropdown_menu {
                     self.show_titlebar = true;
                     self.titlebar_hide_ticks = 25;
                 } else if !self.show_dropdown_menu {
@@ -2459,6 +2455,15 @@ impl WazooApp {
             );
         }
 
+        let scrollable_content = container(shortcuts_list)
+            .padding(iced::Padding {
+                top: 0.0,
+                right: 28.0, // Clear gutter so scrollbar never touches or overlaps text
+                bottom: 0.0,
+                left: 4.0,
+            })
+            .width(Length::Fill);
+
         let card = container(
             column![
                 row![
@@ -2469,10 +2474,12 @@ impl WazooApp {
                         .on_press(Message::CloseHelpModal),
                 ]
                 .align_y(Alignment::Center),
-                scrollable(shortcuts_list).height(Length::Fixed(360.0)),
+                scrollable(scrollable_content)
+                    .height(Length::Fixed(420.0))
+                    .width(Length::Fill),
             ]
             .spacing(14)
-            .width(Length::Fixed(460.0)),
+            .width(Length::Fixed(540.0)),
         )
         .padding(20)
         .style(theme::modal_card_style);
