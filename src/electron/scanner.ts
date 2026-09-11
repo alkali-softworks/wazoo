@@ -173,17 +173,8 @@ if (parentPort) {
       try {
         if (!client) {
           client = new Database(dbPath)
+          client.pragma('journal_mode = WAL')
           db = drizzle(client)
-        }
-
-        // Check if ffprobe is valid before starting
-        try {
-          await execFileAsync(ffprobePath || 'ffprobe', ['-version'])
-          isFfprobeAvailable = true
-          console.log(`ffprobe found at: ${ffprobePath || 'ffprobe'}`)
-        } catch (err) {
-          isFfprobeAvailable = false
-          console.warn(`ffprobe NOT FOUND at: ${ffprobePath || 'ffprobe'}. Metadata probing will be disabled.`, err)
         }
 
         let allVideos: { name: string, path: string }[] = []
@@ -245,10 +236,50 @@ if (parentPort) {
           console.log(`Pruned ${staleIds.length} stale video entries from database`)
         }
 
-        // Filter for only new videos that require probing and inserting
+        // Phase 1: Quick Add - immediately insert all new videos with default/pending metadata
         const newVideos = uniqueVideos.filter(v => !existingPathMap.has(v.path))
 
-        if (newVideos.length === 0) {
+        if (newVideos.length > 0) {
+          const insertStmt = client.prepare(`
+            INSERT INTO Video (name, path, codec, width, height, duration, has_subtitles)
+            VALUES (?, ?, 'pending', 0, 0, 0, 0)
+          `)
+          const insertMany = client.transaction((videos: { name: string, path: string }[]) => {
+            for (const video of videos) {
+              insertStmt.run(video.name, video.path)
+            }
+          })
+          insertMany(newVideos)
+          console.log(`Quick-added ${newVideos.length} new videos to database`)
+        }
+
+        // Notify main thread that files are in the database so the usage list updates instantly
+        parentPort?.postMessage({
+          type: 'quick-scan-complete',
+          payload: {
+            scanId,
+            newCount: newVideos.length,
+            totalDiscovered: uniqueVideos.length
+          }
+        })
+
+        // Phase 2: Background fill - probe metadata for all pending/unprobed videos
+        try {
+          await execFileAsync(ffprobePath || 'ffprobe', ['-version'])
+          isFfprobeAvailable = true
+          console.log(`ffprobe found at: ${ffprobePath || 'ffprobe'}`)
+        } catch (err) {
+          isFfprobeAvailable = false
+          console.warn(`ffprobe NOT FOUND at: ${ffprobePath || 'ffprobe'}. Metadata probing will be disabled.`, err)
+        }
+
+        const unprobedVideos = isFfprobeAvailable
+          ? (client.prepare(
+              "SELECT id, name, path FROM Video WHERE codec = 'pending' OR (codec = 'unknown' AND duration = 0 AND width = 0)"
+            ).all() as { id: number, name: string, path: string }[])
+          : []
+
+        if (unprobedVideos.length === 0) {
           if (currentScanId.value === scanId) {
             parentPort?.postMessage({
               type: 'scan-progress',
@@ -259,22 +290,25 @@ if (parentPort) {
           return
         }
 
-        await processConcurrently(
-          newVideos,
-          8, // Safer limit: max 8 concurrent ffprobe process spawning blocks
-          async (video) => {
-            // Sniff the codec right before inserting into SQLite
-            const metadata = await getVideoMetadata(video.path, ffprobePath || 'ffprobe')
+        const updateStmt = client.prepare(`
+          UPDATE Video
+          SET codec = ?, width = ?, height = ?, duration = ?, has_subtitles = ?
+          WHERE id = ?
+        `)
 
-            db.insert(VideoTable).values({
-              name: video.name,
-              path: video.path,
-              codec: metadata.codec,
-              width: metadata.width,
-              height: metadata.height,
-              duration: metadata.duration,
-              has_subtitles: metadata.hasSubtitles
-            }).run()
+        await processConcurrently(
+          unprobedVideos,
+          6, // Background probe concurrency
+          async (video) => {
+            const metadata = await getVideoMetadata(video.path, ffprobePath || 'ffprobe')
+            updateStmt.run(
+              metadata.codec,
+              metadata.width,
+              metadata.height,
+              metadata.duration,
+              metadata.hasSubtitles ? 1 : 0,
+              video.id
+            )
           },
           (processed, total, video) => {
             if (currentScanId.value !== scanId) return

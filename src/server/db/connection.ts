@@ -21,6 +21,7 @@ if (!fs.existsSync(userDbPath)) {
 }
 
 export const client = new Database(userDbPath)
+client.pragma('journal_mode = WAL')
 
 const db = drizzle(client, { schema })
 

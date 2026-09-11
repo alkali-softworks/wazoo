@@ -120,6 +120,15 @@ watch(() => props.isOpen, async (isOpen) => {
 let lastVideoCountUpdate = 0
 
 onMounted(() => {
+  window.electron.on('quick-scan-complete', async (data: any) => {
+    if (localScanId === data.scanId) {
+      const countResult = await window.electron.invoke('get-video-count')
+      if (countResult?.success) {
+        videoCount.value = countResult.count
+      }
+    }
+  })
+
   window.electron.on('scan-progress', async (data: { 
       processed: number,
       total: number,

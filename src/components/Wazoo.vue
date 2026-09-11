@@ -898,6 +898,10 @@ onMounted(async () => {
     showMenuModal.value = true
   })
   window.addEventListener('resize', handleResize)
+
+  window.electron?.on('quick-scan-complete', async () => {
+    await queryFiles(state.searchQuery, state.searchFolder, true)
+  })
 })
 
 onBeforeUnmount(() => {

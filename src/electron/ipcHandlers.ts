@@ -255,7 +255,13 @@ export function setupIpcHandlers(mainWindow: BrowserWindow) {
           const { type, payload } = message
           if (payload.scanId !== scanId) return
 
-          if (type === 'scan-progress') {
+          if (type === 'quick-scan-complete') {
+            event.sender.send('quick-scan-complete', {
+              scanId,
+              newCount: payload.newCount,
+              totalDiscovered: payload.totalDiscovered
+            })
+          } else if (type === 'scan-progress') {
             const { processed, total, name } = payload
             event.sender.send('scan-progress', {
               processed,
