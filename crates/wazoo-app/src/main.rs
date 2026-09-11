@@ -48,7 +48,6 @@ pub struct WazooApp {
     titlebar_hide_ticks: usize,
     show_dropdown_menu: bool,
     is_alt_pressed: bool,
-    player_overlay_ticks: usize,
     window_id: Option<iced::window::Id>,
     app_icon_handle: iced::widget::image::Handle,
     toast_message: Option<String>,
@@ -182,7 +181,6 @@ impl WazooApp {
             titlebar_hide_ticks: 0,
             show_dropdown_menu: false,
             is_alt_pressed: false,
-            player_overlay_ticks: 120,
             window_id: None,
             app_icon_handle: icon_handle,
             toast_message: Some("Welcome to Wazoo".to_string()),
@@ -305,7 +303,6 @@ impl WazooApp {
             }
             Message::CursorMoved(win_id, pos) => {
                 self.window_id = Some(win_id);
-                self.player_overlay_ticks = 120; // 2 seconds of overlay visibility
 
                 if pos.y < 35.0 || self.show_dropdown_menu {
                     self.show_titlebar = true;
@@ -458,7 +455,6 @@ impl WazooApp {
                     if !was_already_active {
                         self.focus_border_ticks = 20;
                     }
-                    self.player_overlay_ticks = 120;
                 }
             }
             Message::TogglePlay(id) => {
@@ -566,7 +562,6 @@ impl WazooApp {
             }
             Message::PlayerHovered(id) => {
                 self.hovered_player_id = Some(id);
-                self.player_overlay_ticks = 120;
             }
             Message::PlayerUnhovered(id) => {
                 if self.hovered_player_id == Some(id) {
@@ -575,7 +570,6 @@ impl WazooApp {
             }
             Message::SeekRelativeFocused(secs) => {
                 if let Some(id) = self.focused_player_id() {
-                    self.player_overlay_ticks = 120;
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                         p.seek_relative(secs);
                         let pos = p.position();
@@ -1028,9 +1022,6 @@ impl WazooApp {
             }
             Message::VideoFrameTick => {
                 self.spinner_ticks = self.spinner_ticks.wrapping_add(1);
-                if self.player_overlay_ticks > 0 {
-                    self.player_overlay_ticks -= 1;
-                }
                 if self.focus_border_ticks > 0 {
                     self.focus_border_ticks -= 1;
                 }
@@ -1565,8 +1556,8 @@ impl WazooApp {
             stack_children.push(Element::from(loading_layer));
         }
 
-        // Overlays show when mouse is active or video paused or player is loading
-        let show_overlay = is_hovered || !p.state.is_playing || self.player_overlay_ticks > 0 || is_loading;
+        // Overlays show when mouse is hovering this specific player, or while player is loading
+        let show_overlay = is_hovered || is_loading;
 
         if show_overlay {
             // 1. Top-Left Title Pill (Matches Electron Player.vue)
