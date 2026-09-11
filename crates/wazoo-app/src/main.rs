@@ -99,6 +99,7 @@ pub enum Message {
 
     // Timers & Ticks
     AnimationTick,
+    VideoFrameTick,
     WatchdogTick,
     FlipModeTick,
     DismissToast,
@@ -676,6 +677,9 @@ impl WazooApp {
             }
             Message::ToggleSubtitles => {
                 self.subtitles_enabled = !self.subtitles_enabled;
+                for p in &mut self.players {
+                    p.set_subtitles_visible(self.subtitles_enabled);
+                }
                 self.toast_message = Some(if self.subtitles_enabled {
                     "Subtitles: ON".to_string()
                 } else {
@@ -710,6 +714,11 @@ impl WazooApp {
                         let vol = self.scroll_engine.calculate_player_volume(p.id);
                         p.set_volume(vol);
                     }
+                }
+            }
+            Message::VideoFrameTick => {
+                for p in &mut self.players {
+                    p.update_frame();
                 }
             }
             Message::WatchdogTick => {
@@ -764,6 +773,7 @@ impl WazooApp {
 
     pub fn subscription(&self) -> Subscription<Message> {
         let mut subs = vec![
+            iced::time::every(Duration::from_millis(16)).map(|_| Message::VideoFrameTick),
             iced::time::every(Duration::from_secs(1)).map(|_| Message::WatchdogTick),
             iced::event::listen_with(|event, _status, _window| {
                 if let iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) = event {
@@ -937,7 +947,8 @@ impl WazooApp {
             0.0f32
         };
 
-        let video_widget = iced_video_player::VideoPlayer::new(&p.video)
+        let video_widget = iced::widget::image(p.frame_handle())
+            .content_fit(iced::ContentFit::Contain)
             .width(Length::Fill)
             .height(Length::Fill);
 
