@@ -5,7 +5,7 @@ mod theme;
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use iced::futures::SinkExt;
 use iced::{
     keyboard::{key::Named, Key},
@@ -69,6 +69,10 @@ pub struct WazooApp {
     spinner_ticks: u32,
     preloaded_player: Option<VideoHandle>,
     is_preloading: bool,
+    cursor_position: iced::Point,
+    titlebar_drag_pending: bool,
+    titlebar_press_origin: Option<iced::Point>,
+    last_titlebar_click: Option<Instant>,
 }
 
 #[derive(Debug, Clone)]
@@ -85,6 +89,8 @@ pub enum Message {
     MaximizeWindow,
     CloseApp,
     DragWindow,
+    TitleBarPressed,
+    LeftClickReleased,
     ToggleDropdownMenu,
     CloseDropdownMenu,
     OpenMenuModal,
@@ -209,6 +215,10 @@ impl WazooApp {
             spinner_ticks: 0,
             preloaded_player: None,
             is_preloading: false,
+            cursor_position: Point::ORIGIN,
+            titlebar_drag_pending: false,
+            titlebar_press_origin: None,
+            last_titlebar_click: None,
         };
 
         // Initialize players based on settings or restore saved session
@@ -225,12 +235,14 @@ impl WazooApp {
                     size_mb: app.settings.buffer_size_mb,
                     read_chunk_kb: 512,
                 };
-                if let Ok(mut handle) = VideoHandle::with_buffering(id, &session.path, &name, buffer_config) {
+                let start_secs = if session.position_secs > 0.05 {
+                    Some(session.position_secs)
+                } else {
+                    None
+                };
+                if let Ok(mut handle) = VideoHandle::with_buffering_and_start(id, &session.path, &name, buffer_config, start_secs) {
                     handle.set_muted(session.is_muted);
                     handle.set_volume(session.volume);
-                    if session.position_secs > 0.0 {
-                        handle.seek(Duration::from_secs_f64(session.position_secs));
-                    }
                     handle.set_subtitles_visible(app.subtitles_enabled);
                     app.players.push(handle);
                 }
@@ -315,12 +327,16 @@ impl WazooApp {
     }
 
     fn create_video_handle(&self, id: PlayerId, path: &str, name: &str) -> Result<VideoHandle, String> {
+        self.create_video_handle_with_start(id, path, name, None)
+    }
+
+    fn create_video_handle_with_start(&self, id: PlayerId, path: &str, name: &str, start_secs: Option<f64>) -> Result<VideoHandle, String> {
         let buffer_config = BufferConfig {
             duration_secs: self.settings.buffer_duration_secs,
             size_mb: self.settings.buffer_size_mb,
             read_chunk_kb: 512,
         };
-        VideoHandle::with_buffering(id, path, name, buffer_config)
+        VideoHandle::with_buffering_and_start(id, path, name, buffer_config, start_secs)
     }
 
     pub fn current_opacity(&self) -> f32 {
@@ -485,6 +501,7 @@ impl WazooApp {
             }
             Message::CursorMoved(win_id, pos) => {
                 self.window_id = Some(win_id);
+                self.cursor_position = pos;
                 self.player_overlay_ticks = 120; // 2 seconds delay before hiding controls
 
                 if pos.y < 35.0 || self.show_dropdown_menu {
@@ -497,6 +514,36 @@ impl WazooApp {
                         self.show_titlebar = false;
                     }
                 }
+
+                if self.titlebar_drag_pending {
+                    if let Some(origin) = self.titlebar_press_origin {
+                        let dist = (pos.x - origin.x).hypot(pos.y - origin.y);
+                        if dist > 5.0 {
+                            self.titlebar_drag_pending = false;
+                            self.titlebar_press_origin = None;
+                            self.last_titlebar_click = None;
+                            return iced::window::drag(win_id);
+                        }
+                    }
+                }
+            }
+            Message::TitleBarPressed => {
+                let now = Instant::now();
+                if let Some(last_click) = self.last_titlebar_click {
+                    if now.duration_since(last_click) < Duration::from_millis(400) {
+                        self.last_titlebar_click = None;
+                        self.titlebar_drag_pending = false;
+                        self.titlebar_press_origin = None;
+                        return self.update(Message::MaximizeWindow);
+                    }
+                }
+                self.last_titlebar_click = Some(now);
+                self.titlebar_drag_pending = true;
+                self.titlebar_press_origin = Some(self.cursor_position);
+            }
+            Message::LeftClickReleased => {
+                self.titlebar_drag_pending = false;
+                self.titlebar_press_origin = None;
             }
             Message::RightClickPressed(win_id) => {
                 self.window_id = Some(win_id);
@@ -577,6 +624,9 @@ impl WazooApp {
                 }
             }
             Message::MaximizeWindow => {
+                self.last_titlebar_click = None;
+                self.titlebar_drag_pending = false;
+                self.titlebar_press_origin = None;
                 if let Some(id) = self.window_id {
                     return iced::window::toggle_maximize(id);
                 }
@@ -1470,6 +1520,9 @@ impl WazooApp {
                 iced::Event::Mouse(iced::mouse::Event::ButtonPressed(iced::mouse::Button::Right)) => {
                     Some(Message::RightClickPressed(window_id))
                 }
+                iced::Event::Mouse(iced::mouse::Event::ButtonReleased(iced::mouse::Button::Left)) => {
+                    Some(Message::LeftClickReleased)
+                }
                 _ => None,
             }),
         ];
@@ -1655,7 +1708,7 @@ impl WazooApp {
                 .width(Length::Fill)
                 .height(Length::Fixed(30.0)),
         )
-        .on_press(Message::DragWindow)
+        .on_press(Message::TitleBarPressed)
         .on_double_click(Message::MaximizeWindow);
 
         let window_buttons = row![

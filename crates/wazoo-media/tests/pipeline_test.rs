@@ -161,3 +161,49 @@ fn test_av1_ninkoro_playback() {
         let _element = handle.view::<()>(1.0);
     }
 }
+
+#[test]
+fn test_seek_immediately_after_init() {
+    let sample = "/home/klo/Downloads/VID_20240309_123459_679.mp4";
+    if Path::new(sample).exists() {
+        let mut handle = VideoHandle::new(2, sample, "Test Video 2").unwrap();
+        handle.set_muted(true);
+        handle.seek(Duration::from_secs(10));
+        std::thread::sleep(Duration::from_millis(600));
+        let _ = handle.update_frame();
+        let pos = handle.position();
+        println!("Position after immediate seek and 600ms sleep: {:?}", pos);
+        assert!(pos >= Duration::from_secs(9), "Expected pos >= 9s, but got {:?}", pos);
+    }
+}
+
+#[test]
+fn test_loadfile_start_option() {
+    let sample = "/home/klo/Downloads/VID_20240309_123459_679.mp4";
+    if Path::new(sample).exists() {
+        let buffer_config = wazoo_media::BufferConfig {
+            duration_secs: 10,
+            size_mb: 64,
+            read_chunk_kb: 512,
+        };
+        let mut handle = VideoHandle::with_buffering_and_start(
+            3,
+            sample,
+            "Test Video 3",
+            buffer_config,
+            Some(12.5),
+        )
+        .unwrap();
+        assert_eq!(handle.position(), Duration::from_secs_f64(12.5));
+
+        // Wait a bit, tick frame, and verify position stays >= 12.0s
+        std::thread::sleep(Duration::from_millis(600));
+        let _ = handle.update_frame();
+        let pos = handle.position();
+        println!("Position after with_buffering_and_start(12.5): {:?}", pos);
+        assert!(pos >= Duration::from_secs(11), "Expected pos >= 11s, got {:?}", pos);
+    }
+}
+
+
+
