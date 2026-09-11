@@ -2228,6 +2228,7 @@ impl WazooApp {
                     text(folder.clone()).size(13).color(iced::Color::WHITE),
                     Space::new().width(Length::Fill),
                     text(format!("({count})")).size(12).color(theme::COLOR_TEXT_MUTED),
+                    Space::new().width(Length::Fixed(4.0)),
                 ]
                 .spacing(8)
                 .align_y(Alignment::Center),
@@ -2262,6 +2263,15 @@ impl WazooApp {
             }
         }
 
+        let scrollable_folders = container(folders_col)
+            .padding(iced::Padding {
+                top: 0.0,
+                right: 20.0, // Dedicated gutter so vertical scrollbar never overlaps text
+                bottom: 0.0,
+                left: 0.0,
+            })
+            .width(Length::Fill);
+
         let content = column![
             Space::new().height(Length::Fixed(24.0)),
             row![
@@ -2276,7 +2286,9 @@ impl WazooApp {
                 .on_input(Message::FilePickerSearchChanged)
                 .style(theme::dark_input_style)
                 .padding(8),
-            scrollable(folders_col).height(Length::Fill),
+            scrollable(scrollable_folders)
+                .height(Length::Fill)
+                .width(Length::Fill),
         ]
         .spacing(12)
         .padding(16);
