@@ -5,11 +5,6 @@ pub struct VideoRecord {
     pub id: i64,
     pub name: String,
     pub path: String,
-    pub codec: String,
-    pub width: u32,
-    pub height: u32,
-    pub duration: f64,
-    pub has_subtitles: bool,
     pub created_at: i64,
 }
 
