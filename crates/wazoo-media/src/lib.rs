@@ -1,4 +1,5 @@
 pub mod mpv_ffi;
+pub mod pipeline;
 pub mod player;
 pub mod scroll;
 

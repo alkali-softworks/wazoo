@@ -7,9 +7,12 @@ license.workspace = true
 
 [dependencies]
 wazoo-core.workspace = true
-iced.workspace = true
+iced = { workspace = true }
+iced_wgpu = { workspace = true }
+bytemuck = { workspace = true }
 tokio.workspace = true
 rand.workspace = true
 log.workspace = true
 url.workspace = true
 thiserror.workspace = true
+

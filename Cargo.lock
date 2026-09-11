@@ -4769,7 +4769,9 @@ dependencies = [
 name = "wazoo-media"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "iced",
+ "iced_wgpu",
  "log",
  "rand 0.8.8",
  "thiserror 2.0.20",

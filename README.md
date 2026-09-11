@@ -2,7 +2,7 @@
 
 > **Ambient media engine for non-stop viewing — rewritten in native Rust.**
 
-**Wazoo-RS** is a high-performance native port of [Wazoo](https://github.com/alkali-softworks/wazoo), inspired by [Madamiru](https://github.com/mtkennerly/madamiru). Built as a "moving mood-board" for artists, designers, and curators, Wazoo transforms your local video collection into a non-stop, ambient atmosphere.
+**Wazoo-RS** is a high-performance native port of [Wazoo](https://github.com/alkali-softworks/wazoo). Built as a "moving mood-board" for artists, designers, and curators, Wazoo transforms your local video collection into a non-stop, ambient atmosphere.
 
 Forget the play button. Open Wazoo and let your media collection become the environment.
 
