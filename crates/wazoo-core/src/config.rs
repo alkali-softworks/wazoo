@@ -74,4 +74,28 @@ mod tests {
         assert!(mgr.config_dir.exists());
         assert!(mgr.data_dir.exists());
     }
+
+    #[test]
+    fn test_session_videos_serialization() {
+        let mut settings = WazooSettings::default();
+        settings.session_videos.push(crate::models::VideoSession {
+            path: "/path/to/video1.mp4".to_string(),
+            position_secs: 42.5,
+            is_muted: false,
+            volume: 0.8,
+        });
+
+        let json = serde_json::to_string(&settings).unwrap();
+        let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.session_videos.len(), 1);
+        assert_eq!(deserialized.session_videos[0].path, "/path/to/video1.mp4");
+        assert_eq!(deserialized.session_videos[0].position_secs, 42.5);
+        assert_eq!(deserialized.session_videos[0].is_muted, false);
+        assert_eq!(deserialized.session_videos[0].volume, 0.8);
+
+        // Verify backwards compatibility when session_videos is omitted from JSON
+        let json_legacy = r#"{"window_bounds":{"x":0,"y":0,"width":1280,"height":720},"window_opacity":1.0,"media_folders":[],"player_count":1,"layout":"grid","playback_mode":"normal","scroll_speed":1.0,"is_global_muted":true,"last_query":"","last_folder":"All"}"#;
+        let legacy_settings: WazooSettings = serde_json::from_str(json_legacy).unwrap();
+        assert!(legacy_settings.session_videos.is_empty());
+    }
 }

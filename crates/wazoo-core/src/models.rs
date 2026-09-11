@@ -62,6 +62,21 @@ fn default_buffer_size_mb() -> u32 {
     64
 }
 
+fn default_session_volume() -> f64 {
+    1.0
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct VideoSession {
+    pub path: String,
+    #[serde(default)]
+    pub position_secs: f64,
+    #[serde(default)]
+    pub is_muted: bool,
+    #[serde(default = "default_session_volume")]
+    pub volume: f64,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WazooSettings {
     pub window_bounds: WindowBounds,
@@ -78,6 +93,8 @@ pub struct WazooSettings {
     pub buffer_duration_secs: u32,
     #[serde(default = "default_buffer_size_mb")]
     pub buffer_size_mb: u32,
+    #[serde(default)]
+    pub session_videos: Vec<VideoSession>,
 }
 
 impl Default for WazooSettings {
@@ -95,6 +112,7 @@ impl Default for WazooSettings {
             last_folder: "All".to_string(),
             buffer_duration_secs: 10,
             buffer_size_mb: 64,
+            session_videos: Vec::new(),
         }
     }
 }

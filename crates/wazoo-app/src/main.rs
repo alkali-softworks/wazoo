@@ -12,7 +12,7 @@ use iced::{
     widget::{button, column, container, mouse_area, row, scrollable, slider, svg, text, text_input, Space, Stack},
     Alignment, Color, Element, Length, Point, Subscription, Task, Theme,
 };
-use wazoo_core::{ConfigManager, Database, LayoutMode, PlaybackMode, VideoRecord, WazooSettings};
+use wazoo_core::{ConfigManager, Database, LayoutMode, PlaybackMode, VideoRecord, VideoSession, WazooSettings};
 use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, VideoHandle};
 use wazoo_scanner::{ScanProgress, ScanStage, Scanner};
 
@@ -211,9 +211,34 @@ impl WazooApp {
             is_preloading: false,
         };
 
-        // Initialize players based on settings
+        // Initialize players based on settings or restore saved session
         let count = settings.player_count.clamp(1, 12);
-        for _ in 0..count {
+        let restored_sessions = settings.session_videos.clone();
+
+        for session in restored_sessions.into_iter().take(count) {
+            if std::path::Path::new(&session.path).exists() {
+                let id = app.next_player_id;
+                app.next_player_id += 1;
+                let name = format::format_video_title(&session.path);
+                let buffer_config = BufferConfig {
+                    duration_secs: app.settings.buffer_duration_secs,
+                    size_mb: app.settings.buffer_size_mb,
+                    read_chunk_kb: 512,
+                };
+                if let Ok(mut handle) = VideoHandle::with_buffering(id, &session.path, &name, buffer_config) {
+                    handle.set_muted(session.is_muted);
+                    handle.set_volume(session.volume);
+                    if session.position_secs > 0.0 {
+                        handle.seek(Duration::from_secs_f64(session.position_secs));
+                    }
+                    handle.set_subtitles_visible(app.subtitles_enabled);
+                    app.players.push(handle);
+                }
+            }
+        }
+
+        // Fill remaining players if any
+        while app.players.len() < count {
             app.add_player_internal();
         }
 
@@ -228,8 +253,12 @@ impl WazooApp {
                     break;
                 }
             }
+            if app.settings.session_videos.is_empty() {
+                for p in &mut app.players {
+                    p.seek_random();
+                }
+            }
             for p in &mut app.players {
-                p.seek_random();
                 let vol = app.scroll_engine.calculate_player_volume(p.id);
                 p.set_volume(vol);
             }
@@ -324,6 +353,24 @@ impl WazooApp {
             }
         }
         None
+    }
+
+    /// Persists the exact current playback session (file, timestamp, mute, volume) to settings
+    fn save_session_state(&mut self) {
+        if !self.players.is_empty() {
+            let sessions: Vec<VideoSession> = self
+                .players
+                .iter()
+                .map(|p| VideoSession {
+                    path: p.state.path.clone(),
+                    position_secs: p.position().as_secs_f64(),
+                    is_muted: p.state.is_muted,
+                    volume: p.state.volume,
+                })
+                .collect();
+            self.settings.session_videos = sessions;
+            let _ = self.config_mgr.save_settings(&self.settings);
+        }
     }
 
     /// Triggers an asynchronous background preload task for the next video in scroll mode
@@ -440,7 +487,11 @@ impl WazooApp {
                 self.window_id = Some(win_id);
                 self.player_overlay_ticks = 120; // 2 seconds delay before hiding controls
 
-                if pos.y < 35.0 || self.show_dropdown_menu {
+                let drawer_width = 420.0;
+                let window_w = self.settings.window_bounds.width as f32;
+                let inside_file_drawer = self.show_file_picker && pos.x >= (window_w - drawer_width).max(0.0);
+
+                if (pos.y < 35.0 && !inside_file_drawer) || self.show_dropdown_menu {
                     self.show_titlebar = true;
                     self.titlebar_hide_ticks = 25;
                 } else if !self.show_dropdown_menu {
@@ -535,6 +586,7 @@ impl WazooApp {
                 }
             }
             Message::CloseApp => {
+                self.save_session_state();
                 if let Some(id) = self.window_id {
                     return iced::window::close(id);
                 } else {
@@ -1376,6 +1428,7 @@ impl WazooApp {
                         self.toast_message = None;
                     }
                 }
+                self.save_session_state();
             }
             Message::FlipModeTick => {
                 if self.settings.playback_mode == PlaybackMode::Flip && !self.players.is_empty() {
@@ -1405,6 +1458,9 @@ impl WazooApp {
                 }
                 iced::Event::Keyboard(iced::keyboard::Event::KeyReleased { key, .. }) => {
                     Some(Message::KeyReleased(key))
+                }
+                iced::Event::Window(iced::window::Event::CloseRequested) => {
+                    Some(Message::CloseApp)
                 }
                 iced::Event::Window(iced::window::Event::Unfocused) => {
                     Some(Message::KeyReleased(iced::keyboard::Key::Named(iced::keyboard::key::Named::Alt)))
@@ -1603,7 +1659,8 @@ impl WazooApp {
                 .width(Length::Fill)
                 .height(Length::Fixed(30.0)),
         )
-        .on_press(Message::DragWindow);
+        .on_press(Message::DragWindow)
+        .on_double_click(Message::MaximizeWindow);
 
         let window_buttons = row![
             button(
@@ -2110,6 +2167,7 @@ impl WazooApp {
         }
 
         let content = column![
+            Space::new().height(Length::Fixed(24.0)),
             row![
                 text("Files").size(18).color(iced::Color::WHITE),
                 Space::new().width(Length::Fill),
@@ -2128,7 +2186,7 @@ impl WazooApp {
         .padding(16);
 
         container(content)
-            .width(Length::Fixed(320.0))
+            .width(Length::Fixed(420.0))
             .height(Length::Fill)
             .style(theme::file_picker_drawer_style)
             .into()
