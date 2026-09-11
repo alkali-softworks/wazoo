@@ -369,7 +369,6 @@ impl Scanner {
                 id: 0,
                 name: cleaned_name.clone(),
                 path: path_str,
-                created_at: chrono::Utc::now().timestamp(),
             };
 
             records.push(record);

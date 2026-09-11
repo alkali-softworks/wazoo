@@ -27,8 +27,7 @@ impl Database {
             "CREATE TABLE IF NOT EXISTS Video (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                path TEXT NOT NULL UNIQUE,
-                created_at INTEGER DEFAULT (strftime('%s', 'now'))
+                path TEXT NOT NULL UNIQUE
             )",
             [],
         )?;
@@ -48,14 +47,13 @@ impl Database {
 
     pub fn insert_or_update_video(&self, video: &VideoRecord) -> Result<i64> {
         self.conn.execute(
-            "INSERT INTO Video (name, path, created_at)
-             VALUES (?1, ?2, ?3)
+            "INSERT INTO Video (name, path)
+             VALUES (?1, ?2)
              ON CONFLICT(path) DO UPDATE SET
                 name = excluded.name",
             params![
                 video.name,
                 video.path,
-                video.created_at,
             ],
         )?;
 
@@ -67,8 +65,8 @@ impl Database {
         let mut count = 0;
         {
             let mut stmt = tx.prepare(
-                "INSERT INTO Video (name, path, created_at)
-                 VALUES (?1, ?2, ?3)
+                "INSERT INTO Video (name, path)
+                 VALUES (?1, ?2)
                  ON CONFLICT(path) DO UPDATE SET
                     name = excluded.name"
             )?;
@@ -77,7 +75,6 @@ impl Database {
                 stmt.execute(params![
                     video.name,
                     video.path,
-                    video.created_at,
                 ])?;
                 count += 1;
             }
@@ -120,7 +117,7 @@ impl Database {
 
     pub fn get_all_videos(&self) -> Result<Vec<VideoRecord>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, path, created_at
+            "SELECT id, name, path
              FROM Video ORDER BY name ASC",
         )?;
 
@@ -129,7 +126,6 @@ impl Database {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 path: row.get(2)?,
-                created_at: row.get(3)?,
             })
         })?;
 
@@ -186,10 +182,10 @@ impl Database {
         }
 
         let query = if where_conditions.is_empty() {
-            "SELECT id, name, path, created_at FROM Video ORDER BY path ASC".to_string()
+            "SELECT id, name, path FROM Video ORDER BY path ASC".to_string()
         } else {
             format!(
-                "SELECT id, name, path, created_at FROM Video WHERE {} ORDER BY path ASC",
+                "SELECT id, name, path FROM Video WHERE {} ORDER BY path ASC",
                 where_conditions.join(" AND ")
             )
         };
@@ -205,7 +201,6 @@ impl Database {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 path: row.get(2)?,
-                created_at: row.get(3)?,
             })
         })?;
 
@@ -254,7 +249,6 @@ mod tests {
             id: 0,
             name: "Ambient Video 1".to_string(),
             path: "/media/ambient1.mp4".to_string(),
-            created_at: 1000,
         };
 
         db.insert_or_update_video(&video).unwrap();

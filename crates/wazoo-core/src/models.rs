@@ -5,7 +5,6 @@ pub struct VideoRecord {
     pub id: i64,
     pub name: String,
     pub path: String,
-    pub created_at: i64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
