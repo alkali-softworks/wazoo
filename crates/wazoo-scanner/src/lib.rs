@@ -369,11 +369,6 @@ impl Scanner {
                 id: 0,
                 name: cleaned_name.clone(),
                 path: path_str,
-                codec: "native".to_string(),
-                width: 0,
-                height: 0,
-                duration: 0.0,
-                has_subtitles: false,
                 created_at: chrono::Utc::now().timestamp(),
             };
 

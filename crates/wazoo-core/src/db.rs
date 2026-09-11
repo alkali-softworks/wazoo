@@ -28,11 +28,6 @@ impl Database {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 path TEXT NOT NULL UNIQUE,
-                codec TEXT DEFAULT 'unknown',
-                width INTEGER DEFAULT 0,
-                height INTEGER DEFAULT 0,
-                duration REAL DEFAULT 0,
-                has_subtitles INTEGER DEFAULT 0,
                 created_at INTEGER DEFAULT (strftime('%s', 'now'))
             )",
             [],
@@ -53,23 +48,13 @@ impl Database {
 
     pub fn insert_or_update_video(&self, video: &VideoRecord) -> Result<i64> {
         self.conn.execute(
-            "INSERT INTO Video (name, path, codec, width, height, duration, has_subtitles, created_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+            "INSERT INTO Video (name, path, created_at)
+             VALUES (?1, ?2, ?3)
              ON CONFLICT(path) DO UPDATE SET
-                name = excluded.name,
-                codec = excluded.codec,
-                width = excluded.width,
-                height = excluded.height,
-                duration = excluded.duration,
-                has_subtitles = excluded.has_subtitles",
+                name = excluded.name",
             params![
                 video.name,
                 video.path,
-                video.codec,
-                video.width,
-                video.height,
-                video.duration,
-                video.has_subtitles as i32,
                 video.created_at,
             ],
         )?;
@@ -82,26 +67,16 @@ impl Database {
         let mut count = 0;
         {
             let mut stmt = tx.prepare(
-                "INSERT INTO Video (name, path, codec, width, height, duration, has_subtitles, created_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+                "INSERT INTO Video (name, path, created_at)
+                 VALUES (?1, ?2, ?3)
                  ON CONFLICT(path) DO UPDATE SET
-                    name = excluded.name,
-                    codec = excluded.codec,
-                    width = excluded.width,
-                    height = excluded.height,
-                    duration = excluded.duration,
-                    has_subtitles = excluded.has_subtitles"
+                    name = excluded.name"
             )?;
 
             for video in videos {
                 stmt.execute(params![
                     video.name,
                     video.path,
-                    video.codec,
-                    video.width,
-                    video.height,
-                    video.duration,
-                    video.has_subtitles as i32,
                     video.created_at,
                 ])?;
                 count += 1;
@@ -145,7 +120,7 @@ impl Database {
 
     pub fn get_all_videos(&self) -> Result<Vec<VideoRecord>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, path, codec, width, height, duration, has_subtitles, created_at
+            "SELECT id, name, path, created_at
              FROM Video ORDER BY name ASC",
         )?;
 
@@ -154,12 +129,7 @@ impl Database {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 path: row.get(2)?,
-                codec: row.get(3)?,
-                width: row.get(4)?,
-                height: row.get(5)?,
-                duration: row.get(6)?,
-                has_subtitles: row.get::<_, i32>(7)? != 0,
-                created_at: row.get(8)?,
+                created_at: row.get(3)?,
             })
         })?;
 
@@ -168,17 +138,6 @@ impl Database {
             videos.push(r?);
         }
         Ok(videos)
-    }
-
-    pub fn check_video_subs(&self, file_path: &str) -> Result<bool> {
-        let mut stmt = self.conn.prepare("SELECT has_subtitles FROM Video WHERE path = ?1 LIMIT 1")?;
-        let mut rows = stmt.query([file_path])?;
-        if let Some(row) = rows.next()? {
-            let has_subs: i32 = row.get(0)?;
-            Ok(has_subs != 0)
-        } else {
-            Ok(false)
-        }
     }
 
     pub fn search_videos(&self, query_str: &str, folders: &[String]) -> Result<Vec<VideoRecord>> {
@@ -227,10 +186,10 @@ impl Database {
         }
 
         let query = if where_conditions.is_empty() {
-            "SELECT id, name, path, codec, width, height, duration, has_subtitles, created_at FROM Video ORDER BY path ASC".to_string()
+            "SELECT id, name, path, created_at FROM Video ORDER BY path ASC".to_string()
         } else {
             format!(
-                "SELECT id, name, path, codec, width, height, duration, has_subtitles, created_at FROM Video WHERE {} ORDER BY path ASC",
+                "SELECT id, name, path, created_at FROM Video WHERE {} ORDER BY path ASC",
                 where_conditions.join(" AND ")
             )
         };
@@ -246,12 +205,7 @@ impl Database {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 path: row.get(2)?,
-                codec: row.get(3)?,
-                width: row.get(4)?,
-                height: row.get(5)?,
-                duration: row.get(6)?,
-                has_subtitles: row.get::<_, i32>(7)? != 0,
-                created_at: row.get(8)?,
+                created_at: row.get(3)?,
             })
         })?;
 
@@ -300,11 +254,6 @@ mod tests {
             id: 0,
             name: "Ambient Video 1".to_string(),
             path: "/media/ambient1.mp4".to_string(),
-            codec: "hevc-10bit".to_string(),
-            width: 3840,
-            height: 2160,
-            duration: 120.5,
-            has_subtitles: true,
             created_at: 1000,
         };
 
@@ -314,9 +263,6 @@ mod tests {
         let search_results = db.search_videos("ambient", &[]).unwrap();
         assert_eq!(search_results.len(), 1);
         assert_eq!(search_results[0].name, "Ambient Video 1");
-
-        let subs = db.check_video_subs("/media/ambient1.mp4").unwrap();
-        assert!(subs);
 
         let mut db = db;
         let pruned = db.prune_missing_videos(&[]).unwrap();
