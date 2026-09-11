@@ -131,9 +131,9 @@ impl ScrollEngine {
         offscreen_players
     }
 
-    /// Check if the bottom edge of the content has left empty space on the screen.
+    /// Check if the bottom edge of the content has left empty space on the screen (with optional lookahead margin).
     /// Returns the target `y` coordinate where a new player should be spawned, or None if screen is full.
-    pub fn needs_new_player(&self) -> Option<f32> {
+    pub fn needs_new_player_with_margin(&self, margin: f32) -> Option<f32> {
         if self.items.is_empty() {
             return Some(0.0);
         }
@@ -146,11 +146,17 @@ impl ScrollEngine {
             }
         }
 
-        if max_bottom < self.window_height {
+        if max_bottom < self.window_height + margin {
             Some(max_bottom)
         } else {
             None
         }
+    }
+
+    /// Check if the bottom edge of the content has left empty space on the screen.
+    /// Returns the target `y` coordinate where a new player should be spawned, or None if screen is full.
+    pub fn needs_new_player(&self) -> Option<f32> {
+        self.needs_new_player_with_margin(0.0)
     }
 
     /// Calculate the volume (0.0 to 1.0) for a given player based on its visibility intersection.
@@ -251,5 +257,17 @@ mod tests {
     fn test_scroll_engine_empty_spawn() {
         let engine = ScrollEngine::new(1000.0);
         assert_eq!(engine.needs_new_player(), Some(0.0));
+    }
+
+    #[test]
+    fn test_scroll_engine_lookahead_margin() {
+        let mut engine = ScrollEngine::new(1000.0);
+        engine.add_item(1, 0.0, 1050.0); // bottom at 1050 > 1000
+
+        // Without margin: bottom is 1050 >= 1000, so None
+        assert_eq!(engine.needs_new_player(), None);
+
+        // With 100px margin: threshold is 1100 > 1050, so returns Some(1050)
+        assert_eq!(engine.needs_new_player_with_margin(100.0), Some(1050.0));
     }
 }
