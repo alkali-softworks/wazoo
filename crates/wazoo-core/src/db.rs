@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::Path;
 use rusqlite::{params, Connection, Result};
 use crate::models::VideoRecord;
@@ -104,6 +105,29 @@ impl Database {
                     video.created_at,
                 ])?;
                 count += 1;
+            }
+        }
+        tx.commit()?;
+        Ok(count)
+    }
+
+    pub fn prune_missing_videos(&mut self, existing_paths: &[String]) -> Result<usize> {
+        let all_db = self.get_all_videos()?;
+        let path_set: HashSet<&str> = existing_paths.iter().map(|s| s.as_str()).collect();
+        let stale: Vec<i64> = all_db
+            .into_iter()
+            .filter(|v| !path_set.contains(v.path.as_str()))
+            .map(|v| v.id)
+            .collect();
+        if stale.is_empty() {
+            return Ok(0);
+        }
+        let tx = self.conn.transaction()?;
+        let count = stale.len();
+        {
+            let mut stmt = tx.prepare("DELETE FROM Video WHERE id = ?1")?;
+            for id in &stale {
+                stmt.execute(params![id])?;
             }
         }
         tx.commit()?;
@@ -293,5 +317,10 @@ mod tests {
 
         let subs = db.check_video_subs("/media/ambient1.mp4").unwrap();
         assert!(subs);
+
+        let mut db = db;
+        let pruned = db.prune_missing_videos(&[]).unwrap();
+        assert_eq!(pruned, 1);
+        assert_eq!(db.get_video_count().unwrap(), 0);
     }
 }

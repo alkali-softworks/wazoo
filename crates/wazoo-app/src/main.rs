@@ -3,6 +3,7 @@ mod theme;
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::time::Duration;
+use iced::futures::SinkExt;
 use iced::{
     keyboard::{key::Named, Key},
     widget::{button, column, container, mouse_area, row, scrollable, slider, svg, text, text_input, Space, Stack},
@@ -10,7 +11,7 @@ use iced::{
 };
 use wazoo_core::{ConfigManager, Database, LayoutMode, PlaybackMode, VideoRecord, WazooSettings};
 use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, VideoHandle};
-use wazoo_scanner::{ScanProgress, Scanner};
+use wazoo_scanner::{ScanProgress, ScanStage, Scanner};
 
 static APP_ICON_BYTES: &[u8] = include_bytes!("../resources/icon.png");
 
@@ -906,19 +907,46 @@ impl WazooApp {
             Message::StartScan => {
                 if !self.is_scanning && !self.settings.media_folders.is_empty() {
                     self.is_scanning = true;
+                    self.scan_progress = None;
                     let folders = self.settings.media_folders.clone();
                     let db_path = self.config_mgr.database_path();
 
-                    return Task::perform(
-                        async move {
-                            let scanner = Scanner::new(None);
-                            scanner.scan_and_index(&folders, db_path, None).await
-                        },
-                        Message::ScanFinished,
-                    );
+                    return Task::stream(iced::stream::channel(100, |mut output: iced::futures::channel::mpsc::Sender<Message>| async move {
+                        let (tx, mut rx) = tokio::sync::mpsc::channel(100);
+
+                        let scan_handle = tokio::spawn(async move {
+                            let scanner = Scanner::default();
+                            scanner.scan_and_index(&folders, db_path, Some(tx)).await
+                        });
+
+                        while let Some(progress) = rx.recv().await {
+                            let _ = output.send(Message::ScanProgressUpdate(progress)).await;
+                        }
+
+                        let res = match scan_handle.await {
+                            Ok(inner_res) => inner_res,
+                            Err(join_err) => Err(join_err.to_string()),
+                        };
+
+                        let _ = output.send(Message::ScanFinished(res)).await;
+                    }));
                 }
             }
             Message::ScanProgressUpdate(progress) => {
+                match progress.stage {
+                    ScanStage::Listing => {
+                        if progress.processed > 0 {
+                            self.toast_message = Some(format!("Listing files... ({} found)", progress.processed));
+                            self.toast_time_remaining = 2;
+                        }
+                    }
+                    ScanStage::Indexing => {
+                        if !progress.current_name.is_empty() {
+                            self.toast_message = Some(format!("Added: {} ({}%)", progress.current_name, progress.percent));
+                            self.toast_time_remaining = 2;
+                        }
+                    }
+                }
                 self.scan_progress = Some(progress);
             }
             Message::ScanFinished(res) => {
@@ -1862,6 +1890,38 @@ impl WazooApp {
 
         let opacity_val = (self.settings.window_opacity * 100.0).round() as u32;
 
+        let scan_btn_text = if self.is_scanning {
+            if let Some(ref progress) = self.scan_progress {
+                match progress.stage {
+                    ScanStage::Listing => {
+                        if progress.processed == 0 {
+                            "Listing files...".to_string()
+                        } else {
+                            format!("Listing files... ({} found)", progress.processed)
+                        }
+                    }
+                    ScanStage::Indexing => {
+                        format!("Loading... {}% ({} files)", progress.percent, progress.total)
+                    }
+                }
+            } else {
+                "Listing files...".to_string()
+            }
+        } else {
+            "Scan Folders".to_string()
+        };
+
+        let scan_btn = if self.is_scanning {
+            button(text(scan_btn_text))
+                .style(theme::action_button_style)
+                .padding([8, 14])
+        } else {
+            button(text(scan_btn_text))
+                .style(theme::action_button_style)
+                .on_press(Message::StartScan)
+                .padding([8, 14])
+        };
+
         let content = column![
             row![
                 text("Settings").size(20).color(iced::Color::WHITE),
@@ -1890,44 +1950,9 @@ impl WazooApp {
                     .style(theme::action_button_style)
                     .on_press(Message::PickFolders)
                     .padding([8, 14]),
-                button(text(if self.is_scanning { "Scanning..." } else { "Scan Folders" }))
-                    .style(theme::action_button_style)
-                    .on_press(Message::StartScan)
-                    .padding([8, 14]),
+                scan_btn,
             ]
             .spacing(10),
-            row![
-                text("Players count:").size(13).color(theme::COLOR_TEXT_MUTED),
-                button(text("1")).style(theme::action_button_style).on_press(Message::SetPlayerCount(1)).padding([4, 10]),
-                button(text("2")).style(theme::action_button_style).on_press(Message::SetPlayerCount(2)).padding([4, 10]),
-                button(text("3")).style(theme::action_button_style).on_press(Message::SetPlayerCount(3)).padding([4, 10]),
-                button(text("4")).style(theme::action_button_style).on_press(Message::SetPlayerCount(4)).padding([4, 10]),
-                button(text("6")).style(theme::action_button_style).on_press(Message::SetPlayerCount(6)).padding([4, 10]),
-                button(text("8")).style(theme::action_button_style).on_press(Message::SetPlayerCount(8)).padding([4, 10]),
-            ]
-            .spacing(8)
-            .align_y(Alignment::Center),
-            row![
-                text("WiFi / Samba Buffer:").size(13).color(theme::COLOR_TEXT_MUTED),
-                button(text(if self.settings.buffer_duration_secs == 5 { "5s ★" } else { "5s" }))
-                    .style(theme::action_button_style)
-                    .on_press(Message::SetBufferDuration(5))
-                    .padding([4, 8]),
-                button(text(if self.settings.buffer_duration_secs == 10 { "10s ★" } else { "10s" }))
-                    .style(theme::action_button_style)
-                    .on_press(Message::SetBufferDuration(10))
-                    .padding([4, 8]),
-                button(text(if self.settings.buffer_duration_secs == 20 { "20s ★" } else { "20s" }))
-                    .style(theme::action_button_style)
-                    .on_press(Message::SetBufferDuration(20))
-                    .padding([4, 8]),
-                button(text(if self.settings.buffer_duration_secs == 30 { "30s ★" } else { "30s" }))
-                    .style(theme::action_button_style)
-                    .on_press(Message::SetBufferDuration(30))
-                    .padding([4, 8]),
-            ]
-            .spacing(8)
-            .align_y(Alignment::Center),
             text(format!("Total Videos: {}", self.available_videos.len()))
                 .size(13)
                 .color(theme::COLOR_TEXT_MUTED),
