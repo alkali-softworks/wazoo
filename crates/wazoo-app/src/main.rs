@@ -1169,6 +1169,10 @@ impl WazooApp {
                 self.show_search_modal = true;
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
+                return Task::batch([
+                    iced::widget::operation::focus("search_input"),
+                    iced::widget::operation::select_all("search_input"),
+                ]);
             }
             Message::CloseSearchModal => {
                 self.show_search_modal = false;
@@ -2522,6 +2526,7 @@ impl WazooApp {
                 scrollable(folder_chips).direction(scrollable::Direction::Horizontal(scrollable::Scrollbar::default())),
                 row![
                     text_input("Search videos...", &self.search_input)
+                        .id("search_input")
                         .on_input(Message::SearchInputChanged)
                         .on_submit(Message::PerformSearch)
                         .style(theme::dark_input_style)
