@@ -858,16 +858,7 @@ impl WazooApp {
                     self.toast_time_remaining = 3;
 
                     if !self.is_scanning && !self.settings.media_folders.is_empty() {
-                        self.is_scanning = true;
-                        let folders = self.settings.media_folders.clone();
-                        let db_path = self.config_mgr.database_path();
-                        return Task::perform(
-                            async move {
-                                let scanner = Scanner::new(None);
-                                scanner.scan_and_index(&folders, db_path, None).await
-                            },
-                            Message::ScanFinished,
-                        );
+                        return self.update(Message::StartScan);
                     }
                 }
             }
@@ -884,17 +875,8 @@ impl WazooApp {
                         self.toast_message = Some(format!("Added folder: {trimmed}"));
                         self.toast_time_remaining = 3;
 
-                        if !self.is_scanning {
-                            self.is_scanning = true;
-                            let folders = self.settings.media_folders.clone();
-                            let db_path = self.config_mgr.database_path();
-                            return Task::perform(
-                                async move {
-                                    let scanner = Scanner::new(None);
-                                    scanner.scan_and_index(&folders, db_path, None).await
-                                },
-                                Message::ScanFinished,
-                            );
+                        if !self.is_scanning && !self.settings.media_folders.is_empty() {
+                            return self.update(Message::StartScan);
                         }
                     } else {
                         self.folder_input.clear();
