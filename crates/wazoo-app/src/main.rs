@@ -76,6 +76,8 @@ pub enum Message {
     OpenHelpModal,
     CloseHelpModal,
     FolderInputChanged(String),
+    PickFolders,
+    FoldersSelected(Vec<String>),
     AddMediaFolder,
     RemoveMediaFolder(String),
     StartScan,
@@ -469,15 +471,88 @@ impl WazooApp {
             Message::CloseHelpModal => {
                 self.show_help_modal = false;
             }
+            Message::PickFolders => {
+                let starting_dir = self.settings.media_folders.first().cloned();
+                return Task::perform(
+                    async move {
+                        let mut dialog = rfd::AsyncFileDialog::new()
+                            .set_title("Select Media Folder(s)");
+                        if let Some(ref dir) = starting_dir {
+                            dialog = dialog.set_directory(dir);
+                        }
+                        if let Some(handles) = dialog.pick_folders().await {
+                            handles
+                                .into_iter()
+                                .map(|h| h.path().to_string_lossy().to_string())
+                                .collect()
+                        } else {
+                            Vec::new()
+                        }
+                    },
+                    Message::FoldersSelected,
+                );
+            }
+            Message::FoldersSelected(folders) => {
+                if folders.is_empty() {
+                    return Task::none();
+                }
+                let mut added_any = false;
+                for folder in folders {
+                    let trimmed = folder.trim().to_string();
+                    if !trimmed.is_empty() && !self.settings.media_folders.contains(&trimmed) {
+                        self.settings.media_folders.push(trimmed);
+                        added_any = true;
+                    }
+                }
+                if added_any {
+                    let _ = self.config_mgr.save_settings(&self.settings);
+                    self.toast_message = Some("Added folder(s). Starting library scan...".to_string());
+                    self.toast_time_remaining = 3;
+
+                    if !self.is_scanning && !self.settings.media_folders.is_empty() {
+                        self.is_scanning = true;
+                        let folders = self.settings.media_folders.clone();
+                        let db_path = self.config_mgr.database_path();
+                        return Task::perform(
+                            async move {
+                                let scanner = Scanner::new(None);
+                                scanner.scan_and_index(&folders, db_path, None).await
+                            },
+                            Message::ScanFinished,
+                        );
+                    }
+                }
+            }
             Message::FolderInputChanged(val) => {
                 self.folder_input = val;
             }
             Message::AddMediaFolder => {
                 let trimmed = self.folder_input.trim().to_string();
-                if !trimmed.is_empty() && !self.settings.media_folders.contains(&trimmed) {
-                    self.settings.media_folders.push(trimmed);
-                    self.folder_input.clear();
-                    let _ = self.config_mgr.save_settings(&self.settings);
+                if !trimmed.is_empty() {
+                    if !self.settings.media_folders.contains(&trimmed) {
+                        self.settings.media_folders.push(trimmed.clone());
+                        self.folder_input.clear();
+                        let _ = self.config_mgr.save_settings(&self.settings);
+                        self.toast_message = Some(format!("Added folder: {trimmed}"));
+                        self.toast_time_remaining = 3;
+
+                        if !self.is_scanning {
+                            self.is_scanning = true;
+                            let folders = self.settings.media_folders.clone();
+                            let db_path = self.config_mgr.database_path();
+                            return Task::perform(
+                                async move {
+                                    let scanner = Scanner::new(None);
+                                    scanner.scan_and_index(&folders, db_path, None).await
+                                },
+                                Message::ScanFinished,
+                            );
+                        }
+                    } else {
+                        self.folder_input.clear();
+                    }
+                } else {
+                    return Task::done(Message::PickFolders);
                 }
             }
             Message::RemoveMediaFolder(folder) => {
@@ -511,6 +586,12 @@ impl WazooApp {
                         self.toast_time_remaining = 3;
                         if let Ok(videos) = self.db.get_all_videos() {
                             self.available_videos = videos;
+                            if self.players.is_empty() && !self.available_videos.is_empty() {
+                                let count = self.settings.player_count.clamp(1, 12);
+                                for _ in 0..count {
+                                    self.add_player_internal();
+                                }
+                            }
                         }
                     }
                     Err(err) => {
@@ -760,29 +841,56 @@ impl WazooApp {
     }
 
     fn view_welcome(&self) -> Element<'_, Message> {
-        container(
-            column![
-                text("Welcome to Wazoo").size(28),
-                text("Ambient media engine for non-stop viewing").size(16),
-                text("No videos indexed yet. Add your media folder to start:").size(14),
-                row![
-                    text_input("Enter folder path (e.g. /home/user/Videos)", &self.folder_input)
-                        .on_input(Message::FolderInputChanged)
-                        .padding(8)
-                        .width(Length::Fixed(400.0)),
-                    button(text("Add Folder")).on_press(Message::AddMediaFolder),
-                    button(text("Start Scan")).on_press(Message::StartScan),
-                ]
-                .spacing(10),
+        let mut col = column![
+            text("Welcome to Wazoo").size(28),
+            text("Ambient media engine for non-stop viewing").size(16),
+            text("No videos indexed yet. Add your media folder(s) to start:").size(14),
+            row![
+                button(text("📁 Add Folder")).on_press(Message::PickFolders).padding(10),
+                button(text(if self.is_scanning { "Scanning..." } else { "Start Scan" }))
+                    .on_press(Message::StartScan)
+                    .padding(10),
             ]
-            .spacing(16)
-            .align_x(Alignment::Center),
-        )
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .center_x(Length::Fill)
-        .center_y(Length::Fill)
-        .into()
+            .spacing(12),
+            row![
+                text_input("Or enter folder path manually...", &self.folder_input)
+                    .on_input(Message::FolderInputChanged)
+                    .on_submit(Message::AddMediaFolder)
+                    .padding(8)
+                    .width(Length::Fixed(350.0)),
+                button(text("Add Path")).on_press(Message::AddMediaFolder).padding(8),
+            ]
+            .spacing(10),
+        ]
+        .spacing(16)
+        .align_x(Alignment::Center);
+
+        if !self.settings.media_folders.is_empty() {
+            let mut folders_col = column![text("Configured Folders:").size(14)].spacing(6);
+            for f in &self.settings.media_folders {
+                let f_clone = f.clone();
+                folders_col = folders_col.push(
+                    row![
+                        text(format!("• {f}")).size(13),
+                        button(text("✕")).on_press(Message::RemoveMediaFolder(f_clone)),
+                    ]
+                    .spacing(8)
+                    .align_y(Alignment::Center),
+                );
+            }
+            col = col.push(folders_col);
+        }
+
+        if self.is_scanning {
+            col = col.push(text("Scanning media folders and indexing videos...").size(13));
+        }
+
+        container(col)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill)
+            .into()
     }
 
     fn view_search_modal(&self) -> Element<'_, Message> {
@@ -817,9 +925,11 @@ impl WazooApp {
             folders_col = folders_col.push(
                 row![
                     text(folder).size(13),
+                    Space::new().width(Length::Fill),
                     button(text("Remove")).on_press(Message::RemoveMediaFolder(f)),
                 ]
-                .spacing(10),
+                .spacing(10)
+                .align_y(Alignment::Center),
             );
         }
 
@@ -827,12 +937,19 @@ impl WazooApp {
             text("Wazoo Settings").size(22),
             folders_col,
             row![
-                text_input("New folder path...", &self.folder_input)
-                    .on_input(Message::FolderInputChanged)
-                    .width(Length::Fixed(300.0)),
-                button(text("Add")).on_press(Message::AddMediaFolder),
+                button(text("📁 Add Folder")).on_press(Message::PickFolders).padding(8),
                 button(text(if self.is_scanning { "Scanning..." } else { "Re-scan Library" }))
-                    .on_press(Message::StartScan),
+                    .on_press(Message::StartScan)
+                    .padding(8),
+            ]
+            .spacing(10),
+            row![
+                text_input("Or enter folder path manually...", &self.folder_input)
+                    .on_input(Message::FolderInputChanged)
+                    .on_submit(Message::AddMediaFolder)
+                    .width(Length::Fixed(280.0))
+                    .padding(6),
+                button(text("Add Path")).on_press(Message::AddMediaFolder).padding(6),
             ]
             .spacing(8),
             row![
@@ -845,7 +962,7 @@ impl WazooApp {
                 button(text("8")).on_press(Message::SetPlayerCount(8)),
             ]
             .spacing(8),
-            button(text("Done")).on_press(Message::CloseSettingsModal),
+            button(text("Done")).on_press(Message::CloseSettingsModal).padding(8),
         ]
         .spacing(16)
         .padding(24);
