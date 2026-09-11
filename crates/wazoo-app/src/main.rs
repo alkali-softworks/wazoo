@@ -890,6 +890,16 @@ impl WazooApp {
                 }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.set_volume(vol);
+                    if vol > 0.0 {
+                        if p.state.is_muted {
+                            p.set_muted(false);
+                        }
+                        self.settings.is_global_muted = false;
+                        self.scroll_engine.is_global_muted = false;
+                        let _ = self.config_mgr.save_settings(&self.settings);
+                    } else {
+                        p.set_muted(true);
+                    }
                 }
                 self.player_overlay_ticks = 120;
             }
@@ -900,10 +910,15 @@ impl WazooApp {
                 if let Some(id) = self.focused_player_id() {
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                         p.adjust_volume(delta);
-                        if delta > 0.0 && p.state.is_muted {
-                            p.set_muted(false);
+                        if p.state.volume > 0.0 {
+                            if p.state.is_muted {
+                                p.set_muted(false);
+                            }
                             self.settings.is_global_muted = false;
+                            self.scroll_engine.is_global_muted = false;
                             let _ = self.config_mgr.save_settings(&self.settings);
+                        } else {
+                            p.set_muted(true);
                         }
                         self.toast_message = Some(format!("Volume: {:.0}%", p.state.volume * 100.0));
                         self.toast_time_remaining = 1;
