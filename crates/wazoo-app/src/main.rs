@@ -714,19 +714,27 @@ impl WazooApp {
             }
             Message::WatchdogTick => {
                 // Check if any video finished or is stuck
-                let finished_or_stuck: Vec<PlayerId> = self
-                    .players
-                    .iter_mut()
-                    .filter_map(|p| {
-                        if p.is_finished() || p.check_stuck() {
-                            Some(p.id)
-                        } else {
-                            None
-                        }
-                    })
-                    .collect();
+                let mut finished_ids = Vec::new();
+                let mut stuck_ids = Vec::new();
 
-                for id in finished_or_stuck {
+                for p in &mut self.players {
+                    if p.is_finished() {
+                        finished_ids.push(p.id);
+                    } else if p.check_stuck() {
+                        stuck_ids.push(p.id);
+                    }
+                }
+
+                for id in finished_ids {
+                    log::info!("Player {id} video reached end, advancing to next video");
+                    let _ = self.update(Message::NextVideo(id));
+                }
+
+                for id in stuck_ids {
+                    log::warn!(
+                        "Player {id} playback stuck for {}s, skipping to next video",
+                        VideoHandle::STUCK_THRESHOLD_SECONDS
+                    );
                     let _ = self.update(Message::NextVideo(id));
                 }
 

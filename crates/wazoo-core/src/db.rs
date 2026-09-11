@@ -269,7 +269,7 @@ mod tests {
 
     #[test]
     fn test_db_operations() {
-        let mut db = Database::open_in_memory().unwrap();
+        let db = Database::open_in_memory().unwrap();
         assert_eq!(db.get_video_count().unwrap(), 0);
 
         let video = VideoRecord {
