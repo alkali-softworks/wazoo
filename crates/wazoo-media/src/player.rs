@@ -111,9 +111,9 @@ impl VideoHandle {
                 }
             };
 
-            // Configure libmpv for optimal ambient media playback (wasapi on Windows, pulse/pipewire/alsa on Linux)
+            // Configure libmpv for optimal ambient media playback (coreaudio on macOS, wasapi on Windows, pulse/pipewire/alsa on Linux)
             set_opt("vo", "libmpv");
-            set_opt("ao", "wasapi,pulse,pipewire,alsa,null");
+            set_opt("ao", "coreaudio,wasapi,pulse,pipewire,alsa,null");
             set_opt("hwdec", "auto-safe");
             set_opt("demuxer-max-bytes", &format!("{}M", config.size_mb.max(16)));
             set_opt("demuxer-readahead-secs", &format!("{}", config.duration_secs.max(2)));

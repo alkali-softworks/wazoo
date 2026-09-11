@@ -21,3 +21,6 @@ rand.workspace = true
 directories.workspace = true
 rfd.workspace = true
 
+[target.'cfg(target_os = "linux")'.dependencies]
+iced = { version = "0.14.0", features = ["wayland", "x11"] }
+
