@@ -170,6 +170,7 @@ pub struct ScanProgress {
     pub total: usize,
     pub percent: usize,
     pub current_name: String,
+    pub files_found: usize,
 }
 
 pub struct Scanner {
@@ -213,54 +214,141 @@ impl Scanner {
         progress_tx: Option<mpsc::Sender<ScanProgress>>,
     ) -> Result<usize, String> {
         let mut files = Vec::new();
+        let mut subdirs = Vec::new();
+        let mut seen_files = std::collections::HashSet::new();
+
+        // 1. Initial pass: Read immediate entries of each configured root folder
         for folder in folders {
             let path = Path::new(folder);
             if !path.is_dir() {
                 continue;
             }
 
-            for entry in WalkDir::new(path).into_iter().filter_map(|e| e.ok()) {
-                let p = entry.path();
-                if p.is_file() && is_video_file(p) {
-                    files.push(p.to_path_buf());
-                    if let Some(ref tx) = progress_tx {
-                        if files.len() % 25 == 0 {
-                            let name = p.file_name().and_then(|s| s.to_str()).unwrap_or("").to_string();
-                            let _ = tx.send(ScanProgress {
-                                stage: ScanStage::Listing,
-                                processed: files.len(),
-                                total: 0,
-                                percent: 0,
-                                current_name: name,
-                            }).await;
+            if let Ok(entries) = std::fs::read_dir(path) {
+                for entry in entries.filter_map(|e| e.ok()) {
+                    let p = entry.path();
+                    if p.is_dir() {
+                        subdirs.push(p);
+                    } else if is_video_file(&p) {
+                        if seen_files.insert(p.clone()) {
+                            files.push(p);
                         }
                     }
                 }
             }
         }
 
-        let total = files.len();
-        if total == 0 {
-            if let Some(ref tx) = progress_tx {
-                let _ = tx.send(ScanProgress {
-                    stage: ScanStage::Listing,
-                    processed: 0,
-                    total: 0,
-                    percent: 100,
-                    current_name: String::new(),
-                }).await;
+        // Expand container directories if we have a small set of directories (< 25)
+        // so progress is tracked per show/movie folder rather than across an entire disk or root.
+        while subdirs.len() < 25 {
+            let mut any_expanded = false;
+            let mut next_subdirs = Vec::new();
+
+            for dir in subdirs {
+                let mut child_dirs = Vec::new();
+                let mut child_videos = Vec::new();
+
+                if let Ok(entries) = std::fs::read_dir(&dir) {
+                    for entry in entries.filter_map(|e| e.ok()) {
+                        let p = entry.path();
+                        if p.is_dir() {
+                            child_dirs.push(p);
+                        } else if is_video_file(&p) {
+                            child_videos.push(p);
+                        }
+                    }
+                }
+
+                if !child_dirs.is_empty() && (child_videos.is_empty() || child_dirs.len() > 1) {
+                    for v in child_videos {
+                        if seen_files.insert(v.clone()) {
+                            files.push(v);
+                        }
+                    }
+                    next_subdirs.extend(child_dirs);
+                    any_expanded = true;
+                } else {
+                    next_subdirs.push(dir);
+                }
             }
-            return Ok(0);
+
+            subdirs = next_subdirs;
+            if !any_expanded {
+                break;
+            }
         }
 
-        if let Some(ref tx) = progress_tx {
+        let total_dirs = subdirs.len();
+        if total_dirs > 0 {
+            for (idx, subdir) in subdirs.into_iter().enumerate() {
+                let dir_name = subdir
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("")
+                    .to_string();
+
+                let percent = (idx * 100) / total_dirs;
+
+                if let Some(ref tx) = progress_tx {
+                    let _ = tx.send(ScanProgress {
+                        stage: ScanStage::Listing,
+                        processed: idx,
+                        total: total_dirs,
+                        percent,
+                        current_name: dir_name.clone(),
+                        files_found: files.len(),
+                    }).await;
+                }
+
+                let prev_files = files.len();
+                for entry in WalkDir::new(&subdir).into_iter().filter_map(|e| e.ok()) {
+                    let p = entry.path();
+                    if p.is_file() && is_video_file(p) {
+                        let pb = p.to_path_buf();
+                        if seen_files.insert(pb.clone()) {
+                            files.push(pb);
+                            if (files.len() - prev_files) % 15 == 0 {
+                                if let Some(ref tx) = progress_tx {
+                                    let _ = tx.send(ScanProgress {
+                                        stage: ScanStage::Listing,
+                                        processed: idx,
+                                        total: total_dirs,
+                                        percent,
+                                        current_name: dir_name.clone(),
+                                        files_found: files.len(),
+                                    }).await;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                let end_percent = ((idx + 1) * 100) / total_dirs;
+                if let Some(ref tx) = progress_tx {
+                    let _ = tx.send(ScanProgress {
+                        stage: ScanStage::Listing,
+                        processed: idx + 1,
+                        total: total_dirs,
+                        percent: end_percent,
+                        current_name: dir_name,
+                        files_found: files.len(),
+                    }).await;
+                }
+            }
+        } else if let Some(ref tx) = progress_tx {
             let _ = tx.send(ScanProgress {
                 stage: ScanStage::Listing,
-                processed: total,
-                total,
+                processed: 1,
+                total: 1,
                 percent: 100,
-                current_name: format!("{total} files discovered"),
+                current_name: format!("{} files discovered", files.len()),
+                files_found: files.len(),
             }).await;
+        }
+
+        let total = files.len();
+        if total == 0 {
+            return Ok(0);
         }
 
         let mut db = Database::open(&db_path).map_err(|e| e.to_string())?;
@@ -302,6 +390,7 @@ impl Scanner {
                         total,
                         percent,
                         current_name: cleaned_name,
+                        files_found: total,
                     }).await;
                 }
             }
@@ -355,4 +444,39 @@ mod tests {
 
         let _ = std::fs::remove_dir_all(&tmp);
     }
+
+    #[tokio::test]
+    async fn test_scanner_listing_percentage() {
+        let tmp = std::env::temp_dir().join(format!("wazoo_test_pct_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let dir_a = tmp.join("Anime").join("ShowA");
+        let dir_b = tmp.join("Anime").join("ShowB");
+        let _ = std::fs::create_dir_all(&dir_a);
+        let _ = std::fs::create_dir_all(&dir_b);
+        let _ = std::fs::write(dir_a.join("Ep1.mkv"), b"video1");
+        let _ = std::fs::write(dir_a.join("Ep2.mp4"), b"video2");
+        let _ = std::fs::write(dir_b.join("Ep1.mkv"), b"video3");
+        let db_file = tmp.join("test.db");
+
+        let (tx, mut rx) = tokio::sync::mpsc::channel(20);
+        let scanner = Scanner::default();
+        let folders = vec![tmp.join("Anime").to_string_lossy().to_string()];
+        let res = scanner.scan_and_index(&folders, db_file, Some(tx)).await;
+        assert_eq!(res.unwrap(), 3);
+
+        let mut listing_stages = Vec::new();
+        while let Ok(progress) = rx.try_recv() {
+            if matches!(progress.stage, ScanStage::Listing) {
+                listing_stages.push(progress);
+            }
+        }
+
+        assert!(!listing_stages.is_empty(), "Should have received Listing progress events");
+        // Verify we get percentage and file count
+        let last_listing = listing_stages.last().unwrap();
+        assert_eq!(last_listing.percent, 100);
+        assert_eq!(last_listing.files_found, 3);
+
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
 }
+
