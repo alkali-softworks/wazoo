@@ -1,3 +1,4 @@
+mod cursor;
 mod format;
 mod theme;
 
@@ -1606,15 +1607,17 @@ impl WazooApp {
             .style(theme::progress_slider_style)
             .width(Length::Fill);
 
-            let progress_bar_with_timestamp = Stack::new()
-                .push(seek_slider)
-                .push(
-                    container(text(time_str).size(13).color(iced::Color::WHITE))
-                        .width(Length::Fill)
-                        .height(Length::Fixed(22.0))
-                        .center_x(Length::Fill)
-                        .center_y(Length::Fill),
-                );
+            let progress_bar_with_timestamp = cursor::PointerCursor::new(
+                Stack::new()
+                    .push(seek_slider)
+                    .push(
+                        container(text(time_str).size(13).color(iced::Color::WHITE))
+                            .width(Length::Fill)
+                            .height(Length::Fixed(22.0))
+                            .center_x(Length::Fill)
+                            .center_y(Length::Fill),
+                    ),
+            );
 
             let play_pause_icon = if p.state.is_playing {
                 svg(svg::Handle::from_memory(SVG_PLAYER_PAUSE))
@@ -1657,14 +1660,16 @@ impl WazooApp {
                     .style(theme::player_control_button_style)
                     .on_press(Message::TogglePlayerMute(player_id))
                     .padding([4, 6]),
-                slider(
-                    0.0..=1.0,
-                    p.state.volume as f32,
-                    move |v| Message::SetVolume(player_id, v as f64),
-                )
-                .step(0.01)
-                .style(theme::volume_slider_style)
-                .width(Length::Fixed(80.0)),
+                cursor::PointerCursor::new(
+                    slider(
+                        0.0..=1.0,
+                        p.state.volume as f32,
+                        move |v| Message::SetVolume(player_id, v as f64),
+                    )
+                    .step(0.01)
+                    .style(theme::volume_slider_style)
+                    .width(Length::Fixed(80.0)),
+                ),
                 Space::new().width(Length::Fill),
                 // Right: Play/Pause + Skip Next
                 button(play_pause_icon)
