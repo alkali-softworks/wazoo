@@ -10,7 +10,7 @@ pub struct ConfigManager {
 
 impl ConfigManager {
     pub fn new() -> Self {
-        let proj_dirs = ProjectDirs::from("com", "alkalisoftworks", "wazoo")
+        let proj_dirs = ProjectDirs::from("com", "alkalisoftworks", "wazoo-rs")
             .expect("Unable to determine project directories");
 
         let config_dir = proj_dirs.config_dir().to_path_buf();
@@ -59,5 +59,19 @@ impl ConfigManager {
 impl Default for ConfigManager {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_config_manager_paths() {
+        let mgr = ConfigManager::new();
+        assert!(mgr.config_file_path().to_string_lossy().contains("wazoo-rs"));
+        assert!(mgr.database_path().to_string_lossy().contains("wazoo-rs"));
+        assert!(mgr.config_dir.exists());
+        assert!(mgr.data_dir.exists());
     }
 }
