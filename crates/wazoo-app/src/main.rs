@@ -1,7 +1,7 @@
 use std::time::Duration;
 use iced::{
     keyboard::{key::Named, Key},
-    widget::{button, column, container, row, scrollable, text, text_input, Space},
+    widget::{button, column, container, mouse_area, row, scrollable, slider, text, text_input, Space, Stack},
     window, Alignment, Element, Length, Subscription, Task, Theme,
 };
 use wazoo_core::{ConfigManager, Database, LayoutMode, PlaybackMode, VideoRecord, WazooSettings};
@@ -30,6 +30,7 @@ pub struct WazooApp {
     is_shuffle_mode: bool,
     show_wazoo_controls: bool,
     show_title_overlay: bool,
+    hovered_player_id: Option<PlayerId>,
     subtitles_enabled: bool,
 }
 
@@ -45,7 +46,10 @@ pub enum Message {
     NextVideoFocused,
     PrevVideoFocused,
     Seek(PlayerId, Duration),
+    SeekRatio(PlayerId, f32),
     SeekRelativeFocused(f64),
+    PlayerHovered(PlayerId),
+    PlayerUnhovered(PlayerId),
     SetVolume(PlayerId, f64),
     AdjustVolumeFocused(f64),
     TogglePlayerMute(PlayerId),
@@ -130,7 +134,8 @@ impl WazooApp {
             focused_player_idx: 0,
             is_shuffle_mode: true,
             show_wazoo_controls: true,
-            show_title_overlay: true,
+            show_title_overlay: false,
+            hovered_player_id: None,
             subtitles_enabled: true,
         };
 
@@ -298,8 +303,41 @@ impl WazooApp {
                     p.seek(pos);
                 }
             }
+            Message::SeekRatio(id, ratio) => {
+                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                    self.focused_player_idx = pos;
+                }
+                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                    let dur = p.duration();
+                    if dur > Duration::ZERO {
+                        let target_secs = dur.as_secs_f64() * (ratio.clamp(0.0, 1.0) as f64);
+                        let target = Duration::from_secs_f64(target_secs);
+                        p.seek(target);
+
+                        let pos_s = target.as_secs();
+                        let dur_s = dur.as_secs();
+                        self.toast_message = Some(format!(
+                            "Seek [{:02}:{:02} / {:02}:{:02}]",
+                            pos_s / 60,
+                            pos_s % 60,
+                            dur_s / 60,
+                            dur_s % 60
+                        ));
+                        self.toast_time_remaining = 2;
+                    }
+                }
+            }
+            Message::PlayerHovered(id) => {
+                self.hovered_player_id = Some(id);
+            }
+            Message::PlayerUnhovered(id) => {
+                if self.hovered_player_id == Some(id) {
+                    self.hovered_player_id = None;
+                }
+            }
             Message::SeekRelativeFocused(secs) => {
                 if let Some(id) = self.focused_player_id() {
+                    self.hovered_player_id = Some(id);
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                         p.seek_relative(secs);
                         let pos = p.position();
@@ -828,29 +866,107 @@ impl WazooApp {
     fn view_single_player<'a>(&self, p: &'a VideoHandle) -> Element<'a, Message> {
         let player_id = p.id;
         let is_focused = self.focused_player_id() == Some(player_id);
-        let video_widget = iced_video_player::VideoPlayer::new(&p.video);
+        let is_hovered = self.hovered_player_id == Some(player_id);
 
-        let mut col = column![video_widget];
+        let pos = p.position();
+        let dur = p.duration();
+        let pos_secs = pos.as_secs();
+        let dur_secs = dur.as_secs();
+        let time_str = format!(
+            "{:02}:{:02} / {:02}:{:02}",
+            pos_secs / 60,
+            pos_secs % 60,
+            dur_secs / 60,
+            dur_secs % 60
+        );
 
-        if self.show_title_overlay {
+        let progress_ratio = if dur.as_secs_f64() > 0.0 {
+            (pos.as_secs_f64() / dur.as_secs_f64()).clamp(0.0, 1.0) as f32
+        } else {
+            0.0f32
+        };
+
+        let video_widget = iced_video_player::VideoPlayer::new(&p.video)
+            .width(Length::Fill)
+            .height(Length::Fill);
+
+        let show_overlay = is_hovered || !p.state.is_playing || self.show_title_overlay;
+
+        let mut stack_children: Vec<Element<'a, Message>> = vec![Element::from(video_widget)];
+
+        if show_overlay {
             let focus_indicator = if is_focused { "▶ " } else { "" };
             let title_text = format!("{focus_indicator}{}", p.state.name);
 
-            let info_overlay = row![
-                text(title_text).size(12),
-                Space::new().width(Length::Fill),
-                button(text("⏭")).on_press(Message::NextVideo(player_id)),
-                button(text(if p.state.is_playing { "⏸" } else { "▶" })).on_press(Message::TogglePlay(player_id)),
-                button(text(if p.state.is_muted { "🔇" } else { "🔊" })).on_press(Message::TogglePlayerMute(player_id)),
-            ]
-            .spacing(8)
-            .padding(4);
+            let top_bar = container(
+                row![
+                    text(title_text).size(13).color(iced::Color::WHITE),
+                    Space::new().width(Length::Fill),
+                ]
+                .align_y(Alignment::Center),
+            )
+            .padding(8)
+            .width(Length::Fill)
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.65))),
+                ..Default::default()
+            });
 
-            col = col.push(info_overlay);
+            let seek_bar = slider(
+                0.0..=1.0,
+                progress_ratio,
+                move |ratio| Message::SeekRatio(player_id, ratio),
+            )
+            .step(0.001)
+            .width(Length::Fill);
+
+            let bottom_controls = container(
+                column![
+                    seek_bar,
+                    row![
+                        button(text(if p.state.is_playing { "⏸" } else { "▶" }))
+                            .on_press(Message::TogglePlay(player_id)),
+                        button(text("⏮"))
+                            .on_press(Message::SeekRelativeFocused(-5.0)),
+                        button(text("⏭"))
+                            .on_press(Message::NextVideo(player_id)),
+                        button(text(if p.state.is_muted { "🔇" } else { "🔊" }))
+                            .on_press(Message::TogglePlayerMute(player_id)),
+                        button(text("CC"))
+                            .on_press(Message::ToggleSubtitles),
+                        Space::new().width(Length::Fill),
+                        text(time_str).size(12).color(iced::Color::WHITE),
+                    ]
+                    .spacing(8)
+                    .align_y(Alignment::Center),
+                ]
+                .spacing(4),
+            )
+            .padding(8)
+            .width(Length::Fill)
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.75))),
+                ..Default::default()
+            });
+
+            let overlay_layer = column![
+                top_bar,
+                Space::new().height(Length::Fill),
+                bottom_controls,
+            ]
+            .width(Length::Fill)
+            .height(Length::Fill);
+
+            stack_children.push(Element::from(overlay_layer));
         }
 
-        col.width(Length::Fill)
-            .height(Length::Fill)
+        let player_stack = Stack::with_children(stack_children)
+            .width(Length::Fill)
+            .height(Length::Fill);
+
+        mouse_area(player_stack)
+            .on_enter(Message::PlayerHovered(player_id))
+            .on_exit(Message::PlayerUnhovered(player_id))
             .into()
     }
 
