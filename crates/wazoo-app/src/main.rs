@@ -2202,8 +2202,58 @@ impl WazooApp {
     }
 }
 
+#[cfg(target_os = "linux")]
+fn init_linux_cursor_env() {
+    if std::env::var_os("XCURSOR_SIZE").is_none() {
+        let size = std::process::Command::new("gsettings")
+            .args(["get", "org.gnome.desktop.interface", "cursor-size"])
+            .output()
+            .or_else(|_| {
+                std::process::Command::new("gsettings")
+                    .args(["get", "org.cinnamon.desktop.interface", "cursor-size"])
+                    .output()
+            })
+            .ok()
+            .and_then(|out| {
+                let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                s.parse::<u32>().ok()
+            });
+
+        if let Some(sz) = size {
+            if sz > 0 {
+                std::env::set_var("XCURSOR_SIZE", sz.to_string());
+            }
+        }
+    }
+
+    if std::env::var_os("XCURSOR_THEME").is_none() {
+        let theme = std::process::Command::new("gsettings")
+            .args(["get", "org.gnome.desktop.interface", "cursor-theme"])
+            .output()
+            .or_else(|_| {
+                std::process::Command::new("gsettings")
+                    .args(["get", "org.cinnamon.desktop.interface", "cursor-theme"])
+                    .output()
+            })
+            .ok()
+            .and_then(|out| {
+                let s = String::from_utf8_lossy(&out.stdout)
+                    .trim()
+                    .trim_matches('\'')
+                    .to_string();
+                if s.is_empty() { None } else { Some(s) }
+            });
+
+        if let Some(th) = theme {
+            std::env::set_var("XCURSOR_THEME", th);
+        }
+    }
+}
+
 pub fn main() -> iced::Result {
     env_logger::init();
+    #[cfg(target_os = "linux")]
+    init_linux_cursor_env();
 
     iced::application(WazooApp::new, WazooApp::update, WazooApp::view)
         .title(WazooApp::title)
