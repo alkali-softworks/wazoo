@@ -19,7 +19,7 @@ The original Wazoo was built on Electron. While flexible, running multiple simul
 | **RAM Footprint (4 players)** | ~1.5 GB – 3 GB | **~150 MB – 350 MB** |
 | **H.265 / HEVC 10-bit Playback** | CPU transcode via live FFmpeg | **Native GPU hardware decoding** |
 | **UI Framework** | Vue 3 + Chromium DOM | **Iced 0.14** (`wgpu` accelerated) |
-| **Media Subsystem** | HTML5 `<video>` | **GStreamer 1.0** via `iced_video_player` |
+| **Media Subsystem** | HTML5 `<video>` | **libmpv** (GPU hardware decoding + FFmpeg) |
 | **Database** | `better-sqlite3` + Drizzle | **`rusqlite`** (bundled) with indexed queries |
 | **Startup Time** | ~2–4 seconds | **< 150 ms** |
 
@@ -63,7 +63,7 @@ wazoo-rs/
 ├── crates/
 │   ├── wazoo-core/       # SQLite database, schema, models, & settings persistence
 │   ├── wazoo-scanner/    # Multithreaded media discovery, name cleaning, & metadata probing
-│   ├── wazoo-media/      # GStreamer pipeline wrappers, VideoHandle, & ScrollEngine
+│   ├── wazoo-media/      # libmpv rendering pipeline, VideoHandle, & ScrollEngine
 │   └── wazoo-app/        # Iced 0.14 native desktop GUI (layouts, HUD, modals)
 └── Cargo.toml
 ```
@@ -75,20 +75,18 @@ wazoo-rs/
 ### Prerequisites
 
 #### Linux (Ubuntu/Debian)
-Install GStreamer 1.0 runtime and development packages:
+Install `libmpv` runtime and development packages:
 ```bash
-sudo apt-get install \
-    libgstreamer1.0-dev \
-    libgstreamer-plugins-base1.0-dev \
-    gstreamer1.0-plugins-good \
-    gstreamer1.0-plugins-bad \
-    gstreamer1.0-plugins-ugly \
-    gstreamer1.0-libav
+sudo apt-get install libmpv-dev libmpv2
 ```
-*Note: A local sysroot configuration is bundled in `.cargo/config.toml` for zero-install environments.*
 
-#### Windows & macOS
-GStreamer binaries can be downloaded from the [GStreamer official website](https://gstreamer.freedesktop.org/download/).
+#### macOS
+```bash
+brew install mpv
+```
+
+#### Windows
+`mpv-2.dll` can be obtained from the official mpv Windows builds or libmpv development packages.
 
 ---
 
