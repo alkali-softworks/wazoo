@@ -963,14 +963,11 @@ impl WazooApp {
             0.0f32
         };
 
-        let video_widget = iced::widget::image(p.frame_handle())
-            .content_fit(iced::ContentFit::Contain)
-            .width(Length::Fill)
-            .height(Length::Fill);
+        let video_widget = p.view();
 
         let show_overlay = is_hovered || !p.state.is_playing || self.show_title_overlay;
 
-        let mut stack_children: Vec<Element<'a, Message>> = vec![Element::from(video_widget)];
+        let mut stack_children: Vec<Element<'a, Message>> = vec![video_widget];
 
         if show_overlay {
             let focus_indicator = if is_focused { "▶ " } else { "" };

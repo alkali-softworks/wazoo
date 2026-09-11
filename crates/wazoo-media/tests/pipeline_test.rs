@@ -156,5 +156,8 @@ fn test_av1_ninkoro_playback() {
         println!("NinKoro rendered {} frames smoothly with libmpv", rendered_frames);
         assert!(rendered_frames > 0, "Expected at least 1 rendered frame");
         assert!(handle.duration() > Duration::from_secs(60), "Duration should be anime length (> 60s)");
+
+        // Verify that persistent shader view element can be created
+        let _element = handle.view::<()>();
     }
 }

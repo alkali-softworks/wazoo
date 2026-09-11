@@ -1,8 +1,11 @@
 use std::ffi::{c_int, c_void, CString};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use rand::Rng;
 
 use crate::mpv_ffi;
+use crate::pipeline::FrameData;
 
 pub type PlayerId = usize;
 
@@ -63,6 +66,8 @@ pub struct VideoHandle {
     render_height: u32,
     pixel_buffer: Vec<u8>,
     current_frame: iced::widget::image::Handle,
+    frame: Arc<Mutex<FrameData>>,
+    alive: Arc<AtomicBool>,
     is_eos: bool,
     last_seek_time: Option<Instant>,
 }
@@ -72,6 +77,7 @@ unsafe impl Sync for VideoHandle {}
 
 impl Drop for VideoHandle {
     fn drop(&mut self) {
+        self.alive.store(false, Ordering::SeqCst);
         unsafe {
             if !self.render_ctx.is_null() {
                 mpv_ffi::mpv_render_context_free(self.render_ctx);
@@ -204,6 +210,14 @@ impl VideoHandle {
                 pixel_buffer.clone(),
             );
 
+            let alive = Arc::new(AtomicBool::new(true));
+            let frame = Arc::new(Mutex::new(FrameData {
+                width: render_width,
+                height: render_height,
+                pixels: pixel_buffer.clone(),
+                new_frame: true,
+            }));
+
             let mut state = PlayerState::new(id, file_path.to_string(), name.to_string());
             state.duration = initial_duration;
 
@@ -216,6 +230,8 @@ impl VideoHandle {
                 render_height,
                 pixel_buffer,
                 current_frame,
+                frame,
+                alive,
                 is_eos: false,
                 last_seek_time: None,
             };
@@ -289,6 +305,17 @@ impl VideoHandle {
                         *p |= 0xFF000000;
                     }
 
+                    {
+                        let mut frame_guard = self.frame.lock().unwrap();
+                        frame_guard.width = self.render_width;
+                        frame_guard.height = self.render_height;
+                        if frame_guard.pixels.len() != self.pixel_buffer.len() {
+                            frame_guard.pixels.resize(self.pixel_buffer.len(), 0);
+                        }
+                        frame_guard.pixels.copy_from_slice(&self.pixel_buffer);
+                        frame_guard.new_frame = true;
+                    }
+
                     self.current_frame = iced::widget::image::Handle::from_rgba(
                         self.render_width,
                         self.render_height,
@@ -306,6 +333,16 @@ impl VideoHandle {
         false
     }
 
+    /// Render video frame using a persistent GPU texture pipeline (flicker-free)
+    pub fn view<'a, Message: 'a>(&'a self) -> iced::Element<'a, Message> {
+        let program = crate::pipeline::VideoProgram::new(
+            self.id as u64,
+            Arc::clone(&self.frame),
+            Arc::clone(&self.alive),
+        );
+        iced::Element::new(crate::pipeline::video_shader(program))
+    }
+
     /// Retrieve the current decoded video frame for rendering in Iced
     pub fn frame_handle(&self) -> iced::widget::image::Handle {
         self.current_frame.clone()
@@ -313,6 +350,10 @@ impl VideoHandle {
 
     pub fn dimensions(&self) -> (u32, u32) {
         (self.render_width, self.render_height)
+    }
+
+    pub fn pixel_buffer(&self) -> &[u8] {
+        &self.pixel_buffer
     }
 
     pub fn set_volume(&mut self, volume: f64) {
