@@ -73,6 +73,7 @@ pub struct WazooApp {
     titlebar_drag_pending: bool,
     titlebar_press_origin: Option<iced::Point>,
     last_titlebar_click: Option<Instant>,
+    expanded_folders: HashSet<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -96,6 +97,7 @@ pub enum Message {
     OpenMenuModal,
     CloseMenuModal,
     ToggleFilePicker,
+    ToggleFolderCollapse(String),
     FilePickerSearchChanged(String),
     PlayFileInFocused(String),
     SelectSearchFolder(String),
@@ -219,6 +221,7 @@ impl WazooApp {
             titlebar_drag_pending: false,
             titlebar_press_origin: None,
             last_titlebar_click: None,
+            expanded_folders: HashSet::new(),
         };
 
         // Initialize players based on settings or restore saved session
@@ -665,7 +668,27 @@ impl WazooApp {
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
             }
+            Message::ToggleFolderCollapse(folder) => {
+                if self.expanded_folders.contains(&folder) {
+                    self.expanded_folders.remove(&folder);
+                } else {
+                    self.expanded_folders.insert(folder);
+                }
+            }
             Message::FilePickerSearchChanged(s) => {
+                let trimmed = s.trim().to_lowercase();
+                if !trimmed.is_empty() && self.file_picker_search.trim().is_empty() {
+                    for v in &self.available_videos {
+                        let title = format::format_video_title(&v.path).to_lowercase();
+                        if title.contains(&trimmed) {
+                            let folder = format::format_video_folder(&v.path);
+                            let folder_key = if folder.is_empty() { "Other".to_string() } else { folder };
+                            self.expanded_folders.insert(folder_key);
+                        }
+                    }
+                } else if trimmed.is_empty() {
+                    self.expanded_folders.clear();
+                }
                 self.file_picker_search = s;
             }
             Message::PlayFileInFocused(path) => {
@@ -2120,13 +2143,13 @@ impl WazooApp {
 
             let overlays_column = if is_loading {
                 column![
-                    Space::new().height(Length::Fixed(20.0)),
+                    Space::new().height(Length::Fixed(80.0)),
                     top_row,
                     Space::new().height(Length::Fill),
                 ]
             } else {
                 column![
-                    Space::new().height(Length::Fixed(20.0)),
+                    Space::new().height(Length::Fixed(80.0)),
                     top_row,
                     Space::new().height(Length::Fill),
                     bottom_overlay,
@@ -2178,41 +2201,50 @@ impl WazooApp {
             grouped.entry(folder_key).or_default().push(v);
         }
 
-        let mut folders_col = column![].spacing(8);
+        let mut folders_col = column![].spacing(6);
         for (folder, files) in grouped {
             let count = files.len();
-            let header = container(
+            let is_expanded = self.expanded_folders.contains(&folder);
+            let chevron = if is_expanded { "▼" } else { "▶" };
+
+            let header_btn = button(
                 row![
-                    text(folder).size(13).color(iced::Color::WHITE),
+                    text(chevron).size(10).color(theme::COLOR_PRIMARY),
+                    text(folder.clone()).size(13).color(iced::Color::WHITE),
                     Space::new().width(Length::Fill),
                     text(format!("({count})")).size(12).color(theme::COLOR_TEXT_MUTED),
                 ]
+                .spacing(8)
                 .align_y(Alignment::Center),
             )
-            .padding([6, 10])
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(theme::COLOR_BTN_HOVER)),
-                border: iced::Border {
-                    radius: 4.0.into(),
-                    ..Default::default()
-                },
-                ..Default::default()
-            });
+            .style(theme::folder_group_header_style)
+            .on_press(Message::ToggleFolderCollapse(folder))
+            .padding([7, 10])
+            .width(Length::Fill);
 
-            let mut files_list = column![].spacing(2);
-            for f in files {
-                let file_title = format::format_video_title(&f.path);
-                let p_clone = f.path.clone();
-                files_list = files_list.push(
-                    button(text(file_title).size(12).color(iced::Color::WHITE))
+            if is_expanded {
+                let mut files_list = column![].spacing(2);
+                for f in files {
+                    let file_title = format::format_video_title(&f.path);
+                    let p_clone = f.path.clone();
+                    files_list = files_list.push(
+                        button(
+                            row![
+                                Space::new().width(Length::Fixed(12.0)),
+                                text(file_title).size(12).color(iced::Color::WHITE),
+                            ]
+                            .align_y(Alignment::Center),
+                        )
                         .style(theme::menu_item_style)
                         .on_press(Message::PlayFileInFocused(p_clone))
                         .padding([4, 8])
                         .width(Length::Fill),
-                );
+                    );
+                }
+                folders_col = folders_col.push(column![header_btn, files_list].spacing(4));
+            } else {
+                folders_col = folders_col.push(header_btn);
             }
-
-            folders_col = folders_col.push(column![header, files_list].spacing(4));
         }
 
         let content = column![

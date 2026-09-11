@@ -88,6 +88,25 @@ pub fn menu_item_style(_theme: &Theme, status: button::Status) -> button::Style 
     }
 }
 
+// Folder Group Header Button (File Drawer collapsible header)
+pub fn folder_group_header_style(_theme: &Theme, status: button::Status) -> button::Style {
+    let bg = match status {
+        button::Status::Hovered => Color::from_rgb(0.24, 0.24, 0.24),
+        button::Status::Pressed => Color::from_rgb(0.28, 0.28, 0.28),
+        _ => Color::from_rgb(0.16, 0.16, 0.16),
+    };
+    button::Style {
+        background: Some(Background::Color(bg)),
+        text_color: Color::WHITE,
+        border: Border {
+            radius: 5.0.into(),
+            ..Default::default()
+        },
+        shadow: Shadow::default(),
+        ..Default::default()
+    }
+}
+
 // Player Control Buttons (Play, Pause, Next, Mute)
 pub fn player_control_button_style(_theme: &Theme, status: button::Status) -> button::Style {
     let bg = match status {
