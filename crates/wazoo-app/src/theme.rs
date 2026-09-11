@@ -273,9 +273,9 @@ pub fn modal_backdrop_style(_theme: &Theme) -> container::Style {
 }
 
 // Player Container Style (2px #42b883 border when focused)
-pub fn player_container_style(is_focused: bool) -> impl Fn(&Theme) -> container::Style {
+pub fn player_container_style(is_focused: bool, opacity: f32) -> impl Fn(&Theme) -> container::Style {
     move |_theme: &Theme| container::Style {
-        background: None,
+        background: Some(Background::Color(Color::from_rgba(0.0, 0.0, 0.0, opacity))),
         border: if is_focused {
             Border {
                 radius: 0.0.into(),

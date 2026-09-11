@@ -1356,14 +1356,14 @@ impl WazooApp {
 
         match self.settings.layout {
             LayoutMode::Row => {
-                let mut r = row![].spacing(4).width(Length::Fill).height(Length::Fill);
+                let mut r = row![].spacing(0).width(Length::Fill).height(Length::Fill);
                 for p in &self.players {
                     r = r.push(self.view_single_player(p));
                 }
                 r.into()
             }
             LayoutMode::Column => {
-                let mut c = column![].spacing(4).width(Length::Fill).height(Length::Fill);
+                let mut c = column![].spacing(0).width(Length::Fill).height(Length::Fill);
                 for p in &self.players {
                     c = c.push(self.view_single_player(p));
                 }
@@ -1378,7 +1378,7 @@ impl WazooApp {
                         self.view_single_player(&self.players[0]),
                         self.view_single_player(&self.players[1]),
                     ]
-                    .spacing(4)
+                    .spacing(0)
                     .width(Length::Fill)
                     .height(Length::Fill)
                     .into()
@@ -1392,19 +1392,19 @@ impl WazooApp {
                             self.view_single_player(&self.players[1]),
                             self.view_single_player(&self.players[2]),
                         ]
-                        .spacing(4)
+                        .spacing(0)
                         .width(Length::Fill)
                         .height(Length::FillPortion(1)),
                     ]
-                    .spacing(4)
+                    .spacing(0)
                     .width(Length::Fill)
                     .height(Length::Fill)
                     .into()
                 } else {
                     let cols = if count <= 4 { 2 } else if count <= 9 { 3 } else { 4 };
-                    let mut rows = column![].spacing(4).width(Length::Fill).height(Length::Fill);
+                    let mut rows = column![].spacing(0).width(Length::Fill).height(Length::Fill);
                     for chunk in self.players.chunks(cols) {
-                        let mut r = row![].spacing(4).width(Length::Fill).height(Length::Fill);
+                        let mut r = row![].spacing(0).width(Length::Fill).height(Length::Fill);
                         for p in chunk {
                             r = r.push(self.view_single_player(p));
                         }
@@ -1636,7 +1636,7 @@ impl WazooApp {
         let player_box = container(player_stack)
             .width(Length::Fill)
             .height(Length::Fill)
-            .style(theme::player_container_style(show_border));
+            .style(theme::player_container_style(show_border, opacity));
 
         mouse_area(player_box)
             .on_press(Message::PlayerClicked(player_id))
