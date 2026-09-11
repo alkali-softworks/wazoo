@@ -1224,20 +1224,22 @@ defineExpose({
 
 .scan-toast {
   position: fixed;
-  bottom: 0;
+  top: 0;
   left: 0;
   width: 100%;
   box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.75);
   color: #fff;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 24px;
-  z-index: 9999;
-  font-size: 24px;
-  backdrop-filter: blur(4px);
-  border-radius: 8px;
+  z-index: 9998;
+  font-size: 20px;
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
 }
 
 .scan-toast-title {
