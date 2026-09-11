@@ -300,8 +300,8 @@ pub fn title_pill_style(_theme: &Theme) -> container::Style {
         border: Border {
             radius: iced::border::Radius {
                 top_left: 0.0,
-                top_right: 8.0,
-                bottom_right: 8.0,
+                top_right: 10.0,
+                bottom_right: 10.0,
                 bottom_left: 0.0,
             },
             width: 0.0,
