@@ -135,6 +135,26 @@ impl VideoHandle {
         self.state.position = position;
     }
 
+    pub fn seek_relative(&mut self, seconds: f64) {
+        let current = self.position();
+        let new_pos = if seconds < 0.0 {
+            current.saturating_sub(Duration::from_secs_f64(-seconds))
+        } else {
+            let dur = self.duration();
+            let target = current + Duration::from_secs_f64(seconds);
+            if dur > Duration::ZERO && target > dur {
+                dur
+            } else {
+                target
+            }
+        };
+        self.seek(new_pos);
+    }
+
+    pub fn adjust_volume(&mut self, delta: f64) {
+        self.set_volume(self.state.volume + delta);
+    }
+
     pub fn position(&self) -> Duration {
         self.pipeline
             .query_position::<gst::ClockTime>()

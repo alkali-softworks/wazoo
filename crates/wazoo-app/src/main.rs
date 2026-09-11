@@ -1,5 +1,6 @@
 use std::time::Duration;
 use iced::{
+    keyboard::{key::Named, Key},
     widget::{button, column, container, row, scrollable, text, text_input, Space},
     window, Alignment, Element, Length, Subscription, Task, Theme,
 };
@@ -25,17 +26,33 @@ pub struct WazooApp {
     next_player_id: PlayerId,
     is_scanning: bool,
     scan_progress: Option<ScanProgress>,
+    focused_player_idx: usize,
+    is_shuffle_mode: bool,
+    show_wazoo_controls: bool,
+    show_title_overlay: bool,
+    subtitles_enabled: bool,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    // Keyboard Event
+    KeyPressed(Key),
+
     // Playback controls
     TogglePlay(PlayerId),
+    TogglePlayFocused,
     NextVideo(PlayerId),
+    NextVideoFocused,
+    PrevVideoFocused,
     Seek(PlayerId, Duration),
+    SeekRelativeFocused(f64),
     SetVolume(PlayerId, f64),
+    AdjustVolumeFocused(f64),
     TogglePlayerMute(PlayerId),
+    ToggleMuteFocused,
     ToggleGlobalMute,
+    GlobalUnmute,
+    ToggleShuffleMode,
 
     // Layout & Modes
     CycleLayout,
@@ -43,6 +60,11 @@ pub enum Message {
     ToggleScrollMode,
     ToggleFlipMode,
     SetScrollSpeed(f32),
+    AdjustScrollSpeed(f32),
+    AddNewPlayer,
+    RemoveFocusedPlayer,
+    CycleFocusedPlayer,
+    SetFocusedPlayer(usize),
 
     // Modals & UI
     OpenSearchModal,
@@ -59,6 +81,10 @@ pub enum Message {
     StartScan,
     ScanProgressUpdate(ScanProgress),
     ScanFinished(Result<usize, String>),
+    ToggleControlsHUD,
+    ToggleTitleOverlay,
+    ToggleSubtitles,
+    EscapePressed,
 
     // Window management
     ToggleDecorations,
@@ -99,6 +125,11 @@ impl WazooApp {
             next_player_id: 1,
             is_scanning: false,
             scan_progress: None,
+            focused_player_idx: 0,
+            is_shuffle_mode: true,
+            show_wazoo_controls: true,
+            show_title_overlay: true,
+            subtitles_enabled: true,
         };
 
         // Initialize players based on settings
@@ -110,13 +141,48 @@ impl WazooApp {
         (app, Task::none())
     }
 
-    fn add_player_internal(&mut self) -> Option<PlayerId> {
+    fn focused_player_id(&self) -> Option<PlayerId> {
+        if self.players.is_empty() {
+            None
+        } else {
+            let idx = self.focused_player_idx % self.players.len();
+            Some(self.players[idx].id)
+        }
+    }
+
+    fn get_next_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
         if self.available_videos.is_empty() {
             return None;
         }
+        if self.is_shuffle_mode {
+            let idx = rand::random::<usize>() % self.available_videos.len();
+            Some(self.available_videos[idx].clone())
+        } else {
+            if let Some(curr) = current_path {
+                if let Some(pos) = self.available_videos.iter().position(|v| v.path == curr) {
+                    let next_pos = (pos + 1) % self.available_videos.len();
+                    return Some(self.available_videos[next_pos].clone());
+                }
+            }
+            Some(self.available_videos[0].clone())
+        }
+    }
 
-        let idx = rand::random::<usize>() % self.available_videos.len();
-        let video_rec = &self.available_videos[idx];
+    fn get_prev_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
+        if self.available_videos.is_empty() {
+            return None;
+        }
+        if let Some(curr) = current_path {
+            if let Some(pos) = self.available_videos.iter().position(|v| v.path == curr) {
+                let prev_pos = if pos == 0 { self.available_videos.len() - 1 } else { pos - 1 };
+                return Some(self.available_videos[prev_pos].clone());
+            }
+        }
+        Some(self.available_videos[0].clone())
+    }
+
+    fn add_player_internal(&mut self) -> Option<PlayerId> {
+        let video_rec = self.get_next_video_rec(None)?;
 
         let id = self.next_player_id;
         self.next_player_id += 1;
@@ -140,19 +206,87 @@ impl WazooApp {
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::KeyPressed(key) => {
+                if self.show_search_modal || self.show_settings_modal || self.show_help_modal {
+                    if key == Key::Named(Named::Escape) {
+                        self.show_search_modal = false;
+                        self.show_settings_modal = false;
+                        self.show_help_modal = false;
+                    }
+                    return Task::none();
+                }
+
+                match key {
+                    Key::Named(Named::Space) => return self.update(Message::TogglePlayFocused),
+                    Key::Named(Named::ArrowUp) => return self.update(Message::NextVideoFocused),
+                    Key::Named(Named::ArrowDown) => return self.update(Message::PrevVideoFocused),
+                    Key::Named(Named::ArrowLeft) => return self.update(Message::SeekRelativeFocused(-5.0)),
+                    Key::Named(Named::ArrowRight) => return self.update(Message::SeekRelativeFocused(5.0)),
+                    Key::Named(Named::Tab) => return self.update(Message::CycleFocusedPlayer),
+                    Key::Named(Named::Escape) => return self.update(Message::EscapePressed),
+                    Key::Character(s) => match s.as_str() {
+                        "f" | "F" | "j" | "J" | "/" => return self.update(Message::OpenSearchModal),
+                        "s" | "S" => return self.update(Message::ToggleShuffleMode),
+                        "1" => return self.update(Message::SetPlayerCount(1)),
+                        "2" => return self.update(Message::SetPlayerCount(2)),
+                        "3" => return self.update(Message::SetPlayerCount(3)),
+                        "4" => return self.update(Message::SetPlayerCount(4)),
+                        "5" => return self.update(Message::ToggleScrollMode),
+                        "6" => return self.update(Message::ToggleFlipMode),
+                        "l" | "L" => return self.update(Message::CycleLayout),
+                        "n" | "N" => return self.update(Message::AddNewPlayer),
+                        "x" | "X" => return self.update(Message::RemoveFocusedPlayer),
+                        "m" | "M" => return self.update(Message::ToggleMuteFocused),
+                        "[" => return self.update(Message::AdjustVolumeFocused(-0.1)),
+                        "]" => return self.update(Message::AdjustVolumeFocused(0.1)),
+                        "-" => return self.update(Message::AdjustScrollSpeed(-0.1)),
+                        "+" | "=" => return self.update(Message::AdjustScrollSpeed(0.1)),
+                        "c" | "C" => return self.update(Message::ToggleSubtitles),
+                        "t" | "T" => return self.update(Message::ToggleTitleOverlay),
+                        "h" | "H" => return self.update(Message::ToggleControlsHUD),
+                        "?" => return self.update(Message::OpenHelpModal),
+                        "," => return self.update(Message::SeekRelativeFocused(-0.04)),
+                        "." => return self.update(Message::SeekRelativeFocused(0.04)),
+                        _ => {}
+                    },
+                    _ => {}
+                }
+            }
             Message::TogglePlay(id) => {
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.toggle_play();
                 }
             }
+            Message::TogglePlayFocused => {
+                if let Some(id) = self.focused_player_id() {
+                    return self.update(Message::TogglePlay(id));
+                }
+            }
             Message::NextVideo(id) => {
-                if !self.available_videos.is_empty() {
-                    let idx = rand::random::<usize>() % self.available_videos.len();
-                    let video_rec = &self.available_videos[idx];
+                let curr_path = self.players.iter().find(|p| p.id == id).map(|p| p.state.path.clone());
+                if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                         if let Ok(new_handle) = VideoHandle::new(id, &video_rec.path, &video_rec.name) {
                             *p = new_handle;
                             p.set_muted(self.settings.is_global_muted);
+                        }
+                    }
+                }
+            }
+            Message::NextVideoFocused => {
+                if let Some(id) = self.focused_player_id() {
+                    return self.update(Message::NextVideo(id));
+                }
+            }
+            Message::PrevVideoFocused => {
+                if let Some(id) = self.focused_player_id() {
+                    let curr_path = self.players.iter().find(|p| p.id == id).map(|p| p.state.path.clone());
+                    if let Some(prev_rec) = self.get_prev_video_rec(curr_path.as_deref()) {
+                        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                            if let Ok(new_handle) = VideoHandle::new(id, &prev_rec.path, &prev_rec.name) {
+                                *p = new_handle;
+                                p.set_muted(self.settings.is_global_muted);
+                            }
                         }
                     }
                 }
@@ -162,15 +296,42 @@ impl WazooApp {
                     p.seek(pos);
                 }
             }
+            Message::SeekRelativeFocused(secs) => {
+                if let Some(id) = self.focused_player_id() {
+                    if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                        p.seek_relative(secs);
+                    }
+                }
+            }
             Message::SetVolume(id, vol) => {
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.set_volume(vol);
+                }
+            }
+            Message::AdjustVolumeFocused(delta) => {
+                if self.settings.playback_mode == PlaybackMode::Scroll && delta > 0.0 {
+                    return self.update(Message::GlobalUnmute);
+                }
+                if let Some(id) = self.focused_player_id() {
+                    if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                        p.adjust_volume(delta);
+                        self.toast_message = Some(format!("Volume: {:.0}%", p.state.volume * 100.0));
+                        self.toast_time_remaining = 1;
+                    }
                 }
             }
             Message::TogglePlayerMute(id) => {
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     let muted = !p.state.is_muted;
                     p.set_muted(muted);
+                }
+            }
+            Message::ToggleMuteFocused => {
+                if self.settings.playback_mode == PlaybackMode::Scroll {
+                    return self.update(Message::ToggleGlobalMute);
+                }
+                if let Some(id) = self.focused_player_id() {
+                    return self.update(Message::TogglePlayerMute(id));
                 }
             }
             Message::ToggleGlobalMute => {
@@ -182,6 +343,23 @@ impl WazooApp {
                     "Global Mute: ON".to_string()
                 } else {
                     "Global Mute: OFF".to_string()
+                });
+                self.toast_time_remaining = 2;
+            }
+            Message::GlobalUnmute => {
+                self.settings.is_global_muted = false;
+                for p in &mut self.players {
+                    p.set_muted(false);
+                }
+                self.toast_message = Some("Global Mute: OFF".to_string());
+                self.toast_time_remaining = 2;
+            }
+            Message::ToggleShuffleMode => {
+                self.is_shuffle_mode = !self.is_shuffle_mode;
+                self.toast_message = Some(if self.is_shuffle_mode {
+                    "Switched to shuffle mode".to_string()
+                } else {
+                    "Switched to sequential mode".to_string()
                 });
                 self.toast_time_remaining = 2;
             }
@@ -203,6 +381,8 @@ impl WazooApp {
                 while self.players.len() < target {
                     self.add_player_internal();
                 }
+                self.toast_message = Some(format!("Players: {target}"));
+                self.toast_time_remaining = 2;
             }
             Message::ToggleScrollMode => {
                 self.settings.playback_mode = match self.settings.playback_mode {
@@ -223,6 +403,39 @@ impl WazooApp {
             Message::SetScrollSpeed(speed) => {
                 self.settings.scroll_speed = speed.clamp(0.1, 10.0);
                 self.scroll_engine.set_speed(self.settings.scroll_speed);
+                self.toast_message = Some(format!("Scroll Speed: {:.1}", self.settings.scroll_speed));
+                self.toast_time_remaining = 1;
+            }
+            Message::AdjustScrollSpeed(delta) => {
+                let new_speed = (self.settings.scroll_speed + delta).clamp(0.1, 10.0);
+                return self.update(Message::SetScrollSpeed(new_speed));
+            }
+            Message::AddNewPlayer => {
+                let new_count = (self.players.len() + 1).min(12);
+                return self.update(Message::SetPlayerCount(new_count));
+            }
+            Message::RemoveFocusedPlayer => {
+                if let Some(id) = self.focused_player_id() {
+                    self.players.retain(|p| p.id != id);
+                    self.settings.player_count = self.players.len();
+                    if self.focused_player_idx >= self.players.len() && !self.players.is_empty() {
+                        self.focused_player_idx = self.players.len() - 1;
+                    }
+                    self.toast_message = Some(format!("Players: {}", self.players.len()));
+                    self.toast_time_remaining = 2;
+                }
+            }
+            Message::CycleFocusedPlayer => {
+                if !self.players.is_empty() {
+                    self.focused_player_idx = (self.focused_player_idx + 1) % self.players.len();
+                    self.toast_message = Some(format!("Focused Player: {}", self.focused_player_idx + 1));
+                    self.toast_time_remaining = 1;
+                }
+            }
+            Message::SetFocusedPlayer(idx) => {
+                if idx < self.players.len() {
+                    self.focused_player_idx = idx;
+                }
             }
             Message::OpenSearchModal => {
                 self.show_search_modal = true;
@@ -306,6 +519,24 @@ impl WazooApp {
                     }
                 }
             }
+            Message::ToggleControlsHUD => {
+                self.show_wazoo_controls = !self.show_wazoo_controls;
+            }
+            Message::ToggleTitleOverlay => {
+                self.show_title_overlay = !self.show_title_overlay;
+            }
+            Message::ToggleSubtitles => {
+                self.subtitles_enabled = !self.subtitles_enabled;
+                self.toast_message = Some(if self.subtitles_enabled {
+                    "Subtitles: ON".to_string()
+                } else {
+                    "Subtitles: OFF".to_string()
+                });
+                self.toast_time_remaining = 2;
+            }
+            Message::EscapePressed => {
+                self.show_help_modal = !self.show_help_modal;
+            }
             Message::ToggleDecorations => {}
             Message::WindowResized(w, h) => {
                 self.settings.window_bounds.width = w;
@@ -377,6 +608,13 @@ impl WazooApp {
     pub fn subscription(&self) -> Subscription<Message> {
         let mut subs = vec![
             iced::time::every(Duration::from_secs(1)).map(|_| Message::WatchdogTick),
+            iced::event::listen_with(|event, _status, _window| {
+                if let iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) = event {
+                    Some(Message::KeyPressed(key))
+                } else {
+                    None
+                }
+            }),
         ];
 
         if self.settings.playback_mode == PlaybackMode::Scroll {
@@ -400,22 +638,26 @@ impl WazooApp {
         let mut content = column![players_view];
 
         // Bottom control bar overlay
-        let controls = row![
-            button(text("🔍 Search")).on_press(Message::OpenSearchModal),
-            button(text(format!("Layout: {:?}", self.settings.layout))).on_press(Message::CycleLayout),
-            button(text(if self.settings.playback_mode == PlaybackMode::Scroll { "🌊 Scroll: ON" } else { "🌊 Scroll: OFF" }))
-                .on_press(Message::ToggleScrollMode),
-            button(text(if self.settings.playback_mode == PlaybackMode::Flip { "⚡ Flip: ON" } else { "⚡ Flip: OFF" }))
-                .on_press(Message::ToggleFlipMode),
-            button(text(if self.settings.is_global_muted { "🔇 Unmute" } else { "🔊 Mute" }))
-                .on_press(Message::ToggleGlobalMute),
-            button(text("⚙ Settings")).on_press(Message::OpenSettingsModal),
-            button(text("❓ Help")).on_press(Message::OpenHelpModal),
-        ]
-        .spacing(10)
-        .padding(10);
+        if self.show_wazoo_controls {
+            let controls = row![
+                button(text("🔍 Find (F)")).on_press(Message::OpenSearchModal),
+                button(text(format!("Layout: {:?} (L)", self.settings.layout))).on_press(Message::CycleLayout),
+                button(text(if self.is_shuffle_mode { "🔀 Shuffle (S)" } else { "🔁 Sequential (S)" }))
+                    .on_press(Message::ToggleShuffleMode),
+                button(text(if self.settings.playback_mode == PlaybackMode::Scroll { "🌊 Scroll: ON (5)" } else { "🌊 Scroll: OFF (5)" }))
+                    .on_press(Message::ToggleScrollMode),
+                button(text(if self.settings.playback_mode == PlaybackMode::Flip { "⚡ Flip: ON (6)" } else { "⚡ Flip: OFF (6)" }))
+                    .on_press(Message::ToggleFlipMode),
+                button(text(if self.settings.is_global_muted { "🔇 Unmute (M)" } else { "🔊 Mute (M)" }))
+                    .on_press(Message::ToggleGlobalMute),
+                button(text("⚙ Settings")).on_press(Message::OpenSettingsModal),
+                button(text("❓ Help (?)")).on_press(Message::OpenHelpModal),
+            ]
+            .spacing(8)
+            .padding(8);
 
-        content = content.push(controls);
+            content = content.push(controls);
+        }
 
         // Toast message overlay
         if let Some(ref toast) = self.toast_message {
@@ -490,25 +732,31 @@ impl WazooApp {
 
     fn view_single_player<'a>(&self, p: &'a VideoHandle) -> Element<'a, Message> {
         let player_id = p.id;
+        let is_focused = self.focused_player_id() == Some(player_id);
         let video_widget = iced_video_player::VideoPlayer::new(&p.video);
 
-        let info_overlay = row![
-            text(&p.state.name).size(12),
-            Space::new().width(Length::Fill),
-            button(text("⏭")).on_press(Message::NextVideo(player_id)),
-            button(text(if p.state.is_playing { "⏸" } else { "▶" })).on_press(Message::TogglePlay(player_id)),
-            button(text(if p.state.is_muted { "🔇" } else { "🔊" })).on_press(Message::TogglePlayerMute(player_id)),
-        ]
-        .spacing(8)
-        .padding(4);
+        let mut col = column![video_widget];
 
-        column![
-            video_widget,
-            info_overlay
-        ]
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .into()
+        if self.show_title_overlay {
+            let focus_indicator = if is_focused { "▶ " } else { "" };
+            let title_text = format!("{focus_indicator}{}", p.state.name);
+
+            let info_overlay = row![
+                text(title_text).size(12),
+                Space::new().width(Length::Fill),
+                button(text("⏭")).on_press(Message::NextVideo(player_id)),
+                button(text(if p.state.is_playing { "⏸" } else { "▶" })).on_press(Message::TogglePlay(player_id)),
+                button(text(if p.state.is_muted { "🔇" } else { "🔊" })).on_press(Message::TogglePlayerMute(player_id)),
+            ]
+            .spacing(8)
+            .padding(4);
+
+            col = col.push(info_overlay);
+        }
+
+        col.width(Length::Fill)
+            .height(Length::Fill)
+            .into()
     }
 
     fn view_welcome(&self) -> Element<'_, Message> {
@@ -540,14 +788,14 @@ impl WazooApp {
     fn view_search_modal(&self) -> Element<'_, Message> {
         container(
             column![
-                text("Instant Search").size(22),
+                text("Instant Search (Find)").size(22),
                 row![
                     text_input("Search videos...", &self.search_input)
                         .on_input(Message::SearchInputChanged)
                         .padding(10)
                         .width(Length::Fixed(350.0)),
                     button(text("Search")).on_press(Message::PerformSearch),
-                    button(text("Cancel")).on_press(Message::CloseSearchModal),
+                    button(text("Cancel (Esc)")).on_press(Message::CloseSearchModal),
                 ]
                 .spacing(10),
                 text(format!("Current results: {} videos", self.available_videos.len())).size(12),
@@ -591,6 +839,7 @@ impl WazooApp {
                 text("Players count:"),
                 button(text("1")).on_press(Message::SetPlayerCount(1)),
                 button(text("2")).on_press(Message::SetPlayerCount(2)),
+                button(text("3")).on_press(Message::SetPlayerCount(3)),
                 button(text("4")).on_press(Message::SetPlayerCount(4)),
                 button(text("6")).on_press(Message::SetPlayerCount(6)),
                 button(text("8")).on_press(Message::SetPlayerCount(8)),
@@ -612,16 +861,31 @@ impl WazooApp {
     fn view_help_modal(&self) -> Element<'_, Message> {
         container(
             column![
-                text("Wazoo Help & Shortcuts").size(22),
-                text("• Space: Pause / Play active video").size(14),
-                text("• M: Toggle Global Mute").size(14),
-                text("• L: Cycle Layout (Grid -> Row -> Column)").size(14),
-                text("• S: Open Search modal").size(14),
-                text("• F: Toggle Flip Mode (rapid ambient shuffle)").size(14),
-                text("• Alt + Drag: Move borderless window").size(14),
+                text("Wazoo Help & Keyboard Shortcuts").size(22),
+                text("• F / j / /: Find / Search modal").size(14),
+                text("• S: Toggle Shuffle / Sequential playback mode").size(14),
+                text("• 1, 2, 3, 4: Set player count to 1, 2, 3, or 4").size(14),
+                text("• 5: Toggle Scroll Mode (The Infinity Stream)").size(14),
+                text("• 6: Toggle Flip Mode (staggered auto-shuffle)").size(14),
+                text("• Space: Play / Pause focused video").size(14),
+                text("• ArrowUp: Play next video on focused player").size(14),
+                text("• ArrowDown: Play previous video on focused player").size(14),
+                text("• ArrowLeft / Right: Seek -5s / +5s").size(14),
+                text("• , / .: Frame backward / forward").size(14),
+                text("• L: Cycle Layout (Grid ➔ Row ➔ Column)").size(14),
+                text("• N: Add new player (up to 12)").size(14),
+                text("• X: Remove focused player").size(14),
+                text("• Tab: Cycle focused player").size(14),
+                text("• M: Toggle Mute (Global in scroll mode)").size(14),
+                text("• [ / ]: Volume Down / Up").size(14),
+                text("• - / +: Scroll speed down / up").size(14),
+                text("• C: Toggle Subtitles").size(14),
+                text("• T: Toggle Title / Info overlay").size(14),
+                text("• H: Toggle Controls HUD").size(14),
+                text("• Esc: Close modal").size(14),
                 button(text("Close")).on_press(Message::CloseHelpModal),
             ]
-            .spacing(12)
+            .spacing(6)
             .padding(24),
         )
         .width(Length::Fill)
