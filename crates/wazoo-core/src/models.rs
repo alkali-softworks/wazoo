@@ -60,6 +60,14 @@ impl Default for WindowBounds {
     }
 }
 
+fn default_buffer_duration_secs() -> u32 {
+    10
+}
+
+fn default_buffer_size_mb() -> u32 {
+    64
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WazooSettings {
     pub window_bounds: WindowBounds,
@@ -72,6 +80,10 @@ pub struct WazooSettings {
     pub is_global_muted: bool,
     pub last_query: String,
     pub last_folder: String,
+    #[serde(default = "default_buffer_duration_secs")]
+    pub buffer_duration_secs: u32,
+    #[serde(default = "default_buffer_size_mb")]
+    pub buffer_size_mb: u32,
 }
 
 impl Default for WazooSettings {
@@ -87,6 +99,8 @@ impl Default for WazooSettings {
             is_global_muted: true,
             last_query: String::new(),
             last_folder: "All".to_string(),
+            buffer_duration_secs: 10,
+            buffer_size_mb: 64,
         }
     }
 }

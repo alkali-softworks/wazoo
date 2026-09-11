@@ -22,11 +22,112 @@ fn test_video_handle_gstreamer() {
 }
 
 #[test]
+fn test_pipeline_buffering_and_queue_properties() {
+    use gstreamer as gst;
+    use gstreamer::prelude::*;
+
+    let sample = "/home/klo/Downloads/VID_20240309_123459_679.mp4";
+    if Path::new(sample).exists() {
+        let handle = VideoHandle::new(2, sample, "Buffer Test Video").unwrap();
+        let bin = handle.pipeline.upcast::<gst::Bin>();
+
+        // Check playbin properties
+        let buf_dur: i64 = bin.property("buffer-duration");
+        let buf_size: i32 = bin.property("buffer-size");
+        let ring_buf: u64 = bin.property("ring-buffer-max-size");
+        println!("playbin buffer-duration: {buf_dur}, buffer-size: {buf_size}, ring-buffer: {ring_buf}");
+        assert_eq!(buf_dur, 10_000_000_000);
+        assert_eq!(buf_size, 64 * 1024 * 1024);
+        assert_eq!(ring_buf, 64 * 1024 * 1024);
+
+        // Find multiqueue inside decodebin
+        let mut found_multiqueue = false;
+        let mut found_source = false;
+
+        let mut it = bin.iterate_elements();
+        while let Ok(Some(elem)) = it.next() {
+            if elem.name().starts_with("uridecodebin") {
+                if let Ok(uri_bin) = elem.downcast::<gst::Bin>() {
+                    let mut it2 = uri_bin.iterate_elements();
+                    while let Ok(Some(elem2)) = it2.next() {
+                        if elem2.name().starts_with("source") {
+                            if elem2.has_property("blocksize", None) {
+                                let bs: u32 = elem2.property("blocksize");
+                                println!("source blocksize: {bs}");
+                                assert_eq!(bs, 524_288);
+                                found_source = true;
+                            }
+                        } else if elem2.name().starts_with("decodebin") {
+                            if let Ok(dec_bin) = elem2.downcast::<gst::Bin>() {
+                                let mut it3 = dec_bin.iterate_elements();
+                                while let Ok(Some(elem3)) = it3.next() {
+                                    if elem3.name().starts_with("multiqueue") {
+                                        let max_buffers: u32 = elem3.property("max-size-buffers");
+                                        let max_time: u64 = elem3.property("max-size-time");
+                                        let max_bytes: u32 = elem3.property("max-size-bytes");
+                                        println!("multiqueue ({}): buffers={max_buffers}, time={max_time}, bytes={max_bytes}", elem3.name());
+                                        assert!(max_buffers >= 1000, "Expected multiqueue buffer limit >= 1000, got {max_buffers}");
+                                        assert_eq!(max_time, 10_000_000_000);
+                                        assert_eq!(max_bytes, 128 * 1024 * 1024);
+                                        found_multiqueue = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check vqueue and aqueue
+        let mut found_vqueue = false;
+        let mut found_aqueue = false;
+        let mut it_playsink = bin.iterate_elements();
+        while let Ok(Some(elem)) = it_playsink.next() {
+            if elem.name().starts_with("playsink") {
+                if let Ok(playsink_bin) = elem.downcast::<gst::Bin>() {
+                    let mut it_play = playsink_bin.iterate_elements();
+                    while let Ok(Some(child)) = it_play.next() {
+                        if child.name().starts_with("vbin") {
+                            if let Ok(vbin) = child.downcast::<gst::Bin>() {
+                                if let Some(vq) = vbin.by_name("vqueue") {
+                                    let vq_buf: u32 = vq.property("max-size-buffers");
+                                    let vq_time: u64 = vq.property("max-size-time");
+                                    println!("vqueue: buffers={vq_buf}, time={vq_time}");
+                                    assert_eq!(vq_buf, 60);
+                                    assert_eq!(vq_time, 1_000_000_000);
+                                    found_vqueue = true;
+                                }
+                            }
+                        } else if child.name().starts_with("abin") {
+                            if let Ok(abin) = child.downcast::<gst::Bin>() {
+                                if let Some(aq) = abin.by_name("aqueue") {
+                                    let aq_time: u64 = aq.property("max-size-time");
+                                    println!("aqueue: time={aq_time}");
+                                    assert_eq!(aq_time, 2_000_000_000);
+                                    found_aqueue = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        assert!(found_source, "source element with blocksize was not found");
+        assert!(found_multiqueue, "multiqueue element was not found or configured");
+        assert!(found_vqueue, "vqueue element was not found or configured");
+        assert!(found_aqueue, "aqueue element was not found or configured");
+    }
+}
+
+#[test]
 fn test_seek_behavior() {
     use std::time::Duration;
     let sample = "/home/klo/Downloads/VID_20240309_123459_679.mp4";
     if Path::new(sample).exists() {
         let mut handle = VideoHandle::new(1, sample, "Test Video").unwrap();
+        handle.set_muted(true);
         handle.play();
         std::thread::sleep(Duration::from_millis(500));
         let pos1 = handle.position();

@@ -38,6 +38,23 @@ impl PlayerState {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct BufferConfig {
+    pub duration_secs: u32,
+    pub size_mb: u32,
+    pub read_chunk_kb: u32,
+}
+
+impl Default for BufferConfig {
+    fn default() -> Self {
+        Self {
+            duration_secs: 10,
+            size_mb: 64,
+            read_chunk_kb: 512,
+        }
+    }
+}
+
 pub struct VideoHandle {
     pub id: PlayerId,
     pub video: iced_video_player::Video,
@@ -49,6 +66,15 @@ pub struct VideoHandle {
 
 impl VideoHandle {
     pub fn new(id: PlayerId, file_path: &str, name: &str) -> Result<Self, String> {
+        Self::with_buffering(id, file_path, name, BufferConfig::default())
+    }
+
+    pub fn with_buffering(
+        id: PlayerId,
+        file_path: &str,
+        name: &str,
+        config: BufferConfig,
+    ) -> Result<Self, String> {
         let uri = if file_path.starts_with("file://") {
             Url::parse(file_path).map_err(|e| e.to_string())?
         } else {
@@ -66,6 +92,60 @@ impl VideoHandle {
             .map_err(|e| e.to_string())?
             .downcast::<gst::Pipeline>()
             .map_err(|_| "Failed to downcast to Pipeline".to_string())?;
+
+        let dur_secs = config.duration_secs.max(2) as u64;
+        let dur_ns = dur_secs * 1_000_000_000u64;
+        let dur_ns_i64 = dur_ns as i64;
+        let buf_size_bytes = (config.size_mb.max(16) as u32) * 1024 * 1024;
+        let multiqueue_size_bytes = buf_size_bytes.max(128 * 1024 * 1024);
+        let extra_size_bytes = multiqueue_size_bytes / 2;
+        let extra_size_time = dur_ns / 2;
+        let read_chunk_bytes = (config.read_chunk_kb.max(64) as u32) * 1024;
+
+        pipeline.set_property("buffer-duration", dur_ns_i64);
+        pipeline.set_property("buffer-size", buf_size_bytes as i32);
+        pipeline.set_property("ring-buffer-max-size", buf_size_bytes as u64);
+
+        pipeline.connect("source-setup", false, move |values| {
+            if let Some(source) = values.get(1).and_then(|v| v.get::<gst::Element>().ok()) {
+                if source.has_property("blocksize", None) {
+                    // Set large read block size for smooth reads over SMB/NFS/WiFi mounts instead of 4KB default
+                    let _ = source.set_property("blocksize", read_chunk_bytes);
+                }
+            }
+            None
+        });
+
+        pipeline.connect("element-setup", false, move |values| {
+            if let Some(elem) = values.get(1).and_then(|v| v.get::<gst::Element>().ok()) {
+                let factory_name = elem.factory().map(|f| f.name().to_string()).unwrap_or_default();
+                let name = elem.name();
+                if factory_name == "decodebin" {
+                    let _ = elem.set_property("max-size-buffers", 2000u32);
+                    let _ = elem.set_property("max-size-time", dur_ns);
+                    let _ = elem.set_property("max-size-bytes", multiqueue_size_bytes);
+                } else if factory_name == "uridecodebin" {
+                    let _ = elem.set_property("buffer-duration", dur_ns_i64);
+                    let _ = elem.set_property("buffer-size", buf_size_bytes as i32);
+                    let _ = elem.set_property("ring-buffer-max-size", buf_size_bytes as u64);
+                } else if factory_name == "multiqueue" {
+                    let _ = elem.set_property("use-interleave", false);
+                    let _ = elem.set_property("max-size-buffers", 2000u32);
+                    let _ = elem.set_property("extra-size-buffers", 1000u32);
+                    let _ = elem.set_property("max-size-time", dur_ns);
+                    let _ = elem.set_property("extra-size-time", extra_size_time);
+                    let _ = elem.set_property("max-size-bytes", multiqueue_size_bytes);
+                    let _ = elem.set_property("extra-size-bytes", extra_size_bytes);
+                } else if name.as_str() == "vqueue" {
+                    let _ = elem.set_property("max-size-buffers", 60u32);
+                    let _ = elem.set_property("max-size-time", 1_000_000_000u64);
+                    let _ = elem.set_property("max-size-bytes", 0u32);
+                } else if name.as_str() == "aqueue" {
+                    let _ = elem.set_property("max-size-time", 2_000_000_000u64);
+                }
+            }
+            None
+        });
 
         let video_sink: gst::Element = pipeline.property("video-sink");
         let pad = video_sink.pads().first().cloned().ok_or("No pads on video sink")?;

@@ -5,7 +5,7 @@ use iced::{
     window, Alignment, Element, Length, Subscription, Task, Theme,
 };
 use wazoo_core::{ConfigManager, Database, LayoutMode, PlaybackMode, VideoRecord, WazooSettings};
-use wazoo_media::{PlayerId, ScrollEngine, VideoHandle};
+use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, VideoHandle};
 use wazoo_scanner::{Scanner, ScanProgress};
 
 pub struct WazooApp {
@@ -77,6 +77,7 @@ pub enum Message {
     PerformSearch,
     OpenSettingsModal,
     CloseSettingsModal,
+    SetBufferDuration(u32),
     OpenHelpModal,
     CloseHelpModal,
     FolderInputChanged(String),
@@ -188,13 +189,22 @@ impl WazooApp {
         Some(self.available_videos[0].clone())
     }
 
+    fn create_video_handle(&self, id: PlayerId, path: &str, name: &str) -> Result<VideoHandle, String> {
+        let buffer_config = BufferConfig {
+            duration_secs: self.settings.buffer_duration_secs,
+            size_mb: self.settings.buffer_size_mb,
+            read_chunk_kb: 512,
+        };
+        VideoHandle::with_buffering(id, path, name, buffer_config)
+    }
+
     fn add_player_internal(&mut self) -> Option<PlayerId> {
         let video_rec = self.get_next_video_rec(None)?;
 
         let id = self.next_player_id;
         self.next_player_id += 1;
 
-        match VideoHandle::new(id, &video_rec.path, &video_rec.name) {
+        match self.create_video_handle(id, &video_rec.path, &video_rec.name) {
             Ok(mut handle) => {
                 handle.set_muted(self.settings.is_global_muted);
                 self.players.push(handle);
@@ -272,10 +282,10 @@ impl WazooApp {
             Message::NextVideo(id) => {
                 let curr_path = self.players.iter().find(|p| p.id == id).map(|p| p.state.path.clone());
                 if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
-                    if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
-                        if let Ok(new_handle) = VideoHandle::new(id, &video_rec.path, &video_rec.name) {
+                    if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
+                        new_handle.set_muted(self.settings.is_global_muted);
+                        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                             *p = new_handle;
-                            p.set_muted(self.settings.is_global_muted);
                         }
                     }
                 }
@@ -289,10 +299,10 @@ impl WazooApp {
                 if let Some(id) = self.focused_player_id() {
                     let curr_path = self.players.iter().find(|p| p.id == id).map(|p| p.state.path.clone());
                     if let Some(prev_rec) = self.get_prev_video_rec(curr_path.as_deref()) {
-                        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
-                            if let Ok(new_handle) = VideoHandle::new(id, &prev_rec.path, &prev_rec.name) {
+                        if let Ok(mut new_handle) = self.create_video_handle(id, &prev_rec.path, &prev_rec.name) {
+                            new_handle.set_muted(self.settings.is_global_muted);
+                            if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                                 *p = new_handle;
-                                p.set_muted(self.settings.is_global_muted);
                             }
                         }
                     }
@@ -516,6 +526,12 @@ impl WazooApp {
             Message::CloseSettingsModal => {
                 self.show_settings_modal = false;
                 let _ = self.config_mgr.save_settings(&self.settings);
+            }
+            Message::SetBufferDuration(secs) => {
+                self.settings.buffer_duration_secs = secs;
+                let _ = self.config_mgr.save_settings(&self.settings);
+                self.toast_message = Some(format!("Buffer set to {secs}s (active on next video load)"));
+                self.toast_time_remaining = 3;
             }
             Message::OpenHelpModal => {
                 self.show_help_modal = true;
@@ -1141,6 +1157,19 @@ impl WazooApp {
                 button(text("8")).on_press(Message::SetPlayerCount(8)),
             ]
             .spacing(8),
+            row![
+                text("WiFi / Samba Buffer:"),
+                button(text(if self.settings.buffer_duration_secs == 5 { "5s (Low) ★" } else { "5s" }))
+                    .on_press(Message::SetBufferDuration(5)),
+                button(text(if self.settings.buffer_duration_secs == 10 { "10s (Recommended) ★" } else { "10s" }))
+                    .on_press(Message::SetBufferDuration(10)),
+                button(text(if self.settings.buffer_duration_secs == 20 { "20s (High) ★" } else { "20s" }))
+                    .on_press(Message::SetBufferDuration(20)),
+                button(text(if self.settings.buffer_duration_secs == 30 { "30s (Max) ★" } else { "30s" }))
+                    .on_press(Message::SetBufferDuration(30)),
+            ]
+            .spacing(8)
+            .align_y(Alignment::Center),
             button(text("Done")).on_press(Message::CloseSettingsModal).padding(8),
         ]
         .spacing(16);
