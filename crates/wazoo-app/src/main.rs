@@ -1243,11 +1243,13 @@ impl WazooApp {
                         .width(Length::Fixed(10.0))
                         .height(Length::Fixed(10.0))
                 )
-                .width(Length::Fixed(46.0))
-                .height(Length::Fixed(30.0))
+                .width(Length::Fill)
+                .height(Length::Fill)
                 .center_x(Length::Fill)
                 .center_y(Length::Fill),
             )
+            .width(Length::Fixed(42.0))
+            .height(Length::Fixed(30.0))
             .style(theme::window_control_button_style)
             .on_press(Message::MinimizeWindow)
             .padding(0),
@@ -1257,11 +1259,13 @@ impl WazooApp {
                         .width(Length::Fixed(10.0))
                         .height(Length::Fixed(10.0))
                 )
-                .width(Length::Fixed(46.0))
-                .height(Length::Fixed(30.0))
+                .width(Length::Fill)
+                .height(Length::Fill)
                 .center_x(Length::Fill)
                 .center_y(Length::Fill),
             )
+            .width(Length::Fixed(42.0))
+            .height(Length::Fixed(30.0))
             .style(theme::window_control_button_style)
             .on_press(Message::MaximizeWindow)
             .padding(0),
@@ -1271,15 +1275,18 @@ impl WazooApp {
                         .width(Length::Fixed(10.0))
                         .height(Length::Fixed(10.0))
                 )
-                .width(Length::Fixed(46.0))
-                .height(Length::Fixed(30.0))
+                .width(Length::Fill)
+                .height(Length::Fill)
                 .center_x(Length::Fill)
                 .center_y(Length::Fill),
             )
+            .width(Length::Fixed(42.0))
+            .height(Length::Fixed(30.0))
             .style(theme::close_window_button_style)
             .on_press(Message::CloseApp)
             .padding(0),
-        ];
+        ]
+        .width(Length::Shrink);
 
         let titlebar_row = container(
             row![
