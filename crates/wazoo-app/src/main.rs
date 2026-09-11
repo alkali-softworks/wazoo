@@ -792,35 +792,62 @@ impl WazooApp {
             content = content.push(controls);
         }
 
-        // Toast message overlay
+        let base_layer = container(content)
+            .width(Length::Fill)
+            .height(Length::Fill);
+
+        let mut root_stack_children = vec![Element::from(base_layer)];
+
+        // Floating Toast / Notice Overlay (Zero reflow - floats over top center)
         if let Some(ref toast) = self.toast_message {
             let toast_widget = container(
                 row![
-                    text(toast).size(14),
-                    button(text("✕").size(12)).on_press(Message::DismissToast)
+                    text(toast).size(15).color(iced::Color::WHITE),
+                    button(text("✕").size(12)).on_press(Message::DismissToast).padding(2),
                 ]
-                .spacing(10)
+                .spacing(12)
                 .align_y(Alignment::Center),
             )
-            .padding(12);
+            .padding([8, 18])
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.85))),
+                border: iced::Border {
+                    radius: 8.0.into(),
+                    width: 1.0,
+                    color: iced::Color::from_rgba(1.0, 1.0, 1.0, 0.15),
+                },
+                shadow: iced::Shadow {
+                    color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5),
+                    offset: iced::Vector::new(0.0, 4.0),
+                    blur_radius: 12.0,
+                },
+                ..Default::default()
+            });
 
-            content = content.push(toast_widget);
+            let toast_layer = container(
+                column![
+                    Space::new().height(Length::Fixed(24.0)),
+                    toast_widget,
+                ]
+                .align_x(Alignment::Center),
+            )
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x(Length::Fill);
+
+            root_stack_children.push(Element::from(toast_layer));
         }
 
-        // Modal overlays
+        // Floating Modal Overlays (Zero reflow - video continues in background)
         if self.show_search_modal {
-            return self.view_search_modal();
+            root_stack_children.push(self.view_search_modal());
+        } else if self.show_settings_modal {
+            root_stack_children.push(self.view_settings_modal());
+        } else if self.show_help_modal {
+            root_stack_children.push(self.view_help_modal());
         }
 
-        if self.show_settings_modal {
-            return self.view_settings_modal();
-        }
-
-        if self.show_help_modal {
-            return self.view_help_modal();
-        }
-
-        container(content)
+        Stack::with_children(root_stack_children)
             .width(Length::Fill)
             .height(Length::Fill)
             .into()
@@ -1024,28 +1051,50 @@ impl WazooApp {
     }
 
     fn view_search_modal(&self) -> Element<'_, Message> {
-        container(
+        let card = container(
             column![
                 text("Instant Search (Find)").size(22),
                 row![
                     text_input("Search videos...", &self.search_input)
                         .on_input(Message::SearchInputChanged)
+                        .on_submit(Message::PerformSearch)
                         .padding(10)
                         .width(Length::Fixed(350.0)),
-                    button(text("Search")).on_press(Message::PerformSearch),
-                    button(text("Cancel (Esc)")).on_press(Message::CloseSearchModal),
+                    button(text("Search")).on_press(Message::PerformSearch).padding(8),
+                    button(text("Cancel (Esc)")).on_press(Message::CloseSearchModal).padding(8),
                 ]
-                .spacing(10),
+                .spacing(10)
+                .align_y(Alignment::Center),
                 text(format!("Current results: {} videos", self.available_videos.len())).size(12),
             ]
-            .spacing(14)
-            .padding(24),
+            .spacing(14),
         )
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .center_x(Length::Fill)
-        .center_y(Length::Fill)
-        .into()
+        .padding(24)
+        .style(|_theme: &Theme| container::Style {
+            background: Some(iced::Background::Color(iced::Color::from_rgba(0.12, 0.12, 0.14, 0.96))),
+            border: iced::Border {
+                radius: 12.0.into(),
+                width: 1.0,
+                color: iced::Color::from_rgba(1.0, 1.0, 1.0, 0.15),
+            },
+            shadow: iced::Shadow {
+                color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.6),
+                offset: iced::Vector::new(0.0, 8.0),
+                blur_radius: 24.0,
+            },
+            ..Default::default()
+        });
+
+        container(card)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill)
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.75))),
+                ..Default::default()
+            })
+            .into()
     }
 
     fn view_settings_modal(&self) -> Element<'_, Message> {
@@ -1094,52 +1143,92 @@ impl WazooApp {
             .spacing(8),
             button(text("Done")).on_press(Message::CloseSettingsModal).padding(8),
         ]
-        .spacing(16)
-        .padding(24);
+        .spacing(16);
 
-        container(scrollable(content))
+        let card = container(scrollable(content))
+            .padding(24)
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(0.12, 0.12, 0.14, 0.96))),
+                border: iced::Border {
+                    radius: 12.0.into(),
+                    width: 1.0,
+                    color: iced::Color::from_rgba(1.0, 1.0, 1.0, 0.15),
+                },
+                shadow: iced::Shadow {
+                    color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.6),
+                    offset: iced::Vector::new(0.0, 8.0),
+                    blur_radius: 24.0,
+                },
+                ..Default::default()
+            });
+
+        container(card)
             .width(Length::Fill)
             .height(Length::Fill)
             .center_x(Length::Fill)
             .center_y(Length::Fill)
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.75))),
+                ..Default::default()
+            })
             .into()
     }
 
     fn view_help_modal(&self) -> Element<'_, Message> {
-        container(
-            column![
-                text("Wazoo Help & Keyboard Shortcuts").size(22),
-                text("• F / j / /: Find / Search modal").size(14),
-                text("• S: Toggle Shuffle / Sequential playback mode").size(14),
-                text("• 1, 2, 3, 4: Set player count to 1, 2, 3, or 4").size(14),
-                text("• 5: Toggle Scroll Mode (The Infinity Stream)").size(14),
-                text("• 6: Toggle Flip Mode (staggered auto-shuffle)").size(14),
-                text("• Space: Play / Pause focused video").size(14),
-                text("• ArrowUp: Play next video on focused player").size(14),
-                text("• ArrowDown: Play previous video on focused player").size(14),
-                text("• ArrowLeft / Right: Seek -5s / +5s").size(14),
-                text("• , / .: Frame backward / forward").size(14),
-                text("• L: Cycle Layout (Grid ➔ Row ➔ Column)").size(14),
-                text("• N: Add new player (up to 12)").size(14),
-                text("• X: Remove focused player").size(14),
-                text("• Tab: Cycle focused player").size(14),
-                text("• M: Toggle Mute (Global in scroll mode)").size(14),
-                text("• [ / ]: Volume Down / Up").size(14),
-                text("• - / +: Scroll speed down / up").size(14),
-                text("• C: Toggle Subtitles").size(14),
-                text("• T: Toggle Title / Info overlay").size(14),
-                text("• H: Toggle Controls HUD").size(14),
-                text("• Esc: Close modal").size(14),
-                button(text("Close")).on_press(Message::CloseHelpModal),
-            ]
-            .spacing(6)
-            .padding(24),
-        )
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .center_x(Length::Fill)
-        .center_y(Length::Fill)
-        .into()
+        let content = column![
+            text("Wazoo Help & Keyboard Shortcuts").size(22),
+            text("• F / j / /: Find / Search modal").size(14),
+            text("• S: Toggle Shuffle / Sequential playback mode").size(14),
+            text("• 1, 2, 3, 4: Set player count to 1, 2, 3, or 4").size(14),
+            text("• 5: Toggle Scroll Mode (The Infinity Stream)").size(14),
+            text("• 6: Toggle Flip Mode (staggered auto-shuffle)").size(14),
+            text("• Space: Play / Pause focused video").size(14),
+            text("• ArrowUp: Play next video on focused player").size(14),
+            text("• ArrowDown: Play previous video on focused player").size(14),
+            text("• ArrowLeft / Right: Seek -5s / +5s").size(14),
+            text("• , / .: Frame backward / forward").size(14),
+            text("• L: Cycle Layout (Grid ➔ Row ➔ Column)").size(14),
+            text("• N: Add new player (up to 12)").size(14),
+            text("• X: Remove focused player").size(14),
+            text("• Tab: Cycle focused player").size(14),
+            text("• M: Toggle Mute (Global in scroll mode)").size(14),
+            text("• [ / ]: Volume Down / Up").size(14),
+            text("• C: Toggle Subtitles").size(14),
+            text("• T: Toggle Title Overlay").size(14),
+            text("• H: Toggle Bottom Controls HUD").size(14),
+            text("• - / +: Adjust scroll speed").size(14),
+            text("• Esc: Close modal / cancel").size(14),
+            button(text("Close (Esc)")).on_press(Message::CloseHelpModal).padding(8),
+        ]
+        .spacing(12);
+
+        let card = container(scrollable(content))
+            .padding(24)
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(0.12, 0.12, 0.14, 0.96))),
+                border: iced::Border {
+                    radius: 12.0.into(),
+                    width: 1.0,
+                    color: iced::Color::from_rgba(1.0, 1.0, 1.0, 0.15),
+                },
+                shadow: iced::Shadow {
+                    color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.6),
+                    offset: iced::Vector::new(0.0, 8.0),
+                    blur_radius: 24.0,
+                },
+                ..Default::default()
+            });
+
+        container(card)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill)
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.75))),
+                ..Default::default()
+            })
+            .into()
     }
 
     pub fn theme(&self) -> Theme {
