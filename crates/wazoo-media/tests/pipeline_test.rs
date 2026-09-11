@@ -159,6 +159,31 @@ fn test_seek_behavior() {
         let pos_clamped = handle.position();
         println!("pos after -10.0s (clamped): {:?}", pos_clamped);
         assert_eq!(pos_clamped, Duration::ZERO);
+
+        // Verify check_stuck() is false during seek grace period
+        assert!(!handle.check_stuck(), "check_stuck should not trigger during seek grace period");
+
+        // Verify check_stuck() is false when paused
+        handle.pause();
+        assert!(!handle.check_stuck(), "check_stuck should never trigger when paused");
+        handle.play();
+
+        // Forward seek way past duration should NOT immediately trigger is_finished()
+        let dur = handle.duration();
+        handle.seek_relative(100.0);
+        let pos_near_end = handle.position();
+        println!("pos after seeking way past end: {:?} (duration: {:?})", pos_near_end, dur);
+        assert!(pos_near_end < dur, "Position should be clamped before duration, got {:?}", pos_near_end);
+        assert!(!handle.is_finished(), "is_finished() must NOT trigger immediately after a seek!");
+        assert!(!handle.check_stuck(), "check_stuck() must NOT trigger immediately after a seek!");
     }
 }
+
+#[test]
+fn test_watchdog_threshold_constant() {
+    use std::time::Duration;
+    assert_eq!(VideoHandle::STUCK_THRESHOLD_SECONDS, 30);
+    assert_eq!(VideoHandle::SEEK_GRACE_PERIOD, Duration::from_secs(10));
+}
+
 

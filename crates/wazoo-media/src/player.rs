@@ -213,10 +213,22 @@ impl VideoHandle {
         }
     }
 
+    pub const STUCK_THRESHOLD_SECONDS: usize = 30;
+    pub const SEEK_GRACE_PERIOD: Duration = Duration::from_secs(10);
+
     pub fn seek(&mut self, position: Duration) {
+        self.seek_with_accuracy(position, true);
+    }
+
+    pub fn seek_with_accuracy(&mut self, position: Duration, accurate: bool) {
         let dur = self.duration();
+        let margin = if dur > Duration::from_secs(2) {
+            Duration::from_millis(800)
+        } else {
+            dur / 4
+        };
         let clamped_pos = if dur > Duration::ZERO {
-            position.min(dur.saturating_sub(Duration::from_millis(100)))
+            position.min(dur.saturating_sub(margin))
         } else {
             position
         };
@@ -225,14 +237,21 @@ impl VideoHandle {
         self.pending_seek_target = Some(clamped_pos);
         self.last_seek_time = Some(Instant::now());
         self.state.stuck_count = 0;
+        self.state.last_checked_pos = clamped_pos;
 
-        // Perform seek on iced_video_player::Video with accurate = true
-        // This flushes pipeline without macroblock artifacts and keeps subtitles synced
-        if let Err(e) = self.video.seek(clamped_pos, true) {
+        // Perform seek on iced_video_player::Video
+        // For arrow-key scrubs (accurate = false), fast keyframe seek avoids decoding intermediate frames
+        if let Err(e) = self.video.seek(clamped_pos, accurate) {
             log::warn!("Video::seek error ({:?}), falling back to pipeline.seek_simple", e);
             let pos_nanos = clamped_pos.as_nanos() as u64;
+            let flags = gst::SeekFlags::FLUSH
+                | if accurate {
+                    gst::SeekFlags::ACCURATE
+                } else {
+                    gst::SeekFlags::empty()
+                };
             let _ = self.pipeline.seek_simple(
-                gst::SeekFlags::FLUSH | gst::SeekFlags::ACCURATE,
+                flags,
                 gst::ClockTime::from_nseconds(pos_nanos),
             );
         }
@@ -240,18 +259,24 @@ impl VideoHandle {
 
     pub fn seek_relative(&mut self, seconds: f64) {
         let current = self.position();
+        let dur = self.duration();
+        let margin = if dur > Duration::from_secs(2) {
+            Duration::from_millis(800)
+        } else {
+            dur / 4
+        };
         let new_pos = if seconds < 0.0 {
             current.saturating_sub(Duration::from_secs_f64(-seconds))
         } else {
-            let dur = self.duration();
             let target = current + Duration::from_secs_f64(seconds);
-            if dur > Duration::ZERO && target > dur {
-                dur.saturating_sub(Duration::from_millis(100))
+            if dur > Duration::ZERO && target >= dur {
+                dur.saturating_sub(margin)
             } else {
                 target
             }
         };
-        self.seek(new_pos);
+        // Use fast keyframe seek for smooth relative arrow-key scrubbing
+        self.seek_with_accuracy(new_pos, false);
     }
 
     pub fn adjust_volume(&mut self, delta: f64) {
@@ -267,10 +292,11 @@ impl VideoHandle {
     pub fn position(&self) -> Duration {
         if let Some(target) = self.pending_seek_target {
             if let Some(seek_time) = self.last_seek_time {
-                if seek_time.elapsed() < Duration::from_millis(400) {
+                let elapsed = seek_time.elapsed();
+                if elapsed < Duration::from_secs(3) {
                     if let Some(pos) = self.query_pipeline_position() {
                         let diff = (pos.as_millis() as i64 - target.as_millis() as i64).abs();
-                        if pos > Duration::ZERO && diff < 800 {
+                        if pos > Duration::ZERO && diff < 1200 {
                             return pos;
                         }
                     }
@@ -301,21 +327,49 @@ impl VideoHandle {
     }
 
     pub fn is_finished(&self) -> bool {
+        // Direct EOS report from GStreamer bus via iced_video_player
+        if self.video.eos() {
+            return true;
+        }
+
+        // Never trigger finished while paused unless true EOS is reached
+        if !self.state.is_playing || self.video.paused() {
+            return false;
+        }
+
+        // Never trigger finished within 3 seconds of a seek
+        if let Some(seek_time) = self.last_seek_time {
+            if seek_time.elapsed() < Duration::from_secs(3) {
+                return false;
+            }
+        }
+
         let dur = self.duration();
         let pos = self.position();
-        dur > Duration::ZERO && pos >= dur.saturating_sub(Duration::from_millis(300))
+        dur > Duration::ZERO && pos >= dur.saturating_sub(Duration::from_millis(400))
     }
 
     /// Check if video playback is stuck (same position for too long while marked playing)
     pub fn check_stuck(&mut self) -> bool {
-        if !self.state.is_playing {
+        // Smart check: never watchdog if playback is paused
+        if !self.state.is_playing || self.video.paused() {
+            self.state.stuck_count = 0;
             return false;
+        }
+
+        // Smart check: never watchdog during or immediately after a seek
+        if let Some(seek_time) = self.last_seek_time {
+            if seek_time.elapsed() < Self::SEEK_GRACE_PERIOD {
+                self.state.stuck_count = 0;
+                self.state.last_checked_pos = self.position();
+                return false;
+            }
         }
 
         let current_pos = self.position();
         if current_pos == self.state.last_checked_pos && self.duration() > Duration::ZERO {
             self.state.stuck_count += 1;
-            if self.state.stuck_count >= 3 {
+            if self.state.stuck_count >= Self::STUCK_THRESHOLD_SECONDS {
                 return true;
             }
         } else {
