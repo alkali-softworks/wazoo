@@ -624,4 +624,12 @@ impl VideoHandle {
         }
         false
     }
+
+    pub fn path(&self) -> &str {
+        &self.state.path
+    }
+
+    pub fn name(&self) -> &str {
+        &self.state.name
+    }
 }

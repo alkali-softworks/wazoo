@@ -12,7 +12,7 @@ use iced::{
     widget::{button, column, container, mouse_area, row, scrollable, slider, svg, text, text_input, Space, Stack},
     Alignment, Color, Element, Length, Point, Subscription, Task, Theme,
 };
-use wazoo_core::{ConfigManager, Database, LayoutMode, PlaybackMode, VideoRecord, VideoSession, WazooSettings};
+use wazoo_core::{Bookmark, ConfigManager, Database, LayoutMode, PlaybackMode, VideoRecord, VideoSession, WazooSettings};
 use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, VideoHandle};
 use wazoo_scanner::{ScanProgress, ScanStage, Scanner};
 
@@ -45,6 +45,7 @@ pub struct WazooApp {
     show_settings_modal: bool,
     show_help_modal: bool,
     show_menu_modal: bool,
+    show_bookmarks_modal: bool,
     show_file_picker: bool,
     file_picker_search: String,
     show_titlebar: bool,
@@ -69,9 +70,9 @@ pub struct WazooApp {
     spinner_ticks: u32,
     preloaded_player: Option<VideoHandle>,
     is_preloading: bool,
-    cursor_position: iced::Point,
+    cursor_position: Point,
+    titlebar_press_origin: Option<Point>,
     titlebar_drag_pending: bool,
-    titlebar_press_origin: Option<iced::Point>,
     last_titlebar_click: Option<Instant>,
     expanded_folders: HashSet<String>,
 }
@@ -156,6 +157,16 @@ pub enum Message {
     ToggleSubtitles,
     EscapePressed,
 
+    // Bookmarks & wazoo-js shortcuts
+    ToggleBookmarksModal,
+    CloseBookmarksModal,
+    AddBookmarkFocused,
+    RemoveBookmarkFocused,
+    RemoveBookmark(usize),
+    JumpToBookmark(Bookmark),
+    RandomSeekFocused,
+    ShowTitleOverlayFocused,
+
     // Timers & Ticks
     AnimationTick,
     VideoFrameTick,
@@ -193,6 +204,7 @@ impl WazooApp {
             show_settings_modal: false,
             show_help_modal: false,
             show_menu_modal: false,
+            show_bookmarks_modal: false,
             show_file_picker: false,
             file_picker_search: String::new(),
             show_titlebar: false,
@@ -590,6 +602,9 @@ impl WazooApp {
                     Key::Named(Named::ArrowRight) => return self.update(Message::SeekRelativeFocused(5.0)),
                     Key::Named(Named::Tab) => return self.update(Message::CycleFocusedPlayer),
                     Key::Character(s) => match s.as_str() {
+                        "b" | "B" => return self.update(Message::ToggleBookmarksModal),
+                        "r" | "R" => return self.update(Message::RandomSeekFocused),
+                        "t" | "T" => return self.update(Message::ShowTitleOverlayFocused),
                         "f" | "F" | "j" | "J" | "/" => return self.update(Message::OpenSearchModal),
                         "s" | "S" => return self.update(Message::ToggleShuffleMode),
                         "1" => return self.update(Message::SetPlayerCount(1)),
@@ -604,8 +619,20 @@ impl WazooApp {
                         "m" | "M" => return self.update(Message::ToggleMuteFocused),
                         "[" => return self.update(Message::AdjustVolumeFocused(-0.1)),
                         "]" => return self.update(Message::AdjustVolumeFocused(0.1)),
-                        "-" => return self.update(Message::AdjustScrollSpeed(-0.1)),
-                        "+" | "=" => return self.update(Message::AdjustScrollSpeed(0.1)),
+                        "-" => {
+                            if self.settings.playback_mode == PlaybackMode::Scroll {
+                                return self.update(Message::AdjustScrollSpeed(-0.1));
+                            } else {
+                                return self.update(Message::RemoveBookmarkFocused);
+                            }
+                        }
+                        "+" | "=" => {
+                            if self.settings.playback_mode == PlaybackMode::Scroll {
+                                return self.update(Message::AdjustScrollSpeed(0.1));
+                            } else {
+                                return self.update(Message::AddBookmarkFocused);
+                            }
+                        }
                         "c" | "C" => return self.update(Message::ToggleSubtitles),
                         "h" | "H" => return self.update(Message::ToggleFilePicker),
                         "?" => return self.update(Message::OpenHelpModal),
@@ -1186,6 +1213,132 @@ impl WazooApp {
             Message::CloseHelpModal => {
                 self.show_help_modal = false;
             }
+            Message::ToggleBookmarksModal => {
+                self.show_bookmarks_modal = !self.show_bookmarks_modal;
+                if self.show_bookmarks_modal {
+                    self.show_dropdown_menu = false;
+                    self.show_menu_modal = false;
+                    self.show_search_modal = false;
+                    self.show_settings_modal = false;
+                    self.show_help_modal = false;
+                }
+            }
+            Message::CloseBookmarksModal => {
+                self.show_bookmarks_modal = false;
+            }
+            Message::AddBookmarkFocused => {
+                if let Some(id) = self.focused_player_id() {
+                    if let Some(p) = self.players.iter().find(|p| p.id == id) {
+                        let path = p.path().to_string();
+                        if !path.is_empty() {
+                            let name = format::format_descriptive_title(&path);
+                            let query = self.active_search_query.clone();
+                            let position_secs = p.position().as_secs_f64();
+
+                            if let Some(existing) = self.settings.bookmarks.iter_mut().find(|b| b.path == path) {
+                                existing.name = name.clone();
+                                existing.query = query;
+                                existing.position_secs = position_secs;
+                                self.toast_message = Some(format!("Updated bookmark: {name}"));
+                            } else {
+                                self.settings.bookmarks.push(Bookmark {
+                                    name: name.clone(),
+                                    query,
+                                    path,
+                                    position_secs,
+                                });
+                                self.toast_message = Some(format!("Added bookmark: {name}"));
+                            }
+                            let _ = self.config_mgr.save_settings(&self.settings);
+                            self.toast_time_remaining = 3;
+                        }
+                    }
+                }
+            }
+            Message::RemoveBookmarkFocused => {
+                if let Some(id) = self.focused_player_id() {
+                    if let Some(p) = self.players.iter().find(|p| p.id == id) {
+                        let path = p.path();
+                        if let Some(pos) = self.settings.bookmarks.iter().position(|b| b.path == path) {
+                            let removed = self.settings.bookmarks.remove(pos);
+                            let _ = self.config_mgr.save_settings(&self.settings);
+                            self.toast_message = Some(format!("Removed bookmark: {}", removed.name));
+                            self.toast_time_remaining = 3;
+                        } else {
+                            self.toast_message = Some("No bookmark found for current video".to_string());
+                            self.toast_time_remaining = 2;
+                        }
+                    }
+                }
+            }
+            Message::RemoveBookmark(idx) => {
+                if idx < self.settings.bookmarks.len() {
+                    let removed = self.settings.bookmarks.remove(idx);
+                    let _ = self.config_mgr.save_settings(&self.settings);
+                    self.toast_message = Some(format!("Removed bookmark: {}", removed.name));
+                    self.toast_time_remaining = 2;
+                }
+            }
+            Message::JumpToBookmark(b) => {
+                if let Some(id) = self.focused_player_id() {
+                    self.loading_player_ids.insert(id);
+                    self.loading_player_ticks.insert(id, 0);
+                    let title = format::format_video_title(&b.path);
+                    let curr_player = self.players.iter().find(|p| p.id == id);
+                    let prev_muted = curr_player.map(|p| p.state.is_muted);
+                    let prev_volume = curr_player.map(|p| p.state.volume);
+
+                    if let Ok(mut handle) = self.create_video_handle_with_start(id, &b.path, &title, Some(b.position_secs)) {
+                        handle.set_muted(prev_muted.unwrap_or(self.settings.is_global_muted));
+                        if let Some(vol) = prev_volume {
+                            handle.set_volume(vol);
+                        }
+                        handle.set_subtitles_visible(self.subtitles_enabled);
+                        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                            *p = handle;
+                        }
+                        self.toast_message = Some(format!(
+                            "Bookmark: {}  [{}]",
+                            b.name,
+                            format::format_time_str(b.position_secs)
+                        ));
+                        self.toast_time_remaining = 3;
+                    }
+                    self.show_bookmarks_modal = false;
+                }
+            }
+            Message::RandomSeekFocused => {
+                self.player_overlay_ticks = 120;
+                if let Some(id) = self.focused_player_id() {
+                    if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                        p.seek_random();
+                        let pos = p.position();
+                        let dur = p.duration();
+                        self.toast_message = Some(format!(
+                            "Random Seek  [{} / {}]",
+                            format::format_time_str(pos.as_secs_f64()),
+                            format::format_time_str(dur.as_secs_f64())
+                        ));
+                        self.toast_time_remaining = 2;
+                    }
+                }
+            }
+            Message::ShowTitleOverlayFocused => {
+                self.player_overlay_ticks = 180;
+                if let Some(id) = self.focused_player_id() {
+                    if let Some(p) = self.players.iter().find(|p| p.id == id) {
+                        let title = format::format_descriptive_title(p.path());
+                        let pos = p.position();
+                        let dur = p.duration();
+                        self.toast_message = Some(format!(
+                            "{title}  [{} / {}]",
+                            format::format_time_str(pos.as_secs_f64()),
+                            format::format_time_str(dur.as_secs_f64())
+                        ));
+                        self.toast_time_remaining = 3;
+                    }
+                }
+            }
             Message::PickFolders => {
                 let starting_dir = self.settings.media_folders.first().cloned();
                 return Task::perform(
@@ -1392,6 +1545,7 @@ impl WazooApp {
                     || self.show_search_modal
                     || self.show_settings_modal
                     || self.show_menu_modal
+                    || self.show_bookmarks_modal
                     || self.show_dropdown_menu
                     || self.show_file_picker
                 {
@@ -1399,6 +1553,7 @@ impl WazooApp {
                     self.show_search_modal = false;
                     self.show_settings_modal = false;
                     self.show_menu_modal = false;
+                    self.show_bookmarks_modal = false;
                     self.show_dropdown_menu = false;
                     self.show_file_picker = false;
                 } else {
@@ -1711,6 +1866,8 @@ impl WazooApp {
             root_stack_children.push(self.view_settings_modal());
         } else if self.show_help_modal {
             root_stack_children.push(self.view_help_modal());
+        } else if self.show_bookmarks_modal {
+            root_stack_children.push(self.view_bookmarks_modal());
         } else if self.show_menu_modal {
             root_stack_children.push(self.view_menu_modal());
         }
@@ -1824,6 +1981,7 @@ impl WazooApp {
                     button(text("Add Player")).style(theme::menu_item_style).on_press(Message::AddNewPlayer).padding([8, 14]).width(Length::Fill),
                     button(text("Toggle Layout")).style(theme::menu_item_style).on_press(Message::CycleLayout).padding([8, 14]).width(Length::Fill),
                     button(text("Toggle Files")).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 14]).width(Length::Fill),
+                    button(text("Bookmarks (B)")).style(theme::menu_item_style).on_press(Message::ToggleBookmarksModal).padding([8, 14]).width(Length::Fill),
                     button(text("Search")).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 14]).width(Length::Fill),
                     button(text("Settings")).style(theme::menu_item_style).on_press(Message::OpenSettingsModal).padding([8, 14]).width(Length::Fill),
                     button(text("Help")).style(theme::menu_item_style).on_press(Message::OpenHelpModal).padding([8, 14]).width(Length::Fill),
@@ -2524,6 +2682,11 @@ impl WazooApp {
         let shortcuts = [
             ("Esc", "Toggle Menu / Close Modal"),
             ("?", "Toggle Help"),
+            ("b", "Toggle Bookmarks"),
+            ("+ / =", "Add Bookmark (or Scroll Speed +)"),
+            ("-", "Remove Bookmark (or Scroll Speed -)"),
+            ("r", "Random Seek on Video"),
+            ("t", "Show Title & Time"),
             ("5", "Toggle Scroll Mode"),
             ("6", "Toggle Flip Mode"),
             ("h", "Toggle File Picker"),
@@ -2599,6 +2762,146 @@ impl WazooApp {
         Self::wrap_modal_with_backdrop(card, Message::CloseHelpModal)
     }
 
+    fn view_bookmarks_modal(&self) -> Element<'_, Message> {
+        let count = self.settings.bookmarks.len();
+        let header_row = row![
+            text("Bookmarks").size(20).color(iced::Color::WHITE),
+            container(text(format!("{count}")).size(12).color(theme::COLOR_TEXT_DIM))
+                .padding([2, 8])
+                .style(|_theme: &Theme| container::Style {
+                    background: Some(iced::Background::Color(theme::COLOR_BTN_BG)),
+                    border: iced::Border {
+                        radius: 10.0.into(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                }),
+            Space::new().width(Length::Fill),
+            button(
+                row![
+                    text("+").size(14).color(iced::Color::from_rgb(0.06, 0.06, 0.06)),
+                    text("Bookmark Current").size(12).color(iced::Color::from_rgb(0.06, 0.06, 0.06)),
+                ]
+                .spacing(4)
+                .align_y(Alignment::Center),
+            )
+            .style(theme::primary_button_style)
+            .padding([6, 12])
+            .on_press(Message::AddBookmarkFocused),
+            button(text("✕").size(14))
+                .style(theme::window_control_button_style)
+                .on_press(Message::CloseBookmarksModal),
+        ]
+        .spacing(10)
+        .align_y(Alignment::Center);
+
+        let content_element: Element<'_, Message> = if self.settings.bookmarks.is_empty() {
+            container(
+                column![
+                    text("No bookmarks saved yet.").size(15).color(theme::COLOR_TEXT_DIM),
+                    text("Press + or = while playing a video (or click '+ Bookmark Current' above) to save the current video and timestamp.")
+                        .size(13)
+                        .color(theme::COLOR_TEXT_MUTED),
+                ]
+                .spacing(8)
+                .align_x(Alignment::Center),
+            )
+            .padding([40, 20])
+            .center_x(Length::Fill)
+            .into()
+        } else {
+            let mut list = column![].spacing(8);
+            for (idx, b) in self.settings.bookmarks.iter().enumerate() {
+                let time_str = format::format_time_str(b.position_secs);
+                let bookmark_clone = b.clone();
+
+                let mut meta_row = row![
+                    container(text(time_str).size(11).color(theme::COLOR_PRIMARY))
+                        .padding([2, 6])
+                        .style(|_theme: &Theme| container::Style {
+                            background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.9, 0.7, 0.15))),
+                            border: iced::Border {
+                                radius: 4.0.into(),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        }),
+                ]
+                .spacing(6)
+                .align_y(Alignment::Center);
+
+                if !b.query.is_empty() {
+                    meta_row = meta_row.push(
+                        container(text(format!("#{}", b.query)).size(11).color(theme::COLOR_TEXT_MUTED))
+                            .padding([2, 6])
+                            .style(|_theme: &Theme| container::Style {
+                                background: Some(iced::Background::Color(theme::COLOR_BTN_BG)),
+                                border: iced::Border {
+                                    radius: 4.0.into(),
+                                    ..Default::default()
+                                },
+                                ..Default::default()
+                            }),
+                    );
+                }
+
+                let info_col = column![
+                    text(&b.name).size(14).color(iced::Color::WHITE),
+                    meta_row,
+                ]
+                .spacing(4)
+                .width(Length::Fill);
+
+                let play_btn = button(info_col)
+                    .style(theme::bookmark_item_button_style)
+                    .width(Length::Fill)
+                    .padding([8, 12])
+                    .on_press(Message::JumpToBookmark(bookmark_clone));
+
+                let delete_btn = button(text("✕").size(12).color(theme::COLOR_TEXT_MUTED))
+                    .style(theme::window_control_button_style)
+                    .padding([8, 10])
+                    .on_press(Message::RemoveBookmark(idx));
+
+                let row_item = row![
+                    play_btn,
+                    delete_btn,
+                ]
+                .spacing(6)
+                .align_y(Alignment::Center);
+
+                list = list.push(row_item);
+            }
+
+            let scrollable_content = container(list)
+                .padding(iced::Padding {
+                    top: 0.0,
+                    right: 20.0,
+                    bottom: 0.0,
+                    left: 2.0,
+                })
+                .width(Length::Fill);
+
+            scrollable(scrollable_content)
+                .height(Length::Fixed(400.0))
+                .width(Length::Fill)
+                .into()
+        };
+
+        let card = container(
+            column![
+                header_row,
+                content_element,
+            ]
+            .spacing(16)
+            .width(Length::Fixed(560.0)),
+        )
+        .padding(20)
+        .style(theme::modal_card_style);
+
+        Self::wrap_modal_with_backdrop(card, Message::CloseBookmarksModal)
+    }
+
     fn view_menu_modal(&self) -> Element<'_, Message> {
         let card = container(
             column![
@@ -2615,6 +2918,7 @@ impl WazooApp {
                     button(text("Toggle Layout")).style(theme::menu_item_style).on_press(Message::CycleLayout).padding([8, 12]).width(Length::Fill),
                     button(text(if self.settings.playback_mode == PlaybackMode::Scroll { "Disable Infinity Stream (5)" } else { "Infinity Stream (5)" })).style(theme::menu_item_style).on_press(Message::ToggleScrollMode).padding([8, 12]).width(Length::Fill),
                     button(text("Toggle Files")).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 12]).width(Length::Fill),
+                    button(text("Bookmarks (B)")).style(theme::menu_item_style).on_press(Message::ToggleBookmarksModal).padding([8, 12]).width(Length::Fill),
                     button(text("Search")).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 12]).width(Length::Fill),
                     button(text("Settings")).style(theme::menu_item_style).on_press(Message::OpenSettingsModal).padding([8, 12]).width(Length::Fill),
                     button(text("Help")).style(theme::menu_item_style).on_press(Message::OpenHelpModal).padding([8, 12]).width(Length::Fill),
