@@ -79,7 +79,7 @@ pub enum Message {
     PreloadedPlayerReady(Arc<Mutex<Option<Result<VideoHandle, String>>>>),
     CursorMoved(iced::window::Id, Point),
     RightClickPressed(iced::window::Id),
-    KeyPressed(Key),
+    KeyPressed(Key, iced::event::Status),
     KeyReleased(Key),
     MinimizeWindow,
     MaximizeWindow,
@@ -456,7 +456,7 @@ impl WazooApp {
                 self.show_menu_modal = true;
                 self.show_dropdown_menu = false;
             }
-            Message::KeyPressed(key) => {
+            Message::KeyPressed(key, status) => {
                 // If Alt key pressed
                 if key == Key::Named(Named::Alt) || key == Key::Named(Named::AltGraph) {
                     self.is_alt_pressed = true;
@@ -474,6 +474,15 @@ impl WazooApp {
 
                 if key == Key::Named(Named::Escape) {
                     return self.update(Message::EscapePressed);
+                }
+
+                // If typing in either search input (captured by widget) or if search modal is open,
+                // do NOT allow keystrokes to trigger global shortcuts (e.g. 'm' for mute, 's' for shuffle, etc.)
+                if status == iced::event::Status::Captured || self.show_search_modal {
+                    if self.show_search_modal && key == Key::Named(Named::Enter) {
+                        return self.update(Message::PerformSearch);
+                    }
+                    return Task::none();
                 }
 
                 match key {
@@ -566,8 +575,15 @@ impl WazooApp {
                     self.loading_player_ids.insert(id);
                     self.loading_player_ticks.insert(id, 0);
                     let title = format::format_video_title(&path);
+                    let curr_player = self.players.iter().find(|p| p.id == id);
+                    let prev_muted = curr_player.map(|p| p.state.is_muted);
+                    let prev_volume = curr_player.map(|p| p.state.volume);
+
                     if let Ok(mut handle) = self.create_video_handle(id, &path, &title) {
-                        handle.set_muted(self.settings.is_global_muted);
+                        handle.set_muted(prev_muted.unwrap_or(self.settings.is_global_muted));
+                        if let Some(vol) = prev_volume {
+                            handle.set_volume(vol);
+                        }
                         handle.set_subtitles_visible(self.subtitles_enabled);
                         if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                             *p = handle;
@@ -623,11 +639,18 @@ impl WazooApp {
                 self.loading_player_ids.insert(id);
                 self.loading_player_ticks.insert(id, 0);
                 self.player_overlay_ticks = 120;
-                let curr_path = self.players.iter().find(|p| p.id == id).map(|p| p.state.path.clone());
+                let curr_player = self.players.iter().find(|p| p.id == id);
+                let curr_path = curr_player.map(|p| p.state.path.clone());
+                let prev_muted = curr_player.map(|p| p.state.is_muted);
+                let prev_volume = curr_player.map(|p| p.state.volume);
+
                 for _ in 0..3 {
                     if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
                         if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
-                            new_handle.set_muted(self.settings.is_global_muted);
+                            new_handle.set_muted(prev_muted.unwrap_or(self.settings.is_global_muted));
+                            if let Some(vol) = prev_volume {
+                                new_handle.set_volume(vol);
+                            }
                             new_handle.set_subtitles_visible(self.subtitles_enabled);
                             if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                                 *p = new_handle;
@@ -646,11 +669,18 @@ impl WazooApp {
                 if let Some(id) = self.focused_player_id() {
                     self.loading_player_ids.insert(id);
                     self.loading_player_ticks.insert(id, 0);
-                    let curr_path = self.players.iter().find(|p| p.id == id).map(|p| p.state.path.clone());
+                    let curr_player = self.players.iter().find(|p| p.id == id);
+                    let curr_path = curr_player.map(|p| p.state.path.clone());
+                    let prev_muted = curr_player.map(|p| p.state.is_muted);
+                    let prev_volume = curr_player.map(|p| p.state.volume);
+
                     for _ in 0..3 {
                         if let Some(prev_rec) = self.get_prev_video_rec(curr_path.as_deref()) {
                             if let Ok(mut new_handle) = self.create_video_handle(id, &prev_rec.path, &prev_rec.name) {
-                                new_handle.set_muted(self.settings.is_global_muted);
+                                new_handle.set_muted(prev_muted.unwrap_or(self.settings.is_global_muted));
+                                if let Some(vol) = prev_volume {
+                                    new_handle.set_volume(vol);
+                                }
                                 new_handle.set_subtitles_visible(self.subtitles_enabled);
                                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                                     *p = new_handle;
@@ -749,6 +779,11 @@ impl WazooApp {
                 if let Some(id) = self.focused_player_id() {
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                         p.adjust_volume(delta);
+                        if delta > 0.0 && p.state.is_muted {
+                            p.set_muted(false);
+                            self.settings.is_global_muted = false;
+                            let _ = self.config_mgr.save_settings(&self.settings);
+                        }
                         self.toast_message = Some(format!("Volume: {:.0}%", p.state.volume * 100.0));
                         self.toast_time_remaining = 1;
                     }
@@ -765,6 +800,10 @@ impl WazooApp {
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     let muted = !p.state.is_muted;
                     p.set_muted(muted);
+                    if !muted {
+                        self.settings.is_global_muted = false;
+                        let _ = self.config_mgr.save_settings(&self.settings);
+                    }
                     self.toast_message = Some(if muted { "Muted".to_string() } else { "Unmuted".to_string() });
                     self.toast_time_remaining = 2;
                 }
@@ -1360,9 +1399,9 @@ impl WazooApp {
         let mut subs = vec![
             iced::time::every(Duration::from_millis(16)).map(|_| Message::VideoFrameTick),
             iced::time::every(Duration::from_secs(1)).map(|_| Message::WatchdogTick),
-            iced::event::listen_with(|event, _status, window_id| match event {
+            iced::event::listen_with(|event, status, window_id| match event {
                 iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) => {
-                    Some(Message::KeyPressed(key))
+                    Some(Message::KeyPressed(key, status))
                 }
                 iced::Event::Keyboard(iced::keyboard::Event::KeyReleased { key, .. }) => {
                     Some(Message::KeyReleased(key))
