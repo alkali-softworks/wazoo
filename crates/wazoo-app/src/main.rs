@@ -935,10 +935,18 @@ impl WazooApp {
             Message::ScanProgressUpdate(progress) => {
                 match progress.stage {
                     ScanStage::Listing => {
-                        if progress.processed > 0 {
-                            self.toast_message = Some(format!("Listing files... ({} found)", progress.processed));
-                            self.toast_time_remaining = 2;
-                        }
+                        let name_part = if progress.current_name.is_empty() {
+                            String::new()
+                        } else {
+                            format!(": {}", progress.current_name)
+                        };
+                        self.toast_message = Some(format!(
+                            "Scanning{} ({}% - {} found)",
+                            name_part,
+                            progress.percent,
+                            progress.files_found
+                        ));
+                        self.toast_time_remaining = 2;
                     }
                     ScanStage::Indexing => {
                         if !progress.current_name.is_empty() {
@@ -1203,11 +1211,36 @@ impl WazooApp {
 
         // 4. Scan Toast Banner (Matches Electron scan toast across top)
         if self.is_scanning {
+            let (label, status_text) = if let Some(ref progress) = self.scan_progress {
+                match progress.stage {
+                    ScanStage::Listing => {
+                        let name = if progress.current_name.is_empty() {
+                            "Discovering files...".to_string()
+                        } else {
+                            format!("Listing: {}", progress.current_name)
+                        };
+                        let stat = format!("{}% ({} found)", progress.percent, progress.files_found);
+                        (name, stat)
+                    }
+                    ScanStage::Indexing => {
+                        let name = if progress.current_name.is_empty() {
+                            "Indexing library...".to_string()
+                        } else {
+                            format!("Indexing: {}", progress.current_name)
+                        };
+                        let stat = format!("{}% ({} files)", progress.percent, progress.total);
+                        (name, stat)
+                    }
+                }
+            } else {
+                ("Scanning media folders...".to_string(), "In progress".to_string())
+            };
+
             let scan_banner = container(
                 row![
-                    text("Scanning media folders and indexing library...").size(13).color(iced::Color::WHITE),
+                    text(label).size(13).color(iced::Color::WHITE),
                     Space::new().width(Length::Fill),
-                    text("In progress").size(13).color(theme::COLOR_PRIMARY),
+                    text(status_text).size(13).color(theme::COLOR_PRIMARY),
                 ]
                 .padding([4, 24])
                 .align_y(Alignment::Center),
@@ -1894,10 +1927,12 @@ impl WazooApp {
             if let Some(ref progress) = self.scan_progress {
                 match progress.stage {
                     ScanStage::Listing => {
-                        if progress.processed == 0 {
-                            "Listing files...".to_string()
+                        if progress.percent > 0 {
+                            format!("Listing... {}% ({} found)", progress.percent, progress.files_found)
+                        } else if progress.files_found > 0 {
+                            format!("Listing... ({} found)", progress.files_found)
                         } else {
-                            format!("Listing files... ({} found)", progress.processed)
+                            "Listing files...".to_string()
                         }
                     }
                     ScanStage::Indexing => {
@@ -1922,6 +1957,42 @@ impl WazooApp {
                 .padding([8, 14])
         };
 
+        let mut scan_controls = column![
+            row![
+                button(text("Add Folder"))
+                    .style(theme::action_button_style)
+                    .on_press(Message::PickFolders)
+                    .padding([8, 14]),
+                scan_btn,
+            ]
+            .spacing(10),
+        ]
+        .spacing(6);
+
+        if self.is_scanning {
+            if let Some(ref progress) = self.scan_progress {
+                let info_str = match progress.stage {
+                    ScanStage::Listing => {
+                        if progress.current_name.is_empty() {
+                            format!("Discovering files: {}% ({} found)", progress.percent, progress.files_found)
+                        } else {
+                            format!("Scanning {}: {}% ({} found)", progress.current_name, progress.percent, progress.files_found)
+                        }
+                    }
+                    ScanStage::Indexing => {
+                        if progress.current_name.is_empty() {
+                            format!("Indexing database: {}% ({} files)", progress.percent, progress.total)
+                        } else {
+                            format!("Adding {}: {}%", progress.current_name, progress.percent)
+                        }
+                    }
+                };
+                scan_controls = scan_controls.push(
+                    text(info_str).size(12).color(theme::COLOR_PRIMARY)
+                );
+            }
+        }
+
         let content = column![
             row![
                 text("Settings").size(20).color(iced::Color::WHITE),
@@ -1945,14 +2016,7 @@ impl WazooApp {
             ]
             .spacing(6),
             folders_col,
-            row![
-                button(text("Add Folder"))
-                    .style(theme::action_button_style)
-                    .on_press(Message::PickFolders)
-                    .padding([8, 14]),
-                scan_btn,
-            ]
-            .spacing(10),
+            scan_controls,
             text(format!("Total Videos: {}", self.available_videos.len()))
                 .size(13)
                 .color(theme::COLOR_TEXT_MUTED),
