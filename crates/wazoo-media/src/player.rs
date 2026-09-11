@@ -111,9 +111,9 @@ impl VideoHandle {
                 }
             };
 
-            // Configure libmpv for optimal ambient media playback
+            // Configure libmpv for optimal ambient media playback (wasapi on Windows, pulse/pipewire/alsa on Linux)
             set_opt("vo", "libmpv");
-            set_opt("ao", "pulse,pipewire,alsa,null");
+            set_opt("ao", "wasapi,pulse,pipewire,alsa,null");
             set_opt("hwdec", "auto-safe");
             set_opt("demuxer-max-bytes", &format!("{}M", config.size_mb.max(16)));
             set_opt("demuxer-readahead-secs", &format!("{}", config.duration_secs.max(2)));
@@ -149,13 +149,14 @@ impl VideoHandle {
                 return Err(format!("Failed to create mpv render context (code {res})"));
             }
 
-            // Load media file
+            // Load media file (normalize Windows backslashes so mpv command string doesn't treat them as escape characters)
             let clean_path = if let Some(stripped) = file_path.strip_prefix("file://") {
                 stripped
             } else {
                 file_path
             };
-            let cmd = CString::new(format!("loadfile \"{}\"", clean_path.replace('"', "\\\"")))
+            let normalized_path = clean_path.replace('\\', "/");
+            let cmd = CString::new(format!("loadfile \"{}\"", normalized_path.replace('"', "\\\"")))
                 .map_err(|e| e.to_string())?;
             mpv_ffi::mpv_command_string(mpv, cmd.as_ptr());
 
