@@ -1573,10 +1573,14 @@ impl WazooApp {
             let formatted_title = format::format_descriptive_title(&p.state.path);
             let title_pill = container(
                 text(formatted_title)
-                    .size(14)
+                    .size(22)
+                    .font(iced::Font {
+                        weight: iced::font::Weight::Bold,
+                        ..Default::default()
+                    })
                     .color(iced::Color::WHITE),
             )
-            .padding([6, 12])
+            .padding([10, 18])
             .style(theme::title_pill_style);
 
             let top_row = row![
