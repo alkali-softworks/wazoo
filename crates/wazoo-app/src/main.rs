@@ -1,12 +1,18 @@
+mod format;
+mod theme;
+
+use std::collections::BTreeMap;
 use std::time::Duration;
 use iced::{
     keyboard::{key::Named, Key},
     widget::{button, column, container, mouse_area, row, scrollable, slider, text, text_input, Space, Stack},
-    window, Alignment, Element, Length, Subscription, Task, Theme,
+    Alignment, Color, Element, Length, Point, Subscription, Task, Theme,
 };
 use wazoo_core::{ConfigManager, Database, LayoutMode, PlaybackMode, VideoRecord, WazooSettings};
 use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, VideoHandle};
-use wazoo_scanner::{Scanner, ScanProgress};
+use wazoo_scanner::{ScanProgress, Scanner};
+
+static APP_ICON_BYTES: &[u8] = include_bytes!("../resources/icon.png");
 
 pub struct WazooApp {
     settings: WazooSettings,
@@ -18,9 +24,20 @@ pub struct WazooApp {
     active_search_query: String,
     search_input: String,
     folder_input: String,
+    selected_search_folder: String,
     show_search_modal: bool,
     show_settings_modal: bool,
     show_help_modal: bool,
+    show_menu_modal: bool,
+    show_file_picker: bool,
+    file_picker_search: String,
+    show_titlebar: bool,
+    titlebar_hide_ticks: usize,
+    show_dropdown_menu: bool,
+    is_alt_pressed: bool,
+    player_overlay_ticks: usize,
+    window_id: Option<iced::window::Id>,
+    app_icon_handle: iced::widget::image::Handle,
     toast_message: Option<String>,
     toast_time_remaining: usize,
     next_player_id: PlayerId,
@@ -28,16 +45,31 @@ pub struct WazooApp {
     scan_progress: Option<ScanProgress>,
     focused_player_idx: usize,
     is_shuffle_mode: bool,
-    show_wazoo_controls: bool,
-    show_title_overlay: bool,
     hovered_player_id: Option<PlayerId>,
     subtitles_enabled: bool,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    // Keyboard Event
+    // Window management & Events
+    WindowIdReceived(iced::window::Id),
+    CursorMoved(iced::window::Id, Point),
+    RightClickPressed(iced::window::Id),
     KeyPressed(Key),
+    KeyReleased(Key),
+    MinimizeWindow,
+    MaximizeWindow,
+    CloseApp,
+    DragWindow,
+    ToggleDropdownMenu,
+    CloseDropdownMenu,
+    OpenMenuModal,
+    CloseMenuModal,
+    ToggleFilePicker,
+    FilePickerSearchChanged(String),
+    PlayFileInFocused(String),
+    SelectSearchFolder(String),
+    SetWindowOpacity(f32),
 
     // Playback controls
     TogglePlay(PlayerId),
@@ -88,14 +120,8 @@ pub enum Message {
     StartScan,
     ScanProgressUpdate(ScanProgress),
     ScanFinished(Result<usize, String>),
-    ToggleControlsHUD,
-    ToggleTitleOverlay,
     ToggleSubtitles,
     EscapePressed,
-
-    // Window management
-    ToggleDecorations,
-    WindowResized(u32, u32),
 
     // Timers & Ticks
     AnimationTick,
@@ -120,6 +146,8 @@ impl WazooApp {
             .collect();
         let scroll_engine = ScrollEngine::new(settings.window_bounds.height as f32);
 
+        let icon_handle = iced::widget::image::Handle::from_bytes(APP_ICON_BYTES);
+
         let mut app = Self {
             settings: settings.clone(),
             config_mgr,
@@ -130,9 +158,20 @@ impl WazooApp {
             active_search_query: settings.last_query.clone(),
             search_input: settings.last_query.clone(),
             folder_input: String::new(),
+            selected_search_folder: "All".to_string(),
             show_search_modal: false,
             show_settings_modal: false,
             show_help_modal: false,
+            show_menu_modal: false,
+            show_file_picker: false,
+            file_picker_search: String::new(),
+            show_titlebar: false,
+            titlebar_hide_ticks: 0,
+            show_dropdown_menu: false,
+            is_alt_pressed: false,
+            player_overlay_ticks: 120,
+            window_id: None,
+            app_icon_handle: icon_handle,
             toast_message: Some("Welcome to Wazoo (Native Rust)".to_string()),
             toast_time_remaining: 3,
             next_player_id: 1,
@@ -140,8 +179,6 @@ impl WazooApp {
             scan_progress: None,
             focused_player_idx: 0,
             is_shuffle_mode: true,
-            show_wazoo_controls: true,
-            show_title_overlay: false,
             hovered_player_id: None,
             subtitles_enabled: true,
         };
@@ -188,7 +225,11 @@ impl WazooApp {
         }
         if let Some(curr) = current_path {
             if let Some(pos) = self.available_videos.iter().position(|v| v.path == curr) {
-                let prev_pos = if pos == 0 { self.available_videos.len() - 1 } else { pos - 1 };
+                let prev_pos = if pos == 0 {
+                    self.available_videos.len() - 1
+                } else {
+                    pos - 1
+                };
                 return Some(self.available_videos[prev_pos].clone());
             }
         }
@@ -202,6 +243,14 @@ impl WazooApp {
             read_chunk_kb: 512,
         };
         VideoHandle::with_buffering(id, path, name, buffer_config)
+    }
+
+    pub fn current_opacity(&self) -> f32 {
+        if self.is_alt_pressed {
+            0.85
+        } else {
+            self.settings.window_opacity.clamp(0.1, 1.0)
+        }
     }
 
     fn add_player_internal(&mut self) -> Option<PlayerId> {
@@ -232,14 +281,62 @@ impl WazooApp {
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::WindowIdReceived(id) => {
+                self.window_id = Some(id);
+            }
+            Message::CursorMoved(win_id, pos) => {
+                self.window_id = Some(win_id);
+                self.player_overlay_ticks = 120; // 2 seconds of overlay visibility
+
+                if pos.y < 35.0 || self.show_dropdown_menu {
+                    self.show_titlebar = true;
+                    self.titlebar_hide_ticks = 25;
+                } else if !self.show_dropdown_menu {
+                    if self.titlebar_hide_ticks > 0 {
+                        self.titlebar_hide_ticks -= 1;
+                    } else {
+                        self.show_titlebar = false;
+                    }
+                }
+            }
+            Message::RightClickPressed(win_id) => {
+                self.window_id = Some(win_id);
+                self.show_menu_modal = true;
+                self.show_dropdown_menu = false;
+            }
             Message::KeyPressed(key) => {
-                if self.show_search_modal || self.show_settings_modal || self.show_help_modal {
+                // If Alt key pressed
+                if key == Key::Named(Named::Alt) || key == Key::Named(Named::AltGraph) {
+                    self.is_alt_pressed = true;
+                    return Task::none();
+                }
+
+                // If Alt is held and X is pressed: quit app
+                if self.is_alt_pressed {
+                    if let Key::Character(ref s) = key {
+                        if s.eq_ignore_ascii_case("x") {
+                            return self.update(Message::CloseApp);
+                        }
+                    }
+                }
+
+                // If any modal is open, Escape closes it
+                if self.show_search_modal
+                    || self.show_settings_modal
+                    || self.show_help_modal
+                    || self.show_menu_modal
+                    || self.show_dropdown_menu
+                    || self.show_file_picker
+                {
                     if key == Key::Named(Named::Escape) {
                         self.show_search_modal = false;
                         self.show_settings_modal = false;
                         self.show_help_modal = false;
+                        self.show_menu_modal = false;
+                        self.show_dropdown_menu = false;
+                        self.show_file_picker = false;
+                        return Task::none();
                     }
-                    return Task::none();
                 }
 
                 match key {
@@ -268,8 +365,7 @@ impl WazooApp {
                         "-" => return self.update(Message::AdjustScrollSpeed(-0.1)),
                         "+" | "=" => return self.update(Message::AdjustScrollSpeed(0.1)),
                         "c" | "C" => return self.update(Message::ToggleSubtitles),
-                        "t" | "T" => return self.update(Message::ToggleTitleOverlay),
-                        "h" | "H" => return self.update(Message::ToggleControlsHUD),
+                        "h" | "H" => return self.update(Message::ToggleFilePicker),
                         "?" => return self.update(Message::OpenHelpModal),
                         "," => return self.update(Message::SeekRelativeFocused(-0.04)),
                         "." => return self.update(Message::SeekRelativeFocused(0.04)),
@@ -277,6 +373,78 @@ impl WazooApp {
                     },
                     _ => {}
                 }
+            }
+            Message::KeyReleased(key) => {
+                if key == Key::Named(Named::Alt) || key == Key::Named(Named::AltGraph) {
+                    self.is_alt_pressed = false;
+                }
+            }
+            Message::MinimizeWindow => {
+                if let Some(id) = self.window_id {
+                    return iced::window::minimize(id, true);
+                }
+            }
+            Message::MaximizeWindow => {
+                if let Some(id) = self.window_id {
+                    return iced::window::toggle_maximize(id);
+                }
+            }
+            Message::CloseApp => {
+                if let Some(id) = self.window_id {
+                    return iced::window::close(id);
+                } else {
+                    std::process::exit(0);
+                }
+            }
+            Message::DragWindow => {
+                if let Some(id) = self.window_id {
+                    return iced::window::drag(id);
+                }
+            }
+            Message::ToggleDropdownMenu => {
+                self.show_dropdown_menu = !self.show_dropdown_menu;
+                if self.show_dropdown_menu {
+                    self.show_titlebar = true;
+                }
+            }
+            Message::CloseDropdownMenu => {
+                self.show_dropdown_menu = false;
+            }
+            Message::OpenMenuModal => {
+                self.show_menu_modal = true;
+                self.show_dropdown_menu = false;
+            }
+            Message::CloseMenuModal => {
+                self.show_menu_modal = false;
+            }
+            Message::ToggleFilePicker => {
+                self.show_file_picker = !self.show_file_picker;
+                self.show_dropdown_menu = false;
+                self.show_menu_modal = false;
+            }
+            Message::FilePickerSearchChanged(s) => {
+                self.file_picker_search = s;
+            }
+            Message::PlayFileInFocused(path) => {
+                if let Some(id) = self.focused_player_id() {
+                    let title = format::format_video_title(&path);
+                    if let Ok(mut handle) = self.create_video_handle(id, &path, &title) {
+                        handle.set_muted(self.settings.is_global_muted);
+                        handle.set_subtitles_visible(self.subtitles_enabled);
+                        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                            *p = handle;
+                        }
+                        self.toast_message = Some(format!("Playing: {title}"));
+                        self.toast_time_remaining = 3;
+                    }
+                }
+            }
+            Message::SelectSearchFolder(folder) => {
+                self.selected_search_folder = folder;
+            }
+            Message::SetWindowOpacity(opacity) => {
+                self.settings.window_opacity = opacity.clamp(0.1, 1.0);
+                let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::TogglePlay(id) => {
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
@@ -341,14 +509,12 @@ impl WazooApp {
                         let target = Duration::from_secs_f64(target_secs);
                         p.seek(target);
 
-                        let pos_s = target.as_secs();
-                        let dur_s = dur.as_secs();
+                        let pos_s = target.as_secs_f64();
+                        let dur_s = dur.as_secs_f64();
                         self.toast_message = Some(format!(
-                            "Seek [{:02}:{:02} / {:02}:{:02}]",
-                            pos_s / 60,
-                            pos_s % 60,
-                            dur_s / 60,
-                            dur_s % 60
+                            "Seek [{} / {}]",
+                            format::format_time_str(pos_s),
+                            format::format_time_str(dur_s)
                         ));
                         self.toast_time_remaining = 2;
                     }
@@ -356,6 +522,7 @@ impl WazooApp {
             }
             Message::PlayerHovered(id) => {
                 self.hovered_player_id = Some(id);
+                self.player_overlay_ticks = 120;
             }
             Message::PlayerUnhovered(id) => {
                 if self.hovered_player_id == Some(id) {
@@ -364,21 +531,17 @@ impl WazooApp {
             }
             Message::SeekRelativeFocused(secs) => {
                 if let Some(id) = self.focused_player_id() {
-                    self.hovered_player_id = Some(id);
+                    self.player_overlay_ticks = 120;
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                         p.seek_relative(secs);
                         let pos = p.position();
                         let dur = p.duration();
-                        let pos_s = pos.as_secs();
-                        let dur_s = dur.as_secs();
                         let sign = if secs > 0.0 { "+" } else { "" };
                         self.toast_message = Some(format!(
-                            "Seek {sign}{:.0}s  [{:02}:{:02} / {:02}:{:02}]",
+                            "Seek {sign}{:.0}s  [{} / {}]",
                             secs,
-                            pos_s / 60,
-                            pos_s % 60,
-                            dur_s / 60,
-                            dur_s % 60
+                            format::format_time_str(pos.as_secs_f64()),
+                            format::format_time_str(dur.as_secs_f64())
                         ));
                         self.toast_time_remaining = 2;
                     }
@@ -405,6 +568,8 @@ impl WazooApp {
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     let muted = !p.state.is_muted;
                     p.set_muted(muted);
+                    self.toast_message = Some(if muted { "Muted".to_string() } else { "Unmuted".to_string() });
+                    self.toast_time_remaining = 2;
                 }
             }
             Message::ToggleMuteFocused => {
@@ -452,6 +617,7 @@ impl WazooApp {
                 };
                 self.toast_message = Some(format!("Layout: {:?}", self.settings.layout));
                 self.toast_time_remaining = 2;
+                let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::SetPlayerCount(count) => {
                 let target = count.clamp(1, 12);
@@ -464,13 +630,17 @@ impl WazooApp {
                 }
                 self.toast_message = Some(format!("Players: {target}"));
                 self.toast_time_remaining = 2;
+                let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::ToggleScrollMode => {
                 self.settings.playback_mode = match self.settings.playback_mode {
                     PlaybackMode::Scroll => PlaybackMode::Normal,
                     _ => PlaybackMode::Scroll,
                 };
-                self.toast_message = Some(format!("Scroll Mode: {:?}", self.settings.playback_mode));
+                self.toast_message = Some(match self.settings.playback_mode {
+                    PlaybackMode::Scroll => "Scroll Mode: Enabled".to_string(),
+                    _ => "Scroll Mode: Disabled".to_string(),
+                });
                 self.toast_time_remaining = 2;
             }
             Message::ToggleFlipMode => {
@@ -478,7 +648,10 @@ impl WazooApp {
                     PlaybackMode::Flip => PlaybackMode::Normal,
                     _ => PlaybackMode::Flip,
                 };
-                self.toast_message = Some(format!("Flip Mode: {:?}", self.settings.playback_mode));
+                self.toast_message = Some(match self.settings.playback_mode {
+                    PlaybackMode::Flip => "Flip Mode: Enabled".to_string(),
+                    _ => "Flip Mode: Disabled".to_string(),
+                });
                 self.toast_time_remaining = 2;
             }
             Message::SetScrollSpeed(speed) => {
@@ -493,6 +666,8 @@ impl WazooApp {
             }
             Message::AddNewPlayer => {
                 let new_count = (self.players.len() + 1).min(12);
+                self.show_dropdown_menu = false;
+                self.show_menu_modal = false;
                 return self.update(Message::SetPlayerCount(new_count));
             }
             Message::RemoveFocusedPlayer => {
@@ -504,6 +679,7 @@ impl WazooApp {
                     }
                     self.toast_message = Some(format!("Players: {}", self.players.len()));
                     self.toast_time_remaining = 2;
+                    let _ = self.config_mgr.save_settings(&self.settings);
                 }
             }
             Message::CycleFocusedPlayer => {
@@ -520,6 +696,8 @@ impl WazooApp {
             }
             Message::OpenSearchModal => {
                 self.show_search_modal = true;
+                self.show_dropdown_menu = false;
+                self.show_menu_modal = false;
             }
             Message::CloseSearchModal => {
                 self.show_search_modal = false;
@@ -529,16 +707,24 @@ impl WazooApp {
             }
             Message::PerformSearch => {
                 self.active_search_query = self.search_input.clone();
-                let folders = self.settings.media_folders.clone();
+                let folders = if self.selected_search_folder == "All" {
+                    self.settings.media_folders.clone()
+                } else {
+                    vec![self.selected_search_folder.clone()]
+                };
+
                 if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
-                    self.toast_message = Some(format!("Found {} videos", results.len()));
-                    self.toast_time_remaining = 2;
+                    let total = results.len();
                     self.available_videos = results;
+                    self.toast_message = Some(format!("Total files: {total}"));
+                    self.toast_time_remaining = 3;
                 }
                 self.show_search_modal = false;
             }
             Message::OpenSettingsModal => {
                 self.show_settings_modal = true;
+                self.show_dropdown_menu = false;
+                self.show_menu_modal = false;
             }
             Message::CloseSettingsModal => {
                 self.show_settings_modal = false;
@@ -552,6 +738,8 @@ impl WazooApp {
             }
             Message::OpenHelpModal => {
                 self.show_help_modal = true;
+                self.show_dropdown_menu = false;
+                self.show_menu_modal = false;
             }
             Message::CloseHelpModal => {
                 self.show_help_modal = false;
@@ -560,8 +748,7 @@ impl WazooApp {
                 let starting_dir = self.settings.media_folders.first().cloned();
                 return Task::perform(
                     async move {
-                        let mut dialog = rfd::AsyncFileDialog::new()
-                            .set_title("Select Media Folder(s)");
+                        let mut dialog = rfd::AsyncFileDialog::new().set_title("Select Media Folder(s)");
                         if let Some(ref dir) = starting_dir {
                             dialog = dialog.set_directory(dir);
                         }
@@ -685,32 +872,25 @@ impl WazooApp {
                     }
                 }
             }
-            Message::ToggleControlsHUD => {
-                self.show_wazoo_controls = !self.show_wazoo_controls;
-            }
-            Message::ToggleTitleOverlay => {
-                self.show_title_overlay = !self.show_title_overlay;
-            }
             Message::ToggleSubtitles => {
                 self.subtitles_enabled = !self.subtitles_enabled;
                 for p in &mut self.players {
                     p.set_subtitles_visible(self.subtitles_enabled);
                 }
                 self.toast_message = Some(if self.subtitles_enabled {
-                    "Subtitles: ON".to_string()
+                    "Subtitles: Enabled".to_string()
                 } else {
-                    "Subtitles: OFF".to_string()
+                    "Subtitles: Disabled".to_string()
                 });
                 self.toast_time_remaining = 2;
             }
             Message::EscapePressed => {
-                self.show_help_modal = !self.show_help_modal;
-            }
-            Message::ToggleDecorations => {}
-            Message::WindowResized(w, h) => {
-                self.settings.window_bounds.width = w;
-                self.settings.window_bounds.height = h;
-                self.scroll_engine.set_window_height(h as f32);
+                self.show_help_modal = false;
+                self.show_search_modal = false;
+                self.show_settings_modal = false;
+                self.show_menu_modal = false;
+                self.show_dropdown_menu = false;
+                self.show_file_picker = false;
             }
             Message::AnimationTick => {
                 if self.settings.playback_mode == PlaybackMode::Scroll {
@@ -733,12 +913,14 @@ impl WazooApp {
                 }
             }
             Message::VideoFrameTick => {
+                if self.player_overlay_ticks > 0 {
+                    self.player_overlay_ticks -= 1;
+                }
                 for p in &mut self.players {
                     p.update_frame();
                 }
             }
             Message::WatchdogTick => {
-                // Check if any video finished or is stuck
                 let mut finished_ids = Vec::new();
                 let mut stuck_ids = Vec::new();
 
@@ -791,12 +973,23 @@ impl WazooApp {
         let mut subs = vec![
             iced::time::every(Duration::from_millis(16)).map(|_| Message::VideoFrameTick),
             iced::time::every(Duration::from_secs(1)).map(|_| Message::WatchdogTick),
-            iced::event::listen_with(|event, _status, _window| {
-                if let iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) = event {
+            iced::event::listen_with(|event, _status, window_id| match event {
+                iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) => {
                     Some(Message::KeyPressed(key))
-                } else {
-                    None
                 }
+                iced::Event::Keyboard(iced::keyboard::Event::KeyReleased { key, .. }) => {
+                    Some(Message::KeyReleased(key))
+                }
+                iced::Event::Window(iced::window::Event::Unfocused) => {
+                    Some(Message::KeyReleased(iced::keyboard::Key::Named(iced::keyboard::key::Named::Alt)))
+                }
+                iced::Event::Mouse(iced::mouse::Event::CursorMoved { position }) => {
+                    Some(Message::CursorMoved(window_id, position))
+                }
+                iced::Event::Mouse(iced::mouse::Event::ButtonPressed(iced::mouse::Button::Right)) => {
+                    Some(Message::RightClickPressed(window_id))
+                }
+                _ => None,
             }),
         ];
 
@@ -812,71 +1005,49 @@ impl WazooApp {
     }
 
     pub fn view(&self) -> Element<'_, Message> {
-        if self.available_videos.is_empty() {
-            return self.view_welcome();
-        }
-
-        let players_view = self.view_players();
-
-        let mut content = column![players_view];
-
-        // Bottom control bar overlay
-        if self.show_wazoo_controls {
-            let controls = row![
-                button(text("🔍 Find (F)")).on_press(Message::OpenSearchModal),
-                button(text(format!("Layout: {:?} (L)", self.settings.layout))).on_press(Message::CycleLayout),
-                button(text(if self.is_shuffle_mode { "🔀 Shuffle (S)" } else { "🔁 Sequential (S)" }))
-                    .on_press(Message::ToggleShuffleMode),
-                button(text(if self.settings.playback_mode == PlaybackMode::Scroll { "🌊 Scroll: ON (5)" } else { "🌊 Scroll: OFF (5)" }))
-                    .on_press(Message::ToggleScrollMode),
-                button(text(if self.settings.playback_mode == PlaybackMode::Flip { "⚡ Flip: ON (6)" } else { "⚡ Flip: OFF (6)" }))
-                    .on_press(Message::ToggleFlipMode),
-                button(text(if self.settings.is_global_muted { "🔇 Unmute (M)" } else { "🔊 Mute (M)" }))
-                    .on_press(Message::ToggleGlobalMute),
-                button(text("⚙ Settings")).on_press(Message::OpenSettingsModal),
-                button(text("❓ Help (?)")).on_press(Message::OpenHelpModal),
+        let main_content: Element<'_, Message> = if self.available_videos.is_empty() {
+            self.view_welcome()
+        } else if self.show_file_picker {
+            row![
+                container(self.view_players()).width(Length::Fill).height(Length::Fill),
+                self.view_file_picker(),
             ]
-            .spacing(8)
-            .padding(8);
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .into()
+        } else {
+            row![container(self.view_players()).width(Length::Fill).height(Length::Fill)]
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .into()
+        };
 
-            content = content.push(controls);
+        let mut root_stack_children: Vec<Element<'_, Message>> = vec![main_content];
+
+        // 2. Sliding Titlebar & Dropdown Menu Overlay
+        if self.show_titlebar {
+            root_stack_children.push(self.view_titlebar());
         }
 
-        let base_layer = container(content)
-            .width(Length::Fill)
-            .height(Length::Fill);
-
-        let mut root_stack_children = vec![Element::from(base_layer)];
-
-        // Floating Toast / Notice Overlay (Zero reflow - floats over top center)
+        // 3. Floating Notice (Matches Electron Notice.vue)
         if let Some(ref toast) = self.toast_message {
             let toast_widget = container(
                 row![
-                    text(toast).size(15).color(iced::Color::WHITE),
-                    button(text("✕").size(12)).on_press(Message::DismissToast).padding(2),
+                    text(toast).size(16).color(iced::Color::WHITE),
+                    button(text("✕").size(12))
+                        .style(theme::window_control_button_style)
+                        .on_press(Message::DismissToast)
+                        .padding(2),
                 ]
                 .spacing(12)
                 .align_y(Alignment::Center),
             )
-            .padding([8, 18])
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.85))),
-                border: iced::Border {
-                    radius: 8.0.into(),
-                    width: 1.0,
-                    color: iced::Color::from_rgba(1.0, 1.0, 1.0, 0.15),
-                },
-                shadow: iced::Shadow {
-                    color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5),
-                    offset: iced::Vector::new(0.0, 4.0),
-                    blur_radius: 12.0,
-                },
-                ..Default::default()
-            });
+            .padding([6, 18])
+            .style(theme::notice_pill_style);
 
             let toast_layer = container(
                 column![
-                    Space::new().height(Length::Fixed(24.0)),
+                    Space::new().height(Length::Fixed(35.0)),
                     toast_widget,
                 ]
                 .align_x(Alignment::Center),
@@ -888,13 +1059,55 @@ impl WazooApp {
             root_stack_children.push(Element::from(toast_layer));
         }
 
-        // Floating Modal Overlays (Zero reflow - video continues in background)
+        // 4. Scan Toast Banner (Matches Electron scan toast across top)
+        if self.is_scanning {
+            let scan_banner = container(
+                row![
+                    text("Scanning media folders and indexing library...").size(13).color(iced::Color::WHITE),
+                    Space::new().width(Length::Fill),
+                    text("In progress").size(13).color(theme::COLOR_PRIMARY),
+                ]
+                .padding([4, 24])
+                .align_y(Alignment::Center),
+            )
+            .width(Length::Fill)
+            .height(Length::Fixed(28.0))
+            .style(theme::scan_toast_banner_style);
+
+            root_stack_children.push(Element::from(scan_banner));
+        }
+
+        // 5. Alt Drag Overlay (Matches Electron Alt overlay)
+        if self.is_alt_pressed {
+            let alt_overlay = container(
+                column![
+                    text("Drag to move").size(22).color(iced::Color::WHITE),
+                    text("X to quit").size(16).color(theme::COLOR_TEXT_DIM),
+                ]
+                .spacing(8)
+                .align_x(Alignment::Center),
+            )
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill)
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5))),
+                ..Default::default()
+            });
+
+            root_stack_children.push(Element::from(mouse_area(alt_overlay).on_press(Message::DragWindow)));
+        }
+
+        // 6. Floating Modals (Zero reflow - video playback continues)
         if self.show_search_modal {
             root_stack_children.push(self.view_search_modal());
         } else if self.show_settings_modal {
             root_stack_children.push(self.view_settings_modal());
         } else if self.show_help_modal {
             root_stack_children.push(self.view_help_modal());
+        } else if self.show_menu_modal {
+            root_stack_children.push(self.view_menu_modal());
         }
 
         Stack::with_children(root_stack_children)
@@ -903,21 +1116,142 @@ impl WazooApp {
             .into()
     }
 
+    fn view_titlebar(&self) -> Element<'_, Message> {
+        let badge_btn = button(
+            row![
+                iced::widget::image(self.app_icon_handle.clone())
+                    .width(Length::Fixed(20.0))
+                    .height(Length::Fixed(20.0)),
+                text("Wazoo").size(16).color(iced::Color::WHITE),
+            ]
+            .spacing(6)
+            .align_y(Alignment::Center),
+        )
+        .style(theme::titlebar_badge_style)
+        .on_press(Message::ToggleDropdownMenu)
+        .padding(iced::Padding {
+            top: 2.0,
+            right: 14.0,
+            bottom: 2.0,
+            left: 8.0,
+        });
+
+        let drag_strip = mouse_area(
+            container(Space::new())
+                .width(Length::Fill)
+                .height(Length::Fixed(30.0)),
+        )
+        .on_press(Message::DragWindow);
+
+        let window_buttons = row![
+            button(
+                container(text("─").size(14))
+                    .width(Length::Fixed(46.0))
+                    .height(Length::Fixed(30.0))
+                    .center_x(Length::Fill)
+                    .center_y(Length::Fill),
+            )
+            .style(theme::window_control_button_style)
+            .on_press(Message::MinimizeWindow)
+            .padding(0),
+            button(
+                container(text("□").size(14))
+                    .width(Length::Fixed(46.0))
+                    .height(Length::Fixed(30.0))
+                    .center_x(Length::Fill)
+                    .center_y(Length::Fill),
+            )
+            .style(theme::window_control_button_style)
+            .on_press(Message::MaximizeWindow)
+            .padding(0),
+            button(
+                container(text("✕").size(14))
+                    .width(Length::Fixed(46.0))
+                    .height(Length::Fixed(30.0))
+                    .center_x(Length::Fill)
+                    .center_y(Length::Fill),
+            )
+            .style(theme::close_window_button_style)
+            .on_press(Message::CloseApp)
+            .padding(0),
+        ];
+
+        let titlebar_row = container(
+            row![
+                badge_btn,
+                drag_strip,
+                window_buttons,
+            ]
+            .align_y(Alignment::Center)
+            .width(Length::Fill)
+            .height(Length::Fixed(30.0)),
+        )
+        .width(Length::Fill)
+        .height(Length::Fixed(30.0))
+        .style(|_theme: &Theme| container::Style {
+            background: Some(iced::Background::Color(theme::COLOR_TITLEBAR_BG)),
+            ..Default::default()
+        });
+
+        if self.show_dropdown_menu {
+            let menu_dropdown = container(
+                column![
+                    button(text("Add Player")).style(theme::menu_item_style).on_press(Message::AddNewPlayer).padding([8, 14]).width(Length::Fill),
+                    button(text("Toggle Layout")).style(theme::menu_item_style).on_press(Message::CycleLayout).padding([8, 14]).width(Length::Fill),
+                    button(text("Toggle Files")).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 14]).width(Length::Fill),
+                    button(text("Search")).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 14]).width(Length::Fill),
+                    button(text("Settings")).style(theme::menu_item_style).on_press(Message::OpenSettingsModal).padding([8, 14]).width(Length::Fill),
+                    button(text("Help")).style(theme::menu_item_style).on_press(Message::OpenHelpModal).padding([8, 14]).width(Length::Fill),
+                    button(text("Quit")).style(theme::menu_item_style).on_press(Message::CloseApp).padding([8, 14]).width(Length::Fill),
+                ]
+                .width(Length::Fixed(160.0)),
+            )
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(iced::Color::BLACK)),
+                border: iced::Border {
+                    radius: iced::border::Radius {
+                        top_left: 0.0,
+                        top_right: 0.0,
+                        bottom_right: 6.0,
+                        bottom_left: 6.0,
+                    },
+                    width: 1.0,
+                    color: theme::COLOR_BORDER,
+                },
+                shadow: iced::Shadow {
+                    color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5),
+                    offset: iced::Vector::new(0.0, 4.0),
+                    blur_radius: 12.0,
+                },
+                ..Default::default()
+            });
+
+            column![titlebar_row, menu_dropdown].into()
+        } else {
+            titlebar_row.into()
+        }
+    }
+
     fn view_players(&self) -> Element<'_, Message> {
         if self.players.is_empty() {
-            return text("No active players").into();
+            return container(text("No active players").size(18).color(theme::COLOR_TEXT_MUTED))
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center_x(Length::Fill)
+                .center_y(Length::Fill)
+                .into();
         }
 
         match self.settings.layout {
             LayoutMode::Row => {
-                let mut r = row![].spacing(6).width(Length::Fill).height(Length::Fill);
+                let mut r = row![].spacing(4).width(Length::Fill).height(Length::Fill);
                 for p in &self.players {
                     r = r.push(self.view_single_player(p));
                 }
                 r.into()
             }
             LayoutMode::Column => {
-                let mut c = column![].spacing(6).width(Length::Fill).height(Length::Fill);
+                let mut c = column![].spacing(4).width(Length::Fill).height(Length::Fill);
                 for p in &self.players {
                     c = c.push(self.view_single_player(p));
                 }
@@ -925,17 +1259,47 @@ impl WazooApp {
             }
             LayoutMode::Grid => {
                 let count = self.players.len();
-                let cols = if count <= 1 { 1 } else if count <= 4 { 2 } else if count <= 9 { 3 } else { 4 };
-
-                let mut rows = column![].spacing(6).width(Length::Fill).height(Length::Fill);
-                for chunk in self.players.chunks(cols) {
-                    let mut r = row![].spacing(6).width(Length::Fill).height(Length::Fill);
-                    for p in chunk {
-                        r = r.push(self.view_single_player(p));
+                if count == 1 {
+                    self.view_single_player(&self.players[0])
+                } else if count == 2 {
+                    row![
+                        self.view_single_player(&self.players[0]),
+                        self.view_single_player(&self.players[1]),
+                    ]
+                    .spacing(4)
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .into()
+                } else if count == 3 {
+                    // Electron 3-player special layout: top player spans full width, bottom row has 2
+                    column![
+                        container(self.view_single_player(&self.players[0]))
+                            .width(Length::Fill)
+                            .height(Length::FillPortion(1)),
+                        row![
+                            self.view_single_player(&self.players[1]),
+                            self.view_single_player(&self.players[2]),
+                        ]
+                        .spacing(4)
+                        .width(Length::Fill)
+                        .height(Length::FillPortion(1)),
+                    ]
+                    .spacing(4)
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .into()
+                } else {
+                    let cols = if count <= 4 { 2 } else if count <= 9 { 3 } else { 4 };
+                    let mut rows = column![].spacing(4).width(Length::Fill).height(Length::Fill);
+                    for chunk in self.players.chunks(cols) {
+                        let mut r = row![].spacing(4).width(Length::Fill).height(Length::Fill);
+                        for p in chunk {
+                            r = r.push(self.view_single_player(p));
+                        }
+                        rows = rows.push(r);
                     }
-                    rows = rows.push(r);
+                    rows.into()
                 }
-                rows.into()
             }
         }
     }
@@ -947,14 +1311,10 @@ impl WazooApp {
 
         let pos = p.position();
         let dur = p.duration();
-        let pos_secs = pos.as_secs();
-        let dur_secs = dur.as_secs();
         let time_str = format!(
-            "{:02}:{:02} / {:02}:{:02}",
-            pos_secs / 60,
-            pos_secs % 60,
-            dur_secs / 60,
-            dur_secs % 60
+            "{} / {}",
+            format::format_time_str(pos.as_secs_f64()),
+            format::format_time_str(dur.as_secs_f64())
         );
 
         let progress_ratio = if dur.as_secs_f64() > 0.0 {
@@ -963,134 +1323,221 @@ impl WazooApp {
             0.0f32
         };
 
-        let video_widget = p.view();
+        let opacity = self.current_opacity();
+        let video_widget = p.view(opacity);
 
-        let show_overlay = is_hovered || !p.state.is_playing || self.show_title_overlay;
+        // Overlays show when mouse is active or video paused
+        let show_overlay = is_hovered || !p.state.is_playing || self.player_overlay_ticks > 0;
 
         let mut stack_children: Vec<Element<'a, Message>> = vec![video_widget];
 
         if show_overlay {
-            let focus_indicator = if is_focused { "▶ " } else { "" };
-            let title_text = format!("{focus_indicator}{}", p.state.name);
-
-            let top_bar = container(
-                row![
-                    text(title_text).size(13).color(iced::Color::WHITE),
-                    Space::new().width(Length::Fill),
-                ]
-                .align_y(Alignment::Center),
+            // 1. Top-Left Title Pill (Matches Electron Player.vue)
+            let formatted_title = format::format_descriptive_title(&p.state.path);
+            let title_pill = container(
+                text(formatted_title)
+                    .size(14)
+                    .color(iced::Color::WHITE),
             )
-            .padding(8)
-            .width(Length::Fill)
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.65))),
-                ..Default::default()
-            });
+            .padding([6, 12])
+            .style(theme::title_pill_style);
 
-            let seek_bar = slider(
+            let top_row = row![
+                title_pill,
+                Space::new().width(Length::Fill),
+            ]
+            .width(Length::Fill);
+
+            // 2. Bottom Progress & Control Overlay (Vue emerald green theme #42b883)
+            let seek_slider = slider(
                 0.0..=1.0,
                 progress_ratio,
                 move |ratio| Message::SeekRatio(player_id, ratio),
             )
             .step(0.001)
+            .style(theme::progress_slider_style)
             .width(Length::Fill);
 
-            let bottom_controls = container(
-                column![
-                    seek_bar,
-                    row![
-                        button(text(if p.state.is_playing { "⏸" } else { "▶" }))
-                            .on_press(Message::TogglePlay(player_id)),
-                        button(text("⏮"))
-                            .on_press(Message::SeekRelativeFocused(-5.0)),
-                        button(text("⏭"))
-                            .on_press(Message::NextVideo(player_id)),
-                        button(text(if p.state.is_muted { "🔇" } else { "🔊" }))
-                            .on_press(Message::TogglePlayerMute(player_id)),
-                        button(text("CC"))
-                            .on_press(Message::ToggleSubtitles),
-                        Space::new().width(Length::Fill),
-                        text(time_str).size(12).color(iced::Color::WHITE),
-                    ]
-                    .spacing(8)
-                    .align_y(Alignment::Center),
-                ]
-                .spacing(4),
-            )
-            .padding(8)
-            .width(Length::Fill)
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.75))),
-                ..Default::default()
-            });
+            let progress_bar_with_timestamp = Stack::new()
+                .push(seek_slider)
+                .push(
+                    container(text(time_str).size(12).color(iced::Color::WHITE))
+                        .width(Length::Fill)
+                        .height(Length::Fixed(20.0))
+                        .center_x(Length::Fill)
+                        .center_y(Length::Fill),
+                );
 
-            let overlay_layer = column![
-                top_bar,
+            let controls_row = row![
+                // Left: CC + Volume Icon + Volume Slider
+                button(text(if self.subtitles_enabled { "CC" } else { "cc" }).size(13))
+                    .style(theme::menu_item_style)
+                    .on_press(Message::ToggleSubtitles)
+                    .padding([2, 6]),
+                button(text(if p.state.is_muted { "🔇" } else { "🔊" }).size(15))
+                    .style(theme::menu_item_style)
+                    .on_press(Message::TogglePlayerMute(player_id))
+                    .padding([2, 4]),
+                slider(
+                    0.0..=1.0,
+                    p.state.volume as f32,
+                    move |v| Message::SetVolume(player_id, v as f64),
+                )
+                .step(0.01)
+                .style(theme::volume_slider_style)
+                .width(Length::Fixed(60.0)),
+                Space::new().width(Length::Fill),
+                // Right: Play/Pause + Skip Next
+                button(text(if p.state.is_playing { "⏸" } else { "▶" }).size(14))
+                    .style(theme::menu_item_style)
+                    .on_press(Message::TogglePlay(player_id))
+                    .padding([2, 6]),
+                button(text("⏭").size(14))
+                    .style(theme::menu_item_style)
+                    .on_press(Message::NextVideo(player_id))
+                    .padding([2, 6]),
+            ]
+            .spacing(8)
+            .align_y(Alignment::Center);
+
+            let bottom_overlay = container(
+                column![
+                    controls_row,
+                    progress_bar_with_timestamp,
+                ]
+                .spacing(6),
+            )
+            .padding(iced::Padding {
+                top: 8.0,
+                right: 12.0,
+                bottom: 10.0,
+                left: 12.0,
+            })
+            .width(Length::Fill)
+            .style(theme::controls_overlay_style);
+
+            let overlays_column = column![
+                Space::new().height(Length::Fixed(20.0)),
+                top_row,
                 Space::new().height(Length::Fill),
-                bottom_controls,
+                bottom_overlay,
             ]
             .width(Length::Fill)
             .height(Length::Fill);
 
-            stack_children.push(Element::from(overlay_layer));
+            stack_children.push(Element::from(overlays_column));
         }
 
         let player_stack = Stack::with_children(stack_children)
             .width(Length::Fill)
             .height(Length::Fill);
 
-        mouse_area(player_stack)
+        let player_box = container(player_stack)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .style(theme::player_container_style(is_focused));
+
+        mouse_area(player_box)
             .on_enter(Message::PlayerHovered(player_id))
             .on_exit(Message::PlayerUnhovered(player_id))
             .into()
     }
 
-    fn view_welcome(&self) -> Element<'_, Message> {
-        let mut col = column![
-            text("Welcome to Wazoo").size(28),
-            text("Ambient media engine for non-stop viewing").size(16),
-            text("No videos indexed yet. Add your media folder(s) to start:").size(14),
-            row![
-                button(text("📁 Add Folder")).on_press(Message::PickFolders).padding(10),
-                button(text(if self.is_scanning { "Scanning..." } else { "Start Scan" }))
-                    .on_press(Message::StartScan)
-                    .padding(10),
-            ]
-            .spacing(12),
-            row![
-                text_input("Or enter folder path manually...", &self.folder_input)
-                    .on_input(Message::FolderInputChanged)
-                    .on_submit(Message::AddMediaFolder)
-                    .padding(8)
-                    .width(Length::Fixed(350.0)),
-                button(text("Add Path")).on_press(Message::AddMediaFolder).padding(8),
-            ]
-            .spacing(10),
-        ]
-        .spacing(16)
-        .align_x(Alignment::Center);
+    fn view_file_picker(&self) -> Element<'_, Message> {
+        let search_filter = self.file_picker_search.to_lowercase();
 
-        if !self.settings.media_folders.is_empty() {
-            let mut folders_col = column![text("Configured Folders:").size(14)].spacing(6);
-            for f in &self.settings.media_folders {
-                let f_clone = f.clone();
-                folders_col = folders_col.push(
-                    row![
-                        text(format!("• {f}")).size(13),
-                        button(text("✕")).on_press(Message::RemoveMediaFolder(f_clone)),
-                    ]
-                    .spacing(8)
-                    .align_y(Alignment::Center),
+        // Group videos by folder
+        let mut grouped: BTreeMap<String, Vec<&VideoRecord>> = BTreeMap::new();
+        for v in &self.available_videos {
+            let title = format::format_video_title(&v.path);
+            if !search_filter.is_empty() && !title.to_lowercase().contains(&search_filter) {
+                continue;
+            }
+            let folder = format::format_video_folder(&v.path);
+            let folder_key = if folder.is_empty() { "Other".to_string() } else { folder };
+            grouped.entry(folder_key).or_default().push(v);
+        }
+
+        let mut folders_col = column![].spacing(8);
+        for (folder, files) in grouped {
+            let count = files.len();
+            let header = container(
+                row![
+                    text(folder).size(13).color(iced::Color::WHITE),
+                    Space::new().width(Length::Fill),
+                    text(format!("({count})")).size(12).color(theme::COLOR_TEXT_MUTED),
+                ]
+                .align_y(Alignment::Center),
+            )
+            .padding([6, 10])
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(theme::COLOR_BTN_HOVER)),
+                border: iced::Border {
+                    radius: 4.0.into(),
+                    ..Default::default()
+                },
+                ..Default::default()
+            });
+
+            let mut files_list = column![].spacing(2);
+            for f in files {
+                let file_title = format::format_video_title(&f.path);
+                let p_clone = f.path.clone();
+                files_list = files_list.push(
+                    button(text(file_title).size(12).color(iced::Color::WHITE))
+                        .style(theme::menu_item_style)
+                        .on_press(Message::PlayFileInFocused(p_clone))
+                        .padding([4, 8])
+                        .width(Length::Fill),
                 );
             }
-            col = col.push(folders_col);
+
+            folders_col = folders_col.push(column![header, files_list].spacing(4));
         }
 
-        if self.is_scanning {
-            col = col.push(text("Scanning media folders and indexing videos...").size(13));
-        }
+        let content = column![
+            row![
+                text("Files").size(18).color(iced::Color::WHITE),
+                Space::new().width(Length::Fill),
+                button(text("✕").size(14))
+                    .style(theme::window_control_button_style)
+                    .on_press(Message::ToggleFilePicker),
+            ]
+            .align_y(Alignment::Center),
+            text_input("Search files...", &self.file_picker_search)
+                .on_input(Message::FilePickerSearchChanged)
+                .style(theme::dark_input_style)
+                .padding(8),
+            scrollable(folders_col).height(Length::Fill),
+        ]
+        .spacing(12)
+        .padding(16);
 
-        container(col)
+        container(content)
+            .width(Length::Fixed(320.0))
+            .height(Length::Fill)
+            .style(theme::file_picker_drawer_style)
+            .into()
+    }
+
+    fn view_welcome(&self) -> Element<'_, Message> {
+        let card = container(
+            column![
+                text("📁").size(48),
+                text("Welcome to Wazoo").size(24).color(iced::Color::WHITE),
+                text("Add your media folders in settings to get started.").size(14).color(theme::COLOR_TEXT_MUTED),
+                button(text("Open Settings to Add Media Folders"))
+                    .style(theme::action_button_style)
+                    .on_press(Message::OpenSettingsModal)
+                    .padding([10, 20]),
+            ]
+            .spacing(16)
+            .align_x(Alignment::Center),
+        )
+        .padding(40)
+        .style(theme::welcome_card_style);
+
+        container(card)
             .width(Length::Fill)
             .height(Length::Fill)
             .center_x(Length::Fill)
@@ -1099,196 +1546,291 @@ impl WazooApp {
     }
 
     fn view_search_modal(&self) -> Element<'_, Message> {
+        let mut folder_chips = row![
+            button(text("All"))
+                .style(theme::folder_chip_style(self.selected_search_folder == "All"))
+                .on_press(Message::SelectSearchFolder("All".to_string()))
+                .padding([4, 12]),
+        ]
+        .spacing(8)
+        .align_y(Alignment::Center);
+
+        for folder in &self.settings.media_folders {
+            let label = folder.split(['/', '\\']).filter(|s| !s.is_empty()).last().unwrap_or(folder);
+            folder_chips = folder_chips.push(
+                button(text(label))
+                    .style(theme::folder_chip_style(self.selected_search_folder == *folder))
+                    .on_press(Message::SelectSearchFolder(folder.clone()))
+                    .padding([4, 12]),
+            );
+        }
+
         let card = container(
             column![
-                text("Instant Search (Find)").size(22),
+                row![
+                    text("Folder").size(14).color(theme::COLOR_TEXT_MUTED),
+                    Space::new().width(Length::Fill),
+                    button(text("✕").size(14))
+                        .style(theme::window_control_button_style)
+                        .on_press(Message::CloseSearchModal),
+                ]
+                .align_y(Alignment::Center),
+                scrollable(folder_chips).direction(scrollable::Direction::Horizontal(scrollable::Scrollbar::default())),
                 row![
                     text_input("Search videos...", &self.search_input)
                         .on_input(Message::SearchInputChanged)
                         .on_submit(Message::PerformSearch)
+                        .style(theme::dark_input_style)
                         .padding(10)
-                        .width(Length::Fixed(350.0)),
-                    button(text("Search")).on_press(Message::PerformSearch).padding(8),
-                    button(text("Cancel (Esc)")).on_press(Message::CloseSearchModal).padding(8),
+                        .width(Length::Fill),
+                    button(text("🔍 Search"))
+                        .style(theme::action_button_style)
+                        .on_press(Message::PerformSearch)
+                        .padding([10, 16]),
                 ]
                 .spacing(10)
                 .align_y(Alignment::Center),
-                text(format!("Current results: {} videos", self.available_videos.len())).size(12),
+                text(format!("Total videos: {}", self.available_videos.len()))
+                    .size(12)
+                    .color(theme::COLOR_TEXT_MUTED),
             ]
-            .spacing(14),
+            .spacing(14)
+            .width(Length::Fixed(480.0)),
         )
-        .padding(24)
-        .style(|_theme: &Theme| container::Style {
-            background: Some(iced::Background::Color(iced::Color::from_rgba(0.12, 0.12, 0.14, 0.96))),
-            border: iced::Border {
-                radius: 12.0.into(),
-                width: 1.0,
-                color: iced::Color::from_rgba(1.0, 1.0, 1.0, 0.15),
-            },
-            shadow: iced::Shadow {
-                color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.6),
-                offset: iced::Vector::new(0.0, 8.0),
-                blur_radius: 24.0,
-            },
-            ..Default::default()
-        });
+        .padding(20)
+        .style(theme::modal_card_style);
 
         container(card)
             .width(Length::Fill)
             .height(Length::Fill)
             .center_x(Length::Fill)
             .center_y(Length::Fill)
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.75))),
-                ..Default::default()
-            })
+            .style(theme::modal_backdrop_style)
             .into()
     }
 
     fn view_settings_modal(&self) -> Element<'_, Message> {
-        let mut folders_col = column![text("Media Folders:").size(16)].spacing(6);
+        let mut folders_col = column![text("Media Folders").size(14).color(theme::COLOR_TEXT_MUTED)].spacing(6);
         for folder in &self.settings.media_folders {
             let f = folder.clone();
             folders_col = folders_col.push(
-                row![
-                    text(folder).size(13),
-                    Space::new().width(Length::Fill),
-                    button(text("Remove")).on_press(Message::RemoveMediaFolder(f)),
-                ]
-                .spacing(10)
-                .align_y(Alignment::Center),
+                container(
+                    row![
+                        text(folder).size(13).color(iced::Color::WHITE),
+                        Space::new().width(Length::Fill),
+                        button(text("✕").size(12))
+                            .style(theme::close_window_button_style)
+                            .on_press(Message::RemoveMediaFolder(f)),
+                    ]
+                    .align_y(Alignment::Center),
+                )
+                .padding([6, 10])
+                .style(|_theme: &Theme| container::Style {
+                    background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
+                    border: iced::Border {
+                        radius: 4.0.into(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                }),
             );
         }
 
+        let opacity_val = (self.settings.window_opacity * 100.0).round() as u32;
+
         let content = column![
-            text("Wazoo Settings").size(22),
+            row![
+                text("Settings").size(20).color(iced::Color::WHITE),
+                Space::new().width(Length::Fill),
+                button(text("✕").size(14))
+                    .style(theme::window_control_button_style)
+                    .on_press(Message::CloseSettingsModal),
+            ]
+            .align_y(Alignment::Center),
+            column![
+                text("Window Opacity").size(14).color(theme::COLOR_TEXT_MUTED),
+                row![
+                    slider(0.1..=1.0, self.settings.window_opacity, Message::SetWindowOpacity)
+                        .step(0.01)
+                        .style(theme::volume_slider_style)
+                        .width(Length::Fill),
+                    text(format!("{opacity_val}%")).size(13).color(theme::COLOR_TEXT_DIM),
+                ]
+                .spacing(12)
+                .align_y(Alignment::Center),
+            ]
+            .spacing(6),
             folders_col,
             row![
-                button(text("📁 Add Folder")).on_press(Message::PickFolders).padding(8),
-                button(text(if self.is_scanning { "Scanning..." } else { "Re-scan Library" }))
+                button(text("Add Folder"))
+                    .style(theme::action_button_style)
+                    .on_press(Message::PickFolders)
+                    .padding([8, 14]),
+                button(text(if self.is_scanning { "Scanning..." } else { "Scan Folders" }))
+                    .style(theme::action_button_style)
                     .on_press(Message::StartScan)
-                    .padding(8),
+                    .padding([8, 14]),
             ]
             .spacing(10),
             row![
-                text_input("Or enter folder path manually...", &self.folder_input)
-                    .on_input(Message::FolderInputChanged)
-                    .on_submit(Message::AddMediaFolder)
-                    .width(Length::Fixed(280.0))
-                    .padding(6),
-                button(text("Add Path")).on_press(Message::AddMediaFolder).padding(6),
-            ]
-            .spacing(8),
-            row![
-                text("Players count:"),
-                button(text("1")).on_press(Message::SetPlayerCount(1)),
-                button(text("2")).on_press(Message::SetPlayerCount(2)),
-                button(text("3")).on_press(Message::SetPlayerCount(3)),
-                button(text("4")).on_press(Message::SetPlayerCount(4)),
-                button(text("6")).on_press(Message::SetPlayerCount(6)),
-                button(text("8")).on_press(Message::SetPlayerCount(8)),
-            ]
-            .spacing(8),
-            row![
-                text("WiFi / Samba Buffer:"),
-                button(text(if self.settings.buffer_duration_secs == 5 { "5s (Low) ★" } else { "5s" }))
-                    .on_press(Message::SetBufferDuration(5)),
-                button(text(if self.settings.buffer_duration_secs == 10 { "10s (Recommended) ★" } else { "10s" }))
-                    .on_press(Message::SetBufferDuration(10)),
-                button(text(if self.settings.buffer_duration_secs == 20 { "20s (High) ★" } else { "20s" }))
-                    .on_press(Message::SetBufferDuration(20)),
-                button(text(if self.settings.buffer_duration_secs == 30 { "30s (Max) ★" } else { "30s" }))
-                    .on_press(Message::SetBufferDuration(30)),
+                text("Players count:").size(13).color(theme::COLOR_TEXT_MUTED),
+                button(text("1")).style(theme::action_button_style).on_press(Message::SetPlayerCount(1)).padding([4, 10]),
+                button(text("2")).style(theme::action_button_style).on_press(Message::SetPlayerCount(2)).padding([4, 10]),
+                button(text("3")).style(theme::action_button_style).on_press(Message::SetPlayerCount(3)).padding([4, 10]),
+                button(text("4")).style(theme::action_button_style).on_press(Message::SetPlayerCount(4)).padding([4, 10]),
+                button(text("6")).style(theme::action_button_style).on_press(Message::SetPlayerCount(6)).padding([4, 10]),
+                button(text("8")).style(theme::action_button_style).on_press(Message::SetPlayerCount(8)).padding([4, 10]),
             ]
             .spacing(8)
             .align_y(Alignment::Center),
-            button(text("Done")).on_press(Message::CloseSettingsModal).padding(8),
+            row![
+                text("WiFi / Samba Buffer:").size(13).color(theme::COLOR_TEXT_MUTED),
+                button(text(if self.settings.buffer_duration_secs == 5 { "5s ★" } else { "5s" }))
+                    .style(theme::action_button_style)
+                    .on_press(Message::SetBufferDuration(5))
+                    .padding([4, 8]),
+                button(text(if self.settings.buffer_duration_secs == 10 { "10s ★" } else { "10s" }))
+                    .style(theme::action_button_style)
+                    .on_press(Message::SetBufferDuration(10))
+                    .padding([4, 8]),
+                button(text(if self.settings.buffer_duration_secs == 20 { "20s ★" } else { "20s" }))
+                    .style(theme::action_button_style)
+                    .on_press(Message::SetBufferDuration(20))
+                    .padding([4, 8]),
+                button(text(if self.settings.buffer_duration_secs == 30 { "30s ★" } else { "30s" }))
+                    .style(theme::action_button_style)
+                    .on_press(Message::SetBufferDuration(30))
+                    .padding([4, 8]),
+            ]
+            .spacing(8)
+            .align_y(Alignment::Center),
+            text(format!("Total Videos: {}", self.available_videos.len()))
+                .size(13)
+                .color(theme::COLOR_TEXT_MUTED),
         ]
-        .spacing(16);
+        .spacing(16)
+        .width(Length::Fixed(480.0));
 
         let card = container(scrollable(content))
-            .padding(24)
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(iced::Color::from_rgba(0.12, 0.12, 0.14, 0.96))),
-                border: iced::Border {
-                    radius: 12.0.into(),
-                    width: 1.0,
-                    color: iced::Color::from_rgba(1.0, 1.0, 1.0, 0.15),
-                },
-                shadow: iced::Shadow {
-                    color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.6),
-                    offset: iced::Vector::new(0.0, 8.0),
-                    blur_radius: 24.0,
-                },
-                ..Default::default()
-            });
+            .padding(20)
+            .style(theme::modal_card_style);
 
         container(card)
             .width(Length::Fill)
             .height(Length::Fill)
             .center_x(Length::Fill)
             .center_y(Length::Fill)
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.75))),
-                ..Default::default()
-            })
+            .style(theme::modal_backdrop_style)
             .into()
     }
 
     fn view_help_modal(&self) -> Element<'_, Message> {
-        let content = column![
-            text("Wazoo Help & Keyboard Shortcuts").size(22),
-            text("• F / j / /: Find / Search modal").size(14),
-            text("• S: Toggle Shuffle / Sequential playback mode").size(14),
-            text("• 1, 2, 3, 4: Set player count to 1, 2, 3, or 4").size(14),
-            text("• 5: Toggle Scroll Mode (The Infinity Stream)").size(14),
-            text("• 6: Toggle Flip Mode (staggered auto-shuffle)").size(14),
-            text("• Space: Play / Pause focused video").size(14),
-            text("• ArrowUp: Play next video on focused player").size(14),
-            text("• ArrowDown: Play previous video on focused player").size(14),
-            text("• ArrowLeft / Right: Seek -5s / +5s").size(14),
-            text("• , / .: Frame backward / forward").size(14),
-            text("• L: Cycle Layout (Grid ➔ Row ➔ Column)").size(14),
-            text("• N: Add new player (up to 12)").size(14),
-            text("• X: Remove focused player").size(14),
-            text("• Tab: Cycle focused player").size(14),
-            text("• M: Toggle Mute (Global in scroll mode)").size(14),
-            text("• [ / ]: Volume Down / Up").size(14),
-            text("• C: Toggle Subtitles").size(14),
-            text("• T: Toggle Title Overlay").size(14),
-            text("• H: Toggle Bottom Controls HUD").size(14),
-            text("• - / +: Adjust scroll speed").size(14),
-            text("• Esc: Close modal / cancel").size(14),
-            button(text("Close (Esc)")).on_press(Message::CloseHelpModal).padding(8),
-        ]
-        .spacing(12);
+        let shortcuts = [
+            ("?", "Toggle Help"),
+            ("5", "Toggle Scroll Mode"),
+            ("6", "Toggle Flip Mode"),
+            ("h", "Toggle File Picker"),
+            ("n", "Add Player"),
+            ("x", "Remove Player"),
+            ("Tab", "Focus Next Player"),
+            ("l", "Toggle Layout"),
+            ("c", "Toggle Subtitles"),
+            ("< OR >", "Prev / Next Frame"),
+            ("[space]", "Play / Pause"),
+            ("↓ ↑", "Prev / Next Video"),
+            ("← →", "Seek Back / Forward"),
+            ("s", "Toggle Play Mode (Shuffle / Sequential)"),
+            ("m", "Toggle Mute"),
+            ("[ OR ]", "Adjust Volume"),
+            ("j OR /", "Search Videos"),
+            ("Alt + X", "Close App"),
+            ("Alt + Drag", "Move Window"),
+        ];
 
-        let card = container(scrollable(content))
-            .padding(24)
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(iced::Color::from_rgba(0.12, 0.12, 0.14, 0.96))),
-                border: iced::Border {
-                    radius: 12.0.into(),
-                    width: 1.0,
-                    color: iced::Color::from_rgba(1.0, 1.0, 1.0, 0.15),
-                },
-                shadow: iced::Shadow {
-                    color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.6),
-                    offset: iced::Vector::new(0.0, 8.0),
-                    blur_radius: 24.0,
-                },
-                ..Default::default()
-            });
+        let mut shortcuts_list = column![].spacing(8);
+        for (key, desc) in shortcuts {
+            let key_badge = container(text(key).size(12).color(iced::Color::WHITE))
+                .padding([4, 8])
+                .style(|_theme: &Theme| container::Style {
+                    background: Some(iced::Background::Color(theme::COLOR_BTN_BG)),
+                    border: iced::Border {
+                        radius: 4.0.into(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                });
+
+            shortcuts_list = shortcuts_list.push(
+                row![
+                    key_badge,
+                    Space::new().width(Length::Fill),
+                    text(desc).size(13).color(theme::COLOR_TEXT_DIM),
+                ]
+                .align_y(Alignment::Center),
+            );
+        }
+
+        let card = container(
+            column![
+                row![
+                    text("Keyboard Shortcuts").size(20).color(iced::Color::WHITE),
+                    Space::new().width(Length::Fill),
+                    button(text("✕").size(14))
+                        .style(theme::window_control_button_style)
+                        .on_press(Message::CloseHelpModal),
+                ]
+                .align_y(Alignment::Center),
+                scrollable(shortcuts_list).height(Length::Fixed(360.0)),
+            ]
+            .spacing(14)
+            .width(Length::Fixed(460.0)),
+        )
+        .padding(20)
+        .style(theme::modal_card_style);
 
         container(card)
             .width(Length::Fill)
             .height(Length::Fill)
             .center_x(Length::Fill)
             .center_y(Length::Fill)
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.75))),
-                ..Default::default()
-            })
+            .style(theme::modal_backdrop_style)
+            .into()
+    }
+
+    fn view_menu_modal(&self) -> Element<'_, Message> {
+        let card = container(
+            column![
+                row![
+                    text("Menu").size(18).color(iced::Color::WHITE),
+                    Space::new().width(Length::Fill),
+                    button(text("✕").size(14))
+                        .style(theme::window_control_button_style)
+                        .on_press(Message::CloseMenuModal),
+                ]
+                .align_y(Alignment::Center),
+                column![
+                    button(text("Add Player")).style(theme::menu_item_style).on_press(Message::AddNewPlayer).padding([8, 12]).width(Length::Fill),
+                    button(text("Toggle Layout")).style(theme::menu_item_style).on_press(Message::CycleLayout).padding([8, 12]).width(Length::Fill),
+                    button(text("Toggle Files")).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 12]).width(Length::Fill),
+                    button(text("Search")).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 12]).width(Length::Fill),
+                    button(text("Settings")).style(theme::menu_item_style).on_press(Message::OpenSettingsModal).padding([8, 12]).width(Length::Fill),
+                    button(text("Help")).style(theme::menu_item_style).on_press(Message::OpenHelpModal).padding([8, 12]).width(Length::Fill),
+                    button(text("Quit")).style(theme::menu_item_style).on_press(Message::CloseApp).padding([8, 12]).width(Length::Fill),
+                ]
+                .spacing(4),
+            ]
+            .spacing(12)
+            .width(Length::Fixed(240.0)),
+        )
+        .padding(16)
+        .style(theme::modal_card_style);
+
+        container(card)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill)
+            .style(theme::modal_backdrop_style)
             .into()
     }
 
@@ -1304,7 +1846,15 @@ pub fn main() -> iced::Result {
         .title(WazooApp::title)
         .subscription(WazooApp::subscription)
         .theme(WazooApp::theme)
-        .window(window::Settings {
+        .style(|app: &WazooApp, _theme: &Theme| iced::theme::Style {
+            background_color: if app.available_videos.is_empty() {
+                Color::from_rgba(0.05, 0.05, 0.05, app.current_opacity())
+            } else {
+                Color::TRANSPARENT
+            },
+            text_color: Color::WHITE,
+        })
+        .window(iced::window::Settings {
             size: iced::Size::new(1280.0, 720.0),
             decorations: false,
             transparent: true,

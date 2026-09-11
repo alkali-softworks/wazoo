@@ -12,7 +12,8 @@ use iced_wgpu::wgpu;
 #[derive(Clone, Copy, Pod, Zeroable)]
 struct Uniforms {
     scale: [f32; 2],
-    _pad: [f32; 2],
+    opacity: f32,
+    _pad: f32,
 }
 
 pub struct FrameData {
@@ -58,7 +59,8 @@ struct VertexOutput {
 
 struct Uniforms {
     scale: vec2<f32>,
-    _pad: vec2<f32>,
+    opacity: f32,
+    _pad: f32,
 }
 
 @group(0) @binding(0)
@@ -100,9 +102,10 @@ fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> VertexOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     if in.uv.x < 0.0 || in.uv.x > 1.0 || in.uv.y < 0.0 || in.uv.y > 1.0 {
-        return vec4<f32>(0.0, 0.0, 0.0, 1.0);
+        return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
     }
-    return textureSample(tex, s, in.uv);
+    var col = textureSample(tex, s, in.uv);
+    return vec4<f32>(col.rgb, col.a * uniforms.opacity);
 }
 "#;
 
@@ -200,7 +203,7 @@ impl Pipeline for VideoPipeline {
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 2,
-                    visibility: wgpu::ShaderStages::VERTEX,
+                    visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -287,6 +290,7 @@ pub struct VideoPrimitive {
     player_id: u64,
     frame: Arc<Mutex<FrameData>>,
     alive: Arc<AtomicBool>,
+    opacity: f32,
 }
 
 impl Primitive for VideoPrimitive {
@@ -359,7 +363,8 @@ impl Primitive for VideoPrimitive {
 
         let uniforms = Uniforms {
             scale: [scale_x, scale_y],
-            _pad: [0.0, 0.0],
+            opacity: self.opacity,
+            _pad: 0.0,
         };
         queue.write_buffer(&entry.uniform_buffer, 0, bytemuck::bytes_of(&uniforms));
     }
@@ -383,14 +388,21 @@ pub struct VideoProgram {
     player_id: u64,
     frame: Arc<Mutex<FrameData>>,
     alive: Arc<AtomicBool>,
+    opacity: f32,
 }
 
 impl VideoProgram {
-    pub fn new(player_id: u64, frame: Arc<Mutex<FrameData>>, alive: Arc<AtomicBool>) -> Self {
+    pub fn new(
+        player_id: u64,
+        frame: Arc<Mutex<FrameData>>,
+        alive: Arc<AtomicBool>,
+        opacity: f32,
+    ) -> Self {
         Self {
             player_id,
             frame,
             alive,
+            opacity,
         }
     }
 }
@@ -409,6 +421,7 @@ impl<Message> Program<Message> for VideoProgram {
             player_id: self.player_id,
             frame: Arc::clone(&self.frame),
             alive: Arc::clone(&self.alive),
+            opacity: self.opacity,
         }
     }
 }

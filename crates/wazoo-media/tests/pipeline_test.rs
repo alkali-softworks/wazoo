@@ -145,10 +145,10 @@ fn test_av1_ninkoro_playback() {
         handle.set_muted(true);
         handle.play();
 
-        // Let it render a few frames of 10-bit AV1 with ASS subtitles
+        // Let it render frames of 10-bit AV1 with ASS subtitles (give network mount enough time to buffer)
         let mut rendered_frames = 0;
-        for _ in 0..10 {
-            std::thread::sleep(Duration::from_millis(50));
+        for _ in 0..30 {
+            std::thread::sleep(Duration::from_millis(100));
             if handle.update_frame() {
                 rendered_frames += 1;
             }
@@ -158,6 +158,6 @@ fn test_av1_ninkoro_playback() {
         assert!(handle.duration() > Duration::from_secs(60), "Duration should be anime length (> 60s)");
 
         // Verify that persistent shader view element can be created
-        let _element = handle.view::<()>();
+        let _element = handle.view::<()>(1.0);
     }
 }

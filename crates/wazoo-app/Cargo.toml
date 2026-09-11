@@ -20,4 +20,5 @@ env_logger.workspace = true
 rand.workspace = true
 directories.workspace = true
 rfd.workspace = true
+regex.workspace = true
 
