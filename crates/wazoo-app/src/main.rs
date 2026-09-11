@@ -906,6 +906,50 @@ impl WazooApp {
             Message::RemoveMediaFolder(folder) => {
                 self.settings.media_folders.retain(|f| f != &folder);
                 let _ = self.config_mgr.save_settings(&self.settings);
+
+                // 1. Immediately delete all files belonging to this folder from the SQLite database
+                let removed_count = self.db.remove_videos_in_folder(&folder).unwrap_or(0);
+                log::info!("Removed media folder '{}' ({} videos deleted from database)", folder, removed_count);
+
+                // 2. Immediately refresh in-memory available_videos from DB
+                if !self.active_search_query.is_empty() {
+                    let folders = if self.selected_search_folder.is_empty() || self.selected_search_folder == "All" {
+                        self.settings.media_folders.clone()
+                    } else {
+                        vec![self.selected_search_folder.clone()]
+                    };
+                    self.available_videos = self.db.search_videos(&self.active_search_query, &folders).unwrap_or_default();
+                } else {
+                    self.available_videos = self.db.get_all_videos().unwrap_or_default();
+                }
+
+                // 3. Immediately update active players
+                if self.available_videos.is_empty() {
+                    self.players.clear();
+                    self.loading_player_ids.clear();
+                    self.loading_player_ticks.clear();
+                    self.focused_player_idx = 0;
+                } else {
+                    // For each player, if its currently loaded video was from the removed folder, advance to next video
+                    let stale_player_ids: Vec<PlayerId> = self.players
+                        .iter()
+                        .filter(|p| !self.available_videos.iter().any(|v| v.path == p.state.path))
+                        .map(|p| p.id)
+                        .collect();
+
+                    for id in stale_player_ids {
+                        let _ = self.update(Message::NextVideo(id));
+                    }
+                }
+
+                if self.selected_search_folder == folder {
+                    self.selected_search_folder.clear();
+                }
+
+                let folder_name = format::format_video_folder(&folder);
+                let display_name = if folder_name.is_empty() { folder } else { folder_name };
+                self.toast_message = Some(format!("Removed {} ({} files)", display_name, removed_count));
+                self.toast_time_remaining = 2;
             }
             Message::StartScan => {
                 if !self.is_scanning && !self.settings.media_folders.is_empty() {
