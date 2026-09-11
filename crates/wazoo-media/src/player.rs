@@ -70,6 +70,7 @@ pub struct VideoHandle {
     alive: Arc<AtomicBool>,
     is_eos: bool,
     last_seek_time: Option<Instant>,
+    pending_seek: Option<Duration>,
 }
 
 unsafe impl Send for VideoHandle {}
@@ -114,6 +115,16 @@ impl VideoHandle {
         name: &str,
         config: BufferConfig,
     ) -> Result<Self, String> {
+        Self::with_buffering_and_start(id, file_path, name, config, None)
+    }
+
+    pub fn with_buffering_and_start(
+        id: PlayerId,
+        file_path: &str,
+        name: &str,
+        config: BufferConfig,
+        start_secs: Option<f64>,
+    ) -> Result<Self, String> {
         unsafe {
             let mpv = mpv_ffi::mpv_create();
             if mpv.is_null() {
@@ -142,6 +153,12 @@ impl VideoHandle {
             set_opt("keep-open", "yes");
             set_opt("idle", "yes");
             set_opt("terminal", "no");
+
+            if let Some(start) = start_secs {
+                if start > 0.05 {
+                    set_opt("start", &format!("{:.3}", start));
+                }
+            }
 
             let res = mpv_ffi::mpv_initialize(mpv);
             if res < 0 {
@@ -230,6 +247,17 @@ impl VideoHandle {
             let mut state = PlayerState::new(id, file_path.to_string(), name.to_string());
             state.duration = initial_duration;
 
+            let (pending_seek, last_seek_time) = if let Some(start) = start_secs {
+                if start > 0.05 {
+                    state.position = Duration::from_secs_f64(start);
+                    (Some(Duration::from_secs_f64(start)), Some(Instant::now()))
+                } else {
+                    (None, None)
+                }
+            } else {
+                (None, None)
+            };
+
             let mut handle = Self {
                 id,
                 state,
@@ -242,7 +270,8 @@ impl VideoHandle {
                 frame,
                 alive,
                 is_eos: false,
-                last_seek_time: None,
+                last_seek_time,
+                pending_seek,
             };
 
             handle.set_volume(1.0);
@@ -261,6 +290,26 @@ impl VideoHandle {
                 }
                 if (*event).event_id == mpv_ffi::MPV_EVENT_END_FILE {
                     self.is_eos = true;
+                }
+                if (*event).event_id == mpv_ffi::MPV_EVENT_FILE_LOADED || (*event).event_id == mpv_ffi::MPV_EVENT_PLAYBACK_RESTART {
+                    if let Some(target) = self.pending_seek.take() {
+                        self.last_seek_time = Some(Instant::now());
+                        let cmd = format!("no-osd seek {:.3} absolute+exact", target.as_secs_f64());
+                        if let Ok(c_cmd) = CString::new(cmd) {
+                            mpv_ffi::mpv_command_string(self.mpv, c_cmd.as_ptr());
+                        }
+                    }
+                }
+            }
+
+            if let Some(target) = self.pending_seek {
+                if self.duration() > Duration::ZERO {
+                    self.pending_seek = None;
+                    self.last_seek_time = Some(Instant::now());
+                    let cmd = format!("no-osd seek {:.3} absolute+exact", target.as_secs_f64());
+                    if let Ok(c_cmd) = CString::new(cmd) {
+                        mpv_ffi::mpv_command_string(self.mpv, c_cmd.as_ptr());
+                    }
                 }
             }
 
@@ -476,6 +525,12 @@ impl VideoHandle {
         };
         self.state.position = Duration::from_secs_f64(target);
 
+        if dur == 0.0 {
+            self.pending_seek = Some(self.state.position);
+        } else {
+            self.pending_seek = None;
+        }
+
         let mode = if relative {
             if accurate { "relative+exact" } else { "relative" }
         } else {
@@ -495,8 +550,11 @@ impl VideoHandle {
     }
 
     pub fn position(&self) -> Duration {
+        if let Some(target) = self.pending_seek {
+            return target;
+        }
         if let Some(seek_time) = self.last_seek_time {
-            if seek_time.elapsed() < Duration::from_millis(500) {
+            if seek_time.elapsed() < Duration::from_millis(1500) {
                 return self.state.position;
             }
         }
