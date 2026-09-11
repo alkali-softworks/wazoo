@@ -34,6 +34,6 @@ chrono = { version = "0.4", features = ["serde"] }
 thiserror = "2.0"
 url = "2.5"
 
-iced = { version = "0.14.0", features = ["advanced", "crisp", "image", "svg", "tokio", "wgpu"], default-features = false }
+iced = { version = "0.14.0", features = ["advanced", "crisp", "image", "svg", "tokio", "wgpu", "wayland", "x11"], default-features = false }
 rfd = "0.15"
 
