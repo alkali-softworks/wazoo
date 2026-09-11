@@ -1,5 +1,6 @@
 mod cursor;
 mod format;
+mod scroll_view;
 mod theme;
 
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -71,6 +72,7 @@ pub struct WazooApp {
 pub enum Message {
     // Window management & Events
     WindowIdReceived(iced::window::Id),
+    WindowResized(iced::Size),
     CursorMoved(iced::window::Id, Point),
     RightClickPressed(iced::window::Id),
     KeyPressed(Key),
@@ -158,7 +160,9 @@ impl WazooApp {
             .expect("Failed to initialize SQLite database");
 
         let videos: Vec<VideoRecord> = db.get_all_videos().unwrap_or_default();
-        let scroll_engine = ScrollEngine::new(settings.window_bounds.height as f32);
+        let mut scroll_engine = ScrollEngine::new(settings.window_bounds.height as f32);
+        scroll_engine.set_speed(settings.scroll_speed);
+        scroll_engine.is_global_muted = settings.is_global_muted;
 
         let icon_handle = iced::widget::image::Handle::from_bytes(APP_ICON_BYTES);
 
@@ -205,6 +209,24 @@ impl WazooApp {
         let count = settings.player_count.clamp(1, 12);
         for _ in 0..count {
             app.add_player_internal();
+        }
+
+        if app.settings.playback_mode == PlaybackMode::Scroll {
+            let ids: Vec<PlayerId> = app.players.iter().map(|p| p.id).collect();
+            app.scroll_engine.init_stack(&ids);
+            let item_h = app.scroll_engine.default_item_height();
+            while let Some(spawn_y) = app.scroll_engine.needs_new_player() {
+                if let Some(id) = app.add_player_internal() {
+                    app.scroll_engine.add_item(id, spawn_y, item_h);
+                } else {
+                    break;
+                }
+            }
+            for p in &mut app.players {
+                p.seek_random();
+                let vol = app.scroll_engine.calculate_player_volume(p.id);
+                p.set_volume(vol);
+            }
         }
 
         (app, Task::none())
@@ -303,6 +325,28 @@ impl WazooApp {
         match message {
             Message::WindowIdReceived(id) => {
                 self.window_id = Some(id);
+            }
+            Message::WindowResized(size) => {
+                self.settings.window_bounds.width = size.width as u32;
+                self.settings.window_bounds.height = size.height as u32;
+                self.scroll_engine.set_window_height(size.height);
+                if self.settings.playback_mode == PlaybackMode::Scroll {
+                    let item_h = self.scroll_engine.default_item_height();
+                    for item in self.scroll_engine.items.values_mut() {
+                        item.height = item_h;
+                    }
+                    self.scroll_engine.recalculate_positions();
+                    while let Some(spawn_y) = self.scroll_engine.needs_new_player() {
+                        if let Some(id) = self.add_player_internal() {
+                            self.scroll_engine.add_item(id, spawn_y, item_h);
+                            if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                                p.seek_random();
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+                }
             }
             Message::CursorMoved(win_id, pos) => {
                 self.window_id = Some(win_id);
@@ -648,8 +692,14 @@ impl WazooApp {
             }
             Message::ToggleGlobalMute => {
                 self.settings.is_global_muted = !self.settings.is_global_muted;
+                self.scroll_engine.is_global_muted = self.settings.is_global_muted;
                 for p in &mut self.players {
-                    p.set_muted(self.settings.is_global_muted);
+                    if self.settings.playback_mode == PlaybackMode::Scroll {
+                        let vol = self.scroll_engine.calculate_player_volume(p.id);
+                        p.set_volume(vol);
+                    } else {
+                        p.set_muted(self.settings.is_global_muted);
+                    }
                 }
                 self.toast_message = Some(if self.settings.is_global_muted {
                     "Global Mute: ON".to_string()
@@ -657,14 +707,22 @@ impl WazooApp {
                     "Global Mute: OFF".to_string()
                 });
                 self.toast_time_remaining = 2;
+                let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::GlobalUnmute => {
                 self.settings.is_global_muted = false;
+                self.scroll_engine.is_global_muted = false;
                 for p in &mut self.players {
-                    p.set_muted(false);
+                    if self.settings.playback_mode == PlaybackMode::Scroll {
+                        let vol = self.scroll_engine.calculate_player_volume(p.id);
+                        p.set_volume(vol);
+                    } else {
+                        p.set_muted(false);
+                    }
                 }
                 self.toast_message = Some("Global Mute: OFF".to_string());
                 self.toast_time_remaining = 2;
+                let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::ToggleShuffleMode => {
                 self.is_shuffle_mode = !self.is_shuffle_mode;
@@ -701,15 +759,54 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::ToggleScrollMode => {
+                self.show_menu_modal = false;
+                self.show_dropdown_menu = false;
                 self.settings.playback_mode = match self.settings.playback_mode {
                     PlaybackMode::Scroll => PlaybackMode::Normal,
                     _ => PlaybackMode::Scroll,
                 };
-                self.toast_message = Some(match self.settings.playback_mode {
-                    PlaybackMode::Scroll => "Scroll Mode: Enabled".to_string(),
-                    _ => "Scroll Mode: Disabled".to_string(),
-                });
+                if self.settings.playback_mode == PlaybackMode::Scroll {
+                    self.settings.is_global_muted = true;
+                    self.scroll_engine.is_global_muted = true;
+                    let window_h = self.settings.window_bounds.height as f32;
+                    self.scroll_engine.set_window_height(window_h);
+                    let item_h = self.scroll_engine.default_item_height();
+
+                    let ids: Vec<PlayerId> = self.players.iter().map(|p| p.id).collect();
+                    self.scroll_engine.init_stack(&ids);
+
+                    while let Some(spawn_y) = self.scroll_engine.needs_new_player() {
+                        if let Some(id) = self.add_player_internal() {
+                            self.scroll_engine.add_item(id, spawn_y, item_h);
+                        } else {
+                            break;
+                        }
+                    }
+
+                    for p in &mut self.players {
+                        p.seek_random();
+                        let vol = self.scroll_engine.calculate_player_volume(p.id);
+                        p.set_volume(vol);
+                    }
+
+                    self.toast_message = Some("Scroll Mode: Enabled".to_string());
+                } else {
+                    self.scroll_engine.clear();
+                    let target_count = self.settings.player_count.clamp(1, 12);
+                    while self.players.len() > target_count {
+                        self.players.pop();
+                    }
+                    while self.players.len() < target_count {
+                        self.add_player_internal();
+                    }
+                    for p in &mut self.players {
+                        p.set_muted(self.settings.is_global_muted);
+                        p.set_volume(1.0);
+                    }
+                    self.toast_message = Some("Scroll Mode: Disabled".to_string());
+                }
                 self.toast_time_remaining = 2;
+                let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::ToggleFlipMode => {
                 self.settings.playback_mode = match self.settings.playback_mode {
@@ -1045,12 +1142,19 @@ impl WazooApp {
                     let offscreen = self.scroll_engine.tick();
                     for id in offscreen {
                         self.players.retain(|p| p.id != id);
+                        self.loading_player_ids.remove(&id);
+                        self.loading_player_ticks.remove(&id);
                     }
 
-                    if let Some(spawn_y) = self.scroll_engine.needs_new_player() {
+                    let item_h = self.scroll_engine.default_item_height();
+                    while let Some(spawn_y) = self.scroll_engine.needs_new_player() {
                         if let Some(id) = self.add_player_internal() {
-                            let height = 360.0;
-                            self.scroll_engine.add_item(id, spawn_y, height);
+                            self.scroll_engine.add_item(id, spawn_y, item_h);
+                            if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                                p.seek_random();
+                            }
+                        } else {
+                            break;
                         }
                     }
 
@@ -1153,6 +1257,9 @@ impl WazooApp {
                 }
                 iced::Event::Window(iced::window::Event::Unfocused) => {
                     Some(Message::KeyReleased(iced::keyboard::Key::Named(iced::keyboard::key::Named::Alt)))
+                }
+                iced::Event::Window(iced::window::Event::Resized(size)) => {
+                    Some(Message::WindowResized(size))
                 }
                 iced::Event::Mouse(iced::mouse::Event::CursorMoved { position }) => {
                     Some(Message::CursorMoved(window_id, position))
@@ -1465,6 +1572,10 @@ impl WazooApp {
                 .into();
         }
 
+        if self.settings.playback_mode == PlaybackMode::Scroll {
+            return self.view_scroll_stream();
+        }
+
         match self.settings.layout {
             LayoutMode::Row => {
                 let mut r = row![].spacing(0).width(Length::Fill).height(Length::Fill);
@@ -1527,7 +1638,31 @@ impl WazooApp {
         }
     }
 
+    fn view_scroll_stream(&self) -> Element<'_, Message> {
+        let mut stream = scroll_view::ScrollStream::new();
+        let mut scroll_items: Vec<(&VideoHandle, &wazoo_media::ScrollItem)> = self
+            .players
+            .iter()
+            .filter_map(|p| self.scroll_engine.items.get(&p.id).map(|item| (p, item)))
+            .collect();
+        scroll_items.sort_by(|a, b| a.1.y_pos.partial_cmp(&b.1.y_pos).unwrap_or(std::cmp::Ordering::Equal));
+
+        for (p, item) in scroll_items {
+            stream = stream.push(self.view_scroll_player(p), item.y_pos, item.height);
+        }
+
+        stream.into()
+    }
+
     fn view_single_player<'a>(&self, p: &'a VideoHandle) -> Element<'a, Message> {
+        self.view_player_internal(p, false)
+    }
+
+    fn view_scroll_player<'a>(&self, p: &'a VideoHandle) -> Element<'a, Message> {
+        self.view_player_internal(p, true)
+    }
+
+    fn view_player_internal<'a>(&self, p: &'a VideoHandle, is_scroll_mode: bool) -> Element<'a, Message> {
         let player_id = p.id;
         let is_focused = self.focused_player_id() == Some(player_id);
         let is_hovered = self.hovered_player_id == Some(player_id);
@@ -1547,7 +1682,7 @@ impl WazooApp {
         };
 
         let opacity = self.current_opacity();
-        let video_widget = p.view(opacity);
+        let video_widget = p.view_with_fit(opacity, is_scroll_mode);
         let mut stack_children: Vec<Element<'a, Message>> = vec![video_widget];
 
         let is_loading = self.loading_player_ids.contains(&player_id);
@@ -1746,7 +1881,7 @@ impl WazooApp {
             stack_children.push(Element::from(overlays_column));
         }
 
-        let show_border = is_focused && self.focus_border_ticks > 0;
+        let show_border = !is_scroll_mode && is_focused && self.focus_border_ticks > 0;
         if show_border {
             let focus_ring = container(Space::new().width(Length::Fill).height(Length::Fill))
                 .width(Length::Fill)
@@ -2150,6 +2285,7 @@ impl WazooApp {
                 column![
                     button(text("Add Player")).style(theme::menu_item_style).on_press(Message::AddNewPlayer).padding([8, 12]).width(Length::Fill),
                     button(text("Toggle Layout")).style(theme::menu_item_style).on_press(Message::CycleLayout).padding([8, 12]).width(Length::Fill),
+                    button(text(if self.settings.playback_mode == PlaybackMode::Scroll { "Disable Infinity Stream (5)" } else { "Infinity Stream (5)" })).style(theme::menu_item_style).on_press(Message::ToggleScrollMode).padding([8, 12]).width(Length::Fill),
                     button(text("Toggle Files")).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 12]).width(Length::Fill),
                     button(text("Search")).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 12]).width(Length::Fill),
                     button(text("Settings")).style(theme::menu_item_style).on_press(Message::OpenSettingsModal).padding([8, 12]).width(Length::Fill),

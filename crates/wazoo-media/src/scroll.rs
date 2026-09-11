@@ -54,6 +54,63 @@ impl ScrollEngine {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.items.clear();
+    }
+
+    pub fn default_item_height(&self) -> f32 {
+        (self.window_height / 2.0).max(180.0)
+    }
+
+    /// Initialize a gapless vertical stack of players starting from y = 0.0 downwards.
+    pub fn init_stack(&mut self, player_ids: &[PlayerId]) {
+        self.items.clear();
+        let item_h = self.default_item_height();
+        let mut y = 0.0;
+        for &id in player_ids {
+            self.add_item(id, y, item_h);
+            y += item_h;
+        }
+    }
+
+    /// Recalculates and stacks all active player positions gaplessly.
+    /// Matches the wazoo-desktop recalculateScrollPositions logic.
+    pub fn recalculate_positions(&mut self) {
+        if self.items.is_empty() {
+            return;
+        }
+
+        let mut sorted_ids: Vec<PlayerId> = self.items.keys().copied().collect();
+        sorted_ids.sort_by(|&a, &b| {
+            let y_a = self.items.get(&a).map(|i| i.y_pos).unwrap_or(0.0);
+            let y_b = self.items.get(&b).map(|i| i.y_pos).unwrap_or(0.0);
+            y_a.partial_cmp(&y_b).unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+        let first_id = sorted_ids[0];
+        let mut current_top = self.items.get(&first_id).map(|i| i.y_pos).unwrap_or(0.0);
+        if current_top > 0.0 {
+            current_top = 0.0;
+        }
+
+        let total_height: f32 = sorted_ids
+            .iter()
+            .filter_map(|id| self.items.get(id))
+            .map(|i| i.height)
+            .sum();
+
+        if total_height < self.window_height {
+            current_top = self.window_height - total_height;
+        }
+
+        for id in sorted_ids {
+            if let Some(item) = self.items.get_mut(&id) {
+                item.y_pos = current_top;
+                current_top += item.height;
+            }
+        }
+    }
+
     /// Advance the scroll positions by `scroll_speed`.
     /// Returns a list of player IDs that have scrolled completely off the top of the screen.
     pub fn tick(&mut self) -> Vec<PlayerId> {
@@ -78,7 +135,7 @@ impl ScrollEngine {
     /// Returns the target `y` coordinate where a new player should be spawned, or None if screen is full.
     pub fn needs_new_player(&self) -> Option<f32> {
         if self.items.is_empty() {
-            return Some(self.window_height);
+            return Some(0.0);
         }
 
         let mut max_bottom = -f32::INFINITY;
@@ -140,5 +197,59 @@ mod tests {
 
         // Needs new player because content ends at 500 while window is 1000
         assert_eq!(engine.needs_new_player(), Some(500.0));
+    }
+
+    #[test]
+    fn test_scroll_engine_init_stack() {
+        let mut engine = ScrollEngine::new(1000.0);
+        engine.init_stack(&[10, 20]);
+
+        assert_eq!(engine.items.len(), 2);
+        assert_eq!(engine.items.get(&10).unwrap().y_pos, 0.0);
+        assert_eq!(engine.items.get(&10).unwrap().height, 500.0);
+        assert_eq!(engine.items.get(&20).unwrap().y_pos, 500.0);
+        assert_eq!(engine.items.get(&20).unwrap().height, 500.0);
+
+        // Content ends at 1000, so window is completely full
+        assert_eq!(engine.needs_new_player(), None);
+    }
+
+    #[test]
+    fn test_scroll_engine_recalculate_positions() {
+        let mut engine = ScrollEngine::new(1000.0);
+        // Add two items with gaps or misplaced offsets
+        engine.add_item(1, 50.0, 400.0);
+        engine.add_item(2, 600.0, 400.0);
+
+        engine.recalculate_positions();
+
+        // Total height = 800 < 1000, so top should be 1000 - 800 = 200
+        assert_eq!(engine.items.get(&1).unwrap().y_pos, 200.0);
+        assert_eq!(engine.items.get(&2).unwrap().y_pos, 600.0);
+    }
+
+    #[test]
+    fn test_scroll_engine_tick_despawn() {
+        let mut engine = ScrollEngine::new(1000.0);
+        engine.scroll_speed = 5.0;
+        engine.add_item(1, -490.0, 500.0); // y becomes -495, bottom is 5.0 > 0.0
+        engine.add_item(2, 10.0, 500.0);
+
+        let offscreen = engine.tick();
+        assert!(offscreen.is_empty());
+
+        let mut engine2 = ScrollEngine::new(1000.0);
+        engine2.scroll_speed = 10.0;
+        engine2.add_item(1, -495.0, 500.0); // y will become -505, -505 + 500 = -5 < 0
+
+        let offscreen2 = engine2.tick();
+        assert_eq!(offscreen2, vec![1]);
+        assert!(!engine2.items.contains_key(&1));
+    }
+
+    #[test]
+    fn test_scroll_engine_empty_spawn() {
+        let engine = ScrollEngine::new(1000.0);
+        assert_eq!(engine.needs_new_player(), Some(0.0));
     }
 }

@@ -335,11 +335,17 @@ impl VideoHandle {
 
     /// Render video frame using a persistent GPU texture pipeline (flicker-free)
     pub fn view<'a, Message: 'a>(&'a self, opacity: f32) -> iced::Element<'a, Message> {
-        let program = crate::pipeline::VideoProgram::new(
+        self.view_with_fit(opacity, false)
+    }
+
+    /// Render video frame with custom fit mode (fit_cover = true for edge-to-edge ambient fill)
+    pub fn view_with_fit<'a, Message: 'a>(&'a self, opacity: f32, fit_cover: bool) -> iced::Element<'a, Message> {
+        let program = crate::pipeline::VideoProgram::new_with_fit(
             self.id as u64,
             Arc::clone(&self.frame),
             Arc::clone(&self.alive),
             opacity,
+            fit_cover,
         );
         iced::Element::new(crate::pipeline::video_shader(program))
     }

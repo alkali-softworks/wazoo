@@ -291,6 +291,7 @@ pub struct VideoPrimitive {
     frame: Arc<Mutex<FrameData>>,
     alive: Arc<AtomicBool>,
     opacity: f32,
+    fit_cover: bool,
 }
 
 impl Primitive for VideoPrimitive {
@@ -357,10 +358,20 @@ impl Primitive for VideoPrimitive {
         let (scale_x, scale_y) = if bw > 0.0 && bh > 0.0 && vw > 0.0 && vh > 0.0 {
             let video_aspect = vw / vh;
             let bounds_aspect = bw / bh;
-            if bounds_aspect > video_aspect {
-                (video_aspect / bounds_aspect, 1.0)
+            if self.fit_cover {
+                // object-fit: cover (zooms/crops to fill entire bounds seamlessly)
+                if bounds_aspect > video_aspect {
+                    (1.0, bounds_aspect / video_aspect)
+                } else {
+                    (video_aspect / bounds_aspect, 1.0)
+                }
             } else {
-                (1.0, bounds_aspect / video_aspect)
+                // object-fit: contain (letterbox / pillarbox with black bars)
+                if bounds_aspect > video_aspect {
+                    (video_aspect / bounds_aspect, 1.0)
+                } else {
+                    (1.0, bounds_aspect / video_aspect)
+                }
             }
         } else {
             (1.0, 1.0)
@@ -394,6 +405,7 @@ pub struct VideoProgram {
     frame: Arc<Mutex<FrameData>>,
     alive: Arc<AtomicBool>,
     opacity: f32,
+    fit_cover: bool,
 }
 
 impl VideoProgram {
@@ -403,11 +415,22 @@ impl VideoProgram {
         alive: Arc<AtomicBool>,
         opacity: f32,
     ) -> Self {
+        Self::new_with_fit(player_id, frame, alive, opacity, false)
+    }
+
+    pub fn new_with_fit(
+        player_id: u64,
+        frame: Arc<Mutex<FrameData>>,
+        alive: Arc<AtomicBool>,
+        opacity: f32,
+        fit_cover: bool,
+    ) -> Self {
         Self {
             player_id,
             frame,
             alive,
             opacity,
+            fit_cover,
         }
     }
 }
@@ -427,6 +450,7 @@ impl<Message> Program<Message> for VideoProgram {
             frame: Arc::clone(&self.frame),
             alive: Arc::clone(&self.alive),
             opacity: self.opacity,
+            fit_cover: self.fit_cover,
         }
     }
 }
