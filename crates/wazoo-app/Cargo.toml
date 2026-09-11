@@ -1,0 +1,22 @@
+[package]
+name = "wazoo-app"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "wazoo"
+path = "src/main.rs"
+
+[dependencies]
+wazoo-core.workspace = true
+wazoo-scanner.workspace = true
+wazoo-media.workspace = true
+iced.workspace = true
+iced_video_player.workspace = true
+tokio.workspace = true
+log.workspace = true
+env_logger.workspace = true
+rand.workspace = true
+directories.workspace = true

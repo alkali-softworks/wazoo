@@ -1,0 +1,18 @@
+[package]
+name = "wazoo-media"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+wazoo-core.workspace = true
+gstreamer.workspace = true
+gstreamer-app.workspace = true
+gstreamer-video.workspace = true
+iced_video_player.workspace = true
+tokio.workspace = true
+rand.workspace = true
+log.workspace = true
+url.workspace = true
+thiserror.workspace = true
