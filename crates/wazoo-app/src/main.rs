@@ -1,0 +1,653 @@
+use std::time::Duration;
+use iced::{
+    widget::{button, column, container, row, scrollable, text, text_input, Space},
+    window, Alignment, Element, Length, Subscription, Task, Theme,
+};
+use wazoo_core::{ConfigManager, Database, LayoutMode, PlaybackMode, VideoRecord, WazooSettings};
+use wazoo_media::{PlayerId, ScrollEngine, VideoHandle};
+use wazoo_scanner::{Scanner, ScanProgress};
+
+pub struct WazooApp {
+    settings: WazooSettings,
+    config_mgr: ConfigManager,
+    db: Database,
+    players: Vec<VideoHandle>,
+    scroll_engine: ScrollEngine,
+    available_videos: Vec<VideoRecord>,
+    active_search_query: String,
+    search_input: String,
+    folder_input: String,
+    show_search_modal: bool,
+    show_settings_modal: bool,
+    show_help_modal: bool,
+    toast_message: Option<String>,
+    toast_time_remaining: usize,
+    next_player_id: PlayerId,
+    is_scanning: bool,
+    scan_progress: Option<ScanProgress>,
+}
+
+#[derive(Debug, Clone)]
+pub enum Message {
+    // Playback controls
+    TogglePlay(PlayerId),
+    NextVideo(PlayerId),
+    Seek(PlayerId, Duration),
+    SetVolume(PlayerId, f64),
+    TogglePlayerMute(PlayerId),
+    ToggleGlobalMute,
+
+    // Layout & Modes
+    CycleLayout,
+    SetPlayerCount(usize),
+    ToggleScrollMode,
+    ToggleFlipMode,
+    SetScrollSpeed(f32),
+
+    // Modals & UI
+    OpenSearchModal,
+    CloseSearchModal,
+    SearchInputChanged(String),
+    PerformSearch,
+    OpenSettingsModal,
+    CloseSettingsModal,
+    OpenHelpModal,
+    CloseHelpModal,
+    FolderInputChanged(String),
+    AddMediaFolder,
+    RemoveMediaFolder(String),
+    StartScan,
+    ScanProgressUpdate(ScanProgress),
+    ScanFinished(Result<usize, String>),
+
+    // Window management
+    ToggleDecorations,
+    WindowResized(u32, u32),
+
+    // Timers & Ticks
+    AnimationTick,
+    WatchdogTick,
+    FlipModeTick,
+    DismissToast,
+}
+
+impl WazooApp {
+    pub fn new() -> (Self, Task<Message>) {
+        let config_mgr = ConfigManager::new();
+        let settings = config_mgr.load_settings();
+        let db = Database::open(config_mgr.database_path())
+            .expect("Failed to initialize SQLite database");
+
+        let videos = db.get_all_videos().unwrap_or_default();
+        let scroll_engine = ScrollEngine::new(settings.window_bounds.height as f32);
+
+        let mut app = Self {
+            settings: settings.clone(),
+            config_mgr,
+            db,
+            players: Vec::new(),
+            scroll_engine,
+            available_videos: videos,
+            active_search_query: settings.last_query.clone(),
+            search_input: settings.last_query.clone(),
+            folder_input: String::new(),
+            show_search_modal: false,
+            show_settings_modal: false,
+            show_help_modal: false,
+            toast_message: Some("Welcome to Wazoo (Native Rust)".to_string()),
+            toast_time_remaining: 3,
+            next_player_id: 1,
+            is_scanning: false,
+            scan_progress: None,
+        };
+
+        // Initialize players based on settings
+        let count = settings.player_count.clamp(1, 12);
+        for _ in 0..count {
+            app.add_player_internal();
+        }
+
+        (app, Task::none())
+    }
+
+    fn add_player_internal(&mut self) -> Option<PlayerId> {
+        if self.available_videos.is_empty() {
+            return None;
+        }
+
+        let idx = rand::random::<usize>() % self.available_videos.len();
+        let video_rec = &self.available_videos[idx];
+
+        let id = self.next_player_id;
+        self.next_player_id += 1;
+
+        match VideoHandle::new(id, &video_rec.path, &video_rec.name) {
+            Ok(mut handle) => {
+                handle.set_muted(self.settings.is_global_muted);
+                self.players.push(handle);
+                Some(id)
+            }
+            Err(err) => {
+                log::error!("Failed to create VideoHandle for {}: {}", video_rec.path, err);
+                None
+            }
+        }
+    }
+
+    pub fn title(&self) -> String {
+        format!("Wazoo - Ambient Media Engine ({} videos)", self.available_videos.len())
+    }
+
+    pub fn update(&mut self, message: Message) -> Task<Message> {
+        match message {
+            Message::TogglePlay(id) => {
+                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                    p.toggle_play();
+                }
+            }
+            Message::NextVideo(id) => {
+                if !self.available_videos.is_empty() {
+                    let idx = rand::random::<usize>() % self.available_videos.len();
+                    let video_rec = &self.available_videos[idx];
+                    if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                        if let Ok(new_handle) = VideoHandle::new(id, &video_rec.path, &video_rec.name) {
+                            *p = new_handle;
+                            p.set_muted(self.settings.is_global_muted);
+                        }
+                    }
+                }
+            }
+            Message::Seek(id, pos) => {
+                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                    p.seek(pos);
+                }
+            }
+            Message::SetVolume(id, vol) => {
+                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                    p.set_volume(vol);
+                }
+            }
+            Message::TogglePlayerMute(id) => {
+                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                    let muted = !p.state.is_muted;
+                    p.set_muted(muted);
+                }
+            }
+            Message::ToggleGlobalMute => {
+                self.settings.is_global_muted = !self.settings.is_global_muted;
+                for p in &mut self.players {
+                    p.set_muted(self.settings.is_global_muted);
+                }
+                self.toast_message = Some(if self.settings.is_global_muted {
+                    "Global Mute: ON".to_string()
+                } else {
+                    "Global Mute: OFF".to_string()
+                });
+                self.toast_time_remaining = 2;
+            }
+            Message::CycleLayout => {
+                self.settings.layout = match self.settings.layout {
+                    LayoutMode::Grid => LayoutMode::Row,
+                    LayoutMode::Row => LayoutMode::Column,
+                    LayoutMode::Column => LayoutMode::Grid,
+                };
+                self.toast_message = Some(format!("Layout: {:?}", self.settings.layout));
+                self.toast_time_remaining = 2;
+            }
+            Message::SetPlayerCount(count) => {
+                let target = count.clamp(1, 12);
+                self.settings.player_count = target;
+                while self.players.len() > target {
+                    self.players.pop();
+                }
+                while self.players.len() < target {
+                    self.add_player_internal();
+                }
+            }
+            Message::ToggleScrollMode => {
+                self.settings.playback_mode = match self.settings.playback_mode {
+                    PlaybackMode::Scroll => PlaybackMode::Normal,
+                    _ => PlaybackMode::Scroll,
+                };
+                self.toast_message = Some(format!("Scroll Mode: {:?}", self.settings.playback_mode));
+                self.toast_time_remaining = 2;
+            }
+            Message::ToggleFlipMode => {
+                self.settings.playback_mode = match self.settings.playback_mode {
+                    PlaybackMode::Flip => PlaybackMode::Normal,
+                    _ => PlaybackMode::Flip,
+                };
+                self.toast_message = Some(format!("Flip Mode: {:?}", self.settings.playback_mode));
+                self.toast_time_remaining = 2;
+            }
+            Message::SetScrollSpeed(speed) => {
+                self.settings.scroll_speed = speed.clamp(0.1, 10.0);
+                self.scroll_engine.set_speed(self.settings.scroll_speed);
+            }
+            Message::OpenSearchModal => {
+                self.show_search_modal = true;
+            }
+            Message::CloseSearchModal => {
+                self.show_search_modal = false;
+            }
+            Message::SearchInputChanged(val) => {
+                self.search_input = val;
+            }
+            Message::PerformSearch => {
+                self.active_search_query = self.search_input.clone();
+                let folders = self.settings.media_folders.clone();
+                if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
+                    self.toast_message = Some(format!("Found {} videos", results.len()));
+                    self.toast_time_remaining = 2;
+                    self.available_videos = results;
+                }
+                self.show_search_modal = false;
+            }
+            Message::OpenSettingsModal => {
+                self.show_settings_modal = true;
+            }
+            Message::CloseSettingsModal => {
+                self.show_settings_modal = false;
+                let _ = self.config_mgr.save_settings(&self.settings);
+            }
+            Message::OpenHelpModal => {
+                self.show_help_modal = true;
+            }
+            Message::CloseHelpModal => {
+                self.show_help_modal = false;
+            }
+            Message::FolderInputChanged(val) => {
+                self.folder_input = val;
+            }
+            Message::AddMediaFolder => {
+                let trimmed = self.folder_input.trim().to_string();
+                if !trimmed.is_empty() && !self.settings.media_folders.contains(&trimmed) {
+                    self.settings.media_folders.push(trimmed);
+                    self.folder_input.clear();
+                    let _ = self.config_mgr.save_settings(&self.settings);
+                }
+            }
+            Message::RemoveMediaFolder(folder) => {
+                self.settings.media_folders.retain(|f| f != &folder);
+                let _ = self.config_mgr.save_settings(&self.settings);
+            }
+            Message::StartScan => {
+                if !self.is_scanning && !self.settings.media_folders.is_empty() {
+                    self.is_scanning = true;
+                    let folders = self.settings.media_folders.clone();
+                    let db_path = self.config_mgr.database_path();
+
+                    return Task::perform(
+                        async move {
+                            let scanner = Scanner::new(None);
+                            scanner.scan_and_index(&folders, db_path, None).await
+                        },
+                        Message::ScanFinished,
+                    );
+                }
+            }
+            Message::ScanProgressUpdate(progress) => {
+                self.scan_progress = Some(progress);
+            }
+            Message::ScanFinished(res) => {
+                self.is_scanning = false;
+                self.scan_progress = None;
+                match res {
+                    Ok(count) => {
+                        self.toast_message = Some(format!("Indexed {count} videos!"));
+                        self.toast_time_remaining = 3;
+                        if let Ok(videos) = self.db.get_all_videos() {
+                            self.available_videos = videos;
+                        }
+                    }
+                    Err(err) => {
+                        self.toast_message = Some(format!("Scan error: {err}"));
+                        self.toast_time_remaining = 3;
+                    }
+                }
+            }
+            Message::ToggleDecorations => {}
+            Message::WindowResized(w, h) => {
+                self.settings.window_bounds.width = w;
+                self.settings.window_bounds.height = h;
+                self.scroll_engine.set_window_height(h as f32);
+            }
+            Message::AnimationTick => {
+                if self.settings.playback_mode == PlaybackMode::Scroll {
+                    let offscreen = self.scroll_engine.tick();
+                    for id in offscreen {
+                        self.players.retain(|p| p.id != id);
+                    }
+
+                    if let Some(spawn_y) = self.scroll_engine.needs_new_player() {
+                        if let Some(id) = self.add_player_internal() {
+                            let height = 360.0;
+                            self.scroll_engine.add_item(id, spawn_y, height);
+                        }
+                    }
+
+                    for p in &mut self.players {
+                        let vol = self.scroll_engine.calculate_player_volume(p.id);
+                        p.set_volume(vol);
+                    }
+                }
+            }
+            Message::WatchdogTick => {
+                // Check if any video finished or is stuck
+                let finished_or_stuck: Vec<PlayerId> = self
+                    .players
+                    .iter_mut()
+                    .filter_map(|p| {
+                        if p.is_finished() || p.check_stuck() {
+                            Some(p.id)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+
+                for id in finished_or_stuck {
+                    let _ = self.update(Message::NextVideo(id));
+                }
+
+                if self.toast_message.is_some() {
+                    if self.toast_time_remaining > 0 {
+                        self.toast_time_remaining -= 1;
+                    } else {
+                        self.toast_message = None;
+                    }
+                }
+            }
+            Message::FlipModeTick => {
+                if self.settings.playback_mode == PlaybackMode::Flip && !self.players.is_empty() {
+                    let rand_id = self.players[rand::random::<usize>() % self.players.len()].id;
+                    let _ = self.update(Message::NextVideo(rand_id));
+                    if let Some(p) = self.players.iter_mut().find(|p| p.id == rand_id) {
+                        p.seek_random();
+                    }
+                }
+            }
+            Message::DismissToast => {
+                self.toast_message = None;
+            }
+        }
+        Task::none()
+    }
+
+    pub fn subscription(&self) -> Subscription<Message> {
+        let mut subs = vec![
+            iced::time::every(Duration::from_secs(1)).map(|_| Message::WatchdogTick),
+        ];
+
+        if self.settings.playback_mode == PlaybackMode::Scroll {
+            subs.push(iced::time::every(Duration::from_millis(16)).map(|_| Message::AnimationTick));
+        }
+
+        if self.settings.playback_mode == PlaybackMode::Flip {
+            subs.push(iced::time::every(Duration::from_secs(15)).map(|_| Message::FlipModeTick));
+        }
+
+        Subscription::batch(subs)
+    }
+
+    pub fn view(&self) -> Element<'_, Message> {
+        if self.available_videos.is_empty() {
+            return self.view_welcome();
+        }
+
+        let players_view = self.view_players();
+
+        let mut content = column![players_view];
+
+        // Bottom control bar overlay
+        let controls = row![
+            button(text("🔍 Search")).on_press(Message::OpenSearchModal),
+            button(text(format!("Layout: {:?}", self.settings.layout))).on_press(Message::CycleLayout),
+            button(text(if self.settings.playback_mode == PlaybackMode::Scroll { "🌊 Scroll: ON" } else { "🌊 Scroll: OFF" }))
+                .on_press(Message::ToggleScrollMode),
+            button(text(if self.settings.playback_mode == PlaybackMode::Flip { "⚡ Flip: ON" } else { "⚡ Flip: OFF" }))
+                .on_press(Message::ToggleFlipMode),
+            button(text(if self.settings.is_global_muted { "🔇 Unmute" } else { "🔊 Mute" }))
+                .on_press(Message::ToggleGlobalMute),
+            button(text("⚙ Settings")).on_press(Message::OpenSettingsModal),
+            button(text("❓ Help")).on_press(Message::OpenHelpModal),
+        ]
+        .spacing(10)
+        .padding(10);
+
+        content = content.push(controls);
+
+        // Toast message overlay
+        if let Some(ref toast) = self.toast_message {
+            let toast_widget = container(
+                row![
+                    text(toast).size(14),
+                    button(text("✕").size(12)).on_press(Message::DismissToast)
+                ]
+                .spacing(10)
+                .align_y(Alignment::Center),
+            )
+            .padding(12);
+
+            content = content.push(toast_widget);
+        }
+
+        // Modal overlays
+        if self.show_search_modal {
+            return self.view_search_modal();
+        }
+
+        if self.show_settings_modal {
+            return self.view_settings_modal();
+        }
+
+        if self.show_help_modal {
+            return self.view_help_modal();
+        }
+
+        container(content)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .into()
+    }
+
+    fn view_players(&self) -> Element<'_, Message> {
+        if self.players.is_empty() {
+            return text("No active players").into();
+        }
+
+        match self.settings.layout {
+            LayoutMode::Row => {
+                let mut r = row![].spacing(6).width(Length::Fill).height(Length::Fill);
+                for p in &self.players {
+                    r = r.push(self.view_single_player(p));
+                }
+                r.into()
+            }
+            LayoutMode::Column => {
+                let mut c = column![].spacing(6).width(Length::Fill).height(Length::Fill);
+                for p in &self.players {
+                    c = c.push(self.view_single_player(p));
+                }
+                c.into()
+            }
+            LayoutMode::Grid => {
+                let count = self.players.len();
+                let cols = if count <= 1 { 1 } else if count <= 4 { 2 } else if count <= 9 { 3 } else { 4 };
+
+                let mut rows = column![].spacing(6).width(Length::Fill).height(Length::Fill);
+                for chunk in self.players.chunks(cols) {
+                    let mut r = row![].spacing(6).width(Length::Fill).height(Length::Fill);
+                    for p in chunk {
+                        r = r.push(self.view_single_player(p));
+                    }
+                    rows = rows.push(r);
+                }
+                rows.into()
+            }
+        }
+    }
+
+    fn view_single_player<'a>(&self, p: &'a VideoHandle) -> Element<'a, Message> {
+        let player_id = p.id;
+        let video_widget = iced_video_player::VideoPlayer::new(&p.video);
+
+        let info_overlay = row![
+            text(&p.state.name).size(12),
+            Space::new().width(Length::Fill),
+            button(text("⏭")).on_press(Message::NextVideo(player_id)),
+            button(text(if p.state.is_playing { "⏸" } else { "▶" })).on_press(Message::TogglePlay(player_id)),
+            button(text(if p.state.is_muted { "🔇" } else { "🔊" })).on_press(Message::TogglePlayerMute(player_id)),
+        ]
+        .spacing(8)
+        .padding(4);
+
+        column![
+            video_widget,
+            info_overlay
+        ]
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .into()
+    }
+
+    fn view_welcome(&self) -> Element<'_, Message> {
+        container(
+            column![
+                text("Welcome to Wazoo").size(28),
+                text("Ambient media engine for non-stop viewing").size(16),
+                text("No videos indexed yet. Add your media folder to start:").size(14),
+                row![
+                    text_input("Enter folder path (e.g. /home/user/Videos)", &self.folder_input)
+                        .on_input(Message::FolderInputChanged)
+                        .padding(8)
+                        .width(Length::Fixed(400.0)),
+                    button(text("Add Folder")).on_press(Message::AddMediaFolder),
+                    button(text("Start Scan")).on_press(Message::StartScan),
+                ]
+                .spacing(10),
+            ]
+            .spacing(16)
+            .align_x(Alignment::Center),
+        )
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .center_x(Length::Fill)
+        .center_y(Length::Fill)
+        .into()
+    }
+
+    fn view_search_modal(&self) -> Element<'_, Message> {
+        container(
+            column![
+                text("Instant Search").size(22),
+                row![
+                    text_input("Search videos...", &self.search_input)
+                        .on_input(Message::SearchInputChanged)
+                        .padding(10)
+                        .width(Length::Fixed(350.0)),
+                    button(text("Search")).on_press(Message::PerformSearch),
+                    button(text("Cancel")).on_press(Message::CloseSearchModal),
+                ]
+                .spacing(10),
+                text(format!("Current results: {} videos", self.available_videos.len())).size(12),
+            ]
+            .spacing(14)
+            .padding(24),
+        )
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .center_x(Length::Fill)
+        .center_y(Length::Fill)
+        .into()
+    }
+
+    fn view_settings_modal(&self) -> Element<'_, Message> {
+        let mut folders_col = column![text("Media Folders:").size(16)].spacing(6);
+        for folder in &self.settings.media_folders {
+            let f = folder.clone();
+            folders_col = folders_col.push(
+                row![
+                    text(folder).size(13),
+                    button(text("Remove")).on_press(Message::RemoveMediaFolder(f)),
+                ]
+                .spacing(10),
+            );
+        }
+
+        let content = column![
+            text("Wazoo Settings").size(22),
+            folders_col,
+            row![
+                text_input("New folder path...", &self.folder_input)
+                    .on_input(Message::FolderInputChanged)
+                    .width(Length::Fixed(300.0)),
+                button(text("Add")).on_press(Message::AddMediaFolder),
+                button(text(if self.is_scanning { "Scanning..." } else { "Re-scan Library" }))
+                    .on_press(Message::StartScan),
+            ]
+            .spacing(8),
+            row![
+                text("Players count:"),
+                button(text("1")).on_press(Message::SetPlayerCount(1)),
+                button(text("2")).on_press(Message::SetPlayerCount(2)),
+                button(text("4")).on_press(Message::SetPlayerCount(4)),
+                button(text("6")).on_press(Message::SetPlayerCount(6)),
+                button(text("8")).on_press(Message::SetPlayerCount(8)),
+            ]
+            .spacing(8),
+            button(text("Done")).on_press(Message::CloseSettingsModal),
+        ]
+        .spacing(16)
+        .padding(24);
+
+        container(scrollable(content))
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill)
+            .into()
+    }
+
+    fn view_help_modal(&self) -> Element<'_, Message> {
+        container(
+            column![
+                text("Wazoo Help & Shortcuts").size(22),
+                text("• Space: Pause / Play active video").size(14),
+                text("• M: Toggle Global Mute").size(14),
+                text("• L: Cycle Layout (Grid -> Row -> Column)").size(14),
+                text("• S: Open Search modal").size(14),
+                text("• F: Toggle Flip Mode (rapid ambient shuffle)").size(14),
+                text("• Alt + Drag: Move borderless window").size(14),
+                button(text("Close")).on_press(Message::CloseHelpModal),
+            ]
+            .spacing(12)
+            .padding(24),
+        )
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .center_x(Length::Fill)
+        .center_y(Length::Fill)
+        .into()
+    }
+
+    pub fn theme(&self) -> Theme {
+        Theme::Dark
+    }
+}
+
+pub fn main() -> iced::Result {
+    env_logger::init();
+
+    iced::application(WazooApp::new, WazooApp::update, WazooApp::view)
+        .title(WazooApp::title)
+        .subscription(WazooApp::subscription)
+        .theme(WazooApp::theme)
+        .window(window::Settings {
+            size: iced::Size::new(1280.0, 720.0),
+            decorations: false,
+            transparent: true,
+            ..Default::default()
+        })
+        .run()
+}

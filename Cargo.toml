@@ -1,0 +1,42 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/wazoo-core",
+    "crates/wazoo-scanner",
+    "crates/wazoo-media",
+    "crates/wazoo-app",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Alkali Softworks"]
+license = "MIT"
+description = "Native Rust ambient media engine for non-stop viewing"
+
+[workspace.dependencies]
+wazoo-core = { path = "crates/wazoo-core" }
+wazoo-scanner = { path = "crates/wazoo-scanner" }
+wazoo-media = { path = "crates/wazoo-media" }
+
+rusqlite = { version = "0.32", features = ["bundled"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+walkdir = "2.5"
+rayon = "1.10"
+regex = "1.11"
+rand = "0.8"
+directories = "5.0"
+log = "0.4"
+env_logger = "0.11"
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "2.0"
+url = "2.5"
+
+gstreamer = "0.23"
+gstreamer-app = "0.23"
+gstreamer-video = "0.23"
+gstreamer-pbutils = "0.23"
+iced = { version = "0.14.0", features = ["advanced", "crisp", "image", "svg", "tokio", "wgpu", "wayland", "x11"], default-features = false }
+iced_video_player = "0.6"
