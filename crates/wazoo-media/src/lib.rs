@@ -1,3 +1,4 @@
+pub mod mpv_ffi;
 pub mod player;
 pub mod scroll;
 

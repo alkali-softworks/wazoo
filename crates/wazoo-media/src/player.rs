@@ -1,9 +1,8 @@
+use std::ffi::{c_int, c_void, CString};
 use std::time::{Duration, Instant};
-use gstreamer as gst;
-use gstreamer_app as gst_app;
-use gstreamer::prelude::*;
 use rand::Rng;
-use url::Url;
+
+use crate::mpv_ffi;
 
 pub type PlayerId = usize;
 
@@ -49,7 +48,7 @@ impl Default for BufferConfig {
     fn default() -> Self {
         Self {
             duration_secs: 10,
-            size_mb: 64,
+            size_mb: 32,
             read_chunk_kb: 512,
         }
     }
@@ -57,14 +56,39 @@ impl Default for BufferConfig {
 
 pub struct VideoHandle {
     pub id: PlayerId,
-    pub video: iced_video_player::Video,
-    pub pipeline: gst::Pipeline,
     pub state: PlayerState,
+    mpv: *mut mpv_ffi::MpvHandle,
+    render_ctx: *mut mpv_ffi::MpvRenderContext,
+    render_width: u32,
+    render_height: u32,
+    pixel_buffer: Vec<u8>,
+    current_frame: iced::widget::image::Handle,
+    is_eos: bool,
     last_seek_time: Option<Instant>,
-    pending_seek_target: Option<Duration>,
+}
+
+unsafe impl Send for VideoHandle {}
+unsafe impl Sync for VideoHandle {}
+
+impl Drop for VideoHandle {
+    fn drop(&mut self) {
+        unsafe {
+            if !self.render_ctx.is_null() {
+                mpv_ffi::mpv_render_context_free(self.render_ctx);
+                self.render_ctx = std::ptr::null_mut();
+            }
+            if !self.mpv.is_null() {
+                mpv_ffi::mpv_terminate_destroy(self.mpv);
+                self.mpv = std::ptr::null_mut();
+            }
+        }
+    }
 }
 
 impl VideoHandle {
+    pub const STUCK_THRESHOLD_SECONDS: usize = 30;
+    pub const SEEK_GRACE_PERIOD: Duration = Duration::from_secs(10);
+
     pub fn new(id: PlayerId, file_path: &str, name: &str) -> Result<Self, String> {
         Self::with_buffering(id, file_path, name, BufferConfig::default())
     }
@@ -75,115 +99,230 @@ impl VideoHandle {
         name: &str,
         config: BufferConfig,
     ) -> Result<Self, String> {
-        let uri = if file_path.starts_with("file://") {
-            Url::parse(file_path).map_err(|e| e.to_string())?
-        } else {
-            Url::from_file_path(file_path).map_err(|_| "Failed to convert path to URL".to_string())?
-        };
+        unsafe {
+            let mpv = mpv_ffi::mpv_create();
+            if mpv.is_null() {
+                return Err("Failed to create libmpv instance".to_string());
+            }
 
-        gst::init().map_err(|e| e.to_string())?;
+            let set_opt = |k: &str, v: &str| {
+                if let (Ok(ck), Ok(cv)) = (CString::new(k), CString::new(v)) {
+                    mpv_ffi::mpv_set_option_string(mpv, ck.as_ptr(), cv.as_ptr());
+                }
+            };
 
-        let pipeline_str = format!(
-            r#"playbin uri="{}" video-sink="videoscale ! videoconvert ! appsink name=iced_video drop=true caps=video/x-raw,format=NV12,pixel-aspect-ratio=1/1""#,
-            uri.as_str()
-        );
+            // Configure libmpv for optimal ambient media playback
+            set_opt("vo", "libmpv");
+            set_opt("ao", "pulse,pipewire,alsa,null");
+            set_opt("hwdec", "auto-safe");
+            set_opt("demuxer-max-bytes", &format!("{}M", config.size_mb.max(16)));
+            set_opt("demuxer-readahead-secs", &format!("{}", config.duration_secs.max(2)));
+            set_opt("sub-auto", "all");
+            set_opt("sub-ass", "yes");
+            set_opt("embeddedfonts", "yes");
+            set_opt("keep-open", "yes");
+            set_opt("idle", "yes");
+            set_opt("terminal", "no");
 
-        let pipeline = gst::parse::launch(pipeline_str.as_ref())
-            .map_err(|e| e.to_string())?
-            .downcast::<gst::Pipeline>()
-            .map_err(|_| "Failed to downcast to Pipeline".to_string())?;
+            let res = mpv_ffi::mpv_initialize(mpv);
+            if res < 0 {
+                mpv_ffi::mpv_terminate_destroy(mpv);
+                return Err(format!("Failed to initialize libmpv (code {res})"));
+            }
 
-        let dur_secs = config.duration_secs.max(2) as u64;
-        let dur_ns = dur_secs * 1_000_000_000u64;
-        let dur_ns_i64 = dur_ns as i64;
-        let buf_size_bytes = (config.size_mb.max(16) as u32) * 1024 * 1024;
-        let multiqueue_size_bytes = buf_size_bytes.max(128 * 1024 * 1024);
-        let extra_size_bytes = multiqueue_size_bytes / 2;
-        let extra_size_time = dur_ns / 2;
-        let read_chunk_bytes = (config.read_chunk_kb.max(64) as u32) * 1024;
+            let api_type = CString::new("sw").unwrap();
+            let mut params = [
+                mpv_ffi::MpvRenderParam {
+                    type_: mpv_ffi::MPV_RENDER_PARAM_API_TYPE,
+                    data: api_type.as_ptr() as *mut c_void,
+                },
+                mpv_ffi::MpvRenderParam {
+                    type_: mpv_ffi::MPV_RENDER_PARAM_INVALID,
+                    data: std::ptr::null_mut(),
+                },
+            ];
 
-        pipeline.set_property("buffer-duration", dur_ns_i64);
-        pipeline.set_property("buffer-size", buf_size_bytes as i32);
-        pipeline.set_property("ring-buffer-max-size", buf_size_bytes as u64);
+            let mut render_ctx: *mut mpv_ffi::MpvRenderContext = std::ptr::null_mut();
+            let res = mpv_ffi::mpv_render_context_create(&mut render_ctx, mpv, params.as_mut_ptr());
+            if res < 0 || render_ctx.is_null() {
+                mpv_ffi::mpv_terminate_destroy(mpv);
+                return Err(format!("Failed to create mpv render context (code {res})"));
+            }
 
-        pipeline.connect("source-setup", false, move |values| {
-            if let Some(source) = values.get(1).and_then(|v| v.get::<gst::Element>().ok()) {
-                if source.has_property("blocksize", None) {
-                    // Set large read block size for smooth reads over SMB/NFS/WiFi mounts instead of 4KB default
-                    let _ = source.set_property("blocksize", read_chunk_bytes);
+            // Load media file
+            let clean_path = if let Some(stripped) = file_path.strip_prefix("file://") {
+                stripped
+            } else {
+                file_path
+            };
+            let cmd = CString::new(format!("loadfile \"{}\"", clean_path.replace('"', "\\\"")))
+                .map_err(|e| e.to_string())?;
+            mpv_ffi::mpv_command_string(mpv, cmd.as_ptr());
+
+            // Wait briefly for file to load so metadata (duration, streams) is populated
+            let deadline = Instant::now() + Duration::from_millis(2000);
+            while Instant::now() < deadline {
+                let event = mpv_ffi::mpv_wait_event(mpv, 0.05);
+                if !event.is_null() {
+                    let eid = (*event).event_id;
+                    if eid == mpv_ffi::MPV_EVENT_FILE_LOADED || eid == mpv_ffi::MPV_EVENT_END_FILE {
+                        break;
+                    }
                 }
             }
-            None
-        });
 
-        pipeline.connect("element-setup", false, move |values| {
-            if let Some(elem) = values.get(1).and_then(|v| v.get::<gst::Element>().ok()) {
-                let factory_name = elem.factory().map(|f| f.name().to_string()).unwrap_or_default();
-                let name = elem.name();
-                if factory_name == "decodebin" {
-                    let _ = elem.set_property("max-size-buffers", 2000u32);
-                    let _ = elem.set_property("max-size-time", dur_ns);
-                    let _ = elem.set_property("max-size-bytes", multiqueue_size_bytes);
-                } else if factory_name == "uridecodebin" {
-                    let _ = elem.set_property("buffer-duration", dur_ns_i64);
-                    let _ = elem.set_property("buffer-size", buf_size_bytes as i32);
-                    let _ = elem.set_property("ring-buffer-max-size", buf_size_bytes as u64);
-                } else if factory_name == "multiqueue" {
-                    let _ = elem.set_property("use-interleave", false);
-                    let _ = elem.set_property("max-size-buffers", 2000u32);
-                    let _ = elem.set_property("extra-size-buffers", 1000u32);
-                    let _ = elem.set_property("max-size-time", dur_ns);
-                    let _ = elem.set_property("extra-size-time", extra_size_time);
-                    let _ = elem.set_property("max-size-bytes", multiqueue_size_bytes);
-                    let _ = elem.set_property("extra-size-bytes", extra_size_bytes);
-                } else if name.as_str() == "vqueue" {
-                    let _ = elem.set_property("max-size-buffers", 60u32);
-                    let _ = elem.set_property("max-size-time", 1_000_000_000u64);
-                    let _ = elem.set_property("max-size-bytes", 0u32);
-                } else if name.as_str() == "aqueue" {
-                    let _ = elem.set_property("max-size-time", 2_000_000_000u64);
+            let mut dur: f64 = 0.0;
+            let prop = CString::new("duration").unwrap();
+            let res = mpv_ffi::mpv_get_property(
+                mpv,
+                prop.as_ptr(),
+                mpv_ffi::MPV_FORMAT_DOUBLE,
+                &mut dur as *mut _ as *mut _,
+            );
+            let initial_duration = if res == 0 && dur > 0.0 {
+                Duration::from_secs_f64(dur)
+            } else {
+                Duration::ZERO
+            };
+
+            let render_width = 1280u32;
+            let render_height = 720u32;
+            let buffer_size = (render_width * render_height * 4) as usize;
+            let mut pixel_buffer = vec![0u8; buffer_size];
+            for chunk in pixel_buffer.chunks_exact_mut(4) {
+                chunk[3] = 255;
+            }
+            let current_frame = iced::widget::image::Handle::from_rgba(
+                render_width,
+                render_height,
+                pixel_buffer.clone(),
+            );
+
+            let mut state = PlayerState::new(id, file_path.to_string(), name.to_string());
+            state.duration = initial_duration;
+
+            let mut handle = Self {
+                id,
+                state,
+                mpv,
+                render_ctx,
+                render_width,
+                render_height,
+                pixel_buffer,
+                current_frame,
+                is_eos: false,
+                last_seek_time: None,
+            };
+
+            handle.set_volume(1.0);
+            Ok(handle)
+        }
+    }
+
+    /// Update video frame if mpv has decoded a new presentation frame
+    pub fn update_frame(&mut self) -> bool {
+        unsafe {
+            // Process pending mpv events
+            while !self.mpv.is_null() {
+                let event = mpv_ffi::mpv_wait_event(self.mpv, 0.0);
+                if event.is_null() || (*event).event_id == mpv_ffi::MPV_EVENT_NONE {
+                    break;
+                }
+                if (*event).event_id == mpv_ffi::MPV_EVENT_END_FILE {
+                    self.is_eos = true;
                 }
             }
-            None
-        });
 
-        let video_sink: gst::Element = pipeline.property("video-sink");
-        let pad = video_sink.pads().first().cloned().ok_or("No pads on video sink")?;
-        let pad = pad.dynamic_cast::<gst::GhostPad>().map_err(|_| "Not a ghost pad")?;
-        let bin = pad.parent_element().ok_or("No parent element")?.downcast::<gst::Bin>().map_err(|_| "Not a bin")?;
-        let app_sink = bin.by_name("iced_video").ok_or("Could not find iced_video appsink")?;
-        let app_sink = app_sink.downcast::<gst_app::AppSink>().map_err(|_| "Not an AppSink")?;
+            if self.render_ctx.is_null() {
+                return false;
+            }
 
-        let video = iced_video_player::Video::from_gst_pipeline(pipeline.clone(), app_sink, None)
-            .map_err(|e| format!("iced_video_player error: {e:?}"))?;
+            let flags = mpv_ffi::mpv_render_context_update(self.render_ctx);
+            if (flags & mpv_ffi::MPV_RENDER_UPDATE_FRAME) != 0 {
+                let mut size = [self.render_width as i32, self.render_height as i32];
+                let format = CString::new("rgb0").unwrap();
+                let mut stride = (self.render_width * 4) as usize;
+                let mut render_params = [
+                    mpv_ffi::MpvRenderParam {
+                        type_: mpv_ffi::MPV_RENDER_PARAM_SW_SIZE,
+                        data: size.as_mut_ptr() as *mut c_void,
+                    },
+                    mpv_ffi::MpvRenderParam {
+                        type_: mpv_ffi::MPV_RENDER_PARAM_SW_FORMAT,
+                        data: format.as_ptr() as *mut c_void,
+                    },
+                    mpv_ffi::MpvRenderParam {
+                        type_: mpv_ffi::MPV_RENDER_PARAM_SW_STRIDE,
+                        data: &mut stride as *mut usize as *mut c_void,
+                    },
+                    mpv_ffi::MpvRenderParam {
+                        type_: mpv_ffi::MPV_RENDER_PARAM_SW_POINTER,
+                        data: self.pixel_buffer.as_mut_ptr() as *mut c_void,
+                    },
+                    mpv_ffi::MpvRenderParam {
+                        type_: mpv_ffi::MPV_RENDER_PARAM_INVALID,
+                        data: std::ptr::null_mut(),
+                    },
+                ];
 
-        let mut handle = Self {
-            id,
-            video,
-            pipeline,
-            state: PlayerState::new(id, file_path.to_string(), name.to_string()),
-            last_seek_time: None,
-            pending_seek_target: None,
-        };
+                let err = mpv_ffi::mpv_render_context_render(self.render_ctx, render_params.as_mut_ptr());
+                if err == 0 {
+                    for chunk in self.pixel_buffer.chunks_exact_mut(4) {
+                        chunk[3] = 255;
+                    }
+                    self.current_frame = iced::widget::image::Handle::from_rgba(
+                        self.render_width,
+                        self.render_height,
+                        self.pixel_buffer.clone(),
+                    );
+                    self.state.position = self.position();
+                    let d = self.duration();
+                    if d > Duration::ZERO {
+                        self.state.duration = d;
+                    }
+                    return true;
+                }
+            }
+        }
+        false
+    }
 
-        handle.set_volume(1.0);
-        let dur = handle.duration();
-        handle.state.duration = dur;
+    /// Retrieve the current decoded video frame for rendering in Iced
+    pub fn frame_handle(&self) -> iced::widget::image::Handle {
+        self.current_frame.clone()
+    }
 
-        Ok(handle)
+    pub fn dimensions(&self) -> (u32, u32) {
+        (self.render_width, self.render_height)
     }
 
     pub fn set_volume(&mut self, volume: f64) {
         let clamped = volume.clamp(0.0, 1.0);
         self.state.volume = clamped;
-        let effective_volume = if self.state.is_muted { 0.0 } else { clamped };
-        self.pipeline.set_property("volume", effective_volume);
+        let mpv_vol = clamped * 100.0;
+        unsafe {
+            let prop = CString::new("volume").unwrap();
+            mpv_ffi::mpv_set_property(
+                self.mpv,
+                prop.as_ptr(),
+                mpv_ffi::MPV_FORMAT_DOUBLE,
+                &mpv_vol as *const _ as *mut _,
+            );
+        }
     }
 
     pub fn set_muted(&mut self, muted: bool) {
         self.state.is_muted = muted;
-        let effective_volume = if muted { 0.0 } else { self.state.volume };
-        self.pipeline.set_property("volume", effective_volume);
+        let flag: c_int = if muted { 1 } else { 0 };
+        unsafe {
+            let prop = CString::new("mute").unwrap();
+            mpv_ffi::mpv_set_property(
+                self.mpv,
+                prop.as_ptr(),
+                mpv_ffi::MPV_FORMAT_FLAG,
+                &flag as *const _ as *mut _,
+            );
+        }
     }
 
     pub fn toggle_play(&mut self) {
@@ -195,13 +334,38 @@ impl VideoHandle {
     }
 
     pub fn play(&mut self) {
-        let _ = self.pipeline.set_state(gst::State::Playing);
-        self.state.is_playing = true;
+        self.set_pause_internal(false);
     }
 
     pub fn pause(&mut self) {
-        let _ = self.pipeline.set_state(gst::State::Paused);
-        self.state.is_playing = false;
+        self.set_pause_internal(true);
+    }
+
+    fn set_pause_internal(&mut self, paused: bool) {
+        self.state.is_playing = !paused;
+        let flag: c_int = if paused { 1 } else { 0 };
+        unsafe {
+            let prop = CString::new("pause").unwrap();
+            mpv_ffi::mpv_set_property(
+                self.mpv,
+                prop.as_ptr(),
+                mpv_ffi::MPV_FORMAT_FLAG,
+                &flag as *const _ as *mut _,
+            );
+        }
+    }
+
+    pub fn set_subtitles_visible(&mut self, visible: bool) {
+        let flag: c_int = if visible { 1 } else { 0 };
+        unsafe {
+            let prop = CString::new("sub-visibility").unwrap();
+            mpv_ffi::mpv_set_property(
+                self.mpv,
+                prop.as_ptr(),
+                mpv_ffi::MPV_FORMAT_FLAG,
+                &flag as *const _ as *mut _,
+            );
+        }
     }
 
     pub fn seek_random(&mut self) {
@@ -213,151 +377,99 @@ impl VideoHandle {
         }
     }
 
-    pub const STUCK_THRESHOLD_SECONDS: usize = 30;
-    pub const SEEK_GRACE_PERIOD: Duration = Duration::from_secs(10);
-
     pub fn seek(&mut self, position: Duration) {
-        self.seek_with_accuracy(position, true);
-    }
-
-    pub fn seek_with_accuracy(&mut self, position: Duration, accurate: bool) {
-        let dur = self.duration();
-        let margin = if dur > Duration::from_secs(2) {
-            Duration::from_millis(800)
-        } else {
-            dur / 4
-        };
-        let clamped_pos = if dur > Duration::ZERO {
-            position.min(dur.saturating_sub(margin))
-        } else {
-            position
-        };
-
-        self.state.position = clamped_pos;
-        self.pending_seek_target = Some(clamped_pos);
-        self.last_seek_time = Some(Instant::now());
-        self.state.stuck_count = 0;
-        self.state.last_checked_pos = clamped_pos;
-
-        // Perform seek on iced_video_player::Video
-        // For arrow-key scrubs (accurate = false), fast keyframe seek avoids decoding intermediate frames
-        if let Err(e) = self.video.seek(clamped_pos, accurate) {
-            log::warn!("Video::seek error ({:?}), falling back to pipeline.seek_simple", e);
-            let pos_nanos = clamped_pos.as_nanos() as u64;
-            let flags = gst::SeekFlags::FLUSH
-                | if accurate {
-                    gst::SeekFlags::ACCURATE
-                } else {
-                    gst::SeekFlags::empty()
-                };
-            let _ = self.pipeline.seek_simple(
-                flags,
-                gst::ClockTime::from_nseconds(pos_nanos),
-            );
-        }
+        self.seek_internal(position.as_secs_f64(), false, true);
     }
 
     pub fn seek_relative(&mut self, seconds: f64) {
-        let current = self.position();
-        let dur = self.duration();
-        let margin = if dur > Duration::from_secs(2) {
-            Duration::from_millis(800)
+        self.seek_internal(seconds, true, false);
+    }
+
+    fn seek_internal(&mut self, val: f64, relative: bool, accurate: bool) {
+        self.last_seek_time = Some(Instant::now());
+        self.is_eos = false;
+        self.state.stuck_count = 0;
+
+        let current = self.position().as_secs_f64();
+        let dur = self.duration().as_secs_f64();
+        let max_target = if dur > 0.5 { dur - 0.1 } else { f64::MAX };
+        let target = if relative {
+            (current + val).clamp(0.0, max_target)
         } else {
-            dur / 4
+            val.clamp(0.0, max_target)
         };
-        let new_pos = if seconds < 0.0 {
-            current.saturating_sub(Duration::from_secs_f64(-seconds))
+        self.state.position = Duration::from_secs_f64(target);
+
+        let mode = if relative {
+            if accurate { "relative+exact" } else { "relative" }
         } else {
-            let target = current + Duration::from_secs_f64(seconds);
-            if dur > Duration::ZERO && target >= dur {
-                dur.saturating_sub(margin)
-            } else {
-                target
+            if accurate { "absolute+exact" } else { "absolute" }
+        };
+
+        let cmd = format!("seek {} {}", val, mode);
+        if let Ok(c_cmd) = CString::new(cmd) {
+            unsafe {
+                mpv_ffi::mpv_command_string(self.mpv, c_cmd.as_ptr());
             }
-        };
-        // Use fast keyframe seek for smooth relative arrow-key scrubbing
-        self.seek_with_accuracy(new_pos, false);
+        }
     }
 
     pub fn adjust_volume(&mut self, delta: f64) {
         self.set_volume(self.state.volume + delta);
     }
 
-    fn query_pipeline_position(&self) -> Option<Duration> {
-        self.pipeline
-            .query_position::<gst::ClockTime>()
-            .map(|t| Duration::from_nanos(t.nseconds()))
-    }
-
     pub fn position(&self) -> Duration {
-        if let Some(target) = self.pending_seek_target {
-            if let Some(seek_time) = self.last_seek_time {
-                let elapsed = seek_time.elapsed();
-                if elapsed < Duration::from_secs(3) {
-                    if let Some(pos) = self.query_pipeline_position() {
-                        let diff = (pos.as_millis() as i64 - target.as_millis() as i64).abs();
-                        if pos > Duration::ZERO && diff < 1200 {
-                            return pos;
-                        }
-                    }
-                    return target;
-                }
-            }
-        }
-
-        if let Some(pos) = self.query_pipeline_position() {
-            if pos == Duration::ZERO && self.state.position > Duration::from_millis(500) {
+        if let Some(seek_time) = self.last_seek_time {
+            if seek_time.elapsed() < Duration::from_millis(500) {
                 return self.state.position;
             }
-            pos
-        } else {
-            self.state.position
+        }
+        unsafe {
+            let mut pos: f64 = 0.0;
+            let prop = CString::new("time-pos").unwrap();
+            let res = mpv_ffi::mpv_get_property(
+                self.mpv,
+                prop.as_ptr(),
+                mpv_ffi::MPV_FORMAT_DOUBLE,
+                &mut pos as *mut _ as *mut _,
+            );
+            if res == 0 && pos >= 0.0 {
+                Duration::from_secs_f64(pos)
+            } else {
+                self.state.position
+            }
         }
     }
 
     pub fn duration(&self) -> Duration {
-        let video_dur = self.video.duration();
-        if video_dur > Duration::ZERO {
-            return video_dur;
+        unsafe {
+            let mut dur: f64 = 0.0;
+            let prop = CString::new("duration").unwrap();
+            let res = mpv_ffi::mpv_get_property(
+                self.mpv,
+                prop.as_ptr(),
+                mpv_ffi::MPV_FORMAT_DOUBLE,
+                &mut dur as *mut _ as *mut _,
+            );
+            if res == 0 && dur > 0.0 {
+                Duration::from_secs_f64(dur)
+            } else {
+                self.state.duration
+            }
         }
-        self.pipeline
-            .query_duration::<gst::ClockTime>()
-            .map(|t| Duration::from_nanos(t.nseconds()))
-            .unwrap_or(self.state.duration)
     }
 
     pub fn is_finished(&self) -> bool {
-        // Direct EOS report from GStreamer bus via iced_video_player
-        if self.video.eos() {
-            return true;
-        }
-
-        // Never trigger finished while paused unless true EOS is reached
-        if !self.state.is_playing || self.video.paused() {
-            return false;
-        }
-
-        // Never trigger finished within 3 seconds of a seek
-        if let Some(seek_time) = self.last_seek_time {
-            if seek_time.elapsed() < Duration::from_secs(3) {
-                return false;
-            }
-        }
-
-        let dur = self.duration();
-        let pos = self.position();
-        dur > Duration::ZERO && pos >= dur.saturating_sub(Duration::from_millis(400))
+        self.is_eos
     }
 
     /// Check if video playback is stuck (same position for too long while marked playing)
     pub fn check_stuck(&mut self) -> bool {
-        // Smart check: never watchdog if playback is paused
-        if !self.state.is_playing || self.video.paused() {
+        if !self.state.is_playing {
             self.state.stuck_count = 0;
             return false;
         }
 
-        // Smart check: never watchdog during or immediately after a seek
         if let Some(seek_time) = self.last_seek_time {
             if seek_time.elapsed() < Self::SEEK_GRACE_PERIOD {
                 self.state.stuck_count = 0;

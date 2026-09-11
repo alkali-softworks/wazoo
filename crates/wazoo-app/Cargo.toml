@@ -14,7 +14,6 @@ wazoo-core.workspace = true
 wazoo-scanner.workspace = true
 wazoo-media.workspace = true
 iced.workspace = true
-iced_video_player.workspace = true
 tokio.workspace = true
 log.workspace = true
 env_logger.workspace = true
