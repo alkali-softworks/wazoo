@@ -302,6 +302,20 @@ impl WazooApp {
                 if let Some(id) = self.focused_player_id() {
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                         p.seek_relative(secs);
+                        let pos = p.position();
+                        let dur = p.duration();
+                        let pos_s = pos.as_secs();
+                        let dur_s = dur.as_secs();
+                        let sign = if secs > 0.0 { "+" } else { "" };
+                        self.toast_message = Some(format!(
+                            "Seek {sign}{:.0}s  [{:02}:{:02} / {:02}:{:02}]",
+                            secs,
+                            pos_s / 60,
+                            pos_s % 60,
+                            dur_s / 60,
+                            dur_s % 60
+                        ));
+                        self.toast_time_remaining = 2;
                     }
                 }
             }

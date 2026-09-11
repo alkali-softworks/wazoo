@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use gstreamer as gst;
 use gstreamer_app as gst_app;
 use gstreamer::prelude::*;
@@ -43,6 +43,8 @@ pub struct VideoHandle {
     pub video: iced_video_player::Video,
     pub pipeline: gst::Pipeline,
     pub state: PlayerState,
+    last_seek_time: Option<Instant>,
+    pending_seek_target: Option<Duration>,
 }
 
 impl VideoHandle {
@@ -80,9 +82,14 @@ impl VideoHandle {
             video,
             pipeline,
             state: PlayerState::new(id, file_path.to_string(), name.to_string()),
+            last_seek_time: None,
+            pending_seek_target: None,
         };
 
         handle.set_volume(1.0);
+        let dur = handle.duration();
+        handle.state.duration = dur;
+
         Ok(handle)
     }
 
@@ -127,12 +134,28 @@ impl VideoHandle {
     }
 
     pub fn seek(&mut self, position: Duration) {
-        let pos_nanos = position.as_nanos() as u64;
-        let _ = self.pipeline.seek_simple(
-            gst::SeekFlags::FLUSH | gst::SeekFlags::KEY_UNIT,
-            gst::ClockTime::from_nseconds(pos_nanos),
-        );
-        self.state.position = position;
+        let dur = self.duration();
+        let clamped_pos = if dur > Duration::ZERO {
+            position.min(dur.saturating_sub(Duration::from_millis(100)))
+        } else {
+            position
+        };
+
+        self.state.position = clamped_pos;
+        self.pending_seek_target = Some(clamped_pos);
+        self.last_seek_time = Some(Instant::now());
+        self.state.stuck_count = 0;
+
+        // Perform seek on iced_video_player::Video with accurate = true
+        // This flushes pipeline without macroblock artifacts and keeps subtitles synced
+        if let Err(e) = self.video.seek(clamped_pos, true) {
+            log::warn!("Video::seek error ({:?}), falling back to pipeline.seek_simple", e);
+            let pos_nanos = clamped_pos.as_nanos() as u64;
+            let _ = self.pipeline.seek_simple(
+                gst::SeekFlags::FLUSH | gst::SeekFlags::ACCURATE,
+                gst::ClockTime::from_nseconds(pos_nanos),
+            );
+        }
     }
 
     pub fn seek_relative(&mut self, seconds: f64) {
@@ -143,7 +166,7 @@ impl VideoHandle {
             let dur = self.duration();
             let target = current + Duration::from_secs_f64(seconds);
             if dur > Duration::ZERO && target > dur {
-                dur
+                dur.saturating_sub(Duration::from_millis(100))
             } else {
                 target
             }
@@ -155,14 +178,42 @@ impl VideoHandle {
         self.set_volume(self.state.volume + delta);
     }
 
-    pub fn position(&self) -> Duration {
+    fn query_pipeline_position(&self) -> Option<Duration> {
         self.pipeline
             .query_position::<gst::ClockTime>()
             .map(|t| Duration::from_nanos(t.nseconds()))
-            .unwrap_or(self.state.position)
+    }
+
+    pub fn position(&self) -> Duration {
+        if let Some(target) = self.pending_seek_target {
+            if let Some(seek_time) = self.last_seek_time {
+                if seek_time.elapsed() < Duration::from_millis(400) {
+                    if let Some(pos) = self.query_pipeline_position() {
+                        let diff = (pos.as_millis() as i64 - target.as_millis() as i64).abs();
+                        if pos > Duration::ZERO && diff < 800 {
+                            return pos;
+                        }
+                    }
+                    return target;
+                }
+            }
+        }
+
+        if let Some(pos) = self.query_pipeline_position() {
+            if pos == Duration::ZERO && self.state.position > Duration::from_millis(500) {
+                return self.state.position;
+            }
+            pos
+        } else {
+            self.state.position
+        }
     }
 
     pub fn duration(&self) -> Duration {
+        let video_dur = self.video.duration();
+        if video_dur > Duration::ZERO {
+            return video_dur;
+        }
         self.pipeline
             .query_duration::<gst::ClockTime>()
             .map(|t| Duration::from_nanos(t.nseconds()))
