@@ -75,6 +75,15 @@ pub struct VideoHandle {
 unsafe impl Send for VideoHandle {}
 unsafe impl Sync for VideoHandle {}
 
+impl std::fmt::Debug for VideoHandle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VideoHandle")
+            .field("id", &self.id)
+            .field("state", &self.state)
+            .finish()
+    }
+}
+
 impl Drop for VideoHandle {
     fn drop(&mut self) {
         self.alive.store(false, Ordering::SeqCst);

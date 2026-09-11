@@ -4,6 +4,7 @@ mod scroll_view;
 mod theme;
 
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use iced::futures::SinkExt;
 use iced::{
@@ -66,6 +67,8 @@ pub struct WazooApp {
     loading_player_ids: HashSet<PlayerId>,
     loading_player_ticks: HashMap<PlayerId, usize>,
     spinner_ticks: u32,
+    preloaded_player: Option<VideoHandle>,
+    is_preloading: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -73,6 +76,7 @@ pub enum Message {
     // Window management & Events
     WindowIdReceived(iced::window::Id),
     WindowResized(iced::Size),
+    PreloadedPlayerReady(Arc<Mutex<Option<Result<VideoHandle, String>>>>),
     CursorMoved(iced::window::Id, Point),
     RightClickPressed(iced::window::Id),
     KeyPressed(Key),
@@ -203,6 +207,8 @@ impl WazooApp {
             loading_player_ids: HashSet::new(),
             loading_player_ticks: HashMap::new(),
             spinner_ticks: 0,
+            preloaded_player: None,
+            is_preloading: false,
         };
 
         // Initialize players based on settings
@@ -211,7 +217,7 @@ impl WazooApp {
             app.add_player_internal();
         }
 
-        if app.settings.playback_mode == PlaybackMode::Scroll {
+        let preload_task = if app.settings.playback_mode == PlaybackMode::Scroll {
             let ids: Vec<PlayerId> = app.players.iter().map(|p| p.id).collect();
             app.scroll_engine.init_stack(&ids);
             let item_h = app.scroll_engine.default_item_height();
@@ -227,9 +233,12 @@ impl WazooApp {
                 let vol = app.scroll_engine.calculate_player_volume(p.id);
                 p.set_volume(vol);
             }
-        }
+            app.trigger_preload_task()
+        } else {
+            Task::none()
+        };
 
-        (app, Task::none())
+        (app, preload_task)
     }
 
     fn focused_player_id(&self) -> Option<PlayerId> {
@@ -317,6 +326,51 @@ impl WazooApp {
         None
     }
 
+    /// Triggers an asynchronous background preload task for the next video in scroll mode
+    fn trigger_preload_task(&mut self) -> Task<Message> {
+        if self.preloaded_player.is_some() || self.is_preloading || self.settings.playback_mode != PlaybackMode::Scroll {
+            return Task::none();
+        }
+
+        let curr_path = self.players.last().map(|p| p.state.path.clone());
+        let video_rec = match self.get_next_video_rec(curr_path.as_deref()) {
+            Some(rec) => rec,
+            None => return Task::none(),
+        };
+
+        let id = self.next_player_id;
+        self.next_player_id += 1;
+        self.is_preloading = true;
+
+        let buffer_config = BufferConfig {
+            duration_secs: self.settings.buffer_duration_secs,
+            size_mb: self.settings.buffer_size_mb,
+            read_chunk_kb: 512,
+        };
+        let path = video_rec.path;
+        let name = video_rec.name;
+
+        let holder = Arc::new(Mutex::new(None));
+        let holder_clone = Arc::clone(&holder);
+
+        Task::perform(
+            async move {
+                let res = tokio::task::spawn_blocking(move || {
+                    let mut handle = VideoHandle::with_buffering(id, &path, &name, buffer_config)?;
+                    handle.seek_random();
+                    Ok::<VideoHandle, String>(handle)
+                })
+                .await
+                .map_err(|e| e.to_string())
+                .and_then(|r| r);
+
+                *holder_clone.lock().unwrap() = Some(res);
+                holder_clone
+            },
+            Message::PreloadedPlayerReady,
+        )
+    }
+
     pub fn title(&self) -> String {
         format!("Wazoo - Ambient Media Engine ({} videos)", self.available_videos.len())
     }
@@ -325,6 +379,39 @@ impl WazooApp {
         match message {
             Message::WindowIdReceived(id) => {
                 self.window_id = Some(id);
+            }
+            Message::PreloadedPlayerReady(holder) => {
+                self.is_preloading = false;
+                if self.settings.playback_mode != PlaybackMode::Scroll {
+                    return Task::none();
+                }
+
+                let result = match holder.lock().ok().and_then(|mut g| g.take()) {
+                    Some(r) => r,
+                    None => return Task::none(),
+                };
+
+                match result {
+                    Ok(mut handle) => {
+                        handle.set_subtitles_visible(self.subtitles_enabled);
+                        handle.set_muted(self.settings.is_global_muted);
+                        let item_h = self.scroll_engine.default_item_height();
+                        // If scroll stream needs a player right now, attach it immediately!
+                        if let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(item_h * 0.5) {
+                            self.scroll_engine.add_item(handle.id, spawn_y, item_h);
+                            let vol = self.scroll_engine.calculate_player_volume(handle.id);
+                            handle.set_volume(vol);
+                            self.players.push(handle);
+                            return self.trigger_preload_task();
+                        } else {
+                            self.preloaded_player = Some(handle);
+                        }
+                    }
+                    Err(err) => {
+                        log::error!("Background player preload failed: {err}");
+                        return self.trigger_preload_task();
+                    }
+                }
             }
             Message::WindowResized(size) => {
                 self.settings.window_bounds.width = size.width as u32;
@@ -336,16 +423,17 @@ impl WazooApp {
                         item.height = item_h;
                     }
                     self.scroll_engine.recalculate_positions();
-                    while let Some(spawn_y) = self.scroll_engine.needs_new_player() {
-                        if let Some(id) = self.add_player_internal() {
-                            self.scroll_engine.add_item(id, spawn_y, item_h);
-                            if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
-                                p.seek_random();
-                            }
+                    while let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(item_h * 0.5) {
+                        if let Some(mut handle) = self.preloaded_player.take() {
+                            self.scroll_engine.add_item(handle.id, spawn_y, item_h);
+                            let vol = self.scroll_engine.calculate_player_volume(handle.id);
+                            handle.set_volume(vol);
+                            self.players.push(handle);
                         } else {
                             break;
                         }
                     }
+                    return self.trigger_preload_task();
                 }
             }
             Message::CursorMoved(win_id, pos) => {
@@ -790,8 +878,14 @@ impl WazooApp {
                     }
 
                     self.toast_message = Some("Scroll Mode: Enabled".to_string());
+                    self.toast_time_remaining = 2;
+                    let _ = self.config_mgr.save_settings(&self.settings);
+
+                    return self.trigger_preload_task();
                 } else {
                     self.scroll_engine.clear();
+                    self.preloaded_player = None;
+                    self.is_preloading = false;
                     let target_count = self.settings.player_count.clamp(1, 12);
                     while self.players.len() > target_count {
                         self.players.pop();
@@ -1140,20 +1234,34 @@ impl WazooApp {
             Message::AnimationTick => {
                 if self.settings.playback_mode == PlaybackMode::Scroll {
                     let offscreen = self.scroll_engine.tick();
-                    for id in offscreen {
-                        self.players.retain(|p| p.id != id);
-                        self.loading_player_ids.remove(&id);
-                        self.loading_player_ticks.remove(&id);
+                    if !offscreen.is_empty() {
+                        let (keep, despawned): (Vec<_>, Vec<_>) = self
+                            .players
+                            .drain(..)
+                            .partition(|p| !offscreen.contains(&p.id));
+                        self.players = keep;
+                        for &id in &offscreen {
+                            self.loading_player_ids.remove(&id);
+                            self.loading_player_ticks.remove(&id);
+                        }
+                        if !despawned.is_empty() {
+                            std::thread::spawn(move || drop(despawned));
+                        }
                     }
 
                     let item_h = self.scroll_engine.default_item_height();
-                    while let Some(spawn_y) = self.scroll_engine.needs_new_player() {
-                        if let Some(id) = self.add_player_internal() {
-                            self.scroll_engine.add_item(id, spawn_y, item_h);
-                            if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
-                                p.seek_random();
-                            }
+                    let mut needs_preload = false;
+
+                    // Non-blocking spawn: attach preloaded player seamlessly if ready
+                    while let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(item_h * 0.5) {
+                        if let Some(mut handle) = self.preloaded_player.take() {
+                            self.scroll_engine.add_item(handle.id, spawn_y, item_h);
+                            let vol = self.scroll_engine.calculate_player_volume(handle.id);
+                            handle.set_volume(vol);
+                            self.players.push(handle);
+                            needs_preload = true;
                         } else {
+                            // Preloaded player still preparing in background - do NOT block!
                             break;
                         }
                     }
@@ -1161,6 +1269,10 @@ impl WazooApp {
                     for p in &mut self.players {
                         let vol = self.scroll_engine.calculate_player_volume(p.id);
                         p.set_volume(vol);
+                    }
+
+                    if needs_preload || (self.preloaded_player.is_none() && !self.is_preloading) {
+                        return self.trigger_preload_task();
                     }
                 }
             }
