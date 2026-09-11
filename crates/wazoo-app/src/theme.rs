@@ -272,18 +272,22 @@ pub fn modal_backdrop_style(_theme: &Theme) -> container::Style {
     }
 }
 
-// Player Container Style (2px #42b883 border when focused)
-pub fn player_container_style(is_focused: bool, opacity: f32) -> impl Fn(&Theme) -> container::Style {
+// Player Container Style (solid black background scaled with opacity)
+pub fn player_container_style(opacity: f32) -> impl Fn(&Theme) -> container::Style {
     move |_theme: &Theme| container::Style {
         background: Some(Background::Color(Color::from_rgba(0.0, 0.0, 0.0, opacity))),
-        border: if is_focused {
-            Border {
-                radius: 0.0.into(),
-                width: 2.0,
-                color: COLOR_PRIMARY,
-            }
-        } else {
-            Border::default()
+        ..Default::default()
+    }
+}
+
+// Active Player Focus Ring (3px #42b883 emerald ring overlaid on top of video)
+pub fn focus_ring_style(_theme: &Theme) -> container::Style {
+    container::Style {
+        background: None,
+        border: Border {
+            radius: 0.0.into(),
+            width: 3.0,
+            color: COLOR_PRIMARY,
         },
         ..Default::default()
     }

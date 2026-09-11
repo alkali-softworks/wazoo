@@ -189,7 +189,7 @@ impl WazooApp {
             player_overlay_ticks: 120,
             window_id: None,
             app_icon_handle: icon_handle,
-            toast_message: Some("Welcome to Wazoo (Native Rust)".to_string()),
+            toast_message: Some("Welcome to Wazoo".to_string()),
             toast_time_remaining: 3,
             next_player_id: 1,
             is_scanning: false,
@@ -457,30 +457,38 @@ impl WazooApp {
             }
             Message::PlayerClicked(id) => {
                 if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                    let was_already_active = self.focused_player_idx == pos;
                     self.focused_player_idx = pos;
-                    self.focus_border_ticks = 40;
+                    if !was_already_active {
+                        self.focus_border_ticks = 20;
+                    }
                     self.player_overlay_ticks = 120;
                 }
             }
             Message::TogglePlay(id) => {
                 if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                    let was_already_active = self.focused_player_idx == pos;
                     self.focused_player_idx = pos;
-                    self.focus_border_ticks = 40;
+                    if !was_already_active {
+                        self.focus_border_ticks = 20;
+                    }
                 }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.toggle_play();
                 }
             }
             Message::TogglePlayFocused => {
-                self.focus_border_ticks = 40;
                 if let Some(id) = self.focused_player_id() {
                     return self.update(Message::TogglePlay(id));
                 }
             }
             Message::NextVideo(id) => {
                 if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                    let was_already_active = self.focused_player_idx == pos;
                     self.focused_player_idx = pos;
-                    self.focus_border_ticks = 40;
+                    if !was_already_active {
+                        self.focus_border_ticks = 20;
+                    }
                 }
                 self.loading_player_ids.insert(id);
                 self.loading_player_ticks.insert(id, 0);
@@ -499,13 +507,11 @@ impl WazooApp {
                 }
             }
             Message::NextVideoFocused => {
-                self.focus_border_ticks = 40;
                 if let Some(id) = self.focused_player_id() {
                     return self.update(Message::NextVideo(id));
                 }
             }
             Message::PrevVideoFocused => {
-                self.focus_border_ticks = 40;
                 if let Some(id) = self.focused_player_id() {
                     self.loading_player_ids.insert(id);
                     self.loading_player_ticks.insert(id, 0);
@@ -526,8 +532,11 @@ impl WazooApp {
             }
             Message::Seek(id, pos) => {
                 if let Some(pos_idx) = self.players.iter().position(|p| p.id == id) {
+                    let was_already_active = self.focused_player_idx == pos_idx;
                     self.focused_player_idx = pos_idx;
-                    self.focus_border_ticks = 40;
+                    if !was_already_active {
+                        self.focus_border_ticks = 20;
+                    }
                 }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.seek(pos);
@@ -535,8 +544,11 @@ impl WazooApp {
             }
             Message::SeekRatio(id, ratio) => {
                 if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                    let was_already_active = self.focused_player_idx == pos;
                     self.focused_player_idx = pos;
-                    self.focus_border_ticks = 40;
+                    if !was_already_active {
+                        self.focus_border_ticks = 20;
+                    }
                 }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     let dur = p.duration();
@@ -566,7 +578,6 @@ impl WazooApp {
                 }
             }
             Message::SeekRelativeFocused(secs) => {
-                self.focus_border_ticks = 40;
                 if let Some(id) = self.focused_player_id() {
                     self.player_overlay_ticks = 120;
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
@@ -586,15 +597,17 @@ impl WazooApp {
             }
             Message::SetVolume(id, vol) => {
                 if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                    let was_already_active = self.focused_player_idx == pos;
                     self.focused_player_idx = pos;
-                    self.focus_border_ticks = 40;
+                    if !was_already_active {
+                        self.focus_border_ticks = 20;
+                    }
                 }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.set_volume(vol);
                 }
             }
             Message::AdjustVolumeFocused(delta) => {
-                self.focus_border_ticks = 40;
                 if self.settings.playback_mode == PlaybackMode::Scroll && delta > 0.0 {
                     return self.update(Message::GlobalUnmute);
                 }
@@ -608,8 +621,11 @@ impl WazooApp {
             }
             Message::TogglePlayerMute(id) => {
                 if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                    let was_already_active = self.focused_player_idx == pos;
                     self.focused_player_idx = pos;
-                    self.focus_border_ticks = 40;
+                    if !was_already_active {
+                        self.focus_border_ticks = 20;
+                    }
                 }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     let muted = !p.state.is_muted;
@@ -619,7 +635,6 @@ impl WazooApp {
                 }
             }
             Message::ToggleMuteFocused => {
-                self.focus_border_ticks = 40;
                 if self.settings.playback_mode == PlaybackMode::Scroll {
                     return self.update(Message::ToggleGlobalMute);
                 }
@@ -733,16 +748,22 @@ impl WazooApp {
             }
             Message::CycleFocusedPlayer => {
                 if !self.players.is_empty() {
-                    self.focused_player_idx = (self.focused_player_idx + 1) % self.players.len();
-                    self.focus_border_ticks = 40;
+                    let next_idx = (self.focused_player_idx + 1) % self.players.len();
+                    if next_idx != self.focused_player_idx {
+                        self.focus_border_ticks = 20;
+                    }
+                    self.focused_player_idx = next_idx;
                     self.toast_message = Some(format!("Focused Player: {}", self.focused_player_idx + 1));
                     self.toast_time_remaining = 1;
                 }
             }
             Message::SetFocusedPlayer(idx) => {
                 if idx < self.players.len() {
+                    let was_already_active = self.focused_player_idx == idx;
                     self.focused_player_idx = idx;
-                    self.focus_border_ticks = 40;
+                    if !was_already_active {
+                        self.focus_border_ticks = 20;
+                    }
                 }
             }
             Message::OpenSearchModal => {
@@ -1627,16 +1648,23 @@ impl WazooApp {
             stack_children.push(Element::from(overlays_column));
         }
 
+        let show_border = is_focused && self.focus_border_ticks > 0;
+        if show_border {
+            let focus_ring = container(Space::new().width(Length::Fill).height(Length::Fill))
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .style(theme::focus_ring_style);
+            stack_children.push(Element::from(focus_ring));
+        }
+
         let player_stack = Stack::with_children(stack_children)
             .width(Length::Fill)
             .height(Length::Fill);
 
-        let show_border = is_focused && self.focus_border_ticks > 0;
-
         let player_box = container(player_stack)
             .width(Length::Fill)
             .height(Length::Fill)
-            .style(theme::player_container_style(show_border, opacity));
+            .style(theme::player_container_style(opacity));
 
         mouse_area(player_box)
             .on_press(Message::PlayerClicked(player_id))
