@@ -4744,6 +4744,7 @@ dependencies = [
  "iced",
  "log",
  "rand 0.8.8",
+ "regex",
  "rfd",
  "tokio",
  "wazoo-core",
