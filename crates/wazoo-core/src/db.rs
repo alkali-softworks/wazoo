@@ -106,6 +106,51 @@ impl Database {
         Ok(count)
     }
 
+    pub fn remove_videos_in_folder(&mut self, folder: &str) -> Result<usize> {
+        let folder_clean = folder.trim_end_matches('/');
+        let folder_prefix = format!("{}/", folder_clean);
+        let folder_path = std::path::Path::new(folder_clean);
+        let canon_folder = std::fs::canonicalize(folder_path).ok();
+
+        let all_db = self.get_all_videos()?;
+        let matching_ids: Vec<i64> = all_db
+            .into_iter()
+            .filter(|v| {
+                if v.path == folder_clean || v.path.starts_with(&folder_prefix) {
+                    return true;
+                }
+                let p = std::path::Path::new(&v.path);
+                if p.starts_with(folder_path) {
+                    return true;
+                }
+                if let Some(ref cf) = canon_folder {
+                    if let Ok(canon) = std::fs::canonicalize(p) {
+                        if canon.starts_with(cf) {
+                            return true;
+                        }
+                    }
+                }
+                false
+            })
+            .map(|v| v.id)
+            .collect();
+
+        if matching_ids.is_empty() {
+            return Ok(0);
+        }
+
+        let count = matching_ids.len();
+        let tx = self.conn.transaction()?;
+        {
+            let mut stmt = tx.prepare("DELETE FROM Video WHERE id = ?1")?;
+            for id in &matching_ids {
+                stmt.execute(params![id])?;
+            }
+        }
+        tx.commit()?;
+        Ok(count)
+    }
+
     pub fn get_video_count(&self) -> Result<usize> {
         let count: usize = self.conn.query_row(
             "SELECT COUNT(*) FROM Video",
@@ -262,5 +307,27 @@ mod tests {
         let pruned = db.prune_missing_videos(&[]).unwrap();
         assert_eq!(pruned, 1);
         assert_eq!(db.get_video_count().unwrap(), 0);
+    }
+
+    #[test]
+    fn test_remove_videos_in_folder() {
+        let mut db = Database::open_in_memory().unwrap();
+        db.batch_insert_videos(&[
+            VideoRecord { id: 0, name: "Vid 1".to_string(), path: "/home/user/media/folder_a/1.mp4".to_string() },
+            VideoRecord { id: 0, name: "Vid 2".to_string(), path: "/home/user/media/folder_a/sub/2.mp4".to_string() },
+            VideoRecord { id: 0, name: "Vid 3".to_string(), path: "/home/user/media/folder_b/3.mp4".to_string() },
+            VideoRecord { id: 0, name: "Vid 4".to_string(), path: "/home/user/media/folder_a_other/4.mp4".to_string() },
+        ]).unwrap();
+        assert_eq!(db.get_video_count().unwrap(), 4);
+
+        // Remove folder_a
+        let removed = db.remove_videos_in_folder("/home/user/media/folder_a").unwrap();
+        assert_eq!(removed, 2);
+        assert_eq!(db.get_video_count().unwrap(), 2);
+
+        let remaining = db.get_all_videos().unwrap();
+        assert_eq!(remaining.len(), 2);
+        assert_eq!(remaining[0].name, "Vid 3");
+        assert_eq!(remaining[1].name, "Vid 4");
     }
 }
