@@ -123,6 +123,10 @@ impl VideoHandle {
             set_opt("hwdec", "auto-safe");
             set_opt("demuxer-max-bytes", &format!("{}M", config.size_mb.max(16)));
             set_opt("demuxer-readahead-secs", &format!("{}", config.duration_secs.max(2)));
+            set_opt("osc", "no");
+            set_opt("osd-level", "0");
+            set_opt("osd-on-seek", "no");
+            set_opt("osd-bar", "no");
             set_opt("sub-auto", "all");
             set_opt("sub-ass", "yes");
             set_opt("embeddedfonts", "yes");
@@ -466,7 +470,7 @@ impl VideoHandle {
             if accurate { "absolute+exact" } else { "absolute" }
         };
 
-        let cmd = format!("seek {} {}", val, mode);
+        let cmd = format!("no-osd seek {} {}", val, mode);
         if let Ok(c_cmd) = CString::new(cmd) {
             unsafe {
                 mpv_ffi::mpv_command_string(self.mpv, c_cmd.as_ptr());
