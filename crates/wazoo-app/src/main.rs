@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use std::time::Duration;
 use iced::{
     keyboard::{key::Named, Key},
-    widget::{button, column, container, mouse_area, row, scrollable, slider, text, text_input, Space, Stack},
+    widget::{button, column, container, mouse_area, row, scrollable, slider, svg, text, text_input, Space, Stack},
     Alignment, Color, Element, Length, Point, Subscription, Task, Theme,
 };
 use wazoo_core::{ConfigManager, Database, LayoutMode, PlaybackMode, VideoRecord, WazooSettings};
@@ -13,6 +13,18 @@ use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, VideoHandle};
 use wazoo_scanner::{ScanProgress, Scanner};
 
 static APP_ICON_BYTES: &[u8] = include_bytes!("../resources/icon.png");
+
+// Crisp vector SVGs for window controls matching modern desktop apps
+static SVG_WINDOW_MINIMIZE: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><line x1="0" y1="5" x2="10" y2="5" stroke="#cccccc" stroke-width="1.2"/></svg>"##;
+static SVG_WINDOW_MAXIMIZE: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10" fill="none"><rect x="1.5" y="1.5" width="7" height="7" stroke="#cccccc" stroke-width="1.2"/></svg>"##;
+static SVG_WINDOW_CLOSE: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><line x1="1.5" y1="1.5" x2="8.5" y2="8.5" stroke="#cccccc" stroke-width="1.2"/><line x1="8.5" y1="1.5" x2="1.5" y2="8.5" stroke="#cccccc" stroke-width="1.2"/></svg>"##;
+
+// Lucide-style 24x24 vector playback SVGs for bottom player controls
+static SVG_PLAYER_PLAY: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ffffff"><polygon points="6 3 20 12 6 21 6 3"/></svg>"##;
+static SVG_PLAYER_PAUSE: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ffffff"><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>"##;
+static SVG_PLAYER_NEXT: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ffffff"><polygon points="5 4 15 12 5 20 5 4"/><rect x="17" y="4" width="3" height="16" rx="1"/></svg>"##;
+static SVG_PLAYER_VOLUME: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#ffffff"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>"##;
+static SVG_PLAYER_MUTE: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#ffffff"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>"##;
 
 pub struct WazooApp {
     settings: WazooSettings,
@@ -44,6 +56,7 @@ pub struct WazooApp {
     is_scanning: bool,
     scan_progress: Option<ScanProgress>,
     focused_player_idx: usize,
+    focus_border_ticks: usize,
     is_shuffle_mode: bool,
     hovered_player_id: Option<PlayerId>,
     subtitles_enabled: bool,
@@ -72,6 +85,7 @@ pub enum Message {
     SetWindowOpacity(f32),
 
     // Playback controls
+    PlayerClicked(PlayerId),
     TogglePlay(PlayerId),
     TogglePlayFocused,
     NextVideo(PlayerId),
@@ -178,6 +192,7 @@ impl WazooApp {
             is_scanning: false,
             scan_progress: None,
             focused_player_idx: 0,
+            focus_border_ticks: 0,
             is_shuffle_mode: true,
             hovered_player_id: None,
             subtitles_enabled: true,
@@ -446,17 +461,33 @@ impl WazooApp {
                 self.settings.window_opacity = opacity.clamp(0.1, 1.0);
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
+            Message::PlayerClicked(id) => {
+                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                    self.focused_player_idx = pos;
+                    self.focus_border_ticks = 40;
+                    self.player_overlay_ticks = 120;
+                }
+            }
             Message::TogglePlay(id) => {
+                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                    self.focused_player_idx = pos;
+                    self.focus_border_ticks = 40;
+                }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.toggle_play();
                 }
             }
             Message::TogglePlayFocused => {
+                self.focus_border_ticks = 40;
                 if let Some(id) = self.focused_player_id() {
                     return self.update(Message::TogglePlay(id));
                 }
             }
             Message::NextVideo(id) => {
+                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                    self.focused_player_idx = pos;
+                    self.focus_border_ticks = 40;
+                }
                 let curr_path = self.players.iter().find(|p| p.id == id).map(|p| p.state.path.clone());
                 for _ in 0..3 {
                     if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
@@ -472,11 +503,13 @@ impl WazooApp {
                 }
             }
             Message::NextVideoFocused => {
+                self.focus_border_ticks = 40;
                 if let Some(id) = self.focused_player_id() {
                     return self.update(Message::NextVideo(id));
                 }
             }
             Message::PrevVideoFocused => {
+                self.focus_border_ticks = 40;
                 if let Some(id) = self.focused_player_id() {
                     let curr_path = self.players.iter().find(|p| p.id == id).map(|p| p.state.path.clone());
                     for _ in 0..3 {
@@ -494,6 +527,10 @@ impl WazooApp {
                 }
             }
             Message::Seek(id, pos) => {
+                if let Some(pos_idx) = self.players.iter().position(|p| p.id == id) {
+                    self.focused_player_idx = pos_idx;
+                    self.focus_border_ticks = 40;
+                }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.seek(pos);
                 }
@@ -501,6 +538,7 @@ impl WazooApp {
             Message::SeekRatio(id, ratio) => {
                 if let Some(pos) = self.players.iter().position(|p| p.id == id) {
                     self.focused_player_idx = pos;
+                    self.focus_border_ticks = 40;
                 }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     let dur = p.duration();
@@ -530,6 +568,7 @@ impl WazooApp {
                 }
             }
             Message::SeekRelativeFocused(secs) => {
+                self.focus_border_ticks = 40;
                 if let Some(id) = self.focused_player_id() {
                     self.player_overlay_ticks = 120;
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
@@ -548,11 +587,16 @@ impl WazooApp {
                 }
             }
             Message::SetVolume(id, vol) => {
+                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                    self.focused_player_idx = pos;
+                    self.focus_border_ticks = 40;
+                }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.set_volume(vol);
                 }
             }
             Message::AdjustVolumeFocused(delta) => {
+                self.focus_border_ticks = 40;
                 if self.settings.playback_mode == PlaybackMode::Scroll && delta > 0.0 {
                     return self.update(Message::GlobalUnmute);
                 }
@@ -565,6 +609,10 @@ impl WazooApp {
                 }
             }
             Message::TogglePlayerMute(id) => {
+                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                    self.focused_player_idx = pos;
+                    self.focus_border_ticks = 40;
+                }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     let muted = !p.state.is_muted;
                     p.set_muted(muted);
@@ -573,6 +621,7 @@ impl WazooApp {
                 }
             }
             Message::ToggleMuteFocused => {
+                self.focus_border_ticks = 40;
                 if self.settings.playback_mode == PlaybackMode::Scroll {
                     return self.update(Message::ToggleGlobalMute);
                 }
@@ -685,6 +734,7 @@ impl WazooApp {
             Message::CycleFocusedPlayer => {
                 if !self.players.is_empty() {
                     self.focused_player_idx = (self.focused_player_idx + 1) % self.players.len();
+                    self.focus_border_ticks = 40;
                     self.toast_message = Some(format!("Focused Player: {}", self.focused_player_idx + 1));
                     self.toast_time_remaining = 1;
                 }
@@ -692,6 +742,7 @@ impl WazooApp {
             Message::SetFocusedPlayer(idx) => {
                 if idx < self.players.len() {
                     self.focused_player_idx = idx;
+                    self.focus_border_ticks = 40;
                 }
             }
             Message::OpenSearchModal => {
@@ -915,6 +966,9 @@ impl WazooApp {
             Message::VideoFrameTick => {
                 if self.player_overlay_ticks > 0 {
                     self.player_overlay_ticks -= 1;
+                }
+                if self.focus_border_ticks > 0 {
+                    self.focus_border_ticks -= 1;
                 }
                 for p in &mut self.players {
                     p.update_frame();
@@ -1145,31 +1199,43 @@ impl WazooApp {
 
         let window_buttons = row![
             button(
-                container(text("─").size(14))
-                    .width(Length::Fixed(46.0))
-                    .height(Length::Fixed(30.0))
-                    .center_x(Length::Fill)
-                    .center_y(Length::Fill),
+                container(
+                    svg(svg::Handle::from_memory(SVG_WINDOW_MINIMIZE))
+                        .width(Length::Fixed(10.0))
+                        .height(Length::Fixed(10.0))
+                )
+                .width(Length::Fixed(46.0))
+                .height(Length::Fixed(30.0))
+                .center_x(Length::Fill)
+                .center_y(Length::Fill),
             )
             .style(theme::window_control_button_style)
             .on_press(Message::MinimizeWindow)
             .padding(0),
             button(
-                container(text("□").size(14))
-                    .width(Length::Fixed(46.0))
-                    .height(Length::Fixed(30.0))
-                    .center_x(Length::Fill)
-                    .center_y(Length::Fill),
+                container(
+                    svg(svg::Handle::from_memory(SVG_WINDOW_MAXIMIZE))
+                        .width(Length::Fixed(10.0))
+                        .height(Length::Fixed(10.0))
+                )
+                .width(Length::Fixed(46.0))
+                .height(Length::Fixed(30.0))
+                .center_x(Length::Fill)
+                .center_y(Length::Fill),
             )
             .style(theme::window_control_button_style)
             .on_press(Message::MaximizeWindow)
             .padding(0),
             button(
-                container(text("✕").size(14))
-                    .width(Length::Fixed(46.0))
-                    .height(Length::Fixed(30.0))
-                    .center_x(Length::Fill)
-                    .center_y(Length::Fill),
+                container(
+                    svg(svg::Handle::from_memory(SVG_WINDOW_CLOSE))
+                        .width(Length::Fixed(10.0))
+                        .height(Length::Fixed(10.0))
+                )
+                .width(Length::Fixed(46.0))
+                .height(Length::Fixed(30.0))
+                .center_x(Length::Fill)
+                .center_y(Length::Fill),
             )
             .style(theme::close_window_button_style)
             .on_press(Message::CloseApp)
@@ -1361,23 +1427,54 @@ impl WazooApp {
             let progress_bar_with_timestamp = Stack::new()
                 .push(seek_slider)
                 .push(
-                    container(text(time_str).size(12).color(iced::Color::WHITE))
+                    container(text(time_str).size(13).color(iced::Color::WHITE))
                         .width(Length::Fill)
-                        .height(Length::Fixed(20.0))
+                        .height(Length::Fixed(22.0))
                         .center_x(Length::Fill)
                         .center_y(Length::Fill),
                 );
 
+            let play_pause_icon = if p.state.is_playing {
+                svg(svg::Handle::from_memory(SVG_PLAYER_PAUSE))
+                    .width(Length::Fixed(20.0))
+                    .height(Length::Fixed(20.0))
+            } else {
+                svg(svg::Handle::from_memory(SVG_PLAYER_PLAY))
+                    .width(Length::Fixed(20.0))
+                    .height(Length::Fixed(20.0))
+            };
+
+            let volume_icon = if p.state.is_muted {
+                svg(svg::Handle::from_memory(SVG_PLAYER_MUTE))
+                    .width(Length::Fixed(20.0))
+                    .height(Length::Fixed(20.0))
+            } else {
+                svg(svg::Handle::from_memory(SVG_PLAYER_VOLUME))
+                    .width(Length::Fixed(20.0))
+                    .height(Length::Fixed(20.0))
+            };
+
+            let next_icon = svg(svg::Handle::from_memory(SVG_PLAYER_NEXT))
+                .width(Length::Fixed(20.0))
+                .height(Length::Fixed(20.0));
+
             let controls_row = row![
                 // Left: CC + Volume Icon + Volume Slider
-                button(text(if self.subtitles_enabled { "CC" } else { "cc" }).size(13))
-                    .style(theme::menu_item_style)
-                    .on_press(Message::ToggleSubtitles)
-                    .padding([2, 6]),
-                button(text(if p.state.is_muted { "🔇" } else { "🔊" }).size(15))
-                    .style(theme::menu_item_style)
+                button(
+                    container(
+                        text(if self.subtitles_enabled { "CC" } else { "cc" })
+                            .size(14)
+                    )
+                    .center_x(Length::Shrink)
+                    .center_y(Length::Shrink),
+                )
+                .style(theme::cc_button_style(self.subtitles_enabled))
+                .on_press(Message::ToggleSubtitles)
+                .padding([4, 8]),
+                button(volume_icon)
+                    .style(theme::player_control_button_style)
                     .on_press(Message::TogglePlayerMute(player_id))
-                    .padding([2, 4]),
+                    .padding([4, 6]),
                 slider(
                     0.0..=1.0,
                     p.state.volume as f32,
@@ -1385,19 +1482,19 @@ impl WazooApp {
                 )
                 .step(0.01)
                 .style(theme::volume_slider_style)
-                .width(Length::Fixed(60.0)),
+                .width(Length::Fixed(80.0)),
                 Space::new().width(Length::Fill),
                 // Right: Play/Pause + Skip Next
-                button(text(if p.state.is_playing { "⏸" } else { "▶" }).size(14))
-                    .style(theme::menu_item_style)
+                button(play_pause_icon)
+                    .style(theme::player_control_button_style)
                     .on_press(Message::TogglePlay(player_id))
-                    .padding([2, 6]),
-                button(text("⏭").size(14))
-                    .style(theme::menu_item_style)
+                    .padding([4, 8]),
+                button(next_icon)
+                    .style(theme::player_control_button_style)
                     .on_press(Message::NextVideo(player_id))
-                    .padding([2, 6]),
+                    .padding([4, 8]),
             ]
-            .spacing(8)
+            .spacing(12)
             .align_y(Alignment::Center);
 
             let bottom_overlay = container(
@@ -1405,13 +1502,13 @@ impl WazooApp {
                     controls_row,
                     progress_bar_with_timestamp,
                 ]
-                .spacing(6),
+                .spacing(8),
             )
             .padding(iced::Padding {
                 top: 8.0,
-                right: 12.0,
-                bottom: 10.0,
-                left: 12.0,
+                right: 14.0,
+                bottom: 12.0,
+                left: 14.0,
             })
             .width(Length::Fill)
             .style(theme::controls_overlay_style);
@@ -1432,12 +1529,15 @@ impl WazooApp {
             .width(Length::Fill)
             .height(Length::Fill);
 
+        let show_border = is_focused && self.focus_border_ticks > 0;
+
         let player_box = container(player_stack)
             .width(Length::Fill)
             .height(Length::Fill)
-            .style(theme::player_container_style(is_focused));
+            .style(theme::player_container_style(show_border));
 
         mouse_area(player_box)
+            .on_press(Message::PlayerClicked(player_id))
             .on_enter(Message::PlayerHovered(player_id))
             .on_exit(Message::PlayerUnhovered(player_id))
             .into()

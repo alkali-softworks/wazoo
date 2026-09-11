@@ -88,6 +88,51 @@ pub fn menu_item_style(_theme: &Theme, status: button::Status) -> button::Style 
     }
 }
 
+// Player Control Buttons (Play, Pause, Next, Mute)
+pub fn player_control_button_style(_theme: &Theme, status: button::Status) -> button::Style {
+    let bg = match status {
+        button::Status::Hovered => Color::from_rgba(1.0, 1.0, 1.0, 0.2),
+        button::Status::Pressed => Color::from_rgba(1.0, 1.0, 1.0, 0.3),
+        _ => Color::TRANSPARENT,
+    };
+    button::Style {
+        background: Some(Background::Color(bg)),
+        text_color: Color::WHITE,
+        border: Border {
+            radius: 4.0.into(),
+            ..Default::default()
+        },
+        shadow: Shadow::default(),
+        ..Default::default()
+    }
+}
+
+// CC Button Style
+pub fn cc_button_style(is_enabled: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
+    move |_theme: &Theme, status: button::Status| {
+        let bg = match status {
+            button::Status::Hovered => Color::from_rgba(1.0, 1.0, 1.0, 0.2),
+            button::Status::Pressed => Color::from_rgba(1.0, 1.0, 1.0, 0.3),
+            _ => Color::TRANSPARENT,
+        };
+        let text_color = if is_enabled {
+            COLOR_PRIMARY
+        } else {
+            COLOR_TEXT_MUTED
+        };
+        button::Style {
+            background: Some(Background::Color(bg)),
+            text_color,
+            border: Border {
+                radius: 4.0.into(),
+                ..Default::default()
+            },
+            shadow: Shadow::default(),
+            ..Default::default()
+        }
+    }
+}
+
 // Action Button (standard dark UI button)
 pub fn action_button_style(_theme: &Theme, status: button::Status) -> button::Style {
     let bg = match status {
@@ -163,7 +208,7 @@ pub fn progress_slider_style(_theme: &Theme, _status: slider::Status) -> slider:
                 Background::Color(COLOR_PRIMARY),
                 Background::Color(COLOR_TRACK_BG),
             ),
-            width: 20.0,
+            width: 22.0,
             border: Border {
                 radius: 3.0.into(),
                 ..Default::default()
@@ -186,9 +231,9 @@ pub fn volume_slider_style(_theme: &Theme, _status: slider::Status) -> slider::S
                 Background::Color(COLOR_PRIMARY),
                 Background::Color(COLOR_TRACK_BG),
             ),
-            width: 6.0,
+            width: 8.0,
             border: Border {
-                radius: 2.0.into(),
+                radius: 3.0.into(),
                 ..Default::default()
             },
         },
