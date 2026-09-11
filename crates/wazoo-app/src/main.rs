@@ -53,6 +53,7 @@ pub struct WazooApp {
     show_dropdown_menu: bool,
     is_alt_pressed: bool,
     player_overlay_ticks: usize,
+    title_pill_ticks: usize,
     window_id: Option<iced::window::Id>,
     app_icon_handle: iced::widget::image::Handle,
     toast_message: Option<String>,
@@ -212,6 +213,7 @@ impl WazooApp {
             show_dropdown_menu: false,
             is_alt_pressed: false,
             player_overlay_ticks: 0,
+            title_pill_ticks: 0,
             window_id: None,
             app_icon_handle: icon_handle,
             toast_message: Some("Welcome to Wazoo".to_string()),
@@ -1324,19 +1326,10 @@ impl WazooApp {
                 }
             }
             Message::ShowTitleOverlayFocused => {
-                self.player_overlay_ticks = 180;
-                if let Some(id) = self.focused_player_id() {
-                    if let Some(p) = self.players.iter().find(|p| p.id == id) {
-                        let title = format::format_descriptive_title(p.path());
-                        let pos = p.position();
-                        let dur = p.duration();
-                        self.toast_message = Some(format!(
-                            "{title}  [{} / {}]",
-                            format::format_time_str(pos.as_secs_f64()),
-                            format::format_time_str(dur.as_secs_f64())
-                        ));
-                        self.toast_time_remaining = 3;
-                    }
+                if self.title_pill_ticks > 0 {
+                    self.title_pill_ticks = 0;
+                } else {
+                    self.title_pill_ticks = 240; // ~4 seconds
                 }
             }
             Message::PickFolders => {
@@ -1610,6 +1603,9 @@ impl WazooApp {
                 self.spinner_ticks = self.spinner_ticks.wrapping_add(1);
                 if self.player_overlay_ticks > 0 {
                     self.player_overlay_ticks -= 1;
+                }
+                if self.title_pill_ticks > 0 {
+                    self.title_pill_ticks -= 1;
                 }
                 if self.focus_border_ticks > 0 {
                     self.focus_border_ticks -= 1;
@@ -2190,27 +2186,27 @@ impl WazooApp {
         // Overlays show when mouse is actively moving over this specific player (fades after delay), or while player is loading
         let show_overlay = (is_hovered && self.player_overlay_ticks > 0) || is_loading;
 
+        // 1. Top-Left Title Pill (Matches Electron Player.vue)
+        let formatted_title = format::format_descriptive_title(&p.state.path);
+        let title_pill = container(
+            text(formatted_title)
+                .size(22)
+                .font(iced::Font {
+                    weight: iced::font::Weight::Bold,
+                    ..Default::default()
+                })
+                .color(iced::Color::WHITE),
+        )
+        .padding([10, 18])
+        .style(theme::title_pill_style);
+
+        let top_row = row![
+            title_pill,
+            Space::new().width(Length::Fill),
+        ]
+        .width(Length::Fill);
+
         if show_overlay {
-            // 1. Top-Left Title Pill (Matches Electron Player.vue)
-            let formatted_title = format::format_descriptive_title(&p.state.path);
-            let title_pill = container(
-                text(formatted_title)
-                    .size(22)
-                    .font(iced::Font {
-                        weight: iced::font::Weight::Bold,
-                        ..Default::default()
-                    })
-                    .color(iced::Color::WHITE),
-            )
-            .padding([10, 18])
-            .style(theme::title_pill_style);
-
-            let top_row = row![
-                title_pill,
-                Space::new().width(Length::Fill),
-            ]
-            .width(Length::Fill);
-
             // 2. Bottom Progress & Control Overlay (Vue emerald green theme #42b883)
             let seek_slider = slider(
                 0.0..=1.0,
@@ -2332,6 +2328,16 @@ impl WazooApp {
             .height(Length::Fill);
 
             stack_children.push(Element::from(overlays_column));
+        } else if is_focused && self.title_pill_ticks > 0 {
+            let pill_column = column![
+                Space::new().height(Length::Fixed(80.0)),
+                top_row,
+                Space::new().height(Length::Fill),
+            ]
+            .width(Length::Fill)
+            .height(Length::Fill);
+
+            stack_children.push(Element::from(pill_column));
         }
 
         let show_border = !is_scroll_mode && is_focused && self.focus_border_ticks > 0;
@@ -2686,7 +2692,7 @@ impl WazooApp {
             ("+ / =", "Add Bookmark (or Scroll Speed +)"),
             ("-", "Remove Bookmark (or Scroll Speed -)"),
             ("r", "Random Seek on Video"),
-            ("t", "Show Title & Time"),
+            ("t", "Show Video Title Pill"),
             ("5", "Toggle Scroll Mode"),
             ("6", "Toggle Flip Mode"),
             ("h", "Toggle File Picker"),
