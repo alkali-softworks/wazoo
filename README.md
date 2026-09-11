@@ -119,15 +119,33 @@ GStreamer binaries can be downloaded from the [GStreamer official website](https
 
 ## ⌨️ Controls & Shortcuts
 
-| Shortcut / Action | Function |
+| Shortcut / Key | Function |
 | :--- | :--- |
-| `Space` | Play / Pause active player |
-| `M` | Toggle Global Mute |
+| `F` / `J` / `/` | **Find** — Open Instant Search modal |
+| `S` | Toggle **Shuffle** vs. Sequential playback mode |
+| `1` | Set player count to **1** |
+| `2` | Set player count to **2** |
+| `3` | Set player count to **3** |
+| `4` | Set player count to **4** |
+| `5` | Toggle **Scroll Mode** (The Infinity Stream) |
+| `6` | Toggle **Flip Mode** (staggered auto-shuffle) |
+| `Space` | Play / Pause focused player |
+| `ArrowUp` | Play next video on focused player |
+| `ArrowDown` | Play previous video on focused player |
+| `ArrowLeft` / `Right` | Seek backward / forward 5 seconds |
+| `,` / `.` | Step frame backward / forward |
 | `L` | Cycle Layout (`Grid` ➔ `Row` ➔ `Column`) |
-| `S` | Open Instant Search Modal |
-| `F` | Toggle Flip Mode (staggered auto-shuffle) |
+| `N` | Add new player (up to 12) |
+| `X` | Remove focused player |
+| `Tab` | Cycle focused player |
+| `M` | Toggle Mute (Global in scroll mode) |
+| `[` / `]` | Decrease / Increase volume |
+| `-` / `+` | Decrease / Increase scroll speed |
+| `C` | Toggle Subtitles |
+| `T` | Toggle Title / Info overlay |
+| `H` | Toggle Controls HUD |
+| `Esc` | Close modal / open Menu |
 | `Alt + Drag` | Move borderless window |
-| `Scroll Up / Down` | Adjust scroll speed in Infinity Stream mode |
 
 ---
 
