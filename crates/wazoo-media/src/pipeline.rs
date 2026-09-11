@@ -312,6 +312,7 @@ impl Primitive for VideoPrimitive {
             return;
         }
 
+        let mut just_created = false;
         let needs_recreate = match pipeline.videos.get(&self.player_id) {
             Some(entry) => entry.width != width || entry.height != height,
             None => true,
@@ -320,11 +321,15 @@ impl Primitive for VideoPrimitive {
         if needs_recreate {
             let new_entry = pipeline.create_entry(device, width, height, Arc::clone(&self.alive));
             pipeline.videos.insert(self.player_id, new_entry);
+            just_created = true;
+        } else {
+            let entry = pipeline.videos.get_mut(&self.player_id).unwrap();
+            entry.alive = Arc::clone(&self.alive);
         }
 
         let entry = pipeline.videos.get_mut(&self.player_id).unwrap();
 
-        if frame_guard.new_frame && !frame_guard.pixels.is_empty() {
+        if (just_created || frame_guard.new_frame) && !frame_guard.pixels.is_empty() {
             queue.write_texture(
                 wgpu::TexelCopyTextureInfo {
                     texture: &entry.texture,
