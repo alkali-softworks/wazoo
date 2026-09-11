@@ -156,12 +156,7 @@ impl WazooApp {
         let db = Database::open(config_mgr.database_path())
             .expect("Failed to initialize SQLite database");
 
-        let videos: Vec<VideoRecord> = db
-            .get_all_videos()
-            .unwrap_or_default()
-            .into_iter()
-            .filter(|v| v.path.starts_with("http") || std::path::Path::new(&v.path).exists())
-            .collect();
+        let videos: Vec<VideoRecord> = db.get_all_videos().unwrap_or_default();
         let scroll_engine = ScrollEngine::new(settings.window_bounds.height as f32);
 
         let icon_handle = iced::widget::image::Handle::from_bytes(APP_ICON_BYTES);
