@@ -36,8 +36,7 @@ Built from the ground up in native Rust with hardware-accelerated rendering:
 
 ### 📁 File Browser Drawer
 - **Collapsible Folder Tree**: Press <kbd>H</kbd> to slide out the library directory tree, organized cleanly with file counts.
-- **Gutter-Aware Scrolling**: Smooth scroll navigation with dedicated gutter margins ensuring text is never obscured by scrollbars.
-- **Direct Tile Loading**: Click any file in the drawer to immediately load it into the currently focused playback tile.
+- **Direct Tile Loading**: Click any file in the drawer to immediately load it into the currently focused player.
 
 ### 💻 Command-Line Launch & Search
 - **Instant CLI Boot**: Launch Wazoo directly with a search query from your terminal:

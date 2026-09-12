@@ -100,7 +100,9 @@ impl WazooApp {
             Message::CursorMoved(win_id, pos) => {
                 self.window_id = Some(win_id);
                 self.cursor_position = pos;
-                self.player_overlay_ticks = 120; // 2 seconds delay before hiding controls
+                if !self.is_modal_or_menu_open() {
+                    self.player_overlay_ticks = 120; // 2 seconds delay before hiding controls
+                }
 
                 if pos.y < 35.0 || self.show_dropdown_menu {
                     self.show_titlebar = true;
@@ -147,6 +149,8 @@ impl WazooApp {
                 self.window_id = Some(win_id);
                 self.show_menu_modal = true;
                 self.show_dropdown_menu = false;
+                self.hovered_player_id = None;
+                self.player_overlay_ticks = 0;
             }
             Message::KeyPressed(key, status) => {
                 // If Alt key pressed
@@ -262,6 +266,8 @@ impl WazooApp {
                 self.show_dropdown_menu = !self.show_dropdown_menu;
                 if self.show_dropdown_menu {
                     self.show_titlebar = true;
+                    self.hovered_player_id = None;
+                    self.player_overlay_ticks = 0;
                 }
             }
             Message::CloseDropdownMenu => {
@@ -270,6 +276,8 @@ impl WazooApp {
             Message::OpenMenuModal => {
                 self.show_menu_modal = true;
                 self.show_dropdown_menu = false;
+                self.hovered_player_id = None;
+                self.player_overlay_ticks = 0;
             }
             Message::CloseMenuModal => {
                 self.show_menu_modal = false;
@@ -382,6 +390,9 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::PlayerClicked(id) => {
+                if self.is_modal_or_menu_open() {
+                    return Task::none();
+                }
                 if let Some(pos) = self.players.iter().position(|p| p.id == id) {
                     let was_already_active = self.focused_player_idx == pos;
                     self.focused_player_idx = pos;
@@ -522,6 +533,9 @@ impl WazooApp {
                 self.player_overlay_ticks = 120;
             }
             Message::PlayerHovered(id) => {
+                if self.is_modal_or_menu_open() {
+                    return Task::none();
+                }
                 self.hovered_player_id = Some(id);
                 self.player_overlay_ticks = 120;
             }
@@ -820,6 +834,8 @@ impl WazooApp {
                 self.show_bookmarks_modal = false;
                 self.show_titlebar = false;
                 self.toast_message = None;
+                self.hovered_player_id = None;
+                self.player_overlay_ticks = 0;
                 return Task::batch([
                     iced::widget::operation::focus("search_input"),
                 ]);
@@ -865,6 +881,8 @@ impl WazooApp {
                 self.show_bookmarks_modal = false;
                 self.show_titlebar = false;
                 self.toast_message = None;
+                self.hovered_player_id = None;
+                self.player_overlay_ticks = 0;
             }
             Message::CloseSettingsModal => {
                 self.show_settings_modal = false;
@@ -885,6 +903,8 @@ impl WazooApp {
                 self.show_bookmarks_modal = false;
                 self.show_titlebar = false;
                 self.toast_message = None;
+                self.hovered_player_id = None;
+                self.player_overlay_ticks = 0;
             }
             Message::CloseHelpModal => {
                 self.show_help_modal = false;
@@ -899,6 +919,8 @@ impl WazooApp {
                     self.show_help_modal = false;
                     self.show_titlebar = false;
                     self.toast_message = None;
+                    self.hovered_player_id = None;
+                    self.player_overlay_ticks = 0;
                 }
             }
             Message::CloseBookmarksModal => {
@@ -1393,6 +1415,7 @@ impl WazooApp {
             Message::DismissToast => {
                 self.toast_message = None;
             }
+            Message::ModalCardClicked => {}
         }
         Task::none()
     }
