@@ -202,20 +202,50 @@ impl Database {
 
         // Process search clauses
         if !clauses.is_empty() {
-            let mut clause_conditions: Vec<String> = Vec::new();
+            let mut positive_conditions: Vec<String> = Vec::new();
+            let mut negative_conditions: Vec<String> = Vec::new();
+
             for clause in clauses {
-                if let Some(term) = clause.strip_prefix("not ") {
-                    let wildcard = format!("%{}%", term.split_whitespace().collect::<Vec<_>>().join("%"));
-                    param_values.push(wildcard);
-                    clause_conditions.push(format!("path NOT LIKE ?{}", param_values.len()));
+                let trimmed = clause.trim();
+                let (is_not, term) = if trimmed.len() >= 4 && trimmed[..4].eq_ignore_ascii_case("not ") {
+                    (true, trimmed[4..].trim())
+                } else if let Some(rest) = trimmed.strip_prefix('!') {
+                    (true, rest.trim())
                 } else {
-                    let wildcard = format!("%{}%", clause.split_whitespace().collect::<Vec<_>>().join("%"));
-                    param_values.push(wildcard);
-                    clause_conditions.push(format!("path LIKE ?{}", param_values.len()));
+                    (false, trimmed)
+                };
+
+                if term.is_empty() {
+                    continue;
+                }
+
+                // Match original wazoo-js: replace '-' with space, split words, join with '%'
+                let wildcard = format!(
+                    "%{}%",
+                    term.replace('-', " ")
+                        .split_whitespace()
+                        .collect::<Vec<_>>()
+                        .join("%")
+                );
+
+                param_values.push(wildcard);
+                let param_idx = param_values.len();
+
+                if is_not {
+                    negative_conditions.push(format!("path NOT LIKE ?{param_idx}"));
+                } else {
+                    positive_conditions.push(format!("path LIKE ?{param_idx}"));
                 }
             }
-            if !clause_conditions.is_empty() {
-                where_conditions.push(format!("({})", clause_conditions.join(" OR ")));
+
+            // Positive clauses are grouped with OR: at least one positive term must match
+            if !positive_conditions.is_empty() {
+                where_conditions.push(format!("({})", positive_conditions.join(" OR ")));
+            }
+
+            // Negative clauses are grouped with AND: all negative terms must NOT match
+            if !negative_conditions.is_empty() {
+                where_conditions.push(format!("({})", negative_conditions.join(" AND ")));
             }
         }
 
@@ -358,6 +388,58 @@ mod tests {
         // Currently playing GoT does not exist in the new queried list of files
         let got_playing_path = "/media/GameOfThrones/S01E01.mp4";
         assert!(!bb_results.iter().any(|v| v.path == got_playing_path));
+    }
+
+    #[test]
+    fn test_search_videos_negative_query_grouping() {
+        let mut db = Database::open_in_memory().unwrap();
+        db.batch_insert_videos(&[
+            VideoRecord {
+                id: 0,
+                name: "Cowboy Bebop - 01 - Asteroid Blues".to_string(),
+                path: "/media/CowboyBebop/01-AsteroidBlues.mkv".to_string(),
+            },
+            VideoRecord {
+                id: 0,
+                name: "Cowboy Bebop - 05 - Ballad of Fallen Angels".to_string(),
+                path: "/media/CowboyBebop/05-BalladOfFallenAngels.mkv".to_string(),
+            },
+            VideoRecord {
+                id: 0,
+                name: "Eek The Cat - 01 - Misereek".to_string(),
+                path: "/media/EekTheCat/01-Misereek.mkv".to_string(),
+            },
+            VideoRecord {
+                id: 0,
+                name: "Trigun - 01 - The $$60 Billion Man".to_string(),
+                path: "/media/Trigun/01.mkv".to_string(),
+            },
+        ])
+        .unwrap();
+
+        // 1. Mixed query: positive (OR) and negative (AND)
+        // "cowboy, eek, not fallen" -> (cowboy OR eek) AND (NOT fallen)
+        let mixed = db.search_videos("cowboy, eek, not fallen", &[]).unwrap();
+        assert_eq!(mixed.len(), 2);
+        assert!(mixed.iter().any(|v| v.path.contains("01-AsteroidBlues")));
+        assert!(mixed.iter().any(|v| v.path.contains("EekTheCat")));
+        assert!(!mixed.iter().any(|v| v.path.contains("BalladOfFallenAngels")));
+
+        // 2. Multiple negative queries: cowboy, not fallen, !asteroid
+        // "cowboy, not fallen, !asteroid" -> (cowboy) AND (NOT fallen AND NOT asteroid)
+        let multi_not = db.search_videos("cowboy, not fallen, !asteroid", &[]).unwrap();
+        assert_eq!(multi_not.len(), 0);
+
+        // 3. Pure negative query: not eek, not trigun
+        // -> NOT eek AND NOT trigun (should match both Cowboy Bebop episodes)
+        let pure_not = db.search_videos("not eek, not trigun", &[]).unwrap();
+        assert_eq!(pure_not.len(), 2);
+        assert!(pure_not.iter().all(|v| v.path.contains("CowboyBebop")));
+
+        // 4. Case-insensitive NOT and hyphen replacement matching wazoo-js
+        let case_and_hyphen = db.search_videos("cowboy, NOT asteroid-blues", &[]).unwrap();
+        assert_eq!(case_and_hyphen.len(), 1);
+        assert!(case_and_hyphen[0].path.contains("BalladOfFallenAngels"));
     }
 }
 
