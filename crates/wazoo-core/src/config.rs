@@ -108,6 +108,7 @@ mod tests {
             query: "scifi".to_string(),
             path: "/media/scifi/ep01.mp4".to_string(),
             position_secs: 125.4,
+            is_shuffle: false,
         });
 
         let json = serde_json::to_string(&settings).unwrap();
@@ -117,5 +118,11 @@ mod tests {
         assert_eq!(deserialized.bookmarks[0].query, "scifi");
         assert_eq!(deserialized.bookmarks[0].path, "/media/scifi/ep01.mp4");
         assert_eq!(deserialized.bookmarks[0].position_secs, 125.4);
+        assert_eq!(deserialized.bookmarks[0].is_shuffle, false);
+
+        // Verify legacy bookmark JSON without is_shuffle defaults to true
+        let legacy_bookmark_json = r#"{"name":"Legacy","query":"test","path":"/path/test.mp4","position_secs":10.0}"#;
+        let legacy_bookmark: crate::models::Bookmark = serde_json::from_str(legacy_bookmark_json).unwrap();
+        assert_eq!(legacy_bookmark.is_shuffle, true);
     }
 }

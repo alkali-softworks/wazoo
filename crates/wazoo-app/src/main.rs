@@ -183,13 +183,21 @@ impl WazooApp {
         let db = Database::open(config_mgr.database_path())
             .expect("Failed to initialize SQLite database");
 
+        let folders = if settings.last_folder.is_empty() || settings.last_folder == "All" {
+            Vec::new()
+        } else {
+            vec![settings.last_folder.clone()]
+        };
+
         let videos: Vec<VideoRecord> = if !settings.last_query.is_empty() {
-            let filtered = db.search_videos(&settings.last_query, &settings.media_folders).unwrap_or_default();
+            let filtered = db.search_videos(&settings.last_query, &folders).unwrap_or_default();
             if filtered.is_empty() {
                 db.get_all_videos().unwrap_or_default()
             } else {
                 filtered
             }
+        } else if !folders.is_empty() {
+            db.search_videos("", &folders).unwrap_or_default()
         } else {
             db.get_all_videos().unwrap_or_default()
         };
@@ -198,6 +206,12 @@ impl WazooApp {
         scroll_engine.is_global_muted = settings.is_global_muted;
 
         let icon_handle = iced::widget::image::Handle::from_bytes(APP_ICON_BYTES);
+
+        let toast_msg = if !settings.last_query.is_empty() {
+            Some(format!("Restored query: \"{}\" ({} videos)", settings.last_query, videos.len()))
+        } else {
+            Some("Welcome to Wazoo".to_string())
+        };
 
         let mut app = Self {
             settings: settings.clone(),
@@ -209,7 +223,11 @@ impl WazooApp {
             active_search_query: settings.last_query.clone(),
             search_input: settings.last_query.clone(),
             folder_input: String::new(),
-            selected_search_folder: "All".to_string(),
+            selected_search_folder: if settings.last_folder.is_empty() {
+                "All".to_string()
+            } else {
+                settings.last_folder.clone()
+            },
             show_search_modal: false,
             show_settings_modal: false,
             show_help_modal: false,
@@ -225,7 +243,7 @@ impl WazooApp {
             title_pill_ticks: 0,
             window_id: None,
             app_icon_handle: icon_handle,
-            toast_message: Some("Welcome to Wazoo".to_string()),
+            toast_message: toast_msg,
             toast_time_remaining: 3,
             next_player_id: 1,
             is_scanning: false,
@@ -280,6 +298,12 @@ impl WazooApp {
             app.add_player_internal();
         }
 
+        // If a last_query was active, reconcile active players so any player playing a video
+        // not in the queried files list switches to a matching video from available_videos
+        if !app.settings.last_query.is_empty() {
+            app.reconcile_players_with_available_videos(None);
+        }
+
         let preload_task = if app.settings.playback_mode == PlaybackMode::Scroll {
             let ids: Vec<PlayerId> = app.players.iter().map(|p| p.id).collect();
             app.scroll_engine.init_stack(&ids);
@@ -305,7 +329,16 @@ impl WazooApp {
             Task::none()
         };
 
-        (app, preload_task)
+        // Window focus task on boot: request focus for the application window
+        let focus_task = iced::window::oldest().then(|maybe_id| {
+            if let Some(id) = maybe_id {
+                iced::window::gain_focus(id)
+            } else {
+                Task::none()
+            }
+        });
+
+        (app, Task::batch([preload_task, focus_task]))
     }
 
     fn focused_player_id(&self) -> Option<PlayerId> {
@@ -411,6 +444,8 @@ impl WazooApp {
                 })
                 .collect();
             self.settings.session_videos = sessions;
+            self.settings.last_query = self.active_search_query.clone();
+            self.settings.last_folder = self.selected_search_folder.clone();
             let _ = self.config_mgr.save_settings(&self.settings);
         }
     }
@@ -557,6 +592,7 @@ impl WazooApp {
         match message {
             Message::WindowIdReceived(id) => {
                 self.window_id = Some(id);
+                return iced::window::gain_focus(id);
             }
             Message::PreloadedPlayerReady(holder) => {
                 self.is_preloading = false;
@@ -1280,10 +1316,11 @@ impl WazooApp {
             Message::PerformSearch => {
                 self.active_search_query = self.search_input.clone();
                 self.settings.last_query = self.active_search_query.clone();
+                self.settings.last_folder = self.selected_search_folder.clone();
                 let _ = self.config_mgr.save_settings(&self.settings);
 
                 let folders = if self.selected_search_folder.is_empty() || self.selected_search_folder == "All" {
-                    self.settings.media_folders.clone()
+                    Vec::new()
                 } else {
                     vec![self.selected_search_folder.clone()]
                 };
@@ -1343,11 +1380,13 @@ impl WazooApp {
                             let name = format::format_descriptive_title(&path);
                             let query = self.active_search_query.clone();
                             let position_secs = p.position().as_secs_f64();
+                            let is_shuffle = self.is_shuffle_mode;
 
                             if let Some(existing) = self.settings.bookmarks.iter_mut().find(|b| b.path == path) {
                                 existing.name = name.clone();
                                 existing.query = query;
                                 existing.position_secs = position_secs;
+                                existing.is_shuffle = is_shuffle;
                                 self.toast_message = Some(format!("Updated bookmark: {name}"));
                             } else {
                                 self.settings.bookmarks.push(Bookmark {
@@ -1355,6 +1394,7 @@ impl WazooApp {
                                     query,
                                     path,
                                     position_secs,
+                                    is_shuffle,
                                 });
                                 self.toast_message = Some(format!("Added bookmark: {name}"));
                             }
@@ -1389,15 +1429,19 @@ impl WazooApp {
                 }
             }
             Message::JumpToBookmark(b) => {
-                // 1. Update the global search query to match the bookmark's query
+                // 1. Restore shuffle vs linear mode
+                self.is_shuffle_mode = b.is_shuffle;
+
+                // 2. Update the global search query to match the bookmark's query
                 self.active_search_query = b.query.clone();
                 self.search_input = b.query.clone();
                 self.settings.last_query = b.query.clone();
+                self.settings.last_folder = self.selected_search_folder.clone();
                 let _ = self.config_mgr.save_settings(&self.settings);
 
-                // 2. Query the database using the updated search query
+                // 3. Query the database using the updated search query
                 let folders = if self.selected_search_folder.is_empty() || self.selected_search_folder == "All" {
-                    self.settings.media_folders.clone()
+                    Vec::new()
                 } else {
                     vec![self.selected_search_folder.clone()]
                 };
@@ -1406,7 +1450,7 @@ impl WazooApp {
                     self.available_videos = results;
                 }
 
-                // 3. Load the bookmarked video and position in the focused player
+                // 4. Load the bookmarked video and position in the focused player
                 let focused_id = if let Some(id) = self.focused_player_id() {
                     self.loading_player_ids.insert(id);
                     self.loading_player_ticks.insert(id, 0);
@@ -1441,14 +1485,15 @@ impl WazooApp {
                     }
                 };
 
-                // 4. Reconcile other players if what they are playing does not exist in the new queried list of files
+                // 5. Reconcile other players if what they are playing does not exist in the new queried list of files
                 self.reconcile_players_with_available_videos(focused_id);
                 self.save_session_state();
 
                 self.toast_message = Some(format!(
-                    "Bookmark: {}  [{}]",
+                    "Bookmark: {}  [{}] ({})",
                     b.name,
-                    format::format_time_str(b.position_secs)
+                    format::format_time_str(b.position_secs),
+                    if b.is_shuffle { "Shuffle" } else { "Linear" }
                 ));
                 self.toast_time_remaining = 3;
                 self.show_bookmarks_modal = false;
@@ -1824,6 +1869,9 @@ impl WazooApp {
             iced::time::every(Duration::from_millis(16)).map(|_| Message::VideoFrameTick),
             iced::time::every(Duration::from_secs(1)).map(|_| Message::WatchdogTick),
             iced::event::listen_with(|event, status, window_id| match event {
+                iced::Event::Window(iced::window::Event::Opened { .. }) => {
+                    Some(Message::WindowIdReceived(window_id))
+                }
                 iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) => {
                     Some(Message::KeyPressed(key, status))
                 }
@@ -2987,6 +3035,21 @@ impl WazooApp {
                             }),
                     );
                 }
+
+                let mode_label = if b.is_shuffle { "Shuffle" } else { "Linear" };
+                let mode_color = if b.is_shuffle { theme::COLOR_BLUE_ACTIVE } else { theme::COLOR_TEXT_MUTED };
+                meta_row = meta_row.push(
+                    container(text(mode_label).size(11).color(mode_color))
+                        .padding([2, 6])
+                        .style(|_theme: &Theme| container::Style {
+                            background: Some(iced::Background::Color(theme::COLOR_BTN_BG)),
+                            border: iced::Border {
+                                radius: 4.0.into(),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        }),
+                );
 
                 let info_col = column![
                     text(&b.name).size(14).color(iced::Color::WHITE),
