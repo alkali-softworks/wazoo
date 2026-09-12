@@ -2,9 +2,21 @@
 
 > **Ambient media engine for non-stop viewing - built in native Rust.**
 
-**Wazoo** is a high-performance ambient media engine and "moving mood-board" designed for artists, designers, collectors, and curators. It transforms your local video collection into a vibrant, non-stop ambient atmosphere.
+**Wazoo** is an ambient video player and "moving mood-board" designed for artists, designers, and curators, who want to experience their local video collection without the burden of choice. Wazoo provides a non-stop, feed of visuals that flows continuously based on your library and optional search queries. 
 
-Forget the play button. Open Wazoo and let your media collection become the room.
+Forget the play button. Open Wazoo and let your media collection become the atmosphere.
+
+
+---
+
+## 🧠 The Philosophy of "Ambient Viewing"
+
+Wazoo was born from a simple problem: **digital fatigue.** We spend more time deciding what to watch than actually enjoying our media.
+
+Wazoo flips the script. Instead of making you "pick," it creates a **continuous, non-stop feed** based on your entire collection or search queries:
+
+- **Effortless Discovery**: Rediscover forgotten gems in your library without ever having to click "Open File."
+- **A Moving Mood-Board**: Perfect for artists, writers, and designers needing continuous background inspiration.
 
 ---
 
