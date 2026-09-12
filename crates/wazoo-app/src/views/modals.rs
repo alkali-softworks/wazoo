@@ -153,7 +153,7 @@ impl WazooApp {
                         } else if progress.files_found > 0 {
                             format!("Listing... ({} found)", format::format_number(progress.files_found))
                         } else {
-                            "Listing files...".to_string()
+                            self.t("wazoo.listing_files")
                         }
                     }
                     ScanStage::Indexing => {
@@ -161,7 +161,7 @@ impl WazooApp {
                     }
                 }
             } else {
-                "Listing files...".to_string()
+                self.t("wazoo.listing_files")
             }
         } else {
             self.t("settings.scan_folders")

@@ -23,14 +23,10 @@
     "loading_progress": "Загрузка... {percent}% ({total} файлов)",
     "open_settings_to_add": "Открыть настройки для добавления папок",
     "no_files_found": "Файлы не найдены",
-    "query_in_folder": "Запрос: \"{query}\" в {folder}",
-    "try_another_search": "Попробовать другой поиск",
-    "search_error": "Ошибка поиска: {error}",
     "no_files_found_in": "Файлы в {folder} не найдены",
     "total_files": "Всего файлов: {total}",
     "more_than_before": "На {diff} больше, чем раньше",
     "less_than_before": "На {diff} меньше, чем раньше",
-    "scroll_mode_unmuted": "Звук в режиме прокрутки включен",
     "global_mode_muted": "Глобальный режим без звука",
     "global_mode_unmuted": "Глобальный режим со звуком",
     "set_players_count": "Установлено {count} плеер(ов){suffix}",
@@ -41,11 +37,8 @@
     "scroll_mode_disabled": "Режим прокрутки выключен",
     "flip_mode_enabled": "Режим перелистывания включен",
     "flip_mode_disabled": "Режим перелистывания выключен",
-    "added": "Добавлено: {name}",
     "no_players": "Нет активных плееров",
-    "no_players_msg": "Нажмите 'N', чтобы добавить плеер, или щелкните правой кнопкой мыши, чтобы открыть меню.",
-    "no_videos_found": "Видео по запросу не найдены",
-    "videos_count": "({count} видео)"
+    "no_videos_found": "Видео по запросу не найдены"
   },
   "settings": {
     "title": "Настройки",
@@ -54,13 +47,11 @@
     "scan_folders": "Сканировать папки",
     "add_folder": "Добавить папку",
     "total_videos": "Всего видео: {count}",
-    "adding_media_notice": "Добавление медиафайлов по сети занимает время, так как требуется анализ метаданных видео.",
     "language": "Язык"
   },
   "search": {
     "folder": "Папка:",
-    "placeholder": "Поиск...",
-    "multiple_folders": "{count} папок"
+    "placeholder": "Поиск..."
   },
   "help": {
     "title": "Горячие клавиши",
@@ -81,7 +72,6 @@
       "toggle_mute": "Переключить звук",
       "adjust_volume": "Регулировка громкости",
       "search_videos": "Поиск видео",
-      "fullscreen": "Полноэкранный режим",
       "close_app": "Закрыть приложение",
       "move_window": "Переместить окно",
       "toggle_bookmarks": "Переключить закладки",
@@ -95,14 +85,7 @@
     "muted": "Звук выключен",
     "unmuted": "Звук включен",
     "subtitles_enabled": "Субтитры включены",
-    "subtitles_disabled": "Субтитры выключены",
-    "hevc_title": "Видео HEVC ({codec})",
-    "hevc_description": "Chromium не поддерживает видеокодек HEVC. Это видео требует конвертации в AV1 / H.264.",
-    "convert_now": "Конвертировать сейчас",
-    "skip_to_next": "Перейти к следующему ({countdown}с)",
-    "end_of_playlist": "Конец плейлиста",
-    "starting_conversion": "Начало конвертации...",
-    "starting_subtitle_extraction": "Извлечение субтитров..."
+    "subtitles_disabled": "Субтитры выключены"
   },
   "transcript": {
     "title": "Транскрипт",

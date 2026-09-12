@@ -288,8 +288,13 @@ fn test_subtitle_tracks_and_extraction() {
         let mut handle = VideoHandle::new(12, sample, "Mushoku Tensei").expect("create VideoHandle");
         handle.set_muted(true);
 
-        std::thread::sleep(Duration::from_millis(300));
-        let _ = handle.update_frame();
+        for _ in 0..30 {
+            std::thread::sleep(Duration::from_millis(100));
+            let _ = handle.update_frame();
+            if handle.subtitle_tracks().len() >= 3 {
+                break;
+            }
+        }
 
         let sub_tracks = handle.subtitle_tracks().to_vec();
         println!("Found {} subtitle tracks", sub_tracks.len());
@@ -330,8 +335,13 @@ fn test_subtitle_tracks_and_extraction() {
         let mut handle = VideoHandle::new(13, sample16, "Norn and Aisha").expect("create VideoHandle");
         handle.set_muted(true);
 
-        std::thread::sleep(Duration::from_millis(300));
-        let _ = handle.update_frame();
+        for _ in 0..30 {
+            std::thread::sleep(Duration::from_millis(100));
+            let _ = handle.update_frame();
+            if handle.subtitle_tracks().len() >= 3 {
+                break;
+            }
+        }
 
         let sub_tracks = handle.subtitle_tracks();
         println!("S02E16: Found {} subtitle tracks", sub_tracks.len());

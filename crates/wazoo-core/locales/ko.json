@@ -23,14 +23,10 @@
     "loading_progress": "로딩 중... {percent}% ({total}개 파일)",
     "open_settings_to_add": "설정을 열어 폴더 추가",
     "no_files_found": "파일을 찾을 수 없습니다",
-    "query_in_folder": "검색어: \"{query}\" (폴더: {folder})",
-    "try_another_search": "다른 검색 시도",
-    "search_error": "검색 오류: {error}",
     "no_files_found_in": "{folder}에서 파일을 찾을 수 없습니다",
     "total_files": "총 {total}개 파일",
     "more_than_before": "이전보다 {diff}개 증가",
     "less_than_before": "이전보다 {diff}개 감소",
-    "scroll_mode_unmuted": "스크롤 모드 음소거 해제됨",
     "global_mode_muted": "전체 음소거됨",
     "global_mode_unmuted": "전체 음소거 해제됨",
     "set_players_count": "{count}개 플레이어로 설정됨{suffix}",
@@ -41,11 +37,8 @@
     "scroll_mode_disabled": "스크롤 모드 비활성화됨",
     "flip_mode_enabled": "플립 모드 활성화됨",
     "flip_mode_disabled": "플립 모드 비활성화됨",
-    "added": "추가됨: {name}",
     "no_players": "활성 플레이어 없음",
-    "no_players_msg": "플레이어를 추가하려면 'N'을 누르거나, 마우스 오른쪽 버튼을 클릭하여 메뉴를 여십시오.",
-    "no_videos_found": "검색어와 일치하는 동영상을 찾을 수 없습니다",
-    "videos_count": "({count}개의 동영상)"
+    "no_videos_found": "검색어와 일치하는 동영상을 찾을 수 없습니다"
   },
   "settings": {
     "title": "설정",
@@ -54,13 +47,11 @@
     "scan_folders": "폴더 스캔",
     "add_folder": "폴더 추가",
     "total_videos": "총 비디오 수: {count}",
-    "adding_media_notice": "네트워크를 통해 미디어를 추가하면 비디오 메타데이터를 분석하는 데 시간이 걸립니다.",
     "language": "언어"
   },
   "search": {
     "folder": "폴더:",
-    "placeholder": "검색...",
-    "multiple_folders": "{count}개 폴더"
+    "placeholder": "검색..."
   },
   "help": {
     "title": "단축키",
@@ -81,7 +72,6 @@
       "toggle_mute": "음소거 토글",
       "adjust_volume": "볼륨 조절",
       "search_videos": "비디오 검색",
-      "fullscreen": "전체 화면",
       "close_app": "앱 종료",
       "move_window": "창 이동",
       "toggle_bookmarks": "북마크 전환",
@@ -95,14 +85,7 @@
     "muted": "음소거됨",
     "unmuted": "음소거 해제됨",
     "subtitles_enabled": "자막 활성화됨",
-    "subtitles_disabled": "자막 비활성화됨",
-    "hevc_title": "HEVC 비디오 ({codec})",
-    "hevc_description": "Chromium은 HEVC 비디오 코덱을 지원하지 않습니다. 이 비디오는 AV1 / H.264로 변환이 필요합니다.",
-    "convert_now": "지금 변환",
-    "skip_to_next": "다음으로 건너뛰기 ({countdown}초)",
-    "end_of_playlist": "재생 목록의 끝",
-    "starting_conversion": "변환을 시작하는 중...",
-    "starting_subtitle_extraction": "자막 추출 중..."
+    "subtitles_disabled": "자막 비활성화됨"
   },
   "transcript": {
     "title": "스크립트",
