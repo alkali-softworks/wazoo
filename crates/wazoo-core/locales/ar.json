@@ -107,6 +107,7 @@
   "transcript": {
     "title": "النص المكتوب",
     "cues_count": "{count} سطر",
+    "subtitle_track": "الترجمة:",
     "search_placeholder": "البحث في الحوار...",
     "extracting": "جارٍ استخراج مسارات الحوار...",
     "loading_subtitles": "جارٍ تحميل الترجمة المدمجة",

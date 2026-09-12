@@ -107,6 +107,7 @@
   "transcript": {
     "title": "บทสนทนา",
     "cues_count": "{count} ประโยค",
+    "subtitle_track": "คำบรรยาย:",
     "search_placeholder": "ค้นหาบทสนทนา...",
     "extracting": "กำลังแยกแทร็กบทสนทนา...",
     "loading_subtitles": "กำลังโหลดคำบรรยายในตัว",

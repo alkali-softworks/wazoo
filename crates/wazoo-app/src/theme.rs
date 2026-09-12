@@ -480,6 +480,43 @@ pub fn audio_track_button_style_with_alpha(is_open: bool, alpha: f32) -> impl Fn
     }
 }
 
+pub fn transcript_track_button_style(is_open: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
+    move |_theme, status| {
+        let (bg, border_color) = if is_open {
+            (
+                Color::from_rgba(0.15, 0.24, 0.18, 0.95),
+                COLOR_PRIMARY,
+            )
+        } else {
+            match status {
+                button::Status::Hovered => (
+                    Color::from_rgba(0.24, 0.24, 0.27, 0.9),
+                    Color::from_rgba(0.5, 0.5, 0.5, 0.8),
+                ),
+                button::Status::Pressed => (
+                    Color::from_rgba(0.18, 0.24, 0.20, 0.9),
+                    COLOR_PRIMARY,
+                ),
+                _ => (
+                    Color::from_rgba(0.14, 0.14, 0.17, 0.85),
+                    Color::from_rgba(0.30, 0.30, 0.35, 0.6),
+                ),
+            }
+        };
+        button::Style {
+            background: Some(Background::Color(bg)),
+            text_color: Color::WHITE,
+            border: Border {
+                radius: 6.0.into(),
+                width: 1.0,
+                color: border_color,
+            },
+            shadow: Shadow::default(),
+            ..Default::default()
+        }
+    }
+}
+
 pub fn audio_menu_item_style(_theme: &Theme, status: button::Status) -> button::Style {
     let (bg, text_color) = match status {
         button::Status::Hovered => (

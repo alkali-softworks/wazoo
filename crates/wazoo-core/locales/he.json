@@ -107,6 +107,7 @@
   "transcript": {
     "title": "תמליל",
     "cues_count": "{count} שורות",
+    "subtitle_track": "כתוביות:",
     "search_placeholder": "חיפוש בדיאלוג...",
     "extracting": "מחלץ רצועות דיאלוג...",
     "loading_subtitles": "טוען כתוביות מוטמעות",

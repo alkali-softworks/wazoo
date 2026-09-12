@@ -107,6 +107,7 @@
   "transcript": {
     "title": "Transcription",
     "cues_count": "{count} répliques",
+    "subtitle_track": "Sous-titres :",
     "search_placeholder": "Rechercher dans les dialogues...",
     "extracting": "Extraction des pistes de dialogue...",
     "loading_subtitles": "Chargement des sous-titres intégrés",

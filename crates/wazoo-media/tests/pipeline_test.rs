@@ -157,10 +157,13 @@ fn test_av1_ninkoro_playback() {
 
         // Let it render frames of 10-bit AV1 with ASS subtitles (give network mount enough time to buffer)
         let mut rendered_frames = 0;
-        for _ in 0..30 {
+        for _ in 0..50 {
             std::thread::sleep(Duration::from_millis(100));
             if handle.update_frame() {
                 rendered_frames += 1;
+                if rendered_frames >= 3 {
+                    break;
+                }
             }
         }
         println!("NinKoro rendered {} frames smoothly with libmpv", rendered_frames);
@@ -278,7 +281,40 @@ fn test_audio_stream_auto_selection() {
         assert!(!handle.audio_tracks().iter().find(|t| t.id == 1).unwrap().is_selected);
     }
 }
+#[test]
+fn test_subtitle_tracks_and_extraction() {
+    let sample = "/mnt/bob/anime/Mushoku Tensei/Season 2/S02E14-Wedding Reception.mkv";
+    if Path::new(sample).exists() {
+        let mut handle = VideoHandle::new(12, sample, "Mushoku Tensei").expect("create VideoHandle");
+        handle.set_muted(true);
 
+        std::thread::sleep(Duration::from_millis(300));
+        let _ = handle.update_frame();
 
+        let sub_tracks = handle.subtitle_tracks();
+        println!("Found {} subtitle tracks", sub_tracks.len());
+        for (i, t) in sub_tracks.iter().enumerate() {
+            println!("  [{}] id={} selected={} lang={:?} title={:?} label='{}'",
+                i, t.id, t.is_selected, t.lang, t.title, wazoo_media::format_subtitle_track_label(t, i)
+            );
+        }
 
+        assert!(sub_tracks.len() >= 3, "Expected at least 3 subtitle tracks for Wedding Reception");
+        assert_eq!(wazoo_media::format_subtitle_track_label(&sub_tracks[0], 0), "English (Full Subtitles)");
+        assert_eq!(wazoo_media::format_subtitle_track_label(&sub_tracks[1], 1), "English (Full Subtitles - Honorifics)");
+        assert_eq!(wazoo_media::format_subtitle_track_label(&sub_tracks[2], 2), "English (Signs/Songs)");
 
+        // Subtitle switching
+        handle.set_subtitle_track(2);
+        assert_eq!(handle.current_subtitle_track_id(), Some(2));
+        assert!(handle.subtitle_tracks().iter().find(|t| t.id == 2).unwrap().is_selected);
+        assert!(!handle.subtitle_tracks().iter().find(|t| t.id == 1).unwrap().is_selected);
+
+        // Subtitle cues extraction via ffmpeg for track 0 and track 1
+        let cues_track0 = wazoo_media::load_subtitles_for_track_sync(sample, 0);
+        let cues_track1 = wazoo_media::load_subtitles_for_track_sync(sample, 1);
+        assert!(!cues_track0.is_empty(), "Track 0 cues should not be empty");
+        assert!(!cues_track1.is_empty(), "Track 1 cues should not be empty");
+        println!("Extracted {} cues for track 0, {} cues for track 1", cues_track0.len(), cues_track1.len());
+    }
+}

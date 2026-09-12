@@ -107,6 +107,7 @@
   "transcript": {
     "title": "प्रतिलेख",
     "cues_count": "{count} पंक्तियाँ",
+    "subtitle_track": "उपशीर्षक:",
     "search_placeholder": "संवाद खोजें...",
     "extracting": "संवाद ट्रैक निकाले जा रहे हैं...",
     "loading_subtitles": "एम्बेडेड उपशीर्षक लोड हो रहे हैं",

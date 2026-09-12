@@ -332,6 +332,9 @@ impl WazooApp {
             }
             Message::ToggleTranscript => {
                 self.show_transcript = !self.show_transcript;
+                if !self.show_transcript {
+                    self.show_transcript_menu = false;
+                }
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
                 if self.show_transcript {
@@ -343,12 +346,14 @@ impl WazooApp {
                 let is_same_focused = self.focused_player_id() == Some(id);
                 if is_same_focused && self.show_transcript {
                     self.show_transcript = false;
+                    self.show_transcript_menu = false;
                     return Task::none();
                 }
                 if let Some(idx) = self.players.iter().position(|p| p.id == id) {
                     self.focused_player_idx = idx;
                 }
                 self.show_transcript = true;
+                self.show_transcript_menu = false;
                 self.show_file_picker = false;
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
@@ -356,6 +361,7 @@ impl WazooApp {
             }
             Message::CloseTranscript => {
                 self.show_transcript = false;
+                self.show_transcript_menu = false;
             }
             Message::TranscriptSearchChanged(s) => {
                 self.transcript_search = s;
@@ -371,6 +377,46 @@ impl WazooApp {
                     // Offset by +10ms so playback starts cleanly inside the target cue,
                     // avoiding boundary collision with the preceding cue.
                     return self.update(Message::Seek(id, Duration::from_secs_f64((secs + 0.01).max(0.0))));
+                }
+            }
+            Message::ToggleTranscriptSubtitleMenu => {
+                self.show_transcript_menu = !self.show_transcript_menu;
+            }
+            Message::CloseTranscriptSubtitleMenu => {
+                self.show_transcript_menu = false;
+            }
+            Message::SelectTranscriptSubtitleTrack(track_idx, track_id) => {
+                self.show_transcript_menu = false;
+                self.transcript_track_index = track_idx;
+                if let Some(player) = self.focused_player_mut() {
+                    player.set_subtitle_track(track_id);
+                    let sub_track = player.subtitle_tracks().get(track_idx).cloned();
+                    let path = player.state.path.clone();
+                    if !path.is_empty() {
+                        self.transcript_video_path = Some(path.clone());
+                        self.transcript_loading = true;
+                        self.transcript_cues.clear();
+                        let path_clone = path.clone();
+                        return Task::perform(
+                            async move {
+                                if let Some(track) = sub_track {
+                                    if let Some(ext_file) = track.external_filename {
+                                        if let Ok(content) = tokio::fs::read_to_string(&ext_file).await {
+                                            let cues = wazoo_media::parse_subtitles(&content);
+                                            if !cues.is_empty() {
+                                                return cues;
+                                            }
+                                        }
+                                    }
+                                    let stream_idx = track.ff_index.map(|i| i as usize).unwrap_or(track_idx);
+                                    wazoo_media::load_subtitles_for_track(path, stream_idx).await
+                                } else {
+                                    wazoo_media::load_subtitles_for_track(path, track_idx).await
+                                }
+                            },
+                            move |cues| Message::TranscriptLoaded(path_clone, cues),
+                        );
+                    }
                 }
             }
             Message::ToggleFolderCollapse(folder) => {
@@ -1512,6 +1558,10 @@ impl WazooApp {
                 self.toast_time_remaining = 2;
             }
             Message::EscapePressed => {
+                if self.show_transcript_menu {
+                    self.show_transcript_menu = false;
+                    return Task::none();
+                }
                 if self.open_audio_menu_player_id.is_some() {
                     self.open_audio_menu_player_id = None;
                     return Task::none();
@@ -1529,6 +1579,7 @@ impl WazooApp {
                     self.show_dropdown_menu = false;
                     self.show_file_picker = false;
                     self.show_transcript = false;
+                    self.show_transcript_menu = false;
                 } else {
                     self.show_menu_modal = true;
                     self.show_dropdown_menu = false;

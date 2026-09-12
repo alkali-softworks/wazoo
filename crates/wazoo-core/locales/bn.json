@@ -107,6 +107,7 @@
   "transcript": {
     "title": "অনুলিপি",
     "cues_count": "{count} টি লাইন",
+    "subtitle_track": "সাবটাইটেল:",
     "search_placeholder": "সংলাপ খুঁজুন...",
     "extracting": "সংলাপ ট্র্যাক নিষ্কাশন করা হচ্ছে...",
     "loading_subtitles": "সাবটাইটেল লোড হচ্ছে",

@@ -107,6 +107,7 @@
   "transcript": {
     "title": "字幕记录",
     "cues_count": "{count} 条",
+    "subtitle_track": "字幕：",
     "search_placeholder": "搜索字幕对白...",
     "extracting": "正在提取对白轨道...",
     "loading_subtitles": "正在加载内嵌字幕",
