@@ -80,7 +80,7 @@ impl WazooApp {
                     text("Extracting dialogue tracks...")
                         .size(14)
                         .color(theme::COLOR_PRIMARY),
-                    text("Demuxing embedded subtitles & searching sidecars")
+                    text("Loading embedded subtitles")
                         .size(12)
                         .color(theme::COLOR_TEXT_MUTED),
                 ]
