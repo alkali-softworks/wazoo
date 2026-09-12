@@ -257,7 +257,7 @@ impl WazooApp {
             .spacing(6),
             folders_col,
             scan_controls,
-            text(self.t_with("settings.total_videos", &[("count", &format::format_number(self.available_videos.len()))]))
+            text(self.t_with("settings.total_videos", &[("count", &format::format_number(self.total_video_count()))]))
                 .size(13)
                 .color(theme::COLOR_TEXT_MUTED),
         ]

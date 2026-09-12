@@ -672,6 +672,10 @@ impl WazooApp {
         wazoo_core::t_with(&self.settings.language, key, args)
     }
 
+    pub(crate) fn total_video_count(&self) -> usize {
+        self.db.get_video_count().unwrap_or(self.available_videos.len())
+    }
+
     pub(crate) fn show_video_totals_notice(&mut self, total: usize, folder_label: &str) {
         if total == 0 {
             let msg = if folder_label.is_empty() || folder_label == "All" {
@@ -1166,6 +1170,36 @@ mod tests {
         assert!(!app.is_scanning);
         let _ = app.update(Message::ScanFinished(2, Ok(10)));
         assert!(!app.is_scanning);
+    }
+
+    #[test]
+    fn test_settings_total_videos_shows_whole_database_total_not_present_query() {
+        let (mut app, _) = WazooApp::new(None);
+        app.db = wazoo_core::Database::open_in_memory().expect("in-memory db");
+
+        // Insert 5 videos into the database
+        for i in 1..=5 {
+            let _ = app.db.insert_or_update_video(&VideoRecord {
+                id: i,
+                name: format!("video_{i}"),
+                path: format!("/media/videos/video_{i}.mp4"),
+            });
+        }
+        assert_eq!(app.total_video_count(), 5);
+
+        // Simulate a search query that filters available_videos down to 1
+        app.active_search_query = "video_1".to_string();
+        app.available_videos = vec![
+            VideoRecord { id: 1, name: "video_1".to_string(), path: "/media/videos/video_1.mp4".to_string() },
+        ];
+        assert_eq!(app.available_videos.len(), 1);
+
+        // Whole database total should still be 5, not the filtered query length (1)
+        assert_eq!(app.total_video_count(), 5);
+
+        // Verify settings modal rendering runs without panic
+        app.show_settings_modal = true;
+        let _ = app.view_settings_modal();
     }
 }
 
