@@ -480,10 +480,16 @@ impl WazooApp {
         } else {
             if let Some(curr) = current_path {
                 if let Some(pos) = self.available_videos.iter().position(|v| v.path == curr) {
-                    let next_pos = (pos + 1) % self.available_videos.len();
+                    // If we reach the end of the list in sequential mode, start over from the beginning
+                    let next_pos = if pos + 1 >= self.available_videos.len() {
+                        0
+                    } else {
+                        pos + 1
+                    };
                     return Some(self.available_videos[next_pos].clone());
                 }
             }
+            // If current video is not found or not provided, start from beginning of list
             Some(self.available_videos[0].clone())
         }
     }
