@@ -11,7 +11,7 @@ use std::time::{Duration, Instant};
 use iced::futures::SinkExt;
 use iced::{
     keyboard::{key::Named, Key},
-    Task,
+    Point, Task,
 };
 use wazoo_core::{Bookmark, LayoutMode, PlaybackMode};
 use wazoo_media::{PlayerId, VideoHandle};
@@ -32,6 +32,15 @@ impl WazooApp {
             }
             Message::WindowUnfocused => {
                 self.is_alt_pressed = false;
+                if !self.show_dropdown_menu {
+                    self.show_titlebar = false;
+                    self.titlebar_hide_ticks = 0;
+                }
+                self.hovered_player_id = None;
+                self.player_overlay_ticks = 0;
+                self.cursor_position = Point::new(-1000.0, -1000.0);
+                self.titlebar_drag_pending = false;
+                self.titlebar_press_origin = None;
             }
             Message::ModifiersChanged(modifiers) => {
                 self.is_alt_pressed = modifiers.alt();
@@ -113,15 +122,9 @@ impl WazooApp {
                     self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS; // 2.5 seconds delay before hiding controls
                 }
 
-                if pos.y < 35.0 || self.show_dropdown_menu {
+                if self.is_point_in_titlebar(pos) || self.show_dropdown_menu {
                     self.show_titlebar = true;
                     self.titlebar_hide_ticks = 25;
-                } else if !self.show_dropdown_menu {
-                    if self.titlebar_hide_ticks > 0 {
-                        self.titlebar_hide_ticks -= 1;
-                    } else {
-                        self.show_titlebar = false;
-                    }
                 }
 
                 if self.titlebar_drag_pending {
@@ -135,6 +138,17 @@ impl WazooApp {
                         }
                     }
                 }
+            }
+            Message::CursorLeft => {
+                if !self.show_dropdown_menu {
+                    self.show_titlebar = false;
+                    self.titlebar_hide_ticks = 0;
+                }
+                self.hovered_player_id = None;
+                self.player_overlay_ticks = 0;
+                self.cursor_position = Point::new(-1000.0, -1000.0);
+                self.titlebar_drag_pending = false;
+                self.titlebar_press_origin = None;
             }
             Message::TitleBarPressed => {
                 let now = Instant::now();
@@ -276,10 +290,17 @@ impl WazooApp {
                     self.show_titlebar = true;
                     self.hovered_player_id = None;
                     self.player_overlay_ticks = 0;
+                } else if !self.is_point_in_titlebar(self.cursor_position) {
+                    self.show_titlebar = false;
+                    self.titlebar_hide_ticks = 0;
                 }
             }
             Message::CloseDropdownMenu => {
                 self.show_dropdown_menu = false;
+                if !self.is_point_in_titlebar(self.cursor_position) {
+                    self.show_titlebar = false;
+                    self.titlebar_hide_ticks = 0;
+                }
             }
             Message::OpenMenuModal => {
                 self.show_menu_modal = true;
@@ -1370,6 +1391,14 @@ impl WazooApp {
                 }
                 if self.focus_border_ticks > 0 {
                     self.focus_border_ticks -= 1;
+                }
+                if !self.is_point_in_titlebar(self.cursor_position) && !self.show_dropdown_menu {
+                    if self.titlebar_hide_ticks > 0 {
+                        self.titlebar_hide_ticks -= 1;
+                        if self.titlebar_hide_ticks == 0 {
+                            self.show_titlebar = false;
+                        }
+                    }
                 }
                 for p in &mut self.players {
                     if p.update_frame() {

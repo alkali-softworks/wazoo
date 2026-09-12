@@ -26,6 +26,7 @@ pub enum Message {
     GainWindowFocus,
     PreloadedPlayerReady(Arc<Mutex<Option<Result<VideoHandle, String>>>>),
     CursorMoved(Id, Point),
+    CursorLeft,
     RightClickPressed(Id),
     KeyPressed(Key, Status),
     KeyReleased(Key),

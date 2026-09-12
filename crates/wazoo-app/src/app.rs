@@ -181,7 +181,7 @@ impl WazooApp {
             spinner_ticks: 0,
             preloaded_player: None,
             is_preloading: false,
-            cursor_position: Point::ORIGIN,
+            cursor_position: Point::new(-1000.0, -1000.0),
             titlebar_press_origin: None,
             titlebar_drag_pending: false,
             last_titlebar_click: None,
@@ -293,6 +293,15 @@ impl WazooApp {
 
     pub(crate) fn is_modal_or_menu_open(&self) -> bool {
         self.is_any_modal_open() || self.show_dropdown_menu
+    }
+
+    pub(crate) fn is_point_in_titlebar(&self, pos: Point) -> bool {
+        let width = if self.settings.window_bounds.width > 0 {
+            self.settings.window_bounds.width as f32
+        } else {
+            f32::MAX
+        };
+        pos.x >= 0.0 && pos.x <= width && pos.y >= 0.0 && pos.y < 35.0
     }
 
     pub(crate) fn focused_player_id(&self) -> Option<PlayerId> {
@@ -638,6 +647,9 @@ impl WazooApp {
                 iced::Event::Mouse(iced::mouse::Event::CursorMoved { position }) => {
                     Some(Message::CursorMoved(window_id, position))
                 }
+                iced::Event::Mouse(iced::mouse::Event::CursorLeft) => {
+                    Some(Message::CursorLeft)
+                }
                 iced::Event::Mouse(iced::mouse::Event::ButtonPressed(iced::mouse::Button::Right)) => {
                     Some(Message::RightClickPressed(window_id))
                 }
@@ -671,3 +683,89 @@ impl WazooApp {
         Subscription::batch(subs)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_point_in_titlebar() {
+        let (mut app, _) = WazooApp::new(None);
+        app.settings.window_bounds.width = 800;
+        app.settings.window_bounds.height = 600;
+
+        // Inside titlebar bounds (0 <= x <= 800, 0 <= y < 35)
+        assert!(app.is_point_in_titlebar(Point::new(0.0, 0.0)));
+        assert!(app.is_point_in_titlebar(Point::new(400.0, 20.0)));
+        assert!(app.is_point_in_titlebar(Point::new(800.0, 34.9)));
+
+        // Outside titlebar bounds
+        assert!(!app.is_point_in_titlebar(Point::new(400.0, 35.0)));
+        assert!(!app.is_point_in_titlebar(Point::new(400.0, 100.0)));
+        assert!(!app.is_point_in_titlebar(Point::new(400.0, -1.0)));
+        assert!(!app.is_point_in_titlebar(Point::new(-10.0, 10.0)));
+        assert!(!app.is_point_in_titlebar(Point::new(801.0, 10.0)));
+    }
+
+    #[test]
+    fn test_cursor_left_hides_titlebar() {
+        let (mut app, _) = WazooApp::new(None);
+
+        // Move cursor to top of window -> titlebar shows
+        let win_id = iced::window::Id::unique();
+        let _ = app.update(Message::CursorMoved(win_id, Point::new(100.0, 10.0)));
+        assert!(app.show_titlebar);
+        assert_eq!(app.titlebar_hide_ticks, 25);
+
+        // Cursor leaves window (e.g. continuing up past top)
+        let _ = app.update(Message::CursorLeft);
+        assert!(!app.show_titlebar);
+        assert_eq!(app.titlebar_hide_ticks, 0);
+        assert_eq!(app.cursor_position, Point::new(-1000.0, -1000.0));
+    }
+
+    #[test]
+    fn test_cursor_left_keeps_titlebar_if_dropdown_open() {
+        let (mut app, _) = WazooApp::new(None);
+
+        let _ = app.update(Message::ToggleDropdownMenu);
+        assert!(app.show_dropdown_menu);
+        assert!(app.show_titlebar);
+
+        // When dropdown is open, cursor leaving window should keep titlebar visible
+        let _ = app.update(Message::CursorLeft);
+        assert!(app.show_dropdown_menu);
+        assert!(app.show_titlebar);
+
+        // Closing dropdown should then hide titlebar if cursor is outside
+        let _ = app.update(Message::CloseDropdownMenu);
+        assert!(!app.show_dropdown_menu);
+        assert!(!app.show_titlebar);
+    }
+
+    #[test]
+    fn test_titlebar_hides_after_ticks_when_cursor_moves_away() {
+        let (mut app, _) = WazooApp::new(None);
+
+        let win_id = iced::window::Id::unique();
+        let _ = app.update(Message::CursorMoved(win_id, Point::new(100.0, 10.0)));
+        assert!(app.show_titlebar);
+        assert_eq!(app.titlebar_hide_ticks, 25);
+
+        // Move cursor down into video area
+        let _ = app.update(Message::CursorMoved(win_id, Point::new(100.0, 50.0)));
+        assert!(app.show_titlebar);
+
+        // Tick down 24 frames
+        for _ in 0..24 {
+            let _ = app.update(Message::VideoFrameTick);
+            assert!(app.show_titlebar);
+        }
+
+        // 25th frame tick should hide titlebar
+        let _ = app.update(Message::VideoFrameTick);
+        assert!(!app.show_titlebar);
+        assert_eq!(app.titlebar_hide_ticks, 0);
+    }
+}
+
