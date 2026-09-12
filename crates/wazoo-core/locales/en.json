@@ -63,7 +63,6 @@
   "help": {
     "title": "Keyboard Shortcuts",
     "shortcuts": {
-      "toggle_help": "Toggle Help",
       "toggle_scroll": "Toggle Infinite Scroll Mode",
       "toggle_flip": "Toggle Flip Mode",
       "toggle_file_picker": "Toggle File Picker",

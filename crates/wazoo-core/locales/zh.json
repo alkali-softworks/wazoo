@@ -63,7 +63,6 @@
   "help": {
     "title": "键盘快捷键",
     "shortcuts": {
-      "toggle_help": "切换帮助",
       "toggle_scroll": "切换无限滚动模式",
       "toggle_flip": "切换翻转模式",
       "toggle_file_picker": "切换文件选择器",

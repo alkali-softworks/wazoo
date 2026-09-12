@@ -63,7 +63,6 @@
   "help": {
     "title": "Atajos de Teclado",
     "shortcuts": {
-      "toggle_help": "Alternar Ayuda",
       "toggle_scroll": "Alternar Modo de Desplazamiento Infinito",
       "toggle_flip": "Alternar Modo de Volteo",
       "toggle_file_picker": "Alternar Selector de Archivos",

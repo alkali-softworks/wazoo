@@ -63,7 +63,6 @@
   "help": {
     "title": "कीबोर्ड शॉर्टकट",
     "shortcuts": {
-      "toggle_help": "सहायता दिखाएं/छिपाएं",
       "toggle_scroll": "अनंत स्क्रॉल मोड बदलें",
       "toggle_flip": "फ्लिप मोड बदलें",
       "toggle_file_picker": "फ़ाइल चयनकर्ता दिखाएं/छिपाएं",

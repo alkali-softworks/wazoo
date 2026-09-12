@@ -63,7 +63,6 @@
   "help": {
     "title": "단축키",
     "shortcuts": {
-      "toggle_help": "도움말 토글",
       "toggle_scroll": "무한 스크롤 모드 토글",
       "toggle_flip": "플립 모드 토글",
       "toggle_file_picker": "파일 선택기 토글",

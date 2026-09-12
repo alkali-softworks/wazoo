@@ -63,7 +63,6 @@
   "help": {
     "title": "Raccourcis clavier",
     "shortcuts": {
-      "toggle_help": "Afficher/Masquer l'aide",
       "toggle_scroll": "Basculer le mode défilement infini",
       "toggle_flip": "Basculer le mode retournement",
       "toggle_file_picker": "Afficher/Masquer le sélecteur de fichiers",

@@ -63,7 +63,6 @@
   "help": {
     "title": "קיצורי מקלדת",
     "shortcuts": {
-      "toggle_help": "הצג/הסתר עזרה",
       "toggle_scroll": "החלף מצב גלילה אינסופית",
       "toggle_flip": "החלף מצב היפוך",
       "toggle_file_picker": "הצג/הסתר בחירת קבצים",

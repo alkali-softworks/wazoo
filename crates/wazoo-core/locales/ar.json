@@ -63,7 +63,6 @@
   "help": {
     "title": "اختصارات لوحة المفاتيح",
     "shortcuts": {
-      "toggle_help": "تبديل المساعدة",
       "toggle_scroll": "تبديل وضع التمرير اللانهائي",
       "toggle_flip": "تبديل وضع التقليب",
       "toggle_file_picker": "تبديل منتقي الملفات",
