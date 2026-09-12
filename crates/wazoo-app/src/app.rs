@@ -129,7 +129,11 @@ impl WazooApp {
             if videos.is_empty() {
                 Some(wazoo_core::t(&settings.language, "wazoo.no_videos_found"))
             } else {
-                Some(format!("({} Videos)", videos.len()))
+                Some(wazoo_core::t_with(
+                    &settings.language,
+                    "wazoo.videos_count",
+                    &[("count", &videos.len().to_string())],
+                ))
             }
         } else {
             None

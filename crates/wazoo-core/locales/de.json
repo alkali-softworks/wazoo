@@ -44,7 +44,8 @@
     "added": "Hinzugefügt: {name}",
     "no_players": "Keine aktiven Player",
     "no_players_msg": "Drücken Sie 'N', um einen Player hinzuzufügen, oder machen Sie einen Rechtsklick, um das Menü zu öffnen.",
-    "no_videos_found": "Keine Videos für die Suchanfrage gefunden"
+    "no_videos_found": "Keine Videos für die Suchanfrage gefunden",
+    "videos_count": "({count} Videos)"
   },
   "settings": {
     "title": "Einstellungen",

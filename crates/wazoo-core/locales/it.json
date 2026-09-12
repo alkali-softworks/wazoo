@@ -44,7 +44,8 @@
     "added": "Aggiunto: {name}",
     "no_players": "Nessun lettore attivo",
     "no_players_msg": "Premi 'N' per aggiungere un lettore, o fai clic destro per aprire il menu.",
-    "no_videos_found": "Nessun video trovato per la query"
+    "no_videos_found": "Nessun video trovato per la query",
+    "videos_count": "({count} Video)"
   },
   "settings": {
     "title": "Impostazioni",
