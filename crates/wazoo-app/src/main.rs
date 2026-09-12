@@ -178,22 +178,42 @@ pub enum Message {
 }
 
 impl WazooApp {
-    pub fn new() -> (Self, Task<Message>) {
+    pub fn new(cli_query: Option<String>) -> (Self, Task<Message>) {
         let config_mgr = ConfigManager::new();
-        let settings = config_mgr.load_settings();
+        let mut settings = config_mgr.load_settings();
         let db = Database::open(config_mgr.database_path())
             .expect("Failed to initialize SQLite database");
 
-        let folders = if settings.last_folder.is_empty() || settings.last_folder == "All" {
-            Vec::new()
+        let cli_query_clean = cli_query.map(|q| q.trim().to_string()).filter(|q| !q.is_empty());
+        let is_cli = cli_query_clean.is_some();
+
+        let (folders, active_query, selected_folder) = if let Some(ref q) = cli_query_clean {
+            settings.last_query = q.clone();
+            settings.last_folder = "All".to_string();
+            let _ = config_mgr.save_settings(&settings);
+            (Vec::new(), q.clone(), "All".to_string())
         } else {
-            vec![settings.last_folder.clone()]
+            let f = if settings.last_folder.is_empty() || settings.last_folder == "All" {
+                Vec::new()
+            } else {
+                vec![settings.last_folder.clone()]
+            };
+            let sel = if settings.last_folder.is_empty() {
+                "All".to_string()
+            } else {
+                settings.last_folder.clone()
+            };
+            (f, settings.last_query.clone(), sel)
         };
 
-        let videos: Vec<VideoRecord> = if !settings.last_query.is_empty() {
-            let filtered = db.search_videos(&settings.last_query, &folders).unwrap_or_default();
+        let videos: Vec<VideoRecord> = if !active_query.is_empty() {
+            let filtered = db.search_videos(&active_query, &folders).unwrap_or_default();
             if filtered.is_empty() {
-                db.get_all_videos().unwrap_or_default()
+                if is_cli {
+                    Vec::new()
+                } else {
+                    db.get_all_videos().unwrap_or_default()
+                }
             } else {
                 filtered
             }
@@ -208,7 +228,13 @@ impl WazooApp {
 
         let icon_handle = iced::widget::image::Handle::from_bytes(APP_ICON_BYTES);
 
-        let toast_msg = if !settings.last_query.is_empty() {
+        let toast_msg = if is_cli {
+            if videos.is_empty() {
+                Some(format!("No videos found for query: \"{}\"", active_query))
+            } else {
+                Some(format!("Query: \"{}\" ({} videos)", active_query, videos.len()))
+            }
+        } else if !settings.last_query.is_empty() {
             Some(format!("Restored query: \"{}\" ({} videos)", settings.last_query, videos.len()))
         } else {
             Some("Welcome to Wazoo".to_string())
@@ -221,14 +247,10 @@ impl WazooApp {
             players: Vec::new(),
             scroll_engine,
             available_videos: videos,
-            active_search_query: settings.last_query.clone(),
-            search_input: settings.last_query.clone(),
+            active_search_query: active_query.clone(),
+            search_input: active_query,
             folder_input: String::new(),
-            selected_search_folder: if settings.last_folder.is_empty() {
-                "All".to_string()
-            } else {
-                settings.last_folder.clone()
-            },
+            selected_search_folder: selected_folder,
             show_search_modal: false,
             show_settings_modal: false,
             show_help_modal: false,
@@ -268,7 +290,11 @@ impl WazooApp {
 
         // Initialize players based on settings or restore saved session
         let count = settings.player_count.clamp(1, 12);
-        let restored_sessions = settings.session_videos.clone();
+        let restored_sessions = if is_cli {
+            Vec::new()
+        } else {
+            settings.session_videos.clone()
+        };
 
         for session in restored_sessions.into_iter().take(count) {
             if std::path::Path::new(&session.path).exists() {
@@ -296,13 +322,20 @@ impl WazooApp {
 
         // Fill remaining players if any
         while app.players.len() < count {
-            app.add_player_internal();
+            if app.add_player_internal().is_none() {
+                break;
+            }
         }
 
         // If a last_query was active, reconcile active players so any player playing a video
         // not in the queried files list switches to a matching video from available_videos
         if !app.settings.last_query.is_empty() {
             app.reconcile_players_with_available_videos(None);
+        }
+
+        // Save session state if CLI query successfully populated players
+        if is_cli && !app.players.is_empty() {
+            app.save_session_state();
         }
 
         let preload_task = if app.settings.playback_mode == PlaybackMode::Scroll {
@@ -316,7 +349,7 @@ impl WazooApp {
                     break;
                 }
             }
-            if app.settings.session_videos.is_empty() {
+            if app.settings.session_videos.is_empty() || is_cli {
                 for p in &mut app.players {
                     p.seek_random();
                 }
@@ -3355,32 +3388,170 @@ async fn ensure_window_focused_linux() {
     }
 }
 
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct CliArgs {
+    pub query: Option<String>,
+}
+
+pub fn parse_cli_args() -> CliArgs {
+    parse_cli_args_from(std::env::args().skip(1))
+}
+
+pub fn parse_cli_args_from<I>(args: I) -> CliArgs
+where
+    I: IntoIterator<Item = String>,
+{
+    let mut positional: Vec<String> = Vec::new();
+    let mut query_flag: Option<String> = None;
+    let mut iter = args.into_iter();
+
+    while let Some(arg) = iter.next() {
+        if arg == "--help" || arg == "-h" {
+            print_help_and_exit();
+        } else if arg == "--version" || arg == "-V" {
+            println!("wazoo {}", env!("CARGO_PKG_VERSION"));
+            std::process::exit(0);
+        } else if arg == "-q" || arg == "--query" {
+            if let Some(val) = iter.next() {
+                query_flag = Some(val);
+            } else {
+                eprintln!("error: flag '{}' requires a query value", arg);
+                eprintln!("Usage: wazoo [OPTIONS] [QUERY]...\nFor more information, try '--help'.");
+                std::process::exit(1);
+            }
+        } else if let Some(val) = arg.strip_prefix("--query=") {
+            query_flag = Some(val.to_string());
+        } else if let Some(val) = arg.strip_prefix("-q=") {
+            query_flag = Some(val.to_string());
+        } else if arg == "--" {
+            for remaining in iter.by_ref() {
+                positional.push(remaining);
+            }
+            break;
+        } else if arg.starts_with('-') && arg.len() > 1 {
+            eprintln!("error: unexpected argument '{}'", arg);
+            eprintln!("Usage: wazoo [OPTIONS] [QUERY]...\nFor more information, try '--help'.");
+            std::process::exit(1);
+        } else {
+            positional.push(arg);
+        }
+    }
+
+    let query = query_flag
+        .or_else(|| {
+            if positional.is_empty() {
+                None
+            } else {
+                Some(positional.join(" "))
+            }
+        })
+        .map(|q| q.trim().to_string())
+        .filter(|q| !q.is_empty());
+
+    CliArgs { query }
+}
+
+fn print_help_and_exit() -> ! {
+    println!(
+        "\
+Wazoo - Ambient media engine for non-stop viewing
+
+Usage: wazoo [OPTIONS] [QUERY]...
+
+Arguments:
+  [QUERY]...  Initial search query to filter videos (e.g. 'wazoo boku')
+
+Options:
+  -q, --query <QUERY>  Search query to filter videos
+  -h, --help           Print help
+  -V, --version        Print version"
+    );
+    std::process::exit(0);
+}
+
 pub fn main() -> iced::Result {
+    let cli = parse_cli_args();
     env_logger::init();
     #[cfg(target_os = "linux")]
     init_linux_cursor_env();
 
-    iced::application(WazooApp::new, WazooApp::update, WazooApp::view)
-        .title(WazooApp::title)
-        .subscription(WazooApp::subscription)
-        .theme(WazooApp::theme)
-        .style(|app: &WazooApp, _theme: &Theme| iced::theme::Style {
-            background_color: if app.available_videos.is_empty() {
-                Color::from_rgba(0.05, 0.05, 0.05, app.current_opacity())
-            } else {
-                Color::TRANSPARENT
-            },
-            text_color: Color::WHITE,
-        })
-        .window(iced::window::Settings {
-            size: iced::Size::new(1280.0, 720.0),
-            decorations: false,
-            transparent: true,
-            platform_specific: iced::window::settings::PlatformSpecific {
-                application_id: "wazoo".to_string(),
-                override_redirect: false,
-            },
-            ..Default::default()
-        })
-        .run()
+    let initial_query = cli.query;
+    iced::application(
+        move || WazooApp::new(initial_query.clone()),
+        WazooApp::update,
+        WazooApp::view,
+    )
+    .title(WazooApp::title)
+    .subscription(WazooApp::subscription)
+    .theme(WazooApp::theme)
+    .style(|app: &WazooApp, _theme: &Theme| iced::theme::Style {
+        background_color: if app.available_videos.is_empty() {
+            Color::from_rgba(0.05, 0.05, 0.05, app.current_opacity())
+        } else {
+            Color::TRANSPARENT
+        },
+        text_color: Color::WHITE,
+    })
+    .window(iced::window::Settings {
+        size: iced::Size::new(1280.0, 720.0),
+        decorations: false,
+        transparent: true,
+        platform_specific: iced::window::settings::PlatformSpecific {
+            application_id: "wazoo".to_string(),
+            override_redirect: false,
+        },
+        ..Default::default()
+    })
+    .run()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cli_empty_args() {
+        let parsed = parse_cli_args_from(Vec::<String>::new());
+        assert_eq!(parsed.query, None);
+    }
+
+    #[test]
+    fn test_cli_single_positional_arg() {
+        let parsed = parse_cli_args_from(vec!["boku".to_string()]);
+        assert_eq!(parsed.query, Some("boku".to_string()));
+    }
+
+    #[test]
+    fn test_cli_multi_positional_args() {
+        let parsed = parse_cli_args_from(vec!["boku".to_string(), "hero".to_string()]);
+        assert_eq!(parsed.query, Some("boku hero".to_string()));
+    }
+
+    #[test]
+    fn test_cli_query_flags() {
+        let parsed = parse_cli_args_from(vec!["-q".to_string(), "boku".to_string()]);
+        assert_eq!(parsed.query, Some("boku".to_string()));
+
+        let parsed2 = parse_cli_args_from(vec!["--query".to_string(), "boku no hero".to_string()]);
+        assert_eq!(parsed2.query, Some("boku no hero".to_string()));
+
+        let parsed3 = parse_cli_args_from(vec!["--query=boku".to_string()]);
+        assert_eq!(parsed3.query, Some("boku".to_string()));
+
+        let parsed4 = parse_cli_args_from(vec!["-q=boku".to_string()]);
+        assert_eq!(parsed4.query, Some("boku".to_string()));
+    }
+
+    #[test]
+    fn test_cli_dash_dash_delimiter() {
+        let parsed = parse_cli_args_from(vec!["--".to_string(), "-special".to_string(), "video".to_string()]);
+        assert_eq!(parsed.query, Some("-special video".to_string()));
+    }
+
+    #[test]
+    fn test_cli_whitespace_only() {
+        let parsed = parse_cli_args_from(vec!["   ".to_string()]);
+        assert_eq!(parsed.query, None);
+    }
+}
+
