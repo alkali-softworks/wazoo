@@ -465,6 +465,16 @@ impl WazooApp {
             return None;
         }
         if self.is_shuffle_mode {
+            if self.available_videos.len() > 1 {
+                if let Some(curr) = current_path {
+                    for _ in 0..5 {
+                        let idx = rand::random::<usize>() % self.available_videos.len();
+                        if self.available_videos[idx].path != curr {
+                            return Some(self.available_videos[idx].clone());
+                        }
+                    }
+                }
+            }
             let idx = rand::random::<usize>() % self.available_videos.len();
             Some(self.available_videos[idx].clone())
         } else {
@@ -1033,6 +1043,9 @@ mod tests {
         assert_eq!(grouped["Mushoku Tensei"].len(), 3);
         assert_eq!(grouped["Frieren"].len(), 1);
         assert_eq!(app.file_picker_groups.len(), 2);
+
+        // 7. Verify view_file_picker constructs successfully with total video count
+        let _picker_view = app.view_file_picker();
     }
 
     #[test]
@@ -1045,6 +1058,34 @@ mod tests {
         let save_res = app.config_mgr.save_settings(&app.settings);
         assert!(save_res.is_ok());
         assert!(path.exists());
+    }
+
+    #[test]
+    fn test_get_next_video_rec_sequential_and_random() {
+        let (mut app, _) = new_test_app();
+        app.available_videos = vec![
+            VideoRecord { id: 1, name: "V1".to_string(), path: "/media/v1.mp4".to_string() },
+            VideoRecord { id: 2, name: "V2".to_string(), path: "/media/v2.mp4".to_string() },
+            VideoRecord { id: 3, name: "V3".to_string(), path: "/media/v3.mp4".to_string() },
+        ];
+
+        // 1. Sequential mode
+        app.is_shuffle_mode = false;
+        let next1 = app.get_next_video_rec(Some("/media/v1.mp4")).unwrap();
+        assert_eq!(next1.path, "/media/v2.mp4");
+        let next2 = app.get_next_video_rec(Some("/media/v2.mp4")).unwrap();
+        assert_eq!(next2.path, "/media/v3.mp4");
+        let next3 = app.get_next_video_rec(Some("/media/v3.mp4")).unwrap();
+        assert_eq!(next3.path, "/media/v1.mp4"); // Wraps around
+
+        // 2. Random/shuffle mode
+        app.is_shuffle_mode = true;
+        for _ in 0..10 {
+            let rand_rec = app.get_next_video_rec(Some("/media/v1.mp4")).unwrap();
+            assert!(app.available_videos.iter().any(|v| v.path == rand_rec.path));
+            // With 3 videos, shuffle mode avoids immediately repeating current video
+            assert_ne!(rand_rec.path, "/media/v1.mp4");
+        }
     }
 }
 

@@ -21,6 +21,45 @@ use crate::format;
 use crate::message::Message;
 
 impl WazooApp {
+    pub(crate) fn advance_player_to_next_video(&mut self, id: PlayerId, request_focus: bool) -> Task<Message> {
+        if request_focus {
+            if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                let was_already_active = self.focused_player_idx == pos;
+                self.focused_player_idx = pos;
+                if !was_already_active {
+                    self.focus_border_ticks = 20;
+                }
+            }
+            self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+        }
+        self.loading_player_ids.insert(id);
+        self.loading_player_ticks.insert(id, 0);
+        let curr_player = self.players.iter().find(|p| p.id == id);
+        let curr_path = curr_player.map(|p| p.state.path.clone());
+        let prev_muted = curr_player.map(|p| p.state.is_muted);
+        let prev_volume = curr_player.map(|p| p.state.volume);
+
+        for _ in 0..3 {
+            if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
+                if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
+                    new_handle.set_muted(prev_muted.unwrap_or(self.settings.is_global_muted));
+                    if let Some(vol) = prev_volume {
+                        new_handle.set_volume(vol);
+                    }
+                    new_handle.set_subtitles_visible(self.subtitles_enabled);
+                    if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                        *p = new_handle;
+                    }
+                    break;
+                }
+            }
+        }
+        if self.show_transcript && self.focused_player_id() == Some(id) {
+            return self.load_transcript_for_focused_player();
+        }
+        Task::none()
+    }
+
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::WindowIdReceived(id) => {
@@ -524,39 +563,10 @@ impl WazooApp {
                 }
             }
             Message::NextVideo(id) => {
-                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
-                    let was_already_active = self.focused_player_idx == pos;
-                    self.focused_player_idx = pos;
-                    if !was_already_active {
-                        self.focus_border_ticks = 20;
-                    }
-                }
-                self.loading_player_ids.insert(id);
-                self.loading_player_ticks.insert(id, 0);
-                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
-                let curr_player = self.players.iter().find(|p| p.id == id);
-                let curr_path = curr_player.map(|p| p.state.path.clone());
-                let prev_muted = curr_player.map(|p| p.state.is_muted);
-                let prev_volume = curr_player.map(|p| p.state.volume);
-
-                for _ in 0..3 {
-                    if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
-                        if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
-                            new_handle.set_muted(prev_muted.unwrap_or(self.settings.is_global_muted));
-                            if let Some(vol) = prev_volume {
-                                new_handle.set_volume(vol);
-                            }
-                            new_handle.set_subtitles_visible(self.subtitles_enabled);
-                            if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
-                                *p = new_handle;
-                            }
-                            break;
-                        }
-                    }
-                }
-                if self.show_transcript && self.focused_player_id() == Some(id) {
-                    return self.load_transcript_for_focused_player();
-                }
+                return self.advance_player_to_next_video(id, true);
+            }
+            Message::AutoAdvanceVideo(id) => {
+                return self.advance_player_to_next_video(id, false);
             }
             Message::NextVideoFocused => {
                 if let Some(id) = self.focused_player_id() {
@@ -1711,6 +1721,23 @@ impl WazooApp {
                         self.loading_player_ticks.remove(&p.id);
                     }
                 }
+
+                if self.settings.playback_mode != PlaybackMode::Scroll {
+                    let mut finished_ids = Vec::new();
+                    for p in &self.players {
+                        if !self.loading_player_ids.contains(&p.id) && p.is_finished() {
+                            finished_ids.push(p.id);
+                        }
+                    }
+                    if !finished_ids.is_empty() {
+                        let mut tasks = Vec::new();
+                        for id in finished_ids {
+                            log::info!("Player {id} video reached end, advancing to next video");
+                            tasks.push(self.update(Message::AutoAdvanceVideo(id)));
+                        }
+                        return Task::batch(tasks);
+                    }
+                }
             }
             Message::WatchdogTick => {
                 // Auto-clear loading state if it exceeds 10 seconds to avoid indefinite spinner
@@ -1740,7 +1767,7 @@ impl WazooApp {
 
                 for id in finished_ids {
                     log::info!("Player {id} video reached end, advancing to next video");
-                    let _ = self.update(Message::NextVideo(id));
+                    let _ = self.update(Message::AutoAdvanceVideo(id));
                 }
 
                 for id in stuck_ids {
@@ -1748,7 +1775,7 @@ impl WazooApp {
                         "Player {id} playback stuck for {}s, skipping to next video",
                         VideoHandle::STUCK_THRESHOLD_SECONDS
                     );
-                    let _ = self.update(Message::NextVideo(id));
+                    let _ = self.update(Message::AutoAdvanceVideo(id));
                 }
 
                 if self.toast_message.is_some() {
