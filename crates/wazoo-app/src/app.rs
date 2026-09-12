@@ -30,6 +30,7 @@ pub struct WazooApp {
     pub(crate) available_videos: Vec<VideoRecord>,
     pub(crate) active_search_query: String,
     pub(crate) search_input: String,
+    pub(crate) search_tags: Vec<String>,
     pub(crate) folder_input: String,
     pub(crate) selected_search_folder: String,
     pub(crate) show_search_modal: bool,
@@ -150,7 +151,12 @@ impl WazooApp {
             scroll_engine,
             available_videos: videos,
             active_search_query: active_query.clone(),
-            search_input: active_query,
+            search_tags: active_query
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect(),
+            search_input: String::new(),
             folder_input: String::new(),
             selected_search_folder: selected_folder,
             show_search_modal: false,
@@ -854,6 +860,73 @@ mod tests {
         app.show_video_totals_notice(0, "/media/videos/Anime");
         assert_eq!(app.toast_message.as_deref(), Some("No files found in Anime"));
         assert_eq!(app.last_total_videos, 200); // last_total_videos preserved
+    }
+
+    #[test]
+    fn test_search_tags_comma_and_backspace() {
+        use iced::keyboard::{key::Named, Key};
+
+        let (mut app, _) = WazooApp::new(None);
+        app.active_search_query.clear();
+        let _ = app.update(Message::OpenSearchModal);
+        assert!(app.show_search_modal);
+        assert!(app.search_tags.is_empty());
+        assert!(app.search_input.is_empty());
+
+        // 1. Typing without comma updates search_input
+        let _ = app.update(Message::SearchInputChanged("bebop".to_string()));
+        assert_eq!(app.search_input, "bebop");
+        assert!(app.search_tags.is_empty());
+
+        // 2. Typing comma commits tag and clears search_input
+        let _ = app.update(Message::SearchInputChanged("bebop,".to_string()));
+        assert_eq!(app.search_tags, vec!["bebop"]);
+        assert_eq!(app.search_input, "");
+
+        // 3. Pasting multiple comma-separated items
+        let _ = app.update(Message::SearchInputChanged("cowboy, space, spike".to_string()));
+        assert_eq!(app.search_tags, vec!["bebop", "cowboy", "space"]);
+        assert_eq!(app.search_input, "spike");
+
+        // 4. Backspace when search_input is not empty does NOT pop tag
+        let _ = app.update(Message::KeyPressed(Key::Named(Named::Backspace), iced::event::Status::Captured));
+        assert_eq!(app.search_tags.len(), 3);
+
+        // 5. Backspace when search_input is empty pops the last tag
+        app.search_input.clear();
+        let _ = app.update(Message::KeyPressed(Key::Named(Named::Backspace), iced::event::Status::Captured));
+        assert_eq!(app.search_tags, vec!["bebop", "cowboy"]);
+
+        // 6. Remove specific tag by index
+        let _ = app.update(Message::RemoveSearchTag(0));
+        assert_eq!(app.search_tags, vec!["cowboy"]);
+
+        // 7. PerformSearch commits pending text and builds full query
+        let _ = app.update(Message::SearchInputChanged("anime".to_string()));
+        let _ = app.update(Message::PerformSearch);
+        assert_eq!(app.active_search_query, "cowboy, anime");
+        assert_eq!(app.search_tags, vec!["cowboy", "anime"]);
+        assert_eq!(app.search_input, "");
+        assert!(!app.show_search_modal);
+
+        // 8. Re-opening search modal populates tags from active_search_query
+        let _ = app.update(Message::OpenSearchModal);
+        assert_eq!(app.search_tags, vec!["cowboy", "anime"]);
+        assert_eq!(app.search_input, "");
+    }
+
+    #[test]
+    fn test_search_modal_view_rendering() {
+        let (mut app, _) = WazooApp::new(None);
+        app.show_search_modal = true;
+
+        // View with empty tags
+        let _ = app.view_search_modal();
+
+        // View with multiple tags
+        app.search_tags = vec!["bebop".to_string(), "space".to_string()];
+        app.search_input = "cowboy".to_string();
+        let _ = app.view_search_modal();
     }
 }
 

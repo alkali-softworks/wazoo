@@ -39,6 +39,57 @@ impl WazooApp {
             );
         }
 
+        let mut tags_row = row![].spacing(6).align_y(Alignment::Center);
+
+        for (idx, tag) in self.search_tags.iter().enumerate() {
+            let chip = container(
+                row![
+                    text(tag).size(13).color(iced::Color::WHITE),
+                    button(text("✕").size(10))
+                        .style(theme::tag_delete_button_style)
+                        .on_press(Message::RemoveSearchTag(idx))
+                        .padding([0, 2]),
+                ]
+                .spacing(4)
+                .align_y(Alignment::Center),
+            )
+            .padding([2, 6])
+            .style(theme::tag_chip_style);
+
+            tags_row = tags_row.push(chip);
+        }
+
+        let placeholder = if self.search_tags.is_empty() {
+            self.t("search.placeholder")
+        } else {
+            String::new()
+        };
+
+        let input_widget = text_input(&placeholder, &self.search_input)
+            .id("search_input")
+            .on_input(Message::SearchInputChanged)
+            .on_submit(Message::PerformSearch)
+            .style(theme::transparent_input_style)
+            .padding([4, 6])
+            .width(Length::Fill);
+
+        tags_row = tags_row.push(input_widget);
+
+        let tag_box = container(tags_row)
+            .padding([3, 8])
+            .style(theme::tag_input_box_style)
+            .width(Length::Fill);
+
+        let search_bar_row = row![
+            tag_box,
+            button(text("🔍").size(16))
+                .style(theme::search_button_style)
+                .on_press(Message::PerformSearch)
+                .padding([8, 12]),
+        ]
+        .spacing(10)
+        .align_y(Alignment::Center);
+
         let card = container(
             column![
                 row![
@@ -50,21 +101,7 @@ impl WazooApp {
                 ]
                 .align_y(Alignment::Center),
                 scrollable(folder_chips).direction(scrollable::Direction::Horizontal(scrollable::Scrollbar::default())),
-                row![
-                    text_input(&self.t("search.placeholder"), &self.search_input)
-                        .id("search_input")
-                        .on_input(Message::SearchInputChanged)
-                        .on_submit(Message::PerformSearch)
-                        .style(theme::dark_input_style)
-                        .padding(10)
-                        .width(Length::Fill),
-                    button(text(format!("🔍 {}", self.t("common.search"))))
-                        .style(theme::action_button_style)
-                        .on_press(Message::PerformSearch)
-                        .padding([10, 16]),
-                ]
-                .spacing(10)
-                .align_y(Alignment::Center),
+                search_bar_row,
                 text(self.t_with("settings.total_videos", &[("count", &format::format_number(self.available_videos.len()))]))
                     .size(12)
                     .color(theme::COLOR_TEXT_MUTED),
