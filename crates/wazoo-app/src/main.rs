@@ -341,6 +341,14 @@ impl WazooApp {
         (app, Task::batch([preload_task, focus_task]))
     }
 
+    fn is_any_modal_open(&self) -> bool {
+        self.show_search_modal
+            || self.show_settings_modal
+            || self.show_help_modal
+            || self.show_bookmarks_modal
+            || self.show_menu_modal
+    }
+
     fn focused_player_id(&self) -> Option<PlayerId> {
         if self.players.is_empty() {
             None
@@ -721,9 +729,9 @@ impl WazooApp {
                     return self.update(Message::EscapePressed);
                 }
 
-                // If typing in either search input (captured by widget) or if search modal is open,
+                // If typing in either search input (captured by widget) or if search modal or any modal is open,
                 // do NOT allow keystrokes to trigger global shortcuts (e.g. 'm' for mute, 's' for shuffle, etc.)
-                if status == iced::event::Status::Captured || self.show_search_modal {
+                if status == iced::event::Status::Captured || self.is_any_modal_open() {
                     if self.show_search_modal && key == Key::Named(Named::Enter) {
                         return self.update(Message::PerformSearch);
                     }
@@ -1303,6 +1311,11 @@ impl WazooApp {
                 self.show_search_modal = true;
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
+                self.show_settings_modal = false;
+                self.show_help_modal = false;
+                self.show_bookmarks_modal = false;
+                self.show_titlebar = false;
+                self.toast_message = None;
                 return Task::batch([
                     iced::widget::operation::focus("search_input"),
                 ]);
@@ -1340,6 +1353,11 @@ impl WazooApp {
                 self.show_settings_modal = true;
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
+                self.show_search_modal = false;
+                self.show_help_modal = false;
+                self.show_bookmarks_modal = false;
+                self.show_titlebar = false;
+                self.toast_message = None;
             }
             Message::CloseSettingsModal => {
                 self.show_settings_modal = false;
@@ -1355,6 +1373,11 @@ impl WazooApp {
                 self.show_help_modal = true;
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
+                self.show_search_modal = false;
+                self.show_settings_modal = false;
+                self.show_bookmarks_modal = false;
+                self.show_titlebar = false;
+                self.toast_message = None;
             }
             Message::CloseHelpModal => {
                 self.show_help_modal = false;
@@ -1367,6 +1390,8 @@ impl WazooApp {
                     self.show_search_modal = false;
                     self.show_settings_modal = false;
                     self.show_help_modal = false;
+                    self.show_titlebar = false;
+                    self.toast_message = None;
                 }
             }
             Message::CloseBookmarksModal => {
@@ -1715,11 +1740,7 @@ impl WazooApp {
                 self.toast_time_remaining = 2;
             }
             Message::EscapePressed => {
-                if self.show_help_modal
-                    || self.show_search_modal
-                    || self.show_settings_modal
-                    || self.show_menu_modal
-                    || self.show_bookmarks_modal
+                if self.is_any_modal_open()
                     || self.show_dropdown_menu
                     || self.show_file_picker
                 {
@@ -1929,6 +1950,31 @@ impl WazooApp {
                 .into()
         };
 
+        // If any modal is active, display only main content in the background and the modal layer.
+        // This guarantees a stable 2-element stack where the modal is always child index 1.
+        // Intermediate transient layers (toast, titlebar, scan banner) are never inserted/removed
+        // while a modal is open, preventing iced::widget::Stack index shifts that destroy focus.
+        let modal: Option<Element<'_, Message>> = if self.show_search_modal {
+            Some(self.view_search_modal())
+        } else if self.show_settings_modal {
+            Some(self.view_settings_modal())
+        } else if self.show_help_modal {
+            Some(self.view_help_modal())
+        } else if self.show_bookmarks_modal {
+            Some(self.view_bookmarks_modal())
+        } else if self.show_menu_modal {
+            Some(self.view_menu_modal())
+        } else {
+            None
+        };
+
+        if let Some(modal_el) = modal {
+            return Stack::with_children(vec![main_content, modal_el])
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .into();
+        }
+
         let mut root_stack_children: Vec<Element<'_, Message>> = vec![main_content];
 
         // 1.5. Dropdown backdrop for dismissal when clicking outside
@@ -2037,19 +2083,6 @@ impl WazooApp {
             });
 
             root_stack_children.push(Element::from(mouse_area(alt_overlay).on_press(Message::DragWindow)));
-        }
-
-        // 6. Floating Modals (Zero reflow - video playback continues)
-        if self.show_search_modal {
-            root_stack_children.push(self.view_search_modal());
-        } else if self.show_settings_modal {
-            root_stack_children.push(self.view_settings_modal());
-        } else if self.show_help_modal {
-            root_stack_children.push(self.view_help_modal());
-        } else if self.show_bookmarks_modal {
-            root_stack_children.push(self.view_bookmarks_modal());
-        } else if self.show_menu_modal {
-            root_stack_children.push(self.view_menu_modal());
         }
 
         Stack::with_children(root_stack_children)
