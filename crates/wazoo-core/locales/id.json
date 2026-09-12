@@ -52,7 +52,8 @@
     "scan_folders": "Pindai Folder",
     "add_folder": "Tambah Folder",
     "total_videos": "Total Video: {count}",
-    "adding_media_notice": "Menambahkan media melalui jaringan membutuhkan waktu untuk menganalisis metadata video."
+    "adding_media_notice": "Menambahkan media melalui jaringan membutuhkan waktu untuk menganalisis metadata video.",
+    "language": "Bahasa"
   },
   "search": {
     "folder": "Folder:",

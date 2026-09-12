@@ -52,7 +52,8 @@
     "scan_folders": "Scanner les dossiers",
     "add_folder": "Ajouter un dossier",
     "total_videos": "Total des vidéos : {count}",
-    "adding_media_notice": "L'ajout de médias via le réseau prend du temps pour analyser les métadonnées vidéo."
+    "adding_media_notice": "L'ajout de médias via le réseau prend du temps pour analyser les métadonnées vidéo.",
+    "language": "Langue"
   },
   "search": {
     "folder": "Dossier :",

@@ -52,7 +52,8 @@
     "scan_folders": "Ordner scannen",
     "add_folder": "Ordner hinzufügen",
     "total_videos": "Videos insgesamt: {count}",
-    "adding_media_notice": "Das Hinzufügen von Medien über das Netzwerk benötigt Zeit, um die Video-Metadaten zu analysieren."
+    "adding_media_notice": "Das Hinzufügen von Medien über das Netzwerk benötigt Zeit, um die Video-Metadaten zu analysieren.",
+    "language": "Sprache"
   },
   "search": {
     "folder": "Ordner:",

@@ -52,7 +52,8 @@
     "scan_folders": "フォルダをスキャン",
     "add_folder": "フォルダを追加",
     "total_videos": "合計ビデオ数: {count}",
-    "adding_media_notice": "ネットワーク経由でメディアを追加する場合、動画のメタデータを解析するのに時間がかかります。"
+    "adding_media_notice": "ネットワーク経由でメディアを追加する場合、動画のメタデータを解析するのに時間がかかります。",
+    "language": "言語"
   },
   "search": {
     "folder": "フォルダー:",
