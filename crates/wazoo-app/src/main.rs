@@ -31,10 +31,10 @@ pub fn main() -> iced::Result {
 
     #[cfg(target_os = "linux")]
     {
-        // On Linux hybrid graphics laptops (e.g. Intel/AMD iGPU + NVIDIA dGPU), defaulting to
+        // On Linux hybrid graphics laptops (e.g. Intel iGPU + NVIDIA dGPU), defaulting to
         // the integrated GPU avoids cross-GPU DRI3 PRIME swapchain presentation failure /
         // VK_ERROR_DEVICE_LOST when windows are occluded or behind other windows.
-        // On desktop PCs (e.g. Ryzen 9900X + RTX 4070), monitors are plugged directly into the dGPU,
+        // On desktop PCs, monitors are plugged directly into the dGPU,
         // so the dedicated GPU is preferred without PRIME offload sync issues.
         if std::env::var("WGPU_POWER_PREF").is_err() && crate::platform::is_hybrid_laptop() {
             std::env::set_var("WGPU_POWER_PREF", "low");
