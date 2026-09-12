@@ -513,7 +513,7 @@ impl WazooApp {
         if self.is_alt_pressed {
             0.85
         } else {
-            self.settings.window_opacity.clamp(0.1, 1.0)
+            self.settings.window_opacity.clamp(0.05, 1.0)
         }
     }
 
