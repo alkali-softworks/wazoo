@@ -50,7 +50,9 @@ impl ConfigManager {
         let path = self.config_file_path();
         if path.exists() {
             if let Ok(content) = fs::read_to_string(&path) {
-                if let Ok(settings) = serde_json::from_str::<WazooSettings>(&content) {
+                if let Ok(mut settings) = serde_json::from_str::<WazooSettings>(&content) {
+                    settings.buffer_size_mb = settings.buffer_size_mb.clamp(16, 4096);
+                    settings.buffer_duration_secs = settings.buffer_duration_secs.clamp(2, 300);
                     return settings;
                 }
             }
@@ -61,7 +63,9 @@ impl ConfigManager {
     pub fn save_settings(&self, settings: &WazooSettings) -> Result<(), std::io::Error> {
         let path = self.config_file_path();
         let json = serde_json::to_string_pretty(settings)?;
-        fs::write(path, json)
+        let temp_path = path.with_extension("tmp");
+        fs::write(&temp_path, json)?;
+        fs::rename(temp_path, path)
     }
 }
 
@@ -133,5 +137,49 @@ mod tests {
         let legacy_bookmark_json = r#"{"name":"Legacy","query":"test","path":"/path/test.mp4","position_secs":10.0}"#;
         let legacy_bookmark: crate::models::Bookmark = serde_json::from_str(legacy_bookmark_json).unwrap();
         assert_eq!(legacy_bookmark.is_shuffle, true);
+    }
+
+    #[test]
+    fn test_buffer_settings_clamping() {
+        let temp_dir = std::env::temp_dir().join(format!("wazoo_clamp_test_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let _ = fs::create_dir_all(&temp_dir);
+        let config_file = temp_dir.join("settings.json");
+
+        let hostile_json = r#"{"buffer_size_mb": 999999999, "buffer_duration_secs": 99999}"#;
+        fs::write(&config_file, hostile_json).unwrap();
+
+        let mgr = ConfigManager {
+            config_dir: temp_dir.clone(),
+            data_dir: temp_dir.clone(),
+        };
+
+        let loaded = mgr.load_settings();
+        assert_eq!(loaded.buffer_size_mb, 4096);
+        assert_eq!(loaded.buffer_duration_secs, 300);
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_atomic_save_settings() {
+        let temp_dir = std::env::temp_dir().join(format!("wazoo_atomic_test_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let _ = fs::create_dir_all(&temp_dir);
+
+        let mgr = ConfigManager {
+            config_dir: temp_dir.clone(),
+            data_dir: temp_dir.clone(),
+        };
+
+        let mut settings = WazooSettings::default();
+        settings.last_query = "secure_query".to_string();
+        mgr.save_settings(&settings).unwrap();
+
+        assert!(mgr.config_file_path().exists());
+        assert!(!mgr.config_file_path().with_extension("tmp").exists());
+
+        let loaded = mgr.load_settings();
+        assert_eq!(loaded.last_query, "secure_query");
+
+        let _ = fs::remove_dir_all(&temp_dir);
     }
 }

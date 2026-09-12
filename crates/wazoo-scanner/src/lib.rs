@@ -93,6 +93,7 @@ pub fn probe_video_metadata<P: AsRef<Path>>(path: P, ffprobe_bin: Option<&str>) 
             "-probesize", "5000000",
             "-show_entries", "stream=codec_name,profile,width,height,codec_type:format=duration",
             "-of", "json",
+            "--",
             path.as_ref().to_str().unwrap_or_default(),
         ])
         .output();
@@ -480,6 +481,14 @@ mod tests {
         assert_eq!(last_listing.files_found, 3);
 
         let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_probe_dash_filename() {
+        // Filenames starting with '-' must not cause ffprobe option parsing errors
+        let meta = probe_video_metadata("-option_like_name.mp4", None);
+        assert_eq!(meta.codec, "unknown");
+        assert_eq!(meta.width, 0);
     }
 }
 
