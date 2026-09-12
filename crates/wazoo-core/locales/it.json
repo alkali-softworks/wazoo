@@ -63,7 +63,6 @@
   "help": {
     "title": "Scorciatoie da tastiera",
     "shortcuts": {
-      "toggle_help": "Mostra/Nascondi aiuto",
       "toggle_scroll": "Cambia modalità scorrimento infinito",
       "toggle_flip": "Cambia modalità ribaltamento",
       "toggle_file_picker": "Mostra/Nascondi selettore file",

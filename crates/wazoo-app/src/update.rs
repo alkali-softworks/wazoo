@@ -223,7 +223,6 @@ impl WazooApp {
                         "c" | "C" => return self.update(Message::ToggleSubtitles),
                         "v" | "V" => return self.update(Message::ToggleTranscript),
                         "h" | "H" => return self.update(Message::ToggleFilePicker),
-                        "?" => return self.update(Message::OpenHelpModal),
                         "," => return self.update(Message::SeekRelativeFocused(-0.04)),
                         "." => return self.update(Message::SeekRelativeFocused(0.04)),
                         _ => {}

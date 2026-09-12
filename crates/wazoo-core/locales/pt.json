@@ -63,7 +63,6 @@
   "help": {
     "title": "Atalhos de teclado",
     "shortcuts": {
-      "toggle_help": "Alternar ajuda",
       "toggle_scroll": "Alternar modo de rolagem infinita",
       "toggle_flip": "Alternar modo de inversão",
       "toggle_file_picker": "Alternar selecionador de arquivos",

@@ -235,7 +235,6 @@ impl WazooApp {
 
     pub(crate) fn view_help_modal(&self) -> Element<'_, Message> {
         let shortcuts = [
-            ("?", self.t("help.shortcuts.toggle_help")),
             ("b", self.t("help.shortcuts.toggle_bookmarks")),
             ("+ / =", self.t("bookmarks.bookmark_current")),
             ("5", self.t("help.shortcuts.toggle_scroll")),

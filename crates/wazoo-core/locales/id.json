@@ -63,7 +63,6 @@
   "help": {
     "title": "Pintasan Keyboard",
     "shortcuts": {
-      "toggle_help": "Tampilkan/Sembunyikan Bantuan",
       "toggle_scroll": "Ganti Mode Gulir Tak Terbatas",
       "toggle_flip": "Ganti Mode Balik",
       "toggle_file_picker": "Tampilkan/Sembunyikan Pemilih Berkas",

@@ -63,7 +63,6 @@
   "help": {
     "title": "Tastenkombinationen",
     "shortcuts": {
-      "toggle_help": "Hilfe umschalten",
       "toggle_scroll": "Unendlichen Scroll-Modus umschalten",
       "toggle_flip": "Flip-Modus umschalten",
       "toggle_file_picker": "Dateiauswahl umschalten",
