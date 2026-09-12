@@ -16,7 +16,7 @@ use iced::{
 use wazoo_core::{Bookmark, LayoutMode, PlaybackMode};
 use wazoo_media::{PlayerId, VideoHandle};
 use wazoo_scanner::{ScanStage, Scanner};
-use crate::app::WazooApp;
+use crate::app::{WazooApp, PLAYER_OVERLAY_HIDE_TICKS};
 use crate::format;
 use crate::message::Message;
 
@@ -110,7 +110,7 @@ impl WazooApp {
                 self.window_id = Some(win_id);
                 self.cursor_position = pos;
                 if !self.is_modal_or_menu_open() {
-                    self.player_overlay_ticks = 120; // 2 seconds delay before hiding controls
+                    self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS; // 3 seconds delay before hiding controls
                 }
 
                 if pos.y < 35.0 || self.show_dropdown_menu {
@@ -414,7 +414,7 @@ impl WazooApp {
                             return self.load_transcript_for_focused_player();
                         }
                     }
-                    self.player_overlay_ticks = 120;
+                    self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
                 }
             }
             Message::TogglePlay(id) => {
@@ -428,7 +428,7 @@ impl WazooApp {
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.toggle_play();
                 }
-                self.player_overlay_ticks = 120;
+                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
             }
             Message::TogglePlayFocused => {
                 if let Some(id) = self.focused_player_id() {
@@ -445,7 +445,7 @@ impl WazooApp {
                 }
                 self.loading_player_ids.insert(id);
                 self.loading_player_ticks.insert(id, 0);
-                self.player_overlay_ticks = 120;
+                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
                 let curr_player = self.players.iter().find(|p| p.id == id);
                 let curr_path = curr_player.map(|p| p.state.path.clone());
                 let prev_muted = curr_player.map(|p| p.state.is_muted);
@@ -515,7 +515,7 @@ impl WazooApp {
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.seek(pos);
                 }
-                self.player_overlay_ticks = 120;
+                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
             }
             Message::SeekRatio(id, ratio) => {
                 if let Some(pos) = self.players.iter().position(|p| p.id == id) {
@@ -542,14 +542,14 @@ impl WazooApp {
                         self.toast_time_remaining = 2;
                     }
                 }
-                self.player_overlay_ticks = 120;
+                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
             }
             Message::PlayerHovered(id) => {
                 if self.is_modal_or_menu_open() {
                     return Task::none();
                 }
                 self.hovered_player_id = Some(id);
-                self.player_overlay_ticks = 120;
+                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
             }
             Message::PlayerUnhovered(id) => {
                 if self.hovered_player_id == Some(id) {
@@ -558,7 +558,7 @@ impl WazooApp {
                 }
             }
             Message::SeekRelativeFocused(secs) => {
-                self.player_overlay_ticks = 120;
+                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
                 if let Some(id) = self.focused_player_id() {
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                         p.seek_relative(secs);
@@ -596,7 +596,7 @@ impl WazooApp {
                         p.set_muted(true);
                     }
                 }
-                self.player_overlay_ticks = 120;
+                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
             }
             Message::AdjustVolumeFocused(delta) => {
                 if self.settings.playback_mode == PlaybackMode::Scroll && delta > 0.0 {
@@ -638,7 +638,7 @@ impl WazooApp {
                     self.toast_message = Some(if muted { self.t("player.muted") } else { self.t("player.unmuted") });
                     self.toast_time_remaining = 2;
                 }
-                self.player_overlay_ticks = 120;
+                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
             }
             Message::ToggleMuteFocused => {
                 if self.settings.playback_mode == PlaybackMode::Scroll {
@@ -1075,7 +1075,7 @@ impl WazooApp {
                 }
             }
             Message::RandomSeekFocused => {
-                self.player_overlay_ticks = 120;
+                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
                 if let Some(id) = self.focused_player_id() {
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                         p.seek_random();
