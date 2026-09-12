@@ -1,70 +1,93 @@
-# 🌊 Wazoo-RS
+# 🌊 Wazoo
 
-> **Ambient media engine for non-stop viewing — rewritten in native Rust.**
+> **Ambient media engine for non-stop viewing — built in native Rust.**
 
-**Wazoo-RS** is a high-performance native port of [Wazoo](https://github.com/alkali-softworks/wazoo). Built as a "moving mood-board" for artists, designers, and curators, Wazoo transforms your local video collection into a non-stop, ambient atmosphere.
+**Wazoo** is a high-performance ambient media engine and "moving mood-board" designed for artists, designers, collectors, and curators. It transforms your local video collection into a vibrant, non-stop ambient atmosphere.
 
-Forget the play button. Open Wazoo and let your media collection become the environment.
+Forget the play button. Open Wazoo and let your media collection become the room.
 
 ---
 
-## ⚡ Why Native Rust?
+## ⚡ High-Performance Architecture
 
-The original Wazoo was built on Electron. While flexible, running multiple simultaneous video players inside Chromium resulted in significant memory usage and required an active FFmpeg transcoding pipeline for H.265/HEVC content.
+Built from the ground up in native Rust with hardware-accelerated rendering:
 
-**Wazoo-RS** replaces Electron with a native Rust architecture:
-
-| Capability | Electron Desktop (`wazoo-desktop`) | Native Rust (`wazoo-rs`) |
-| :--- | :--- | :--- |
-| **RAM Footprint (4 players)** | ~1.5 GB – 3 GB | **~150 MB – 350 MB** |
-| **H.265 / HEVC 10-bit Playback** | CPU transcode via live FFmpeg | **Native GPU hardware decoding** |
-| **UI Framework** | Vue 3 + Chromium DOM | **Iced 0.14** (`wgpu` accelerated) |
-| **Media Subsystem** | HTML5 `<video>` | **libmpv** (GPU hardware decoding + FFmpeg) |
-| **Database** | `better-sqlite3` + Drizzle | **`rusqlite`** (bundled) with indexed queries |
-| **Startup Time** | ~2–4 seconds | **< 150 ms** |
+- **Ultra-Lightweight Footprint**: Consumes only ~150 MB – 350 MB of RAM across multiple simultaneous high-definition streams.
+- **Native GPU Hardware Decoding**: Full hardware-accelerated playback for H.264, H.265/HEVC 10-bit, AV1, and VP9 through `libmpv`.
+- **`wgpu`-Accelerated Interface**: Rendered with **Iced** using GPU rendering pipelines for 60fps animations and glassmorphic overlays.
+- **Blazing Fast Startup**: Instant sub-150ms launch time with automated window manager focus acquisition.
+- **Embedded SQLite Index**: Powered by `rusqlite` for lightning-fast queries across tens of thousands of video files.
 
 ---
 
 ## ✨ Features
 
-### 🖼️ Ambient Orchestration (Multi-Player Layouts)
-Run 1 to 12 video players simultaneously in **Grid**, **Row**, or **Column** configurations. The responsive layout engine adapts automatically as players are added or removed.
+### 📜 Interactive Subtitle Transcript Drawer
+- **Live Dialogue Transcript**: View a full transcript of the active video dialogue in a sleek, sidecar slide-out drawer (<kbd>V</kbd> or <kbd>[TX]</kbd> button).
+- **Click to Seek**: Click any subtitle line to jump video playback directly to that timestamp instantly.
+- **Real-Time Active Line Highlighting**: The currently spoken dialogue cue lights up with an emerald highlight and timestamp badge in real time as the video plays.
+- **Dialogue Search Filter**: Filter thousands of dialogue lines in real-time to find exact quotes and scenes.
+- **Universal Subtitle Extraction**: Automatically parses external sidecar files (`.srt`, `.vtt`, `.ass`, `.ssa`) or demuxes embedded subtitle tracks in milliseconds on a background thread.
+
+### 🔖 Bookmarks & Scene Memory
+- **Instant Bookmarking**: Press <kbd>+</kbd> or <kbd>=</kbd> to save a bookmark of the current video, exact timestamp, search query, and playback mode.
+- **Scene Restoration**: Open the bookmarks drawer (<kbd>B</kbd>) and jump back to any bookmarked scene with a single click.
+- **Multi-Player Reconciliation**: Restoring a bookmark restores your global search query and automatically swaps active player tiles to matching media.
+
+### 📁 File Browser Drawer
+- **Collapsible Folder Tree**: Press <kbd>H</kbd> to slide out the library directory tree, organized cleanly with file counts.
+- **Gutter-Aware Scrolling**: Smooth scroll navigation with dedicated gutter margins ensuring text is never obscured by scrollbars.
+- **Direct Tile Loading**: Click any file in the drawer to immediately load it into the currently focused playback tile.
+
+### 💻 Command-Line Launch & Search
+- **Instant CLI Boot**: Launch Wazoo directly with a search query from your terminal:
+  ```bash
+  wazoo "cyberpunk"
+  wazoo --query "synthwave"
+  wazoo -- "exact phrase"
+  ```
+- **Console Focus Acquisition**: Automatically claims active OS window focus upon startup so keyboard hotkeys work immediately without clicking.
+
+### 🖼️ Ambient Orchestration & Multi-Tile Layouts
+- **1 to 12 Video Players**: Scale from a single minimalist player to an ambient video wall.
+- **Responsive Layout Engine**: Effortlessly cycles between **Grid**, **Row**, and **Column** arrangements (<kbd>L</kbd>).
+- **Independent Audio & Seeking**: Per-player volume control, seek sliders, auto-unmute on volume adjustment, and quick random seeking (<kbd>R</kbd>).
 
 ### 🌊 The Infinity Stream ("Scroll Mode")
-Experience your media library as a continuous vertical river of content:
-- Constant, smooth vertical scroll at configurable `scroll_speed`.
-- **Virtual Viewport**: Automatically despawns players that scroll off the top and spawns new players with random selections at the bottom edge.
-- **Audio Cross-Fading**: Video audio smoothly cross-fades based on the percentage of the player visible on screen.
+Experience your media library as a continuous vertical river of content (<kbd>5</kbd>):
+- Constant, smooth vertical scroll at configurable `scroll_speed` (<kbd>+</kbd> / <kbd>-</kbd>).
+- **Virtual Viewport**: Automatically despawns players that scroll off the top edge and seamlessly spawns new candidate videos at the bottom.
+- **Proportional Audio Cross-Fading**: Sound smoothly fades in and out based on the visible percentage of each video on screen.
 
 ### ⚡ Flip Mode
-Rapid ambient variety. Staggered background timers automatically shuffle and seek active video players to random timestamps, keeping visuals fresh without manual intervention.
+Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically shuffle and seek active video tiles to random timestamps, keeping visuals fresh without manual intervention.
 
-### 🐕 Unstuck Watchdog
-Ambient players should never freeze. Wazoo-RS monitors playback position progress and automatically cycles to the next video if a stream encounters an issue or stalls.
+### 🐕 Unstuck Playback Watchdog
+Ambient displays must never stall. Wazoo constantly monitors playback position progress and automatically cycles to the next video if a network stream or corrupted file encounters a stall.
 
 ### 🔍 Instant Library Indexing & Search
-- Recursive directory scanning with title cleaning (removes resolution tags, brackets, and clutter).
-- Sniffs codec, duration, dimensions, and subtitle tracks.
-- Instant search supporting comma-separated terms, `not <term>` exclusions, and folder scoping.
+- **Smart Directory Scanner**: Recursively indexes media folders while stripping resolution tags, brackets, and clutter from video titles.
+- **Advanced Query Parser**: Supports instant filtering, folder scoping, and comma-separated search terms.
+- **Adaptive Player Reconciliation**: Executing a new search dynamically updates active tiles to ensure all players stream matching content without duplicates.
 
-### 🪟 Frameless Transparent Windowing
-- Transparent, borderless window designed to blend seamlessly into your desktop.
+### 🪟 Frameless Glassmorphic Interface
+- Borderless window with sliding titlebar, quick drop-down menu, and glassmorphic HUD controls.
 - **Alt + Drag** navigation to position the window anywhere on screen.
-- Global mute / unmute toggle and volume management.
+- Configurable window opacity for semi-transparent ambient desktop backgrounds.
 
 ---
 
-## 🏗️ Architecture & Crates
+## 🏗️ Architecture
 
-The project is organized as a Cargo workspace with four modular crates:
+Wazoo is structured as a modular Cargo workspace:
 
 ```
 wazoo-rs/
 ├── crates/
 │   ├── wazoo-core/       # SQLite database, schema, models, & settings persistence
 │   ├── wazoo-scanner/    # Multithreaded media discovery, name cleaning, & metadata probing
-│   ├── wazoo-media/      # libmpv rendering pipeline, VideoHandle, & ScrollEngine
-│   └── wazoo-app/        # Iced 0.14 native desktop GUI (layouts, HUD, modals)
+│   ├── wazoo-media/      # libmpv rendering pipeline, subtitle parser, VideoHandle, & ScrollEngine
+│   └── wazoo-app/        # Iced native GUI (layouts, HUD overlays, modals, drawers)
 └── Cargo.toml
 ```
 
@@ -75,18 +98,18 @@ wazoo-rs/
 ### Prerequisites
 
 #### Linux (Ubuntu/Debian)
-Install `libmpv` runtime and development packages:
+Install `libmpv` runtime and development headers:
 ```bash
-sudo apt-get install libmpv-dev libmpv2
+sudo apt-get install libmpv-dev libmpv2 ffmpeg
 ```
 
 #### macOS
 ```bash
-brew install mpv
+brew install mpv ffmpeg
 ```
 
 #### Windows
-`mpv-2.dll` can be obtained from the official mpv Windows builds or libmpv development packages.
+`mpv-2.dll` can be obtained from the official mpv builds or libmpv development distributions.
 
 ---
 
@@ -98,57 +121,59 @@ brew install mpv
    cd wazoo-rs
    ```
 
-2. **Run all unit & integration tests:**
+2. **Run the test suite:**
    ```bash
-   cargo test
+   cargo test --workspace -- --test-threads=1
    ```
 
-3. **Launch the application:**
+3. **Build an optimized release binary:**
    ```bash
-   cargo run --bin wazoo
+   cargo build --release
    ```
 
-4. **Build an optimized release executable:**
+4. **Launch Wazoo:**
    ```bash
-   cargo build --release --bin wazoo
+   ./target/release/wazoo
    ```
 
 ---
 
 ## ⌨️ Controls & Shortcuts
 
-| Shortcut / Key | Function |
+| Shortcut / Key | Action |
 | :--- | :--- |
-| `F` / `J` / `/` | **Find** — Open Instant Search modal |
-| `S` | Toggle **Shuffle** vs. Sequential playback mode |
-| `1` | Set player count to **1** |
-| `2` | Set player count to **2** |
-| `3` | Set player count to **3** |
-| `4` | Set player count to **4** |
-| `5` | Toggle **Scroll Mode** (The Infinity Stream) |
-| `6` | Toggle **Flip Mode** (staggered auto-shuffle) |
-| `Space` | Play / Pause focused player |
-| `ArrowUp` | Play next video on focused player |
-| `ArrowDown` | Play previous video on focused player |
-| `ArrowLeft` / `Right` | Seek backward / forward 5 seconds |
-| `,` / `.` | Step frame backward / forward |
-| `L` | Cycle Layout (`Grid` ➔ `Row` ➔ `Column`) |
-| `N` | Add new player (up to 12) |
-| `X` | Remove focused player |
-| `Tab` | Cycle focused player |
-| `M` | Toggle Mute (Global in scroll mode) |
-| `[` / `]` | Decrease / Increase volume |
-| `-` / `+` | Decrease / Increase scroll speed |
-| `C` | Toggle Subtitles |
-| `T` | Toggle Title / Info overlay |
-| `H` | Toggle Controls HUD |
-| `Esc` | Close modal / open Menu |
-| `Alt + Drag` | Move borderless window |
+| <kbd>V</kbd> | Toggle **Interactive Subtitle Transcript** drawer |
+| <kbd>B</kbd> | Toggle **Bookmarks** modal |
+| <kbd>+</kbd> / <kbd>=</kbd> | Add Bookmark (or increase Scroll Speed in Scroll Mode) |
+| <kbd>-</kbd> | Remove Bookmark (or decrease Scroll Speed in Scroll Mode) |
+| <kbd>R</kbd> | **Random Seek** on focused player |
+| <kbd>T</kbd> | Show video title pill |
+| <kbd>H</kbd> | Toggle **File Browser** drawer |
+| <kbd>C</kbd> | Toggle Subtitles on/off |
+| <kbd>J</kbd> / <kbd>F</kbd> / <kbd>/</kbd> | Open **Find / Search** modal |
+| <kbd>S</kbd> | Toggle **Shuffle** vs. Sequential playback |
+| <kbd>M</kbd> | Toggle **Mute** (unmutes automatically when volume changes) |
+| <kbd>[</kbd> / <kbd>]</kbd> | Adjust Volume down / up |
+| <kbd>Space</kbd> | Play / Pause focused player |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Next / Previous video in focused player |
+| <kbd>←</kbd> / <kbd>→</kbd> | Seek backward / forward 5 seconds |
+| <kbd>,</kbd> / <kbd>.</kbd> | Step backward / forward one frame |
+| <kbd>1</kbd> – <kbd>4</kbd> | Set active player count (1 to 4) |
+| <kbd>5</kbd> | Toggle **The Infinity Stream** (Scroll Mode) |
+| <kbd>6</kbd> | Toggle **Flip Mode** (staggered auto-shuffle) |
+| <kbd>L</kbd> | Cycle Layout (**Grid** ➔ **Row** ➔ **Column**) |
+| <kbd>N</kbd> | Add player (up to 12) |
+| <kbd>X</kbd> | Remove focused player |
+| <kbd>Tab</kbd> | Focus next player |
+| <kbd>?</kbd> | Open **Keyboard Shortcuts** reference modal |
+| <kbd>Esc</kbd> | Dismiss active drawer / modal, or open Quick Menu |
+| <kbd>Alt + Drag</kbd> | Move borderless window |
+| <kbd>Alt + X</kbd> | Quit application |
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License** — see the LICENSE file for details.
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 Made with ❤️ by [Alkali Softworks](https://alkalisoftworks.com/).
