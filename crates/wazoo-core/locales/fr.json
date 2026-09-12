@@ -121,6 +121,11 @@
     "no_bookmarks": "Aucun signet enregistré.",
     "hint": "Appuyez sur + ou = pendant la lecture pour enregistrer la vidéo et le temps actuels.",
     "linear": "Linéaire",
-    "shuffle": "Aléatoire"
+    "shuffle": "Aléatoire",
+    "updated": "Signet mis à jour : {name}",
+    "added": "Signet ajouté : {name}",
+    "removed": "Signet supprimé : {name}",
+    "not_found": "Aucun signet trouvé pour la vidéo actuelle",
+    "jumped": "Signet : {name}  [{time}] ({mode})"
   }
 }

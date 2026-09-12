@@ -121,6 +121,11 @@
     "no_bookmarks": "Belum ada bookmark yang disimpan.",
     "hint": "Tekan + atau = saat memutar video untuk menyimpan video dan tanda waktu saat ini.",
     "linear": "Linear",
-    "shuffle": "Acak"
+    "shuffle": "Acak",
+    "updated": "Bookmark diperbarui: {name}",
+    "added": "Bookmark ditambahkan: {name}",
+    "removed": "Bookmark dihapus: {name}",
+    "not_found": "Tidak ada bookmark ditemukan untuk video saat ini",
+    "jumped": "Bookmark: {name}  [{time}] ({mode})"
   }
 }

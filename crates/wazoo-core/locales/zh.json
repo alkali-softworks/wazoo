@@ -121,6 +121,11 @@
     "no_bookmarks": "暂无保存的书签。",
     "hint": "在播放时按 + 或 = 保存当前视频和时间点。",
     "linear": "顺序",
-    "shuffle": "随机"
+    "shuffle": "随机",
+    "updated": "已更新书签：{name}",
+    "added": "已添加书签：{name}",
+    "removed": "已删除书签：{name}",
+    "not_found": "未找到当前视频的书签",
+    "jumped": "书签：{name}  [{time}] ({mode})"
   }
 }

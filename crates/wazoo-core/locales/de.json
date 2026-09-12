@@ -121,6 +121,11 @@
     "no_bookmarks": "Noch keine Lesezeichen gespeichert.",
     "hint": "Drücken Sie + oder = während der Wiedergabe, um das Video und die Zeit zu speichern.",
     "linear": "Linear",
-    "shuffle": "Zufall"
+    "shuffle": "Zufall",
+    "updated": "Lesezeichen aktualisiert: {name}",
+    "added": "Lesezeichen hinzugefügt: {name}",
+    "removed": "Lesezeichen entfernt: {name}",
+    "not_found": "Kein Lesezeichen für aktuelles Video gefunden",
+    "jumped": "Lesezeichen: {name}  [{time}] ({mode})"
   }
 }
