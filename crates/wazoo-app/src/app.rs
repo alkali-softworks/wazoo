@@ -127,12 +127,10 @@ impl WazooApp {
 
         let toast_msg = if is_cli {
             if videos.is_empty() {
-                Some(format!("No videos found for query: \"{}\"", active_query))
+                Some(format!("No videos found for query"))
             } else {
-                Some(format!("Query: \"{}\" ({} videos)", active_query, videos.len()))
+                Some(format!("({} Videos)", videos.len()))
             }
-        } else if !settings.last_query.is_empty() {
-            Some(format!("Restored query: \"{}\" ({} videos)", settings.last_query, videos.len()))
         } else {
             None
         };
@@ -574,7 +572,35 @@ impl WazooApp {
     }
 
     pub fn title(&self) -> String {
-        format!("Wazoo - Ambient Media Engine ({} videos)", self.available_videos.len())
+        if let Some(player) = self.focused_player() {
+            let title = if !player.state.path.is_empty() {
+                format::format_descriptive_title(&player.state.path)
+            } else if !player.state.name.is_empty() {
+                format::clean_name(&player.state.name)
+            } else {
+                String::new()
+            };
+
+            if !title.is_empty() {
+                return title;
+            }
+        }
+
+        for player in &self.players {
+            let title = if !player.state.path.is_empty() {
+                format::format_descriptive_title(&player.state.path)
+            } else if !player.state.name.is_empty() {
+                format::clean_name(&player.state.name)
+            } else {
+                String::new()
+            };
+
+            if !title.is_empty() {
+                return title;
+            }
+        }
+
+        "Wazoo".to_string()
     }
 
     pub fn theme(&self) -> Theme {
