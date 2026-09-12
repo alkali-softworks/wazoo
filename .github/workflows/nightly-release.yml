@@ -1,0 +1,149 @@
+name: Nightly Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  # -------------------------------------------------------------
+  # STAGE 1: Build all platforms in parallel
+  # -------------------------------------------------------------
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    env:
+      CARGO_TERM_COLOR: always
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-2022, macos-latest, macos-15-intel]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust Toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Install System Dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmpv-dev libmpv2 ffmpeg pkg-config libx11-dev libxcursor-dev libxrandr-dev libxi-dev libxinerama-dev libwayland-dev libxkbcommon-dev libgtk-3-dev
+
+      - name: Install System Dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install mpv ffmpeg
+
+      - name: Disable Spotlight Indexing (macOS)
+        if: runner.os == 'macOS'
+        run: sudo mdutil -a -i off || true
+
+      - name: Run Tests
+        run: cargo test --workspace -- --test-threads=1
+
+      - name: Build Release Binary
+        run: cargo build --release
+
+      - name: Package Release Artifacts
+        shell: bash
+        run: |
+          mkdir -p dist
+
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            PKG_NAME="wazoo-windows-x86_64"
+            mkdir -p "dist/${PKG_NAME}"
+            cp target/release/wazoo.exe "dist/${PKG_NAME}/"
+            if [ -f target/release/libmpv-2.dll ]; then
+              cp target/release/libmpv-2.dll "dist/${PKG_NAME}/"
+            elif [ -f libmpv-2.dll ]; then
+              cp libmpv-2.dll "dist/${PKG_NAME}/"
+            fi
+            cp README.md LICENSE "dist/${PKG_NAME}/" 2>/dev/null || true
+
+            if command -v 7z &> /dev/null; then
+              7z a "dist/${PKG_NAME}.zip" "./dist/${PKG_NAME}/*"
+            elif command -v powershell &> /dev/null; then
+              powershell -Command "Compress-Archive -Path 'dist/${PKG_NAME}/*' -DestinationPath 'dist/${PKG_NAME}.zip' -Force"
+            fi
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            ARCH=$(uname -m)
+            PKG_NAME="wazoo-macos-${ARCH}"
+            mkdir -p "dist/${PKG_NAME}"
+            cp target/release/wazoo "dist/${PKG_NAME}/"
+            chmod +x "dist/${PKG_NAME}/wazoo"
+            cp README.md LICENSE "dist/${PKG_NAME}/" 2>/dev/null || true
+            tar -czf "dist/${PKG_NAME}.tar.gz" -C dist "${PKG_NAME}"
+          else
+            # Linux
+            PKG_NAME="wazoo-linux-x86_64"
+            mkdir -p "dist/${PKG_NAME}"
+            cp target/release/wazoo "dist/${PKG_NAME}/"
+            chmod +x "dist/${PKG_NAME}/wazoo"
+            cp README.md LICENSE "dist/${PKG_NAME}/" 2>/dev/null || true
+            tar -czf "dist/${PKG_NAME}.tar.gz" -C dist "${PKG_NAME}"
+          fi
+
+      # Save the installers temporarily so Stage 2 can harvest them
+      - name: Upload Local Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wazoo-build-${{ matrix.os }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+          if-no-files-found: warn
+          retention-days: 1
+
+  # -------------------------------------------------------------
+  # STAGE 2: Combine everything into one single public release
+  # -------------------------------------------------------------
+  publish:
+    name: Publish Public Nightly Release
+    needs: build # Wait for all matrix builds to successfully finish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Download every asset compiled in Stage 1 into a local folder
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: final-assets
+          pattern: wazoo-build-*
+          merge-multiple: true # Flattens them into one clean directory
+
+      # Inspect and prune any inadvertently created directories
+      - name: Prepare Final Assets
+        run: |
+          echo "=== Downloaded Artifacts ==="
+          ls -lh final-assets/
+          find final-assets -mindepth 1 -type d -exec rm -rf {} + || true
+
+      # Delete previous release and tag so the landing page is cleanly recreated without orphaned assets
+      - name: Reset Nightly Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete nightly --yes --cleanup-tag || true
+
+      - name: Update Public Nightly Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: "nightly"
+          name: "Nightly Development Build"
+          body: |
+            This is an automated nightly development build.
+            Built from commit: ${{ github.sha }}
+          prerelease: true
+          allowUpdates: true
+          replacesArtifacts: true
+          artifacts: "final-assets/*"
+          token: ${{ secrets.GITHUB_TOKEN }}
