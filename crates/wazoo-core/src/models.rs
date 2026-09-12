@@ -105,6 +105,7 @@ pub struct Bookmark {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct WazooSettings {
     pub window_bounds: WindowBounds,
     pub window_opacity: f32,

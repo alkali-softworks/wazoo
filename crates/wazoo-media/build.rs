@@ -17,11 +17,7 @@ fn main() {
 
     #[cfg(target_os = "linux")]
     {
-        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_default();
-        let sysroot = std::path::Path::new(&manifest_dir).join("../../.sysroot/usr/lib/x86_64-linux-gnu");
-        if sysroot.exists() {
-            println!("cargo:rustc-link-search=native={}", sysroot.display());
-        }
+        linux::setup_linux_mpv();
     }
 
     #[cfg(target_os = "windows")]
@@ -37,6 +33,31 @@ mod windows {
 
     const MPV_WIN_DOWNLOAD_URL: &str =
         "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260903/mpv-dev-x86_64-20260903-git-69e63f425a.7z";
+    const MPV_WIN_DOWNLOAD_SHA256: &str =
+        "fac135c68a35b7639e39d72c0c365104edbaebdea39a0dfdd8c36e8c8e80faef";
+
+    fn verify_sha256(path: &Path, expected_hex: &str) -> bool {
+        let output = Command::new("powershell")
+            .args([
+                "-NoProfile",
+                "-Command",
+                &format!("(Get-FileHash -Algorithm SHA256 '{}').Hash", path.display()),
+            ])
+            .output()
+            .or_else(|_| {
+                Command::new("certutil")
+                    .args(["-hashfile", path.to_str().unwrap_or_default(), "SHA256"])
+                    .output()
+            });
+
+        if let Ok(out) = output {
+            if out.status.success() {
+                let stdout = String::from_utf8_lossy(&out.stdout).to_lowercase();
+                return stdout.contains(&expected_hex.to_lowercase());
+            }
+        }
+        false
+    }
 
     pub fn setup_windows_mpv() {
         let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_default();
@@ -97,6 +118,14 @@ mod windows {
                     .unwrap_or(false);
 
             if downloaded && archive_path.exists() {
+                if !verify_sha256(&archive_path, MPV_WIN_DOWNLOAD_SHA256) {
+                    let _ = std::fs::remove_file(&archive_path);
+                    panic!(
+                        "SECURITY ERROR: SHA-256 checksum mismatch for downloaded mpv archive: {}",
+                        archive_path.display()
+                    );
+                }
+
                 // Extract using tar.exe (bsdtar included with Windows 10/11) or 7z.exe
                 let extracted = Command::new("tar.exe")
                     .args(["-xf", archive_path.to_str().unwrap(), "-C", mpv_dir.to_str().unwrap()])
@@ -134,3 +163,58 @@ mod windows {
         println!("cargo:rustc-link-search=native={}", mpv_dir.display());
     }
 }
+
+#[cfg(target_os = "linux")]
+mod linux {
+    use std::path::Path;
+
+    pub fn setup_linux_mpv() {
+        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_default();
+        let root = Path::new(&manifest_dir).join("../..");
+        let sysroot = root.join(".sysroot/usr/lib/x86_64-linux-gnu");
+
+        // 1. If sysroot already exists and has libmpv.so, add it to link search
+        if sysroot.join("libmpv.so").exists() {
+            println!("cargo:rustc-link-search=native={}", sysroot.display());
+            return;
+        }
+
+        // 2. Check if libmpv.so is already in standard search paths
+        let standard_dirs = [
+            "/usr/lib/x86_64-linux-gnu",
+            "/usr/lib64",
+            "/usr/lib",
+            "/usr/local/lib",
+            "/lib/x86_64-linux-gnu",
+            "/lib64",
+            "/lib",
+        ];
+
+        let has_dev_lib = standard_dirs.iter().any(|dir| {
+            Path::new(dir).join("libmpv.so").exists()
+        });
+
+        if has_dev_lib {
+            return;
+        }
+
+        // 3. If libmpv.so is missing, check for versioned libmpv (e.g. libmpv.so.2)
+        // provided by libmpv2 runtime packages
+        for dir in standard_dirs {
+            let path = Path::new(dir);
+            for version in &["libmpv.so.2", "libmpv.so.1"] {
+                let candidate = path.join(version);
+                if candidate.exists() {
+                    let _ = std::fs::create_dir_all(&sysroot);
+                    let target_link = sysroot.join("libmpv.so");
+                    if !target_link.exists() {
+                        let _ = std::os::unix::fs::symlink(&candidate, &target_link);
+                    }
+                    println!("cargo:rustc-link-search=native={}", sysroot.display());
+                    return;
+                }
+            }
+        }
+    }
+}
+

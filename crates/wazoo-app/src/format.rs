@@ -128,7 +128,7 @@ pub fn format_video_folder(path: &str) -> String {
 
 pub fn format_video_title(path: &str) -> String {
     let clean_path = path.strip_prefix("file://").unwrap_or(path);
-    let file_name = clean_path.split(['/', '\\']).last().unwrap_or("");
+    let file_name = clean_path.split(['/', '\\']).next_back().unwrap_or("");
 
     // Remove file extension
     let without_ext = match file_name.rfind('.') {
@@ -178,7 +178,7 @@ pub fn format_number(n: usize) -> String {
     let len = bytes.len();
     let mut result = String::with_capacity(len + len / 3);
     for (i, &b) in bytes.iter().enumerate() {
-        if i > 0 && (len - i) % 3 == 0 {
+        if i > 0 && (len - i).is_multiple_of(3) {
             result.push(',');
         }
         result.push(b as char);
