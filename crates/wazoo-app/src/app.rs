@@ -236,6 +236,7 @@ impl WazooApp {
                     duration_secs: app.settings.buffer_duration_secs,
                     size_mb: app.settings.buffer_size_mb,
                     read_chunk_kb: 512,
+                    preferred_audio_language: app.settings.preferred_audio_language.clone(),
                 };
                 let start_secs = if session.position_secs > 0.05 {
                     Some(session.position_secs)
@@ -438,6 +439,7 @@ impl WazooApp {
             duration_secs: self.settings.buffer_duration_secs,
             size_mb: self.settings.buffer_size_mb,
             read_chunk_kb: 512,
+            preferred_audio_language: self.settings.preferred_audio_language.clone(),
         };
         VideoHandle::with_buffering_and_start(id, path, name, buffer_config, start_secs)
     }
@@ -603,6 +605,7 @@ impl WazooApp {
             duration_secs: self.settings.buffer_duration_secs,
             size_mb: self.settings.buffer_size_mb,
             read_chunk_kb: 512,
+            preferred_audio_language: self.settings.preferred_audio_language.clone(),
         };
         let path = video_rec.path;
         let name = video_rec.name;
@@ -1308,6 +1311,7 @@ mod tests {
             assert_eq!(app.toast_message.as_deref(), Some("Audio: Japanese"));
             assert_eq!(app.players[0].state.current_audio_track_id, Some(2));
             assert_eq!(app.player_overlay_ticks, PLAYER_OVERLAY_HIDE_TICKS);
+            assert_eq!(app.settings.preferred_audio_language.as_deref(), Some("Japanese"));
 
             // Re-render view with new track selected
             let _ = app.view();

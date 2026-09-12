@@ -127,6 +127,8 @@ pub struct WazooSettings {
     pub session_videos: Vec<VideoSession>,
     #[serde(default)]
     pub bookmarks: Vec<Bookmark>,
+    #[serde(default)]
+    pub preferred_audio_language: Option<String>,
 }
 
 impl Default for WazooSettings {
@@ -147,6 +149,7 @@ impl Default for WazooSettings {
             language: "en".to_string(),
             session_videos: Vec::new(),
             bookmarks: Vec::new(),
+            preferred_audio_language: None,
         }
     }
 }

@@ -107,6 +107,119 @@ pub fn format_audio_track_label(track: &AudioTrack, index: usize) -> String {
     }
 }
 
+pub fn language_aliases(name_or_code: &str) -> Vec<String> {
+    let lower = name_or_code.trim().to_ascii_lowercase();
+    let mut aliases = Vec::new();
+    match lower.as_str() {
+        "ja" | "jpn" | "jp" | "japanese" => {
+            aliases.extend(vec!["ja".into(), "jpn".into(), "jp".into(), "japanese".into()]);
+        }
+        "en" | "eng" | "english" => {
+            aliases.extend(vec!["en".into(), "eng".into(), "english".into()]);
+        }
+        "es" | "spa" | "spanish" => {
+            aliases.extend(vec!["es".into(), "spa".into(), "spanish".into()]);
+        }
+        "fr" | "fra" | "fre" | "french" => {
+            aliases.extend(vec!["fr".into(), "fra".into(), "fre".into(), "french".into()]);
+        }
+        "de" | "deu" | "ger" | "german" => {
+            aliases.extend(vec!["de".into(), "deu".into(), "ger".into(), "german".into()]);
+        }
+        "it" | "ita" | "italian" => {
+            aliases.extend(vec!["it".into(), "ita".into(), "italian".into()]);
+        }
+        "pt" | "por" | "portuguese" => {
+            aliases.extend(vec!["pt".into(), "por".into(), "portuguese".into()]);
+        }
+        "ru" | "rus" | "russian" => {
+            aliases.extend(vec!["ru".into(), "rus".into(), "russian".into()]);
+        }
+        "zh" | "zho" | "chi" | "chinese" => {
+            aliases.extend(vec!["zh".into(), "zho".into(), "chi".into(), "chinese".into()]);
+        }
+        "ko" | "kor" | "korean" => {
+            aliases.extend(vec!["ko".into(), "kor".into(), "korean".into()]);
+        }
+        _ => {
+            let display = language_display_name(&lower);
+            if !display.is_empty() {
+                aliases.push(display.to_ascii_lowercase());
+            }
+            if !lower.is_empty() {
+                aliases.push(lower);
+            }
+        }
+    }
+    aliases
+}
+
+pub fn build_alang_string(preferred: &str) -> String {
+    let aliases = language_aliases(preferred);
+    aliases.join(",")
+}
+
+pub fn get_track_preference_string(track: &AudioTrack) -> String {
+    if let Some(ref l) = track.lang {
+        let display = language_display_name(l);
+        if !display.is_empty() {
+            return display.to_string();
+        }
+        let trimmed = l.trim();
+        if !trimmed.is_empty() {
+            return trimmed.to_string();
+        }
+    }
+    if let Some(ref _t) = track.title {
+        let cleaned = format_audio_track_label(track, 0);
+        if !cleaned.is_empty() {
+            return cleaned;
+        }
+    }
+    format!("Track {}", track.id)
+}
+
+pub fn find_matching_audio_track(tracks: &[AudioTrack], preferred: &str) -> Option<i64> {
+    if preferred.trim().is_empty() {
+        return None;
+    }
+    let aliases = language_aliases(preferred);
+
+    // Pass 1: exact match on track.lang against any alias
+    for t in tracks {
+        if let Some(ref l) = t.lang {
+            let lower_lang = l.trim().to_ascii_lowercase();
+            if aliases.iter().any(|a| a == &lower_lang) {
+                return Some(t.id);
+            }
+            let display = language_display_name(&lower_lang).to_ascii_lowercase();
+            if !display.is_empty() && aliases.iter().any(|a| a == &display) {
+                return Some(t.id);
+            }
+        }
+    }
+
+    // Pass 2: match on track.title containing any alias as a substring
+    for t in tracks {
+        if let Some(ref title) = t.title {
+            let lower_title = title.to_ascii_lowercase();
+            if aliases.iter().any(|a| lower_title.contains(a)) {
+                return Some(t.id);
+            }
+        }
+    }
+
+    // Pass 3: match formatted label
+    for (i, t) in tracks.iter().enumerate() {
+        let label = format_audio_track_label(t, i).to_ascii_lowercase();
+        if aliases.iter().any(|a| label.contains(a)) {
+            return Some(t.id);
+        }
+    }
+
+    None
+}
+
 #[derive(Debug, Clone)]
 pub struct PlayerState {
     pub id: PlayerId,
@@ -142,11 +255,12 @@ impl PlayerState {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct BufferConfig {
     pub duration_secs: u32,
     pub size_mb: u32,
     pub read_chunk_kb: u32,
+    pub preferred_audio_language: Option<String>,
 }
 
 impl Default for BufferConfig {
@@ -155,6 +269,7 @@ impl Default for BufferConfig {
             duration_secs: 10,
             size_mb: 32,
             read_chunk_kb: 512,
+            preferred_audio_language: None,
         }
     }
 }
@@ -174,6 +289,7 @@ pub struct VideoHandle {
     last_seek_time: Option<Instant>,
     pending_seek: Option<Duration>,
     tracks_loaded: bool,
+    preferred_audio_language: Option<String>,
 }
 
 unsafe impl Send for VideoHandle {}
@@ -255,6 +371,13 @@ impl VideoHandle {
             set_opt("keep-open", "yes");
             set_opt("idle", "yes");
             set_opt("terminal", "no");
+
+            if let Some(ref pref) = config.preferred_audio_language {
+                let alang = build_alang_string(pref);
+                if !alang.is_empty() {
+                    set_opt("alang", &alang);
+                }
+            }
 
             if let Some(start) = start_secs {
                 if start > 0.05 {
@@ -379,6 +502,7 @@ impl VideoHandle {
                 last_seek_time,
                 pending_seek,
                 tracks_loaded: false,
+                preferred_audio_language: config.preferred_audio_language,
             };
 
             handle.set_volume(1.0);
@@ -802,17 +926,53 @@ impl VideoHandle {
         }
         let aid_i64 = self.get_property_i64("aid");
         let aid_str = self.get_property_string("aid");
-        let current_aid = aid_i64
+        let mut current_aid = aid_i64
             .or_else(|| aid_str.as_deref().and_then(|s| s.parse::<i64>().ok()))
             .or_else(|| tracks.iter().find(|t| t.is_selected).map(|t| t.id))
             .or_else(|| tracks.first().map(|t| t.id));
         self.state.audio_tracks = tracks;
         self.state.current_audio_track_id = current_aid;
+
+        // Auto-select preferred audio track if configured
+        if let Some(ref pref) = self.preferred_audio_language {
+            if let Some(matching_id) = find_matching_audio_track(&self.state.audio_tracks, pref) {
+                if current_aid != Some(matching_id) {
+                    self.set_audio_track(matching_id);
+                    current_aid = Some(matching_id);
+                }
+            }
+        }
+
         if let Some(aid) = current_aid {
             for t in &mut self.state.audio_tracks {
                 t.is_selected = t.id == aid;
             }
         }
+    }
+
+    pub fn set_preferred_audio_language(&mut self, pref: Option<String>) {
+        self.preferred_audio_language = pref.clone();
+        if let Some(ref p) = pref {
+            let alang = build_alang_string(p);
+            if !alang.is_empty() {
+                if let (Ok(c_prop), Ok(c_val)) = (CString::new("alang"), CString::new(alang)) {
+                    unsafe {
+                        if !self.mpv.is_null() {
+                            mpv_ffi::mpv_set_property_string(self.mpv, c_prop.as_ptr(), c_val.as_ptr());
+                        }
+                    }
+                }
+            }
+            if let Some(matching_id) = find_matching_audio_track(&self.state.audio_tracks, p) {
+                if self.state.current_audio_track_id != Some(matching_id) {
+                    self.set_audio_track(matching_id);
+                }
+            }
+        }
+    }
+
+    pub fn preferred_audio_language(&self) -> Option<&str> {
+        self.preferred_audio_language.as_deref()
     }
 
     fn get_property_string(&self, name: &str) -> Option<String> {
@@ -872,5 +1032,80 @@ impl VideoHandle {
                 None
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_find_matching_audio_track() {
+        let tracks = vec![
+            AudioTrack {
+                id: 1,
+                title: Some("English Dub / AAC LC".to_string()),
+                lang: Some("eng".to_string()),
+                codec: Some("aac".to_string()),
+                is_selected: true,
+            },
+            AudioTrack {
+                id: 2,
+                title: None,
+                lang: Some("jpn".to_string()),
+                codec: Some("aac".to_string()),
+                is_selected: false,
+            },
+        ];
+
+        // Matching by language code or display name
+        assert_eq!(find_matching_audio_track(&tracks, "Japanese"), Some(2));
+        assert_eq!(find_matching_audio_track(&tracks, "jpn"), Some(2));
+        assert_eq!(find_matching_audio_track(&tracks, "ja"), Some(2));
+        assert_eq!(find_matching_audio_track(&tracks, "English"), Some(1));
+        assert_eq!(find_matching_audio_track(&tracks, "eng"), Some(1));
+
+        // Matching by title substring
+        assert_eq!(find_matching_audio_track(&tracks, "dub"), Some(1));
+
+        // Unknown language returns None
+        assert_eq!(find_matching_audio_track(&tracks, "German"), None);
+        assert_eq!(find_matching_audio_track(&tracks, ""), None);
+    }
+
+    #[test]
+    fn test_get_track_preference_string() {
+        let track_jpn = AudioTrack {
+            id: 2,
+            title: None,
+            lang: Some("jpn".to_string()),
+            codec: None,
+            is_selected: false,
+        };
+        assert_eq!(get_track_preference_string(&track_jpn), "Japanese");
+
+        let track_eng = AudioTrack {
+            id: 1,
+            title: Some("English Dub / AAC LC".to_string()),
+            lang: Some("eng".to_string()),
+            codec: None,
+            is_selected: true,
+        };
+        assert_eq!(get_track_preference_string(&track_eng), "English");
+
+        let track_commentary = AudioTrack {
+            id: 3,
+            title: Some("Director's Commentary".to_string()),
+            lang: None,
+            codec: None,
+            is_selected: false,
+        };
+        assert_eq!(get_track_preference_string(&track_commentary), "Director's Commentary");
+    }
+
+    #[test]
+    fn test_build_alang_string() {
+        assert_eq!(build_alang_string("Japanese"), "ja,jpn,jp,japanese");
+        assert_eq!(build_alang_string("English"), "en,eng,english");
     }
 }

@@ -671,12 +671,21 @@ impl WazooApp {
                         self.focus_border_ticks = 20;
                     }
                 }
+                let mut selected_pref = None;
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.set_audio_track(track_id);
                     if let Some(track) = p.state.audio_tracks.iter().find(|t| t.id == track_id) {
                         let label = wazoo_media::format_audio_track_label(track, 0);
                         self.toast_message = Some(format!("Audio: {label}"));
                         self.toast_time_remaining = 2;
+                        selected_pref = Some(wazoo_media::get_track_preference_string(track));
+                    }
+                }
+                if let Some(pref) = selected_pref {
+                    self.settings.preferred_audio_language = Some(pref.clone());
+                    let _ = self.config_mgr.save_settings(&self.settings);
+                    for other in &mut self.players {
+                        other.set_preferred_audio_language(Some(pref.clone()));
                     }
                 }
                 self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
