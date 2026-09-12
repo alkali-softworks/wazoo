@@ -19,20 +19,37 @@ use crate::message::Message;
 use crate::theme;
 
 impl WazooApp {
-    pub(crate) fn view_file_picker(&self) -> Element<'_, Message> {
-        let search_filter = self.file_picker_search.to_lowercase();
+    pub(crate) fn filter_and_group_videos_for_picker(&self) -> BTreeMap<String, Vec<&VideoRecord>> {
+        let search_filter = self.file_picker_search.trim().to_lowercase();
+        let search_clean = search_filter.replace(['_', '-'], " ");
+        let search_words: Vec<&str> = search_clean.split_whitespace().collect();
 
         // Group videos by folder
         let mut grouped: BTreeMap<String, Vec<&VideoRecord>> = BTreeMap::new();
         for v in &self.available_videos {
-            let title = format::format_video_title(&v.path);
-            if !search_filter.is_empty() && !title.to_lowercase().contains(&search_filter) {
-                continue;
-            }
             let folder = format::format_video_folder(&v.path);
             let folder_key = if folder.is_empty() { "Other".to_string() } else { folder };
+            let title = format::format_video_title(&v.path);
+
+            if !search_words.is_empty() {
+                let folder_lower = folder_key.to_lowercase();
+                let title_lower = title.to_lowercase();
+                let matches_all_words = search_words
+                    .iter()
+                    .all(|w| folder_lower.contains(w) || title_lower.contains(w));
+                if !matches_all_words {
+                    continue;
+                }
+            }
+
             grouped.entry(folder_key).or_default().push(v);
         }
+
+        grouped
+    }
+
+    pub(crate) fn view_file_picker(&self) -> Element<'_, Message> {
+        let grouped = self.filter_and_group_videos_for_picker();
 
         let mut folders_col = column![].spacing(6);
         for (folder, files) in grouped {

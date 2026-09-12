@@ -428,20 +428,19 @@ impl WazooApp {
                 }
             }
             Message::FilePickerSearchChanged(s) => {
-                let trimmed = s.trim().to_lowercase();
-                if !trimmed.is_empty() && self.file_picker_search.trim().is_empty() {
-                    for v in &self.available_videos {
-                        let title = format::format_video_title(&v.path).to_lowercase();
-                        if title.contains(&trimmed) {
-                            let folder = format::format_video_folder(&v.path);
-                            let folder_key = if folder.is_empty() { "Other".to_string() } else { folder };
-                            self.expanded_folders.insert(folder_key);
-                        }
+                self.file_picker_search = s;
+                let trimmed = self.file_picker_search.trim();
+                if !trimmed.is_empty() {
+                    let matching_folders: Vec<String> = self
+                        .filter_and_group_videos_for_picker()
+                        .into_keys()
+                        .collect();
+                    for folder in matching_folders {
+                        self.expanded_folders.insert(folder);
                     }
-                } else if trimmed.is_empty() {
+                } else {
                     self.expanded_folders.clear();
                 }
-                self.file_picker_search = s;
             }
             Message::PlayFileInFocused(path) => {
                 if let Some(id) = self.focused_player_id() {

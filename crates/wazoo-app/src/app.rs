@@ -1345,6 +1345,25 @@ mod tests {
             // Re-render view with menu open
             let _ = app.view();
 
+            if let Some(p) = app.players.iter_mut().find(|p| p.id == player_id) {
+                p.state.audio_tracks = vec![
+                    wazoo_media::AudioTrack {
+                        id: 1,
+                        title: Some("English Dub / AAC LC".to_string()),
+                        lang: Some("eng".to_string()),
+                        codec: Some("vorbis".to_string()),
+                        is_selected: true,
+                    },
+                    wazoo_media::AudioTrack {
+                        id: 2,
+                        title: None,
+                        lang: Some("jpn".to_string()),
+                        codec: Some("vorbis".to_string()),
+                        is_selected: false,
+                    },
+                ];
+            }
+
             // Send SelectAudioTrack to switch to Japanese (track 2)
             let _ = app.update(Message::SelectAudioTrack(player_id, 2));
 
@@ -1461,5 +1480,81 @@ mod tests {
             assert_eq!(app.show_transcript_menu, false);
         }
     }
-}
+
+    #[test]
+    fn test_file_picker_search_matches_folder_name_and_expands() {
+        let (mut app, _) = WazooApp::new(None);
+        app.available_videos = vec![
+            VideoRecord {
+                id: 1,
+                name: "S01E01-Jobless Reincarnation V2".to_string(),
+                path: "/media/Mushoku Tensei/S01E01-Jobless Reincarnation V2.mkv".to_string(),
+            },
+            VideoRecord {
+                id: 2,
+                name: "Mushoku Tensei S3 - 01".to_string(),
+                path: "/media/Mushoku Tensei/Mushoku Tensei S3 - 01.mkv".to_string(),
+            },
+            VideoRecord {
+                id: 3,
+                name: "S01E02-Teacher V2".to_string(),
+                path: "/media/Mushoku Tensei/S01E02-Teacher V2.mkv".to_string(),
+            },
+            VideoRecord {
+                id: 4,
+                name: "S01E01-The Journey Begins".to_string(),
+                path: "/media/Frieren/S01E01-The Journey Begins.mkv".to_string(),
+            },
+        ];
+
+        // 1. When search is empty, all folders and files are present
+        let grouped = app.filter_and_group_videos_for_picker();
+        assert_eq!(grouped.len(), 2);
+        assert_eq!(grouped["Mushoku Tensei"].len(), 3);
+        assert_eq!(grouped["Frieren"].len(), 1);
+
+        // 2. Searching "mush" matches the folder "Mushoku Tensei", including ALL files in that folder
+        let _ = app.update(Message::FilePickerSearchChanged("mush".to_string()));
+        assert_eq!(app.file_picker_search, "mush");
+        assert!(app.expanded_folders.contains("Mushoku Tensei"));
+        assert!(!app.expanded_folders.contains("Frieren"));
+
+        let grouped = app.filter_and_group_videos_for_picker();
+        assert_eq!(grouped.len(), 1);
+        // All 3 videos in the folder match because folder name matches "mush"
+        assert_eq!(grouped["Mushoku Tensei"].len(), 3);
+
+        // 3. Searching for a specific episode title "Jobless" inside that folder
+        let _ = app.update(Message::FilePickerSearchChanged("Jobless".to_string()));
+        let grouped = app.filter_and_group_videos_for_picker();
+        assert_eq!(grouped.len(), 1);
+        assert_eq!(grouped["Mushoku Tensei"].len(), 1);
+        assert_eq!(grouped["Mushoku Tensei"][0].name, "S01E01-Jobless Reincarnation V2");
+
+        // 4. Searching across folder and title with multiple words: "mushoku jobless"
+        let _ = app.update(Message::FilePickerSearchChanged("mushoku jobless".to_string()));
+        let grouped = app.filter_and_group_videos_for_picker();
+        assert_eq!(grouped.len(), 1);
+        assert_eq!(grouped["Mushoku Tensei"].len(), 1);
+        assert_eq!(grouped["Mushoku Tensei"][0].name, "S01E01-Jobless Reincarnation V2");
+
+        // 5. Searching for "The Journey" matches only Frieren
+        let _ = app.update(Message::FilePickerSearchChanged("The Journey".to_string()));
+        assert!(app.expanded_folders.contains("Frieren"));
+        let grouped = app.filter_and_group_videos_for_picker();
+        assert_eq!(grouped.len(), 1);
+        assert_eq!(grouped["Frieren"].len(), 1);
+
+        // 6. Clearing the search clears expanded folders and restores all groups
+        let _ = app.update(Message::FilePickerSearchChanged("".to_string()));
+        assert!(app.expanded_folders.is_empty());
+        let grouped = app.filter_and_group_videos_for_picker();
+        assert_eq!(grouped.len(), 2);
+        assert_eq!(grouped["Mushoku Tensei"].len(), 3);
+        assert_eq!(grouped["Frieren"].len(), 1);
+
+        // 7. View file picker renders without errors
+        let _ = app.view_file_picker();
+    }
+    }
 
