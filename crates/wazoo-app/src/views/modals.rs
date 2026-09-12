@@ -520,9 +520,11 @@ impl WazooApp {
         )
         .on_press(on_close);
 
+        let card_area = mouse_area(card).on_press(Message::ModalCardClicked);
+
         let center_row = row![
             backdrop_left,
-            card,
+            card_area,
             backdrop_right,
         ]
         .align_y(Alignment::Center)

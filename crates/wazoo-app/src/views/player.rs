@@ -127,7 +127,7 @@ impl WazooApp {
     pub(crate) fn view_player_internal<'a>(&self, p: &'a VideoHandle, is_scroll_mode: bool) -> Element<'a, Message> {
         let player_id = p.id;
         let is_focused = self.focused_player_id() == Some(player_id);
-        let is_hovered = self.hovered_player_id == Some(player_id);
+        let is_hovered = !self.is_modal_or_menu_open() && self.hovered_player_id == Some(player_id);
 
         let pos = p.position();
         let dur = p.duration();
@@ -197,7 +197,7 @@ impl WazooApp {
         }
 
         // Overlays show when mouse is actively moving over this specific player (fades after delay), or while player is loading
-        let show_overlay = (is_hovered && self.player_overlay_ticks > 0) || is_loading;
+        let show_overlay = (!self.is_modal_or_menu_open() && is_hovered && self.player_overlay_ticks > 0) || is_loading;
 
         // 1. Top-Left Title Pill (Matches Electron Player.vue)
         let formatted_title = format::format_descriptive_title(&p.state.path);

@@ -285,6 +285,10 @@ impl WazooApp {
             || self.show_menu_modal
     }
 
+    pub(crate) fn is_modal_or_menu_open(&self) -> bool {
+        self.is_any_modal_open() || self.show_dropdown_menu
+    }
+
     pub(crate) fn focused_player_id(&self) -> Option<PlayerId> {
         if self.players.is_empty() {
             None

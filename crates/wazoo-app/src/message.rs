@@ -118,4 +118,5 @@ pub enum Message {
     WatchdogTick,
     FlipModeTick,
     DismissToast,
+    ModalCardClicked,
 }
