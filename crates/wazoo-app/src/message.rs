@@ -83,6 +83,7 @@ pub enum Message {
     OpenSearchModal,
     CloseSearchModal,
     SearchInputChanged(String),
+    RemoveSearchTag(usize),
     PerformSearch,
     OpenSettingsModal,
     CloseSettingsModal,

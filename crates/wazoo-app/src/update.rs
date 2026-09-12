@@ -198,8 +198,14 @@ impl WazooApp {
                 // If typing in either search input (captured by widget) or if search modal or any modal is open,
                 // do NOT allow keystrokes to trigger global shortcuts (e.g. 'm' for mute, 's' for shuffle, etc.)
                 if status == iced::event::Status::Captured || self.is_any_modal_open() {
-                    if self.show_search_modal && key == Key::Named(Named::Enter) {
-                        return self.update(Message::PerformSearch);
+                    if self.show_search_modal {
+                        if key == Key::Named(Named::Enter) {
+                            return self.update(Message::PerformSearch);
+                        }
+                        if key == Key::Named(Named::Backspace) && self.search_input.is_empty() {
+                            self.search_tags.pop();
+                            return iced::widget::operation::focus("search_input");
+                        }
                     }
                     return Task::none();
                 }
@@ -882,6 +888,13 @@ impl WazooApp {
                 self.toast_message = None;
                 self.hovered_player_id = None;
                 self.player_overlay_ticks = 0;
+                self.search_tags = self
+                    .active_search_query
+                    .split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+                self.search_input.clear();
                 return Task::batch([
                     iced::widget::operation::focus("search_input"),
                 ]);
@@ -890,10 +903,34 @@ impl WazooApp {
                 self.show_search_modal = false;
             }
             Message::SearchInputChanged(val) => {
-                self.search_input = val;
+                if val.contains(',') {
+                    let mut parts: Vec<&str> = val.split(',').collect();
+                    let remainder = parts.pop().unwrap_or("").to_string();
+                    for part in parts {
+                        let tag = part.trim();
+                        if !tag.is_empty() && !self.search_tags.iter().any(|t| t.eq_ignore_ascii_case(tag)) {
+                            self.search_tags.push(tag.to_string());
+                        }
+                    }
+                    self.search_input = remainder.trim_start().to_string();
+                    return iced::widget::operation::focus("search_input");
+                } else {
+                    self.search_input = val;
+                }
+            }
+            Message::RemoveSearchTag(idx) => {
+                if idx < self.search_tags.len() {
+                    self.search_tags.remove(idx);
+                }
+                return iced::widget::operation::focus("search_input");
             }
             Message::PerformSearch => {
-                self.active_search_query = self.search_input.clone();
+                let pending = self.search_input.trim();
+                if !pending.is_empty() && !self.search_tags.iter().any(|t| t.eq_ignore_ascii_case(pending)) {
+                    self.search_tags.push(pending.to_string());
+                }
+                self.search_input.clear();
+                self.active_search_query = self.search_tags.join(", ");
                 self.settings.last_query = self.active_search_query.clone();
                 self.settings.last_folder = self.selected_search_folder.clone();
                 let _ = self.config_mgr.save_settings(&self.settings);
@@ -1034,7 +1071,13 @@ impl WazooApp {
 
                 // 2. Update the global search query to match the bookmark's query
                 self.active_search_query = b.query.clone();
-                self.search_input = b.query.clone();
+                self.search_tags = b
+                    .query
+                    .split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+                self.search_input.clear();
                 self.settings.last_query = b.query.clone();
                 self.settings.last_folder = self.selected_search_folder.clone();
                 let _ = self.config_mgr.save_settings(&self.settings);

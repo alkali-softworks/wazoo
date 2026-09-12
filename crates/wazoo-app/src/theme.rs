@@ -228,6 +228,85 @@ pub fn dark_input_style(_theme: &Theme, status: text_input::Status) -> text_inpu
     }
 }
 
+// Tag Input Box (Outer container styled like input)
+pub fn tag_input_box_style(_theme: &Theme) -> container::Style {
+    container::Style {
+        background: Some(Background::Color(Color::from_rgb8(0x2a, 0x2a, 0x2a))),
+        border: Border {
+            radius: 6.0.into(),
+            width: 1.0,
+            color: Color::from_rgb8(0x3f, 0x3f, 0x3f),
+        },
+        text_color: Some(Color::WHITE),
+        ..Default::default()
+    }
+}
+
+// Tag Chip container
+pub fn tag_chip_style(_theme: &Theme) -> container::Style {
+    container::Style {
+        background: Some(Background::Color(Color::from_rgb8(0x3a, 0x3a, 0x3a))),
+        border: Border {
+            radius: 4.0.into(),
+            width: 1.0,
+            color: Color::from_rgb8(0x4f, 0x4f, 0x4f),
+        },
+        text_color: Some(Color::WHITE),
+        ..Default::default()
+    }
+}
+
+// Tag Delete (✕) button
+pub fn tag_delete_button_style(_theme: &Theme, status: button::Status) -> button::Style {
+    let color = match status {
+        button::Status::Hovered => Color::WHITE,
+        _ => Color::from_rgb8(0xa1, 0xa1, 0xaa),
+    };
+    button::Style {
+        background: None,
+        text_color: color,
+        border: Border::default(),
+        shadow: Shadow::default(),
+        ..Default::default()
+    }
+}
+
+// Transparent Text Input (inside tag input box)
+pub fn transparent_input_style(_theme: &Theme, _status: text_input::Status) -> text_input::Style {
+    text_input::Style {
+        background: Background::Color(Color::TRANSPARENT),
+        border: Border {
+            radius: 0.0.into(),
+            width: 0.0,
+            color: Color::TRANSPARENT,
+        },
+        icon: Color::from_rgb8(0x71, 0x71, 0x7a),
+        placeholder: Color::from_rgb8(0x71, 0x71, 0x7a),
+        value: Color::WHITE,
+        selection: Color::from_rgba(0.26, 0.72, 0.51, 0.4),
+    }
+}
+
+// Emerald Green Search Button (matching wazoo-desktop)
+pub fn search_button_style(_theme: &Theme, status: button::Status) -> button::Style {
+    let bg = match status {
+        button::Status::Hovered => Color::from_rgb(0.30, 0.78, 0.56),
+        button::Status::Pressed => Color::from_rgb(0.22, 0.65, 0.46),
+        _ => COLOR_PRIMARY,
+    };
+    button::Style {
+        background: Some(Background::Color(bg)),
+        text_color: Color::WHITE,
+        border: Border {
+            radius: 6.0.into(),
+            width: 0.0,
+            color: Color::TRANSPARENT,
+        },
+        shadow: Shadow::default(),
+        ..Default::default()
+    }
+}
+
 pub fn dark_pick_list_style(_theme: &Theme, status: iced::widget::pick_list::Status) -> iced::widget::pick_list::Style {
     let border_color = match status {
         iced::widget::pick_list::Status::Opened { .. } => COLOR_PRIMARY,
