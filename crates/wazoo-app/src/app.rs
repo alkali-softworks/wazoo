@@ -49,6 +49,7 @@ pub struct WazooApp {
     pub(crate) app_icon_handle: iced::widget::image::Handle,
     pub(crate) toast_message: Option<String>,
     pub(crate) toast_time_remaining: usize,
+    pub(crate) last_total_videos: usize,
     pub(crate) next_player_id: PlayerId,
     pub(crate) is_scanning: bool,
     pub(crate) scan_progress: Option<ScanProgress>,
@@ -125,14 +126,15 @@ impl WazooApp {
 
         let icon_handle = iced::widget::image::Handle::from_bytes(APP_ICON_BYTES);
 
+        let total_videos = videos.len();
         let toast_msg = if is_cli {
             if videos.is_empty() {
                 Some(wazoo_core::t(&settings.language, "wazoo.no_videos_found"))
             } else {
                 Some(wazoo_core::t_with(
                     &settings.language,
-                    "wazoo.videos_count",
-                    &[("count", &format::format_number(videos.len()))],
+                    "wazoo.total_files",
+                    &[("total", &format::format_number(total_videos))],
                 ))
             }
         } else {
@@ -168,6 +170,7 @@ impl WazooApp {
             app_icon_handle: icon_handle,
             toast_message: toast_msg,
             toast_time_remaining,
+            last_total_videos: total_videos,
             next_player_id: 1,
             is_scanning: false,
             scan_progress: None,
@@ -630,6 +633,45 @@ impl WazooApp {
         wazoo_core::t_with(&self.settings.language, key, args)
     }
 
+    pub(crate) fn show_video_totals_notice(&mut self, total: usize, folder_label: &str) {
+        if total == 0 {
+            let msg = if folder_label.is_empty() || folder_label == "All" {
+                self.t("wazoo.no_videos_found")
+            } else {
+                let folder_clean = folder_label
+                    .split(['/', '\\'])
+                    .filter(|s| !s.is_empty())
+                    .last()
+                    .unwrap_or(folder_label);
+                self.t_with("wazoo.no_files_found_in", &[("folder", folder_clean)])
+            };
+            self.toast_message = Some(msg);
+            self.toast_time_remaining = 3;
+            return;
+        }
+
+        let total_str = format::format_number(total);
+        let base_msg = self.t_with("wazoo.total_files", &[("total", &total_str)]);
+
+        let msg = if self.last_total_videos != 0 && total > self.last_total_videos {
+            let diff = total - self.last_total_videos;
+            let diff_str = format::format_number(diff);
+            let diff_msg = self.t_with("wazoo.more_than_before", &[("diff", &diff_str)]);
+            format!("{base_msg}\n{diff_msg}")
+        } else if self.last_total_videos != 0 && total < self.last_total_videos {
+            let diff = self.last_total_videos - total;
+            let diff_str = format::format_number(diff);
+            let diff_msg = self.t_with("wazoo.less_than_before", &[("diff", &diff_str)]);
+            format!("{base_msg}\n{diff_msg}")
+        } else {
+            base_msg
+        };
+
+        self.last_total_videos = total;
+        self.toast_message = Some(msg);
+        self.toast_time_remaining = 3;
+    }
+
     pub fn subscription(&self) -> Subscription<Message> {
         let mut subs = vec![
             iced::time::every(Duration::from_millis(16)).map(|_| Message::VideoFrameTick),
@@ -766,6 +808,52 @@ mod tests {
         let _ = app.update(Message::VideoFrameTick);
         assert!(!app.show_titlebar);
         assert_eq!(app.titlebar_hide_ticks, 0);
+    }
+
+    #[test]
+    fn test_show_video_totals_notice_transitions() {
+        let (mut app, _) = WazooApp::new(None);
+        app.settings.language = "en".to_string();
+
+        // 1. Initial count when last_total_videos was 0
+        app.last_total_videos = 0;
+        app.show_video_totals_notice(1000, "All");
+        assert_eq!(app.toast_message.as_deref(), Some("1,000 Total files"));
+        assert_eq!(app.last_total_videos, 1000);
+
+        // 2. Count increases ("More than before")
+        app.show_video_totals_notice(1050, "All");
+        assert_eq!(
+            app.toast_message.as_deref(),
+            Some("1,050 Total files\n50 More than before")
+        );
+        assert_eq!(app.last_total_videos, 1050);
+
+        // 3. Count decreases ("Less than before")
+        app.show_video_totals_notice(200, "All");
+        assert_eq!(
+            app.toast_message.as_deref(),
+            Some("200 Total files\n850 Less than before")
+        );
+        assert_eq!(app.last_total_videos, 200);
+
+        // 4. Same count (no diff)
+        app.show_video_totals_notice(200, "All");
+        assert_eq!(app.toast_message.as_deref(), Some("200 Total files"));
+        assert_eq!(app.last_total_videos, 200);
+
+        // 5. Zero results with "All" or empty folder
+        app.show_video_totals_notice(0, "All");
+        assert_eq!(
+            app.toast_message.as_deref(),
+            Some("No videos found for query")
+        );
+        assert_eq!(app.last_total_videos, 200); // last_total_videos preserved
+
+        // 6. Zero results with specific folder
+        app.show_video_totals_notice(0, "/media/videos/Anime");
+        assert_eq!(app.toast_message.as_deref(), Some("No files found in Anime"));
+        assert_eq!(app.last_total_videos, 200); // last_total_videos preserved
     }
 }
 
