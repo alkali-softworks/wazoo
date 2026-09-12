@@ -389,6 +389,7 @@ impl WazooApp {
         mouse_area(player_box)
             .on_press(Message::PlayerClicked(player_id))
             .on_enter(Message::PlayerHovered(player_id))
+            .on_move(move |_| Message::PlayerHovered(player_id))
             .on_exit(Message::PlayerUnhovered(player_id))
             .into()
     }
