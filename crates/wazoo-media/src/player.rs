@@ -454,7 +454,13 @@ impl VideoHandle {
             // Configure libmpv for optimal ambient media playback (coreaudio on macOS, wasapi on Windows, pulse/pipewire/alsa on Linux)
             set_opt("vo", "libmpv");
             set_opt("ao", "coreaudio,wasapi,pulse,pipewire,alsa,null");
-            set_opt("hwdec", "auto-safe");
+            // For software rendering context (MPV_RENDER_PARAM_API_TYPE = "sw"), direct hardware decoding
+            // (e.g. vaapi, nvdec) is unsupported by libmpv and causes VA-API driver initialization errors
+            // or thread deadlocks on X11 when windows are occluded or behind other windows.
+            // Default to pure software decoding ("no") which is multi-threaded, robust, and zero-overhead.
+            // Allow override via WAZOO_HWDEC environment variable (e.g. "auto-copy") for specialized setups.
+            let hwdec = std::env::var("WAZOO_HWDEC").unwrap_or_else(|_| "no".to_string());
+            set_opt("hwdec", &hwdec);
             set_opt("demuxer-max-bytes", &format!("{}M", config.size_mb.max(16)));
             set_opt("demuxer-readahead-secs", &format!("{}", config.duration_secs.max(2)));
             set_opt("osc", "no");
@@ -526,8 +532,10 @@ impl VideoHandle {
             ];
             mpv_ffi::mpv_command(mpv, args.as_mut_ptr());
 
-            // Non-blocking pump of initial events so the UI thread is not frozen
-            while !mpv.is_null() {
+            // Non-blocking pump of initial events so the UI thread is not frozen (bounded)
+            let mut init_events = 0;
+            while !mpv.is_null() && init_events < 64 {
+                init_events += 1;
                 let event = mpv_ffi::mpv_wait_event(mpv, 0.0);
                 if event.is_null() || (*event).event_id == mpv_ffi::MPV_EVENT_NONE {
                     break;
@@ -610,8 +618,11 @@ impl VideoHandle {
     /// Update video frame if mpv has decoded a new presentation frame
     pub fn update_frame(&mut self) -> bool {
         unsafe {
-            // Process pending mpv events
-            while !self.mpv.is_null() {
+            // Process pending mpv events with a safety limit to prevent UI thread lockups
+            let mut event_count = 0;
+            let mut needs_refresh_tracks = false;
+            while !self.mpv.is_null() && event_count < 64 {
+                event_count += 1;
                 let event = mpv_ffi::mpv_wait_event(self.mpv, 0.0);
                 if event.is_null() || (*event).event_id == mpv_ffi::MPV_EVENT_NONE {
                     break;
@@ -623,7 +634,7 @@ impl VideoHandle {
                     || (*event).event_id == mpv_ffi::MPV_EVENT_TRACKS_CHANGED
                     || (*event).event_id == mpv_ffi::MPV_EVENT_PLAYBACK_RESTART
                 {
-                    self.refresh_audio_tracks();
+                    needs_refresh_tracks = true;
                     self.tracks_loaded = true;
                     if let Some(target) = self.pending_seek.take() {
                         self.last_seek_time = Some(Instant::now());
@@ -635,7 +646,9 @@ impl VideoHandle {
                 }
             }
 
-            if !self.tracks_loaded {
+            if needs_refresh_tracks {
+                self.refresh_audio_tracks();
+            } else if !self.tracks_loaded {
                 let count = self.get_property_i64("track-list/count").unwrap_or(0);
                 if count > 0 {
                     self.refresh_audio_tracks();
@@ -661,7 +674,7 @@ impl VideoHandle {
             let flags = mpv_ffi::mpv_render_context_update(self.render_ctx);
             if (flags & mpv_ffi::MPV_RENDER_UPDATE_FRAME) != 0 {
                 let mut size = [self.render_width as i32, self.render_height as i32];
-                let format = CString::new("rgb0").unwrap();
+                let format = c"rgb0";
                 let mut stride = (self.render_width * 4) as usize;
                 let mut block_target_time: c_int = 0;
                 let mut render_params = [
