@@ -20,6 +20,9 @@ pub enum Message {
     // Window management & Events
     WindowIdReceived(Id),
     WindowResized(Id, Size),
+    WindowFocused,
+    WindowUnfocused,
+    ModifiersChanged(iced::keyboard::Modifiers),
     GainWindowFocus,
     PreloadedPlayerReady(Arc<Mutex<Option<Result<VideoHandle, String>>>>),
     CursorMoved(Id, Point),

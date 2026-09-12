@@ -27,6 +27,15 @@ impl WazooApp {
                 self.window_id = Some(id);
                 return iced::window::gain_focus(id);
             }
+            Message::WindowFocused => {
+                self.is_alt_pressed = false;
+            }
+            Message::WindowUnfocused => {
+                self.is_alt_pressed = false;
+            }
+            Message::ModifiersChanged(modifiers) => {
+                self.is_alt_pressed = modifiers.alt();
+            }
             Message::GainWindowFocus => {
                 if let Some(id) = self.window_id {
                     return iced::window::gain_focus(id);

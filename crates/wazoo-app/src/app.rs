@@ -613,6 +613,15 @@ impl WazooApp {
                 iced::Event::Window(iced::window::Event::Resized(size)) => {
                     Some(Message::WindowResized(window_id, size))
                 }
+                iced::Event::Window(iced::window::Event::Focused) => {
+                    Some(Message::WindowFocused)
+                }
+                iced::Event::Window(iced::window::Event::Unfocused) => {
+                    Some(Message::WindowUnfocused)
+                }
+                iced::Event::Keyboard(iced::keyboard::Event::ModifiersChanged(modifiers)) => {
+                    Some(Message::ModifiersChanged(modifiers))
+                }
                 _ => None,
             }),
         ];
