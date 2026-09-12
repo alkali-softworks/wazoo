@@ -147,7 +147,7 @@ brew install mpv ffmpeg
 | <kbd>+</kbd> / <kbd>=</kbd> | Add Bookmark (or increase Scroll Speed in Scroll Mode) |
 | <kbd>-</kbd> | Remove Bookmark (or decrease Scroll Speed in Scroll Mode) |
 | <kbd>R</kbd> | **Random Seek** on focused player |
-| <kbd>T</kbd> | Show video title |
+| <kbd>T</kbd> | Show video titles (all players) |
 | <kbd>H</kbd> | Toggle **File Browser** drawer |
 | <kbd>C</kbd> | Toggle Subtitles on/off |
 | <kbd>J</kbd> / <kbd>F</kbd> / <kbd>/</kbd> | Open **Find / Search** modal |

@@ -110,7 +110,7 @@ pub enum Message {
     RemoveBookmark(usize),
     JumpToBookmark(Bookmark),
     RandomSeekFocused,
-    ShowTitleOverlayFocused,
+    ShowTitleOverlay,
 
     // Timers & Ticks
     AnimationTick,

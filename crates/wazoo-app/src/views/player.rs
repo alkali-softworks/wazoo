@@ -356,7 +356,7 @@ impl WazooApp {
             .height(Length::Fill);
 
             stack_children.push(Element::from(overlays_column));
-        } else if is_focused && self.title_pill_ticks > 0 {
+        } else if self.title_pill_ticks > 0 {
             let pill_column = column![
                 Space::new().height(Length::Fixed(80.0)),
                 top_row,

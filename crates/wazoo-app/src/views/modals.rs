@@ -222,7 +222,7 @@ impl WazooApp {
             ("+ / =", "Add Bookmark (or Scroll Speed +)"),
             ("-", "Remove Bookmark (or Scroll Speed -)"),
             ("r", "Random Seek on Video"),
-            ("t", "Show Video Title"),
+            ("t", "Show Video Titles"),
             ("5", "Toggle Scroll Mode"),
             ("6", "Toggle Flip Mode"),
             ("h", "Toggle File Picker"),
