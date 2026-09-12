@@ -320,7 +320,9 @@ impl WazooApp {
             }
             Message::SeekToSubtitle(secs) => {
                 if let Some(id) = self.focused_player_id() {
-                    return self.update(Message::Seek(id, Duration::from_secs_f64(secs.max(0.0))));
+                    // Offset by +10ms so playback starts cleanly inside the target cue,
+                    // avoiding boundary collision with the preceding cue.
+                    return self.update(Message::Seek(id, Duration::from_secs_f64((secs + 0.01).max(0.0))));
                 }
             }
             Message::ToggleFolderCollapse(folder) => {

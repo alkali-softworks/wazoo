@@ -116,16 +116,29 @@ impl WazooApp {
             .center_y(Length::Fill)
             .into()
         } else {
+            // Determine the single active cue for the current playback position.
+            // If cues overlap or share boundaries, select the one with the latest start_secs <= current_pos.
+            let active_cue_idx = self.transcript_cues
+                .iter()
+                .enumerate()
+                .filter(|(_, cue)| current_pos >= cue.start_secs && current_pos < cue.end_secs)
+                .max_by(|(_, a), (_, b)| {
+                    a.start_secs
+                        .partial_cmp(&b.start_secs)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                })
+                .map(|(idx, _)| idx);
+
             let mut cues_column = column![].spacing(4);
             let mut matched_count = 0;
 
-            for cue in &self.transcript_cues {
+            for (orig_idx, cue) in self.transcript_cues.iter().enumerate() {
                 if !filter.is_empty() && !cue.text.to_lowercase().contains(&filter) {
                     continue;
                 }
                 matched_count += 1;
 
-                let is_active = current_pos >= cue.start_secs && current_pos <= cue.end_secs;
+                let is_active = active_cue_idx == Some(orig_idx);
                 let time_str = format::format_time_str(cue.start_secs);
 
                 let time_badge = container(
