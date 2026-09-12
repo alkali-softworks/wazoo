@@ -39,7 +39,12 @@ Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically 
 
 ### 🔍 Instant Library Indexing & Search
 - **Smart Directory Scanner**: Recursively indexes media folders while stripping clutter from video titles.
-- **Advanced Query Parser**: Supports instant filtering, folder scoping, and comma-separated search terms.
+- **Advanced Query Parser & Negative Queries**:
+  - Supports comma-separated positive terms (`cowboy, eek`) grouped with `OR`.
+  - Full support for **negative query segments** using `not <term>` or `!<term>` (e.g. `cowboy, not fallen`, `!filler`).
+  - Automatically isolates and groups positive logic (`OR`) and negative exclusions (`AND`), ensuring negative terms strictly exclude matches regardless of which positive terms match.
+  - Supports **pure negative queries** (e.g. `not eek, not filler`) to stream everything in your library *except* specified terms.
+  - Intelligent hyphen normalization (`asteroid-blues` matches `asteroid blues`).
 - **Adaptive Player Reconciliation**: Executing a new search dynamically updates active tiles to ensure all players stream matching content without duplicates.
 
 ### 🪟 Frameless Glassmorphic Interface
