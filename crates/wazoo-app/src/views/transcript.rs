@@ -45,7 +45,7 @@ impl WazooApp {
 
         if !self.transcript_cues.is_empty() {
             let badge = container(
-                text(self.t_with("transcript.cues_count", &[("count", &self.transcript_cues.len().to_string())]))
+                text(self.t_with("transcript.cues_count", &[("count", &format::format_number(self.transcript_cues.len()))]))
                     .size(11)
             )
             .padding([2, 8])

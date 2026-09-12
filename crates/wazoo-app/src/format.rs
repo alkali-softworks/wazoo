@@ -171,6 +171,21 @@ pub fn format_time_str(seconds: f64) -> String {
     format!("{mins:02}:{secs:02}")
 }
 
+/// Formats an unsigned integer with digit grouping separators (e.g. 1000 -> "1,000").
+pub fn format_number(n: usize) -> String {
+    let s = n.to_string();
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+    let mut result = String::with_capacity(len + len / 3);
+    for (i, &b) in bytes.iter().enumerate() {
+        if i > 0 && (len - i) % 3 == 0 {
+            result.push(',');
+        }
+        result.push(b as char);
+    }
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -187,5 +202,17 @@ mod tests {
             format_video_title("/media/Movies/Interstellar.2014.1080p.mkv"),
             "Interstellar 2014"
         );
+    }
+
+    #[test]
+    fn test_format_number() {
+        assert_eq!(format_number(0), "0");
+        assert_eq!(format_number(5), "5");
+        assert_eq!(format_number(999), "999");
+        assert_eq!(format_number(1000), "1,000");
+        assert_eq!(format_number(1234), "1,234");
+        assert_eq!(format_number(12345), "12,345");
+        assert_eq!(format_number(123456), "123,456");
+        assert_eq!(format_number(1234567), "1,234,567");
     }
 }

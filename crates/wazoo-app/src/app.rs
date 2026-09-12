@@ -132,7 +132,7 @@ impl WazooApp {
                 Some(wazoo_core::t_with(
                     &settings.language,
                     "wazoo.videos_count",
-                    &[("count", &videos.len().to_string())],
+                    &[("count", &format::format_number(videos.len()))],
                 ))
             }
         } else {

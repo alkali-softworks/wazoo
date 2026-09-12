@@ -45,7 +45,7 @@ impl WazooApp {
                     text(chevron).size(10).color(theme::COLOR_PRIMARY),
                     text(folder.clone()).size(13).color(iced::Color::WHITE),
                     Space::new().width(Length::Fill),
-                    text(format!("({count})")).size(12).color(theme::COLOR_TEXT_MUTED),
+                    text(format!("({})", format::format_number(count))).size(12).color(theme::COLOR_TEXT_MUTED),
                     Space::new().width(Length::Fixed(4.0)),
                 ]
                 .spacing(8)
