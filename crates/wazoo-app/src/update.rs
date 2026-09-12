@@ -1721,23 +1721,6 @@ impl WazooApp {
                         self.loading_player_ticks.remove(&p.id);
                     }
                 }
-
-                if self.settings.playback_mode != PlaybackMode::Scroll {
-                    let mut finished_ids = Vec::new();
-                    for p in &self.players {
-                        if !self.loading_player_ids.contains(&p.id) && p.is_finished() {
-                            finished_ids.push(p.id);
-                        }
-                    }
-                    if !finished_ids.is_empty() {
-                        let mut tasks = Vec::new();
-                        for id in finished_ids {
-                            log::info!("Player {id} video reached end, advancing to next video");
-                            tasks.push(self.update(Message::AutoAdvanceVideo(id)));
-                        }
-                        return Task::batch(tasks);
-                    }
-                }
             }
             Message::WatchdogTick => {
                 // Auto-clear loading state if it exceeds 10 seconds to avoid indefinite spinner

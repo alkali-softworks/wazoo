@@ -656,21 +656,6 @@ impl VideoHandle {
                 }
             }
 
-            if !self.mpv.is_null() && self.tracks_loaded {
-                let mut eof: std::ffi::c_int = 0;
-                if let Ok(prop) = CString::new("eof-reached") {
-                    let res = mpv_ffi::mpv_get_property(
-                        self.mpv,
-                        prop.as_ptr(),
-                        mpv_ffi::MPV_FORMAT_FLAG,
-                        &mut eof as *mut _ as *mut _,
-                    );
-                    if res == 0 && eof != 0 {
-                        self.is_eos = true;
-                    }
-                }
-            }
-
             if let Some(target) = self.pending_seek {
                 if self.duration() > Duration::ZERO {
                     self.pending_seek = None;
