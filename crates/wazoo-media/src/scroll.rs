@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Continuous Scroll Engine
+ * 
+ * Calculates player positioning, seamless lookahead loading, despawning offscreen players,
+ * and proximity-based audio volume transitions for the infinite stream mode.
+ */
+
 use std::collections::HashMap;
 use crate::player::PlayerId;
 

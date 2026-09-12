@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Static Vector & Icon Assets
+ * 
+ * Embeds static resources including the application icon and Lucide-style vector SVGs
+ * for window controls, playback buttons, and audio indicators.
+ */
+
 pub static APP_ICON_BYTES: &[u8] = include_bytes!("../resources/icon.png");
 
 // Crisp vector SVGs for window controls matching modern desktop apps

@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Video Demuxing & Decoding Pipeline
+ * 
+ * Manages low-level video stream decoding, frame rate tracking, buffer status monitoring,
+ * and format negotiation for media playback.
+ */
+
 use std::collections::BTreeMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};

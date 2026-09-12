@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Platform Integration
+ * 
+ * Provides Linux desktop environment helpers, detecting cursor size and theme settings via
+ * gsettings and managing window activation and focus via wmctrl and xdotool.
+ */
+
 #[cfg(target_os = "linux")]
 pub fn init_linux_cursor_env() {
     if std::env::var_os("XCURSOR_SIZE").is_none() {

@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Core Library Root
+ * 
+ * Re-exports common domain models, SQLite database management, and persistent configuration
+ * services used across all Wazoo engines and client applications.
+ */
+
 pub mod models;
 pub mod db;
 pub mod config;

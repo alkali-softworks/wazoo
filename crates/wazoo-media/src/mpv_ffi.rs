@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * libmpv Foreign Function Interface
+ * 
+ * Declares raw C bindings and data structures for interacting with the libmpv client API,
+ * render contexts, and OpenGL/software frame extraction.
+ */
+
 use std::ffi::{c_char, c_double, c_int, c_void};
 
 #[repr(C)]

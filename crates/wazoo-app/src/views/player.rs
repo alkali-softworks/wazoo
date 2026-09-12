@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Video Player View Components
+ * 
+ * Renders individual video player containers, multi-player layouts (grid, row, column),
+ * title overlays, loading spinners, and interactive playback control bars.
+ */
+
 use iced::{
     widget::{button, column, container, mouse_area, row, slider, svg, text, Space, Stack},
     Alignment, Element, Length, Theme,

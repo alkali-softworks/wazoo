@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * File Browser Drawer
+ * 
+ * Displays an expandable side drawer grouping indexed media by folder, featuring search
+ * filtering and direct file selection into the active playback tile.
+ */
+
 use std::collections::BTreeMap;
 use iced::{
     widget::{button, column, container, row, scrollable, text, text_input, Space},

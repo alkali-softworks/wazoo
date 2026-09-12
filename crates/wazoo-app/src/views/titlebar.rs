@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Window Titlebar & Quick Menu
+ * 
+ * Renders the sliding window titlebar with application branding, interactive drag handle,
+ * window control buttons (minimize, maximize, close), and top-left dropdown menu.
+ */
+
 use iced::{
     widget::{button, column, container, mouse_area, row, svg, text, Space},
     Alignment, Element, Length, Theme,

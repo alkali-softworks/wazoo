@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Media Scanner & Library Indexer
+ * 
+ * Discovers video files across media directories, cleans filenames, extracts metadata,
+ * and batches database updates with real-time progress reporting.
+ */
+
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use walkdir::WalkDir;

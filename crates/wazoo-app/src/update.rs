@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * State Reducer & Event Dispatcher
+ * 
+ * Implements WazooApp::update, processing incoming Message events, executing playback commands,
+ * managing modal dialogs, handling window events, and orchestrating asynchronous tasks.
+ */
+
 use std::time::{Duration, Instant};
 use iced::futures::SinkExt;
 use iced::{

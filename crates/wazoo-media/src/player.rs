@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Video Player Handle
+ * 
+ * Encapsulates an individual video player instance powered by libmpv, providing playback
+ * controls (play, pause, seek, volume, mute), texture rendering, and watchdog monitoring.
+ */
+
 use std::ffi::{c_int, c_void, CString};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};

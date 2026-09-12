@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Media Pipeline Integration Tests
+ * 
+ * Validates playback initialization, buffering cache options, random seeking behavior,
+ * and codec decoding capabilities.
+ */
+
 use std::path::Path;
 use std::time::Duration;
 use wazoo_media::{BufferConfig, VideoHandle};

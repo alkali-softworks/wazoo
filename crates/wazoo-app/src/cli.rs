@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Command-Line Interface Parser
+ * 
+ * Parses startup arguments and options, providing support for search queries,
+ * query flags, help information, version display, and argument verification.
+ */
+
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct CliArgs {
     pub query: Option<String>,

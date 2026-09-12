@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Infinite Scroll Stream Layout
+ * 
+ * Implements a custom Iced widget that arranges child video players into a smooth,
+ * continuously scrolling vertical stream with precise pixel positioning.
+ */
+
 use iced::advanced::layout::{self, Layout};
 use iced::advanced::renderer;
 use iced::advanced::widget::{Tree, Widget};

@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Welcome & Empty State View
+ * 
+ * Presents an introductory splash card when no media is loaded, guiding users to configure
+ * their media folders and initiate library indexing.
+ */
+
 use iced::{
     widget::{button, column, container, text},
     Alignment, Element, Length,
