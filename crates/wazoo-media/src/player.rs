@@ -83,7 +83,6 @@ pub struct VideoHandle {
 }
 
 unsafe impl Send for VideoHandle {}
-unsafe impl Sync for VideoHandle {}
 
 impl std::fmt::Debug for VideoHandle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -205,10 +204,14 @@ impl VideoHandle {
                 mpv_ffi::mpv_terminate_destroy(mpv);
                 return Err(format!("Media file does not exist: {clean_path}"));
             }
-            let normalized_path = clean_path.replace('\\', "/");
-            let cmd = CString::new(format!("loadfile \"{}\"", normalized_path.replace('"', "\\\"")))
-                .map_err(|e| e.to_string())?;
-            mpv_ffi::mpv_command_string(mpv, cmd.as_ptr());
+            let cmd_loadfile = CString::new("loadfile").map_err(|e| e.to_string())?;
+            let path_arg = CString::new(clean_path).map_err(|e| e.to_string())?;
+            let mut args: [*const std::ffi::c_char; 3] = [
+                cmd_loadfile.as_ptr(),
+                path_arg.as_ptr(),
+                std::ptr::null(),
+            ];
+            mpv_ffi::mpv_command(mpv, args.as_mut_ptr());
 
             // Non-blocking pump of initial events so the UI thread is not frozen
             while !mpv.is_null() {
@@ -363,13 +366,8 @@ impl VideoHandle {
                 if err == 0 {
                     mpv_ffi::mpv_render_context_report_swap(self.render_ctx);
 
-                    let num_pixels = (self.render_width * self.render_height) as usize;
-                    let u32_slice: &mut [u32] = std::slice::from_raw_parts_mut(
-                        self.pixel_buffer.as_mut_ptr() as *mut u32,
-                        num_pixels,
-                    );
-                    for p in u32_slice.iter_mut() {
-                        *p |= 0xFF000000;
+                    for chunk in self.pixel_buffer.chunks_exact_mut(4) {
+                        chunk[3] = 0xFF;
                     }
 
                     {

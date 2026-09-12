@@ -116,8 +116,9 @@ impl Database {
     }
 
     pub fn remove_videos_in_folder(&mut self, folder: &str) -> Result<usize> {
-        let folder_clean = folder.trim_end_matches('/');
-        let folder_prefix = format!("{}/", folder_clean);
+        let folder_clean = folder.trim_end_matches(['/', '\\']);
+        let folder_prefix_slash = format!("{folder_clean}/");
+        let folder_prefix_backslash = format!("{folder_clean}\\");
         let folder_path = std::path::Path::new(folder_clean);
         let canon_folder = std::fs::canonicalize(folder_path).ok();
 
@@ -125,7 +126,10 @@ impl Database {
         let matching_ids: Vec<i64> = all_db
             .into_iter()
             .filter(|v| {
-                if v.path == folder_clean || v.path.starts_with(&folder_prefix) {
+                if v.path == folder_clean
+                    || v.path.starts_with(&folder_prefix_slash)
+                    || v.path.starts_with(&folder_prefix_backslash)
+                {
                     return true;
                 }
                 let p = std::path::Path::new(&v.path);
@@ -133,9 +137,12 @@ impl Database {
                     return true;
                 }
                 if let Some(ref cf) = canon_folder {
-                    if let Ok(canon) = std::fs::canonicalize(p) {
-                        if canon.starts_with(cf) {
-                            return true;
+                    let canon_cf_str = cf.to_string_lossy();
+                    if v.path.contains(folder_clean) || v.path.contains(&*canon_cf_str) {
+                        if let Ok(canon) = std::fs::canonicalize(p) {
+                            if canon.starts_with(cf) {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -219,10 +226,17 @@ impl Database {
                     continue;
                 }
 
+                // Escape SQL LIKE special characters: '\', '%', and '_'
+                let escaped_term = term
+                    .replace('\\', "\\\\")
+                    .replace('%', "\\%")
+                    .replace('_', "\\_");
+
                 // Match original wazoo-js: replace '-' with space, split words, join with '%'
                 let wildcard = format!(
                     "%{}%",
-                    term.replace('-', " ")
+                    escaped_term
+                        .replace('-', " ")
                         .split_whitespace()
                         .collect::<Vec<_>>()
                         .join("%")
@@ -232,9 +246,9 @@ impl Database {
                 let param_idx = param_values.len();
 
                 if is_not {
-                    negative_conditions.push(format!("path NOT LIKE ?{param_idx}"));
+                    negative_conditions.push(format!("path NOT LIKE ?{param_idx} ESCAPE '\\'"));
                 } else {
-                    positive_conditions.push(format!("path LIKE ?{param_idx}"));
+                    positive_conditions.push(format!("path LIKE ?{param_idx} ESCAPE '\\'"));
                 }
             }
 
@@ -258,9 +272,13 @@ impl Database {
         if !active_folders.is_empty() {
             let mut folder_conditions: Vec<String> = Vec::new();
             for folder in active_folders {
-                let folder_prefix = format!("{folder}%");
+                let escaped_folder = folder
+                    .replace('\\', "\\\\")
+                    .replace('%', "\\%")
+                    .replace('_', "\\_");
+                let folder_prefix = format!("{escaped_folder}%");
                 param_values.push(folder_prefix);
-                folder_conditions.push(format!("path LIKE ?{}", param_values.len()));
+                folder_conditions.push(format!("path LIKE ?{} ESCAPE '\\'", param_values.len()));
             }
             where_conditions.push(format!("({})", folder_conditions.join(" OR ")));
         }
@@ -440,6 +458,45 @@ mod tests {
         let case_and_hyphen = db.search_videos("cowboy, NOT asteroid-blues", &[]).unwrap();
         assert_eq!(case_and_hyphen.len(), 1);
         assert!(case_and_hyphen[0].path.contains("BalladOfFallenAngels"));
+    }
+
+    #[test]
+    fn test_search_videos_like_wildcard_escaping() {
+        let db = Database::open_in_memory().unwrap();
+        db.insert_or_update_video(&VideoRecord {
+            id: 0,
+            name: "Video 100% Real".to_string(),
+            path: "/media/100%_Real.mkv".to_string(),
+        })
+        .unwrap();
+        db.insert_or_update_video(&VideoRecord {
+            id: 0,
+            name: "Video 1000 Real".to_string(),
+            path: "/media/1000_Real.mkv".to_string(),
+        })
+        .unwrap();
+        db.insert_or_update_video(&VideoRecord {
+            id: 0,
+            name: "Video 100aReal".to_string(),
+            path: "/media/100aReal.mkv".to_string(),
+        })
+        .unwrap();
+
+        // Querying "100%" should only match the literal "100%", not "1000" or "100a"
+        let res_percent = db.search_videos("100%", &[]).unwrap();
+        assert_eq!(res_percent.len(), 1);
+        assert_eq!(res_percent[0].path, "/media/100%_Real.mkv");
+
+        // Querying "100_" should only match literal "100_", not "100a" or "100%"
+        db.insert_or_update_video(&VideoRecord {
+            id: 0,
+            name: "Video 100_literal".to_string(),
+            path: "/media/100_literal.mkv".to_string(),
+        })
+        .unwrap();
+        let res_underscore = db.search_videos("100_", &[]).unwrap();
+        assert_eq!(res_underscore.len(), 1);
+        assert_eq!(res_underscore[0].path, "/media/100_literal.mkv");
     }
 }
 

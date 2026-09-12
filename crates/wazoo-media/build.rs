@@ -33,6 +33,31 @@ mod windows {
 
     const MPV_WIN_DOWNLOAD_URL: &str =
         "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260903/mpv-dev-x86_64-20260903-git-69e63f425a.7z";
+    const MPV_WIN_DOWNLOAD_SHA256: &str =
+        "fac135c68a35b7639e39d72c0c365104edbaebdea39a0dfdd8c36e8c8e80faef";
+
+    fn verify_sha256(path: &Path, expected_hex: &str) -> bool {
+        let output = Command::new("powershell")
+            .args([
+                "-NoProfile",
+                "-Command",
+                &format!("(Get-FileHash -Algorithm SHA256 '{}').Hash", path.display()),
+            ])
+            .output()
+            .or_else(|_| {
+                Command::new("certutil")
+                    .args(["-hashfile", path.to_str().unwrap_or_default(), "SHA256"])
+                    .output()
+            });
+
+        if let Ok(out) = output {
+            if out.status.success() {
+                let stdout = String::from_utf8_lossy(&out.stdout).to_lowercase();
+                return stdout.contains(&expected_hex.to_lowercase());
+            }
+        }
+        false
+    }
 
     pub fn setup_windows_mpv() {
         let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_default();
@@ -93,6 +118,14 @@ mod windows {
                     .unwrap_or(false);
 
             if downloaded && archive_path.exists() {
+                if !verify_sha256(&archive_path, MPV_WIN_DOWNLOAD_SHA256) {
+                    let _ = std::fs::remove_file(&archive_path);
+                    panic!(
+                        "SECURITY ERROR: SHA-256 checksum mismatch for downloaded mpv archive: {}",
+                        archive_path.display()
+                    );
+                }
+
                 // Extract using tar.exe (bsdtar included with Windows 10/11) or 7z.exe
                 let extracted = Command::new("tar.exe")
                     .args(["-xf", archive_path.to_str().unwrap(), "-C", mpv_dir.to_str().unwrap()])

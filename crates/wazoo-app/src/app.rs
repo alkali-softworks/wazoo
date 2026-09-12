@@ -321,9 +321,7 @@ impl WazooApp {
     pub(crate) fn titlebar_alpha(&self) -> f32 {
         if !self.show_titlebar {
             0.0
-        } else if self.is_point_in_titlebar(self.cursor_position) || self.show_dropdown_menu {
-            1.0
-        } else if self.titlebar_hide_ticks >= TITLEBAR_FADE_TICKS {
+        } else if self.is_point_in_titlebar(self.cursor_position) || self.show_dropdown_menu || self.titlebar_hide_ticks >= TITLEBAR_FADE_TICKS {
             1.0
         } else {
             (self.titlebar_hide_ticks as f32 / TITLEBAR_FADE_TICKS as f32).clamp(0.0, 1.0)
@@ -672,7 +670,7 @@ impl WazooApp {
                 let folder_clean = folder_label
                     .split(['/', '\\'])
                     .filter(|s| !s.is_empty())
-                    .last()
+                    .next_back()
                     .unwrap_or(folder_label);
                 self.t_with("wazoo.no_files_found_in", &[("folder", folder_clean)])
             };
