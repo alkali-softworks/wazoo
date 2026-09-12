@@ -39,4 +39,7 @@ iced_wgpu = { version = "0.14.0", default-features = false }
 bytemuck = { version = "1.25", features = ["derive"] }
 rfd = "0.15"
 
+[patch.crates-io]
+iced_winit = { path = "patches/iced_winit" }
+
 
