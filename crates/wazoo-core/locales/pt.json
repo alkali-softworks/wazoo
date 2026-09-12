@@ -23,14 +23,10 @@
     "loading_progress": "Carregando... {percent}% ({total} arquivos)",
     "open_settings_to_add": "Abrir configurações para adicionar pastas",
     "no_files_found": "Nenhum arquivo encontrado",
-    "query_in_folder": "Consulta: \"{query}\" em {folder}",
-    "try_another_search": "Tentar outra pesquisa",
-    "search_error": "Erro de pesquisa: {error}",
     "no_files_found_in": "Nenhum arquivo encontrado em {folder}",
     "total_files": "{total} arquivos no total",
     "more_than_before": "{diff} a mais do que antes",
     "less_than_before": "{diff} a menos do que antes",
-    "scroll_mode_unmuted": "Modo de rolagem com som",
     "global_mode_muted": "Modo global mudo",
     "global_mode_unmuted": "Modo global com som",
     "set_players_count": "Definido para {count} reprodutor(es){suffix}",
@@ -41,11 +37,8 @@
     "scroll_mode_disabled": "Modo de rolagem desativado",
     "flip_mode_enabled": "Modo de inversão ativado",
     "flip_mode_disabled": "Modo de inversão desativado",
-    "added": "Adicionado: {name}",
     "no_players": "Nenhum reprodutor ativo",
-    "no_players_msg": "Pressione 'N' para adicionar um reprodutor, ou clique com o botão direito para abrir o menu.",
-    "no_videos_found": "Nenhum vídeo encontrado para a consulta",
-    "videos_count": "({count} Vídeos)"
+    "no_videos_found": "Nenhum vídeo encontrado para a consulta"
   },
   "settings": {
     "title": "Configurações",
@@ -54,13 +47,11 @@
     "scan_folders": "Escanear pastas",
     "add_folder": "Adicionar pasta",
     "total_videos": "Total de vídeos: {count}",
-    "adding_media_notice": "A adição de mídia pela rede leva tempo para analisar os metadados do vídeo.",
     "language": "Idioma"
   },
   "search": {
     "folder": "Pasta:",
-    "placeholder": "Pesquisar...",
-    "multiple_folders": "{count} pastas"
+    "placeholder": "Pesquisar..."
   },
   "help": {
     "title": "Atalhos de teclado",
@@ -81,7 +72,6 @@
       "toggle_mute": "Alternar mudo",
       "adjust_volume": "Ajustar volume",
       "search_videos": "Pesquisar vídeos",
-      "fullscreen": "Tela cheia",
       "close_app": "Fechar aplicativo",
       "move_window": "Mover janela",
       "toggle_bookmarks": "Alternar favoritos",
@@ -95,14 +85,7 @@
     "muted": "Mudo",
     "unmuted": "Com som",
     "subtitles_enabled": "Legendas ativadas",
-    "subtitles_disabled": "Legendas desativadas",
-    "hevc_title": "Vídeo HEVC ({codec})",
-    "hevc_description": "O Chromium não suporta o codec de vídeo HEVC. Este vídeo requer conversão para AV1 / H.264.",
-    "convert_now": "Converter agora",
-    "skip_to_next": "Pular para o próximo ({countdown}s)",
-    "end_of_playlist": "Fim da lista de reprodução",
-    "starting_conversion": "Iniciando conversão...",
-    "starting_subtitle_extraction": "Extraindo legendas..."
+    "subtitles_disabled": "Legendas desativadas"
   },
   "transcript": {
     "title": "Transcrição",

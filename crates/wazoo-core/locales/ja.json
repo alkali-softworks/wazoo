@@ -23,14 +23,10 @@
     "loading_progress": "読み込み中... {percent}% ({total} ファイル)",
     "open_settings_to_add": "設定を開いてフォルダを追加",
     "no_files_found": "ファイルが見つかりません",
-    "query_in_folder": "クエリ: \"{query}\" フォルダ: {folder}",
-    "try_another_search": "別の検索を試す",
-    "search_error": "検索エラー: {error}",
     "no_files_found_in": "{folder} 内にファイルが見つかりません",
     "total_files": "合計 {total} ファイル",
     "more_than_before": "前回より {diff} 多い",
     "less_than_before": "前回より {diff} 少ない",
-    "scroll_mode_unmuted": "スクロールモードのミュート解除",
     "global_mode_muted": "グローバルモード ミュート",
     "global_mode_unmuted": "グローバルモード ミュート解除",
     "set_players_count": "{count} プレイヤーに設定{suffix}",
@@ -41,11 +37,8 @@
     "scroll_mode_disabled": "スクロールモード無効",
     "flip_mode_enabled": "フリップモード有効",
     "flip_mode_disabled": "フリップモード無効",
-    "added": "追加しました: {name}",
     "no_players": "アクティブなプレイヤーはありません",
-    "no_players_msg": "「N」キーを押してプレイヤーを追加するか、右クリックでメニューを開きます。",
-    "no_videos_found": "クエリに一致する動画が見つかりません",
-    "videos_count": "({count} 本の動画)"
+    "no_videos_found": "クエリに一致する動画が見つかりません"
   },
   "settings": {
     "title": "設定",
@@ -54,13 +47,11 @@
     "scan_folders": "フォルダをスキャン",
     "add_folder": "フォルダを追加",
     "total_videos": "合計ビデオ数: {count}",
-    "adding_media_notice": "ネットワーク経由でメディアを追加する場合、動画のメタデータを解析するのに時間がかかります。",
     "language": "言語"
   },
   "search": {
     "folder": "フォルダー:",
-    "placeholder": "検索...",
-    "multiple_folders": "{count} フォルダー"
+    "placeholder": "検索..."
   },
   "help": {
     "title": "キーボードショートカット",
@@ -81,7 +72,6 @@
       "toggle_mute": "ミュートの切り替え",
       "adjust_volume": "音量調節",
       "search_videos": "ビデオを検索",
-      "fullscreen": "全画面表示",
       "close_app": "アプリを閉じる",
       "move_window": "ウィンドウを移動",
       "toggle_bookmarks": "ブックマークの切り替え",
@@ -95,14 +85,7 @@
     "muted": "ミュート",
     "unmuted": "ミュート解除",
     "subtitles_enabled": "字幕有効",
-    "subtitles_disabled": "字幕無効",
-    "hevc_title": "HEVCビデオ ({codec})",
-    "hevc_description": "ChromiumはHEVCビデオコーデックをサポートしていません。このビデオはAV1 / H.264への変換が必要です。",
-    "convert_now": "今すぐ変換",
-    "skip_to_next": "次へスキップ ({countdown}秒)",
-    "end_of_playlist": "プレイリストの最後",
-    "starting_conversion": "変換を開始しています...",
-    "starting_subtitle_extraction": "字幕を抽出中..."
+    "subtitles_disabled": "字幕無効"
   },
   "transcript": {
     "title": "トランスクリプト",

@@ -23,14 +23,10 @@
     "loading_progress": "Cargando... {percent}% ({total} archivos)",
     "open_settings_to_add": "Abrir Configuración para Añadir Carpetas",
     "no_files_found": "No se encontraron archivos",
-    "query_in_folder": "Consulta: \"{query}\" en {folder}",
-    "try_another_search": "Probar Otra Búsqueda",
-    "search_error": "Error de búsqueda: {error}",
     "no_files_found_in": "No se encontraron archivos en {folder}",
     "total_files": "{total} Archivos en total",
     "more_than_before": "{diff} Más que antes",
     "less_than_before": "{diff} Menos que antes",
-    "scroll_mode_unmuted": "Modo de Desplazamiento reactivado",
     "global_mode_muted": "Modo Global silenciado",
     "global_mode_unmuted": "Modo Global reactivado",
     "set_players_count": "Establecido en {count} reproductor{suffix}",
@@ -41,11 +37,8 @@
     "scroll_mode_disabled": "Modo de desplazamiento desactivado",
     "flip_mode_enabled": "Modo de volteo activado",
     "flip_mode_disabled": "Modo de volteo desactivado",
-    "added": "Añadido: {name}",
     "no_players": "Sin reproductores activos",
-    "no_players_msg": "Presione 'N' para agregar un reproductor, o haga clic derecho para abrir el menú.",
-    "no_videos_found": "No se encontraron videos para la consulta",
-    "videos_count": "({count} Videos)"
+    "no_videos_found": "No se encontraron videos para la consulta"
   },
   "settings": {
     "title": "Configuración",
@@ -54,13 +47,11 @@
     "scan_folders": "Escanear Carpetas",
     "add_folder": "Añadir Carpeta",
     "total_videos": "Total de videos: {count}",
-    "adding_media_notice": "Añadir medios a través de la red requiere tiempo para analizar los metadatos del video.",
     "language": "Idioma"
   },
   "search": {
     "folder": "Carpeta:",
-    "placeholder": "Buscar...",
-    "multiple_folders": "{count} carpetas"
+    "placeholder": "Buscar..."
   },
   "help": {
     "title": "Atajos de Teclado",
@@ -81,7 +72,6 @@
       "toggle_mute": "Alternar Silencio",
       "adjust_volume": "Ajustar Volumen",
       "search_videos": "Buscar Videos",
-      "fullscreen": "Pantalla Completa",
       "close_app": "Cerrar Aplicación",
       "move_window": "Mover Ventana",
       "toggle_bookmarks": "Alternar marcadores",
@@ -95,14 +85,7 @@
     "muted": "Silenciado",
     "unmuted": "Reactivado",
     "subtitles_enabled": "Subtítulos activados",
-    "subtitles_disabled": "Subtítulos desactivados",
-    "hevc_title": "Video HEVC ({codec})",
-    "hevc_description": "Chromium no admite el códec de vídeo HEVC. Este vídeo requiere conversión a AV1 / H.264.",
-    "convert_now": "Convertir ahora",
-    "skip_to_next": "Pasar al siguiente ({countdown}s)",
-    "end_of_playlist": "Fin de la lista de reproducción",
-    "starting_conversion": "Iniciando conversión...",
-    "starting_subtitle_extraction": "Extrayendo subtítulos..."
+    "subtitles_disabled": "Subtítulos desactivados"
   },
   "transcript": {
     "title": "Transcripción",

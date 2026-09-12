@@ -23,14 +23,10 @@
     "loading_progress": "लोड हो रहा है... {percent}% ({total} फ़ाइलें)",
     "open_settings_to_add": "फ़ोल्डर जोड़ने के लिए सेटिंग्स खोलें",
     "no_files_found": "कोई फ़ाइल नहीं मिली",
-    "query_in_folder": "खोज: {folder} में \"{query}\"",
-    "try_another_search": "दूसरी खोज का प्रयास करें",
-    "search_error": "खोज त्रुटि: {error}",
     "no_files_found_in": "{folder} में कोई फ़ाइल नहीं मिली",
     "total_files": "कुल {total} फ़ाइलें",
     "more_than_before": "पहले से {diff} अधिक",
     "less_than_before": "पहले से {diff} कम",
-    "scroll_mode_unmuted": "स्क्रॉल मोड अनम्यूट किया गया",
     "global_mode_muted": "ग्लोबल मोड म्यूट किया गया",
     "global_mode_unmuted": "ग्लोबल मोड अनम्यूट किया गया",
     "set_players_count": "{count} प्लेयर पर सेट किया गया{suffix}",
@@ -41,11 +37,8 @@
     "scroll_mode_disabled": "स्क्रॉल मोड अक्षम",
     "flip_mode_enabled": "फ्लिप मोड सक्षम",
     "flip_mode_disabled": "फ्लिप मोड अक्षम",
-    "added": "जोड़ा गया: {name}",
     "no_players": "कोई सक्रिय प्लेयर नहीं",
-    "no_players_msg": "प्लेयर जोड़ने के लिए 'N' दबाएं, या मेनू खोलने के लिए राइट-क्लिक करें।",
-    "no_videos_found": "क्वेरी के लिए कोई वीडियो नहीं मिला",
-    "videos_count": "({count} वीडियो)"
+    "no_videos_found": "क्वेरी के लिए कोई वीडियो नहीं मिला"
   },
   "settings": {
     "title": "सेटिंग्स",
@@ -54,13 +47,11 @@
     "scan_folders": "फ़ोल्डर स्कैन करें",
     "add_folder": "फ़ोल्डर जोड़ें",
     "total_videos": "कुल वीडियो: {count}",
-    "adding_media_notice": "नेटवर्क पर मीडिया जोड़ने में वीडियो मेटाडेटा का विश्लेषण करने में समय लगता है।",
     "language": "भाषा"
   },
   "search": {
     "folder": "फ़ोल्डर:",
-    "placeholder": "खोजें...",
-    "multiple_folders": "{count} फ़ोल्डर्स"
+    "placeholder": "खोजें..."
   },
   "help": {
     "title": "कीबोर्ड शॉर्टकट",
@@ -81,7 +72,6 @@
       "toggle_mute": "म्यूट बदलें",
       "adjust_volume": "वॉल्यूम समायोजित करें",
       "search_videos": "वीडियो खोजें",
-      "fullscreen": "फुलस्क्रीन",
       "close_app": "ऐप बंद करें",
       "move_window": "विंडो ले जाएं",
       "toggle_bookmarks": "बुकमार्क टॉगल करें",
@@ -95,14 +85,7 @@
     "muted": "म्यूट",
     "unmuted": "अनम्यूट",
     "subtitles_enabled": "उपशीर्षक सक्षम",
-    "subtitles_disabled": "उपशीर्षक अक्षम",
-    "hevc_title": "HEVC वीडियो ({codec})",
-    "hevc_description": "क्रोमियम HEVC वीडियो कोडेक का समर्थन नहीं करता है। इस वीडियो को AV1 / H.264 में बदलने की आवश्यकता है।",
-    "convert_now": "अभी बदलें",
-    "skip_to_next": "अगले पर जाएँ ({countdown}से)",
-    "end_of_playlist": "प्लेलिस्ट का अंत",
-    "starting_conversion": "रूपांतरण शुरू हो रहा है...",
-    "starting_subtitle_extraction": "सबटाइटल निकाले जा रहे हैं..."
+    "subtitles_disabled": "उपशीर्षक अक्षम"
   },
   "transcript": {
     "title": "प्रतिलेख",

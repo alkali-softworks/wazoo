@@ -23,14 +23,10 @@
     "loading_progress": "Caricamento... {percent}% ({total} file)",
     "open_settings_to_add": "Apri impostazioni per aggiungere cartelle",
     "no_files_found": "Nessun file trovato",
-    "query_in_folder": "Query: \"{query}\" in {folder}",
-    "try_another_search": "Prova un'altra ricerca",
-    "search_error": "Errore di ricerca: {error}",
     "no_files_found_in": "Nessun file trovato in {folder}",
     "total_files": "{total} file totali",
     "more_than_before": "{diff} in più rispetto a prima",
     "less_than_before": "{diff} in meno rispetto a prima",
-    "scroll_mode_unmuted": "Audio attivo in modalità scorrimento",
     "global_mode_muted": "Modalità globale muta",
     "global_mode_unmuted": "Modalità globale audio attivo",
     "set_players_count": "Impostato su {count} lettore{suffix}",
@@ -41,11 +37,8 @@
     "scroll_mode_disabled": "Modalità scorrimento disabilitata",
     "flip_mode_enabled": "Modalità ribaltamento abilitata",
     "flip_mode_disabled": "Modalità ribaltamento disabilitata",
-    "added": "Aggiunto: {name}",
     "no_players": "Nessun lettore attivo",
-    "no_players_msg": "Premi 'N' per aggiungere un lettore, o fai clic destro per aprire il menu.",
-    "no_videos_found": "Nessun video trovato per la query",
-    "videos_count": "({count} Video)"
+    "no_videos_found": "Nessun video trovato per la query"
   },
   "settings": {
     "title": "Impostazioni",
@@ -54,13 +47,11 @@
     "scan_folders": "Scansiona cartelle",
     "add_folder": "Aggiungi cartella",
     "total_videos": "Video totali: {count}",
-    "adding_media_notice": "L'aggiunta di file multimediali tramite rete richiede tempo per analizzare i metadati del video.",
     "language": "Lingua"
   },
   "search": {
     "folder": "Cartella:",
-    "placeholder": "Cerca...",
-    "multiple_folders": "{count} cartelle"
+    "placeholder": "Cerca..."
   },
   "help": {
     "title": "Scorciatoie da tastiera",
@@ -81,7 +72,6 @@
       "toggle_mute": "Attiva/Disattiva muto",
       "adjust_volume": "Regola volume",
       "search_videos": "Cerca video",
-      "fullscreen": "Schermo intero",
       "close_app": "Chiudi app",
       "move_window": "Sposta finestra",
       "toggle_bookmarks": "Attiva/disattiva segnalibri",
@@ -95,14 +85,7 @@
     "muted": "Muto",
     "unmuted": "Audio attivo",
     "subtitles_enabled": "Sottotitoli abilitati",
-    "subtitles_disabled": "Sottotitoli disabilitati",
-    "hevc_title": "Video HEVC ({codec})",
-    "hevc_description": "Chromium non supporta il codec video HEVC. Questo video richiede la conversione in AV1 / H.264.",
-    "convert_now": "Converti ora",
-    "skip_to_next": "Passa al prossimo ({countdown}s)",
-    "end_of_playlist": "Fine della playlist",
-    "starting_conversion": "Inizio conversione...",
-    "starting_subtitle_extraction": "Estrazione sottotitoli..."
+    "subtitles_disabled": "Sottotitoli disabilitati"
   },
   "transcript": {
     "title": "Trascrizione",

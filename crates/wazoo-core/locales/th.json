@@ -23,14 +23,10 @@
     "loading_progress": "กำลังโหลด... {percent}% ({total} ไฟล์)",
     "open_settings_to_add": "เปิดการตั้งค่าเพื่อเพิ่มโฟลเดอร์",
     "no_files_found": "ไม่พบไฟล์",
-    "query_in_folder": "ค้นหา: \"{query}\" ใน {folder}",
-    "try_another_search": "ลองค้นหาอีกครั้ง",
-    "search_error": "ข้อผิดพลาดในการค้นหา: {error}",
     "no_files_found_in": "ไม่พบไฟล์ใน {folder}",
     "total_files": "รวม {total} ไฟล์",
     "more_than_before": "มากกว่าเดิม {diff}",
     "less_than_before": "น้อยกว่าเดิม {diff}",
-    "scroll_mode_unmuted": "เปิดเสียงโหมดเลื่อน",
     "global_mode_muted": "ปิดเสียงทั้งหมด",
     "global_mode_unmuted": "เปิดเสียงทั้งหมด",
     "set_players_count": "ตั้งค่าเป็น {count} ผู้เล่น{suffix}",
@@ -41,11 +37,8 @@
     "scroll_mode_disabled": "ปิดใช้งานโหมดเลื่อน",
     "flip_mode_enabled": "เปิดใช้งานโหมดพลิก",
     "flip_mode_disabled": "ปิดใช้งานโหมดพลิก",
-    "added": "เพิ่มแล้ว: {name}",
     "no_players": "ไม่มีเครื่องเล่นที่ใช้งานอยู่",
-    "no_players_msg": "กด 'N' เพื่อเพิ่มเครื่องเล่น หรือคลิกขวาเพื่อเปิดเมนู",
-    "no_videos_found": "ไม่พบวิดีโอสำหรับคำค้นหา",
-    "videos_count": "({count} วิดีโอ)"
+    "no_videos_found": "ไม่พบวิดีโอสำหรับคำค้นหา"
   },
   "settings": {
     "title": "การตั้งค่า",
@@ -54,13 +47,11 @@
     "scan_folders": "สแกนโฟลเดอร์",
     "add_folder": "เพิ่มโฟลเดอร์",
     "total_videos": "วิดีโอทั้งหมด: {count}",
-    "adding_media_notice": "การเพิ่มสื่อผ่านเครือข่ายต้องใช้เวลาในการวิเคราะห์ข้อมูลเมตาของวิดีโอ",
     "language": "ภาษา"
   },
   "search": {
     "folder": "โฟลเดอร์:",
-    "placeholder": "ค้นหา...",
-    "multiple_folders": "{count} โฟลเดอร์"
+    "placeholder": "ค้นหา..."
   },
   "help": {
     "title": "ปุ่มลัดคีย์บอร์ด",
@@ -81,7 +72,6 @@
       "toggle_mute": "สลับการปิดเสียง",
       "adjust_volume": "ปรับระดับเสียง",
       "search_videos": "ค้นหาวิดีโอ",
-      "fullscreen": "เต็มหน้าจอ",
       "close_app": "ปิดแอป",
       "move_window": "ย้ายหน้าต่าง",
       "toggle_bookmarks": "สลับที่คั่นหน้า",
@@ -95,14 +85,7 @@
     "muted": "ปิดเสียงแล้ว",
     "unmuted": "เปิดเสียงแล้ว",
     "subtitles_enabled": "เปิดใช้งานคำบรรยาย",
-    "subtitles_disabled": "ปิดใช้งานคำบรรยาย",
-    "hevc_title": "วิดีโอ HEVC ({codec})",
-    "hevc_description": "Chromium ไม่รองรับตัวถอดรหัสวิดีโอ HEVC วิดีโอนี้ต้องแปลงเป็น AV1 / H.264",
-    "convert_now": "แปลงตอนนี้",
-    "skip_to_next": "ข้ามไปยังถัดไป ({countdown}ว)",
-    "end_of_playlist": "สิ้นสุดรายการเล่น",
-    "starting_conversion": "กำลังเริ่มการแปลง...",
-    "starting_subtitle_extraction": "กำลังแยกคำบรรยาย..."
+    "subtitles_disabled": "ปิดใช้งานคำบรรยาย"
   },
   "transcript": {
     "title": "บทสนทนา",
