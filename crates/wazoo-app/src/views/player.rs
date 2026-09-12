@@ -1,0 +1,371 @@
+use iced::{
+    widget::{button, column, container, mouse_area, row, slider, svg, text, Space, Stack},
+    Alignment, Element, Length, Theme,
+};
+use wazoo_core::{LayoutMode, PlaybackMode};
+use wazoo_media::VideoHandle;
+use crate::app::WazooApp;
+use crate::assets::{
+    SVG_PLAYER_MUTE, SVG_PLAYER_NEXT, SVG_PLAYER_PAUSE, SVG_PLAYER_PLAY, SVG_PLAYER_VOLUME,
+};
+use crate::cursor;
+use crate::format;
+use crate::message::Message;
+use crate::scroll_view;
+use crate::theme;
+
+impl WazooApp {
+    pub(crate) fn view_players(&self) -> Element<'_, Message> {
+        if self.players.is_empty() {
+            return container(text("No active players").size(18).color(theme::COLOR_TEXT_MUTED))
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center_x(Length::Fill)
+                .center_y(Length::Fill)
+                .into();
+        }
+
+        if self.settings.playback_mode == PlaybackMode::Scroll {
+            return self.view_scroll_stream();
+        }
+
+        match self.settings.layout {
+            LayoutMode::Row => {
+                let mut r = row![].spacing(0).width(Length::Fill).height(Length::Fill);
+                for p in &self.players {
+                    r = r.push(self.view_single_player(p));
+                }
+                r.into()
+            }
+            LayoutMode::Column => {
+                let mut c = column![].spacing(0).width(Length::Fill).height(Length::Fill);
+                for p in &self.players {
+                    c = c.push(self.view_single_player(p));
+                }
+                c.into()
+            }
+            LayoutMode::Grid => {
+                let count = self.players.len();
+                if count == 1 {
+                    self.view_single_player(&self.players[0])
+                } else if count == 2 {
+                    row![
+                        self.view_single_player(&self.players[0]),
+                        self.view_single_player(&self.players[1]),
+                    ]
+                    .spacing(0)
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .into()
+                } else if count == 3 {
+                    // Electron 3-player special layout: top player spans full width, bottom row has 2
+                    column![
+                        container(self.view_single_player(&self.players[0]))
+                            .width(Length::Fill)
+                            .height(Length::FillPortion(1)),
+                        row![
+                            self.view_single_player(&self.players[1]),
+                            self.view_single_player(&self.players[2]),
+                        ]
+                        .spacing(0)
+                        .width(Length::Fill)
+                        .height(Length::FillPortion(1)),
+                    ]
+                    .spacing(0)
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .into()
+                } else {
+                    let cols = if count <= 4 { 2 } else if count <= 9 { 3 } else { 4 };
+                    let mut rows = column![].spacing(0).width(Length::Fill).height(Length::Fill);
+                    for chunk in self.players.chunks(cols) {
+                        let mut r = row![].spacing(0).width(Length::Fill).height(Length::Fill);
+                        for p in chunk {
+                            r = r.push(self.view_single_player(p));
+                        }
+                        rows = rows.push(r);
+                    }
+                    rows.into()
+                }
+            }
+        }
+    }
+
+    pub(crate) fn view_scroll_stream(&self) -> Element<'_, Message> {
+        let mut stream = scroll_view::ScrollStream::new();
+        let mut scroll_items: Vec<(&VideoHandle, &wazoo_media::ScrollItem)> = self
+            .players
+            .iter()
+            .filter_map(|p| self.scroll_engine.items.get(&p.id).map(|item| (p, item)))
+            .collect();
+        scroll_items.sort_by(|a, b| a.1.y_pos.partial_cmp(&b.1.y_pos).unwrap_or(std::cmp::Ordering::Equal));
+
+        for (p, item) in scroll_items {
+            stream = stream.push(self.view_scroll_player(p), item.y_pos, item.height);
+        }
+
+        stream.into()
+    }
+
+    pub(crate) fn view_single_player<'a>(&self, p: &'a VideoHandle) -> Element<'a, Message> {
+        self.view_player_internal(p, false)
+    }
+
+    pub(crate) fn view_scroll_player<'a>(&self, p: &'a VideoHandle) -> Element<'a, Message> {
+        self.view_player_internal(p, true)
+    }
+
+    pub(crate) fn view_player_internal<'a>(&self, p: &'a VideoHandle, is_scroll_mode: bool) -> Element<'a, Message> {
+        let player_id = p.id;
+        let is_focused = self.focused_player_id() == Some(player_id);
+        let is_hovered = self.hovered_player_id == Some(player_id);
+
+        let pos = p.position();
+        let dur = p.duration();
+        let time_str = format!(
+            "{} / {}",
+            format::format_time_str(pos.as_secs_f64()),
+            format::format_time_str(dur.as_secs_f64())
+        );
+
+        let progress_ratio = if dur.as_secs_f64() > 0.0 {
+            (pos.as_secs_f64() / dur.as_secs_f64()).clamp(0.0, 1.0) as f32
+        } else {
+            0.0f32
+        };
+
+        let opacity = self.current_opacity();
+        let video_widget = p.view_with_fit(opacity, is_scroll_mode);
+        let mut stack_children: Vec<Element<'a, Message>> = vec![video_widget];
+
+        let is_loading = self.loading_player_ids.contains(&player_id);
+
+        if is_loading {
+            let angle = (self.spinner_ticks * 12) % 360;
+            let spinner_svg = format!(
+                r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none">
+<circle cx="18" cy="18" r="14" stroke="rgba(255,255,255,0.15)" stroke-width="3"/>
+<path d="M18 4 A14 14 0 0 1 32 18" stroke="#42b883" stroke-width="3" stroke-linecap="round" transform="rotate({} 18 18)"/>
+</svg>"##,
+                angle
+            );
+
+            let loading_card = container(
+                column![
+                    svg(svg::Handle::from_memory(spinner_svg.into_bytes()))
+                        .width(Length::Fixed(40.0))
+                        .height(Length::Fixed(40.0)),
+                    text("Loading video...")
+                        .size(13)
+                        .color(iced::Color::from_rgb(0.9, 0.9, 0.9)),
+                ]
+                .spacing(12)
+                .align_x(Alignment::Center),
+            )
+            .padding([16, 24])
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(0.08, 0.08, 0.08, 0.88))),
+                border: iced::Border {
+                    radius: 12.0.into(),
+                    width: 1.0,
+                    color: iced::Color::from_rgba(0.26, 0.72, 0.51, 0.4),
+                },
+                shadow: iced::Shadow {
+                    color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5),
+                    offset: iced::Vector::new(0.0, 4.0),
+                    blur_radius: 16.0,
+                },
+                ..Default::default()
+            });
+
+            let loading_layer = container(loading_card)
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center_x(Length::Fill)
+                .center_y(Length::Fill);
+
+            stack_children.push(Element::from(loading_layer));
+        }
+
+        // Overlays show when mouse is actively moving over this specific player (fades after delay), or while player is loading
+        let show_overlay = (is_hovered && self.player_overlay_ticks > 0) || is_loading;
+
+        // 1. Top-Left Title Pill (Matches Electron Player.vue)
+        let formatted_title = format::format_descriptive_title(&p.state.path);
+        let title_pill = container(
+            text(formatted_title)
+                .size(22)
+                .font(iced::Font {
+                    weight: iced::font::Weight::Bold,
+                    ..Default::default()
+                })
+                .color(iced::Color::WHITE),
+        )
+        .padding([10, 18])
+        .style(theme::title_pill_style);
+
+        let top_row = row![
+            title_pill,
+            Space::new().width(Length::Fill),
+        ]
+        .width(Length::Fill);
+
+        if show_overlay {
+            // 2. Bottom Progress & Control Overlay (Vue emerald green theme #42b883)
+            let seek_slider = slider(
+                0.0..=1.0,
+                progress_ratio,
+                move |ratio| Message::SeekRatio(player_id, ratio),
+            )
+            .step(0.001)
+            .style(theme::progress_slider_style)
+            .width(Length::Fill);
+
+            let progress_bar_with_timestamp = cursor::PointerCursor::new(
+                Stack::new()
+                    .push(seek_slider)
+                    .push(
+                        container(text(time_str).size(13).color(iced::Color::WHITE))
+                            .width(Length::Fill)
+                            .height(Length::Fixed(22.0))
+                            .center_x(Length::Fill)
+                            .center_y(Length::Fill),
+                    ),
+            );
+
+            let play_pause_icon = if p.state.is_playing {
+                svg(svg::Handle::from_memory(SVG_PLAYER_PAUSE))
+                    .width(Length::Fixed(20.0))
+                    .height(Length::Fixed(20.0))
+            } else {
+                svg(svg::Handle::from_memory(SVG_PLAYER_PLAY))
+                    .width(Length::Fixed(20.0))
+                    .height(Length::Fixed(20.0))
+            };
+
+            let volume_icon = if p.state.is_muted {
+                svg(svg::Handle::from_memory(SVG_PLAYER_MUTE))
+                    .width(Length::Fixed(20.0))
+                    .height(Length::Fixed(20.0))
+            } else {
+                svg(svg::Handle::from_memory(SVG_PLAYER_VOLUME))
+                    .width(Length::Fixed(20.0))
+                    .height(Length::Fixed(20.0))
+            };
+
+            let next_icon = svg(svg::Handle::from_memory(SVG_PLAYER_NEXT))
+                .width(Length::Fixed(20.0))
+                .height(Length::Fixed(20.0));
+
+            let controls_row = row![
+                // Left: CC + Volume Icon + Volume Slider
+                button(
+                    container(
+                        text(if self.subtitles_enabled { "CC" } else { "cc" })
+                            .size(14)
+                    )
+                    .center_x(Length::Shrink)
+                    .center_y(Length::Shrink),
+                )
+                .style(theme::cc_button_style(self.subtitles_enabled))
+                .on_press(Message::ToggleSubtitles)
+                .padding([4, 8]),
+                button(volume_icon)
+                    .style(theme::player_control_button_style)
+                    .on_press(Message::TogglePlayerMute(player_id))
+                    .padding([4, 6]),
+                cursor::PointerCursor::new(
+                    slider(
+                        0.0..=1.0,
+                        p.state.volume as f32,
+                        move |v| Message::SetVolume(player_id, v as f64),
+                    )
+                    .step(0.01)
+                    .style(theme::volume_slider_style)
+                    .width(Length::Fixed(80.0)),
+                ),
+                Space::new().width(Length::Fill),
+                // Right: Play/Pause + Skip Next
+                button(play_pause_icon)
+                    .style(theme::player_control_button_style)
+                    .on_press(Message::TogglePlay(player_id))
+                    .padding([4, 8]),
+                button(next_icon)
+                    .style(theme::player_control_button_style)
+                    .on_press(Message::NextVideo(player_id))
+                    .padding([4, 8]),
+            ]
+            .spacing(12)
+            .align_y(Alignment::Center);
+
+            let bottom_overlay = container(
+                column![
+                    controls_row,
+                    progress_bar_with_timestamp,
+                ]
+                .spacing(8),
+            )
+            .padding(iced::Padding {
+                top: 8.0,
+                right: 14.0,
+                bottom: 12.0,
+                left: 14.0,
+            })
+            .width(Length::Fill)
+            .style(theme::controls_overlay_style);
+
+            let overlays_column = if is_loading {
+                column![
+                    Space::new().height(Length::Fixed(80.0)),
+                    top_row,
+                    Space::new().height(Length::Fill),
+                ]
+            } else {
+                column![
+                    Space::new().height(Length::Fixed(80.0)),
+                    top_row,
+                    Space::new().height(Length::Fill),
+                    bottom_overlay,
+                ]
+            }
+            .width(Length::Fill)
+            .height(Length::Fill);
+
+            stack_children.push(Element::from(overlays_column));
+        } else if is_focused && self.title_pill_ticks > 0 {
+            let pill_column = column![
+                Space::new().height(Length::Fixed(80.0)),
+                top_row,
+                Space::new().height(Length::Fill),
+            ]
+            .width(Length::Fill)
+            .height(Length::Fill);
+
+            stack_children.push(Element::from(pill_column));
+        }
+
+        let show_border = !is_scroll_mode && is_focused && self.focus_border_ticks > 0;
+        if show_border {
+            let focus_ring = container(Space::new().width(Length::Fill).height(Length::Fill))
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .style(theme::focus_ring_style);
+            stack_children.push(Element::from(focus_ring));
+        }
+
+        let player_stack = Stack::with_children(stack_children)
+            .width(Length::Fill)
+            .height(Length::Fill);
+
+        let player_box = container(player_stack)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .style(theme::player_container_style(opacity));
+
+        mouse_area(player_box)
+            .on_press(Message::PlayerClicked(player_id))
+            .on_enter(Message::PlayerHovered(player_id))
+            .on_exit(Message::PlayerUnhovered(player_id))
+            .into()
+    }
+}
