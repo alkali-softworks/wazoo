@@ -109,8 +109,8 @@ pub async fn ensure_window_focused_linux() {
 #[cfg(target_os = "linux")]
 pub fn is_hybrid_laptop() -> bool {
     // Detect hybrid laptops (e.g. Intel/AMD iGPU + NVIDIA dGPU driving an internal eDP panel).
-    // On desktop PCs (e.g. Ryzen 9900X + RTX 4070), monitors are plugged directly into the dedicated
-    // GPU via DP/HDMI with no battery or eDP panel, so the dedicated GPU should be preferred directly.
+    // On desktop PCs, monitors are plugged directly into the dedicated GPU via DP/HDMI
+    // with no battery or eDP panel, so the dedicated GPU should be preferred directly.
     let has_battery = std::path::Path::new("/sys/class/power_supply/BAT0").exists()
         || std::path::Path::new("/sys/class/power_supply/BAT1").exists();
 
