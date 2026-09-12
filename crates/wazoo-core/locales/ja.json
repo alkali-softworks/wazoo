@@ -44,7 +44,8 @@
     "added": "追加しました: {name}",
     "no_players": "アクティブなプレイヤーはありません",
     "no_players_msg": "「N」キーを押してプレイヤーを追加するか、右クリックでメニューを開きます。",
-    "no_videos_found": "クエリに一致する動画が見つかりません"
+    "no_videos_found": "クエリに一致する動画が見つかりません",
+    "videos_count": "({count} 本の動画)"
   },
   "settings": {
     "title": "設定",

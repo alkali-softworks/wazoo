@@ -44,7 +44,8 @@
     "added": "Adicionado: {name}",
     "no_players": "Nenhum reprodutor ativo",
     "no_players_msg": "Pressione 'N' para adicionar um reprodutor, ou clique com o botão direito para abrir o menu.",
-    "no_videos_found": "Nenhum vídeo encontrado para a consulta"
+    "no_videos_found": "Nenhum vídeo encontrado para a consulta",
+    "videos_count": "({count} Vídeos)"
   },
   "settings": {
     "title": "Configurações",

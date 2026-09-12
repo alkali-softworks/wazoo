@@ -44,7 +44,8 @@
     "added": "Added: {name}",
     "no_players": "No active players",
     "no_players_msg": "Press 'N' to add a player, or right-click to open the menu.",
-    "no_videos_found": "No videos found for query"
+    "no_videos_found": "No videos found for query",
+    "videos_count": "({count} Videos)"
   },
   "settings": {
     "title": "Settings",
