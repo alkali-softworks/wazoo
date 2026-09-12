@@ -291,7 +291,7 @@ fn test_subtitle_tracks_and_extraction() {
         std::thread::sleep(Duration::from_millis(300));
         let _ = handle.update_frame();
 
-        let sub_tracks = handle.subtitle_tracks();
+        let sub_tracks = handle.subtitle_tracks().to_vec();
         println!("Found {} subtitle tracks", sub_tracks.len());
         for (i, t) in sub_tracks.iter().enumerate() {
             println!("  [{}] id={} selected={} lang={:?} title={:?} label='{}'",
@@ -310,11 +310,47 @@ fn test_subtitle_tracks_and_extraction() {
         assert!(handle.subtitle_tracks().iter().find(|t| t.id == 2).unwrap().is_selected);
         assert!(!handle.subtitle_tracks().iter().find(|t| t.id == 1).unwrap().is_selected);
 
-        // Subtitle cues extraction via ffmpeg for track 0 and track 1
-        let cues_track0 = wazoo_media::load_subtitles_for_track_sync(sample, 0);
-        let cues_track1 = wazoo_media::load_subtitles_for_track_sync(sample, 1);
-        assert!(!cues_track0.is_empty(), "Track 0 cues should not be empty");
-        assert!(!cues_track1.is_empty(), "Track 1 cues should not be empty");
-        println!("Extracted {} cues for track 0, {} cues for track 1", cues_track0.len(), cues_track1.len());
+        // Verify cue extraction for ALL tracks using their respective ff_index or external_filename
+        for (i, t) in sub_tracks.iter().enumerate() {
+            if let Some(ext_file) = &t.external_filename {
+                let content = std::fs::read_to_string(ext_file).expect("read external srt");
+                let cues = wazoo_media::parse_subtitles(&content);
+                assert!(!cues.is_empty(), "Track {} ({}) external cues empty", i, ext_file);
+                println!("Extracted {} cues for track {} from external file {}", cues.len(), i, ext_file);
+            } else {
+                let cues = wazoo_media::load_subtitles_for_stream_sync(sample, t.ff_index, i);
+                assert!(!cues.is_empty(), "Track {} (ff_index: {:?}) cues empty", i, t.ff_index);
+                println!("Extracted {} cues for track {} (ff_index: {:?})", cues.len(), i, t.ff_index);
+            }
+        }
+    }
+
+    let sample16 = "/mnt/bob/anime/Mushoku Tensei/Season 2/S02E16-Norn and Aisha.mkv";
+    if Path::new(sample16).exists() {
+        let mut handle = VideoHandle::new(13, sample16, "Norn and Aisha").expect("create VideoHandle");
+        handle.set_muted(true);
+
+        std::thread::sleep(Duration::from_millis(300));
+        let _ = handle.update_frame();
+
+        let sub_tracks = handle.subtitle_tracks();
+        println!("S02E16: Found {} subtitle tracks", sub_tracks.len());
+        for (i, t) in sub_tracks.iter().enumerate() {
+            println!("  S02E16 [{}] id={} selected={} ff_index={:?} ext={:?} label='{}'",
+                i, t.id, t.is_selected, t.ff_index, t.external_filename, wazoo_media::format_subtitle_track_label(t, i)
+            );
+
+            // Test extracting cues for every single track in S02E16
+            if let Some(ext_file) = &t.external_filename {
+                let content = std::fs::read_to_string(ext_file).expect("read external srt");
+                let cues = wazoo_media::parse_subtitles(&content);
+                assert!(!cues.is_empty(), "S02E16 Track {} ({}) external cues empty", i, ext_file);
+                println!("  -> Extracted {} cues from external file {}", cues.len(), ext_file);
+            } else {
+                let cues = wazoo_media::load_subtitles_for_stream_sync(sample16, t.ff_index, i);
+                assert!(!cues.is_empty(), "S02E16 Track {} (ff_index: {:?}) cues empty", i, t.ff_index);
+                println!("  -> Extracted {} cues via ffmpeg (ff_index: {:?})", cues.len(), t.ff_index);
+            }
+        }
     }
 }

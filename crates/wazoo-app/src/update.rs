@@ -408,10 +408,9 @@ impl WazooApp {
                                             }
                                         }
                                     }
-                                    let stream_idx = track.ff_index.map(|i| i as usize).unwrap_or(track_idx);
-                                    wazoo_media::load_subtitles_for_track(path, stream_idx).await
+                                    wazoo_media::load_subtitles_for_stream(path, track.ff_index, track_idx).await
                                 } else {
-                                    wazoo_media::load_subtitles_for_track(path, track_idx).await
+                                    wazoo_media::load_subtitles_for_stream(path, None, track_idx).await
                                 }
                             },
                             move |cues| Message::TranscriptLoaded(path_clone, cues),
