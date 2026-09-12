@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Root View Assembly
+ * 
+ * Assembles the primary UI layer stack, rendering video players, transient overlays,
+ * sliding titlebars, floating toast notices, scan banners, and modal dialogs.
+ */
+
 pub mod file_picker;
 pub mod modals;
 pub mod player;

@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Configuration & Persistence Manager
+ * 
+ * Resolves standard platform directories for config and database storage, loading and saving
+ * JSON settings files and managing database paths.
+ */
+
 use std::fs;
 use std::path::PathBuf;
 use directories::ProjectDirs;

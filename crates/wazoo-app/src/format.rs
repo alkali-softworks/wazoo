@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * String & Time Formatting Utilities
+ * 
+ * Sanitizes and cleans video file titles, extracts folder names, formats timestamps
+ * (HH:MM:SS / MM:SS), and produces descriptive media labels.
+ */
+
 use regex::Regex;
 use std::sync::LazyLock;
 

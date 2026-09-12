@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * SQLite Database Manager
+ * 
+ * Provides database initialization, indexing, full-text pattern search, folder filtering,
+ * and bulk upsert operations for indexed video files.
+ */
+
 use std::collections::HashSet;
 use std::path::Path;
 use rusqlite::{params, Connection, Result};

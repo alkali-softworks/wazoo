@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Core Application State
+ * 
+ * Defines the central WazooApp struct, initial state construction, player lifecycle management,
+ * active session persistence, search reconciliation, and event subscription bindings.
+ */
+
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};

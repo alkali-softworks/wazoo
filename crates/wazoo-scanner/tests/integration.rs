@@ -1,3 +1,11 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Scanner Integration Tests
+ * 
+ * Tests real video probing, metadata extraction, and scanning pipeline correctness.
+ */
+
 use std::path::Path;
 use wazoo_scanner::probe_video_metadata;
 

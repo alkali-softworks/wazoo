@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Interactive Cursor Widget
+ * 
+ * Wraps arbitrary Iced elements to report custom mouse cursor shapes, such as pointer
+ * cursors for clickable seekbars and playback controls.
+ */
+
 use iced::advanced::widget::{Tree, Widget};
 use iced::advanced::{layout, renderer, Clipboard, Layout, Shell};
 use iced::mouse;

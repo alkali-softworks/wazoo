@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Domain Models & Settings
+ * 
+ * Defines core data structures including VideoRecord, VideoSession, Bookmark, LayoutMode,
+ * PlaybackMode, and persistent WazooSettings with serialization support.
+ */
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

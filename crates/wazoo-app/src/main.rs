@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Application Entry Point
+ * 
+ * Initializes logging, platform-specific cursor environments, and parses CLI arguments.
+ * Boots the Iced application runtime with global styles, window configuration, and lifecycle hooks.
+ */
+
 mod app;
 mod assets;
 mod cli;

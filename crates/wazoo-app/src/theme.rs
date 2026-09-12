@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Application Design System & Theme
+ * 
+ * Defines colors, container styles, button appearances, inputs, modal backdrops,
+ * focus rings, and visual styling rules for the dark ambient aesthetic.
+ */
+
 use iced::{
     widget::{button, container, slider, text_input},
     Background, Border, Color, Shadow, Theme, Vector,

@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Native Build Script
+ * 
+ * Detects libmpv dependencies on Linux and configured search paths, emitting compiler flags
+ * for linking against shared or bundled mpv libraries.
+ */
+
 fn main() {
     #[cfg(target_os = "macos")]
     {

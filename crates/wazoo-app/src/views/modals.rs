@@ -1,3 +1,12 @@
+/**
+ * ALKALI SOFTWORKS - Wazoo
+ * 
+ * Modal Dialogs Subsystem
+ * 
+ * Renders dialogs for video search with folder filters, application settings, keyboard shortcut
+ * references, bookmark manager, and context menus with dismissable backdrops.
+ */
+
 use iced::{
     widget::{button, column, container, mouse_area, row, scrollable, slider, text, text_input, Space},
     Alignment, Element, Length, Theme,
