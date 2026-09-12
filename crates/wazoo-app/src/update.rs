@@ -110,7 +110,7 @@ impl WazooApp {
                 self.window_id = Some(win_id);
                 self.cursor_position = pos;
                 if !self.is_modal_or_menu_open() {
-                    self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS; // 3 seconds delay before hiding controls
+                    self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS; // 2.5 seconds delay before hiding controls
                 }
 
                 if pos.y < 35.0 || self.show_dropdown_menu {
