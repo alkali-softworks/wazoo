@@ -16,7 +16,7 @@ use iced::{
 use wazoo_core::{Bookmark, LayoutMode, PlaybackMode};
 use wazoo_media::{PlayerId, VideoHandle};
 use wazoo_scanner::{ScanStage, Scanner};
-use crate::app::{WazooApp, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, TITLEBAR_HIDE_TICKS};
+use crate::app::{WazooApp, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, TITLEBAR_HIDE_TICKS, TITLEBAR_SHOW_DELAY_TICKS};
 use crate::format;
 use crate::message::Message;
 
@@ -35,6 +35,7 @@ impl WazooApp {
                 self.cursor_position = Point::new(-1000.0, -1000.0);
                 self.titlebar_drag_pending = false;
                 self.titlebar_press_origin = None;
+                self.titlebar_hover_ticks = 0;
                 if self.hovered_player_id.is_some() {
                     self.player_overlay_ticks = self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                 }
@@ -116,12 +117,22 @@ impl WazooApp {
                 self.window_id = Some(win_id);
                 self.cursor_position = pos;
 
-                if self.is_point_in_titlebar(pos) || self.show_dropdown_menu {
+                if self.show_dropdown_menu {
                     self.show_titlebar = true;
                     self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                    self.titlebar_hover_ticks = 0;
                     if self.hovered_player_id.is_some() {
                         self.player_overlay_ticks = self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                     }
+                } else if self.is_point_in_titlebar(pos) {
+                    if self.show_titlebar {
+                        self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                        if self.hovered_player_id.is_some() {
+                            self.player_overlay_ticks = self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                        }
+                    }
+                } else {
+                    self.titlebar_hover_ticks = 0;
                 }
 
                 if self.titlebar_drag_pending {
@@ -140,6 +151,7 @@ impl WazooApp {
                 self.cursor_position = Point::new(-1000.0, -1000.0);
                 self.titlebar_drag_pending = false;
                 self.titlebar_press_origin = None;
+                self.titlebar_hover_ticks = 0;
                 if self.hovered_player_id.is_some() {
                     self.player_overlay_ticks = self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                 }
@@ -559,7 +571,7 @@ impl WazooApp {
                 self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
             }
             Message::PlayerHovered(id) => {
-                if self.is_modal_or_menu_open() || self.is_point_in_titlebar(self.cursor_position) {
+                if self.is_modal_or_menu_open() || (self.show_titlebar && self.is_point_in_titlebar(self.cursor_position)) {
                     if self.hovered_player_id == Some(id) {
                         self.player_overlay_ticks = self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                     }
@@ -1403,7 +1415,26 @@ impl WazooApp {
                 if self.focus_border_ticks > 0 {
                     self.focus_border_ticks -= 1;
                 }
-                if !self.is_point_in_titlebar(self.cursor_position) && !self.show_dropdown_menu {
+                if self.is_point_in_titlebar(self.cursor_position) || self.show_dropdown_menu {
+                    if self.show_dropdown_menu {
+                        self.show_titlebar = true;
+                        self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                        self.titlebar_hover_ticks = 0;
+                    } else if self.show_titlebar {
+                        self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                    } else {
+                        self.titlebar_hover_ticks += 1;
+                        if self.titlebar_hover_ticks >= TITLEBAR_SHOW_DELAY_TICKS {
+                            self.show_titlebar = true;
+                            self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                            self.titlebar_hover_ticks = 0;
+                            if self.hovered_player_id.is_some() {
+                                self.player_overlay_ticks = self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                            }
+                        }
+                    }
+                } else {
+                    self.titlebar_hover_ticks = 0;
                     if self.titlebar_hide_ticks > 0 {
                         self.titlebar_hide_ticks -= 1;
                         if self.titlebar_hide_ticks == 0 {

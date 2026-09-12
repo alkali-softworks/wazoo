@@ -133,27 +133,11 @@ impl WazooApp {
                     button(text(self.t("common.help"))).style(theme::menu_item_style).on_press(Message::OpenHelpModal).padding([8, 14]).width(Length::Fill),
                     button(text(format!("{} (Alt+X)", self.t("common.quit")))).style(theme::menu_item_style).on_press(Message::CloseApp).padding([8, 14]).width(Length::Fill),
                 ]
+                .spacing(2)
                 .width(Length::Fixed(230.0)),
             )
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(iced::Color::BLACK)),
-                border: iced::Border {
-                    radius: iced::border::Radius {
-                        top_left: 0.0,
-                        top_right: 0.0,
-                        bottom_right: 6.0,
-                        bottom_left: 6.0,
-                    },
-                    width: 1.0,
-                    color: theme::COLOR_BORDER,
-                },
-                shadow: iced::Shadow {
-                    color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5),
-                    offset: iced::Vector::new(0.0, 4.0),
-                    blur_radius: 12.0,
-                },
-                ..Default::default()
-            });
+            .padding(4)
+            .style(theme::menu_dropdown_style);
 
             column![titlebar_row, menu_dropdown].into()
         } else {

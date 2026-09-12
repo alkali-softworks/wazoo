@@ -185,6 +185,7 @@ impl WazooApp {
             |lang| Message::SetLanguage(lang.code.to_string()),
         )
         .style(theme::dark_pick_list_style)
+        .menu_style(theme::dark_pick_list_menu_style)
         .width(Length::Fill)
         .padding([8, 12]);
 
@@ -398,7 +399,7 @@ impl WazooApp {
 
                 let is_shuffle = b.is_shuffle;
                 let mode_label = if is_shuffle { self.t("bookmarks.shuffle") } else { self.t("bookmarks.linear") };
-                let mode_color = if is_shuffle { theme::COLOR_BLUE_ACTIVE } else { theme::COLOR_TEXT_MUTED };
+                let mode_color = if is_shuffle { theme::COLOR_PRIMARY } else { theme::COLOR_TEXT_MUTED };
                 meta_row = meta_row.push(
                     container(text(mode_label).size(11).color(mode_color))
                         .padding([2, 6])
