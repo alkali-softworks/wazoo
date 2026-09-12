@@ -9,6 +9,8 @@
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use walkdir::WalkDir;
 use regex::Regex;
 use serde::Deserialize;
@@ -222,12 +224,36 @@ impl Scanner {
         db_path: PathBuf,
         progress_tx: Option<mpsc::Sender<ScanProgress>>,
     ) -> Result<usize, String> {
+        self.scan_and_index_with_cancel(folders, db_path, progress_tx, None).await
+    }
+
+    pub async fn scan_and_index_with_cancel(
+        &self,
+        folders: &[String],
+        db_path: PathBuf,
+        progress_tx: Option<mpsc::Sender<ScanProgress>>,
+        cancel: Option<Arc<AtomicBool>>,
+    ) -> Result<usize, String> {
+        let is_cancelled = || {
+            cancel
+                .as_ref()
+                .map(|c| c.load(Ordering::Relaxed))
+                .unwrap_or(false)
+        };
+
+        if is_cancelled() {
+            return Err("Scan cancelled".to_string());
+        }
+
         let mut files = Vec::new();
         let mut subdirs = Vec::new();
         let mut seen_files = std::collections::HashSet::new();
 
         // 1. Initial pass: Read immediate entries of each configured root folder
         for folder in folders {
+            if is_cancelled() {
+                return Err("Scan cancelled".to_string());
+            }
             let path = Path::new(folder);
             if !path.is_dir() {
                 continue;
@@ -250,10 +276,16 @@ impl Scanner {
         // Expand container directories if we have a small set of directories (< 25)
         // so progress is tracked per show/movie folder rather than across an entire disk or root.
         while subdirs.len() < 25 {
+            if is_cancelled() {
+                return Err("Scan cancelled".to_string());
+            }
             let mut any_expanded = false;
             let mut next_subdirs = Vec::new();
 
             for dir in subdirs {
+                if is_cancelled() {
+                    return Err("Scan cancelled".to_string());
+                }
                 let mut child_dirs = Vec::new();
                 let mut child_videos = Vec::new();
 
@@ -290,6 +322,9 @@ impl Scanner {
         let total_dirs = subdirs.len();
         if total_dirs > 0 {
             for (idx, subdir) in subdirs.into_iter().enumerate() {
+                if is_cancelled() {
+                    return Err("Scan cancelled".to_string());
+                }
                 let dir_name = subdir
                     .file_name()
                     .and_then(|s| s.to_str())
@@ -311,6 +346,9 @@ impl Scanner {
 
                 let prev_files = files.len();
                 for entry in WalkDir::new(&subdir).into_iter().filter_map(|e| e.ok()) {
+                    if is_cancelled() {
+                        return Err("Scan cancelled".to_string());
+                    }
                     let p = entry.path();
                     if p.is_file() && is_video_file(p) {
                         let pb = p.to_path_buf();
@@ -355,6 +393,10 @@ impl Scanner {
             }).await;
         }
 
+        if is_cancelled() {
+            return Err("Scan cancelled".to_string());
+        }
+
         let total = files.len();
         if total == 0 {
             return Ok(0);
@@ -365,6 +407,9 @@ impl Scanner {
         let mut existing_paths = Vec::with_capacity(files.len());
 
         for (idx, file) in files.into_iter().enumerate() {
+            if is_cancelled() {
+                return Err("Scan cancelled".to_string());
+            }
             let path_str = file.to_string_lossy().to_string();
             let file_stem = file
                 .file_stem()
@@ -397,6 +442,10 @@ impl Scanner {
                     }).await;
                 }
             }
+        }
+
+        if is_cancelled() {
+            return Err("Scan cancelled".to_string());
         }
 
         let inserted = db.batch_insert_videos(&records).map_err(|e| e.to_string())?;
@@ -478,6 +527,25 @@ mod tests {
         let last_listing = listing_stages.last().unwrap();
         assert_eq!(last_listing.percent, 100);
         assert_eq!(last_listing.files_found, 3);
+
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[tokio::test]
+    async fn test_scanner_cancellation() {
+        let tmp = std::env::temp_dir().join(format!("wazoo_test_cancel_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let dir = tmp.join("Videos");
+        let _ = std::fs::create_dir_all(&dir);
+        let _ = std::fs::write(dir.join("video.mp4"), b"dummy content");
+        let db_file = tmp.join("test.db");
+
+        let cancel = Arc::new(AtomicBool::new(true));
+        let scanner = Scanner::default();
+        let folders = vec![dir.to_string_lossy().to_string()];
+
+        let res = scanner.scan_and_index_with_cancel(&folders, db_file, None, Some(cancel)).await;
+        assert!(res.is_err());
+        assert_eq!(res.err().as_deref(), Some("Scan cancelled"));
 
         let _ = std::fs::remove_dir_all(&tmp);
     }
