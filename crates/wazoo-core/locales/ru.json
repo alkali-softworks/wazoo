@@ -107,6 +107,7 @@
   "transcript": {
     "title": "Транскрипт",
     "cues_count": "{count} строк",
+    "subtitle_track": "Субтитры:",
     "search_placeholder": "Поиск по диалогам...",
     "extracting": "Извлечение дорожек диалогов...",
     "loading_subtitles": "Загрузка встроенных субтитров",

@@ -67,6 +67,88 @@ impl WazooApp {
             .size(12)
             .color(theme::COLOR_TEXT_MUTED);
 
+        // 2b. Subtitle Track Selector (if more than 1 subtitle stream available)
+        let sub_tracks = self.focused_player().map(|p| p.subtitle_tracks()).unwrap_or(&[]);
+        let subtitle_selector: Option<Element<'_, Message>> = if sub_tracks.len() > 1 {
+            let current_track_idx = if self.transcript_track_index < sub_tracks.len() {
+                self.transcript_track_index
+            } else {
+                sub_tracks.iter().position(|t| t.is_selected).unwrap_or(0)
+            };
+            let active_sub_label = sub_tracks
+                .get(current_track_idx)
+                .map(|t| wazoo_media::format_subtitle_track_label(t, current_track_idx))
+                .unwrap_or_else(|| format!("Track {}", current_track_idx + 1));
+
+            let arrow = if self.show_transcript_menu { "▴" } else { "▾" };
+            let track_btn_content = row![
+                text(self.t("transcript.subtitle_track"))
+                    .size(12)
+                    .color(theme::COLOR_TEXT_MUTED),
+                text(format!("{active_sub_label} {arrow}"))
+                    .size(12)
+                    .color(iced::Color::WHITE),
+            ]
+            .spacing(6)
+            .align_y(Alignment::Center);
+
+            let track_btn = button(track_btn_content)
+                .style(theme::transcript_track_button_style(self.show_transcript_menu))
+                .on_press(Message::ToggleTranscriptSubtitleMenu)
+                .padding([5, 10]);
+
+            let mut selector_col = column![track_btn].spacing(4);
+
+            if self.show_transcript_menu {
+                let menu_items: Vec<Element<'_, Message>> = sub_tracks
+                    .iter()
+                    .enumerate()
+                    .map(|(i, t)| {
+                        let is_selected = i == current_track_idx;
+                        let label = wazoo_media::format_subtitle_track_label(t, i);
+                        let track_id = t.id;
+                        let item_row = row![
+                            text(if is_selected { "✓" } else { "" })
+                                .size(13)
+                                .color(if is_selected { theme::COLOR_PRIMARY } else { iced::Color::TRANSPARENT })
+                                .width(Length::Fixed(14.0)),
+                            text(label)
+                                .size(12)
+                                .color(if is_selected { theme::COLOR_PRIMARY } else { iced::Color::WHITE }),
+                        ]
+                        .spacing(6)
+                        .align_y(Alignment::Center);
+
+                        let item_btn = button(item_row)
+                            .style(if is_selected {
+                                theme::audio_menu_selected_item_style
+                            } else {
+                                theme::audio_menu_item_style
+                            })
+                            .on_press(Message::SelectTranscriptSubtitleTrack(i, track_id))
+                            .padding([6, 10])
+                            .width(Length::Fill);
+
+                        item_btn.into()
+                    })
+                    .collect();
+
+                let sub_menu_card = container(
+                    column(menu_items)
+                        .spacing(2)
+                        .width(Length::Fill)
+                )
+                .padding(4)
+                .style(theme::audio_menu_card_style);
+
+                selector_col = selector_col.push(sub_menu_card);
+            }
+
+            Some(selector_col.into())
+        } else {
+            None
+        };
+
         // 3. Dialogue Search Filter Input
         let search_box = text_input(&self.t("transcript.search_placeholder"), &self.transcript_search)
             .on_input(Message::TranscriptSearchChanged)
@@ -208,15 +290,21 @@ impl WazooApp {
             }
         };
 
-        let content = column![
+        let mut content = column![
             Space::new().height(Length::Fixed(24.0)),
             header,
             video_subheading,
-            search_box,
-            content_body,
         ]
-        .spacing(12)
-        .padding(16);
+        .spacing(12);
+
+        if let Some(selector) = subtitle_selector {
+            content = content.push(selector);
+        }
+
+        let content = content
+            .push(search_box)
+            .push(content_body)
+            .padding(16);
 
         container(content)
             .width(Length::Fixed(440.0))

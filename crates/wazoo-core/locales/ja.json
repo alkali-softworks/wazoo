@@ -107,6 +107,7 @@
   "transcript": {
     "title": "トランスクリプト",
     "cues_count": "{count} 件",
+    "subtitle_track": "字幕:",
     "search_placeholder": "対話テキストを検索...",
     "extracting": "対話トラックを抽出中...",
     "loading_subtitles": "内嵌字幕を読み込み中",

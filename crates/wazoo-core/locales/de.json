@@ -107,6 +107,7 @@
   "transcript": {
     "title": "Transkript",
     "cues_count": "{count} Zeilen",
+    "subtitle_track": "Untertitel:",
     "search_placeholder": "Transkript durchsuchen...",
     "extracting": "Dialogspuren werden extrahiert...",
     "loading_subtitles": "Eingebettete Untertitel laden",

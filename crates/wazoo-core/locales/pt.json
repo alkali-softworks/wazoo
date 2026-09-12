@@ -107,6 +107,7 @@
   "transcript": {
     "title": "Transcrição",
     "cues_count": "{count} falas",
+    "subtitle_track": "Legendas:",
     "search_placeholder": "Pesquisar diálogo...",
     "extracting": "Extraindo faixas de diálogo...",
     "loading_subtitles": "Carregando legendas embutidas",

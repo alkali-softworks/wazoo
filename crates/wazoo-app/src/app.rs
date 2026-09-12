@@ -87,6 +87,8 @@ pub struct WazooApp {
     pub(crate) transcript_search: String,
     pub(crate) transcript_loading: bool,
     pub(crate) transcript_video_path: Option<String>,
+    pub(crate) transcript_track_index: usize,
+    pub(crate) show_transcript_menu: bool,
 }
 
 impl WazooApp {
@@ -217,6 +219,8 @@ impl WazooApp {
             transcript_search: String::new(),
             transcript_loading: false,
             transcript_video_path: None,
+            transcript_track_index: 0,
+            show_transcript_menu: false,
         };
 
         // Initialize players based on settings or restore saved session
@@ -367,32 +371,72 @@ impl WazooApp {
         }
     }
 
+    pub(crate) fn focused_player_mut(&mut self) -> Option<&mut VideoHandle> {
+        if self.players.is_empty() {
+            None
+        } else {
+            let idx = self.focused_player_idx % self.players.len();
+            Some(&mut self.players[idx])
+        }
+    }
+
     pub(crate) fn load_transcript_for_focused_player(&mut self) -> Task<Message> {
-        if let Some(player) = self.focused_player() {
+        let (path, sub_tracks, selected_track_pos) = if let Some(player) = self.focused_player() {
             let path = player.state.path.clone();
-            if path.is_empty() {
-                self.transcript_cues.clear();
-                self.transcript_video_path = None;
-                self.transcript_loading = false;
-                return Task::none();
-            }
-            if self.transcript_video_path.as_deref() == Some(&path) && !self.transcript_cues.is_empty() {
-                return Task::none();
-            }
-            self.transcript_video_path = Some(path.clone());
-            self.transcript_loading = true;
-            self.transcript_cues.clear();
-            let path_clone = path.clone();
-            Task::perform(
-                wazoo_media::load_subtitles(path),
-                move |cues| Message::TranscriptLoaded(path_clone, cues),
-            )
+            let sub_tracks = player.subtitle_tracks().to_vec();
+            let selected_pos = sub_tracks.iter().position(|t| t.is_selected).unwrap_or(0);
+            (path, sub_tracks, selected_pos)
         } else {
             self.transcript_cues.clear();
             self.transcript_video_path = None;
             self.transcript_loading = false;
-            Task::none()
+            self.transcript_track_index = 0;
+            self.show_transcript_menu = false;
+            return Task::none();
+        };
+
+        if path.is_empty() {
+            self.transcript_cues.clear();
+            self.transcript_video_path = None;
+            self.transcript_loading = false;
+            self.transcript_track_index = 0;
+            self.show_transcript_menu = false;
+            return Task::none();
         }
+
+        // Sync track index with selected player subtitle track if video path changed
+        if self.transcript_video_path.as_deref() != Some(&path) {
+            self.transcript_track_index = selected_track_pos;
+            self.show_transcript_menu = false;
+        } else if !self.transcript_cues.is_empty() {
+            return Task::none();
+        }
+
+        self.transcript_video_path = Some(path.clone());
+        self.transcript_loading = true;
+        self.transcript_cues.clear();
+        let path_clone = path.clone();
+        let track_idx = self.transcript_track_index;
+        let sub_track = sub_tracks.get(track_idx).cloned();
+        Task::perform(
+            async move {
+                if let Some(track) = sub_track {
+                    if let Some(ext_file) = track.external_filename {
+                        if let Ok(content) = tokio::fs::read_to_string(&ext_file).await {
+                            let cues = wazoo_media::parse_subtitles(&content);
+                            if !cues.is_empty() {
+                                return cues;
+                            }
+                        }
+                    }
+                    let stream_idx = track.ff_index.map(|i| i as usize).unwrap_or(track_idx);
+                    wazoo_media::load_subtitles_for_track(path, stream_idx).await
+                } else {
+                    wazoo_media::load_subtitles_for_track(path, track_idx).await
+                }
+            },
+            move |cues| Message::TranscriptLoaded(path_clone, cues),
+        )
     }
 
     pub(crate) fn get_next_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
@@ -1325,6 +1369,97 @@ mod tests {
             // When only 1 audio track exists, view should also render cleanly without selector
             app.players[0].state.audio_tracks.truncate(1);
             let _ = app.view();
+        }
+    }
+
+    #[test]
+    fn test_transcript_subtitle_track_selector_and_switching() {
+        let (mut app, _) = WazooApp::new(None);
+        let sample = "/home/klo/Downloads/VID_20240309_123459_679.mp4";
+        if std::path::Path::new(sample).exists() {
+            let handle = wazoo_media::VideoHandle::new(1, sample, "Test Video").expect("create VideoHandle");
+            app.players = vec![handle];
+            app.focused_player_idx = 0;
+
+            let player = &mut app.players[0];
+            player.state.subtitle_tracks = vec![
+                wazoo_media::SubtitleTrack {
+                    id: 1,
+                    title: Some("Full Subtitles / English / ASS / MTBB".to_string()),
+                    lang: Some("enm".to_string()),
+                    codec: Some("ass".to_string()),
+                    is_selected: true,
+                    ..Default::default()
+                },
+                wazoo_media::SubtitleTrack {
+                    id: 2,
+                    title: Some("Full Subtitles / English / ASS / MTBB / Honorofics".to_string()),
+                    lang: Some("enm".to_string()),
+                    codec: Some("ass".to_string()),
+                    is_selected: false,
+                    ..Default::default()
+                },
+                wazoo_media::SubtitleTrack {
+                    id: 3,
+                    title: Some("Signs and Songs".to_string()),
+                    lang: Some("eng".to_string()),
+                    codec: Some("ass".to_string()),
+                    is_selected: false,
+                    ..Default::default()
+                },
+            ];
+            player.state.current_subtitle_track_id = Some(1);
+
+            // Open transcript
+            let _ = app.update(Message::ToggleTranscript);
+            assert!(app.show_transcript);
+            assert_eq!(app.show_transcript_menu, false);
+
+            // View renders cleanly with subtitle selector present
+            let _ = app.view();
+
+            // Toggle transcript subtitle menu open
+            let _ = app.update(Message::ToggleTranscriptSubtitleMenu);
+            assert_eq!(app.show_transcript_menu, true);
+
+            // Re-render view with menu dropdown open
+            let _ = app.view();
+
+            // Escape closes subtitle menu first, keeping transcript drawer open
+            let _ = app.update(Message::EscapePressed);
+            assert_eq!(app.show_transcript_menu, false);
+            assert_eq!(app.show_transcript, true);
+
+            // Select Honorifics track (idx 1, track id 2)
+            let _ = app.update(Message::SelectTranscriptSubtitleTrack(1, 2));
+            assert_eq!(app.transcript_track_index, 1);
+            assert_eq!(app.show_transcript_menu, false);
+            assert_eq!(app.players[0].state.current_subtitle_track_id, Some(2));
+            assert_eq!(app.transcript_loading, true);
+
+            // Simulate cues loaded
+            let cues = vec![
+                wazoo_media::SubtitleCue {
+                    start_secs: 1.0,
+                    end_secs: 4.0,
+                    text: "Test subtitle cue".to_string(),
+                },
+            ];
+            let _ = app.update(Message::TranscriptLoaded(sample.to_string(), cues));
+            assert_eq!(app.transcript_loading, false);
+            assert_eq!(app.transcript_cues.len(), 1);
+
+            // Re-render view with cues and selected track
+            let _ = app.view();
+
+            // When only 1 subtitle track exists, view renders cleanly without selector
+            app.players[0].state.subtitle_tracks.truncate(1);
+            let _ = app.view();
+
+            // Close transcript closes everything
+            let _ = app.update(Message::CloseTranscript);
+            assert_eq!(app.show_transcript, false);
+            assert_eq!(app.show_transcript_menu, false);
         }
     }
 }

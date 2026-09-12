@@ -27,6 +27,17 @@ pub struct AudioTrack {
     pub is_selected: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct SubtitleTrack {
+    pub id: i64,
+    pub title: Option<String>,
+    pub lang: Option<String>,
+    pub codec: Option<String>,
+    pub is_selected: bool,
+    pub external_filename: Option<String>,
+    pub ff_index: Option<i64>,
+}
+
 pub fn language_display_name(code: &str) -> &'static str {
     let lower = code.trim().to_ascii_lowercase();
     match lower.as_str() {
@@ -69,7 +80,11 @@ pub fn format_audio_track_label(track: &AudioTrack, index: usize) -> String {
         if trimmed.is_empty() {
             return None;
         }
-        let first_seg = trimmed.split('/').next().unwrap_or(trimmed).trim();
+        let first_seg = if trimmed.contains(" / ") {
+            trimmed.split(" / ").next().unwrap_or(trimmed).trim()
+        } else {
+            trimmed.split('/').next().unwrap_or(trimmed).trim()
+        };
         if first_seg.is_empty() {
             Some(trimmed.to_string())
         } else if first_seg.chars().count() > 30 {
@@ -90,6 +105,83 @@ pub fn format_audio_track_label(track: &AudioTrack, index: usize) -> String {
             } else {
                 None
             }
+        }
+    });
+
+    match (cleaned_title, lang_display) {
+        (Some(title), Some(lang)) => {
+            if title.to_ascii_lowercase().contains(&lang.to_ascii_lowercase()) {
+                title
+            } else {
+                format!("{lang} ({title})")
+            }
+        }
+        (Some(title), None) => title,
+        (None, Some(lang)) => lang,
+        (None, None) => format!("Track {}", index + 1),
+    }
+}
+
+pub fn format_subtitle_track_label(track: &SubtitleTrack, index: usize) -> String {
+    let lang_display = track.lang.as_ref().and_then(|l| {
+        let display = language_display_name(l);
+        if !display.is_empty() {
+            Some(display.to_string())
+        } else if l.to_ascii_lowercase() == "enm" {
+            Some("English".to_string())
+        } else {
+            let trimmed = l.trim().to_ascii_uppercase();
+            if !trimmed.is_empty() {
+                Some(trimmed)
+            } else {
+                None
+            }
+        }
+    });
+
+    let cleaned_title = track.title.as_ref().and_then(|t| {
+        let trimmed = t.trim();
+        if trimmed.is_empty() {
+            return None;
+        }
+        let lower = trimmed.to_ascii_lowercase();
+        let qualifier = if lower.contains("honorific") || lower.contains("honorofic") {
+            Some("Honorifics")
+        } else if lower.contains("sign") || lower.contains("song") {
+            Some("Signs & Songs")
+        } else if lower.contains("sdh") {
+            Some("SDH")
+        } else if lower.contains("forced") {
+            Some("Forced")
+        } else {
+            None
+        };
+
+        let first_seg = if trimmed.contains(" / ") {
+            trimmed.split(" / ").next().unwrap_or(trimmed).trim()
+        } else {
+            trimmed.split('/').next().unwrap_or(trimmed).trim()
+        };
+        let first_lower = first_seg.to_ascii_lowercase();
+        if let Some(q) = qualifier {
+            let already_has_qualifier = match q {
+                "Honorifics" => first_lower.contains("honorific") || first_lower.contains("honorofic"),
+                "Signs & Songs" => first_lower.contains("sign") || first_lower.contains("song"),
+                "SDH" => first_lower.contains("sdh"),
+                "Forced" => first_lower.contains("forced"),
+                _ => first_lower.contains(&q.to_ascii_lowercase()),
+            };
+            if already_has_qualifier {
+                Some(first_seg.to_string())
+            } else {
+                Some(format!("{first_seg} - {q}"))
+            }
+        } else if first_seg.is_empty() {
+            Some(trimmed.to_string())
+        } else if first_seg.chars().count() > 30 {
+            Some(format!("{}...", first_seg.chars().take(27).collect::<String>()))
+        } else {
+            Some(first_seg.to_string())
         }
     });
 
@@ -234,6 +326,8 @@ pub struct PlayerState {
     pub stuck_count: usize,
     pub audio_tracks: Vec<AudioTrack>,
     pub current_audio_track_id: Option<i64>,
+    pub subtitle_tracks: Vec<SubtitleTrack>,
+    pub current_subtitle_track_id: Option<i64>,
 }
 
 impl PlayerState {
@@ -251,6 +345,8 @@ impl PlayerState {
             stuck_count: 0,
             audio_tracks: Vec::new(),
             current_audio_track_id: None,
+            subtitle_tracks: Vec::new(),
+            current_subtitle_track_id: None,
         }
     }
 }
@@ -365,7 +461,7 @@ impl VideoHandle {
             set_opt("osd-level", "0");
             set_opt("osd-on-seek", "no");
             set_opt("osd-bar", "no");
-            set_opt("sub-auto", "all");
+            set_opt("sub-auto", "fuzzy");
             set_opt("sub-ass", "yes");
             set_opt("embeddedfonts", "yes");
             set_opt("keep-open", "yes");
@@ -901,26 +997,68 @@ impl VideoHandle {
         }
     }
 
+    pub fn subtitle_tracks(&self) -> &[SubtitleTrack] {
+        &self.state.subtitle_tracks
+    }
+
+    pub fn current_subtitle_track_id(&self) -> Option<i64> {
+        self.state.current_subtitle_track_id
+    }
+
+    pub fn set_subtitle_track(&mut self, track_id: i64) {
+        unsafe {
+            if self.mpv.is_null() {
+                return;
+            }
+            let prop = CString::new("sid").unwrap();
+            let mut id = track_id;
+            mpv_ffi::mpv_set_property(
+                self.mpv,
+                prop.as_ptr(),
+                mpv_ffi::MPV_FORMAT_INT64,
+                &mut id as *mut _ as *mut _,
+            );
+            self.state.current_subtitle_track_id = Some(track_id);
+            for t in &mut self.state.subtitle_tracks {
+                t.is_selected = t.id == track_id;
+            }
+        }
+    }
+
     pub fn refresh_audio_tracks(&mut self) {
         if self.mpv.is_null() {
             return;
         }
         let count = self.get_property_i64("track-list/count").unwrap_or(0);
-        let mut tracks = Vec::new();
+        let mut audio_tracks = Vec::new();
+        let mut sub_tracks = Vec::new();
         for i in 0..count {
             let track_type = self.get_property_string(&format!("track-list/{}/type", i));
+            let id = self.get_property_i64(&format!("track-list/{}/id", i)).unwrap_or(0);
+            let title = self.get_property_string(&format!("track-list/{}/title", i));
+            let lang = self.get_property_string(&format!("track-list/{}/lang", i));
+            let codec = self.get_property_string(&format!("track-list/{}/codec", i));
+            let selected = self.get_property_bool(&format!("track-list/{}/selected", i)).unwrap_or(false);
+
             if track_type.as_deref() == Some("audio") {
-                let id = self.get_property_i64(&format!("track-list/{}/id", i)).unwrap_or(0);
-                let title = self.get_property_string(&format!("track-list/{}/title", i));
-                let lang = self.get_property_string(&format!("track-list/{}/lang", i));
-                let codec = self.get_property_string(&format!("track-list/{}/codec", i));
-                let selected = self.get_property_bool(&format!("track-list/{}/selected", i)).unwrap_or(false);
-                tracks.push(AudioTrack {
+                audio_tracks.push(AudioTrack {
                     id,
                     title,
                     lang,
                     codec,
                     is_selected: selected,
+                });
+            } else if track_type.as_deref() == Some("sub") {
+                let external_filename = self.get_property_string(&format!("track-list/{}/external-filename", i));
+                let ff_index = self.get_property_i64(&format!("track-list/{}/ff-index", i));
+                sub_tracks.push(SubtitleTrack {
+                    id,
+                    title,
+                    lang,
+                    codec,
+                    is_selected: selected,
+                    external_filename,
+                    ff_index,
                 });
             }
         }
@@ -928,9 +1066,9 @@ impl VideoHandle {
         let aid_str = self.get_property_string("aid");
         let mut current_aid = aid_i64
             .or_else(|| aid_str.as_deref().and_then(|s| s.parse::<i64>().ok()))
-            .or_else(|| tracks.iter().find(|t| t.is_selected).map(|t| t.id))
-            .or_else(|| tracks.first().map(|t| t.id));
-        self.state.audio_tracks = tracks;
+            .or_else(|| audio_tracks.iter().find(|t| t.is_selected).map(|t| t.id))
+            .or_else(|| audio_tracks.first().map(|t| t.id));
+        self.state.audio_tracks = audio_tracks;
         self.state.current_audio_track_id = current_aid;
 
         // Auto-select preferred audio track if configured
@@ -946,6 +1084,21 @@ impl VideoHandle {
         if let Some(aid) = current_aid {
             for t in &mut self.state.audio_tracks {
                 t.is_selected = t.id == aid;
+            }
+        }
+
+        // Subtitle tracks
+        let sid_i64 = self.get_property_i64("sid");
+        let sid_str = self.get_property_string("sid");
+        let current_sid = sid_i64
+            .or_else(|| sid_str.as_deref().and_then(|s| s.parse::<i64>().ok()))
+            .or_else(|| sub_tracks.iter().find(|t| t.is_selected).map(|t| t.id))
+            .or_else(|| sub_tracks.first().map(|t| t.id));
+        self.state.subtitle_tracks = sub_tracks;
+        self.state.current_subtitle_track_id = current_sid;
+        if let Some(sid) = current_sid {
+            for t in &mut self.state.subtitle_tracks {
+                t.is_selected = t.id == sid;
             }
         }
     }
@@ -1107,5 +1260,58 @@ mod tests {
     fn test_build_alang_string() {
         assert_eq!(build_alang_string("Japanese"), "ja,jpn,jp,japanese");
         assert_eq!(build_alang_string("English"), "en,eng,english");
+    }
+
+    #[test]
+    fn test_format_subtitle_track_label() {
+        let t1 = SubtitleTrack {
+            id: 1,
+            title: Some("Full Subtitles / English / ASS / MTBB".to_string()),
+            lang: Some("enm".to_string()),
+            codec: Some("ass".to_string()),
+            is_selected: true,
+            ..Default::default()
+        };
+        assert_eq!(format_subtitle_track_label(&t1, 0), "English (Full Subtitles)");
+
+        let t2 = SubtitleTrack {
+            id: 2,
+            title: Some("Full Subtitles / English / ASS / MTBB / Honorofics".to_string()),
+            lang: Some("enm".to_string()),
+            codec: Some("ass".to_string()),
+            is_selected: false,
+            ..Default::default()
+        };
+        assert_eq!(format_subtitle_track_label(&t2, 1), "English (Full Subtitles - Honorifics)");
+
+        let t3 = SubtitleTrack {
+            id: 3,
+            title: Some("Signs and Songs".to_string()),
+            lang: Some("eng".to_string()),
+            codec: Some("ass".to_string()),
+            is_selected: false,
+            ..Default::default()
+        };
+        assert_eq!(format_subtitle_track_label(&t3, 2), "English (Signs and Songs)");
+
+        let t4 = SubtitleTrack {
+            id: 4,
+            title: None,
+            lang: Some("ja".to_string()),
+            codec: None,
+            is_selected: false,
+            ..Default::default()
+        };
+        assert_eq!(format_subtitle_track_label(&t4, 3), "Japanese");
+
+        let t5 = SubtitleTrack {
+            id: 5,
+            title: None,
+            lang: None,
+            codec: None,
+            is_selected: false,
+            ..Default::default()
+        };
+        assert_eq!(format_subtitle_track_label(&t5, 4), "Track 5");
     }
 }

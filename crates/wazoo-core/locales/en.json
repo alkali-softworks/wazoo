@@ -107,6 +107,7 @@
   "transcript": {
     "title": "Transcript",
     "cues_count": "{count} cues",
+    "subtitle_track": "Subtitles:",
     "search_placeholder": "Search transcript dialogue...",
     "extracting": "Extracting dialogue tracks...",
     "loading_subtitles": "Loading embedded subtitles",

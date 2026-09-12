@@ -109,6 +109,9 @@ pub enum Message {
     TranscriptSearchChanged(String),
     TranscriptLoaded(String, Vec<wazoo_media::SubtitleCue>),
     SeekToSubtitle(f64),
+    ToggleTranscriptSubtitleMenu,
+    CloseTranscriptSubtitleMenu,
+    SelectTranscriptSubtitleTrack(usize, i64),
     EscapePressed,
 
     // Bookmarks & wazoo-js shortcuts

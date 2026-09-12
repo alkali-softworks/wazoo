@@ -107,6 +107,7 @@
   "transcript": {
     "title": "스크립트",
     "cues_count": "{count}개 대사",
+    "subtitle_track": "자막:",
     "search_placeholder": "대화 내용 검색...",
     "extracting": "대화 트랙 추출 중...",
     "loading_subtitles": "내장 자막 불러오는 중",

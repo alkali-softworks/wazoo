@@ -161,43 +161,19 @@ pub fn parse_subtitles(content: &str) -> Vec<SubtitleCue> {
     parse_srt_or_vtt(content)
 }
 
-/// Synchronously loads subtitles for a given video path.
-/// First searches for sidecar subtitle files (.srt, .vtt, .ass, etc.) alongside the video.
-/// If not found, attempts to demux the primary subtitle stream using ffmpeg.
-pub fn load_subtitles_sync(video_path: &str) -> Vec<SubtitleCue> {
-    let path = Path::new(video_path);
-
-    // 1. Check sidecar subtitle files alongside video
-    if let (Some(parent), Some(stem)) = (path.parent(), path.file_stem()) {
-        let stem_str = stem.to_string_lossy();
-        let candidates = [
-            parent.join(format!("{stem_str}.srt")),
-            parent.join(format!("{stem_str}.vtt")),
-            parent.join(format!("{stem_str}.ass")),
-            parent.join(format!("{stem_str}.ssa")),
-        ];
-
-        for cand in candidates {
-            if cand.exists() {
-                if let Ok(content) = std::fs::read_to_string(&cand) {
-                    let cues = parse_subtitles(&content);
-                    if !cues.is_empty() {
-                        log::info!("Loaded {} subtitle cues from sidecar {:?}", cues.len(), cand);
-                        return cues;
-                    }
-                }
-            }
-        }
-    }
-
-    // 2. Extract embedded subtitle track using ffmpeg
+/// Synchronously loads subtitles for a given video path and subtitle stream index.
+/// If track_index == 0, first searches for sidecar subtitle files (.srt, .vtt, .ass, etc.) alongside the video.
+/// If not found (or if track_index > 0), attempts to demux the subtitle stream using ffmpeg -map 0:s:{track_index}.
+pub fn load_subtitles_for_track_sync(video_path: &str, track_index: usize) -> Vec<SubtitleCue> {
+    // 1. Attempt to extract embedded subtitle track using ffmpeg -map 0:s:{track_index}
+    let map_arg = format!("0:s:{track_index}");
     if let Ok(output) = std::process::Command::new("ffmpeg")
         .args([
             "-nostdin",
             "-protocol_whitelist", "file,crypto",
             "-v", "error",
             "-i", video_path,
-            "-map", "0:s:0",
+            "-map", &map_arg,
             "-f", "srt",
             "-",
         ])
@@ -207,8 +183,34 @@ pub fn load_subtitles_sync(video_path: &str) -> Vec<SubtitleCue> {
             let content = String::from_utf8_lossy(&output.stdout);
             let cues = parse_srt_or_vtt(&content);
             if !cues.is_empty() {
-                log::info!("Extracted {} subtitle cues via ffmpeg from {}", cues.len(), video_path);
+                log::info!("Extracted {} subtitle cues via ffmpeg (-map {}) from {}", cues.len(), map_arg, video_path);
                 return cues;
+            }
+        }
+    }
+
+    // 2. Fallback for primary track (track 0): check sidecar files (.srt, .vtt, .ass, etc.)
+    if track_index == 0 {
+        let path = Path::new(video_path);
+        if let (Some(parent), Some(stem)) = (path.parent(), path.file_stem()) {
+            let stem_str = stem.to_string_lossy();
+            let candidates = [
+                parent.join(format!("{stem_str}.srt")),
+                parent.join(format!("{stem_str}.vtt")),
+                parent.join(format!("{stem_str}.ass")),
+                parent.join(format!("{stem_str}.ssa")),
+            ];
+
+            for cand in candidates {
+                if cand.exists() {
+                    if let Ok(content) = std::fs::read_to_string(&cand) {
+                        let cues = parse_subtitles(&content);
+                        if !cues.is_empty() {
+                            log::info!("Loaded {} subtitle cues from sidecar {:?}", cues.len(), cand);
+                            return cues;
+                        }
+                    }
+                }
             }
         }
     }
@@ -216,11 +218,21 @@ pub fn load_subtitles_sync(video_path: &str) -> Vec<SubtitleCue> {
     Vec::new()
 }
 
-/// Asynchronously loads and parses subtitles on a background blocking thread.
-pub async fn load_subtitles(video_path: String) -> Vec<SubtitleCue> {
-    tokio::task::spawn_blocking(move || load_subtitles_sync(&video_path))
+/// Asynchronously loads and parses subtitles for a specific subtitle stream on a background thread.
+pub async fn load_subtitles_for_track(video_path: String, track_index: usize) -> Vec<SubtitleCue> {
+    tokio::task::spawn_blocking(move || load_subtitles_for_track_sync(&video_path, track_index))
         .await
         .unwrap_or_default()
+}
+
+/// Synchronously loads subtitles for the primary track (track 0).
+pub fn load_subtitles_sync(video_path: &str) -> Vec<SubtitleCue> {
+    load_subtitles_for_track_sync(video_path, 0)
+}
+
+/// Asynchronously loads and parses subtitles for the primary track (track 0) on a background thread.
+pub async fn load_subtitles(video_path: String) -> Vec<SubtitleCue> {
+    load_subtitles_for_track(video_path, 0).await
 }
 
 #[cfg(test)]

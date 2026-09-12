@@ -107,6 +107,7 @@
   "transcript": {
     "title": "Transkrip",
     "cues_count": "{count} baris",
+    "subtitle_track": "Subtitel:",
     "search_placeholder": "Cari dialog transkrip...",
     "extracting": "Mengekstrak trek dialog...",
     "loading_subtitles": "Memuat subtitle tertanam",
