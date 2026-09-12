@@ -119,6 +119,8 @@ impl WazooApp {
             Message::CursorMoved(win_id, pos) => {
                 self.window_id = Some(win_id);
                 self.cursor_position = pos;
+                self.is_window_focused = true;
+                self.unfocused_frame_ticks = 0;
 
                 if self.show_dropdown_menu {
                     self.show_titlebar = true;

@@ -517,6 +517,7 @@ async fn run_instance<P>(
     let mut events = Vec::new();
     let mut messages = Vec::new();
     let mut actions = 0;
+    let mut consecutive_surface_errors: usize = 0;
 
     let mut ui_caches = FxHashMap::default();
     let mut user_interfaces = ManuallyDrop::new(FxHashMap::default());
@@ -979,63 +980,133 @@ async fn run_instance<P>(
                         window.draw_preedit();
 
                         let present_span = debug::present(id);
-                        match current_compositor.present(
+                        let present_result = current_compositor.present(
                             &mut window.renderer,
                             &mut window.surface,
                             window.state.viewport(),
                             window.state.background_color(),
                             || window.raw.pre_present_notify(),
-                        ) {
+                        );
+
+                        match present_result {
                             Ok(()) => {
                                 present_span.finish();
+                                consecutive_surface_errors = 0;
                             }
-                            Err(error) => match error {
-                                compositor::SurfaceError::OutOfMemory => {
-                                    // This is an unrecoverable error.
-                                    panic!("{error:?}");
-                                }
-                                compositor::SurfaceError::Lost => {
-                                    present_span.finish();
-                                    log::warn!("Surface lost, recreating surface...");
-                                    let physical_size =
-                                        window.state.physical_size();
-
-                                    if physical_size.width > 0 && physical_size.height > 0 {
-                                        window.surface = current_compositor
-                                            .create_surface(
-                                                window.raw.clone(),
-                                                physical_size.width,
-                                                physical_size.height,
-                                            );
-                                        window.surface_version =
-                                            window.state.surface_version();
+                            Err(error) => {
+                                consecutive_surface_errors += 1;
+                                match error {
+                                    compositor::SurfaceError::OutOfMemory => {
+                                        // This is an unrecoverable error.
+                                        panic!("{error:?}");
                                     }
-                                }
-                                compositor::SurfaceError::Outdated
-                                | compositor::SurfaceError::Other => {
-                                    present_span.finish();
+                                    compositor::SurfaceError::Lost => {
+                                        present_span.finish();
+                                        log::warn!("Surface lost, recreating surface...");
+                                        let physical_size =
+                                            window.state.physical_size();
 
-                                    let physical_size =
-                                        window.state.physical_size();
+                                        if physical_size.width > 0 && physical_size.height > 0 {
+                                            window.surface = current_compositor
+                                                .create_surface(
+                                                    window.raw.clone(),
+                                                    physical_size.width,
+                                                    physical_size.height,
+                                                );
+                                            window.surface_version =
+                                                window.state.surface_version();
+                                            window.raw.request_redraw();
+                                        }
+                                    }
+                                    compositor::SurfaceError::Outdated
+                                    | compositor::SurfaceError::Other => {
+                                        present_span.finish();
 
-                                    if physical_size.width > 0 && physical_size.height > 0 {
-                                        current_compositor.configure_surface(
-                                            &mut window.surface,
-                                            physical_size.width,
-                                            physical_size.height,
+                                        let physical_size =
+                                            window.state.physical_size();
+
+                                        if physical_size.width > 0 && physical_size.height > 0 {
+                                            if matches!(error, compositor::SurfaceError::Other) {
+                                                window.surface = current_compositor
+                                                    .create_surface(
+                                                        window.raw.clone(),
+                                                        physical_size.width,
+                                                        physical_size.height,
+                                                    );
+                                            } else {
+                                                current_compositor.configure_surface(
+                                                    &mut window.surface,
+                                                    physical_size.width,
+                                                    physical_size.height,
+                                                );
+                                            }
+                                            window.surface_version =
+                                                window.state.surface_version();
+                                            window.raw.request_redraw();
+                                        }
+                                    }
+                                    _ => {
+                                        present_span.finish();
+
+                                        log::warn!(
+                                            "Warning {error:?} when presenting surface; frame skipped."
                                         );
-                                        window.surface_version =
-                                            window.state.surface_version();
+                                        window.raw.request_redraw();
                                     }
                                 }
-                                _ => {
-                                    present_span.finish();
 
+                                if consecutive_surface_errors >= 20 {
+                                    consecutive_surface_errors = 0;
                                     log::warn!(
-                                        "Warning {error:?} when presenting surface; frame skipped."
+                                        "Persistent presentation errors encountered (likely device lost). Recreating compositor and renderers..."
                                     );
+                                    let raw_win = window.raw.clone();
+
+                                    let shell = Shell::new(proxy.clone());
+                                    let new_compositor_fut =
+                                        <P::Renderer as compositor::Default>::Compositor::new(
+                                            graphics_settings,
+                                            display_handle.clone(),
+                                            raw_win,
+                                            shell,
+                                        );
+
+                                    if let Ok(mut new_comp) = new_compositor_fut.await {
+                                        for font in &default_fonts {
+                                            new_comp.load_font(font.clone());
+                                        }
+
+                                        for (_id, win) in window_manager.iter_mut() {
+                                            let size = win.state.physical_size();
+                                            if size.width > 0 && size.height > 0 {
+                                                win.renderer = new_comp.create_renderer();
+                                                win.surface = new_comp.create_surface(
+                                                    win.raw.clone(),
+                                                    size.width,
+                                                    size.height,
+                                                );
+                                                win.surface_version = win.state.surface_version();
+                                                win.raw.request_redraw();
+                                            }
+                                        }
+
+                                        let cached_interfaces: FxHashMap<_, _> =
+                                            ManuallyDrop::into_inner(user_interfaces)
+                                                .into_iter()
+                                                .map(|(id, ui)| (id, ui.into_cache()))
+                                                .collect();
+
+                                        user_interfaces =
+                                            ManuallyDrop::new(build_user_interfaces(
+                                                &program,
+                                                &mut window_manager,
+                                                cached_interfaces,
+                                            ));
+
+                                        compositor = Some(new_comp);
+                                    }
                                 }
-                            },
+                            }
                         }
                     }
                     event::Event::WindowEvent {
