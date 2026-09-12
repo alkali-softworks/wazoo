@@ -729,6 +729,16 @@ impl WazooApp {
             Message::CycleLayout => {
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
+                if self.settings.playback_mode == PlaybackMode::Scroll {
+                    self.cleanup_scroll_mode();
+                    let target_count = self.settings.player_count.clamp(1, 12);
+                    while self.players.len() > target_count {
+                        self.players.pop();
+                    }
+                    while self.players.len() < target_count {
+                        self.add_player_internal();
+                    }
+                }
                 self.settings.layout = match self.settings.layout {
                     LayoutMode::Grid => LayoutMode::Row,
                     LayoutMode::Row => LayoutMode::Column,
@@ -744,12 +754,20 @@ impl WazooApp {
             }
             Message::SetPlayerCount(count) => {
                 let target = count.clamp(1, 12);
+                let was_scroll = self.settings.playback_mode == PlaybackMode::Scroll;
+                if was_scroll {
+                    self.cleanup_scroll_mode();
+                }
                 self.settings.player_count = target;
                 while self.players.len() > target {
                     self.players.pop();
                 }
                 while self.players.len() < target {
                     self.add_player_internal();
+                }
+                for p in &mut self.players {
+                    p.set_muted(self.settings.is_global_muted);
+                    p.set_volume(1.0);
                 }
                 self.toast_message = Some(self.t_with("wazoo.set_players_count", &[
                     ("count", &target.to_string()),
@@ -771,6 +789,23 @@ impl WazooApp {
                     let window_h = self.settings.window_bounds.height as f32;
                     self.scroll_engine.set_window_height(window_h);
                     let item_h = self.scroll_engine.default_item_height();
+
+                    // Scroll mode requires starting from a clean single-player state.
+                    // If we were in multi-player mode (e.g. 2-4 player grid), retain only
+                    // the focused player and discard extra players before building the scroll stack.
+                    if self.players.len() > 1 {
+                        let keep_idx = if self.focused_player_idx < self.players.len() {
+                            self.focused_player_idx
+                        } else {
+                            0
+                        };
+                        let focused_player = self.players.remove(keep_idx);
+                        self.players.clear();
+                        self.players.push(focused_player);
+                        self.focused_player_idx = 0;
+                    } else if self.players.is_empty() {
+                        self.add_player_internal();
+                    }
 
                     let ids: Vec<PlayerId> = self.players.iter().map(|p| p.id).collect();
                     self.scroll_engine.init_stack(&ids);
@@ -795,9 +830,7 @@ impl WazooApp {
 
                     return self.trigger_preload_task();
                 } else {
-                    self.scroll_engine.clear();
-                    self.preloaded_player = None;
-                    self.is_preloading = false;
+                    self.cleanup_scroll_mode();
                     let target_count = self.settings.player_count.clamp(1, 12);
                     while self.players.len() > target_count {
                         self.players.pop();
@@ -815,6 +848,16 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::ToggleFlipMode => {
+                if self.settings.playback_mode == PlaybackMode::Scroll {
+                    self.cleanup_scroll_mode();
+                    let target_count = self.settings.player_count.clamp(1, 12);
+                    while self.players.len() > target_count {
+                        self.players.pop();
+                    }
+                    while self.players.len() < target_count {
+                        self.add_player_internal();
+                    }
+                }
                 self.settings.playback_mode = match self.settings.playback_mode {
                     PlaybackMode::Flip => PlaybackMode::Normal,
                     _ => PlaybackMode::Flip,
@@ -824,6 +867,7 @@ impl WazooApp {
                     _ => self.t("wazoo.flip_mode_disabled"),
                 });
                 self.toast_time_remaining = 2;
+                let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::SetScrollSpeed(speed) => {
                 self.settings.scroll_speed = speed.clamp(0.1, 10.0);
@@ -842,6 +886,16 @@ impl WazooApp {
                 return self.update(Message::SetPlayerCount(new_count));
             }
             Message::RemoveFocusedPlayer => {
+                if self.settings.playback_mode == PlaybackMode::Scroll {
+                    self.cleanup_scroll_mode();
+                    let target_count = self.settings.player_count.clamp(1, 12);
+                    while self.players.len() > target_count {
+                        self.players.pop();
+                    }
+                    while self.players.len() < target_count {
+                        self.add_player_internal();
+                    }
+                }
                 if self.players.len() <= 1 {
                     return Task::none();
                 }

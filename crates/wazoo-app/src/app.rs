@@ -676,6 +676,20 @@ impl WazooApp {
         self.db.get_video_count().unwrap_or(self.available_videos.len())
     }
 
+    /// Resets scroll engine and transitions playback mode back to Normal
+    pub(crate) fn cleanup_scroll_mode(&mut self) {
+        if self.settings.playback_mode == PlaybackMode::Scroll {
+            self.settings.playback_mode = PlaybackMode::Normal;
+            self.scroll_engine.clear();
+            self.preloaded_player = None;
+            self.is_preloading = false;
+            for p in &mut self.players {
+                p.set_muted(self.settings.is_global_muted);
+                p.set_volume(1.0);
+            }
+        }
+    }
+
     pub(crate) fn show_video_totals_notice(&mut self, total: usize, folder_label: &str) {
         if total == 0 {
             let msg = if folder_label.is_empty() || folder_label == "All" {
@@ -1200,6 +1214,43 @@ mod tests {
         // Verify settings modal rendering runs without panic
         app.show_settings_modal = true;
         let _ = app.view_settings_modal();
+    }
+
+    #[test]
+    fn test_scroll_mode_mutual_exclusion_and_single_player_transition() {
+        let (mut app, _) = WazooApp::new(None);
+
+        // 1. Setup multi-player (4 players) in Normal mode
+        let _ = app.update(Message::SetPlayerCount(4));
+        assert_eq!(app.settings.playback_mode, PlaybackMode::Normal);
+        assert_eq!(app.settings.player_count, 4);
+
+        // 2. Switch to Scroll mode from multi-player mode
+        let _ = app.update(Message::ToggleScrollMode);
+        assert_eq!(app.settings.playback_mode, PlaybackMode::Scroll);
+        // Scroll engine items should be initialized cleanly without grid duplication
+        assert!(!app.scroll_engine.items.is_empty());
+        // First item in stack should start at y = 0
+        let first_item = app.scroll_engine.items.values().find(|it| it.y_pos == 0.0);
+        assert!(first_item.is_some(), "scroll stack must start at y = 0.0");
+
+        // 3. While in scroll mode, pressing 1 (SetPlayerCount(1)) must end scroll mode first
+        let _ = app.update(Message::SetPlayerCount(1));
+        assert_eq!(app.settings.playback_mode, PlaybackMode::Normal, "pressing 1 must exit scroll mode");
+        assert!(app.scroll_engine.items.is_empty(), "scroll engine must be cleared");
+        assert_eq!(app.settings.player_count, 1);
+        assert_eq!(app.players.len(), 1);
+
+        // 4. Enter scroll mode again and press 3 (SetPlayerCount(3))
+        let _ = app.update(Message::ToggleScrollMode);
+        assert_eq!(app.settings.playback_mode, PlaybackMode::Scroll);
+        assert!(!app.scroll_engine.items.is_empty());
+
+        let _ = app.update(Message::SetPlayerCount(3));
+        assert_eq!(app.settings.playback_mode, PlaybackMode::Normal, "pressing 3 must exit scroll mode");
+        assert!(app.scroll_engine.items.is_empty(), "scroll engine must be cleared");
+        assert_eq!(app.settings.player_count, 3);
+        assert_eq!(app.players.len(), 3);
     }
 }
 
