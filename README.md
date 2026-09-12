@@ -105,7 +105,14 @@ brew install mpv ffmpeg
 ```
 
 #### Windows
-`mpv-2.dll` can be obtained from the official mpv builds or libmpv development distributions.
+No manual library setup required! Cargo's build script automatically downloads and configures the required `libmpv` prebuilt binaries on the first build.
+
+*(Optional)* For embedded subtitle extraction in the transcript drawer, install `ffmpeg`:
+```powershell
+winget install Gyan.FFmpeg
+# or
+scoop install ffmpeg
+```
 
 ---
 
@@ -117,7 +124,7 @@ brew install mpv ffmpeg
    cd wazoo-rs
    ```
 
-2. **Run the test suite:**
+2. **Optionally run the test suite:**
    ```bash
    cargo test --workspace -- --test-threads=1
    ```
