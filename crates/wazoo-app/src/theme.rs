@@ -228,6 +228,25 @@ pub fn dark_input_style(_theme: &Theme, status: text_input::Status) -> text_inpu
     }
 }
 
+pub fn dark_pick_list_style(_theme: &Theme, status: iced::widget::pick_list::Status) -> iced::widget::pick_list::Style {
+    let border_color = match status {
+        iced::widget::pick_list::Status::Opened { .. } => COLOR_PRIMARY,
+        iced::widget::pick_list::Status::Hovered => Color::from_rgb(0.35, 0.35, 0.35),
+        _ => Color::from_rgb(0.27, 0.27, 0.27),
+    };
+    iced::widget::pick_list::Style {
+        text_color: Color::WHITE,
+        placeholder_color: COLOR_TEXT_MUTED,
+        handle_color: Color::from_rgb(0.7, 0.7, 0.7),
+        background: Background::Color(Color::from_rgb(0.165, 0.165, 0.165)),
+        border: Border {
+            radius: 4.0.into(),
+            width: 1.0,
+            color: border_color,
+        },
+    }
+}
+
 // Progress Bar Slider Style (Vue emerald green #42b883)
 pub fn progress_slider_style(_theme: &Theme, _status: slider::Status) -> slider::Style {
     slider::Style {

@@ -52,7 +52,8 @@
     "scan_folders": "Scan Folders",
     "add_folder": "Add Folder",
     "total_videos": "Total Videos: {count}",
-    "adding_media_notice": "Adding media over the network takes time to probe video metadata."
+    "adding_media_notice": "Adding media over the network takes time to probe video metadata.",
+    "language": "Language"
   },
   "search": {
     "folder": "Folder:",

@@ -8,10 +8,10 @@
  */
 
 use iced::{
-    widget::{button, column, container, mouse_area, row, scrollable, slider, text, text_input, Space},
+    widget::{button, column, container, mouse_area, pick_list, row, scrollable, slider, text, text_input, Space},
     Alignment, Element, Length, Theme,
 };
-use wazoo_core::PlaybackMode;
+use wazoo_core::{Language, PlaybackMode};
 use wazoo_scanner::ScanStage;
 use crate::app::WazooApp;
 use crate::format;
@@ -177,25 +177,20 @@ impl WazooApp {
             }
         }
 
-        // Language selector group (16 supported languages matching wazoo-desktop)
-        let mut lang_row_1 = row![].spacing(6).align_y(Alignment::Center);
-        let mut lang_row_2 = row![].spacing(6).align_y(Alignment::Center);
-        for (i, lang) in wazoo_core::Language::ALL.iter().enumerate() {
-            let is_selected = self.settings.language.eq_ignore_ascii_case(lang.code);
-            let btn = button(text(lang.display_name).size(12))
-                .style(theme::folder_chip_style(is_selected))
-                .on_press(Message::SetLanguage(lang.code.to_string()))
-                .padding([4, 10]);
-            if i < 8 {
-                lang_row_1 = lang_row_1.push(btn);
-            } else {
-                lang_row_2 = lang_row_2.push(btn);
-            }
-        }
+        // Language dropdown selector (16 supported languages matching wazoo-desktop)
+        let current_lang = Language::from_code(&self.settings.language);
+        let language_dropdown = pick_list(
+            Language::ALL,
+            Some(current_lang),
+            |lang| Message::SetLanguage(lang.code.to_string()),
+        )
+        .style(theme::dark_pick_list_style)
+        .width(Length::Fill)
+        .padding([8, 12]);
+
         let language_group = column![
-            text(format!("{} - Language", self.t("common.settings"))).size(14).color(theme::COLOR_TEXT_MUTED),
-            scrollable(column![lang_row_1, lang_row_2].spacing(6))
-                .direction(scrollable::Direction::Horizontal(scrollable::Scrollbar::default())),
+            text(self.t("settings.language")).size(14).color(theme::COLOR_TEXT_MUTED),
+            language_dropdown,
         ]
         .spacing(8);
 

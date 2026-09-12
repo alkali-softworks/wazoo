@@ -52,7 +52,8 @@
     "scan_folders": "扫描文件夹",
     "add_folder": "添加文件夹",
     "total_videos": "视频总数: {count}",
-    "adding_media_notice": "通过网络添加媒体需要时间来解析视频元数据。"
+    "adding_media_notice": "通过网络添加媒体需要时间来解析视频元数据。",
+    "language": "语言"
   },
   "search": {
     "folder": "文件夹:",

@@ -52,7 +52,8 @@
     "scan_folders": "Escanear pastas",
     "add_folder": "Adicionar pasta",
     "total_videos": "Total de vídeos: {count}",
-    "adding_media_notice": "A adição de mídia pela rede leva tempo para analisar os metadados do vídeo."
+    "adding_media_notice": "A adição de mídia pela rede leva tempo para analisar os metadados do vídeo.",
+    "language": "Idioma"
   },
   "search": {
     "folder": "Pasta:",

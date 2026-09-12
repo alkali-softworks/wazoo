@@ -52,7 +52,8 @@
     "scan_folders": "Scansiona cartelle",
     "add_folder": "Aggiungi cartella",
     "total_videos": "Video totali: {count}",
-    "adding_media_notice": "L'aggiunta di file multimediali tramite rete richiede tempo per analizzare i metadati del video."
+    "adding_media_notice": "L'aggiunta di file multimediali tramite rete richiede tempo per analizzare i metadati del video.",
+    "language": "Lingua"
   },
   "search": {
     "folder": "Cartella:",
