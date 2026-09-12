@@ -1,6 +1,6 @@
 # 🌊 Wazoo
 
-> **Ambient media engine for non-stop viewing — built in native Rust.**
+> **Ambient media engine for non-stop viewing - built in native Rust.**
 
 **Wazoo** is a high-performance ambient media engine and "moving mood-board" designed for artists, designers, collectors, and curators. It transforms your local video collection into a vibrant, non-stop ambient atmosphere.
 
@@ -10,12 +10,12 @@ Forget the play button. Open Wazoo and let your media collection become the room
 
 ## ⚡ High-Performance Architecture
 
-Built from the ground up in native Rust with hardware-accelerated rendering:
+Built with native **Rust** and **Iced** for zero-overhead performance, digital sovereignty, and hardware-accelerated rendering:
 
-- **Ultra-Lightweight Footprint**: Consumes only ~150 MB – 350 MB of RAM across multiple simultaneous high-definition streams.
-- **Native GPU Hardware Decoding**: Full hardware-accelerated playback for H.264, H.265/HEVC 10-bit, AV1, and VP9 through `libmpv`.
+- **Ultra-Lightweight Footprint**: Extremely lean resource usage, typically consuming **~70 MB – 150 MB** of RAM during playback (a fraction of Electron-based apps).
+- **Built with Rust & Iced**: Pure native performance with zero web-engine bloat, instant startup, and memory safety without garbage collection pauses.
+- **Native Hardware Decoding**: Full hardware-accelerated playback for H.264, H.265/HEVC 10-bit, AV1, and VP9 through `libmpv`.
 - **`wgpu`-Accelerated Interface**: Rendered with **Iced** using GPU rendering pipelines for 60fps animations and glassmorphic overlays.
-- **Blazing Fast Startup**: Instant sub-150ms launch time with automated window manager focus acquisition.
 - **Embedded SQLite Index**: Powered by `rusqlite` for lightning-fast queries across tens of thousands of video files.
 
 ---
@@ -43,7 +43,7 @@ Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically 
 
 ### 📜 Interactive Subtitle Transcript Drawer
 - **Live Dialogue Transcript**: View a full transcript of the active video dialogue in a sleek slide-out drawer (<kbd>V</kbd> or <kbd>[TX]</kbd> button).
-- **Click to Seek**: Click any subtitle line to jump video playback directly to that timestamp instantly — great for language learning when you want to replay a specific phrase repeatedly.
+- **Click to Seek**: Click any subtitle line to jump video playback directly to that timestamp instantly - great for language learning when you want to replay a specific phrase repeatedly.
 - **Active Line Highlighting**: The currently spoken dialogue cue lights up as the video plays.
 - **Dialogue Search Filter**: Filter thousands of dialogue lines to find exact quotes and scenes.
 
@@ -53,7 +53,7 @@ Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically 
 - **Multi-Player Reconciliation**: Restoring a bookmark restores your global search query and automatically swaps active player tiles to matching media.
 
 ### 🪟 Frameless Glassmorphic Interface
-- Borderless window with sliding titlebar, quick drop-down menu, and glassmorphic HUD controls.
+- Borderless window with sliding titlebar, quick drop-down menu, and HUD controls.
 - **Alt + Drag** navigation to position the window anywhere on screen.
 - Configurable window opacity for semi-transparent ambient desktop backgrounds.
 
@@ -124,17 +124,12 @@ scoop install ffmpeg
    cd wazoo-rs
    ```
 
-2. **Optionally run the test suite:**
-   ```bash
-   cargo test --workspace -- --test-threads=1
-   ```
-
-3. **Build an optimized release binary:**
+2. **Build an optimized release binary:**
    ```bash
    cargo build --release
    ```
 
-4. **Launch Wazoo:**
+3. **Launch Wazoo:**
    ```bash
    ./target/release/wazoo
    ```
@@ -177,6 +172,6 @@ scoop install ffmpeg
 
 ## 📄 License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 Made with ❤️ by [Alkali Softworks](https://alkalisoftworks.com/).
