@@ -29,6 +29,19 @@ pub const COLOR_TRACK_BG: Color = Color::from_rgba(1.0, 1.0, 1.0, 0.2);
 pub const COLOR_OVERLAY_DARK: Color = Color::from_rgba(0.0, 0.0, 0.0, 0.4);
 pub const COLOR_DRAWER_BG: Color = Color::from_rgb(0.2, 0.2, 0.2); // #333
 
+#[inline]
+pub fn with_alpha(color: Color, alpha: f32) -> Color {
+    Color::from_rgba(color.r, color.g, color.b, color.a * alpha.clamp(0.0, 1.0))
+}
+
+#[inline]
+pub fn background_with_alpha(bg: Background, alpha: f32) -> Background {
+    match bg {
+        Background::Color(c) => Background::Color(with_alpha(c, alpha)),
+        Background::Gradient(g) => Background::Gradient(g),
+    }
+}
+
 // Titlebar Badge Style (Wazoo pill button)
 pub fn titlebar_badge_style(_theme: &Theme, status: button::Status) -> button::Style {
     let bg = match status {
@@ -53,6 +66,17 @@ pub fn titlebar_badge_style(_theme: &Theme, status: button::Status) -> button::S
     }
 }
 
+pub fn titlebar_badge_style_with_alpha(alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+    move |theme, status| {
+        let base = titlebar_badge_style(theme, status);
+        button::Style {
+            background: base.background.map(|bg| background_with_alpha(bg, alpha)),
+            text_color: with_alpha(base.text_color, alpha),
+            ..base
+        }
+    }
+}
+
 // Window Controls
 pub fn window_control_button_style(_theme: &Theme, status: button::Status) -> button::Style {
     let (bg, text_color) = match status {
@@ -68,6 +92,17 @@ pub fn window_control_button_style(_theme: &Theme, status: button::Status) -> bu
     }
 }
 
+pub fn window_control_button_style_with_alpha(alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+    move |theme, status| {
+        let base = window_control_button_style(theme, status);
+        button::Style {
+            background: base.background.map(|bg| background_with_alpha(bg, alpha)),
+            text_color: with_alpha(base.text_color, alpha),
+            ..base
+        }
+    }
+}
+
 pub fn close_window_button_style(_theme: &Theme, status: button::Status) -> button::Style {
     let (bg, text_color) = match status {
         button::Status::Hovered | button::Status::Pressed => (COLOR_BTN_CLOSE_HOVER, Color::WHITE),
@@ -79,6 +114,17 @@ pub fn close_window_button_style(_theme: &Theme, status: button::Status) -> butt
         border: Border::default(),
         shadow: Shadow::default(),
         ..Default::default()
+    }
+}
+
+pub fn close_window_button_style_with_alpha(alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+    move |theme, status| {
+        let base = close_window_button_style(theme, status);
+        button::Style {
+            background: base.background.map(|bg| background_with_alpha(bg, alpha)),
+            text_color: with_alpha(base.text_color, alpha),
+            ..base
+        }
     }
 }
 
@@ -135,6 +181,17 @@ pub fn player_control_button_style(_theme: &Theme, status: button::Status) -> bu
     }
 }
 
+pub fn player_control_button_style_with_alpha(alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+    move |theme, status| {
+        let base = player_control_button_style(theme, status);
+        button::Style {
+            background: base.background.map(|bg| background_with_alpha(bg, alpha)),
+            text_color: with_alpha(base.text_color, alpha),
+            ..base
+        }
+    }
+}
+
 // CC Button Style
 pub fn cc_button_style(is_enabled: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_theme: &Theme, status: button::Status| {
@@ -157,6 +214,18 @@ pub fn cc_button_style(is_enabled: bool) -> impl Fn(&Theme, button::Status) -> b
             },
             shadow: Shadow::default(),
             ..Default::default()
+        }
+    }
+}
+
+pub fn cc_button_style_with_alpha(is_enabled: bool, alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+    let base_fn = cc_button_style(is_enabled);
+    move |theme, status| {
+        let base = base_fn(theme, status);
+        button::Style {
+            background: base.background.map(|bg| background_with_alpha(bg, alpha)),
+            text_color: with_alpha(base.text_color, alpha),
+            ..base
         }
     }
 }
@@ -248,25 +317,32 @@ pub fn dark_pick_list_style(_theme: &Theme, status: iced::widget::pick_list::Sta
 }
 
 // Progress Bar Slider Style (Vue emerald green #42b883)
-pub fn progress_slider_style(_theme: &Theme, _status: slider::Status) -> slider::Style {
-    slider::Style {
-        rail: slider::Rail {
-            backgrounds: (
-                Background::Color(COLOR_PRIMARY),
-                Background::Color(COLOR_TRACK_BG),
-            ),
-            width: 22.0,
-            border: Border {
-                radius: 3.0.into(),
-                ..Default::default()
+#[allow(dead_code)]
+pub fn progress_slider_style(theme: &Theme, status: slider::Status) -> slider::Style {
+    progress_slider_style_with_alpha(1.0)(theme, status)
+}
+
+pub fn progress_slider_style_with_alpha(alpha: f32) -> impl Fn(&Theme, slider::Status) -> slider::Style {
+    move |_theme, _status| {
+        slider::Style {
+            rail: slider::Rail {
+                backgrounds: (
+                    Background::Color(with_alpha(COLOR_PRIMARY, alpha)),
+                    Background::Color(with_alpha(COLOR_TRACK_BG, alpha)),
+                ),
+                width: 22.0,
+                border: Border {
+                    radius: 3.0.into(),
+                    ..Default::default()
+                },
             },
-        },
-        handle: slider::Handle {
-            shape: slider::HandleShape::Circle { radius: 0.0 },
-            background: Background::Color(Color::TRANSPARENT),
-            border_width: 0.0,
-            border_color: Color::TRANSPARENT,
-        },
+            handle: slider::Handle {
+                shape: slider::HandleShape::Circle { radius: 0.0 },
+                background: Background::Color(Color::TRANSPARENT),
+                border_width: 0.0,
+                border_color: Color::TRANSPARENT,
+            },
+        }
     }
 }
 
@@ -290,6 +366,30 @@ pub fn volume_slider_style(_theme: &Theme, _status: slider::Status) -> slider::S
             border_width: 0.0,
             border_color: Color::TRANSPARENT,
         },
+    }
+}
+
+pub fn volume_slider_style_with_alpha(alpha: f32) -> impl Fn(&Theme, slider::Status) -> slider::Style {
+    move |_theme, _status| {
+        slider::Style {
+            rail: slider::Rail {
+                backgrounds: (
+                    Background::Color(with_alpha(COLOR_PRIMARY, alpha)),
+                    Background::Color(with_alpha(COLOR_TRACK_BG, alpha)),
+                ),
+                width: 8.0,
+                border: Border {
+                    radius: 3.0.into(),
+                    ..Default::default()
+                },
+            },
+            handle: slider::Handle {
+                shape: slider::HandleShape::Circle { radius: 0.0 },
+                background: Background::Color(Color::TRANSPARENT),
+                border_width: 0.0,
+                border_color: Color::TRANSPARENT,
+            },
+        }
     }
 }
 
@@ -341,28 +441,42 @@ pub fn focus_ring_style(_theme: &Theme) -> container::Style {
 }
 
 // Title Pill Style (top-left attached)
-pub fn title_pill_style(_theme: &Theme) -> container::Style {
-    container::Style {
-        background: Some(Background::Color(COLOR_OVERLAY_DARK)),
-        border: Border {
-            radius: iced::border::Radius {
-                top_left: 0.0,
-                top_right: 10.0,
-                bottom_right: 10.0,
-                bottom_left: 0.0,
+#[allow(dead_code)]
+pub fn title_pill_style(theme: &Theme) -> container::Style {
+    title_pill_style_with_alpha(1.0)(theme)
+}
+
+pub fn title_pill_style_with_alpha(alpha: f32) -> impl Fn(&Theme) -> container::Style {
+    move |_theme| {
+        container::Style {
+            background: Some(Background::Color(with_alpha(COLOR_OVERLAY_DARK, alpha))),
+            border: Border {
+                radius: iced::border::Radius {
+                    top_left: 0.0,
+                    top_right: 10.0,
+                    bottom_right: 10.0,
+                    bottom_left: 0.0,
+                },
+                width: 0.0,
+                color: Color::TRANSPARENT,
             },
-            width: 0.0,
-            color: Color::TRANSPARENT,
-        },
-        ..Default::default()
+            ..Default::default()
+        }
     }
 }
 
 // Controls Bottom Overlay Style
-pub fn controls_overlay_style(_theme: &Theme) -> container::Style {
-    container::Style {
-        background: Some(Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.75))),
-        ..Default::default()
+#[allow(dead_code)]
+pub fn controls_overlay_style(theme: &Theme) -> container::Style {
+    controls_overlay_style_with_alpha(1.0)(theme)
+}
+
+pub fn controls_overlay_style_with_alpha(alpha: f32) -> impl Fn(&Theme) -> container::Style {
+    move |_theme| {
+        container::Style {
+            background: Some(Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.75 * alpha))),
+            ..Default::default()
+        }
     }
 }
 
@@ -498,6 +612,22 @@ pub fn transcript_button_style(is_open: bool) -> impl Fn(&Theme, button::Status)
             },
             shadow: Shadow::default(),
             ..Default::default()
+        }
+    }
+}
+
+pub fn transcript_button_style_with_alpha(is_open: bool, alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+    let base_fn = transcript_button_style(is_open);
+    move |theme, status| {
+        let base = base_fn(theme, status);
+        button::Style {
+            background: base.background.map(|bg| background_with_alpha(bg, alpha)),
+            text_color: with_alpha(base.text_color, alpha),
+            border: Border {
+                color: with_alpha(base.border.color, alpha),
+                ..base.border
+            },
+            ..base
         }
     }
 }

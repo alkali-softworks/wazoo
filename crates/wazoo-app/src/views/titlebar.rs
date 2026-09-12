@@ -18,17 +18,20 @@ use crate::theme;
 
 impl WazooApp {
     pub(crate) fn view_titlebar(&self) -> Element<'_, Message> {
+        let alpha = self.titlebar_alpha();
+
         let badge_btn = button(
             row![
                 iced::widget::image(self.app_icon_handle.clone())
                     .width(Length::Fixed(20.0))
-                    .height(Length::Fixed(20.0)),
-                text("Wazoo").size(16).color(iced::Color::WHITE),
+                    .height(Length::Fixed(20.0))
+                    .opacity(alpha),
+                text("Wazoo").size(16).color(theme::with_alpha(iced::Color::WHITE, alpha)),
             ]
             .spacing(6)
             .align_y(Alignment::Center),
         )
-        .style(theme::titlebar_badge_style)
+        .style(theme::titlebar_badge_style_with_alpha(alpha))
         .on_press(Message::ToggleDropdownMenu)
         .padding(iced::Padding {
             top: 2.0,
@@ -51,6 +54,7 @@ impl WazooApp {
                     svg(svg::Handle::from_memory(SVG_WINDOW_MINIMIZE))
                         .width(Length::Fixed(10.0))
                         .height(Length::Fixed(10.0))
+                        .opacity(alpha)
                 )
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -59,7 +63,7 @@ impl WazooApp {
             )
             .width(Length::Fixed(42.0))
             .height(Length::Fixed(30.0))
-            .style(theme::window_control_button_style)
+            .style(theme::window_control_button_style_with_alpha(alpha))
             .on_press(Message::MinimizeWindow)
             .padding(0),
             button(
@@ -67,6 +71,7 @@ impl WazooApp {
                     svg(svg::Handle::from_memory(SVG_WINDOW_MAXIMIZE))
                         .width(Length::Fixed(10.0))
                         .height(Length::Fixed(10.0))
+                        .opacity(alpha)
                 )
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -75,7 +80,7 @@ impl WazooApp {
             )
             .width(Length::Fixed(42.0))
             .height(Length::Fixed(30.0))
-            .style(theme::window_control_button_style)
+            .style(theme::window_control_button_style_with_alpha(alpha))
             .on_press(Message::MaximizeWindow)
             .padding(0),
             button(
@@ -83,6 +88,7 @@ impl WazooApp {
                     svg(svg::Handle::from_memory(SVG_WINDOW_CLOSE))
                         .width(Length::Fixed(10.0))
                         .height(Length::Fixed(10.0))
+                        .opacity(alpha)
                 )
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -91,7 +97,7 @@ impl WazooApp {
             )
             .width(Length::Fixed(42.0))
             .height(Length::Fixed(30.0))
-            .style(theme::close_window_button_style)
+            .style(theme::close_window_button_style_with_alpha(alpha))
             .on_press(Message::CloseApp)
             .padding(0),
         ]
@@ -109,8 +115,8 @@ impl WazooApp {
         )
         .width(Length::Fill)
         .height(Length::Fixed(30.0))
-        .style(|_theme: &Theme| container::Style {
-            background: Some(iced::Background::Color(theme::COLOR_TITLEBAR_BG)),
+        .style(move |_theme: &Theme| container::Style {
+            background: Some(iced::Background::Color(theme::with_alpha(theme::COLOR_TITLEBAR_BG, alpha))),
             ..Default::default()
         });
 
