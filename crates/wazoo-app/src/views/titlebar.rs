@@ -117,17 +117,17 @@ impl WazooApp {
         if self.show_dropdown_menu {
             let menu_dropdown = container(
                 column![
-                    button(text("Add Player")).style(theme::menu_item_style).on_press(Message::AddNewPlayer).padding([8, 14]).width(Length::Fill),
-                    button(text("Toggle Layout")).style(theme::menu_item_style).on_press(Message::CycleLayout).padding([8, 14]).width(Length::Fill),
-                    button(text("Toggle Files")).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 14]).width(Length::Fill),
-                    button(text("Transcript (V)")).style(theme::menu_item_style).on_press(Message::ToggleTranscript).padding([8, 14]).width(Length::Fill),
-                    button(text("Bookmarks (B)")).style(theme::menu_item_style).on_press(Message::ToggleBookmarksModal).padding([8, 14]).width(Length::Fill),
-                    button(text("Search")).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 14]).width(Length::Fill),
-                    button(text("Settings")).style(theme::menu_item_style).on_press(Message::OpenSettingsModal).padding([8, 14]).width(Length::Fill),
-                    button(text("Help")).style(theme::menu_item_style).on_press(Message::OpenHelpModal).padding([8, 14]).width(Length::Fill),
-                    button(text("Quit")).style(theme::menu_item_style).on_press(Message::CloseApp).padding([8, 14]).width(Length::Fill),
+                    button(text(self.t("common.add_player"))).style(theme::menu_item_style).on_press(Message::AddNewPlayer).padding([8, 14]).width(Length::Fill),
+                    button(text(self.t("common.toggle_layout"))).style(theme::menu_item_style).on_press(Message::CycleLayout).padding([8, 14]).width(Length::Fill),
+                    button(text(self.t("common.toggle_files"))).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 14]).width(Length::Fill),
+                    button(text(format!("{} (V)", self.t("transcript.title")))).style(theme::menu_item_style).on_press(Message::ToggleTranscript).padding([8, 14]).width(Length::Fill),
+                    button(text(format!("{} (B)", self.t("bookmarks.title")))).style(theme::menu_item_style).on_press(Message::ToggleBookmarksModal).padding([8, 14]).width(Length::Fill),
+                    button(text(self.t("common.search"))).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 14]).width(Length::Fill),
+                    button(text(self.t("common.settings"))).style(theme::menu_item_style).on_press(Message::OpenSettingsModal).padding([8, 14]).width(Length::Fill),
+                    button(text(self.t("common.help"))).style(theme::menu_item_style).on_press(Message::OpenHelpModal).padding([8, 14]).width(Length::Fill),
+                    button(text(self.t("common.quit"))).style(theme::menu_item_style).on_press(Message::CloseApp).padding([8, 14]).width(Length::Fill),
                 ]
-                .width(Length::Fixed(160.0)),
+                .width(Length::Fixed(180.0)),
             )
             .style(|_theme: &Theme| container::Style {
                 background: Some(iced::Background::Color(iced::Color::BLACK)),

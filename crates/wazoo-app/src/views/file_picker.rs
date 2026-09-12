@@ -93,14 +93,14 @@ impl WazooApp {
         let content = column![
             Space::new().height(Length::Fixed(24.0)),
             row![
-                text("Files").size(18).color(iced::Color::WHITE),
+                text(self.t("common.files")).size(18).color(iced::Color::WHITE),
                 Space::new().width(Length::Fill),
                 button(text("✕").size(14))
                     .style(theme::window_control_button_style)
                     .on_press(Message::ToggleFilePicker),
             ]
             .align_y(Alignment::Center),
-            text_input("Search files...", &self.file_picker_search)
+            text_input(&self.t("file_picker.search_placeholder"), &self.file_picker_search)
                 .on_input(Message::FilePickerSearchChanged)
                 .style(theme::dark_input_style)
                 .padding(8),

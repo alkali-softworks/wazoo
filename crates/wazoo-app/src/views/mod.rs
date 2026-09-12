@@ -167,8 +167,8 @@ impl WazooApp {
         if self.is_alt_pressed {
             let alt_overlay = container(
                 column![
-                    text("Drag to move").size(22).color(iced::Color::WHITE),
-                    text("X to quit").size(16).color(theme::COLOR_TEXT_DIM),
+                    text(self.t("app.drag_to_move")).size(22).color(iced::Color::WHITE),
+                    text(self.t("app.x_to_quit")).size(16).color(theme::COLOR_TEXT_DIM),
                 ]
                 .spacing(8)
                 .align_x(Alignment::Center),

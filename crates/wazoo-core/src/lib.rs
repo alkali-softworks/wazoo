@@ -10,7 +10,9 @@
 pub mod models;
 pub mod db;
 pub mod config;
+pub mod i18n;
 
 pub use models::*;
 pub use db::Database;
 pub use config::ConfigManager;
+pub use i18n::{t, t_with, Language};

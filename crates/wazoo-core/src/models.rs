@@ -75,6 +75,10 @@ fn default_session_volume() -> f64 {
     1.0
 }
 
+fn default_language() -> String {
+    "en".to_string()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct VideoSession {
     pub path: String,
@@ -116,6 +120,8 @@ pub struct WazooSettings {
     pub buffer_duration_secs: u32,
     #[serde(default = "default_buffer_size_mb")]
     pub buffer_size_mb: u32,
+    #[serde(default = "default_language")]
+    pub language: String,
     #[serde(default)]
     pub session_videos: Vec<VideoSession>,
     #[serde(default)]
@@ -137,6 +143,7 @@ impl Default for WazooSettings {
             last_folder: "All".to_string(),
             buffer_duration_secs: 10,
             buffer_size_mb: 64,
+            language: "en".to_string(),
             session_videos: Vec::new(),
             bookmarks: Vec::new(),
         }

@@ -21,7 +21,7 @@ use crate::theme;
 impl WazooApp {
     pub(crate) fn view_search_modal(&self) -> Element<'_, Message> {
         let mut folder_chips = row![
-            button(text("All"))
+            button(text(self.t("common.all")))
                 .style(theme::folder_chip_style(self.selected_search_folder == "All"))
                 .on_press(Message::SelectSearchFolder("All".to_string()))
                 .padding([4, 12]),
@@ -42,7 +42,7 @@ impl WazooApp {
         let card = container(
             column![
                 row![
-                    text("Folder").size(14).color(theme::COLOR_TEXT_MUTED),
+                    text(self.t("search.folder")).size(14).color(theme::COLOR_TEXT_MUTED),
                     Space::new().width(Length::Fill),
                     button(text("✕").size(14))
                         .style(theme::window_control_button_style)
@@ -51,21 +51,21 @@ impl WazooApp {
                 .align_y(Alignment::Center),
                 scrollable(folder_chips).direction(scrollable::Direction::Horizontal(scrollable::Scrollbar::default())),
                 row![
-                    text_input("Search videos...", &self.search_input)
+                    text_input(&self.t("search.placeholder"), &self.search_input)
                         .id("search_input")
                         .on_input(Message::SearchInputChanged)
                         .on_submit(Message::PerformSearch)
                         .style(theme::dark_input_style)
                         .padding(10)
                         .width(Length::Fill),
-                    button(text("🔍 Search"))
+                    button(text(format!("🔍 {}", self.t("common.search"))))
                         .style(theme::action_button_style)
                         .on_press(Message::PerformSearch)
                         .padding([10, 16]),
                 ]
                 .spacing(10)
                 .align_y(Alignment::Center),
-                text(format!("Total videos: {}", self.available_videos.len()))
+                text(self.t_with("settings.total_videos", &[("count", &self.available_videos.len().to_string())]))
                     .size(12)
                     .color(theme::COLOR_TEXT_MUTED),
             ]
@@ -79,7 +79,7 @@ impl WazooApp {
     }
 
     pub(crate) fn view_settings_modal(&self) -> Element<'_, Message> {
-        let mut folders_col = column![text("Media Folders").size(14).color(theme::COLOR_TEXT_MUTED)].spacing(6);
+        let mut folders_col = column![text(self.t("settings.media_folders")).size(14).color(theme::COLOR_TEXT_MUTED)].spacing(6);
         for folder in &self.settings.media_folders {
             let f = folder.clone();
             folders_col = folders_col.push(
@@ -127,7 +127,7 @@ impl WazooApp {
                 "Listing files...".to_string()
             }
         } else {
-            "Scan Folders".to_string()
+            self.t("settings.scan_folders")
         };
 
         let scan_btn = if self.is_scanning {
@@ -143,7 +143,7 @@ impl WazooApp {
 
         let mut scan_controls = column![
             row![
-                button(text("Add Folder"))
+                button(text(self.t("settings.add_folder")))
                     .style(theme::action_button_style)
                     .on_press(Message::PickFolders)
                     .padding([8, 14]),
@@ -177,17 +177,40 @@ impl WazooApp {
             }
         }
 
+        // Language selector group (16 supported languages matching wazoo-desktop)
+        let mut lang_row_1 = row![].spacing(6).align_y(Alignment::Center);
+        let mut lang_row_2 = row![].spacing(6).align_y(Alignment::Center);
+        for (i, lang) in wazoo_core::Language::ALL.iter().enumerate() {
+            let is_selected = self.settings.language.eq_ignore_ascii_case(lang.code);
+            let btn = button(text(lang.display_name).size(12))
+                .style(theme::folder_chip_style(is_selected))
+                .on_press(Message::SetLanguage(lang.code.to_string()))
+                .padding([4, 10]);
+            if i < 8 {
+                lang_row_1 = lang_row_1.push(btn);
+            } else {
+                lang_row_2 = lang_row_2.push(btn);
+            }
+        }
+        let language_group = column![
+            text(format!("{} - Language", self.t("common.settings"))).size(14).color(theme::COLOR_TEXT_MUTED),
+            scrollable(column![lang_row_1, lang_row_2].spacing(6))
+                .direction(scrollable::Direction::Horizontal(scrollable::Scrollbar::default())),
+        ]
+        .spacing(8);
+
         let content = column![
             row![
-                text("Settings").size(20).color(iced::Color::WHITE),
+                text(self.t("settings.title")).size(20).color(iced::Color::WHITE),
                 Space::new().width(Length::Fill),
                 button(text("✕").size(14))
                     .style(theme::window_control_button_style)
                     .on_press(Message::CloseSettingsModal),
             ]
             .align_y(Alignment::Center),
+            language_group,
             column![
-                text("Window Opacity").size(14).color(theme::COLOR_TEXT_MUTED),
+                text(self.t("settings.window_opacity")).size(14).color(theme::COLOR_TEXT_MUTED),
                 row![
                     slider(0.1..=1.0, self.settings.window_opacity, Message::SetWindowOpacity)
                         .step(0.01)
@@ -201,7 +224,7 @@ impl WazooApp {
             .spacing(6),
             folders_col,
             scan_controls,
-            text(format!("Total Videos: {}", self.available_videos.len()))
+            text(self.t_with("settings.total_videos", &[("count", &self.available_videos.len().to_string())]))
                 .size(13)
                 .color(theme::COLOR_TEXT_MUTED),
         ]
@@ -217,31 +240,28 @@ impl WazooApp {
 
     pub(crate) fn view_help_modal(&self) -> Element<'_, Message> {
         let shortcuts = [
-            ("Esc", "Toggle Menu / Close Modal"),
-            ("b", "Toggle Bookmarks"),
-            ("+ / =", "Add Bookmark (or Scroll Speed +)"),
-            ("-", "Remove Bookmark (or Scroll Speed -)"),
-            ("r", "Random Seek on Video"),
-            ("t", "Show Video Titles"),
-            ("5", "Toggle Scroll Mode"),
-            ("6", "Toggle Flip Mode"),
-            ("h", "Toggle File Picker"),
-            ("n", "Add Player"),
-            ("x", "Remove Player"),
-            ("Tab", "Focus Next Player"),
-            ("l", "Toggle Layout"),
-            ("c", "Toggle Subtitles"),
-            ("v", "Toggle Subtitle Transcript"),
-            ("< OR >", "Prev / Next Frame"),
-            ("[space]", "Play / Pause"),
-            ("↓ ↑", "Prev / Next Video"),
-            ("← →", "Seek Back / Forward"),
-            ("s", "Toggle Shuffle / Sequential"),
-            ("m", "Toggle Mute"),
-            ("[ OR ]", "Adjust Volume"),
-            ("j OR /", "Search Videos"),
-            ("Alt + X", "Close App"),
-            ("Alt + Drag", "Move Window"),
+            ("Esc", self.t("common.help")),
+            ("b", "Toggle Bookmarks".to_string()),
+            ("+ / =", "+ / =".to_string()),
+            ("5", self.t("help.shortcuts.toggle_scroll")),
+            ("6", self.t("help.shortcuts.toggle_flip")),
+            ("h", self.t("help.shortcuts.toggle_file_picker")),
+            ("n", self.t("help.shortcuts.add_player")),
+            ("x", self.t("help.shortcuts.remove_player")),
+            ("Tab", self.t("help.shortcuts.focus_next")),
+            ("l", self.t("help.shortcuts.toggle_layout")),
+            ("c", self.t("help.shortcuts.toggle_subtitles")),
+            ("v", "Toggle Subtitle Transcript".to_string()),
+            ("< OR >", self.t("help.shortcuts.prev_next_frame")),
+            ("[space]", self.t("help.shortcuts.play_pause")),
+            ("↓ ↑", self.t("help.shortcuts.prev_next_video")),
+            ("← →", self.t("help.shortcuts.seek_back_forward")),
+            ("s", self.t("help.shortcuts.toggle_play_mode")),
+            ("m", self.t("help.shortcuts.toggle_mute")),
+            ("[ OR ]", self.t("help.shortcuts.adjust_volume")),
+            ("j OR /", self.t("help.shortcuts.search_videos")),
+            ("Alt + X", self.t("help.shortcuts.close_app")),
+            ("Alt + Drag", self.t("help.shortcuts.move_window")),
         ];
 
         let mut shortcuts_list = column![].spacing(8);
@@ -279,7 +299,7 @@ impl WazooApp {
         let card = container(
             column![
                 row![
-                    text("Keyboard Shortcuts").size(20).color(iced::Color::WHITE),
+                    text(self.t("help.title")).size(20).color(iced::Color::WHITE),
                     Space::new().width(Length::Fill),
                     button(text("✕").size(14))
                         .style(theme::window_control_button_style)
@@ -302,7 +322,7 @@ impl WazooApp {
     pub(crate) fn view_bookmarks_modal(&self) -> Element<'_, Message> {
         let count = self.settings.bookmarks.len();
         let header_row = row![
-            text("Bookmarks").size(20).color(iced::Color::WHITE),
+            text(self.t("bookmarks.title")).size(20).color(iced::Color::WHITE),
             container(text(format!("{count}")).size(12).color(theme::COLOR_TEXT_DIM))
                 .padding([2, 8])
                 .style(|_theme: &Theme| container::Style {
@@ -317,7 +337,7 @@ impl WazooApp {
             button(
                 row![
                     text("+").size(14).color(iced::Color::from_rgb(0.06, 0.06, 0.06)),
-                    text("Bookmark Current").size(12).color(iced::Color::from_rgb(0.06, 0.06, 0.06)),
+                    text(self.t("bookmarks.bookmark_current")).size(12).color(iced::Color::from_rgb(0.06, 0.06, 0.06)),
                 ]
                 .spacing(4)
                 .align_y(Alignment::Center),
@@ -335,8 +355,8 @@ impl WazooApp {
         let content_element: Element<'_, Message> = if self.settings.bookmarks.is_empty() {
             container(
                 column![
-                    text("No bookmarks saved yet.").size(15).color(theme::COLOR_TEXT_DIM),
-                    text("Press + or = while playing a video (or click '+ Bookmark Current' above) to save the current video and timestamp.")
+                    text(self.t("bookmarks.no_bookmarks")).size(15).color(theme::COLOR_TEXT_DIM),
+                    text(self.t("bookmarks.hint"))
                         .size(13)
                         .color(theme::COLOR_TEXT_MUTED),
                 ]
@@ -382,8 +402,9 @@ impl WazooApp {
                     );
                 }
 
-                let mode_label = if b.is_shuffle { "Shuffle" } else { "Linear" };
-                let mode_color = if b.is_shuffle { theme::COLOR_BLUE_ACTIVE } else { theme::COLOR_TEXT_MUTED };
+                let is_shuffle = b.is_shuffle;
+                let mode_label = if is_shuffle { self.t("bookmarks.shuffle") } else { self.t("bookmarks.linear") };
+                let mode_color = if is_shuffle { theme::COLOR_BLUE_ACTIVE } else { theme::COLOR_TEXT_MUTED };
                 meta_row = meta_row.push(
                     container(text(mode_label).size(11).color(mode_color))
                         .padding([2, 6])
@@ -458,7 +479,7 @@ impl WazooApp {
         let card = container(
             column![
                 row![
-                    text("Menu").size(18).color(iced::Color::WHITE),
+                    text(self.t("common.menu")).size(18).color(iced::Color::WHITE),
                     Space::new().width(Length::Fill),
                     button(text("✕").size(14))
                         .style(theme::window_control_button_style)
@@ -466,16 +487,16 @@ impl WazooApp {
                 ]
                 .align_y(Alignment::Center),
                 column![
-                    button(text("Add Player")).style(theme::menu_item_style).on_press(Message::AddNewPlayer).padding([8, 12]).width(Length::Fill),
-                    button(text("Toggle Layout")).style(theme::menu_item_style).on_press(Message::CycleLayout).padding([8, 12]).width(Length::Fill),
+                    button(text(self.t("common.add_player"))).style(theme::menu_item_style).on_press(Message::AddNewPlayer).padding([8, 12]).width(Length::Fill),
+                    button(text(self.t("common.toggle_layout"))).style(theme::menu_item_style).on_press(Message::CycleLayout).padding([8, 12]).width(Length::Fill),
                     button(text(if self.settings.playback_mode == PlaybackMode::Scroll { "Disable Infinity Stream (5)" } else { "Infinity Stream (5)" })).style(theme::menu_item_style).on_press(Message::ToggleScrollMode).padding([8, 12]).width(Length::Fill),
-                    button(text("Toggle Files")).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 12]).width(Length::Fill),
-                    button(text("Transcript (V)")).style(theme::menu_item_style).on_press(Message::ToggleTranscript).padding([8, 12]).width(Length::Fill),
-                    button(text("Bookmarks (B)")).style(theme::menu_item_style).on_press(Message::ToggleBookmarksModal).padding([8, 12]).width(Length::Fill),
-                    button(text("Search")).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 12]).width(Length::Fill),
-                    button(text("Settings")).style(theme::menu_item_style).on_press(Message::OpenSettingsModal).padding([8, 12]).width(Length::Fill),
-                    button(text("Help")).style(theme::menu_item_style).on_press(Message::OpenHelpModal).padding([8, 12]).width(Length::Fill),
-                    button(text("Quit")).style(theme::menu_item_style).on_press(Message::CloseApp).padding([8, 12]).width(Length::Fill),
+                    button(text(self.t("common.toggle_files"))).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 12]).width(Length::Fill),
+                    button(text(format!("{} (V)", self.t("transcript.title")))).style(theme::menu_item_style).on_press(Message::ToggleTranscript).padding([8, 12]).width(Length::Fill),
+                    button(text(format!("{} (B)", self.t("bookmarks.title")))).style(theme::menu_item_style).on_press(Message::ToggleBookmarksModal).padding([8, 12]).width(Length::Fill),
+                    button(text(self.t("common.search"))).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 12]).width(Length::Fill),
+                    button(text(self.t("common.settings"))).style(theme::menu_item_style).on_press(Message::OpenSettingsModal).padding([8, 12]).width(Length::Fill),
+                    button(text(self.t("common.help"))).style(theme::menu_item_style).on_press(Message::OpenHelpModal).padding([8, 12]).width(Length::Fill),
+                    button(text(self.t("common.quit"))).style(theme::menu_item_style).on_press(Message::CloseApp).padding([8, 12]).width(Length::Fill),
                 ]
                 .spacing(4),
             ]
