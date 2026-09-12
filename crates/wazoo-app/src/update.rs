@@ -388,7 +388,9 @@ impl WazooApp {
             Message::SelectTranscriptSubtitleTrack(track_idx, track_id) => {
                 self.show_transcript_menu = false;
                 self.transcript_track_index = track_idx;
+                self.subtitles_enabled = true;
                 if let Some(player) = self.focused_player_mut() {
+                    player.set_subtitles_visible(true);
                     player.set_subtitle_track(track_id);
                     let sub_track = player.subtitle_tracks().get(track_idx).cloned();
                     let path = player.state.path.clone();
