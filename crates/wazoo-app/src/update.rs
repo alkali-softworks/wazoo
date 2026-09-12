@@ -477,7 +477,7 @@ impl WazooApp {
                 self.selected_search_folder = folder;
             }
             Message::SetWindowOpacity(opacity) => {
-                self.settings.window_opacity = opacity.clamp(0.1, 1.0);
+                self.settings.window_opacity = opacity.clamp(0.05, 1.0);
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::SetLanguage(lang) => {

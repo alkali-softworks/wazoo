@@ -14,6 +14,7 @@ use iced::{
 use wazoo_core::Language;
 use wazoo_scanner::ScanStage;
 use crate::app::WazooApp;
+use crate::cursor;
 use crate::format;
 use crate::message::Message;
 use crate::theme;
@@ -245,10 +246,12 @@ impl WazooApp {
             column![
                 text(self.t("settings.window_opacity")).size(14).color(theme::COLOR_TEXT_MUTED),
                 row![
-                    slider(0.1..=1.0, self.settings.window_opacity, Message::SetWindowOpacity)
-                        .step(0.01)
-                        .style(theme::volume_slider_style)
-                        .width(Length::Fill),
+                    cursor::PointerCursor::new(
+                        slider(0.05..=1.0, self.settings.window_opacity, Message::SetWindowOpacity)
+                            .step(0.01)
+                            .style(theme::volume_slider_style)
+                            .width(Length::Fill),
+                    ),
                     text(format!("{opacity_val}%")).size(13).color(theme::COLOR_TEXT_DIM),
                 ]
                 .spacing(12)
