@@ -43,7 +43,8 @@
     "flip_mode_disabled": "Modo de inversão desativado",
     "added": "Adicionado: {name}",
     "no_players": "Nenhum reprodutor ativo",
-    "no_players_msg": "Pressione 'N' para adicionar um reprodutor, ou clique com o botão direito para abrir o menu."
+    "no_players_msg": "Pressione 'N' para adicionar um reprodutor, ou clique com o botão direito para abrir o menu.",
+    "no_videos_found": "Nenhum vídeo encontrado para a consulta"
   },
   "settings": {
     "title": "Configurações",

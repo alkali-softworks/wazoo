@@ -43,7 +43,8 @@
     "flip_mode_disabled": "Mode balik nonaktif",
     "added": "Ditambahkan: {name}",
     "no_players": "Tidak ada pemutar aktif",
-    "no_players_msg": "Tekan 'N' untuk menambahkan pemutar, atau klik Indonesian untuk membuka menu."
+    "no_players_msg": "Tekan 'N' untuk menambahkan pemutar, atau klik Indonesian untuk membuka menu.",
+    "no_videos_found": "Tidak ada video yang ditemukan untuk kueri"
   },
   "settings": {
     "title": "Pengaturan",

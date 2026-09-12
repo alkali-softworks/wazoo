@@ -43,7 +43,8 @@
     "flip_mode_disabled": "翻转模式已禁用",
     "added": "已添加：{name}",
     "no_players": "无活动播放器",
-    "no_players_msg": "按 'N' 添加播放器，或右键单击打开菜单。"
+    "no_players_msg": "按 'N' 添加播放器，或右键单击打开菜单。",
+    "no_videos_found": "未找到符合查询的视频"
   },
   "settings": {
     "title": "设置",

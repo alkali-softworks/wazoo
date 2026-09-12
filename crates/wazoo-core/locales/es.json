@@ -43,7 +43,8 @@
     "flip_mode_disabled": "Modo de volteo desactivado",
     "added": "Añadido: {name}",
     "no_players": "Sin reproductores activos",
-    "no_players_msg": "Presione 'N' para agregar un reproductor, o haga clic derecho para abrir el menú."
+    "no_players_msg": "Presione 'N' para agregar un reproductor, o haga clic derecho para abrir el menú.",
+    "no_videos_found": "No se encontraron videos para la consulta"
   },
   "settings": {
     "title": "Configuración",

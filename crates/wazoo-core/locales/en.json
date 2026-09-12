@@ -43,7 +43,8 @@
     "flip_mode_disabled": "Flip mode disabled",
     "added": "Added: {name}",
     "no_players": "No active players",
-    "no_players_msg": "Press 'N' to add a player, or right-click to open the menu."
+    "no_players_msg": "Press 'N' to add a player, or right-click to open the menu.",
+    "no_videos_found": "No videos found for query"
   },
   "settings": {
     "title": "Settings",
