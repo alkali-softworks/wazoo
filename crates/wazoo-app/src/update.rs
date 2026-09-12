@@ -907,7 +907,7 @@ impl WazooApp {
                 if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
                     let total = results.len();
                     self.available_videos = results;
-                    self.toast_message = Some(format!("Total files: {total}"));
+                    self.toast_message = Some(format!("Total files: {}", format::format_number(total)));
                     self.toast_time_remaining = 3;
 
                     self.reconcile_players_with_available_videos(None);
@@ -1226,7 +1226,7 @@ impl WazooApp {
 
                 let folder_name = format::format_video_folder(&folder);
                 let display_name = if folder_name.is_empty() { folder } else { folder_name };
-                self.toast_message = Some(format!("Removed {} ({} files)", display_name, removed_count));
+                self.toast_message = Some(format!("Removed {} ({} files)", display_name, format::format_number(removed_count)));
                 self.toast_time_remaining = 2;
             }
             Message::StartScan => {
@@ -1269,7 +1269,7 @@ impl WazooApp {
                             "Scanning{} ({}% - {} found)",
                             name_part,
                             progress.percent,
-                            progress.files_found
+                            format::format_number(progress.files_found)
                         ));
                         self.toast_time_remaining = 2;
                     }
@@ -1287,7 +1287,7 @@ impl WazooApp {
                 self.scan_progress = None;
                 match res {
                     Ok(count) => {
-                        self.toast_message = Some(format!("Indexed {count} videos!"));
+                        self.toast_message = Some(format!("Indexed {} videos!", format::format_number(count)));
                         self.toast_time_remaining = 3;
                         if let Ok(videos) = self.db.get_all_videos() {
                             self.available_videos = videos;

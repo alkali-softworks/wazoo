@@ -65,7 +65,7 @@ impl WazooApp {
                 ]
                 .spacing(10)
                 .align_y(Alignment::Center),
-                text(self.t_with("settings.total_videos", &[("count", &self.available_videos.len().to_string())]))
+                text(self.t_with("settings.total_videos", &[("count", &format::format_number(self.available_videos.len()))]))
                     .size(12)
                     .color(theme::COLOR_TEXT_MUTED),
             ]
@@ -112,15 +112,15 @@ impl WazooApp {
                 match progress.stage {
                     ScanStage::Listing => {
                         if progress.percent > 0 {
-                            format!("Listing... {}% ({} found)", progress.percent, progress.files_found)
+                            format!("Listing... {}% ({} found)", progress.percent, format::format_number(progress.files_found))
                         } else if progress.files_found > 0 {
-                            format!("Listing... ({} found)", progress.files_found)
+                            format!("Listing... ({} found)", format::format_number(progress.files_found))
                         } else {
                             "Listing files...".to_string()
                         }
                     }
                     ScanStage::Indexing => {
-                        format!("Loading... {}% ({} files)", progress.percent, progress.total)
+                        format!("Loading... {}% ({} files)", progress.percent, format::format_number(progress.total))
                     }
                 }
             } else {
@@ -158,14 +158,14 @@ impl WazooApp {
                 let info_str = match progress.stage {
                     ScanStage::Listing => {
                         if progress.current_name.is_empty() {
-                            format!("Discovering files: {}% ({} found)", progress.percent, progress.files_found)
+                            format!("Discovering files: {}% ({} found)", progress.percent, format::format_number(progress.files_found))
                         } else {
-                            format!("Scanning {}: {}% ({} found)", progress.current_name, progress.percent, progress.files_found)
+                            format!("Scanning {}: {}% ({} found)", progress.current_name, progress.percent, format::format_number(progress.files_found))
                         }
                     }
                     ScanStage::Indexing => {
                         if progress.current_name.is_empty() {
-                            format!("Indexing database: {}% ({} files)", progress.percent, progress.total)
+                            format!("Indexing database: {}% ({} files)", progress.percent, format::format_number(progress.total))
                         } else {
                             format!("Adding {}: {}%", progress.current_name, progress.percent)
                         }
@@ -219,7 +219,7 @@ impl WazooApp {
             .spacing(6),
             folders_col,
             scan_controls,
-            text(self.t_with("settings.total_videos", &[("count", &self.available_videos.len().to_string())]))
+            text(self.t_with("settings.total_videos", &[("count", &format::format_number(self.available_videos.len()))]))
                 .size(13)
                 .color(theme::COLOR_TEXT_MUTED),
         ]
@@ -317,7 +317,7 @@ impl WazooApp {
         let count = self.settings.bookmarks.len();
         let header_row = row![
             text(self.t("bookmarks.title")).size(20).color(iced::Color::WHITE),
-            container(text(format!("{count}")).size(12).color(theme::COLOR_TEXT_DIM))
+            container(text(format::format_number(count)).size(12).color(theme::COLOR_TEXT_DIM))
                 .padding([2, 8])
                 .style(|_theme: &Theme| container::Style {
                     background: Some(iced::Background::Color(theme::COLOR_BTN_BG)),

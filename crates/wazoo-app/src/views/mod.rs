@@ -20,6 +20,7 @@ use iced::{
 };
 use wazoo_scanner::ScanStage;
 use crate::app::WazooApp;
+use crate::format;
 use crate::message::Message;
 use crate::theme;
 
@@ -130,7 +131,7 @@ impl WazooApp {
                         } else {
                             format!("Listing: {}", progress.current_name)
                         };
-                        let stat = format!("{}% ({} found)", progress.percent, progress.files_found);
+                        let stat = format!("{}% ({} found)", progress.percent, format::format_number(progress.files_found));
                         (name, stat)
                     }
                     ScanStage::Indexing => {
@@ -139,7 +140,7 @@ impl WazooApp {
                         } else {
                             format!("Indexing: {}", progress.current_name)
                         };
-                        let stat = format!("{}% ({} files)", progress.percent, progress.total);
+                        let stat = format!("{}% ({} files)", progress.percent, format::format_number(progress.total));
                         (name, stat)
                     }
                 }
