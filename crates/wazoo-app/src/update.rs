@@ -187,7 +187,7 @@ impl WazooApp {
                     Key::Character(s) => match s.as_str() {
                         "b" | "B" => return self.update(Message::ToggleBookmarksModal),
                         "r" | "R" => return self.update(Message::RandomSeekFocused),
-                        "t" | "T" => return self.update(Message::ShowTitleOverlayFocused),
+                        "t" | "T" => return self.update(Message::ShowTitleOverlay),
                         "f" | "F" | "j" | "J" | "/" => return self.update(Message::OpenSearchModal),
                         "s" | "S" => return self.update(Message::ToggleShuffleMode),
                         "1" => return self.update(Message::SetPlayerCount(1)),
@@ -1049,7 +1049,7 @@ impl WazooApp {
                     }
                 }
             }
-            Message::ShowTitleOverlayFocused => {
+            Message::ShowTitleOverlay => {
                 if self.title_pill_ticks > 0 {
                     self.title_pill_ticks = 0;
                 } else {
