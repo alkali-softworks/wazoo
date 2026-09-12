@@ -166,9 +166,6 @@ pub fn load_subtitles_sync(video_path: &str) -> Vec<SubtitleCue> {
             parent.join(format!("{stem_str}.vtt")),
             parent.join(format!("{stem_str}.ass")),
             parent.join(format!("{stem_str}.ssa")),
-            parent.join(format!("{stem_str}.en.srt")),
-            parent.join(format!("{stem_str}.eng.srt")),
-            parent.join(format!("{stem_str}.en.vtt")),
         ];
 
         for cand in candidates {

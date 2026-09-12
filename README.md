@@ -37,32 +37,25 @@ Experience your media library as a continuous vertical river of content (<kbd>5<
 ### ⚡ Flip Mode
 Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically shuffle and seek active video tiles to random timestamps, keeping visuals fresh without manual intervention.
 
-### 🔍 Instant Library Indexing & Search
+### 🔍 Instant Library Search
 - **Smart Directory Scanner**: Recursively indexes media folders while stripping clutter from video titles.
-- **Advanced Query Parser & Negative Queries**:
-  - Supports comma-separated positive terms (`cowboy, eek`) grouped with `OR`.
-  - Full support for **negative query segments** using `not <term>` or `!<term>` (e.g. `cowboy, not fallen`, `!filler`).
-  - Automatically isolates and groups positive logic (`OR`) and negative exclusions (`AND`), ensuring negative terms strictly exclude matches regardless of which positive terms match.
-  - Supports **pure negative queries** (e.g. `not eek, not filler`) to stream everything in your library *except* specified terms.
-  - Intelligent hyphen normalization (`asteroid-blues` matches `asteroid blues`).
-- **Adaptive Player Reconciliation**: Executing a new search dynamically updates active tiles to ensure all players stream matching content without duplicates.
-
-### 🪟 Frameless Glassmorphic Interface
-- Borderless window with sliding titlebar, quick drop-down menu, and glassmorphic HUD controls.
-- **Alt + Drag** navigation to position the window anywhere on screen.
-- Configurable window opacity for semi-transparent ambient desktop backgrounds.
+- **Advanced Query Parser & Negative Queries**: Easily dial in what's included in your media pool. Type just part of each name you want to match. Use comma separated terms to find several shows at once.  Then, to exclude a subset of the results, add `not ` or `!` before each term you want to exclude (e.g. `anime, not bebop`).
 
 ### 📜 Interactive Subtitle Transcript Drawer
-- **Live Dialogue Transcript**: View a full transcript of the active video dialogue in a sleek, sidecar slide-out drawer (<kbd>V</kbd> or <kbd>[TX]</kbd> button).
-- **Click to Seek**: Click any subtitle line to jump video playback directly to that timestamp instantly.
-- **Real-Time Active Line Highlighting**: The currently spoken dialogue cue lights up with an emerald highlight and timestamp badge in real time as the video plays.
-- **Dialogue Search Filter**: Filter thousands of dialogue lines in real-time to find exact quotes and scenes.
-- **Universal Subtitle Extraction**: Automatically parses external sidecar files (`.srt`, `.vtt`, `.ass`, `.ssa`) or demuxes embedded subtitle tracks in milliseconds on a background thread.
+- **Live Dialogue Transcript**: View a full transcript of the active video dialogue in a sleek slide-out drawer (<kbd>V</kbd> or <kbd>[TX]</kbd> button).
+- **Click to Seek**: Click any subtitle line to jump video playback directly to that timestamp instantly — great for language learning when you want to replay a specific phrase repeatedly.
+- **Active Line Highlighting**: The currently spoken dialogue cue lights up as the video plays.
+- **Dialogue Search Filter**: Filter thousands of dialogue lines to find exact quotes and scenes.
 
 ### 🔖 Bookmarks & Scene Memory
 - **Instant Bookmarking**: Press <kbd>+</kbd> or <kbd>=</kbd> to save a bookmark of the current video, exact timestamp, search query, and playback mode.
 - **Scene Restoration**: Open the bookmarks drawer (<kbd>B</kbd>) and jump back to any bookmarked scene with a single click.
 - **Multi-Player Reconciliation**: Restoring a bookmark restores your global search query and automatically swaps active player tiles to matching media.
+
+### 🪟 Frameless Glassmorphic Interface
+- Borderless window with sliding titlebar, quick drop-down menu, and glassmorphic HUD controls.
+- **Alt + Drag** navigation to position the window anywhere on screen.
+- Configurable window opacity for semi-transparent ambient desktop backgrounds.
 
 ### 📁 File Browser Drawer
 - **Collapsible Folder Tree**: Press <kbd>H</kbd> to slide out the library directory tree, organized cleanly with file counts.
@@ -71,7 +64,7 @@ Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically 
 ### 💻 Command-Line Launch & Search
 - **Instant CLI Boot**: Launch Wazoo directly with a search query from your terminal:
   ```bash
-  wazoo "ambient"
+  wazoo "bebop"
   ```
 - **Console Focus Acquisition**: Automatically claims active OS window focus upon startup so keyboard hotkeys work immediately without clicking.
 
