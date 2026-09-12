@@ -127,7 +127,7 @@ impl WazooApp {
 
         let toast_msg = if is_cli {
             if videos.is_empty() {
-                Some(format!("No videos found for query"))
+                Some(wazoo_core::t(&settings.language, "wazoo.no_videos_found"))
             } else {
                 Some(format!("({} Videos)", videos.len()))
             }

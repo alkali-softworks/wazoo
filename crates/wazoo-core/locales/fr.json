@@ -43,7 +43,8 @@
     "flip_mode_disabled": "Mode retournement désactivé",
     "added": "Ajouté : {name}",
     "no_players": "Aucun lecteur actif",
-    "no_players_msg": "Appuyez sur 'N' pour ajouter un lecteur, ou faites un clic droit pour ouvrir le menu."
+    "no_players_msg": "Appuyez sur 'N' pour ajouter un lecteur, ou faites un clic droit pour ouvrir le menu.",
+    "no_videos_found": "Aucune vidéo trouvée pour la requête"
   },
   "settings": {
     "title": "Paramètres",
