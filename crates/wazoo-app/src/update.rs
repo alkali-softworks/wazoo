@@ -389,6 +389,10 @@ impl WazooApp {
                 self.settings.window_opacity = opacity.clamp(0.1, 1.0);
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
+            Message::SetLanguage(lang) => {
+                self.settings.language = lang;
+                let _ = self.config_mgr.save_settings(&self.settings);
+            }
             Message::PlayerClicked(id) => {
                 if self.is_modal_or_menu_open() {
                     return Task::none();
@@ -623,7 +627,7 @@ impl WazooApp {
                         self.settings.is_global_muted = false;
                         let _ = self.config_mgr.save_settings(&self.settings);
                     }
-                    self.toast_message = Some(if muted { "Muted".to_string() } else { "Unmuted".to_string() });
+                    self.toast_message = Some(if muted { self.t("player.muted") } else { self.t("player.unmuted") });
                     self.toast_time_remaining = 2;
                 }
                 self.player_overlay_ticks = 120;
@@ -648,9 +652,9 @@ impl WazooApp {
                     }
                 }
                 self.toast_message = Some(if self.settings.is_global_muted {
-                    "Global Mute: ON".to_string()
+                    self.t("wazoo.global_mode_muted")
                 } else {
-                    "Global Mute: OFF".to_string()
+                    self.t("wazoo.global_mode_unmuted")
                 });
                 self.toast_time_remaining = 2;
                 let _ = self.config_mgr.save_settings(&self.settings);
@@ -687,7 +691,11 @@ impl WazooApp {
                     LayoutMode::Row => LayoutMode::Column,
                     LayoutMode::Column => LayoutMode::Grid,
                 };
-                self.toast_message = Some(format!("Layout: {:?}", self.settings.layout));
+                self.toast_message = Some(match self.settings.layout {
+                    LayoutMode::Grid => self.t("wazoo.layout_grid"),
+                    LayoutMode::Row => self.t("wazoo.layout_row"),
+                    LayoutMode::Column => self.t("wazoo.layout_column"),
+                });
                 self.toast_time_remaining = 2;
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
@@ -700,7 +708,10 @@ impl WazooApp {
                 while self.players.len() < target {
                     self.add_player_internal();
                 }
-                self.toast_message = Some(format!("Players: {target}"));
+                self.toast_message = Some(self.t_with("wazoo.set_players_count", &[
+                    ("count", &target.to_string()),
+                    ("suffix", if target == 1 { "" } else { "s" }),
+                ]));
                 self.toast_time_remaining = 2;
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
@@ -735,7 +746,7 @@ impl WazooApp {
                         p.set_volume(vol);
                     }
 
-                    self.toast_message = Some("Scroll Mode: Enabled".to_string());
+                    self.toast_message = Some(self.t("wazoo.scroll_mode_enabled"));
                     self.toast_time_remaining = 2;
                     let _ = self.config_mgr.save_settings(&self.settings);
 
@@ -755,7 +766,7 @@ impl WazooApp {
                         p.set_muted(self.settings.is_global_muted);
                         p.set_volume(1.0);
                     }
-                    self.toast_message = Some("Scroll Mode: Disabled".to_string());
+                    self.toast_message = Some(self.t("wazoo.scroll_mode_disabled"));
                 }
                 self.toast_time_remaining = 2;
                 let _ = self.config_mgr.save_settings(&self.settings);
@@ -766,8 +777,8 @@ impl WazooApp {
                     _ => PlaybackMode::Flip,
                 };
                 self.toast_message = Some(match self.settings.playback_mode {
-                    PlaybackMode::Flip => "Flip Mode: Enabled".to_string(),
-                    _ => "Flip Mode: Disabled".to_string(),
+                    PlaybackMode::Flip => self.t("wazoo.flip_mode_enabled"),
+                    _ => self.t("wazoo.flip_mode_disabled"),
                 });
                 self.toast_time_remaining = 2;
             }
@@ -1265,9 +1276,9 @@ impl WazooApp {
                     p.set_subtitles_visible(self.subtitles_enabled);
                 }
                 self.toast_message = Some(if self.subtitles_enabled {
-                    "Subtitles: Enabled".to_string()
+                    self.t("player.subtitles_enabled")
                 } else {
-                    "Subtitles: Disabled".to_string()
+                    self.t("player.subtitles_disabled")
                 });
                 self.toast_time_remaining = 2;
             }

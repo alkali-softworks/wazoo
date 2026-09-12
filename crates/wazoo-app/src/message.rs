@@ -82,6 +82,7 @@ pub enum Message {
     PerformSearch,
     OpenSettingsModal,
     CloseSettingsModal,
+    SetLanguage(String),
     SetBufferDuration(u32),
     OpenHelpModal,
     CloseHelpModal,

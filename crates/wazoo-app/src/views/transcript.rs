@@ -25,14 +25,14 @@ impl WazooApp {
                 player.position().as_secs_f64(),
             )
         } else {
-            ("No Active Player".to_string(), 0.0)
+            (self.t("transcript.no_active_player"), 0.0)
         };
 
         let filter = self.transcript_search.trim().to_lowercase();
 
         // 1. Header row
         let mut header_left = row![
-            text("Transcript")
+            text(self.t("transcript.title"))
                 .size(18)
                 .font(iced::Font {
                     weight: iced::font::Weight::Bold,
@@ -45,7 +45,7 @@ impl WazooApp {
 
         if !self.transcript_cues.is_empty() {
             let badge = container(
-                text(format!("{} cues", self.transcript_cues.len()))
+                text(self.t_with("transcript.cues_count", &[("count", &self.transcript_cues.len().to_string())]))
                     .size(11)
             )
             .padding([2, 8])
@@ -68,7 +68,7 @@ impl WazooApp {
             .color(theme::COLOR_TEXT_MUTED);
 
         // 3. Dialogue Search Filter Input
-        let search_box = text_input("Search transcript dialogue...", &self.transcript_search)
+        let search_box = text_input(&self.t("transcript.search_placeholder"), &self.transcript_search)
             .on_input(Message::TranscriptSearchChanged)
             .style(theme::dark_input_style)
             .padding(8);
@@ -77,10 +77,10 @@ impl WazooApp {
         let content_body: Element<'_, Message> = if self.transcript_loading {
             container(
                 column![
-                    text("Extracting dialogue tracks...")
+                    text(self.t("transcript.extracting"))
                         .size(14)
                         .color(theme::COLOR_PRIMARY),
-                    text("Loading embedded subtitles")
+                    text(self.t("transcript.loading_subtitles"))
                         .size(12)
                         .color(theme::COLOR_TEXT_MUTED),
                 ]
@@ -95,7 +95,7 @@ impl WazooApp {
         } else if self.transcript_cues.is_empty() {
             container(
                 column![
-                    text("No Subtitles Found")
+                    text(self.t("transcript.no_subtitles_found"))
                         .size(15)
                         .font(iced::Font {
                             weight: iced::font::Weight::Bold,
@@ -103,7 +103,7 @@ impl WazooApp {
                         })
                         .color(iced::Color::WHITE),
                     Space::new().height(Length::Fixed(4.0)),
-                    text("This video has no embedded subtitle stream or sidecar (.srt, .vtt, .ass) file.")
+                    text(self.t("transcript.no_subtitles_desc"))
                         .size(12)
                         .color(theme::COLOR_TEXT_MUTED),
                 ]
@@ -182,7 +182,7 @@ impl WazooApp {
 
             if matched_count == 0 {
                 container(
-                    text(format!("No dialogue matching \"{}\"", self.transcript_search))
+                    text(self.t_with("transcript.no_match", &[("query", &self.transcript_search)]))
                         .size(13)
                         .color(theme::COLOR_TEXT_MUTED),
                 )

@@ -577,6 +577,16 @@ impl WazooApp {
         Theme::Dark
     }
 
+    #[inline]
+    pub fn t<'a>(&'a self, key: &'a str) -> String {
+        wazoo_core::t(&self.settings.language, key)
+    }
+
+    #[inline]
+    pub fn t_with<'a>(&'a self, key: &'a str, args: &[(&str, &str)]) -> String {
+        wazoo_core::t_with(&self.settings.language, key, args)
+    }
+
     pub fn subscription(&self) -> Subscription<Message> {
         let mut subs = vec![
             iced::time::every(Duration::from_millis(16)).map(|_| Message::VideoFrameTick),

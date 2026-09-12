@@ -20,9 +20,9 @@ impl WazooApp {
         let card = container(
             column![
                 text("📁").size(48),
-                text("Welcome to Wazoo").size(24).color(iced::Color::WHITE),
-                text("Add your media folders in settings to get started.").size(14).color(theme::COLOR_TEXT_MUTED),
-                button(text("Open Settings to Add Media Folders"))
+                text(self.t("wazoo.welcome")).size(24).color(iced::Color::WHITE),
+                text(self.t("wazoo.no_folders_msg")).size(14).color(theme::COLOR_TEXT_MUTED),
+                button(text(self.t("wazoo.open_settings_to_add")))
                     .style(theme::action_button_style)
                     .on_press(Message::OpenSettingsModal)
                     .padding([10, 20]),

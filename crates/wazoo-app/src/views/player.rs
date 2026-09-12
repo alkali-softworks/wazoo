@@ -26,7 +26,7 @@ use crate::theme;
 impl WazooApp {
     pub(crate) fn view_players(&self) -> Element<'_, Message> {
         if self.players.is_empty() {
-            return container(text("No active players").size(18).color(theme::COLOR_TEXT_MUTED))
+            return container(text(self.t("wazoo.no_players")).size(18).color(theme::COLOR_TEXT_MUTED))
                 .width(Length::Fill)
                 .height(Length::Fill)
                 .center_x(Length::Fill)
@@ -164,7 +164,7 @@ impl WazooApp {
                     svg(svg::Handle::from_memory(spinner_svg.into_bytes()))
                         .width(Length::Fixed(40.0))
                         .height(Length::Fixed(40.0)),
-                    text("Loading video...")
+                    text(self.t("common.loading"))
                         .size(13)
                         .color(iced::Color::from_rgb(0.9, 0.9, 0.9)),
                 ]
