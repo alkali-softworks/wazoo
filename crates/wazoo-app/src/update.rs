@@ -898,24 +898,17 @@ impl WazooApp {
                 self.settings.last_folder = self.selected_search_folder.clone();
                 let _ = self.config_mgr.save_settings(&self.settings);
 
-                let folders = if self.selected_search_folder.is_empty() || self.selected_search_folder == "All" {
+                let folder = self.selected_search_folder.clone();
+                let folders = if folder.is_empty() || folder == "All" {
                     Vec::new()
                 } else {
-                    vec![self.selected_search_folder.clone()]
+                    vec![folder.clone()]
                 };
 
                 if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
                     let total = results.len();
                     self.available_videos = results;
-                    self.toast_message = if total == 0 {
-                        Some(self.t("wazoo.no_videos_found"))
-                    } else {
-                        Some(self.t_with(
-                            "wazoo.videos_count",
-                            &[("count", &format::format_number(total))],
-                        ))
-                    };
-                    self.toast_time_remaining = 3;
+                    self.show_video_totals_notice(total, &folder);
 
                     self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
@@ -1054,6 +1047,7 @@ impl WazooApp {
                 };
 
                 if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
+                    self.last_total_videos = results.len();
                     self.available_videos = results;
                 }
 
@@ -1239,6 +1233,7 @@ impl WazooApp {
                 let display_name = if folder_name.is_empty() { folder } else { folder_name };
                 self.toast_message = Some(format!("Removed {} ({} files)", display_name, format::format_number(removed_count)));
                 self.toast_time_remaining = 2;
+                self.last_total_videos = self.available_videos.len();
             }
             Message::StartScan => {
                 if !self.is_scanning && !self.settings.media_folders.is_empty() {
@@ -1297,11 +1292,17 @@ impl WazooApp {
                 self.is_scanning = false;
                 self.scan_progress = None;
                 match res {
-                    Ok(count) => {
-                        self.toast_message = Some(format!("Indexed {} videos!", format::format_number(count)));
-                        self.toast_time_remaining = 3;
-                        if let Ok(videos) = self.db.get_all_videos() {
+                    Ok(_count) => {
+                        let folder = self.selected_search_folder.clone();
+                        let folders = if folder.is_empty() || folder == "All" {
+                            Vec::new()
+                        } else {
+                            vec![folder.clone()]
+                        };
+                        if let Ok(videos) = self.db.search_videos(&self.active_search_query, &folders) {
+                            let total = videos.len();
                             self.available_videos = videos;
+                            self.show_video_totals_notice(total, &folder);
                             if self.players.is_empty() && !self.available_videos.is_empty() {
                                 let count = self.settings.player_count.clamp(1, 12);
                                 for _ in 0..count {
