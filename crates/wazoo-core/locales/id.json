@@ -82,7 +82,9 @@
       "search_videos": "Cari Video",
       "fullscreen": "Layar Penuh",
       "close_app": "Tutup Aplikasi",
-      "move_window": "Pindahkan Jendela"
+      "move_window": "Pindahkan Jendela",
+      "toggle_bookmarks": "Beralih Bookmark",
+      "toggle_transcript": "Beralih Transkrip Subtitle"
     }
   },
   "file_picker": {

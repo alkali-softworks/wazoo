@@ -82,7 +82,9 @@
       "search_videos": "Videos suchen",
       "fullscreen": "Vollbild",
       "close_app": "Anwendung schließen",
-      "move_window": "Fenster verschieben"
+      "move_window": "Fenster verschieben",
+      "toggle_bookmarks": "Lesezeichen umschalten",
+      "toggle_transcript": "Untertitel-Transkript umschalten"
     }
   },
   "file_picker": {

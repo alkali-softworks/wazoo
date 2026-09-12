@@ -82,7 +82,9 @@
       "search_videos": "ビデオを検索",
       "fullscreen": "全画面表示",
       "close_app": "アプリを閉じる",
-      "move_window": "ウィンドウを移動"
+      "move_window": "ウィンドウを移動",
+      "toggle_bookmarks": "ブックマークの切り替え",
+      "toggle_transcript": "字幕トランスクリプトの切り替え"
     }
   },
   "file_picker": {

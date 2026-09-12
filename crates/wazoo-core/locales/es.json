@@ -82,7 +82,9 @@
       "search_videos": "Buscar Videos",
       "fullscreen": "Pantalla Completa",
       "close_app": "Cerrar Aplicación",
-      "move_window": "Mover Ventana"
+      "move_window": "Mover Ventana",
+      "toggle_bookmarks": "Alternar marcadores",
+      "toggle_transcript": "Alternar transcripción de subtítulos"
     }
   },
   "file_picker": {

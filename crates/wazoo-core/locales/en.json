@@ -82,7 +82,9 @@
       "search_videos": "Search Videos",
       "fullscreen": "Fullscreen",
       "close_app": "Close App",
-      "move_window": "Move Window"
+      "move_window": "Move Window",
+      "toggle_bookmarks": "Toggle Bookmarks",
+      "toggle_transcript": "Toggle Subtitle Transcript"
     }
   },
   "file_picker": {

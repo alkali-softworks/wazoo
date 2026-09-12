@@ -82,7 +82,9 @@
       "search_videos": "Поиск видео",
       "fullscreen": "Полноэкранный режим",
       "close_app": "Закрыть приложение",
-      "move_window": "Переместить окно"
+      "move_window": "Переместить окно",
+      "toggle_bookmarks": "Переключить закладки",
+      "toggle_transcript": "Переключить транскрипт субтитров"
     }
   },
   "file_picker": {
