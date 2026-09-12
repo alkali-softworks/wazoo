@@ -82,7 +82,8 @@ pub struct WazooApp {
 pub enum Message {
     // Window management & Events
     WindowIdReceived(iced::window::Id),
-    WindowResized(iced::Size),
+    WindowResized(iced::window::Id, iced::Size),
+    GainWindowFocus,
     PreloadedPlayerReady(Arc<Mutex<Option<Result<VideoHandle, String>>>>),
     CursorMoved(iced::window::Id, Point),
     RightClickPressed(iced::window::Id),
@@ -329,14 +330,17 @@ impl WazooApp {
             Task::none()
         };
 
-        // Window focus task on boot: request focus for the application window
-        let focus_task = iced::window::oldest().then(|maybe_id| {
-            if let Some(id) = maybe_id {
-                iced::window::gain_focus(id)
-            } else {
-                Task::none()
-            }
-        });
+        // Boot focus task: ensure window receives keyboard focus and activation on boot
+        let focus_task = Task::perform(
+            async {
+                #[cfg(target_os = "linux")]
+                {
+                    ensure_window_focused_linux().await;
+                }
+                tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+            },
+            |_| Message::GainWindowFocus,
+        );
 
         (app, Task::batch([preload_task, focus_task]))
     }
@@ -602,6 +606,19 @@ impl WazooApp {
                 self.window_id = Some(id);
                 return iced::window::gain_focus(id);
             }
+            Message::GainWindowFocus => {
+                if let Some(id) = self.window_id {
+                    return iced::window::gain_focus(id);
+                } else {
+                    return iced::window::oldest().then(|maybe_id| {
+                        if let Some(id) = maybe_id {
+                            iced::window::gain_focus(id)
+                        } else {
+                            Task::none()
+                        }
+                    });
+                }
+            }
             Message::PreloadedPlayerReady(holder) => {
                 self.is_preloading = false;
                 if self.settings.playback_mode != PlaybackMode::Scroll {
@@ -635,7 +652,8 @@ impl WazooApp {
                     }
                 }
             }
-            Message::WindowResized(size) => {
+            Message::WindowResized(id, size) => {
+                self.window_id = Some(id);
                 self.settings.window_bounds.width = size.width as u32;
                 self.settings.window_bounds.height = size.height as u32;
                 self.scroll_engine.set_window_height(size.height);
@@ -1906,7 +1924,10 @@ impl WazooApp {
                     Some(Message::KeyReleased(iced::keyboard::Key::Named(iced::keyboard::key::Named::Alt)))
                 }
                 iced::Event::Window(iced::window::Event::Resized(size)) => {
-                    Some(Message::WindowResized(size))
+                    Some(Message::WindowResized(window_id, size))
+                }
+                iced::Event::Window(iced::window::Event::Focused) => {
+                    Some(Message::WindowIdReceived(window_id))
                 }
                 iced::Event::Mouse(iced::mouse::Event::CursorMoved { position }) => {
                     Some(Message::CursorMoved(window_id, position))
@@ -3283,6 +3304,57 @@ fn init_linux_cursor_env() {
     }
 }
 
+#[cfg(target_os = "linux")]
+async fn ensure_window_focused_linux() {
+    let my_pid = std::process::id();
+    for _ in 0..25 {
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+        let mut activated = false;
+        if let Ok(output) = std::process::Command::new("wmctrl")
+            .args(["-l", "-p"])
+            .output()
+        {
+            if output.status.success() {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                for line in stdout.lines() {
+                    let parts: Vec<&str> = line.split_whitespace().collect();
+                    if parts.len() >= 3 {
+                        if let Ok(pid) = parts[2].parse::<u32>() {
+                            if pid == my_pid {
+                                let win_id = parts[0];
+                                let s = std::process::Command::new("wmctrl")
+                                    .args(["-i", "-a", win_id])
+                                    .status();
+                                if let Ok(status) = s {
+                                    if status.success() {
+                                        activated = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if !activated {
+            if let Ok(status) = std::process::Command::new("xdotool")
+                .args(["search", "--pid", &my_pid.to_string(), "windowactivate"])
+                .status()
+            {
+                if status.success() {
+                    activated = true;
+                }
+            }
+        }
+
+        if activated {
+            break;
+        }
+    }
+}
+
 pub fn main() -> iced::Result {
     env_logger::init();
     #[cfg(target_os = "linux")]
@@ -3304,6 +3376,10 @@ pub fn main() -> iced::Result {
             size: iced::Size::new(1280.0, 720.0),
             decorations: false,
             transparent: true,
+            platform_specific: iced::window::settings::PlatformSpecific {
+                application_id: "wazoo".to_string(),
+                override_redirect: false,
+            },
             ..Default::default()
         })
         .run()
