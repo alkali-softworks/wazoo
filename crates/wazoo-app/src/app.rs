@@ -70,6 +70,7 @@ pub struct WazooApp {
     pub(crate) focus_border_ticks: usize,
     pub(crate) is_shuffle_mode: bool,
     pub(crate) hovered_player_id: Option<PlayerId>,
+    pub(crate) open_audio_menu_player_id: Option<PlayerId>,
     pub(crate) subtitles_enabled: bool,
     pub(crate) loading_player_ids: HashSet<PlayerId>,
     pub(crate) loading_player_ticks: HashMap<PlayerId, usize>,
@@ -199,6 +200,7 @@ impl WazooApp {
             focus_border_ticks: 0,
             is_shuffle_mode: true,
             hovered_player_id: None,
+            open_audio_menu_player_id: None,
             subtitles_enabled: true,
             loading_player_ids: HashSet::new(),
             loading_player_ticks: HashMap::new(),
@@ -1251,6 +1253,75 @@ mod tests {
         assert!(app.scroll_engine.items.is_empty(), "scroll engine must be cleared");
         assert_eq!(app.settings.player_count, 3);
         assert_eq!(app.players.len(), 3);
+    }
+
+    #[test]
+    fn test_select_audio_track_message_and_view() {
+        let (mut app, _) = WazooApp::new(None);
+        if let Some(player) = app.players.first_mut() {
+            // Setup 2 mock audio tracks on the player
+            player.state.audio_tracks = vec![
+                wazoo_media::AudioTrack {
+                    id: 1,
+                    title: Some("English Dub / AAC LC".to_string()),
+                    lang: Some("eng".to_string()),
+                    codec: Some("vorbis".to_string()),
+                    is_selected: true,
+                },
+                wazoo_media::AudioTrack {
+                    id: 2,
+                    title: None,
+                    lang: Some("jpn".to_string()),
+                    codec: Some("vorbis".to_string()),
+                    is_selected: false,
+                },
+            ];
+            player.state.current_audio_track_id = Some(1);
+            let player_id = player.id;
+
+            // Verify view rendering with multiple audio tracks produces valid Element
+            app.hovered_player_id = Some(player_id);
+            app.player_overlay_ticks = 100;
+            let _ = app.view();
+
+            // Toggle audio menu open
+            let _ = app.update(Message::ToggleAudioMenu(player_id));
+            assert_eq!(app.open_audio_menu_player_id, Some(player_id));
+
+            // When unhovering while audio menu is open, overlay must NOT fade or hide
+            let _ = app.update(Message::PlayerUnhovered(player_id));
+            assert_eq!(app.player_overlay_ticks, PLAYER_OVERLAY_HIDE_TICKS);
+
+            // Ticking video frames also preserves overlay while menu is open
+            let _ = app.update(Message::VideoFrameTick);
+            assert_eq!(app.player_overlay_ticks, PLAYER_OVERLAY_HIDE_TICKS);
+
+            // Re-render view with menu open
+            let _ = app.view();
+
+            // Send SelectAudioTrack to switch to Japanese (track 2)
+            let _ = app.update(Message::SelectAudioTrack(player_id, 2));
+
+            // Verify menu is closed, toast message is shown, and track updated
+            assert_eq!(app.open_audio_menu_player_id, None);
+            assert!(app.toast_message.is_some());
+            assert_eq!(app.toast_message.as_deref(), Some("Audio: Japanese"));
+            assert_eq!(app.players[0].state.current_audio_track_id, Some(2));
+            assert_eq!(app.player_overlay_ticks, PLAYER_OVERLAY_HIDE_TICKS);
+
+            // Re-render view with new track selected
+            let _ = app.view();
+
+            // Test Escape closes menu
+            let _ = app.update(Message::ToggleAudioMenu(player_id));
+            assert_eq!(app.open_audio_menu_player_id, Some(player_id));
+            let _ = app.update(Message::EscapePressed);
+            assert_eq!(app.open_audio_menu_player_id, None);
+
+            // When only 1 audio track exists, view should also render cleanly without selector
+            app.players[0].state.audio_tracks.truncate(1);
+            let _ = app.view();
+        }
     }
 }
 

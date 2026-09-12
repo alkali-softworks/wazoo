@@ -214,5 +214,45 @@ fn test_loadfile_start_option() {
     }
 }
 
+#[test]
+fn test_audio_stream_switching() {
+    let sample = "/mnt/bob/anime/Mushoku Tensei/Season 2/S02E14-Wedding Reception.mkv";
+    if Path::new(sample).exists() {
+        let mut handle = VideoHandle::new(10, sample, "Mushoku Tensei").expect("create VideoHandle");
+        handle.set_muted(true);
+
+        // Sleep briefly and update frame to process libmpv events
+        std::thread::sleep(Duration::from_millis(300));
+        let _ = handle.update_frame();
+
+        let tracks = handle.audio_tracks();
+        println!("Found {} audio tracks", tracks.len());
+        for (i, t) in tracks.iter().enumerate() {
+            println!("  [{}] id={} selected={} lang={:?} title={:?} label='{}'",
+                i, t.id, t.is_selected, t.lang, t.title, wazoo_media::format_audio_track_label(t, i)
+            );
+        }
+
+        assert_eq!(tracks.len(), 2, "Expected 2 audio tracks for Wedding Reception");
+        assert_eq!(wazoo_media::format_audio_track_label(&tracks[0], 0), "English Dub");
+        assert_eq!(wazoo_media::format_audio_track_label(&tracks[1], 1), "Japanese");
+
+        // Initial aid should be 1
+        assert_eq!(handle.current_audio_track_id(), Some(1));
+
+        // Switch to Japanese (id 2)
+        handle.set_audio_track(2);
+        assert_eq!(handle.current_audio_track_id(), Some(2));
+        assert!(handle.audio_tracks().iter().find(|t| t.id == 2).unwrap().is_selected);
+        assert!(!handle.audio_tracks().iter().find(|t| t.id == 1).unwrap().is_selected);
+
+        // Switch back to English Dub (id 1)
+        handle.set_audio_track(1);
+        assert_eq!(handle.current_audio_track_id(), Some(1));
+        assert!(handle.audio_tracks().iter().find(|t| t.id == 1).unwrap().is_selected);
+    }
+}
+
+
 
 

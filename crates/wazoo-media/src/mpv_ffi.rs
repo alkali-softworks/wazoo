@@ -41,7 +41,7 @@ pub const MPV_EVENT_START_FILE: c_int = 6;
 pub const MPV_EVENT_END_FILE: c_int = 7;
 pub const MPV_EVENT_FILE_LOADED: c_int = 8;
 pub const MPV_EVENT_IDLE: c_int = 11;
-pub const MPV_EVENT_TICK: c_int = 14;
+pub const MPV_EVENT_TRACKS_CHANGED: c_int = 18;
 pub const MPV_EVENT_PLAYBACK_RESTART: c_int = 21;
 pub const MPV_EVENT_PROPERTY_CHANGE: c_int = 22;
 
@@ -84,6 +84,8 @@ extern "C" {
         format: c_int,
         data: *mut c_void,
     ) -> c_int;
+    pub fn mpv_get_property_string(ctx: *mut MpvHandle, name: *const c_char) -> *mut c_char;
+    pub fn mpv_free(data: *mut c_void);
     pub fn mpv_command(ctx: *mut MpvHandle, args: *mut *const c_char) -> c_int;
     pub fn mpv_command_string(ctx: *mut MpvHandle, args: *const c_char) -> c_int;
     pub fn mpv_wait_event(ctx: *mut MpvHandle, timeout: c_double) -> *mut MpvEvent;

@@ -434,6 +434,9 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::PlayerClicked(id) => {
+                if self.open_audio_menu_player_id.is_some() {
+                    self.open_audio_menu_player_id = None;
+                }
                 if self.is_modal_or_menu_open() {
                     return Task::none();
                 }
@@ -587,6 +590,10 @@ impl WazooApp {
                 self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
             }
             Message::PlayerUnhovered(id) => {
+                // If audio menu is open for this player, do not fade out
+                if self.open_audio_menu_player_id == Some(id) {
+                    return Task::none();
+                }
                 // When moving mouse outside of player / hover ends, immediately trigger fade out
                 if self.hovered_player_id == Some(id) {
                     self.player_overlay_ticks = self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
@@ -654,6 +661,37 @@ impl WazooApp {
                         self.toast_time_remaining = 1;
                     }
                 }
+            }
+            Message::SelectAudioTrack(id, track_id) => {
+                self.open_audio_menu_player_id = None;
+                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                    let was_already_active = self.focused_player_idx == pos;
+                    self.focused_player_idx = pos;
+                    if !was_already_active {
+                        self.focus_border_ticks = 20;
+                    }
+                }
+                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                    p.set_audio_track(track_id);
+                    if let Some(track) = p.state.audio_tracks.iter().find(|t| t.id == track_id) {
+                        let label = wazoo_media::format_audio_track_label(track, 0);
+                        self.toast_message = Some(format!("Audio: {label}"));
+                        self.toast_time_remaining = 2;
+                    }
+                }
+                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+            }
+            Message::ToggleAudioMenu(id) => {
+                if self.open_audio_menu_player_id == Some(id) {
+                    self.open_audio_menu_player_id = None;
+                } else {
+                    self.open_audio_menu_player_id = Some(id);
+                    self.hovered_player_id = Some(id);
+                    self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                }
+            }
+            Message::CloseAudioMenu => {
+                self.open_audio_menu_player_id = None;
             }
             Message::TogglePlayerMute(id) => {
                 if let Some(pos) = self.players.iter().position(|p| p.id == id) {
@@ -1465,6 +1503,10 @@ impl WazooApp {
                 self.toast_time_remaining = 2;
             }
             Message::EscapePressed => {
+                if self.open_audio_menu_player_id.is_some() {
+                    self.open_audio_menu_player_id = None;
+                    return Task::none();
+                }
                 if self.is_any_modal_open()
                     || self.show_dropdown_menu
                     || self.show_file_picker
@@ -1530,7 +1572,9 @@ impl WazooApp {
             }
             Message::VideoFrameTick => {
                 self.spinner_ticks = self.spinner_ticks.wrapping_add(1);
-                if self.player_overlay_ticks > 0 {
+                if self.open_audio_menu_player_id.is_some() {
+                    self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                } else if self.player_overlay_ticks > 0 {
                     self.player_overlay_ticks -= 1;
                     if self.player_overlay_ticks == 0 {
                         self.hovered_player_id = None;
