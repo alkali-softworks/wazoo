@@ -22,6 +22,31 @@ Built from the ground up in native Rust with hardware-accelerated rendering:
 
 ## ✨ Features
 
+
+### 🖼️ Ambient Orchestration & Multi-Tile Layouts
+- **1 to 12 Video Players**: Scale from a single minimalist player to an ambient video wall.
+- **Responsive Layout Engine**: Effortlessly cycles between **Grid**, **Row**, and **Column** arrangements (<kbd>L</kbd>).
+- **Independent Audio & Seeking**: Per-player volume control, seek sliders, auto-unmute on volume adjustment, and quick random seeking (<kbd>R</kbd>).
+
+### 🌊 The Infinity Stream ("Scroll Mode")
+Experience your media library as a continuous vertical river of content (<kbd>5</kbd>):
+- Constant, smooth vertical scroll at configurable `scroll_speed` (<kbd>+</kbd> / <kbd>-</kbd>).
+- **Virtual Viewport**: Automatically despawns players that scroll off the top edge and seamlessly spawns new candidate videos at the bottom.
+- **Proportional Audio Cross-Fading**: Sound smoothly fades in and out based on the visible percentage of each video on screen.
+
+### ⚡ Flip Mode
+Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically shuffle and seek active video tiles to random timestamps, keeping visuals fresh without manual intervention.
+
+### 🔍 Instant Library Indexing & Search
+- **Smart Directory Scanner**: Recursively indexes media folders while stripping clutter from video titles.
+- **Advanced Query Parser**: Supports instant filtering, folder scoping, and comma-separated search terms.
+- **Adaptive Player Reconciliation**: Executing a new search dynamically updates active tiles to ensure all players stream matching content without duplicates.
+
+### 🪟 Frameless Glassmorphic Interface
+- Borderless window with sliding titlebar, quick drop-down menu, and glassmorphic HUD controls.
+- **Alt + Drag** navigation to position the window anywhere on screen.
+- Configurable window opacity for semi-transparent ambient desktop backgrounds.
+
 ### 📜 Interactive Subtitle Transcript Drawer
 - **Live Dialogue Transcript**: View a full transcript of the active video dialogue in a sleek, sidecar slide-out drawer (<kbd>V</kbd> or <kbd>[TX]</kbd> button).
 - **Click to Seek**: Click any subtitle line to jump video playback directly to that timestamp instantly.
@@ -41,38 +66,12 @@ Built from the ground up in native Rust with hardware-accelerated rendering:
 ### 💻 Command-Line Launch & Search
 - **Instant CLI Boot**: Launch Wazoo directly with a search query from your terminal:
   ```bash
-  wazoo "cyberpunk"
-  wazoo --query "synthwave"
-  wazoo -- "exact phrase"
+  wazoo "ambient"
   ```
 - **Console Focus Acquisition**: Automatically claims active OS window focus upon startup so keyboard hotkeys work immediately without clicking.
 
-### 🖼️ Ambient Orchestration & Multi-Tile Layouts
-- **1 to 12 Video Players**: Scale from a single minimalist player to an ambient video wall.
-- **Responsive Layout Engine**: Effortlessly cycles between **Grid**, **Row**, and **Column** arrangements (<kbd>L</kbd>).
-- **Independent Audio & Seeking**: Per-player volume control, seek sliders, auto-unmute on volume adjustment, and quick random seeking (<kbd>R</kbd>).
-
-### 🌊 The Infinity Stream ("Scroll Mode")
-Experience your media library as a continuous vertical river of content (<kbd>5</kbd>):
-- Constant, smooth vertical scroll at configurable `scroll_speed` (<kbd>+</kbd> / <kbd>-</kbd>).
-- **Virtual Viewport**: Automatically despawns players that scroll off the top edge and seamlessly spawns new candidate videos at the bottom.
-- **Proportional Audio Cross-Fading**: Sound smoothly fades in and out based on the visible percentage of each video on screen.
-
-### ⚡ Flip Mode
-Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically shuffle and seek active video tiles to random timestamps, keeping visuals fresh without manual intervention.
-
 ### 🐕 Unstuck Playback Watchdog
 Ambient displays must never stall. Wazoo constantly monitors playback position progress and automatically cycles to the next video if a network stream or corrupted file encounters a stall.
-
-### 🔍 Instant Library Indexing & Search
-- **Smart Directory Scanner**: Recursively indexes media folders while stripping resolution tags, brackets, and clutter from video titles.
-- **Advanced Query Parser**: Supports instant filtering, folder scoping, and comma-separated search terms.
-- **Adaptive Player Reconciliation**: Executing a new search dynamically updates active tiles to ensure all players stream matching content without duplicates.
-
-### 🪟 Frameless Glassmorphic Interface
-- Borderless window with sliding titlebar, quick drop-down menu, and glassmorphic HUD controls.
-- **Alt + Drag** navigation to position the window anywhere on screen.
-- Configurable window opacity for semi-transparent ambient desktop backgrounds.
 
 ---
 
