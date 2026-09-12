@@ -94,6 +94,12 @@ pub enum Message {
     ScanProgressUpdate(ScanProgress),
     ScanFinished(Result<usize, String>),
     ToggleSubtitles,
+    ToggleTranscript,
+    ToggleTranscriptForPlayer(PlayerId),
+    CloseTranscript,
+    TranscriptSearchChanged(String),
+    TranscriptLoaded(String, Vec<wazoo_media::SubtitleCue>),
+    SeekToSubtitle(f64),
     EscapePressed,
 
     // Bookmarks & wazoo-js shortcuts

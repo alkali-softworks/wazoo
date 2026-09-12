@@ -120,6 +120,7 @@ impl WazooApp {
                     button(text("Add Player")).style(theme::menu_item_style).on_press(Message::AddNewPlayer).padding([8, 14]).width(Length::Fill),
                     button(text("Toggle Layout")).style(theme::menu_item_style).on_press(Message::CycleLayout).padding([8, 14]).width(Length::Fill),
                     button(text("Toggle Files")).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 14]).width(Length::Fill),
+                    button(text("Transcript (V)")).style(theme::menu_item_style).on_press(Message::ToggleTranscript).padding([8, 14]).width(Length::Fill),
                     button(text("Bookmarks (B)")).style(theme::menu_item_style).on_press(Message::ToggleBookmarksModal).padding([8, 14]).width(Length::Fill),
                     button(text("Search")).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 14]).width(Length::Fill),
                     button(text("Settings")).style(theme::menu_item_style).on_press(Message::OpenSettingsModal).padding([8, 14]).width(Length::Fill),

@@ -267,7 +267,7 @@ impl WazooApp {
                 .height(Length::Fixed(20.0));
 
             let controls_row = row![
-                // Left: CC + Volume Icon + Volume Slider
+                // Left: CC + TX + Volume Icon + Volume Slider
                 button(
                     container(
                         text(if self.subtitles_enabled { "CC" } else { "cc" })
@@ -278,6 +278,21 @@ impl WazooApp {
                 )
                 .style(theme::cc_button_style(self.subtitles_enabled))
                 .on_press(Message::ToggleSubtitles)
+                .padding([4, 8]),
+                button(
+                    container(
+                        text("TX")
+                            .size(12)
+                            .font(iced::Font {
+                                weight: iced::font::Weight::Bold,
+                                ..Default::default()
+                            })
+                    )
+                    .center_x(Length::Shrink)
+                    .center_y(Length::Shrink),
+                )
+                .style(theme::transcript_button_style(self.show_transcript && is_focused))
+                .on_press(Message::ToggleTranscriptForPlayer(player_id))
                 .padding([4, 8]),
                 button(volume_icon)
                     .style(theme::player_control_button_style)

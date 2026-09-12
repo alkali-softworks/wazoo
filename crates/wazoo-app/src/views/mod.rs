@@ -11,6 +11,7 @@ pub mod file_picker;
 pub mod modals;
 pub mod player;
 pub mod titlebar;
+pub mod transcript;
 pub mod welcome;
 
 use iced::{
@@ -30,6 +31,14 @@ impl WazooApp {
             row![
                 container(self.view_players()).width(Length::Fill).height(Length::Fill),
                 self.view_file_picker(),
+            ]
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .into()
+        } else if self.show_transcript {
+            row![
+                container(self.view_players()).width(Length::Fill).height(Length::Fill),
+                self.view_transcript_drawer(),
             ]
             .width(Length::Fill)
             .height(Length::Fill)

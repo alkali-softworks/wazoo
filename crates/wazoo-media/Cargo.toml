@@ -15,4 +15,5 @@ rand.workspace = true
 log.workspace = true
 url.workspace = true
 thiserror.workspace = true
+serde.workspace = true
 
