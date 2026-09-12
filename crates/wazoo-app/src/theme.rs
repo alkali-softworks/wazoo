@@ -452,3 +452,120 @@ pub fn primary_button_style(_theme: &Theme, status: button::Status) -> button::S
         ..Default::default()
     }
 }
+
+// Transcript Button Style (Controls bar [TX])
+pub fn transcript_button_style(is_open: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
+    move |_theme: &Theme, status: button::Status| {
+        let (bg, text_color) = if is_open {
+            (
+                Color::from_rgba(0.26, 0.72, 0.51, 0.25),
+                COLOR_PRIMARY,
+            )
+        } else {
+            let bg = match status {
+                button::Status::Hovered => Color::from_rgba(1.0, 1.0, 1.0, 0.2),
+                button::Status::Pressed => Color::from_rgba(1.0, 1.0, 1.0, 0.3),
+                _ => Color::TRANSPARENT,
+            };
+            (bg, COLOR_TEXT_MUTED)
+        };
+        button::Style {
+            background: Some(Background::Color(bg)),
+            text_color,
+            border: Border {
+                radius: 4.0.into(),
+                width: if is_open { 1.0 } else { 0.0 },
+                color: if is_open { COLOR_PRIMARY } else { Color::TRANSPARENT },
+            },
+            shadow: Shadow::default(),
+            ..Default::default()
+        }
+    }
+}
+
+// Transcript Time Badge Style
+pub fn transcript_time_badge_style(is_active: bool) -> impl Fn(&Theme) -> container::Style {
+    move |_theme: &Theme| {
+        if is_active {
+            container::Style {
+                background: Some(Background::Color(COLOR_PRIMARY)),
+                border: Border {
+                    radius: 4.0.into(),
+                    ..Default::default()
+                },
+                text_color: Some(Color::from_rgb(0.08, 0.08, 0.08)),
+                ..Default::default()
+            }
+        } else {
+            container::Style {
+                background: Some(Background::Color(Color::from_rgba(1.0, 1.0, 1.0, 0.08))),
+                border: Border {
+                    radius: 4.0.into(),
+                    width: 1.0,
+                    color: Color::from_rgba(1.0, 1.0, 1.0, 0.06),
+                },
+                text_color: Some(Color::from_rgb(0.65, 0.65, 0.65)),
+                ..Default::default()
+            }
+        }
+    }
+}
+
+// Transcript Cue Row Button Style
+pub fn transcript_cue_button_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
+    move |_theme: &Theme, status: button::Status| {
+        if is_active {
+            let bg = match status {
+                button::Status::Hovered => Color::from_rgba(0.26, 0.72, 0.51, 0.28),
+                button::Status::Pressed => Color::from_rgba(0.26, 0.72, 0.51, 0.35),
+                _ => Color::from_rgba(0.26, 0.72, 0.51, 0.18),
+            };
+            button::Style {
+                background: Some(Background::Color(bg)),
+                text_color: Color::WHITE,
+                border: Border {
+                    radius: 6.0.into(),
+                    width: 1.0,
+                    color: Color::from_rgba(0.26, 0.72, 0.51, 0.6),
+                },
+                shadow: Shadow {
+                    color: Color::from_rgba(0.26, 0.72, 0.51, 0.15),
+                    offset: Vector::new(0.0, 2.0),
+                    blur_radius: 6.0,
+                },
+                ..Default::default()
+            }
+        } else {
+            let bg = match status {
+                button::Status::Hovered => Color::from_rgba(1.0, 1.0, 1.0, 0.08),
+                button::Status::Pressed => Color::from_rgba(1.0, 1.0, 1.0, 0.14),
+                _ => Color::TRANSPARENT,
+            };
+            button::Style {
+                background: Some(Background::Color(bg)),
+                text_color: Color::from_rgb(0.85, 0.85, 0.85),
+                border: Border {
+                    radius: 6.0.into(),
+                    ..Default::default()
+                },
+                shadow: Shadow::default(),
+                ..Default::default()
+            }
+        }
+    }
+}
+
+// Transcript Count Pill Badge Style
+pub fn transcript_count_badge_style(_theme: &Theme) -> container::Style {
+    container::Style {
+        background: Some(Background::Color(Color::from_rgba(0.26, 0.72, 0.51, 0.15))),
+        border: Border {
+            radius: 12.0.into(),
+            width: 1.0,
+            color: Color::from_rgba(0.26, 0.72, 0.51, 0.35),
+        },
+        text_color: Some(COLOR_PRIMARY),
+        ..Default::default()
+    }
+}
+

@@ -64,6 +64,11 @@ pub struct WazooApp {
     pub(crate) titlebar_drag_pending: bool,
     pub(crate) last_titlebar_click: Option<Instant>,
     pub(crate) expanded_folders: HashSet<String>,
+    pub(crate) show_transcript: bool,
+    pub(crate) transcript_cues: Vec<wazoo_media::SubtitleCue>,
+    pub(crate) transcript_search: String,
+    pub(crate) transcript_loading: bool,
+    pub(crate) transcript_video_path: Option<String>,
 }
 
 impl WazooApp {
@@ -175,6 +180,11 @@ impl WazooApp {
             titlebar_drag_pending: false,
             last_titlebar_click: None,
             expanded_folders: HashSet::new(),
+            show_transcript: false,
+            transcript_cues: Vec::new(),
+            transcript_search: String::new(),
+            transcript_loading: false,
+            transcript_video_path: None,
         };
 
         // Initialize players based on settings or restore saved session
@@ -281,6 +291,43 @@ impl WazooApp {
         } else {
             let idx = self.focused_player_idx % self.players.len();
             Some(self.players[idx].id)
+        }
+    }
+
+    pub(crate) fn focused_player(&self) -> Option<&VideoHandle> {
+        if self.players.is_empty() {
+            None
+        } else {
+            let idx = self.focused_player_idx % self.players.len();
+            Some(&self.players[idx])
+        }
+    }
+
+    pub(crate) fn load_transcript_for_focused_player(&mut self) -> Task<Message> {
+        if let Some(player) = self.focused_player() {
+            let path = player.state.path.clone();
+            if path.is_empty() {
+                self.transcript_cues.clear();
+                self.transcript_video_path = None;
+                self.transcript_loading = false;
+                return Task::none();
+            }
+            if self.transcript_video_path.as_deref() == Some(&path) && !self.transcript_cues.is_empty() {
+                return Task::none();
+            }
+            self.transcript_video_path = Some(path.clone());
+            self.transcript_loading = true;
+            self.transcript_cues.clear();
+            let path_clone = path.clone();
+            Task::perform(
+                wazoo_media::load_subtitles(path),
+                move |cues| Message::TranscriptLoaded(path_clone, cues),
+            )
+        } else {
+            self.transcript_cues.clear();
+            self.transcript_video_path = None;
+            self.transcript_loading = false;
+            Task::none()
         }
     }
 

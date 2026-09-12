@@ -4775,6 +4775,7 @@ dependencies = [
  "iced_wgpu",
  "log",
  "rand 0.8.8",
+ "serde",
  "thiserror 2.0.20",
  "tokio",
  "url",

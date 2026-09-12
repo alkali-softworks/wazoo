@@ -217,6 +217,7 @@ impl WazooApp {
                             }
                         }
                         "c" | "C" => return self.update(Message::ToggleSubtitles),
+                        "v" | "V" => return self.update(Message::ToggleTranscript),
                         "h" | "H" => return self.update(Message::ToggleFilePicker),
                         "?" => return self.update(Message::OpenHelpModal),
                         "," => return self.update(Message::SeekRelativeFocused(-0.04)),
@@ -275,8 +276,52 @@ impl WazooApp {
             }
             Message::ToggleFilePicker => {
                 self.show_file_picker = !self.show_file_picker;
+                if self.show_file_picker {
+                    self.show_transcript = false;
+                }
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
+            }
+            Message::ToggleTranscript => {
+                self.show_transcript = !self.show_transcript;
+                self.show_dropdown_menu = false;
+                self.show_menu_modal = false;
+                if self.show_transcript {
+                    self.show_file_picker = false;
+                    return self.load_transcript_for_focused_player();
+                }
+            }
+            Message::ToggleTranscriptForPlayer(id) => {
+                let is_same_focused = self.focused_player_id() == Some(id);
+                if is_same_focused && self.show_transcript {
+                    self.show_transcript = false;
+                    return Task::none();
+                }
+                if let Some(idx) = self.players.iter().position(|p| p.id == id) {
+                    self.focused_player_idx = idx;
+                }
+                self.show_transcript = true;
+                self.show_file_picker = false;
+                self.show_dropdown_menu = false;
+                self.show_menu_modal = false;
+                return self.load_transcript_for_focused_player();
+            }
+            Message::CloseTranscript => {
+                self.show_transcript = false;
+            }
+            Message::TranscriptSearchChanged(s) => {
+                self.transcript_search = s;
+            }
+            Message::TranscriptLoaded(path, cues) => {
+                if self.transcript_video_path.as_deref() == Some(&path) {
+                    self.transcript_loading = false;
+                    self.transcript_cues = cues;
+                }
+            }
+            Message::SeekToSubtitle(secs) => {
+                if let Some(id) = self.focused_player_id() {
+                    return self.update(Message::Seek(id, Duration::from_secs_f64(secs.max(0.0))));
+                }
             }
             Message::ToggleFolderCollapse(folder) => {
                 if self.expanded_folders.contains(&folder) {
@@ -321,6 +366,9 @@ impl WazooApp {
                         }
                         self.toast_message = Some(format!("Playing: {title}"));
                         self.toast_time_remaining = 3;
+                        if self.show_transcript {
+                            return self.load_transcript_for_focused_player();
+                        }
                     }
                 }
             }
@@ -337,6 +385,9 @@ impl WazooApp {
                     self.focused_player_idx = pos;
                     if !was_already_active {
                         self.focus_border_ticks = 20;
+                        if self.show_transcript {
+                            return self.load_transcript_for_focused_player();
+                        }
                     }
                     self.player_overlay_ticks = 120;
                 }
@@ -390,6 +441,9 @@ impl WazooApp {
                         }
                     }
                 }
+                if self.show_transcript && self.focused_player_id() == Some(id) {
+                    return self.load_transcript_for_focused_player();
+                }
             }
             Message::NextVideoFocused => {
                 if let Some(id) = self.focused_player_id() {
@@ -419,6 +473,9 @@ impl WazooApp {
                                 break;
                             }
                         }
+                    }
+                    if self.show_transcript {
+                        return self.load_transcript_for_focused_player();
                     }
                 }
             }
@@ -735,6 +792,9 @@ impl WazooApp {
                     self.focused_player_idx = next_idx;
                     self.toast_message = Some(format!("Focused Player: {}", self.focused_player_idx + 1));
                     self.toast_time_remaining = 1;
+                    if self.show_transcript {
+                        return self.load_transcript_for_focused_player();
+                    }
                 }
             }
             Message::SetFocusedPlayer(idx) => {
@@ -743,6 +803,9 @@ impl WazooApp {
                     self.focused_player_idx = idx;
                     if !was_already_active {
                         self.focus_border_ticks = 20;
+                        if self.show_transcript {
+                            return self.load_transcript_for_focused_player();
+                        }
                     }
                 }
             }
@@ -785,6 +848,9 @@ impl WazooApp {
 
                     self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
+                    if self.show_transcript {
+                        return self.load_transcript_for_focused_player();
+                    }
                 }
                 self.show_search_modal = false;
             }
@@ -961,6 +1027,9 @@ impl WazooApp {
                 ));
                 self.toast_time_remaining = 3;
                 self.show_bookmarks_modal = false;
+                if self.show_transcript {
+                    return self.load_transcript_for_focused_player();
+                }
             }
             Message::RandomSeekFocused => {
                 self.player_overlay_ticks = 120;
@@ -1182,6 +1251,7 @@ impl WazooApp {
                 if self.is_any_modal_open()
                     || self.show_dropdown_menu
                     || self.show_file_picker
+                    || self.show_transcript
                 {
                     self.show_help_modal = false;
                     self.show_search_modal = false;
@@ -1190,6 +1260,7 @@ impl WazooApp {
                     self.show_bookmarks_modal = false;
                     self.show_dropdown_menu = false;
                     self.show_file_picker = false;
+                    self.show_transcript = false;
                 } else {
                     self.show_menu_modal = true;
                     self.show_dropdown_menu = false;
