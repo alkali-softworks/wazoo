@@ -976,5 +976,43 @@ mod tests {
         assert!(!app.is_scanning);
         assert!(app.scan_cancel.is_none());
     }
+
+    #[test]
+    fn test_remove_folder_while_scanning() {
+        use std::sync::atomic::Ordering;
+
+        let (mut app, _) = WazooApp::new(None);
+        app.settings.media_folders = vec!["/folder1".to_string(), "/folder2".to_string()];
+
+        // 1. Initial StartScan
+        let _ = app.update(Message::StartScan);
+        assert!(app.is_scanning);
+        assert_eq!(app.current_scan_id, 1);
+        let first_cancel = app.scan_cancel.clone().expect("scan_cancel should be set");
+        assert!(!first_cancel.load(Ordering::SeqCst));
+
+        // 2. Removing a folder while scanning aborts current scan and starts over with remaining folders
+        let _ = app.update(Message::RemoveMediaFolder("/folder1".to_string()));
+        assert_eq!(app.settings.media_folders, vec!["/folder2"]);
+        assert!(first_cancel.load(Ordering::SeqCst), "first scan cancel flag should be set to true");
+        assert!(app.is_scanning);
+        assert_eq!(app.current_scan_id, 2);
+        let second_cancel = app.scan_cancel.clone().expect("second scan_cancel should be set");
+        assert!(!second_cancel.load(Ordering::SeqCst));
+
+        // 3. Removing the last remaining folder aborts current scan and stops scanning
+        let _ = app.update(Message::RemoveMediaFolder("/folder2".to_string()));
+        assert!(app.settings.media_folders.is_empty());
+        assert!(second_cancel.load(Ordering::SeqCst), "second scan cancel flag should be set to true");
+        assert!(!app.is_scanning);
+        assert!(app.scan_cancel.is_none());
+        assert_eq!(app.current_scan_id, 3);
+
+        // 4. Stale ScanFinished from earlier scan (scan_id 1 or 2) is discarded
+        let _ = app.update(Message::ScanFinished(1, Ok(10)));
+        assert!(!app.is_scanning);
+        let _ = app.update(Message::ScanFinished(2, Ok(10)));
+        assert!(!app.is_scanning);
+    }
 }
 

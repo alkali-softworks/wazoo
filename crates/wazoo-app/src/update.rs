@@ -1283,9 +1283,9 @@ impl WazooApp {
                 if let Some(cancel) = self.scan_cancel.take() {
                     cancel.store(true, std::sync::atomic::Ordering::SeqCst);
                 }
+                self.current_scan_id += 1;
 
                 if !self.settings.media_folders.is_empty() {
-                    self.current_scan_id += 1;
                     let scan_id = self.current_scan_id;
                     let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
                     self.scan_cancel = Some(cancel.clone());
