@@ -483,8 +483,8 @@ impl WazooApp {
                 column![
                     button(text(format!("{} (J)", self.t("common.search")))).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 12]).width(Length::Fill),
                     button(text(format!("{} (N)", self.t("common.add_player")))).style(theme::menu_item_style).on_press(Message::AddNewPlayer).padding([8, 12]).width(Length::Fill),
-                    button(text(format!("{} (H)", self.t("common.toggle_files")))).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 12]).width(Length::Fill),
                     button(text(format!("{} (L)", self.t("common.toggle_layout")))).style(theme::menu_item_style).on_press(Message::CycleLayout).padding([8, 12]).width(Length::Fill),
+                    button(text(format!("{} (H)", self.t("common.toggle_files")))).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 12]).width(Length::Fill),
                     button(text(format!("{} (V)", self.t("transcript.title")))).style(theme::menu_item_style).on_press(Message::ToggleTranscript).padding([8, 12]).width(Length::Fill),
                     button(text(format!("{} (B)", self.t("bookmarks.title")))).style(theme::menu_item_style).on_press(Message::ToggleBookmarksModal).padding([8, 12]).width(Length::Fill),
                     button(text(self.t("common.settings"))).style(theme::menu_item_style).on_press(Message::OpenSettingsModal).padding([8, 12]).width(Length::Fill),
