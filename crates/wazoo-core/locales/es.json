@@ -121,6 +121,11 @@
     "no_bookmarks": "Aún no hay marcadores guardados.",
     "hint": "Presiona + o = mientras reproduces un video para guardar el video y la marca de tiempo actuales.",
     "linear": "Lineal",
-    "shuffle": "Aleatorio"
+    "shuffle": "Aleatorio",
+    "updated": "Marcador actualizado: {name}",
+    "added": "Marcador añadido: {name}",
+    "removed": "Marcador eliminado: {name}",
+    "not_found": "No se encontró ningún marcador para el video actual",
+    "jumped": "Marcador: {name}  [{time}] ({mode})"
   }
 }

@@ -121,6 +121,11 @@
     "no_bookmarks": "저장된 북마크가 없습니다.",
     "hint": "재생 중 + 또는 =를 눌러 현재 영상과 시간을 저장하세요.",
     "linear": "순차",
-    "shuffle": "셔플"
+    "shuffle": "셔플",
+    "updated": "북마크 업데이트됨: {name}",
+    "added": "북마크 추가됨: {name}",
+    "removed": "북마크 삭제됨: {name}",
+    "not_found": "현재 비디오의 북마크를 찾을 수 없습니다",
+    "jumped": "북마크: {name}  [{time}] ({mode})"
   }
 }

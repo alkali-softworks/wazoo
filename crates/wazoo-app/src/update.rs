@@ -994,7 +994,7 @@ impl WazooApp {
                                 existing.query = query;
                                 existing.position_secs = position_secs;
                                 existing.is_shuffle = is_shuffle;
-                                self.toast_message = Some(format!("Updated bookmark: {name}"));
+                                self.toast_message = Some(self.t_with("bookmarks.updated", &[("name", &name)]));
                             } else {
                                 self.settings.bookmarks.push(Bookmark {
                                     name: name.clone(),
@@ -1003,7 +1003,7 @@ impl WazooApp {
                                     position_secs,
                                     is_shuffle,
                                 });
-                                self.toast_message = Some(format!("Added bookmark: {name}"));
+                                self.toast_message = Some(self.t_with("bookmarks.added", &[("name", &name)]));
                             }
                             let _ = self.config_mgr.save_settings(&self.settings);
                             self.toast_time_remaining = 3;
@@ -1018,10 +1018,10 @@ impl WazooApp {
                         if let Some(pos) = self.settings.bookmarks.iter().position(|b| b.path == path) {
                             let removed = self.settings.bookmarks.remove(pos);
                             let _ = self.config_mgr.save_settings(&self.settings);
-                            self.toast_message = Some(format!("Removed bookmark: {}", removed.name));
+                            self.toast_message = Some(self.t_with("bookmarks.removed", &[("name", &removed.name)]));
                             self.toast_time_remaining = 3;
                         } else {
-                            self.toast_message = Some("No bookmark found for current video".to_string());
+                            self.toast_message = Some(self.t("bookmarks.not_found"));
                             self.toast_time_remaining = 2;
                         }
                     }
@@ -1031,7 +1031,7 @@ impl WazooApp {
                 if idx < self.settings.bookmarks.len() {
                     let removed = self.settings.bookmarks.remove(idx);
                     let _ = self.config_mgr.save_settings(&self.settings);
-                    self.toast_message = Some(format!("Removed bookmark: {}", removed.name));
+                    self.toast_message = Some(self.t_with("bookmarks.removed", &[("name", &removed.name)]));
                     self.toast_time_remaining = 2;
                 }
             }
@@ -1096,11 +1096,15 @@ impl WazooApp {
                 self.reconcile_players_with_available_videos(focused_id);
                 self.save_session_state();
 
-                self.toast_message = Some(format!(
-                    "Bookmark: {}  [{}] ({})",
-                    b.name,
-                    format::format_time_str(b.position_secs),
-                    if b.is_shuffle { "Shuffle" } else { "Linear" }
+                let mode_str = if b.is_shuffle { self.t("bookmarks.shuffle") } else { self.t("bookmarks.linear") };
+                let time_str = format::format_time_str(b.position_secs);
+                self.toast_message = Some(self.t_with(
+                    "bookmarks.jumped",
+                    &[
+                        ("name", &b.name),
+                        ("time", &time_str),
+                        ("mode", &mode_str),
+                    ],
                 ));
                 self.toast_time_remaining = 3;
                 self.show_bookmarks_modal = false;

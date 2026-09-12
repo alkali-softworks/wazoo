@@ -207,5 +207,10 @@ mod tests {
         assert_eq!(t("en", "bookmarks.title"), "Bookmarks");
         assert_eq!(t("es", "bookmarks.title"), "Marcadores");
         assert_eq!(t("ja", "bookmarks.title"), "ブックマーク");
+
+        assert_eq!(t("en", "bookmarks.not_found"), "No bookmark found for current video");
+        assert_eq!(t("es", "bookmarks.not_found"), "No se encontró ningún marcador para el video actual");
+        assert_eq!(t_with("en", "bookmarks.added", &[("name", "Test")]), "Added bookmark: Test");
+        assert_eq!(t_with("es", "bookmarks.added", &[("name", "Test")]), "Marcador añadido: Test");
     }
 }

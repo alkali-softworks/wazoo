@@ -121,6 +121,11 @@
     "no_bookmarks": "Nessun segnalibro salvato.",
     "hint": "Premi + o = durante la riproduzione per salvare il punto attuale.",
     "linear": "Lineare",
-    "shuffle": "Casuale"
+    "shuffle": "Casuale",
+    "updated": "Segnalibro aggiornato: {name}",
+    "added": "Segnalibro aggiunto: {name}",
+    "removed": "Segnalibro rimosso: {name}",
+    "not_found": "Nessun segnalibro trovato per il video corrente",
+    "jumped": "Segnalibro: {name}  [{time}] ({mode})"
   }
 }

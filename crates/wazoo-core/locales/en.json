@@ -121,6 +121,11 @@
     "no_bookmarks": "No bookmarks saved yet.",
     "hint": "Press + or = while playing a video (or click \"+ Bookmark Current\" above) to save the current video and timestamp.",
     "linear": "Linear",
-    "shuffle": "Shuffle"
+    "shuffle": "Shuffle",
+    "updated": "Updated bookmark: {name}",
+    "added": "Added bookmark: {name}",
+    "removed": "Removed bookmark: {name}",
+    "not_found": "No bookmark found for current video",
+    "jumped": "Bookmark: {name}  [{time}] ({mode})"
   }
 }

@@ -121,6 +121,11 @@
     "no_bookmarks": "Nenhum favorito salvo ainda.",
     "hint": "Pressione + ou = durante a reprodução para salvar o ponto atual.",
     "linear": "Linear",
-    "shuffle": "Aleatório"
+    "shuffle": "Aleatório",
+    "updated": "Marcador atualizado: {name}",
+    "added": "Marcador adicionado: {name}",
+    "removed": "Marcador removido: {name}",
+    "not_found": "Nenhum marcador encontrado para o vídeo atual",
+    "jumped": "Marcador: {name}  [{time}] ({mode})"
   }
 }
