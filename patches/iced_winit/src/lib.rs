@@ -999,30 +999,18 @@ async fn run_instance<P>(
                                 | compositor::SurfaceError::Other => {
                                     present_span.finish();
 
-                                    // Reconfigure surface and try redrawing
                                     let physical_size =
                                         window.state.physical_size();
 
                                     if physical_size.width > 0 && physical_size.height > 0 {
-                                        if error == compositor::SurfaceError::Lost
-                                            || error == compositor::SurfaceError::Other
-                                        {
-                                            window.surface = current_compositor
-                                                .create_surface(
-                                                    window.raw.clone(),
-                                                    physical_size.width,
-                                                    physical_size.height,
-                                                );
-                                        } else {
-                                            current_compositor.configure_surface(
-                                                &mut window.surface,
-                                                physical_size.width,
-                                                physical_size.height,
-                                            );
-                                        }
+                                        current_compositor.configure_surface(
+                                            &mut window.surface,
+                                            physical_size.width,
+                                            physical_size.height,
+                                        );
+                                        window.surface_version =
+                                            window.state.surface_version();
                                     }
-
-                                    window.raw.request_redraw();
                                 }
                                 _ => {
                                     present_span.finish();
