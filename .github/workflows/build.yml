@@ -1,0 +1,114 @@
+name: Build and Release Wazoo
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    env:
+      CARGO_TERM_COLOR: always
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-latest, macos-latest, macos-15-intel]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust Toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Install System Dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmpv-dev libmpv2 ffmpeg pkg-config libx11-dev libxcursor-dev libxrandr-dev libxi-dev libxinerama-dev libwayland-dev libxkbcommon-dev libgtk-3-dev
+
+      - name: Install System Dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install mpv ffmpeg
+
+      - name: Disable Spotlight Indexing (macOS)
+        if: runner.os == 'macOS'
+        run: sudo mdutil -a -i off || true
+
+      - name: Run Tests
+        run: cargo test --workspace -- --test-threads=1
+
+      - name: Build Release Binary
+        run: cargo build --release
+
+      - name: Package Release Artifacts
+        shell: bash
+        run: |
+          mkdir -p dist
+
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            PKG_NAME="wazoo-windows-x86_64"
+            mkdir -p "dist/${PKG_NAME}"
+            cp target/release/wazoo.exe "dist/${PKG_NAME}/"
+            if [ -f target/release/libmpv-2.dll ]; then
+              cp target/release/libmpv-2.dll "dist/${PKG_NAME}/"
+            elif [ -f libmpv-2.dll ]; then
+              cp libmpv-2.dll "dist/${PKG_NAME}/"
+            fi
+            cp README.md LICENSE "dist/${PKG_NAME}/" 2>/dev/null || true
+
+            if command -v 7z &> /dev/null; then
+              7z a "dist/${PKG_NAME}.zip" "./dist/${PKG_NAME}/*"
+            elif command -v powershell &> /dev/null; then
+              powershell -Command "Compress-Archive -Path 'dist/${PKG_NAME}/*' -DestinationPath 'dist/${PKG_NAME}.zip' -Force"
+            fi
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            ARCH=$(uname -m)
+            PKG_NAME="wazoo-macos-${ARCH}"
+            mkdir -p "dist/${PKG_NAME}"
+            cp target/release/wazoo "dist/${PKG_NAME}/"
+            chmod +x "dist/${PKG_NAME}/wazoo"
+            cp README.md LICENSE "dist/${PKG_NAME}/" 2>/dev/null || true
+            tar -czf "dist/${PKG_NAME}.tar.gz" -C dist "${PKG_NAME}"
+          else
+            # Linux
+            PKG_NAME="wazoo-linux-x86_64"
+            mkdir -p "dist/${PKG_NAME}"
+            cp target/release/wazoo "dist/${PKG_NAME}/"
+            chmod +x "dist/${PKG_NAME}/wazoo"
+            cp README.md LICENSE "dist/${PKG_NAME}/" 2>/dev/null || true
+            tar -czf "dist/${PKG_NAME}.tar.gz" -C dist "${PKG_NAME}"
+          fi
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wazoo-build-${{ matrix.os }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+          if-no-files-found: warn
+
+      - name: Create and Upload Release Assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+            dist/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
