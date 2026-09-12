@@ -807,6 +807,9 @@ impl WazooApp {
                 return self.update(Message::SetPlayerCount(new_count));
             }
             Message::RemoveFocusedPlayer => {
+                if self.players.len() <= 1 {
+                    return Task::none();
+                }
                 if let Some(id) = self.focused_player_id() {
                     self.players.retain(|p| p.id != id);
                     self.settings.player_count = self.players.len();
@@ -816,6 +819,9 @@ impl WazooApp {
                     self.toast_message = Some(format!("Players: {}", self.players.len()));
                     self.toast_time_remaining = 2;
                     let _ = self.config_mgr.save_settings(&self.settings);
+                    if self.show_transcript {
+                        return self.load_transcript_for_focused_player();
+                    }
                 }
             }
             Message::CycleFocusedPlayer => {
