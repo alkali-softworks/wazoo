@@ -18,6 +18,9 @@ use crate::assets::APP_ICON_BYTES;
 use crate::format;
 use crate::message::Message;
 
+/// Player controls overlay visibility duration: 3 seconds at 60 FPS (180 ticks)
+pub const PLAYER_OVERLAY_HIDE_TICKS: usize = 180;
+
 pub struct WazooApp {
     pub(crate) settings: WazooSettings,
     pub(crate) config_mgr: ConfigManager,
