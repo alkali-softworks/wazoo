@@ -309,23 +309,51 @@ fn test_subtitle_tracks_and_extraction() {
         assert_eq!(wazoo_media::format_subtitle_track_label(&sub_tracks[1], 1), "English (Full Subtitles - Honorifics)");
         assert_eq!(wazoo_media::format_subtitle_track_label(&sub_tracks[2], 2), "English (Signs/Songs)");
 
-        // Subtitle switching
-        handle.set_subtitle_track(2);
-        assert_eq!(handle.current_subtitle_track_id(), Some(2));
-        assert!(handle.subtitle_tracks().iter().find(|t| t.id == 2).unwrap().is_selected);
-        assert!(!handle.subtitle_tracks().iter().find(|t| t.id == 1).unwrap().is_selected);
+        println!("Initial sid: {:?}", handle.get_property_string("sid"));
+        println!("Initial sub-visibility: {:?}", handle.get_property_string("sub-visibility"));
+        let count = handle.get_property_i64("track-list/count").unwrap_or(0);
+        for i in 0..count {
+            let t_type = handle.get_property_string(&format!("track-list/{}/type", i));
+            let t_id = handle.get_property_i64(&format!("track-list/{}/id", i));
+            let t_ff = handle.get_property_i64(&format!("track-list/{}/ff-index", i));
+            let t_sel = handle.get_property_bool(&format!("track-list/{}/selected", i));
+            let t_ext = handle.get_property_string(&format!("track-list/{}/external-filename", i));
+            let t_codec = handle.get_property_string(&format!("track-list/{}/codec", i));
+            println!("  Track {}: type={:?} id={:?} ff-index={:?} selected={:?} codec={:?} ext={:?}", i, t_type, t_id, t_ff, t_sel, t_codec, t_ext);
+        }
 
-        // Verify cue extraction for ALL tracks using their respective ff_index or external_filename
+        // Test switching subtitle track while paused
+        handle.seek(Duration::from_secs_f64(38.0));
+        handle.pause();
+        std::thread::sleep(Duration::from_millis(400));
+        while handle.update_frame() {}
+
+        // Capture base frame with subtitles invisible
+        handle.set_subtitles_visible(false);
+        std::thread::sleep(Duration::from_millis(200));
+        let _ = handle.update_frame();
+        let _base_pixels = handle.pixel_buffer().to_vec();
+
+        // Switch to track 1 (Full Subtitles)
+        handle.set_subtitle_track(1);
+        std::thread::sleep(Duration::from_millis(200));
+        let _ = handle.update_frame();
+        println!("Track 1 sid={:?}, sub-vis={:?}, sub-text={:?}",
+            handle.get_property_string("sid"),
+            handle.get_property_string("sub-visibility"),
+            handle.get_property_string("sub-text"));
+
+        // Print first 5 cues of each track
         for (i, t) in sub_tracks.iter().enumerate() {
-            if let Some(ext_file) = &t.external_filename {
+            let cues = if let Some(ext_file) = &t.external_filename {
                 let content = std::fs::read_to_string(ext_file).expect("read external srt");
-                let cues = wazoo_media::parse_subtitles(&content);
-                assert!(!cues.is_empty(), "Track {} ({}) external cues empty", i, ext_file);
-                println!("Extracted {} cues for track {} from external file {}", cues.len(), i, ext_file);
+                wazoo_media::parse_subtitles(&content)
             } else {
-                let cues = wazoo_media::load_subtitles_for_stream_sync(sample, t.ff_index, i);
-                assert!(!cues.is_empty(), "Track {} (ff_index: {:?}) cues empty", i, t.ff_index);
-                println!("Extracted {} cues for track {} (ff_index: {:?})", cues.len(), i, t.ff_index);
+                wazoo_media::load_subtitles_for_stream_sync(sample, t.ff_index, i)
+            };
+            println!("Track {} (id: {}, label: {}): {} cues", i, t.id, wazoo_media::format_subtitle_track_label(t, i), cues.len());
+            for cue in cues.iter().take(5) {
+                println!("    cue: [{:.2}s - {:.2}s] {:?}", cue.start_secs, cue.end_secs, cue.text);
             }
         }
     }

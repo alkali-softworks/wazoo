@@ -1018,9 +1018,16 @@ impl VideoHandle {
                 mpv_ffi::MPV_FORMAT_INT64,
                 &mut id as *mut _ as *mut _,
             );
+            if let Ok(c_val) = CString::new(track_id.to_string()) {
+                mpv_ffi::mpv_set_property_string(self.mpv, prop.as_ptr(), c_val.as_ptr());
+            }
             self.state.current_subtitle_track_id = Some(track_id);
             for t in &mut self.state.subtitle_tracks {
                 t.is_selected = t.id == track_id;
+            }
+            self.set_subtitles_visible(true);
+            if let Ok(cmd) = CString::new("no-osd seek 0 relative+exact") {
+                mpv_ffi::mpv_command_string(self.mpv, cmd.as_ptr());
             }
         }
     }
@@ -1088,12 +1095,68 @@ impl VideoHandle {
         }
 
         // Subtitle tracks
+        let is_initial_load = !self.tracks_loaded || self.state.current_subtitle_track_id.is_none();
         let sid_i64 = self.get_property_i64("sid");
         let sid_str = self.get_property_string("sid");
-        let current_sid = sid_i64
+        let mut current_sid = sid_i64
             .or_else(|| sid_str.as_deref().and_then(|s| s.parse::<i64>().ok()))
             .or_else(|| sub_tracks.iter().find(|t| t.is_selected).map(|t| t.id))
             .or_else(|| sub_tracks.first().map(|t| t.id));
+
+        // Auto-promote: If mpv defaulted to a Signs/Songs track (which only contains signs/lyrics, no dialogue),
+        // and a full dialogue subtitle track exists (or external subtitle sidecar), automatically promote to the full track on initial load.
+        if is_initial_load {
+            if let Some(sid) = current_sid {
+                if let Some(active_track) = sub_tracks.iter().find(|t| t.id == sid) {
+                    let is_signs = active_track.title.as_ref().map(|t| {
+                        let l = t.to_ascii_lowercase();
+                        l.contains("sign") || l.contains("song")
+                    }).unwrap_or(false);
+
+                    if is_signs {
+                        let preferred_full_track = sub_tracks.iter().find(|t| {
+                            if t.id == sid {
+                                return false;
+                            }
+                            if let Some(ref title) = t.title {
+                                let l = title.to_ascii_lowercase();
+                                if l.contains("sign") || l.contains("song") {
+                                    return false;
+                                }
+                                if l.contains("full") {
+                                    return true;
+                                }
+                            }
+                            t.external_filename.is_some()
+                        }).or_else(|| {
+                            sub_tracks.iter().find(|t| {
+                                if t.id == sid {
+                                    return false;
+                                }
+                                if let Some(ref title) = t.title {
+                                    let l = title.to_ascii_lowercase();
+                                    if l.contains("sign") || l.contains("song") {
+                                        return false;
+                                    }
+                                }
+                                true
+                            })
+                        });
+
+                        if let Some(full_track) = preferred_full_track {
+                            log::info!(
+                                "Auto-promoting subtitle track from Signs/Songs (id {}) to full dialogue track (id {})",
+                                sid,
+                                full_track.id
+                            );
+                            self.set_subtitle_track(full_track.id);
+                            current_sid = Some(full_track.id);
+                        }
+                    }
+                }
+            }
+        }
+
         self.state.subtitle_tracks = sub_tracks;
         self.state.current_subtitle_track_id = current_sid;
         if let Some(sid) = current_sid {
@@ -1128,7 +1191,7 @@ impl VideoHandle {
         self.preferred_audio_language.as_deref()
     }
 
-    fn get_property_string(&self, name: &str) -> Option<String> {
+    pub fn get_property_string(&self, name: &str) -> Option<String> {
         unsafe {
             if self.mpv.is_null() {
                 return None;
@@ -1145,7 +1208,7 @@ impl VideoHandle {
         }
     }
 
-    fn get_property_i64(&self, name: &str) -> Option<i64> {
+    pub fn get_property_i64(&self, name: &str) -> Option<i64> {
         unsafe {
             if self.mpv.is_null() {
                 return None;
@@ -1166,7 +1229,7 @@ impl VideoHandle {
         }
     }
 
-    fn get_property_bool(&self, name: &str) -> Option<bool> {
+    pub fn get_property_bool(&self, name: &str) -> Option<bool> {
         unsafe {
             if self.mpv.is_null() {
                 return None;
