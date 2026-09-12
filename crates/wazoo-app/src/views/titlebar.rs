@@ -11,7 +11,6 @@ use iced::{
     widget::{button, column, container, mouse_area, row, svg, text, Space},
     Alignment, Element, Length, Theme,
 };
-use wazoo_core::PlaybackMode;
 use crate::app::WazooApp;
 use crate::assets::{SVG_WINDOW_CLOSE, SVG_WINDOW_MAXIMIZE, SVG_WINDOW_MINIMIZE};
 use crate::message::Message;
@@ -118,13 +117,12 @@ impl WazooApp {
         if self.show_dropdown_menu {
             let menu_dropdown = container(
                 column![
+                    button(text(format!("{} (J)", self.t("common.search")))).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 14]).width(Length::Fill),
                     button(text(format!("{} (N)", self.t("common.add_player")))).style(theme::menu_item_style).on_press(Message::AddNewPlayer).padding([8, 14]).width(Length::Fill),
                     button(text(format!("{} (L)", self.t("common.toggle_layout")))).style(theme::menu_item_style).on_press(Message::CycleLayout).padding([8, 14]).width(Length::Fill),
-                    button(text(if self.settings.playback_mode == PlaybackMode::Scroll { "Disable Infinity Stream (5)" } else { "Infinity Stream (5)" })).style(theme::menu_item_style).on_press(Message::ToggleScrollMode).padding([8, 14]).width(Length::Fill),
                     button(text(format!("{} (H)", self.t("common.toggle_files")))).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 14]).width(Length::Fill),
                     button(text(format!("{} (V)", self.t("transcript.title")))).style(theme::menu_item_style).on_press(Message::ToggleTranscript).padding([8, 14]).width(Length::Fill),
                     button(text(format!("{} (B)", self.t("bookmarks.title")))).style(theme::menu_item_style).on_press(Message::ToggleBookmarksModal).padding([8, 14]).width(Length::Fill),
-                    button(text(format!("{} (J)", self.t("common.search")))).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 14]).width(Length::Fill),
                     button(text(self.t("common.settings"))).style(theme::menu_item_style).on_press(Message::OpenSettingsModal).padding([8, 14]).width(Length::Fill),
                     button(text(self.t("common.help"))).style(theme::menu_item_style).on_press(Message::OpenHelpModal).padding([8, 14]).width(Length::Fill),
                     button(text(format!("{} (Alt+X)", self.t("common.quit")))).style(theme::menu_item_style).on_press(Message::CloseApp).padding([8, 14]).width(Length::Fill),

@@ -134,8 +134,9 @@ impl WazooApp {
         } else if !settings.last_query.is_empty() {
             Some(format!("Restored query: \"{}\" ({} videos)", settings.last_query, videos.len()))
         } else {
-            Some("Welcome to Wazoo".to_string())
+            None
         };
+        let toast_time_remaining = if toast_msg.is_some() { 3 } else { 0 };
 
         let mut app = Self {
             settings: settings.clone(),
@@ -164,7 +165,7 @@ impl WazooApp {
             window_id: None,
             app_icon_handle: icon_handle,
             toast_message: toast_msg,
-            toast_time_remaining: 3,
+            toast_time_remaining,
             next_player_id: 1,
             is_scanning: false,
             scan_progress: None,
