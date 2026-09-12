@@ -43,6 +43,7 @@ pub enum Message {
     ToggleFilePicker,
     ToggleFolderCollapse(String),
     FilePickerSearchChanged(String),
+    ApplyFilePickerSearch,
     PlayFileInFocused(String),
     SelectSearchFolder(String),
     SetWindowOpacity(f32),

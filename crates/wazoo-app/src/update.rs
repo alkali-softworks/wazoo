@@ -326,6 +326,9 @@ impl WazooApp {
                 self.show_file_picker = !self.show_file_picker;
                 if self.show_file_picker {
                     self.show_transcript = false;
+                    if self.file_picker_groups.is_empty() && !self.available_videos.is_empty() {
+                        self.apply_file_picker_search();
+                    }
                 }
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
@@ -430,17 +433,16 @@ impl WazooApp {
             Message::FilePickerSearchChanged(s) => {
                 self.file_picker_search = s;
                 let trimmed = self.file_picker_search.trim();
-                if !trimmed.is_empty() {
-                    let matching_folders: Vec<String> = self
-                        .filter_and_group_videos_for_picker()
-                        .into_keys()
-                        .collect();
-                    for folder in matching_folders {
-                        self.expanded_folders.insert(folder);
-                    }
+                if trimmed.is_empty() {
+                    self.file_picker_debounce_ticks = 0;
+                    self.apply_file_picker_search();
                 } else {
-                    self.expanded_folders.clear();
+                    self.file_picker_debounce_ticks = crate::app::FILE_PICKER_DEBOUNCE_TICKS;
                 }
+            }
+            Message::ApplyFilePickerSearch => {
+                self.file_picker_debounce_ticks = 0;
+                self.apply_file_picker_search();
             }
             Message::PlayFileInFocused(path) => {
                 if let Some(id) = self.focused_player_id() {
@@ -1100,6 +1102,8 @@ impl WazooApp {
                 if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
                     let total = results.len();
                     self.available_videos = results;
+                    self.file_picker_entries.clear();
+                    self.apply_file_picker_search();
                     self.show_video_totals_notice(total, &folder);
 
                     self.reconcile_players_with_available_videos(None);
@@ -1247,6 +1251,8 @@ impl WazooApp {
                 if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
                     self.last_total_videos = results.len();
                     self.available_videos = results;
+                    self.file_picker_entries.clear();
+                    self.apply_file_picker_search();
                 }
 
                 // 4. Load the bookmarked video and position in the focused player
@@ -1407,6 +1413,8 @@ impl WazooApp {
                 } else {
                     self.available_videos = self.db.get_all_videos().unwrap_or_default();
                 }
+                self.file_picker_entries.clear();
+                self.apply_file_picker_search();
 
                 // 3. Immediately update active players
                 if self.available_videos.is_empty() {
@@ -1526,6 +1534,8 @@ impl WazooApp {
                         if let Ok(videos) = self.db.search_videos(&self.active_search_query, &folders) {
                             let total = videos.len();
                             self.available_videos = videos;
+                            self.file_picker_entries.clear();
+                            self.apply_file_picker_search();
                             self.show_video_totals_notice(total, &folder);
                             if self.players.is_empty() && !self.available_videos.is_empty() {
                                 let count = self.settings.player_count.clamp(1, 12);
@@ -1645,6 +1655,12 @@ impl WazooApp {
                 }
                 if self.focus_border_ticks > 0 {
                     self.focus_border_ticks -= 1;
+                }
+                if self.file_picker_debounce_ticks > 0 {
+                    self.file_picker_debounce_ticks -= 1;
+                    if self.file_picker_debounce_ticks == 0 {
+                        self.apply_file_picker_search();
+                    }
                 }
                 if self.is_point_in_titlebar(self.cursor_position) || self.show_dropdown_menu {
                     if self.show_dropdown_menu {
