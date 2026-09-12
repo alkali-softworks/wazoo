@@ -61,6 +61,7 @@ fn test_mpv_buffering_and_cache() {
                 duration_secs: 10,
                 size_mb: 64,
                 read_chunk_kb: 512,
+                preferred_audio_language: None,
             },
         );
         assert!(handle.is_ok(), "Failed to create buffered VideoHandle: {:?}", handle.err());
@@ -194,6 +195,7 @@ fn test_loadfile_start_option() {
             duration_secs: 10,
             size_mb: 64,
             read_chunk_kb: 512,
+            preferred_audio_language: None,
         };
         let mut handle = VideoHandle::with_buffering_and_start(
             3,
@@ -250,6 +252,30 @@ fn test_audio_stream_switching() {
         handle.set_audio_track(1);
         assert_eq!(handle.current_audio_track_id(), Some(1));
         assert!(handle.audio_tracks().iter().find(|t| t.id == 1).unwrap().is_selected);
+    }
+}
+
+#[test]
+fn test_audio_stream_auto_selection() {
+    let sample = "/mnt/bob/anime/Mushoku Tensei/Season 2/S02E14-Wedding Reception.mkv";
+    if Path::new(sample).exists() {
+        let config = BufferConfig {
+            duration_secs: 10,
+            size_mb: 32,
+            read_chunk_kb: 512,
+            preferred_audio_language: Some("Japanese".to_string()),
+        };
+        let mut handle = VideoHandle::with_buffering(11, sample, "Mushoku Tensei", config)
+            .expect("create VideoHandle with preferred Japanese audio");
+        handle.set_muted(true);
+
+        std::thread::sleep(Duration::from_millis(300));
+        let _ = handle.update_frame();
+
+        // Track 2 (Japanese) should be automatically selected upon loading!
+        assert_eq!(handle.current_audio_track_id(), Some(2));
+        assert!(handle.audio_tracks().iter().find(|t| t.id == 2).unwrap().is_selected);
+        assert!(!handle.audio_tracks().iter().find(|t| t.id == 1).unwrap().is_selected);
     }
 }
 

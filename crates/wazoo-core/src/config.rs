@@ -182,4 +182,20 @@ mod tests {
 
         let _ = fs::remove_dir_all(&temp_dir);
     }
+
+    #[test]
+    fn test_preferred_audio_language_serialization() {
+        let mut settings = WazooSettings::default();
+        assert_eq!(settings.preferred_audio_language, None);
+
+        settings.preferred_audio_language = Some("Japanese".to_string());
+        let json = serde_json::to_string(&settings).unwrap();
+        let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.preferred_audio_language.as_deref(), Some("Japanese"));
+
+        // Backwards compatibility when omitted
+        let legacy_json = r#"{"window_opacity":1.0}"#;
+        let legacy: WazooSettings = serde_json::from_str(legacy_json).unwrap();
+        assert_eq!(legacy.preferred_audio_language, None);
+    }
 }
