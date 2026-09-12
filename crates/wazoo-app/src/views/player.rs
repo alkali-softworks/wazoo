@@ -196,9 +196,11 @@ impl WazooApp {
             stack_children.push(Element::from(loading_layer));
         }
 
-        // Overlays show when mouse is actively moving over this specific player (fades after delay), or while player is loading
-        let show_overlay = (!self.is_modal_or_menu_open() && is_hovered && self.player_overlay_ticks > 0) || is_loading;
-        let overlay_alpha = if is_loading {
+        let is_audio_menu_open = self.open_audio_menu_player_id == Some(player_id);
+
+        // Overlays show when mouse is actively moving over this specific player (fades after delay), or when audio menu is open, or while player is loading
+        let show_overlay = (!self.is_modal_or_menu_open() && (is_hovered || is_audio_menu_open) && self.player_overlay_ticks > 0) || is_loading;
+        let overlay_alpha = if is_loading || is_audio_menu_open {
             1.0
         } else {
             self.player_overlay_alpha()
@@ -276,7 +278,7 @@ impl WazooApp {
                 .height(Length::Fixed(20.0))
                 .opacity(overlay_alpha);
 
-            let controls_row = row![
+            let mut controls_row = row![
                 // Left: CC + TX + Volume Icon + Volume Slider
                 button(
                     container(
@@ -318,35 +320,115 @@ impl WazooApp {
                     .style(theme::volume_slider_style_with_alpha(overlay_alpha))
                     .width(Length::Fixed(80.0)),
                 ),
-                Space::new().width(Length::Fill),
-                // Right: Play/Pause + Skip Next
-                button(play_pause_icon)
-                    .style(theme::player_control_button_style_with_alpha(overlay_alpha))
-                    .on_press(Message::TogglePlay(player_id))
-                    .padding([4, 8]),
-                button(next_icon)
-                    .style(theme::player_control_button_style_with_alpha(overlay_alpha))
-                    .on_press(Message::NextVideo(player_id))
-                    .padding([4, 8]),
             ]
             .spacing(12)
             .align_y(Alignment::Center);
 
-            let bottom_overlay = container(
-                column![
-                    controls_row,
-                    progress_bar_with_timestamp,
-                ]
-                .spacing(8),
-            )
-            .padding(iced::Padding {
-                top: 8.0,
-                right: 14.0,
-                bottom: 12.0,
-                left: 14.0,
-            })
-            .width(Length::Fill)
-            .style(theme::controls_overlay_style_with_alpha(overlay_alpha));
+            if p.state.audio_tracks.len() > 1 {
+                let active_label = p.state.current_audio_track_id
+                    .and_then(|cid| p.state.audio_tracks.iter().find(|t| t.id == cid))
+                    .map(|t| wazoo_media::format_audio_track_label(t, 0))
+                    .or_else(|| p.state.audio_tracks.first().map(|t| wazoo_media::format_audio_track_label(t, 0)))
+                    .unwrap_or_else(|| "Audio".to_string());
+
+                let arrow = if is_audio_menu_open { "▴" } else { "▾" };
+
+                let audio_button = button(
+                    container(
+                        text(format!("{active_label} {arrow}")).size(12)
+                    )
+                    .center_x(Length::Shrink)
+                    .center_y(Length::Shrink),
+                )
+                .style(theme::audio_track_button_style_with_alpha(is_audio_menu_open, overlay_alpha))
+                .on_press(Message::ToggleAudioMenu(player_id))
+                .padding([4, 10]);
+
+                controls_row = controls_row.push(cursor::PointerCursor::new(audio_button));
+            }
+
+            let controls_row = controls_row
+                .push(Space::new().width(Length::Fill))
+                // Right: Play/Pause + Skip Next
+                .push(
+                    button(play_pause_icon)
+                        .style(theme::player_control_button_style_with_alpha(overlay_alpha))
+                        .on_press(Message::TogglePlay(player_id))
+                        .padding([4, 8]),
+                )
+                .push(
+                    button(next_icon)
+                        .style(theme::player_control_button_style_with_alpha(overlay_alpha))
+                        .on_press(Message::NextVideo(player_id))
+                        .padding([4, 8]),
+                );
+
+            let mut bottom_col = column![];
+
+            if is_audio_menu_open && p.state.audio_tracks.len() > 1 {
+                let menu_items: Vec<Element<'a, Message>> = p.state.audio_tracks
+                    .iter()
+                    .enumerate()
+                    .map(|(i, t)| {
+                        let is_selected = Some(t.id) == p.state.current_audio_track_id;
+                        let label = wazoo_media::format_audio_track_label(t, i);
+                        let track_id = t.id;
+                        let item_row = row![
+                            text(if is_selected { "✓" } else { "" })
+                                .size(13)
+                                .color(if is_selected { theme::COLOR_PRIMARY } else { iced::Color::TRANSPARENT })
+                                .width(Length::Fixed(14.0)),
+                            text(label)
+                                .size(12)
+                                .color(if is_selected { theme::COLOR_PRIMARY } else { iced::Color::WHITE }),
+                        ]
+                        .spacing(6)
+                        .align_y(Alignment::Center);
+
+                        let item_btn = button(item_row)
+                            .style(if is_selected {
+                                theme::audio_menu_selected_item_style
+                            } else {
+                                theme::audio_menu_item_style
+                            })
+                            .on_press(Message::SelectAudioTrack(player_id, track_id))
+                            .padding([6, 10])
+                            .width(Length::Fill);
+
+                        cursor::PointerCursor::new(item_btn).into()
+                    })
+                    .collect();
+
+                let audio_menu_card = container(
+                    column(menu_items)
+                        .spacing(2)
+                        .width(Length::Fixed(200.0))
+                )
+                .padding(4)
+                .style(theme::audio_menu_card_style);
+
+                let menu_row = row![
+                    Space::new().width(Length::Fixed(230.0)),
+                    audio_menu_card,
+                    Space::new().width(Length::Fill),
+                ];
+                bottom_col = bottom_col.push(menu_row);
+            }
+
+            bottom_col = bottom_col
+                .push(controls_row)
+                .push(progress_bar_with_timestamp)
+                .spacing(8);
+
+            let bottom_overlay = container(bottom_col)
+                .padding(iced::Padding {
+                    top: 8.0,
+                    right: 14.0,
+                    bottom: 12.0,
+                    left: 14.0,
+                })
+                .width(Length::Fill)
+                .style(theme::controls_overlay_style_with_alpha(overlay_alpha));
 
             let overlays_column = if is_loading {
                 column![

@@ -18,6 +18,95 @@ use crate::pipeline::FrameData;
 
 pub type PlayerId = usize;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AudioTrack {
+    pub id: i64,
+    pub title: Option<String>,
+    pub lang: Option<String>,
+    pub codec: Option<String>,
+    pub is_selected: bool,
+}
+
+pub fn language_display_name(code: &str) -> &'static str {
+    let lower = code.trim().to_ascii_lowercase();
+    match lower.as_str() {
+        "en" | "eng" => "English",
+        "ja" | "jpn" => "Japanese",
+        "es" | "spa" => "Spanish",
+        "fr" | "fra" | "fre" => "French",
+        "de" | "deu" | "ger" => "German",
+        "it" | "ita" => "Italian",
+        "pt" | "por" => "Portuguese",
+        "ru" | "rus" => "Russian",
+        "zh" | "zho" | "chi" => "Chinese",
+        "ko" | "kor" => "Korean",
+        "ar" | "ara" => "Arabic",
+        "he" | "heb" => "Hebrew",
+        "hi" | "hin" => "Hindi",
+        "bn" | "ben" => "Bengali",
+        "id" | "ind" => "Indonesian",
+        "th" | "tha" => "Thai",
+        "vi" | "vie" => "Vietnamese",
+        "nl" | "nld" | "dut" => "Dutch",
+        "pl" | "pol" => "Polish",
+        "tr" | "tur" => "Turkish",
+        "uk" | "ukr" => "Ukrainian",
+        "sv" | "swe" => "Swedish",
+        "no" | "nor" => "Norwegian",
+        "da" | "dan" => "Danish",
+        "fi" | "fin" => "Finnish",
+        "el" | "ell" | "gre" => "Greek",
+        "cs" | "ces" | "cze" => "Czech",
+        "hu" | "hun" => "Hungarian",
+        "ro" | "ron" | "rum" => "Romanian",
+        _ => "",
+    }
+}
+
+pub fn format_audio_track_label(track: &AudioTrack, index: usize) -> String {
+    let cleaned_title = track.title.as_ref().and_then(|t| {
+        let trimmed = t.trim();
+        if trimmed.is_empty() {
+            return None;
+        }
+        let first_seg = trimmed.split('/').next().unwrap_or(trimmed).trim();
+        if first_seg.is_empty() {
+            Some(trimmed.to_string())
+        } else if first_seg.chars().count() > 30 {
+            Some(format!("{}...", first_seg.chars().take(27).collect::<String>()))
+        } else {
+            Some(first_seg.to_string())
+        }
+    });
+
+    let lang_display = track.lang.as_ref().and_then(|l| {
+        let display = language_display_name(l);
+        if !display.is_empty() {
+            Some(display.to_string())
+        } else {
+            let trimmed = l.trim().to_ascii_uppercase();
+            if !trimmed.is_empty() {
+                Some(trimmed)
+            } else {
+                None
+            }
+        }
+    });
+
+    match (cleaned_title, lang_display) {
+        (Some(title), Some(lang)) => {
+            if title.to_ascii_lowercase().contains(&lang.to_ascii_lowercase()) {
+                title
+            } else {
+                format!("{lang} ({title})")
+            }
+        }
+        (Some(title), None) => title,
+        (None, Some(lang)) => lang,
+        (None, None) => format!("Track {}", index + 1),
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct PlayerState {
     pub id: PlayerId,
@@ -30,6 +119,8 @@ pub struct PlayerState {
     pub is_playing: bool,
     pub last_checked_pos: Duration,
     pub stuck_count: usize,
+    pub audio_tracks: Vec<AudioTrack>,
+    pub current_audio_track_id: Option<i64>,
 }
 
 impl PlayerState {
@@ -45,6 +136,8 @@ impl PlayerState {
             is_playing: true,
             last_checked_pos: Duration::ZERO,
             stuck_count: 0,
+            audio_tracks: Vec::new(),
+            current_audio_track_id: None,
         }
     }
 }
@@ -80,6 +173,7 @@ pub struct VideoHandle {
     is_eos: bool,
     last_seek_time: Option<Instant>,
     pending_seek: Option<Duration>,
+    tracks_loaded: bool,
 }
 
 unsafe impl Send for VideoHandle {}
@@ -284,9 +378,11 @@ impl VideoHandle {
                 is_eos: false,
                 last_seek_time,
                 pending_seek,
+                tracks_loaded: false,
             };
 
             handle.set_volume(1.0);
+            handle.refresh_audio_tracks();
             Ok(handle)
         }
     }
@@ -303,7 +399,12 @@ impl VideoHandle {
                 if (*event).event_id == mpv_ffi::MPV_EVENT_END_FILE {
                     self.is_eos = true;
                 }
-                if (*event).event_id == mpv_ffi::MPV_EVENT_FILE_LOADED || (*event).event_id == mpv_ffi::MPV_EVENT_PLAYBACK_RESTART {
+                if (*event).event_id == mpv_ffi::MPV_EVENT_FILE_LOADED
+                    || (*event).event_id == mpv_ffi::MPV_EVENT_TRACKS_CHANGED
+                    || (*event).event_id == mpv_ffi::MPV_EVENT_PLAYBACK_RESTART
+                {
+                    self.refresh_audio_tracks();
+                    self.tracks_loaded = true;
                     if let Some(target) = self.pending_seek.take() {
                         self.last_seek_time = Some(Instant::now());
                         let cmd = format!("no-osd seek {:.3} absolute+exact", target.as_secs_f64());
@@ -311,6 +412,14 @@ impl VideoHandle {
                             mpv_ffi::mpv_command_string(self.mpv, c_cmd.as_ptr());
                         }
                     }
+                }
+            }
+
+            if !self.tracks_loaded {
+                let count = self.get_property_i64("track-list/count").unwrap_or(0);
+                if count > 0 {
+                    self.refresh_audio_tracks();
+                    self.tracks_loaded = true;
                 }
             }
 
@@ -638,5 +747,130 @@ impl VideoHandle {
 
     pub fn name(&self) -> &str {
         &self.state.name
+    }
+
+    pub fn audio_tracks(&self) -> &[AudioTrack] {
+        &self.state.audio_tracks
+    }
+
+    pub fn current_audio_track_id(&self) -> Option<i64> {
+        self.state.current_audio_track_id
+    }
+
+    pub fn set_audio_track(&mut self, track_id: i64) {
+        unsafe {
+            if self.mpv.is_null() {
+                return;
+            }
+            let prop = CString::new("aid").unwrap();
+            let mut id = track_id;
+            mpv_ffi::mpv_set_property(
+                self.mpv,
+                prop.as_ptr(),
+                mpv_ffi::MPV_FORMAT_INT64,
+                &mut id as *mut _ as *mut _,
+            );
+            self.state.current_audio_track_id = Some(track_id);
+            for t in &mut self.state.audio_tracks {
+                t.is_selected = t.id == track_id;
+            }
+        }
+    }
+
+    pub fn refresh_audio_tracks(&mut self) {
+        if self.mpv.is_null() {
+            return;
+        }
+        let count = self.get_property_i64("track-list/count").unwrap_or(0);
+        let mut tracks = Vec::new();
+        for i in 0..count {
+            let track_type = self.get_property_string(&format!("track-list/{}/type", i));
+            if track_type.as_deref() == Some("audio") {
+                let id = self.get_property_i64(&format!("track-list/{}/id", i)).unwrap_or(0);
+                let title = self.get_property_string(&format!("track-list/{}/title", i));
+                let lang = self.get_property_string(&format!("track-list/{}/lang", i));
+                let codec = self.get_property_string(&format!("track-list/{}/codec", i));
+                let selected = self.get_property_bool(&format!("track-list/{}/selected", i)).unwrap_or(false);
+                tracks.push(AudioTrack {
+                    id,
+                    title,
+                    lang,
+                    codec,
+                    is_selected: selected,
+                });
+            }
+        }
+        let aid_i64 = self.get_property_i64("aid");
+        let aid_str = self.get_property_string("aid");
+        let current_aid = aid_i64
+            .or_else(|| aid_str.as_deref().and_then(|s| s.parse::<i64>().ok()))
+            .or_else(|| tracks.iter().find(|t| t.is_selected).map(|t| t.id))
+            .or_else(|| tracks.first().map(|t| t.id));
+        self.state.audio_tracks = tracks;
+        self.state.current_audio_track_id = current_aid;
+        if let Some(aid) = current_aid {
+            for t in &mut self.state.audio_tracks {
+                t.is_selected = t.id == aid;
+            }
+        }
+    }
+
+    fn get_property_string(&self, name: &str) -> Option<String> {
+        unsafe {
+            if self.mpv.is_null() {
+                return None;
+            }
+            let c_name = CString::new(name).ok()?;
+            let ptr = mpv_ffi::mpv_get_property_string(self.mpv, c_name.as_ptr());
+            if ptr.is_null() {
+                None
+            } else {
+                let s = std::ffi::CStr::from_ptr(ptr).to_string_lossy().into_owned();
+                mpv_ffi::mpv_free(ptr as *mut _);
+                Some(s)
+            }
+        }
+    }
+
+    fn get_property_i64(&self, name: &str) -> Option<i64> {
+        unsafe {
+            if self.mpv.is_null() {
+                return None;
+            }
+            let c_name = CString::new(name).ok()?;
+            let mut val: i64 = 0;
+            let res = mpv_ffi::mpv_get_property(
+                self.mpv,
+                c_name.as_ptr(),
+                mpv_ffi::MPV_FORMAT_INT64,
+                &mut val as *mut _ as *mut _,
+            );
+            if res == 0 {
+                Some(val)
+            } else {
+                None
+            }
+        }
+    }
+
+    fn get_property_bool(&self, name: &str) -> Option<bool> {
+        unsafe {
+            if self.mpv.is_null() {
+                return None;
+            }
+            let c_name = CString::new(name).ok()?;
+            let mut val: std::ffi::c_int = 0;
+            let res = mpv_ffi::mpv_get_property(
+                self.mpv,
+                c_name.as_ptr(),
+                mpv_ffi::MPV_FORMAT_FLAG,
+                &mut val as *mut _ as *mut _,
+            );
+            if res == 0 {
+                Some(val != 0)
+            } else {
+                None
+            }
+        }
     }
 }

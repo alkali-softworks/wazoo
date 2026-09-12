@@ -443,6 +443,106 @@ pub fn dark_pick_list_menu_style(_theme: &Theme) -> menu::Style {
     }
 }
 
+pub fn audio_track_button_style_with_alpha(is_open: bool, alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+    move |_theme, status| {
+        let (bg, border_color) = if is_open {
+            (
+                Color::from_rgba(0.15, 0.24, 0.18, 0.95),
+                COLOR_PRIMARY,
+            )
+        } else {
+            match status {
+                button::Status::Hovered => (
+                    Color::from_rgba(0.24, 0.24, 0.27, 0.9),
+                    Color::from_rgba(0.5, 0.5, 0.5, 0.8),
+                ),
+                button::Status::Pressed => (
+                    Color::from_rgba(0.18, 0.24, 0.20, 0.9),
+                    COLOR_PRIMARY,
+                ),
+                _ => (
+                    Color::from_rgba(0.12, 0.12, 0.14, 0.75),
+                    Color::from_rgba(0.35, 0.35, 0.35, 0.5),
+                ),
+            }
+        };
+        button::Style {
+            background: Some(Background::Color(with_alpha(bg, alpha))),
+            text_color: with_alpha(Color::WHITE, alpha),
+            border: Border {
+                radius: 4.0.into(),
+                width: 1.0,
+                color: with_alpha(border_color, alpha),
+            },
+            shadow: Shadow::default(),
+            ..Default::default()
+        }
+    }
+}
+
+pub fn audio_menu_item_style(_theme: &Theme, status: button::Status) -> button::Style {
+    let (bg, text_color) = match status {
+        button::Status::Hovered => (
+            Background::Color(Color::from_rgba(0.25, 0.25, 0.28, 0.95)),
+            Color::WHITE,
+        ),
+        button::Status::Pressed => (
+            Background::Color(Color::from_rgba(0.20, 0.20, 0.22, 0.95)),
+            COLOR_PRIMARY,
+        ),
+        _ => (
+            Background::Color(Color::TRANSPARENT),
+            Color::from_rgb(0.85, 0.85, 0.85),
+        ),
+    };
+    button::Style {
+        background: Some(bg),
+        text_color,
+        border: Border {
+            radius: 4.0.into(),
+            width: 0.0,
+            color: Color::TRANSPARENT,
+        },
+        shadow: Shadow::default(),
+        ..Default::default()
+    }
+}
+
+pub fn audio_menu_selected_item_style(_theme: &Theme, status: button::Status) -> button::Style {
+    let bg = match status {
+        button::Status::Hovered => Background::Color(Color::from_rgba(0.26, 0.72, 0.51, 0.35)),
+        _ => Background::Color(Color::from_rgba(0.26, 0.72, 0.51, 0.20)),
+    };
+    button::Style {
+        background: Some(bg),
+        text_color: COLOR_PRIMARY,
+        border: Border {
+            radius: 4.0.into(),
+            width: 1.0,
+            color: Color::from_rgba(0.26, 0.72, 0.51, 0.5),
+        },
+        shadow: Shadow::default(),
+        ..Default::default()
+    }
+}
+
+pub fn audio_menu_card_style(_theme: &Theme) -> container::Style {
+    container::Style {
+        background: Some(Background::Color(Color::from_rgba(0.09, 0.09, 0.11, 0.96))),
+        border: Border {
+            radius: 8.0.into(),
+            width: 1.0,
+            color: Color::from_rgba(0.25, 0.25, 0.28, 0.8),
+        },
+        shadow: Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.6),
+            offset: Vector::new(0.0, -2.0),
+            blur_radius: 12.0,
+        },
+        ..Default::default()
+    }
+}
+
 // Progress Bar Slider Style (Vue emerald green #42b883)
 #[allow(dead_code)]
 pub fn progress_slider_style(theme: &Theme, status: slider::Status) -> slider::Style {
