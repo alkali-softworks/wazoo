@@ -330,4 +330,25 @@ mod tests {
         assert_eq!(remaining[0].name, "Vid 3");
         assert_eq!(remaining[1].name, "Vid 4");
     }
+
+    #[test]
+    fn test_search_videos_filtering_for_reconciliation() {
+        let mut db = Database::open_in_memory().unwrap();
+        db.batch_insert_videos(&[
+            VideoRecord { id: 0, name: "Breaking Bad S01E01".to_string(), path: "/media/BreakingBad/S01E01.mp4".to_string() },
+            VideoRecord { id: 0, name: "Breaking Bad S01E02".to_string(), path: "/media/BreakingBad/S01E02.mp4".to_string() },
+            VideoRecord { id: 0, name: "Game of Thrones S01E01".to_string(), path: "/media/GameOfThrones/S01E01.mp4".to_string() },
+        ]).unwrap();
+
+        // Search for Breaking Bad
+        let bb_results = db.search_videos("Breaking Bad", &[]).unwrap();
+        assert_eq!(bb_results.len(), 2);
+        assert!(bb_results.iter().any(|v| v.path == "/media/BreakingBad/S01E01.mp4"));
+        assert!(bb_results.iter().any(|v| v.path == "/media/BreakingBad/S01E02.mp4"));
+
+        // Currently playing GoT does not exist in the new queried list of files
+        let got_playing_path = "/media/GameOfThrones/S01E01.mp4";
+        assert!(!bb_results.iter().any(|v| v.path == got_playing_path));
+    }
 }
+

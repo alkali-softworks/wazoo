@@ -183,7 +183,16 @@ impl WazooApp {
         let db = Database::open(config_mgr.database_path())
             .expect("Failed to initialize SQLite database");
 
-        let videos: Vec<VideoRecord> = db.get_all_videos().unwrap_or_default();
+        let videos: Vec<VideoRecord> = if !settings.last_query.is_empty() {
+            let filtered = db.search_videos(&settings.last_query, &settings.media_folders).unwrap_or_default();
+            if filtered.is_empty() {
+                db.get_all_videos().unwrap_or_default()
+            } else {
+                filtered
+            }
+        } else {
+            db.get_all_videos().unwrap_or_default()
+        };
         let mut scroll_engine = ScrollEngine::new(settings.window_bounds.height as f32);
         scroll_engine.set_speed(settings.scroll_speed);
         scroll_engine.is_global_muted = settings.is_global_muted;
@@ -403,6 +412,95 @@ impl WazooApp {
                 .collect();
             self.settings.session_videos = sessions;
             let _ = self.config_mgr.save_settings(&self.settings);
+        }
+    }
+
+    /// Reconciles active players against `self.available_videos`.
+    /// Any player currently playing a file that does NOT exist in `self.available_videos`
+    /// is switched to play a video that DOES exist in `self.available_videos`.
+    /// Each switching player is assigned a distinct video when possible.
+    fn reconcile_players_with_available_videos(&mut self, skip_player_id: Option<PlayerId>) {
+        if self.available_videos.is_empty() {
+            return;
+        }
+
+        if self.players.is_empty() {
+            let target_count = self.settings.player_count.clamp(1, 12);
+            for _ in 0..target_count {
+                self.add_player_internal();
+            }
+            return;
+        }
+
+        let needs_switch: Vec<(PlayerId, bool, f64)> = self
+            .players
+            .iter()
+            .filter(|p| skip_player_id != Some(p.id))
+            .filter(|p| !self.available_videos.iter().any(|v| v.path == p.state.path))
+            .map(|p| (p.id, p.state.is_muted, p.state.volume))
+            .collect();
+
+        if needs_switch.is_empty() {
+            return;
+        }
+
+        // Track paths already being played by players that are NOT switching
+        let mut used_paths: HashSet<String> = self.players.iter().map(|p| p.state.path.clone()).collect();
+        for &(id, _, _) in &needs_switch {
+            if let Some(p) = self.players.iter().find(|pl| pl.id == id) {
+                used_paths.remove(&p.state.path);
+            }
+        }
+
+        for (idx, (id, prev_muted, prev_volume)) in needs_switch.into_iter().enumerate() {
+            let unused: Vec<&VideoRecord> = self
+                .available_videos
+                .iter()
+                .filter(|v| !used_paths.contains(&v.path))
+                .collect();
+
+            let candidate = if !unused.is_empty() {
+                if self.is_shuffle_mode {
+                    let r = rand::random::<usize>() % unused.len();
+                    Some(unused[r])
+                } else {
+                    Some(unused[0])
+                }
+            } else {
+                let fallback_idx = if self.is_shuffle_mode {
+                    rand::random::<usize>() % self.available_videos.len()
+                } else {
+                    idx % self.available_videos.len()
+                };
+                self.available_videos.get(fallback_idx)
+            };
+
+            if let Some(video_rec) = candidate {
+                let rec_path = video_rec.path.clone();
+                let rec_name = video_rec.name.clone();
+                used_paths.insert(rec_path.clone());
+
+                self.loading_player_ids.insert(id);
+                self.loading_player_ticks.insert(id, 0);
+
+                if let Ok(mut new_handle) = self.create_video_handle(id, &rec_path, &rec_name) {
+                    new_handle.set_muted(prev_muted);
+                    new_handle.set_volume(prev_volume);
+                    new_handle.set_subtitles_visible(self.subtitles_enabled);
+                    if let Some(p) = self.players.iter_mut().find(|pl| pl.id == id) {
+                        *p = new_handle;
+                    }
+                }
+            }
+        }
+
+        if self.settings.playback_mode == PlaybackMode::Scroll {
+            if let Some(ref preloaded) = self.preloaded_player {
+                if !self.available_videos.iter().any(|v| v.path == preloaded.state.path) {
+                    self.preloaded_player = None;
+                    self.is_preloading = false;
+                }
+            }
         }
     }
 
@@ -1171,7 +1269,6 @@ impl WazooApp {
                 self.show_menu_modal = false;
                 return Task::batch([
                     iced::widget::operation::focus("search_input"),
-                    iced::widget::operation::select_all("search_input"),
                 ]);
             }
             Message::CloseSearchModal => {
@@ -1182,7 +1279,10 @@ impl WazooApp {
             }
             Message::PerformSearch => {
                 self.active_search_query = self.search_input.clone();
-                let folders = if self.selected_search_folder == "All" {
+                self.settings.last_query = self.active_search_query.clone();
+                let _ = self.config_mgr.save_settings(&self.settings);
+
+                let folders = if self.selected_search_folder.is_empty() || self.selected_search_folder == "All" {
                     self.settings.media_folders.clone()
                 } else {
                     vec![self.selected_search_folder.clone()]
@@ -1193,6 +1293,9 @@ impl WazooApp {
                     self.available_videos = results;
                     self.toast_message = Some(format!("Total files: {total}"));
                     self.toast_time_remaining = 3;
+
+                    self.reconcile_players_with_available_videos(None);
+                    self.save_session_state();
                 }
                 self.show_search_modal = false;
             }
@@ -1286,7 +1389,25 @@ impl WazooApp {
                 }
             }
             Message::JumpToBookmark(b) => {
-                if let Some(id) = self.focused_player_id() {
+                // 1. Update the global search query to match the bookmark's query
+                self.active_search_query = b.query.clone();
+                self.search_input = b.query.clone();
+                self.settings.last_query = b.query.clone();
+                let _ = self.config_mgr.save_settings(&self.settings);
+
+                // 2. Query the database using the updated search query
+                let folders = if self.selected_search_folder.is_empty() || self.selected_search_folder == "All" {
+                    self.settings.media_folders.clone()
+                } else {
+                    vec![self.selected_search_folder.clone()]
+                };
+
+                if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
+                    self.available_videos = results;
+                }
+
+                // 3. Load the bookmarked video and position in the focused player
+                let focused_id = if let Some(id) = self.focused_player_id() {
                     self.loading_player_ids.insert(id);
                     self.loading_player_ticks.insert(id, 0);
                     let title = format::format_video_title(&b.path);
@@ -1303,15 +1424,34 @@ impl WazooApp {
                         if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                             *p = handle;
                         }
-                        self.toast_message = Some(format!(
-                            "Bookmark: {}  [{}]",
-                            b.name,
-                            format::format_time_str(b.position_secs)
-                        ));
-                        self.toast_time_remaining = 3;
                     }
-                    self.show_bookmarks_modal = false;
-                }
+                    Some(id)
+                } else {
+                    let id = self.next_player_id;
+                    self.next_player_id += 1;
+                    let title = format::format_video_title(&b.path);
+                    if let Ok(mut handle) = self.create_video_handle_with_start(id, &b.path, &title, Some(b.position_secs)) {
+                        handle.set_muted(self.settings.is_global_muted);
+                        handle.set_subtitles_visible(self.subtitles_enabled);
+                        self.players.push(handle);
+                        self.focused_player_idx = 0;
+                        Some(id)
+                    } else {
+                        None
+                    }
+                };
+
+                // 4. Reconcile other players if what they are playing does not exist in the new queried list of files
+                self.reconcile_players_with_available_videos(focused_id);
+                self.save_session_state();
+
+                self.toast_message = Some(format!(
+                    "Bookmark: {}  [{}]",
+                    b.name,
+                    format::format_time_str(b.position_secs)
+                ));
+                self.toast_time_remaining = 3;
+                self.show_bookmarks_modal = false;
             }
             Message::RandomSeekFocused => {
                 self.player_overlay_ticks = 120;
@@ -1428,16 +1568,8 @@ impl WazooApp {
                     self.loading_player_ticks.clear();
                     self.focused_player_idx = 0;
                 } else {
-                    // For each player, if its currently loaded video was from the removed folder, advance to next video
-                    let stale_player_ids: Vec<PlayerId> = self.players
-                        .iter()
-                        .filter(|p| !self.available_videos.iter().any(|v| v.path == p.state.path))
-                        .map(|p| p.id)
-                        .collect();
-
-                    for id in stale_player_ids {
-                        let _ = self.update(Message::NextVideo(id));
-                    }
+                    self.reconcile_players_with_available_videos(None);
+                    self.save_session_state();
                 }
 
                 if self.selected_search_folder == folder {
