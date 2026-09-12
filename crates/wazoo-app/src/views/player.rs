@@ -198,20 +198,25 @@ impl WazooApp {
 
         // Overlays show when mouse is actively moving over this specific player (fades after delay), or while player is loading
         let show_overlay = (!self.is_modal_or_menu_open() && is_hovered && self.player_overlay_ticks > 0) || is_loading;
+        let overlay_alpha = if is_loading {
+            1.0
+        } else {
+            self.player_overlay_alpha()
+        };
 
         // 1. Top-Left Title Pill (Matches Electron Player.vue)
         let formatted_title = format::format_descriptive_title(&p.state.path);
         let title_pill = container(
-            text(formatted_title)
+            text(formatted_title.clone())
                 .size(22)
                 .font(iced::Font {
                     weight: iced::font::Weight::Bold,
                     ..Default::default()
                 })
-                .color(iced::Color::WHITE),
+                .color(theme::with_alpha(iced::Color::WHITE, overlay_alpha)),
         )
         .padding([10, 18])
-        .style(theme::title_pill_style);
+        .style(theme::title_pill_style_with_alpha(overlay_alpha));
 
         let top_row = row![
             title_pill,
@@ -227,14 +232,14 @@ impl WazooApp {
                 move |ratio| Message::SeekRatio(player_id, ratio),
             )
             .step(0.001)
-            .style(theme::progress_slider_style)
+            .style(theme::progress_slider_style_with_alpha(overlay_alpha))
             .width(Length::Fill);
 
             let progress_bar_with_timestamp = cursor::PointerCursor::new(
                 Stack::new()
                     .push(seek_slider)
                     .push(
-                        container(text(time_str).size(13).color(iced::Color::WHITE))
+                        container(text(time_str).size(13).color(theme::with_alpha(iced::Color::WHITE, overlay_alpha)))
                             .width(Length::Fill)
                             .height(Length::Fixed(22.0))
                             .center_x(Length::Fill)
@@ -246,25 +251,30 @@ impl WazooApp {
                 svg(svg::Handle::from_memory(SVG_PLAYER_PAUSE))
                     .width(Length::Fixed(20.0))
                     .height(Length::Fixed(20.0))
+                    .opacity(overlay_alpha)
             } else {
                 svg(svg::Handle::from_memory(SVG_PLAYER_PLAY))
                     .width(Length::Fixed(20.0))
                     .height(Length::Fixed(20.0))
+                    .opacity(overlay_alpha)
             };
 
             let volume_icon = if p.state.is_muted {
                 svg(svg::Handle::from_memory(SVG_PLAYER_MUTE))
                     .width(Length::Fixed(20.0))
                     .height(Length::Fixed(20.0))
+                    .opacity(overlay_alpha)
             } else {
                 svg(svg::Handle::from_memory(SVG_PLAYER_VOLUME))
                     .width(Length::Fixed(20.0))
                     .height(Length::Fixed(20.0))
+                    .opacity(overlay_alpha)
             };
 
             let next_icon = svg(svg::Handle::from_memory(SVG_PLAYER_NEXT))
                 .width(Length::Fixed(20.0))
-                .height(Length::Fixed(20.0));
+                .height(Length::Fixed(20.0))
+                .opacity(overlay_alpha);
 
             let controls_row = row![
                 // Left: CC + TX + Volume Icon + Volume Slider
@@ -276,7 +286,7 @@ impl WazooApp {
                     .center_x(Length::Shrink)
                     .center_y(Length::Shrink),
                 )
-                .style(theme::cc_button_style(self.subtitles_enabled))
+                .style(theme::cc_button_style_with_alpha(self.subtitles_enabled, overlay_alpha))
                 .on_press(Message::ToggleSubtitles)
                 .padding([4, 8]),
                 button(
@@ -291,11 +301,11 @@ impl WazooApp {
                     .center_x(Length::Shrink)
                     .center_y(Length::Shrink),
                 )
-                .style(theme::transcript_button_style(self.show_transcript && is_focused))
+                .style(theme::transcript_button_style_with_alpha(self.show_transcript && is_focused, overlay_alpha))
                 .on_press(Message::ToggleTranscriptForPlayer(player_id))
                 .padding([4, 8]),
                 button(volume_icon)
-                    .style(theme::player_control_button_style)
+                    .style(theme::player_control_button_style_with_alpha(overlay_alpha))
                     .on_press(Message::TogglePlayerMute(player_id))
                     .padding([4, 6]),
                 cursor::PointerCursor::new(
@@ -305,17 +315,17 @@ impl WazooApp {
                         move |v| Message::SetVolume(player_id, v as f64),
                     )
                     .step(0.01)
-                    .style(theme::volume_slider_style)
+                    .style(theme::volume_slider_style_with_alpha(overlay_alpha))
                     .width(Length::Fixed(80.0)),
                 ),
                 Space::new().width(Length::Fill),
                 // Right: Play/Pause + Skip Next
                 button(play_pause_icon)
-                    .style(theme::player_control_button_style)
+                    .style(theme::player_control_button_style_with_alpha(overlay_alpha))
                     .on_press(Message::TogglePlay(player_id))
                     .padding([4, 8]),
                 button(next_icon)
-                    .style(theme::player_control_button_style)
+                    .style(theme::player_control_button_style_with_alpha(overlay_alpha))
                     .on_press(Message::NextVideo(player_id))
                     .padding([4, 8]),
             ]
@@ -336,7 +346,7 @@ impl WazooApp {
                 left: 14.0,
             })
             .width(Length::Fill)
-            .style(theme::controls_overlay_style);
+            .style(theme::controls_overlay_style_with_alpha(overlay_alpha));
 
             let overlays_column = if is_loading {
                 column![
@@ -357,9 +367,22 @@ impl WazooApp {
 
             stack_children.push(Element::from(overlays_column));
         } else if self.title_pill_ticks > 0 {
+            let pill_alpha = (self.title_pill_ticks as f32 / 20.0).min(1.0);
+            let title_pill_fallback = container(
+                text(formatted_title)
+                    .size(22)
+                    .font(iced::Font {
+                        weight: iced::font::Weight::Bold,
+                        ..Default::default()
+                    })
+                    .color(theme::with_alpha(iced::Color::WHITE, pill_alpha)),
+            )
+            .padding([10, 18])
+            .style(theme::title_pill_style_with_alpha(pill_alpha));
+
             let pill_column = column![
                 Space::new().height(Length::Fixed(80.0)),
-                top_row,
+                row![title_pill_fallback, Space::new().width(Length::Fill)].width(Length::Fill),
                 Space::new().height(Length::Fill),
             ]
             .width(Length::Fill)

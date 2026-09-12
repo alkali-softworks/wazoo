@@ -36,7 +36,16 @@ pub fn parse_timestamp(s: &str) -> Option<f64> {
     let sec_clean = sec_part.replace(',', ".");
     let secs = sec_clean.parse::<f64>().ok()?;
 
-    Some(hours * 3600.0 + mins * 60.0 + secs)
+    if !hours.is_finite() || !mins.is_finite() || !secs.is_finite() || hours < 0.0 || mins < 0.0 || secs < 0.0 {
+        return None;
+    }
+
+    let total = hours * 3600.0 + mins * 60.0 + secs;
+    if !total.is_finite() || total < 0.0 {
+        return None;
+    }
+
+    Some(total)
 }
 
 /// Strips HTML tags, ASS override tags (e.g. {\an8}), and formats line breaks into clean text.
@@ -184,6 +193,8 @@ pub fn load_subtitles_sync(video_path: &str) -> Vec<SubtitleCue> {
     // 2. Extract embedded subtitle track using ffmpeg
     if let Ok(output) = std::process::Command::new("ffmpeg")
         .args([
+            "-nostdin",
+            "-protocol_whitelist", "file,crypto",
             "-v", "error",
             "-i", video_path,
             "-map", "0:s:0",
@@ -222,6 +233,9 @@ mod tests {
         assert_eq!(parse_timestamp("01:23.450"), Some(83.45));
         assert_eq!(parse_timestamp("1:02:03.50"), Some(3723.5));
         assert_eq!(parse_timestamp("invalid"), None);
+        assert_eq!(parse_timestamp("NaN:NaN:NaN"), None);
+        assert_eq!(parse_timestamp("inf"), None);
+        assert_eq!(parse_timestamp("-01:00"), None);
     }
 
     #[test]

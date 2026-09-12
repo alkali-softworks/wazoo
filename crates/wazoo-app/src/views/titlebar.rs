@@ -18,17 +18,20 @@ use crate::theme;
 
 impl WazooApp {
     pub(crate) fn view_titlebar(&self) -> Element<'_, Message> {
+        let alpha = self.titlebar_alpha();
+
         let badge_btn = button(
             row![
                 iced::widget::image(self.app_icon_handle.clone())
                     .width(Length::Fixed(20.0))
-                    .height(Length::Fixed(20.0)),
-                text("Wazoo").size(16).color(iced::Color::WHITE),
+                    .height(Length::Fixed(20.0))
+                    .opacity(alpha),
+                text("Wazoo").size(16).color(theme::with_alpha(iced::Color::WHITE, alpha)),
             ]
             .spacing(6)
             .align_y(Alignment::Center),
         )
-        .style(theme::titlebar_badge_style)
+        .style(theme::titlebar_badge_style_with_alpha(alpha))
         .on_press(Message::ToggleDropdownMenu)
         .padding(iced::Padding {
             top: 2.0,
@@ -51,6 +54,7 @@ impl WazooApp {
                     svg(svg::Handle::from_memory(SVG_WINDOW_MINIMIZE))
                         .width(Length::Fixed(10.0))
                         .height(Length::Fixed(10.0))
+                        .opacity(alpha)
                 )
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -59,7 +63,7 @@ impl WazooApp {
             )
             .width(Length::Fixed(42.0))
             .height(Length::Fixed(30.0))
-            .style(theme::window_control_button_style)
+            .style(theme::window_control_button_style_with_alpha(alpha))
             .on_press(Message::MinimizeWindow)
             .padding(0),
             button(
@@ -67,6 +71,7 @@ impl WazooApp {
                     svg(svg::Handle::from_memory(SVG_WINDOW_MAXIMIZE))
                         .width(Length::Fixed(10.0))
                         .height(Length::Fixed(10.0))
+                        .opacity(alpha)
                 )
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -75,7 +80,7 @@ impl WazooApp {
             )
             .width(Length::Fixed(42.0))
             .height(Length::Fixed(30.0))
-            .style(theme::window_control_button_style)
+            .style(theme::window_control_button_style_with_alpha(alpha))
             .on_press(Message::MaximizeWindow)
             .padding(0),
             button(
@@ -83,6 +88,7 @@ impl WazooApp {
                     svg(svg::Handle::from_memory(SVG_WINDOW_CLOSE))
                         .width(Length::Fixed(10.0))
                         .height(Length::Fixed(10.0))
+                        .opacity(alpha)
                 )
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -91,7 +97,7 @@ impl WazooApp {
             )
             .width(Length::Fixed(42.0))
             .height(Length::Fixed(30.0))
-            .style(theme::close_window_button_style)
+            .style(theme::close_window_button_style_with_alpha(alpha))
             .on_press(Message::CloseApp)
             .padding(0),
         ]
@@ -109,8 +115,8 @@ impl WazooApp {
         )
         .width(Length::Fill)
         .height(Length::Fixed(30.0))
-        .style(|_theme: &Theme| container::Style {
-            background: Some(iced::Background::Color(theme::COLOR_TITLEBAR_BG)),
+        .style(move |_theme: &Theme| container::Style {
+            background: Some(iced::Background::Color(theme::with_alpha(theme::COLOR_TITLEBAR_BG, alpha))),
             ..Default::default()
         });
 
@@ -127,27 +133,11 @@ impl WazooApp {
                     button(text(self.t("common.help"))).style(theme::menu_item_style).on_press(Message::OpenHelpModal).padding([8, 14]).width(Length::Fill),
                     button(text(format!("{} (Alt+X)", self.t("common.quit")))).style(theme::menu_item_style).on_press(Message::CloseApp).padding([8, 14]).width(Length::Fill),
                 ]
+                .spacing(2)
                 .width(Length::Fixed(230.0)),
             )
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(iced::Color::BLACK)),
-                border: iced::Border {
-                    radius: iced::border::Radius {
-                        top_left: 0.0,
-                        top_right: 0.0,
-                        bottom_right: 6.0,
-                        bottom_left: 6.0,
-                    },
-                    width: 1.0,
-                    color: theme::COLOR_BORDER,
-                },
-                shadow: iced::Shadow {
-                    color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5),
-                    offset: iced::Vector::new(0.0, 4.0),
-                    blur_radius: 12.0,
-                },
-                ..Default::default()
-            });
+            .padding(4)
+            .style(theme::menu_dropdown_style);
 
             column![titlebar_row, menu_dropdown].into()
         } else {
