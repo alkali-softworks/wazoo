@@ -994,8 +994,24 @@ async fn run_instance<P>(
                                     // This is an unrecoverable error.
                                     panic!("{error:?}");
                                 }
+                                compositor::SurfaceError::Lost => {
+                                    present_span.finish();
+                                    log::warn!("Surface lost, recreating surface...");
+                                    let physical_size =
+                                        window.state.physical_size();
+
+                                    if physical_size.width > 0 && physical_size.height > 0 {
+                                        window.surface = current_compositor
+                                            .create_surface(
+                                                window.raw.clone(),
+                                                physical_size.width,
+                                                physical_size.height,
+                                            );
+                                        window.surface_version =
+                                            window.state.surface_version();
+                                    }
+                                }
                                 compositor::SurfaceError::Outdated
-                                | compositor::SurfaceError::Lost
                                 | compositor::SurfaceError::Other => {
                                     present_span.finish();
 
@@ -1095,6 +1111,10 @@ async fn run_instance<P>(
                                 &window.raw,
                                 &window_event,
                             );
+
+                            if matches!(window_event, winit::event::WindowEvent::Focused(true)) {
+                                window.raw.request_redraw();
+                            }
 
                             if let Some(event) = conversion::window_event(
                                 window_event,

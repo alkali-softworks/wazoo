@@ -94,6 +94,8 @@ pub struct WazooApp {
     pub(crate) transcript_video_path: Option<String>,
     pub(crate) transcript_track_index: usize,
     pub(crate) show_transcript_menu: bool,
+    pub(crate) is_window_focused: bool,
+    pub(crate) unfocused_frame_ticks: u32,
 }
 
 impl WazooApp {
@@ -229,6 +231,8 @@ impl WazooApp {
             transcript_video_path: None,
             transcript_track_index: 0,
             show_transcript_menu: false,
+            is_window_focused: true,
+            unfocused_frame_ticks: 0,
         };
 
         // Initialize players based on settings or restore saved session

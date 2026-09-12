@@ -28,9 +28,12 @@ impl WazooApp {
                 return iced::window::gain_focus(id);
             }
             Message::WindowFocused => {
+                self.is_window_focused = true;
+                self.unfocused_frame_ticks = 0;
                 self.is_alt_pressed = false;
             }
             Message::WindowUnfocused => {
+                self.is_window_focused = false;
                 self.is_alt_pressed = false;
                 self.cursor_position = Point::new(-1000.0, -1000.0);
                 self.titlebar_drag_pending = false;
@@ -1641,6 +1644,15 @@ impl WazooApp {
                 }
             }
             Message::VideoFrameTick => {
+                if !self.is_window_focused {
+                    self.unfocused_frame_ticks = self.unfocused_frame_ticks.wrapping_add(1);
+                    // When the window is behind another window or unfocused, throttle frame updates
+                    // to ~6 FPS (every 10th tick) so audio keeps playing without hammering WGPU
+                    // surface swapchains and triggering X11/Vulkan presentation deadlocks.
+                    if self.unfocused_frame_ticks % 10 != 0 {
+                        return Task::none();
+                    }
+                }
                 self.spinner_ticks = self.spinner_ticks.wrapping_add(1);
                 if self.open_audio_menu_player_id.is_some() {
                     self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
