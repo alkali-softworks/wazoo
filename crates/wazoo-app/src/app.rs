@@ -29,6 +29,8 @@ pub const TITLEBAR_HIDE_TICKS: usize = 50;
 pub const TITLEBAR_FADE_TICKS: usize = 12;
 /// Window titlebar show pre-delay: ~130ms at 60 FPS (8 ticks) to prevent accidental popups on quick swipes
 pub const TITLEBAR_SHOW_DELAY_TICKS: usize = 8;
+/// File picker search input debounce delay: ~200ms at 60 FPS (12 ticks)
+pub const FILE_PICKER_DEBOUNCE_TICKS: usize = 12;
 
 pub struct WazooApp {
     pub(crate) settings: WazooSettings,
@@ -49,6 +51,9 @@ pub struct WazooApp {
     pub(crate) show_bookmarks_modal: bool,
     pub(crate) show_file_picker: bool,
     pub(crate) file_picker_search: String,
+    pub(crate) file_picker_debounce_ticks: usize,
+    pub(crate) file_picker_entries: Vec<crate::views::file_picker::PrecomputedVideoMeta>,
+    pub(crate) file_picker_groups: Vec<crate::views::file_picker::FilePickerGroup>,
     pub(crate) show_titlebar: bool,
     pub(crate) titlebar_hide_ticks: usize,
     pub(crate) titlebar_hover_ticks: usize,
@@ -181,6 +186,9 @@ impl WazooApp {
             show_bookmarks_modal: false,
             show_file_picker: false,
             file_picker_search: String::new(),
+            file_picker_debounce_ticks: 0,
+            file_picker_entries: Vec::new(),
+            file_picker_groups: Vec::new(),
             show_titlebar: false,
             titlebar_hide_ticks: 0,
             titlebar_hover_ticks: 0,
@@ -273,6 +281,8 @@ impl WazooApp {
         if is_cli && !app.players.is_empty() {
             app.save_session_state();
         }
+
+        app.apply_file_picker_search();
 
         let preload_task = if app.settings.playback_mode == PlaybackMode::Scroll {
             let ids: Vec<PlayerId> = app.players.iter().map(|p| p.id).collect();
@@ -1508,14 +1518,19 @@ mod tests {
         ];
 
         // 1. When search is empty, all folders and files are present
+        app.apply_file_picker_search();
         let grouped = app.filter_and_group_videos_for_picker();
         assert_eq!(grouped.len(), 2);
         assert_eq!(grouped["Mushoku Tensei"].len(), 3);
         assert_eq!(grouped["Frieren"].len(), 1);
+        assert_eq!(app.file_picker_groups.len(), 2);
 
-        // 2. Searching "mush" matches the folder "Mushoku Tensei", including ALL files in that folder
+        // 2. Searching "mush" initiates debounce, then ApplyFilePickerSearch immediately applies it
         let _ = app.update(Message::FilePickerSearchChanged("mush".to_string()));
         assert_eq!(app.file_picker_search, "mush");
+        assert_eq!(app.file_picker_debounce_ticks, FILE_PICKER_DEBOUNCE_TICKS);
+        let _ = app.update(Message::ApplyFilePickerSearch);
+        assert_eq!(app.file_picker_debounce_ticks, 0);
         assert!(app.expanded_folders.contains("Mushoku Tensei"));
         assert!(!app.expanded_folders.contains("Frieren"));
 
@@ -1523,35 +1538,52 @@ mod tests {
         assert_eq!(grouped.len(), 1);
         // All 3 videos in the folder match because folder name matches "mush"
         assert_eq!(grouped["Mushoku Tensei"].len(), 3);
+        assert_eq!(app.file_picker_groups.len(), 1);
+        assert_eq!(app.file_picker_groups[0].folder, "Mushoku Tensei");
+        assert_eq!(app.file_picker_groups[0].files.len(), 3);
 
-        // 3. Searching for a specific episode title "Jobless" inside that folder
+        // 3. Searching for a specific episode title "Jobless" inside that folder via tick countdown
         let _ = app.update(Message::FilePickerSearchChanged("Jobless".to_string()));
+        assert_eq!(app.file_picker_debounce_ticks, FILE_PICKER_DEBOUNCE_TICKS);
+        for _ in 0..FILE_PICKER_DEBOUNCE_TICKS {
+            let _ = app.update(Message::VideoFrameTick);
+        }
+        assert_eq!(app.file_picker_debounce_ticks, 0);
         let grouped = app.filter_and_group_videos_for_picker();
         assert_eq!(grouped.len(), 1);
         assert_eq!(grouped["Mushoku Tensei"].len(), 1);
         assert_eq!(grouped["Mushoku Tensei"][0].name, "S01E01-Jobless Reincarnation V2");
+        assert_eq!(app.file_picker_groups.len(), 1);
+        assert_eq!(app.file_picker_groups[0].files.len(), 1);
 
         // 4. Searching across folder and title with multiple words: "mushoku jobless"
         let _ = app.update(Message::FilePickerSearchChanged("mushoku jobless".to_string()));
+        let _ = app.update(Message::ApplyFilePickerSearch);
         let grouped = app.filter_and_group_videos_for_picker();
         assert_eq!(grouped.len(), 1);
         assert_eq!(grouped["Mushoku Tensei"].len(), 1);
         assert_eq!(grouped["Mushoku Tensei"][0].name, "S01E01-Jobless Reincarnation V2");
+        assert_eq!(app.file_picker_groups[0].files.len(), 1);
 
         // 5. Searching for "The Journey" matches only Frieren
         let _ = app.update(Message::FilePickerSearchChanged("The Journey".to_string()));
+        let _ = app.update(Message::ApplyFilePickerSearch);
         assert!(app.expanded_folders.contains("Frieren"));
         let grouped = app.filter_and_group_videos_for_picker();
         assert_eq!(grouped.len(), 1);
         assert_eq!(grouped["Frieren"].len(), 1);
+        assert_eq!(app.file_picker_groups.len(), 1);
+        assert_eq!(app.file_picker_groups[0].folder, "Frieren");
 
-        // 6. Clearing the search clears expanded folders and restores all groups
+        // 6. Clearing the search immediately clears debounce and restored all groups
         let _ = app.update(Message::FilePickerSearchChanged("".to_string()));
+        assert_eq!(app.file_picker_debounce_ticks, 0);
         assert!(app.expanded_folders.is_empty());
         let grouped = app.filter_and_group_videos_for_picker();
         assert_eq!(grouped.len(), 2);
         assert_eq!(grouped["Mushoku Tensei"].len(), 3);
         assert_eq!(grouped["Frieren"].len(), 1);
+        assert_eq!(app.file_picker_groups.len(), 2);
 
         // 7. View file picker renders without errors
         let _ = app.view_file_picker();
