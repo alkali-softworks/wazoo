@@ -53,6 +53,8 @@ pub struct WazooApp {
     pub(crate) last_total_videos: usize,
     pub(crate) next_player_id: PlayerId,
     pub(crate) is_scanning: bool,
+    pub(crate) current_scan_id: u64,
+    pub(crate) scan_cancel: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
     pub(crate) scan_progress: Option<ScanProgress>,
     pub(crate) focused_player_idx: usize,
     pub(crate) focus_border_ticks: usize,
@@ -179,6 +181,8 @@ impl WazooApp {
             last_total_videos: total_videos,
             next_player_id: 1,
             is_scanning: false,
+            current_scan_id: 0,
+            scan_cancel: None,
             scan_progress: None,
             focused_player_idx: 0,
             focus_border_ticks: 0,
@@ -927,6 +931,50 @@ mod tests {
         app.search_tags = vec!["bebop".to_string(), "space".to_string()];
         app.search_input = "cowboy".to_string();
         let _ = app.view_search_modal();
+    }
+
+    #[test]
+    fn test_concurrent_folder_scan_aborts_and_restarts() {
+        use std::sync::atomic::Ordering;
+
+        let (mut app, _) = WazooApp::new(None);
+        app.settings.media_folders = vec!["/folder1".to_string()];
+
+        // 1. Initial StartScan initializes scan state
+        let _ = app.update(Message::StartScan);
+        assert!(app.is_scanning);
+        assert_eq!(app.current_scan_id, 1);
+        let first_cancel = app.scan_cancel.clone().expect("scan_cancel should be set");
+        assert!(!first_cancel.load(Ordering::SeqCst));
+
+        // 2. Adding a folder while scanning aborts the first scan and starts a new one immediately
+        let _ = app.update(Message::FoldersSelected(vec!["/folder2".to_string()]));
+        assert_eq!(app.settings.media_folders, vec!["/folder1", "/folder2"]);
+        assert!(first_cancel.load(Ordering::SeqCst), "first scan cancel flag should be set to true");
+        assert!(app.is_scanning);
+        assert_eq!(app.current_scan_id, 2);
+        let second_cancel = app.scan_cancel.clone().expect("second scan_cancel should be set");
+        assert!(!second_cancel.load(Ordering::SeqCst));
+
+        // 3. Adding another folder via input aborts second scan and starts a third one immediately
+        app.folder_input = "/folder3".to_string();
+        let _ = app.update(Message::AddMediaFolder);
+        assert_eq!(app.settings.media_folders, vec!["/folder1", "/folder2", "/folder3"]);
+        assert!(second_cancel.load(Ordering::SeqCst), "second scan cancel flag should be set to true");
+        assert!(app.is_scanning);
+        assert_eq!(app.current_scan_id, 3);
+
+        // 4. Stale ScanProgressUpdate and ScanFinished from earlier scans (scan_id 1 or 2) are ignored
+        let _ = app.update(Message::ScanFinished(1, Ok(10)));
+        assert!(app.is_scanning, "app should still be scanning because scan_id 1 is obsolete");
+
+        let _ = app.update(Message::ScanFinished(2, Ok(20)));
+        assert!(app.is_scanning, "app should still be scanning because scan_id 2 is obsolete");
+
+        // 5. ScanFinished matching current_scan_id (3) completes the scan
+        let _ = app.update(Message::ScanFinished(3, Ok(30)));
+        assert!(!app.is_scanning);
+        assert!(app.scan_cancel.is_none());
     }
 }
 

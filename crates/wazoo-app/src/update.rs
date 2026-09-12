@@ -1208,10 +1208,7 @@ impl WazooApp {
                     let _ = self.config_mgr.save_settings(&self.settings);
                     self.toast_message = Some("Added folder(s). Starting library scan...".to_string());
                     self.toast_time_remaining = 3;
-
-                    if !self.is_scanning && !self.settings.media_folders.is_empty() {
-                        return self.update(Message::StartScan);
-                    }
+                    return self.update(Message::StartScan);
                 }
             }
             Message::FolderInputChanged(val) => {
@@ -1226,10 +1223,7 @@ impl WazooApp {
                         let _ = self.config_mgr.save_settings(&self.settings);
                         self.toast_message = Some(format!("Added folder: {trimmed}"));
                         self.toast_time_remaining = 3;
-
-                        if !self.is_scanning && !self.settings.media_folders.is_empty() {
-                            return self.update(Message::StartScan);
-                        }
+                        return self.update(Message::StartScan);
                     } else {
                         self.folder_input.clear();
                     }
@@ -1240,6 +1234,8 @@ impl WazooApp {
             Message::RemoveMediaFolder(folder) => {
                 self.settings.media_folders.retain(|f| f != &folder);
                 let _ = self.config_mgr.save_settings(&self.settings);
+
+                let was_scanning = self.is_scanning;
 
                 // 1. Immediately delete all files belonging to this folder from the SQLite database
                 let removed_count = self.db.remove_videos_in_folder(&folder).unwrap_or(0);
@@ -1277,24 +1273,42 @@ impl WazooApp {
                 self.toast_message = Some(format!("Removed {} ({} files)", display_name, format::format_number(removed_count)));
                 self.toast_time_remaining = 2;
                 self.last_total_videos = self.available_videos.len();
+
+                if was_scanning {
+                    return self.update(Message::StartScan);
+                }
             }
             Message::StartScan => {
-                if !self.is_scanning && !self.settings.media_folders.is_empty() {
+                // Cancel any currently running scan task
+                if let Some(cancel) = self.scan_cancel.take() {
+                    cancel.store(true, std::sync::atomic::Ordering::SeqCst);
+                }
+
+                if !self.settings.media_folders.is_empty() {
+                    self.current_scan_id += 1;
+                    let scan_id = self.current_scan_id;
+                    let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+                    self.scan_cancel = Some(cancel.clone());
+
                     self.is_scanning = true;
                     self.scan_progress = None;
                     let folders = self.settings.media_folders.clone();
                     let db_path = self.config_mgr.database_path();
 
-                    return Task::stream(iced::stream::channel(100, |mut output: iced::futures::channel::mpsc::Sender<Message>| async move {
+                    return Task::stream(iced::stream::channel(100, move |mut output: iced::futures::channel::mpsc::Sender<Message>| async move {
                         let (tx, mut rx) = tokio::sync::mpsc::channel(100);
 
+                        let cancel_inner = cancel.clone();
                         let scan_handle = tokio::spawn(async move {
                             let scanner = Scanner::default();
-                            scanner.scan_and_index(&folders, db_path, Some(tx)).await
+                            scanner.scan_and_index_with_cancel(&folders, db_path, Some(tx), Some(cancel_inner)).await
                         });
 
                         while let Some(progress) = rx.recv().await {
-                            let _ = output.send(Message::ScanProgressUpdate(progress)).await;
+                            if cancel.load(std::sync::atomic::Ordering::Relaxed) {
+                                break;
+                            }
+                            let _ = output.send(Message::ScanProgressUpdate(scan_id, progress)).await;
                         }
 
                         let res = match scan_handle.await {
@@ -1302,11 +1316,19 @@ impl WazooApp {
                             Err(join_err) => Err(join_err.to_string()),
                         };
 
-                        let _ = output.send(Message::ScanFinished(res)).await;
+                        if !cancel.load(std::sync::atomic::Ordering::Relaxed) {
+                            let _ = output.send(Message::ScanFinished(scan_id, res)).await;
+                        }
                     }));
+                } else {
+                    self.is_scanning = false;
+                    self.scan_progress = None;
                 }
             }
-            Message::ScanProgressUpdate(progress) => {
+            Message::ScanProgressUpdate(scan_id, progress) => {
+                if scan_id != self.current_scan_id {
+                    return Task::none();
+                }
                 match progress.stage {
                     ScanStage::Listing => {
                         let name_part = if progress.current_name.is_empty() {
@@ -1331,9 +1353,13 @@ impl WazooApp {
                 }
                 self.scan_progress = Some(progress);
             }
-            Message::ScanFinished(res) => {
+            Message::ScanFinished(scan_id, res) => {
+                if scan_id != self.current_scan_id {
+                    return Task::none();
+                }
                 self.is_scanning = false;
                 self.scan_progress = None;
+                self.scan_cancel = None;
                 match res {
                     Ok(_count) => {
                         let folder = self.selected_search_folder.clone();
@@ -1352,11 +1378,15 @@ impl WazooApp {
                                     self.add_player_internal();
                                 }
                             }
+                            self.reconcile_players_with_available_videos(None);
+                            self.save_session_state();
                         }
                     }
                     Err(err) => {
-                        self.toast_message = Some(format!("Scan error: {err}"));
-                        self.toast_time_remaining = 3;
+                        if err != "Scan cancelled" {
+                            self.toast_message = Some(format!("Scan error: {err}"));
+                            self.toast_time_remaining = 3;
+                        }
                     }
                 }
             }
