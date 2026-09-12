@@ -24,9 +24,11 @@ pub const PLAYER_OVERLAY_HIDE_TICKS: usize = 150;
 pub const PLAYER_OVERLAY_FADE_TICKS: usize = 12;
 
 /// Window titlebar hide delay: ~400ms at 60 FPS (25 ticks)
-pub const TITLEBAR_HIDE_TICKS: usize = 25;
+pub const TITLEBAR_HIDE_TICKS: usize = 50;
 /// Window titlebar fade out duration: ~200ms at 60 FPS (12 ticks)
 pub const TITLEBAR_FADE_TICKS: usize = 12;
+/// Window titlebar show pre-delay: ~130ms at 60 FPS (8 ticks) to prevent accidental popups on quick swipes
+pub const TITLEBAR_SHOW_DELAY_TICKS: usize = 8;
 
 pub struct WazooApp {
     pub(crate) settings: WazooSettings,
@@ -48,6 +50,7 @@ pub struct WazooApp {
     pub(crate) file_picker_search: String,
     pub(crate) show_titlebar: bool,
     pub(crate) titlebar_hide_ticks: usize,
+    pub(crate) titlebar_hover_ticks: usize,
     pub(crate) show_dropdown_menu: bool,
     pub(crate) is_alt_pressed: bool,
     pub(crate) player_overlay_ticks: usize,
@@ -169,6 +172,7 @@ impl WazooApp {
             file_picker_search: String::new(),
             show_titlebar: false,
             titlebar_hide_ticks: 0,
+            titlebar_hover_ticks: 0,
             show_dropdown_menu: false,
             is_alt_pressed: false,
             player_overlay_ticks: 0,
@@ -315,7 +319,9 @@ impl WazooApp {
     }
 
     pub(crate) fn titlebar_alpha(&self) -> f32 {
-        if self.is_point_in_titlebar(self.cursor_position) || self.show_dropdown_menu {
+        if !self.show_titlebar {
+            0.0
+        } else if self.is_point_in_titlebar(self.cursor_position) || self.show_dropdown_menu {
             1.0
         } else if self.titlebar_hide_ticks >= TITLEBAR_FADE_TICKS {
             1.0
@@ -778,9 +784,13 @@ mod tests {
     fn test_cursor_left_uses_hide_timer() {
         let (mut app, _) = WazooApp::new(None);
 
-        // Move cursor to top of window -> titlebar shows
+        // Move cursor to top of window and wait for pre-delay -> titlebar shows
         let win_id = iced::window::Id::unique();
         let _ = app.update(Message::CursorMoved(win_id, Point::new(100.0, 10.0)));
+        assert!(!app.show_titlebar); // Pre-delay active
+        for _ in 0..TITLEBAR_SHOW_DELAY_TICKS {
+            let _ = app.update(Message::VideoFrameTick);
+        }
         assert!(app.show_titlebar);
         assert_eq!(app.titlebar_hide_ticks, TITLEBAR_HIDE_TICKS);
         assert_eq!(app.titlebar_alpha(), 1.0);
@@ -848,6 +858,10 @@ mod tests {
 
         let win_id = iced::window::Id::unique();
         let _ = app.update(Message::CursorMoved(win_id, Point::new(100.0, 10.0)));
+        assert!(!app.show_titlebar); // Pre-delay active
+        for _ in 0..TITLEBAR_SHOW_DELAY_TICKS {
+            let _ = app.update(Message::VideoFrameTick);
+        }
         assert!(app.show_titlebar);
         assert_eq!(app.titlebar_hide_ticks, TITLEBAR_HIDE_TICKS);
 
@@ -855,16 +869,47 @@ mod tests {
         let _ = app.update(Message::CursorMoved(win_id, Point::new(100.0, 50.0)));
         assert!(app.show_titlebar);
 
-        // Tick down 24 frames
-        for _ in 0..24 {
+        // Tick down frames until 1 frame remaining
+        for _ in 0..(TITLEBAR_HIDE_TICKS - 1) {
             let _ = app.update(Message::VideoFrameTick);
             assert!(app.show_titlebar);
         }
 
-        // 25th frame tick should hide titlebar
+        // Final frame tick should hide titlebar
         let _ = app.update(Message::VideoFrameTick);
         assert!(!app.show_titlebar);
         assert_eq!(app.titlebar_hide_ticks, 0);
+    }
+
+    #[test]
+    fn test_titlebar_pre_delay_prevents_quick_swipe() {
+        let (mut app, _) = WazooApp::new(None);
+        let win_id = iced::window::Id::unique();
+
+        // 1. Move cursor into titlebar zone (quick swipe for 3 ticks)
+        let _ = app.update(Message::CursorMoved(win_id, Point::new(100.0, 10.0)));
+        assert!(!app.show_titlebar);
+        for _ in 0..3 {
+            let _ = app.update(Message::VideoFrameTick);
+            assert!(!app.show_titlebar);
+            assert_eq!(app.titlebar_alpha(), 0.0);
+        }
+
+        // 2. Cursor quickly leaves titlebar zone
+        let _ = app.update(Message::CursorMoved(win_id, Point::new(100.0, 60.0)));
+        let _ = app.update(Message::VideoFrameTick);
+        assert!(!app.show_titlebar);
+        assert_eq!(app.titlebar_hover_ticks, 0);
+
+        // 3. Now cursor moves into titlebar zone and lingers for full pre-delay
+        let _ = app.update(Message::CursorMoved(win_id, Point::new(100.0, 10.0)));
+        assert!(!app.show_titlebar);
+        for _ in 0..TITLEBAR_SHOW_DELAY_TICKS {
+            let _ = app.update(Message::VideoFrameTick);
+        }
+        assert!(app.show_titlebar);
+        assert_eq!(app.titlebar_hide_ticks, TITLEBAR_HIDE_TICKS);
+        assert_eq!(app.titlebar_alpha(), 1.0);
     }
 
     #[test]
@@ -886,7 +931,7 @@ mod tests {
 
         // Subsequent cursor movements outside the player must NOT reset overlay ticks
         let win_id = iced::window::Id::unique();
-        let _ = app.update(Message::CursorMoved(win_id, Point::new(100.0, 10.0))); // In titlebar
+        let _ = app.update(Message::CursorMoved(win_id, Point::new(100.0, 60.0))); // Outside player
         assert_eq!(app.player_overlay_ticks, PLAYER_OVERLAY_FADE_TICKS);
 
         // Fade down over 25 ticks
@@ -902,11 +947,14 @@ mod tests {
         assert_eq!(app.player_overlay_ticks, 0);
         assert_eq!(app.player_overlay_alpha(), 0.0);
 
-        // 3. Test cursor moving into titlebar triggers immediate fade out
+        // 3. Test cursor moving into titlebar triggers immediate fade out once pre-delay elapses
         let _ = app.update(Message::CursorMoved(win_id, Point::new(100.0, 100.0))); // Into player area
         let _ = app.update(Message::PlayerHovered(player_id));
         assert_eq!(app.player_overlay_ticks, PLAYER_OVERLAY_HIDE_TICKS);
         let _ = app.update(Message::CursorMoved(win_id, Point::new(100.0, 10.0))); // In titlebar
+        for _ in 0..TITLEBAR_SHOW_DELAY_TICKS {
+            let _ = app.update(Message::VideoFrameTick);
+        }
         assert_eq!(app.player_overlay_ticks, PLAYER_OVERLAY_FADE_TICKS);
 
         // 4. Test cursor leaving window also triggers immediate fade out

@@ -8,6 +8,7 @@
  */
 
 use iced::{
+    overlay::menu,
     widget::{button, container, slider, text_input},
     Background, Border, Color, Shadow, Theme, Vector,
 };
@@ -23,8 +24,7 @@ pub const COLOR_TEXT_DIM: Color = Color::from_rgb(0.867, 0.867, 0.867); // #dddd
 pub const COLOR_BTN_BG: Color = Color::from_rgb(0.2, 0.2, 0.2); // #333333
 pub const COLOR_BTN_HOVER: Color = Color::from_rgb(0.267, 0.267, 0.267); // #444444
 pub const COLOR_BTN_CLOSE_HOVER: Color = Color::from_rgb(0.910, 0.067, 0.137); // #e81123
-pub const COLOR_BLUE_ACTIVE: Color = Color::from_rgb(0.231, 0.510, 0.965); // #3b82f6
-pub const COLOR_BLUE_BORDER: Color = Color::from_rgb(0.376, 0.647, 0.980); // #60a5fa
+pub const COLOR_PRIMARY_BORDER: Color = Color::from_rgb(0.35, 0.80, 0.60);
 pub const COLOR_TRACK_BG: Color = Color::from_rgba(1.0, 1.0, 1.0, 0.2);
 pub const COLOR_OVERLAY_DARK: Color = Color::from_rgba(0.0, 0.0, 0.0, 0.4);
 pub const COLOR_DRAWER_BG: Color = Color::from_rgb(0.2, 0.2, 0.2); // #333
@@ -128,16 +128,42 @@ pub fn close_window_button_style_with_alpha(alpha: f32) -> impl Fn(&Theme, butto
     }
 }
 
+// Menu Dropdown Container (Titlebar Logo Dropdown)
+pub fn menu_dropdown_style(_theme: &Theme) -> container::Style {
+    container::Style {
+        background: Some(Background::Color(COLOR_MODAL_BG)),
+        border: Border {
+            radius: iced::border::Radius {
+                top_left: 0.0,
+                top_right: 0.0,
+                bottom_right: 8.0,
+                bottom_left: 8.0,
+            },
+            width: 1.0,
+            color: COLOR_BORDER,
+        },
+        shadow: Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.5),
+            offset: Vector::new(0.0, 6.0),
+            blur_radius: 16.0,
+        },
+        ..Default::default()
+    }
+}
+
 // Menu Items (Dropdown and Menu Modal)
 pub fn menu_item_style(_theme: &Theme, status: button::Status) -> button::Style {
     let bg = match status {
-        button::Status::Hovered | button::Status::Pressed => Color::from_rgb(0.12, 0.12, 0.12),
+        button::Status::Hovered | button::Status::Pressed => Color::from_rgb(0.20, 0.20, 0.20),
         _ => Color::TRANSPARENT,
     };
     button::Style {
         background: Some(Background::Color(bg)),
         text_color: Color::WHITE,
-        border: Border::default(),
+        border: Border {
+            radius: 4.0.into(),
+            ..Default::default()
+        },
         shadow: Shadow::default(),
         ..Default::default()
     }
@@ -255,7 +281,10 @@ pub fn action_button_style(_theme: &Theme, status: button::Status) -> button::St
 pub fn folder_chip_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_theme: &Theme, status: button::Status| {
         let (bg, border_color) = if is_active {
-            (COLOR_BLUE_ACTIVE, COLOR_BLUE_BORDER)
+            match status {
+                button::Status::Hovered => (Color::from_rgb(0.29, 0.76, 0.55), Color::from_rgb(0.38, 0.82, 0.63)),
+                _ => (COLOR_PRIMARY, COLOR_PRIMARY_BORDER),
+            }
         } else {
             match status {
                 button::Status::Hovered => (COLOR_BTN_BG, Color::from_rgb(0.35, 0.35, 0.35)),
@@ -279,7 +308,7 @@ pub fn folder_chip_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> 
 // Text Input Style
 pub fn dark_input_style(_theme: &Theme, status: text_input::Status) -> text_input::Style {
     let border_color = match status {
-        text_input::Status::Focused { .. } => Color::from_rgb(0.4, 0.4, 0.4),
+        text_input::Status::Focused { .. } => COLOR_PRIMARY,
         text_input::Status::Hovered => Color::from_rgb(0.35, 0.35, 0.35),
         _ => Color::from_rgb(0.27, 0.27, 0.27),
     };
@@ -312,6 +341,25 @@ pub fn dark_pick_list_style(_theme: &Theme, status: iced::widget::pick_list::Sta
             radius: 4.0.into(),
             width: 1.0,
             color: border_color,
+        },
+    }
+}
+
+pub fn dark_pick_list_menu_style(_theme: &Theme) -> menu::Style {
+    menu::Style {
+        background: Background::Color(COLOR_MODAL_BG),
+        border: Border {
+            radius: 6.0.into(),
+            width: 1.0,
+            color: COLOR_BORDER,
+        },
+        text_color: Color::WHITE,
+        selected_text_color: Color::WHITE,
+        selected_background: Background::Color(COLOR_PRIMARY),
+        shadow: Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.6),
+            offset: Vector::new(0.0, 6.0),
+            blur_radius: 16.0,
         },
     }
 }
