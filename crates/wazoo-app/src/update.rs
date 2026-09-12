@@ -907,7 +907,14 @@ impl WazooApp {
                 if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
                     let total = results.len();
                     self.available_videos = results;
-                    self.toast_message = Some(format!("Total files: {}", format::format_number(total)));
+                    self.toast_message = if total == 0 {
+                        Some(self.t("wazoo.no_videos_found"))
+                    } else {
+                        Some(self.t_with(
+                            "wazoo.videos_count",
+                            &[("count", &format::format_number(total))],
+                        ))
+                    };
                     self.toast_time_remaining = 3;
 
                     self.reconcile_players_with_available_videos(None);
