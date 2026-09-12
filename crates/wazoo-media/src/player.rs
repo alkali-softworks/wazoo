@@ -723,11 +723,6 @@ impl VideoHandle {
                         frame_guard.new_frame = true;
                     }
 
-                    self.current_frame = iced::widget::image::Handle::from_rgba(
-                        self.render_width,
-                        self.render_height,
-                        self.pixel_buffer.clone(),
-                    );
                     self.state.position = self.position();
                     let d = self.duration();
                     if d > Duration::ZERO {
