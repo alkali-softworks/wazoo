@@ -218,12 +218,11 @@ impl WazooApp {
     pub(crate) fn view_help_modal(&self) -> Element<'_, Message> {
         let shortcuts = [
             ("Esc", "Toggle Menu / Close Modal"),
-            ("?", "Toggle Help"),
             ("b", "Toggle Bookmarks"),
             ("+ / =", "Add Bookmark (or Scroll Speed +)"),
             ("-", "Remove Bookmark (or Scroll Speed -)"),
             ("r", "Random Seek on Video"),
-            ("t", "Show Video Title Pill"),
+            ("t", "Show Video Title"),
             ("5", "Toggle Scroll Mode"),
             ("6", "Toggle Flip Mode"),
             ("h", "Toggle File Picker"),
@@ -237,7 +236,7 @@ impl WazooApp {
             ("[space]", "Play / Pause"),
             ("↓ ↑", "Prev / Next Video"),
             ("← →", "Seek Back / Forward"),
-            ("s", "Toggle Play Mode (Shuffle / Sequential)"),
+            ("s", "Toggle Shuffle / Sequential"),
             ("m", "Toggle Mute"),
             ("[ OR ]", "Adjust Volume"),
             ("j OR /", "Search Videos"),
