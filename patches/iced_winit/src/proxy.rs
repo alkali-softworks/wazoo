@@ -14,7 +14,7 @@ use std::pin::Pin;
 pub struct Proxy<T: 'static> {
     raw: winit::event_loop::EventLoopProxy<Action<T>>,
     sender: mpsc::Sender<Action<T>>,
-    notifier: mpsc::Sender<usize>,
+    notifier: mpsc::UnboundedSender<usize>,
 }
 
 impl<T: 'static> Clone for Proxy<T> {
@@ -34,7 +34,7 @@ impl<T: 'static> Proxy<T> {
     pub fn new(
         raw: winit::event_loop::EventLoopProxy<Action<T>>,
     ) -> (Self, impl Future<Output = ()>) {
-        let (notifier, mut processed) = mpsc::channel(Self::MAX_SIZE);
+        let (notifier, mut processed) = mpsc::unbounded();
         let (sender, mut receiver) = mpsc::channel(Self::MAX_SIZE);
         let proxy = raw.clone();
 
@@ -94,7 +94,7 @@ impl<T: 'static> Proxy<T> {
     /// Frees an amount of slots for additional messages to be queued in
     /// this [`Proxy`].
     pub fn free_slots(&mut self, amount: usize) {
-        let _ = self.notifier.start_send(amount);
+        let _ = self.notifier.unbounded_send(amount);
     }
 }
 

@@ -29,6 +29,16 @@ pub fn main() -> iced::Result {
     #[cfg(target_os = "linux")]
     crate::platform::init_linux_cursor_env();
 
+    #[cfg(target_os = "linux")]
+    {
+        // On Linux systems, especially hybrid graphics laptops (Intel iGPU + NVIDIA dGPU),
+        // defaulting to the integrated GPU avoids cross-GPU DRI3 PRIME swapchain presentation
+        // failure / VK_ERROR_DEVICE_LOST when windows are occluded or behind other windows.
+        if std::env::var("WGPU_POWER_PREF").is_err() {
+            std::env::set_var("WGPU_POWER_PREF", "low");
+        }
+    }
+
     let initial_query = cli.query;
     iced::application(
         move || WazooApp::new(initial_query.clone()),
