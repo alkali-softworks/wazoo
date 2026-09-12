@@ -77,12 +77,18 @@ pub struct VideoSession {
     pub volume: f64,
 }
 
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Bookmark {
     pub name: String,
     pub query: String,
     pub path: String,
     pub position_secs: f64,
+    #[serde(default = "default_true")]
+    pub is_shuffle: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
