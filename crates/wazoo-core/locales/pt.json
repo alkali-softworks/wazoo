@@ -82,7 +82,9 @@
       "search_videos": "Pesquisar vídeos",
       "fullscreen": "Tela cheia",
       "close_app": "Fechar aplicativo",
-      "move_window": "Mover janela"
+      "move_window": "Mover janela",
+      "toggle_bookmarks": "Alternar favoritos",
+      "toggle_transcript": "Alternar transcrição de legendas"
     }
   },
   "file_picker": {

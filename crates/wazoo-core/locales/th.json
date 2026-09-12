@@ -82,7 +82,9 @@
       "search_videos": "ค้นหาวิดีโอ",
       "fullscreen": "เต็มหน้าจอ",
       "close_app": "ปิดแอป",
-      "move_window": "ย้ายหน้าต่าง"
+      "move_window": "ย้ายหน้าต่าง",
+      "toggle_bookmarks": "สลับที่คั่นหน้า",
+      "toggle_transcript": "สลับคำบรรยายบทสนทนา"
     }
   },
   "file_picker": {

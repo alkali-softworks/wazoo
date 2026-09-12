@@ -82,7 +82,9 @@
       "search_videos": "Rechercher des vidéos",
       "fullscreen": "Plein écran",
       "close_app": "Quitter l'application",
-      "move_window": "Déplacer la fenêtre"
+      "move_window": "Déplacer la fenêtre",
+      "toggle_bookmarks": "Basculer les favoris",
+      "toggle_transcript": "Basculer la transcription des sous-titres"
     }
   },
   "file_picker": {

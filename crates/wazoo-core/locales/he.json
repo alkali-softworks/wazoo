@@ -82,7 +82,9 @@
       "search_videos": "חפש סרטונים",
       "fullscreen": "מסך מלא",
       "close_app": "סגור אפליקציה",
-      "move_window": "הזז חלון"
+      "move_window": "הזז חלון",
+      "toggle_bookmarks": "החלף סימניות",
+      "toggle_transcript": "החלף תמליל כתוביות"
     }
   },
   "file_picker": {

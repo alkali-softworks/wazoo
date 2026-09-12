@@ -82,7 +82,9 @@
       "search_videos": "搜索视频",
       "fullscreen": "全屏",
       "close_app": "关闭应用",
-      "move_window": "移动窗口"
+      "move_window": "移动窗口",
+      "toggle_bookmarks": "切换书签",
+      "toggle_transcript": "切换字幕转录"
     }
   },
   "file_picker": {

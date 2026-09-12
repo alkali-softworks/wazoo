@@ -235,9 +235,9 @@ impl WazooApp {
 
     pub(crate) fn view_help_modal(&self) -> Element<'_, Message> {
         let shortcuts = [
-            ("Esc", self.t("common.help")),
-            ("b", "Toggle Bookmarks".to_string()),
-            ("+ / =", "+ / =".to_string()),
+            ("?", self.t("help.shortcuts.toggle_help")),
+            ("b", self.t("help.shortcuts.toggle_bookmarks")),
+            ("+ / =", self.t("bookmarks.bookmark_current")),
             ("5", self.t("help.shortcuts.toggle_scroll")),
             ("6", self.t("help.shortcuts.toggle_flip")),
             ("h", self.t("help.shortcuts.toggle_file_picker")),
@@ -246,7 +246,7 @@ impl WazooApp {
             ("Tab", self.t("help.shortcuts.focus_next")),
             ("l", self.t("help.shortcuts.toggle_layout")),
             ("c", self.t("help.shortcuts.toggle_subtitles")),
-            ("v", "Toggle Subtitle Transcript".to_string()),
+            ("v", self.t("help.shortcuts.toggle_transcript")),
             ("< OR >", self.t("help.shortcuts.prev_next_frame")),
             ("[space]", self.t("help.shortcuts.play_pause")),
             ("↓ ↑", self.t("help.shortcuts.prev_next_video")),

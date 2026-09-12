@@ -82,7 +82,9 @@
       "search_videos": "비디오 검색",
       "fullscreen": "전체 화면",
       "close_app": "앱 종료",
-      "move_window": "창 이동"
+      "move_window": "창 이동",
+      "toggle_bookmarks": "북마크 전환",
+      "toggle_transcript": "자막 대본 전환"
     }
   },
   "file_picker": {

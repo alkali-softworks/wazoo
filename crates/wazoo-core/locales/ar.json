@@ -82,7 +82,9 @@
       "search_videos": "بحث عن فيديوهات",
       "fullscreen": "ملء الشاشة",
       "close_app": "إغلاق التطبيق",
-      "move_window": "تحريك النافذة"
+      "move_window": "تحريك النافذة",
+      "toggle_bookmarks": "تبديل الإشارات المرجعية",
+      "toggle_transcript": "تبديل نصوص الترجمة"
     }
   },
   "file_picker": {

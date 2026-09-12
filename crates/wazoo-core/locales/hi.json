@@ -82,7 +82,9 @@
       "search_videos": "वीडियो खोजें",
       "fullscreen": "फुलस्क्रीन",
       "close_app": "ऐप बंद करें",
-      "move_window": "विंडो ले जाएं"
+      "move_window": "विंडो ले जाएं",
+      "toggle_bookmarks": "बुकमार्क टॉगल करें",
+      "toggle_transcript": "उपशीर्षक प्रतिलेख टॉगल करें"
     }
   },
   "file_picker": {

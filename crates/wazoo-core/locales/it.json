@@ -82,7 +82,9 @@
       "search_videos": "Cerca video",
       "fullscreen": "Schermo intero",
       "close_app": "Chiudi app",
-      "move_window": "Sposta finestra"
+      "move_window": "Sposta finestra",
+      "toggle_bookmarks": "Attiva/disattiva segnalibri",
+      "toggle_transcript": "Attiva/disattiva trascrizione sottotitoli"
     }
   },
   "file_picker": {
