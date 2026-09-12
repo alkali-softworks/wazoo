@@ -205,7 +205,9 @@ impl WazooApp {
         let content = column![
             Space::new().height(Length::Fixed(24.0)),
             row![
-                text(self.t("common.files")).size(18).color(iced::Color::WHITE),
+                text(self.t_with("settings.total_videos", &[("count", &format::format_number(self.available_videos.len()))]))
+                    .size(18)
+                    .color(iced::Color::WHITE),
                 Space::new().width(Length::Fill),
                 button(text("✕").size(14))
                     .style(theme::window_control_button_style)
