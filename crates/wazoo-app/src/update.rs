@@ -861,7 +861,9 @@ impl WazooApp {
                     self.players.pop();
                 }
                 while self.players.len() < target {
-                    self.add_player_internal();
+                    if self.add_player_internal().is_none() {
+                        break;
+                    }
                 }
                 for p in &mut self.players {
                     p.set_muted(self.settings.is_global_muted);

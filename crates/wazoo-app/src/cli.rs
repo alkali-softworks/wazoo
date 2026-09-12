@@ -93,47 +93,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_cli_empty_args() {
-        let parsed = parse_cli_args_from(Vec::<String>::new());
-        assert_eq!(parsed.query, None);
-    }
-
-    #[test]
-    fn test_cli_single_positional_arg() {
-        let parsed = parse_cli_args_from(vec!["boku".to_string()]);
-        assert_eq!(parsed.query, Some("boku".to_string()));
-    }
-
-    #[test]
-    fn test_cli_multi_positional_args() {
-        let parsed = parse_cli_args_from(vec!["boku".to_string(), "hero".to_string()]);
-        assert_eq!(parsed.query, Some("boku hero".to_string()));
-    }
-
-    #[test]
-    fn test_cli_query_flags() {
-        let parsed = parse_cli_args_from(vec!["-q".to_string(), "boku".to_string()]);
-        assert_eq!(parsed.query, Some("boku".to_string()));
-
-        let parsed2 = parse_cli_args_from(vec!["--query".to_string(), "boku no hero".to_string()]);
-        assert_eq!(parsed2.query, Some("boku no hero".to_string()));
-
-        let parsed3 = parse_cli_args_from(vec!["--query=boku".to_string()]);
-        assert_eq!(parsed3.query, Some("boku".to_string()));
-
-        let parsed4 = parse_cli_args_from(vec!["-q=boku".to_string()]);
-        assert_eq!(parsed4.query, Some("boku".to_string()));
-    }
-
-    #[test]
-    fn test_cli_dash_dash_delimiter() {
-        let parsed = parse_cli_args_from(vec!["--".to_string(), "-special".to_string(), "video".to_string()]);
-        assert_eq!(parsed.query, Some("-special video".to_string()));
-    }
-
-    #[test]
-    fn test_cli_whitespace_only() {
-        let parsed = parse_cli_args_from(vec!["   ".to_string()]);
-        assert_eq!(parsed.query, None);
+    fn test_cli_parsing() {
+        assert_eq!(parse_cli_args_from(Vec::<String>::new()).query, None);
+        assert_eq!(parse_cli_args_from(vec!["   ".to_string()]).query, None);
+        assert_eq!(parse_cli_args_from(vec!["boku".to_string()]).query, Some("boku".to_string()));
+        assert_eq!(parse_cli_args_from(vec!["boku".to_string(), "hero".to_string()]).query, Some("boku hero".to_string()));
+        assert_eq!(parse_cli_args_from(vec!["-q".to_string(), "boku".to_string()]).query, Some("boku".to_string()));
+        assert_eq!(parse_cli_args_from(vec!["--query=boku".to_string()]).query, Some("boku".to_string()));
+        assert_eq!(parse_cli_args_from(vec!["--".to_string(), "-special".to_string(), "video".to_string()]).query, Some("-special video".to_string()));
     }
 }

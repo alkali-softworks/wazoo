@@ -38,6 +38,19 @@ impl ConfigManager {
         }
     }
 
+    pub fn with_dirs(config_dir: PathBuf, data_dir: PathBuf) -> Self {
+        if !config_dir.exists() {
+            let _ = fs::create_dir_all(&config_dir);
+        }
+        if !data_dir.exists() {
+            let _ = fs::create_dir_all(&data_dir);
+        }
+        Self {
+            config_dir,
+            data_dir,
+        }
+    }
+
     pub fn config_file_path(&self) -> PathBuf {
         self.config_dir.join("settings.json")
     }
