@@ -204,3 +204,250 @@ button.addEventListener('click', handleClick);
 // WRONG: Executes immediately on page load!
 button.addEventListener('click', handleClick());
 ```
+
+---
+
+## 🧱 Chapter 4: There Are No Classes in Rust! (`struct`, `impl`, and `let mut`)
+
+In PHP and JS, Object-Oriented Programming glues your **data** and your **methods** together inside a `class`:
+
+```php
+// PHP: Data and methods glued together in one class
+class User {
+    public $name;
+    public $age;
+
+    public function celebrateBirthday() {
+        $this->age++;
+    }
+}
+```
+
+**Rust has NO `class` keyword.**
+Instead, Rust separates the **DATA** from the **BEHAVIOR**:
+1. **`struct`** defines the shape of the data (like a database schema or TypeScript interface).
+2. **`impl`** defines the functions and methods that operate on that data.
+
+```rust
+// 1. DATA: Just the fields in memory
+pub struct User {
+    pub name: String,
+    pub age: u32,
+}
+
+// 2. BEHAVIOR: "impl" = "Implement methods for User"
+impl User {
+    // "new" is NOT a keyword or special constructor!
+    // It is literally just a regular function name by convention.
+    // You could name it `create`, `build`, or `spawn`!
+    pub fn new(name: String, age: u32) -> Self {
+        Self { name, age }
+    }
+
+    // A method on an instance (&mut self)
+    pub fn celebrate_birthday(&mut self) {
+        self.age += 1;
+    }
+}
+```
+
+---
+
+### ❓ "Wait, if it's not a class, how does it have a constructor? Do I say `new User('klo', 42)`?"
+
+**NO! There is NO `new` keyword in Rust!**
+
+In JS and PHP, `new` is a built-in language operator that allocates an object on the heap and triggers `__construct()`:
+```js
+// JavaScript:
+const user = new User("klo", 42);
+```
+```php
+// PHP:
+$user = new User("klo", 42);
+```
+
+**In Rust, `new` is NOT a language keyword.**
+Rust doesn't have constructors at the language level. Instead, there are **two ways** to create a struct:
+
+#### Method A: The Conventional Function Call (`User::new(...)`)
+Because `new` is just a regular static function in `impl User`, you call it using double colons `::`:
+```rust
+// How you call it in Rust:
+let mut user = User::new(String::from("klo"), 42);
+
+// Now you can call methods on it with a dot:
+user.celebrate_birthday();
+println!("Age is now: {}", user.age); // 43
+```
+*(Notice `String::from("klo")` because `"klo"` in quotes is a borrowed `&str`, but our struct owns a heap `String`. And `42` is an integer number, not a string `'42'`!)*
+
+#### Method B: Direct Struct Literal (No function needed at all!)
+If a struct's fields are public, you don't even need a `new()` function! You can instantiate it directly in place (like a JS object literal):
+```rust
+let user = User {
+    name: String::from("klo"),
+    age: 42,
+};
+```
+
+So why do Rust developers write `pub fn new(...)`?
+1. **Validation**: You can enforce rules (e.g. `if age < 0 { return Err(...); }`).
+2. **Encapsulation**: If fields are private, `new()` is the only gatekeeper to construct the struct.
+3. **Defaults**: You can set initial default values for fields so the caller doesn't have to specify all 15 fields manually.
+
+
+### 🔒 `let` vs `let mut` (Immutability by Default)
+
+In PHP, all variables are mutable `$x = 1; $x = 2;`.
+In JS, you have `const` and `let`.
+
+**In Rust, EVERYTHING is `const` by default!**
+
+```rust
+let x = 5;
+x = 6; // 💥 COMPILE ERROR! `x` is immutable!
+```
+
+If you want to be able to change a variable's value, you must **explicitly** write `mut` (short for mutable):
+
+```rust
+let mut x = 5;
+x = 6; // ✅ Perfectly fine because you opted into mutability.
+```
+
+Why does Rust do this?
+Because accidental variable mutation is one of the biggest sources of bugs and race conditions in multi-threaded programs. In Rust, you can look at any variable and know: *if it doesn't say `mut`, its value will never change.*
+
+---
+
+### 👤 `self` vs `Self` (Lowercase vs Uppercase)
+
+Inside an `impl` block, you will see both:
+
+1. **`Self`** (Capital `S`):
+   - An alias for the **TYPE** name.
+   - Inside `impl TutorialApp`, `Self` literally means `TutorialApp`.
+   - `-> Self` means "this function returns a `TutorialApp`".
+   - `Self::new()` means `TutorialApp::new()`.
+
+2. **`self`** (Lowercase `s`):
+   - The actual **INSTANCE** of the object!
+   - In PHP, this is `$this`.
+   - In JS, this is `this`.
+
+---
+
+### ⚙️ Static Functions vs Instance Methods
+
+How does Rust know if a function is static (called on the class) or an instance method (called on an object)?
+Look at the **first argument**:
+
+```rust
+impl TutorialApp {
+    // STATIC FUNCTION (No `self` in arguments):
+    // Like `public static function new()` in PHP.
+    // Called with double-colons: TutorialApp::new()
+    pub fn new() -> (Self, Task<Message>) {
+        ...
+    }
+
+    // READ-ONLY METHOD (Takes `&self`):
+    // Borrows read access to `$this`.
+    // Called with dot: app.view()
+    pub fn view(&self) -> Element<'_, Message> {
+        ...
+    }
+
+    // MUTABLE METHOD (Takes `&mut self`):
+    // Borrows write access to `$this`.
+    // Called with dot: app.update(msg)
+    pub fn update(&mut self, message: Message) -> Task<Message> {
+        self.counter_value += 1; // Can mutate fields!
+        ...
+    }
+}
+```
+
+#### ❓ "Do I need to pass in `self` when calling `app.view()`?"
+
+**NO! You do NOT pass `self`!**
+
+You just call it with the dot operator like in JS/PHP:
+```rust
+app.view();                // <-- NO arguments passed for self!
+app.update(my_message);    // <-- Only pass the other arguments!
+```
+
+The dot operator `.` is syntactic sugar. Behind the scenes, the compiler automatically passes `&app` or `&mut app` as the first argument:
+
+| Method Type | How You Define It | How You Call It | What Compiler Does Behind the Scenes |
+| :--- | :--- | :--- | :--- |
+| **Static Function** | `fn new() -> Self` | `TutorialApp::new()` | `TutorialApp::new()` |
+| **Read-Only Method** | `fn view(&self)` | `app.view()` | `TutorialApp::view(&app)` |
+| **Mutable Method** | `fn update(&mut self, msg)` | `app.update(msg)` | `TutorialApp::update(&mut app, msg)` |
+| **Consuming Method** (takes ownership) | `fn close(self)` | `app.close()` | `TutorialApp::close(app)` |
+
+#### 🎯 The PHP Mental Model: `::` vs `.`
+
+Think of it exactly like PHP:
+```
+In PHP:
+  App::new()      <-- Double colons `::` for STATIC call on the class
+  $app->view()    <-- Arrow `->` for INSTANCE call on the object
+
+In Rust:
+  TutorialApp::new()  <-- Double colons `::` for STATIC call on the type
+  app.view()          <-- Dot `.` for INSTANCE call on the object
+```
+*(The only visual difference is Rust uses a dot `.` where PHP uses `->`, because in PHP the dot was already reserved for string concatenation `$a . $b`!)*
+
+Whenever you see:
+- **`::`** (double colon) $\rightarrow$ You are calling the **type/namespace** (static).
+- **`.`** (dot) $\rightarrow$ You are calling the **instance** of an object.
+
+
+### Cheat Sheet: PHP/JS vs Rust
+
+| Concept | PHP / JS | Rust |
+| :--- | :--- | :--- |
+| Object shape | `class User { public $name; }` | `struct User { name: String }` |
+| Attach methods | Inside the `class` block | Inside `impl User { ... }` |
+| Immutable variable | `const x = 5;` | `let x = 5;` |
+| Mutable variable | `$x = 5;` / `let x = 5;` | `let mut x = 5;` |
+| `$this` / `this` | `$this` / `this` | `self` |
+| Class Name Alias | `self::` (PHP) | `Self` |
+| Static call | `User::create()` | `User::create()` |
+| Method call | `$user->save()` / `user.save()` | `user.save()` |
+
+---
+
+### 💡 "WTF is `let app = Self { ... }` in `app.rs` line 122?"
+
+When you see:
+```rust
+impl TutorialApp {
+    pub fn new() -> (Self, Task<Message>) {
+        ...
+        let app = Self {
+            counter_value: 0,
+            active_tab: Tab::CounterAndWidgets,
+            ...
+        };
+
+        (app, Task::none())
+    }
+}
+```
+
+It looks like the function is referencing itself in a circle, but here is what is actually happening:
+
+1. **`Self` is an alias for `TutorialApp`**:
+   Because we are inside `impl TutorialApp`, writing `Self { ... }` is 100% identical to writing `TutorialApp { ... }`.
+2. **It constructs a new instance**:
+   In PHP: `$app = new self();`
+   In JS: `const app = new TutorialApp();`
+3. **Implicit Return (No `return` keyword, no semicolon!)**:
+   Notice line `(app, Task::none())` at the bottom of `new()`.
+   In Rust, **the last expression in a function without a semicolon `;` is automatically returned**!
+   You don't need to write `return (app, Task::none());`. Leaving off the semicolon makes it the return value.
