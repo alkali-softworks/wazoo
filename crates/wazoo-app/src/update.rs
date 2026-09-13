@@ -517,6 +517,25 @@ impl WazooApp {
             Message::SelectSearchFolder(folder) => {
                 self.selected_search_folder = folder;
             }
+            Message::ResetSearchFolder => {
+                self.selected_search_folder = "All".to_string();
+                self.settings.last_folder = "All".to_string();
+                let _ = self.config_mgr.save_settings(&self.settings);
+
+                let folders: Vec<String> = Vec::new();
+                if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
+                    let total = results.len();
+                    self.available_videos = results;
+                    self.file_picker_entries.clear();
+                    self.apply_file_picker_search();
+                    self.show_video_totals_notice(total, "All");
+                    self.reconcile_players_with_available_videos(None);
+                    self.save_session_state();
+                    if self.show_transcript {
+                        return self.load_transcript_for_focused_player();
+                    }
+                }
+            }
             Message::SetWindowOpacity(opacity) => {
                 self.settings.window_opacity = opacity.clamp(0.05, 1.0);
                 let _ = self.config_mgr.save_settings(&self.settings);
@@ -1450,7 +1469,11 @@ impl WazooApp {
                 }
 
                 if self.selected_search_folder == folder {
-                    self.selected_search_folder.clear();
+                    self.selected_search_folder = "All".to_string();
+                }
+                if self.settings.last_folder == folder {
+                    self.settings.last_folder = "All".to_string();
+                    let _ = self.config_mgr.save_settings(&self.settings);
                 }
 
                 let folder_name = format::format_video_folder(&folder);

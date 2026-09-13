@@ -1166,5 +1166,36 @@ mod tests {
             assert!(p.state.is_muted, "Player {i} should be muted");
         }
     }
+
+    #[test]
+    fn test_file_picker_confined_folder_badge_and_reset() {
+        let (mut app, _) = new_test_app();
+        app.available_videos = vec![
+            VideoRecord { id: 1, name: "Anime 1".to_string(), path: "/media/anime/a1.mp4".to_string() },
+            VideoRecord { id: 2, name: "Movie 1".to_string(), path: "/media/movies/m1.mp4".to_string() },
+        ];
+
+        // 1. When last_folder is "All", no confined badge
+        app.settings.last_folder = "All".to_string();
+        {
+            let _view_all = app.view_file_picker();
+        }
+
+        // 2. When last_folder is confined to "anime"
+        app.settings.last_folder = "/media/anime".to_string();
+        {
+            let _view_confined = app.view_file_picker();
+        }
+
+        // 3. Triggering ResetSearchFolder restores last_folder and selected_search_folder to "All"
+        let _ = app.update(Message::ResetSearchFolder);
+        assert_eq!(app.settings.last_folder, "All");
+        assert_eq!(app.selected_search_folder, "All");
+
+        // 4. View file picker again after reset
+        {
+            let _view_reset = app.view_file_picker();
+        }
+    }
 }
 
