@@ -31,6 +31,8 @@ pub const TITLEBAR_FADE_TICKS: usize = 12;
 pub const TITLEBAR_SHOW_DELAY_TICKS: usize = 8;
 /// File picker search input debounce delay: ~200ms at 60 FPS (12 ticks)
 pub const FILE_PICKER_DEBOUNCE_TICKS: usize = 12;
+/// Maximum number of videos retained in the session play history drawer
+pub const MAX_PLAY_HISTORY_ENTRIES: usize = 1000;
 
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct PlaybackHistoryEntry {
@@ -602,7 +604,7 @@ impl WazooApp {
             title,
             folder,
         });
-        if self.play_history.len() > 100 {
+        if self.play_history.len() > MAX_PLAY_HISTORY_ENTRIES {
             self.play_history.remove(0);
         }
     }
@@ -1682,14 +1684,14 @@ mod tests {
         app.record_play_history("/media/video2.mp4");
         assert_eq!(app.play_history.len(), 2);
 
-        // 3. Cap at 100 entries
-        for i in 3..=150 {
+        // 3. Cap at 1000 entries
+        for i in 3..=1050 {
             app.record_play_history(&format!("/media/video{}.mp4", i));
         }
-        assert_eq!(app.play_history.len(), 100);
+        assert_eq!(app.play_history.len(), 1000);
         // The oldest items (video1 to video50) should be dropped; oldest in list should be video51
         assert_eq!(app.play_history.first().unwrap().path, "/media/video51.mp4");
-        assert_eq!(app.play_history.last().unwrap().path, "/media/video150.mp4");
+        assert_eq!(app.play_history.last().unwrap().path, "/media/video1050.mp4");
 
         // 4. Toggle drawer
         let _ = app.update(Message::ToggleHistoryDrawer);
