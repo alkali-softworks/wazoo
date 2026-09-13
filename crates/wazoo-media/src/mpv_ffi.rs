@@ -48,6 +48,7 @@ pub const MPV_EVENT_END_FILE: c_int = 7;
 pub const MPV_EVENT_FILE_LOADED: c_int = 8;
 pub const MPV_EVENT_IDLE: c_int = 11;
 pub const MPV_EVENT_TRACKS_CHANGED: c_int = 18;
+pub const MPV_EVENT_VIDEO_RECONFIG: c_int = 19;
 pub const MPV_EVENT_PLAYBACK_RESTART: c_int = 21;
 pub const MPV_EVENT_PROPERTY_CHANGE: c_int = 22;
 

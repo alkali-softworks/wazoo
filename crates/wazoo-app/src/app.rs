@@ -187,7 +187,10 @@ impl WazooApp {
         } else {
             db.get_all_videos().unwrap_or_default()
         };
-        let mut scroll_engine = ScrollEngine::new(settings.window_bounds.height as f32);
+        let mut scroll_engine = ScrollEngine::with_window_size(
+            settings.window_bounds.width as f32,
+            settings.window_bounds.height as f32,
+        );
         scroll_engine.set_speed(settings.scroll_speed);
         scroll_engine.is_global_muted = settings.is_global_muted;
 
@@ -339,11 +342,20 @@ impl WazooApp {
         app.apply_file_picker_search();
 
         let preload_task = if app.settings.playback_mode == PlaybackMode::Scroll {
-            let ids: Vec<PlayerId> = app.players.iter().map(|p| p.id).collect();
-            app.scroll_engine.init_stack(&ids);
-            let item_h = app.scroll_engine.default_item_height();
+            let items_with_heights: Vec<(PlayerId, f32)> = app
+                .players
+                .iter()
+                .map(|p| (p.id, app.calculate_player_scroll_height(p)))
+                .collect();
+            app.scroll_engine.init_stack_with_heights(&items_with_heights);
             while let Some(spawn_y) = app.scroll_engine.needs_new_player() {
                 if let Some(id) = app.add_player_internal() {
+                    let item_h = app
+                        .players
+                        .iter()
+                        .find(|p| p.id == id)
+                        .map(|p| app.calculate_player_scroll_height(p))
+                        .unwrap_or_else(|| app.scroll_engine.default_item_height());
                     app.scroll_engine.add_item(id, spawn_y, item_h);
                 } else {
                     break;
@@ -858,6 +870,16 @@ impl WazooApp {
         )
     }
 
+    /// Calculates the real pixel height for a player in scroll mode based on its native aspect ratio
+    /// and the current stream (window) width.
+    pub(crate) fn calculate_player_scroll_height(&self, player: &VideoHandle) -> f32 {
+        if let Some(ar) = player.aspect_ratio() {
+            self.scroll_engine.item_height_for_aspect_ratio(ar)
+        } else {
+            self.scroll_engine.default_item_height()
+        }
+    }
+
     pub fn title(&self) -> String {
         if let Some(player) = self.focused_player() {
             let title = if !player.state.path.is_empty() {
@@ -1364,6 +1386,50 @@ mod tests {
     fn test_view_titlebar() {
         let (app, _) = new_test_app();
         let _elem = app.view_titlebar();
+    }
+
+    #[test]
+    fn test_scroll_mode_real_heights_and_recalculation() {
+        let (mut app, _) = new_test_app();
+        app.settings.window_bounds.width = 1920;
+        app.settings.window_bounds.height = 1080;
+        app.scroll_engine.set_window_size(1920.0, 1080.0);
+
+        // Standard 16:9 widescreen video at 1920 width -> real height is 1080.0
+        let h_16_9 = app.scroll_engine.item_height_for_aspect_ratio(16.0 / 9.0);
+        assert!((h_16_9 - 1080.0).abs() < 1.0);
+
+        // 4:3 video at 1920 width -> real height is 1440.0
+        let h_4_3 = app.scroll_engine.item_height_for_aspect_ratio(4.0 / 3.0);
+        assert!((h_4_3 - 1440.0).abs() < 1.0);
+
+        // 9:16 vertical video at 1920 width -> real height is 3413.33
+        let h_9_16 = app.scroll_engine.item_height_for_aspect_ratio(9.0 / 16.0);
+        assert!((h_9_16 - 3413.33).abs() < 1.0);
+
+        // When toggling scroll mode with items, stack initializes with real heights
+        app.scroll_engine.init_stack_with_heights(&[(1, h_16_9), (2, h_4_3)]);
+        assert_eq!(app.scroll_engine.items.get(&1).unwrap().y_pos, 0.0);
+        assert_eq!(app.scroll_engine.items.get(&1).unwrap().height, h_16_9);
+        assert_eq!(app.scroll_engine.items.get(&2).unwrap().y_pos, h_16_9);
+        assert_eq!(app.scroll_engine.items.get(&2).unwrap().height, h_4_3);
+
+        // Dynamic update on aspect ratio resolution
+        let changed = app.scroll_engine.update_height(1, 1080.0);
+        assert!(!changed, "Height did not change significantly, so returns false");
+        let changed = app.scroll_engine.update_height(1, 1200.0);
+        assert!(changed, "Height changed by > 1px, so returns true");
+        app.scroll_engine.recalculate_positions();
+        assert_eq!(app.scroll_engine.items.get(&1).unwrap().y_pos, 0.0);
+        assert_eq!(app.scroll_engine.items.get(&1).unwrap().height, 1200.0);
+        assert_eq!(app.scroll_engine.items.get(&2).unwrap().y_pos, 1200.0);
+
+        // Window resize updates window size and recalculates scroll item heights
+        let _ = app.update(Message::WindowResized(iced::window::Id::unique(), iced::Size::new(1280.0, 720.0)));
+        assert_eq!(app.scroll_engine.window_width, 1280.0);
+        assert_eq!(app.scroll_engine.window_height, 720.0);
+        let resized_h_16_9 = app.scroll_engine.item_height_for_aspect_ratio(16.0 / 9.0);
+        assert!((resized_h_16_9 - 720.0).abs() < 1.0);
     }
 }
 
