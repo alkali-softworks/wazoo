@@ -383,6 +383,7 @@ pub struct VideoHandle {
     is_eos: bool,
     last_seek_time: Option<Instant>,
     pending_seek: Option<Duration>,
+    pending_seek_random: bool,
     tracks_loaded: bool,
     preferred_audio_language: Option<String>,
 }
@@ -609,6 +610,7 @@ impl VideoHandle {
                 is_eos: false,
                 last_seek_time,
                 pending_seek,
+                pending_seek_random: false,
                 tracks_loaded: false,
                 preferred_audio_language: config.preferred_audio_language,
             };
@@ -647,6 +649,14 @@ impl VideoHandle {
                         if let Ok(c_cmd) = CString::new(cmd) {
                             mpv_ffi::mpv_command_string(self.mpv, c_cmd.as_ptr());
                         }
+                    } else if self.pending_seek_random {
+                        let dur = self.duration();
+                        if dur > Duration::from_secs(2) {
+                            self.pending_seek_random = false;
+                            let max_secs = dur.as_secs_f64();
+                            let rand_secs = rand::thread_rng().gen_range(0.0..max_secs);
+                            self.seek(Duration::from_secs_f64(rand_secs));
+                        }
                     }
                 }
             }
@@ -669,6 +679,16 @@ impl VideoHandle {
                     if let Ok(c_cmd) = CString::new(cmd) {
                         mpv_ffi::mpv_command_string(self.mpv, c_cmd.as_ptr());
                     }
+                }
+            }
+
+            if self.pending_seek_random {
+                let dur = self.duration();
+                if dur > Duration::from_secs(2) {
+                    self.pending_seek_random = false;
+                    let max_secs = dur.as_secs_f64();
+                    let rand_secs = rand::thread_rng().gen_range(0.0..max_secs);
+                    self.seek(Duration::from_secs_f64(rand_secs));
                 }
             }
 
@@ -831,12 +851,19 @@ impl VideoHandle {
         }
     }
 
+    pub fn is_pending_seek_random(&self) -> bool {
+        self.pending_seek_random
+    }
+
     pub fn seek_random(&mut self) {
         let duration = self.duration();
         if duration > Duration::from_secs(2) {
             let max_secs = duration.as_secs_f64();
             let rand_secs = rand::thread_rng().gen_range(0.0..max_secs);
+            self.pending_seek_random = false;
             self.seek(Duration::from_secs_f64(rand_secs));
+        } else {
+            self.pending_seek_random = true;
         }
     }
 
@@ -849,6 +876,7 @@ impl VideoHandle {
     }
 
     fn seek_internal(&mut self, val: f64, relative: bool, accurate: bool) {
+        self.pending_seek_random = false;
         self.last_seek_time = Some(Instant::now());
         self.is_eos = false;
         self.state.stuck_count = 0;
@@ -1467,5 +1495,22 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(format_subtitle_track_label(&t5, 4), "Track 5");
+    }
+
+    #[test]
+    fn test_pending_seek_random_flag() {
+        let temp_dir = std::env::temp_dir();
+        let dummy_path = temp_dir.join("wazoo_dummy_test.mp4");
+        let _ = std::fs::write(&dummy_path, b"dummy content");
+        if let Ok(mut handle) = VideoHandle::new(999, dummy_path.to_str().unwrap(), "dummy") {
+            assert!(!handle.is_pending_seek_random());
+            handle.seek_random();
+            // Since dummy file has 0 duration, seek_random marks pending_seek_random
+            assert!(handle.is_pending_seek_random());
+            // Manual seek clears pending_seek_random
+            handle.seek(Duration::from_secs(5));
+            assert!(!handle.is_pending_seek_random());
+        }
+        let _ = std::fs::remove_file(&dummy_path);
     }
 }

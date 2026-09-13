@@ -89,7 +89,10 @@ impl WazooApp {
         if !loaded {
             for _ in 0..3 {
                 if let Some(video_rec) = self.get_next_video_rec_with_mode(curr_path.as_deref(), self.is_player_shuffle(id)) {
-                    if let Ok(new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
+                    if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
+                        if self.settings.playback_mode == PlaybackMode::Scroll || self.settings.playback_mode == PlaybackMode::Flip {
+                            new_handle.seek_random();
+                        }
                         self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
                         break;
@@ -219,12 +222,14 @@ impl WazooApp {
                     Ok(mut handle) => {
                         handle.set_subtitles_visible(self.subtitles_enabled);
                         handle.set_muted(self.settings.is_global_muted);
+                        handle.seek_random();
                         let item_h = self.calculate_player_scroll_height(&handle);
                         // If scroll stream needs a player right now, attach it immediately!
                         if let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(item_h * 0.5) {
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
+                            self.record_play_history(&handle.state.path);
                             self.players.push(handle);
                             return self.trigger_preload_task();
                         } else {
@@ -270,6 +275,7 @@ impl WazooApp {
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
+                            handle.seek_random();
                             self.record_play_history(&handle.state.path);
                             self.players.push(handle);
                         } else {
@@ -1904,6 +1910,7 @@ impl WazooApp {
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
+                            handle.seek_random();
                             self.record_play_history(&handle.state.path);
                             self.players.push(handle);
                             needs_preload = true;
