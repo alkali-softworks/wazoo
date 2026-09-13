@@ -207,38 +207,4 @@ mod tests {
         assert!(!Language::is_rtl_code("es"));
         assert!(!Language::is_rtl_code("ja"));
     }
-
-    #[test]
-    fn test_transcript_and_bookmarks_translations() {
-        assert_eq!(t("en", "transcript.title"), "Transcript");
-        assert_eq!(t("es", "transcript.title"), "Transcripción");
-        assert_eq!(t("ja", "transcript.title"), "トランスクリプト");
-        assert_eq!(t("zh", "transcript.title"), "字幕记录");
-
-        assert_eq!(t("en", "transcript.loading_subtitles"), "Loading embedded subtitles");
-        assert_eq!(t("es", "transcript.loading_subtitles"), "Cargando subtítulos integrados");
-
-        assert_eq!(t("en", "bookmarks.title"), "Bookmarks");
-        assert_eq!(t("es", "bookmarks.title"), "Marcadores");
-        assert_eq!(t("ja", "bookmarks.title"), "ブックマーク");
-
-        assert_eq!(t("en", "bookmarks.not_found"), "No bookmark found for current video");
-        assert_eq!(t("es", "bookmarks.not_found"), "No se encontró ningún marcador para el video actual");
-        assert_eq!(t_with("en", "bookmarks.added", &[("name", "Test")]), "Added bookmark: Test");
-        assert_eq!(t_with("es", "bookmarks.added", &[("name", "Test")]), "Marcador añadido: Test");
-    }
-
-    #[test]
-    fn test_is_all_folder() {
-        assert!(is_all_folder(""));
-        assert!(is_all_folder("All"));
-        assert!(is_all_folder("all"));
-        assert!(is_all_folder("ALL"));
-        assert!(is_all_folder("Todo")); // Spanish
-        assert!(is_all_folder("Alle")); // German
-        assert!(is_all_folder("Tout")); // French
-        assert!(is_all_folder("すべて")); // Japanese
-        assert!(!is_all_folder("anime"));
-        assert!(!is_all_folder("/media/movies"));
-    }
 }

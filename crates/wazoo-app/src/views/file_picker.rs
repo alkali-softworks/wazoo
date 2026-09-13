@@ -12,7 +12,6 @@ use iced::{
     widget::{button, column, container, row, scrollable, text, text_input, Space},
     Alignment, Element, Length,
 };
-use wazoo_core::VideoRecord;
 use crate::app::WazooApp;
 use crate::format;
 use crate::message::Message;
@@ -112,36 +111,6 @@ impl WazooApp {
             .into_iter()
             .map(|(folder, files)| FilePickerGroup { folder, files })
             .collect();
-    }
-
-    #[cfg_attr(not(test), allow(dead_code))]
-    pub(crate) fn filter_and_group_videos_for_picker(&self) -> BTreeMap<String, Vec<&VideoRecord>> {
-        let search_filter = self.file_picker_search.trim().to_lowercase();
-        let search_clean = search_filter.replace(['_', '-'], " ");
-        let search_words: Vec<&str> = search_clean.split_whitespace().collect();
-
-        // Group videos by folder
-        let mut grouped: BTreeMap<String, Vec<&VideoRecord>> = BTreeMap::new();
-        for v in &self.available_videos {
-            let folder = format::format_video_folder(&v.path);
-            let folder_key = if folder.is_empty() { "Other".to_string() } else { folder };
-            let title = format::format_video_title(&v.path);
-
-            if !search_words.is_empty() {
-                let folder_lower = folder_key.to_lowercase();
-                let title_lower = title.to_lowercase();
-                let matches_all_words = search_words
-                    .iter()
-                    .all(|w| folder_lower.contains(w) || title_lower.contains(w));
-                if !matches_all_words {
-                    continue;
-                }
-            }
-
-            grouped.entry(folder_key).or_default().push(v);
-        }
-
-        grouped
     }
 
     pub(crate) fn view_file_picker(&self) -> Element<'_, Message> {

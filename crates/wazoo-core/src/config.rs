@@ -61,7 +61,7 @@ impl ConfigManager {
 
     pub fn load_settings(&self) -> WazooSettings {
         let path = self.config_file_path();
-        if path.exists() {
+        let mut settings = if path.exists() {
             if let Ok(content) = fs::read_to_string(&path) {
                 if let Ok(mut settings) = serde_json::from_str::<WazooSettings>(&content) {
                     settings.buffer_size_mb = settings.buffer_size_mb.clamp(16, 4096);
@@ -69,11 +69,29 @@ impl ConfigManager {
                     settings.window_bounds.width = settings.window_bounds.width.clamp(200, 7680);
                     settings.window_bounds.height = settings.window_bounds.height.clamp(150, 4320);
                     settings.keybinds.reconcile_with_defaults();
-                    return settings;
+                    settings
+                } else {
+                    WazooSettings::default()
                 }
+            } else {
+                WazooSettings::default()
+            }
+        } else {
+            WazooSettings::default()
+        };
+
+        if let Ok(val) = std::env::var("WAZOO_FLIP_INTERVAL") {
+            if let Ok(secs) = val.trim().parse::<u64>() {
+                settings.flip_interval_secs = secs;
             }
         }
-        WazooSettings::default()
+        settings.flip_interval_secs = settings.flip_interval_secs.clamp(1, 3600);
+
+        if settings.playback_mode == crate::models::PlaybackMode::Flip {
+            settings.playback_mode = crate::models::PlaybackMode::Normal;
+        }
+
+        settings
     }
 
     pub fn has_keybinds_in_settings(&self) -> bool {
@@ -94,7 +112,11 @@ impl ConfigManager {
 
     pub fn save_settings(&self, settings: &WazooSettings) -> Result<(), std::io::Error> {
         let path = self.config_file_path();
-        let json = serde_json::to_string_pretty(settings)?;
+        let mut to_save = settings.clone();
+        if to_save.playback_mode == crate::models::PlaybackMode::Flip {
+            to_save.playback_mode = crate::models::PlaybackMode::Normal;
+        }
+        let json = serde_json::to_string_pretty(&to_save)?;
         let temp_path = path.with_extension("tmp");
         fs::write(&temp_path, json)?;
         fs::rename(temp_path, path)
@@ -319,6 +341,84 @@ mod tests {
         assert_eq!(clamped.window_bounds.y, 20);
         assert_eq!(clamped.window_bounds.width, 200);
         assert_eq!(clamped.window_bounds.height, 150);
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_flip_interval_serialization_and_clamping() {
+        let mut settings = WazooSettings::default();
+        assert_eq!(settings.flip_interval_secs, 45);
+
+        // Verify serialization and deserialization
+        settings.flip_interval_secs = 60;
+        let json = serde_json::to_string(&settings).unwrap();
+        let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.flip_interval_secs, 60);
+
+        // Verify legacy settings without flip_interval_secs defaults to 45
+        let legacy_json = r#"{"window_opacity":1.0}"#;
+        let legacy: WazooSettings = serde_json::from_str(legacy_json).unwrap();
+        assert_eq!(legacy.flip_interval_secs, 45);
+
+        // Verify clamping in load_settings
+        let temp_dir = std::env::temp_dir().join(format!("wazoo_flip_test_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let _ = fs::create_dir_all(&temp_dir);
+        let mgr = ConfigManager {
+            config_dir: temp_dir.clone(),
+            data_dir: temp_dir.clone(),
+        };
+
+        fs::write(mgr.config_file_path(), r#"{"flip_interval_secs": 0}"#).unwrap();
+        let loaded = mgr.load_settings();
+        assert_eq!(loaded.flip_interval_secs, 1);
+
+        fs::write(mgr.config_file_path(), r#"{"flip_interval_secs": 99999}"#).unwrap();
+        let loaded_max = mgr.load_settings();
+        assert_eq!(loaded_max.flip_interval_secs, 3600);
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_flip_mode_does_not_persist() {
+        use crate::models::PlaybackMode;
+
+        let temp_dir = std::env::temp_dir().join(format!("wazoo_flip_persist_test_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let _ = fs::create_dir_all(&temp_dir);
+
+        let mgr = ConfigManager {
+            config_dir: temp_dir.clone(),
+            data_dir: temp_dir.clone(),
+        };
+
+        // 1. If save_settings is called while in Flip mode, it should save as Normal mode
+        let settings = WazooSettings {
+            playback_mode: PlaybackMode::Flip,
+            ..Default::default()
+        };
+        mgr.save_settings(&settings).unwrap();
+
+        let content = fs::read_to_string(mgr.config_file_path()).unwrap();
+        assert!(!content.contains(r#""playback_mode": "flip""#));
+        assert!(content.contains(r#""playback_mode": "normal""#));
+
+        let loaded = mgr.load_settings();
+        assert_eq!(loaded.playback_mode, PlaybackMode::Normal);
+
+        // 2. Scroll mode does persist
+        let scroll_settings = WazooSettings {
+            playback_mode: PlaybackMode::Scroll,
+            ..Default::default()
+        };
+        mgr.save_settings(&scroll_settings).unwrap();
+        let loaded_scroll = mgr.load_settings();
+        assert_eq!(loaded_scroll.playback_mode, PlaybackMode::Scroll);
+
+        // 3. Pre-existing settings file with "flip" is coerced to Normal on load
+        fs::write(mgr.config_file_path(), r#"{"playback_mode": "flip"}"#).unwrap();
+        let loaded_legacy = mgr.load_settings();
+        assert_eq!(loaded_legacy.playback_mode, PlaybackMode::Normal);
 
         let _ = fs::remove_dir_all(&temp_dir);
     }

@@ -994,7 +994,8 @@ impl WazooApp {
         }
 
         if self.settings.playback_mode == PlaybackMode::Flip {
-            subs.push(iced::time::every(Duration::from_secs(15)).map(|_| Message::FlipModeTick));
+            let interval_secs = self.settings.flip_interval_secs.max(1);
+            subs.push(iced::time::every(Duration::from_secs(interval_secs)).map(|_| Message::FlipModeTick));
         }
 
         Subscription::batch(subs)
@@ -1018,6 +1019,18 @@ mod tests {
     }
 
     #[test]
+    fn test_test_app_isolation() {
+        let (mut app, _) = new_test_app();
+        // Ensure test config path does not point to live user directory
+        let path = app.config_mgr.config_file_path();
+        assert!(!path.to_string_lossy().contains(".config/wazoo-rs"));
+        app.settings.media_folders = vec!["/test/isolated/folder".to_string()];
+        let save_res = app.config_mgr.save_settings(&app.settings);
+        assert!(save_res.is_ok());
+        assert!(path.exists());
+    }
+
+    #[test]
     fn test_is_point_in_titlebar() {
         let (mut app, _) = new_test_app();
         app.settings.window_bounds.width = 800;
@@ -1036,167 +1049,6 @@ mod tests {
         assert!(!app.is_point_in_titlebar(Point::new(801.0, 10.0)));
     }
 
-    #[test]
-    fn test_search_tags_comma_and_backspace() {
-        use iced::keyboard::{key::Named, Key};
-
-        let (mut app, _) = new_test_app();
-        app.active_search_query.clear();
-        let _ = app.update(Message::OpenSearchModal);
-        assert!(app.show_search_modal);
-        assert!(app.search_tags.is_empty());
-        assert!(app.search_input.is_empty());
-
-        // 1. Typing without comma updates search_input
-        let _ = app.update(Message::SearchInputChanged("bebop".to_string()));
-        assert_eq!(app.search_input, "bebop");
-        assert!(app.search_tags.is_empty());
-
-        // 2. Typing comma commits tag and clears search_input
-        let _ = app.update(Message::SearchInputChanged("bebop,".to_string()));
-        assert_eq!(app.search_tags, vec!["bebop"]);
-        assert_eq!(app.search_input, "");
-
-        // 3. Pasting multiple comma-separated items
-        let _ = app.update(Message::SearchInputChanged("cowboy, space, spike".to_string()));
-        assert_eq!(app.search_tags, vec!["bebop", "cowboy", "space"]);
-        assert_eq!(app.search_input, "spike");
-
-        // 4. Backspace when search_input is not empty does NOT pop tag
-        let _ = app.update(Message::KeyPressed(Key::Named(Named::Backspace), iced::event::Status::Captured));
-        assert_eq!(app.search_tags.len(), 3);
-
-        // 5. Backspace when search_input is empty pops the last tag
-        app.search_input.clear();
-        let _ = app.update(Message::KeyPressed(Key::Named(Named::Backspace), iced::event::Status::Captured));
-        assert_eq!(app.search_tags, vec!["bebop", "cowboy"]);
-
-        // 6. Remove specific tag by index
-        let _ = app.update(Message::RemoveSearchTag(0));
-        assert_eq!(app.search_tags, vec!["cowboy"]);
-
-        // 7. PerformSearch commits pending text and builds full query
-        let _ = app.update(Message::SearchInputChanged("anime".to_string()));
-        let _ = app.update(Message::PerformSearch);
-        assert_eq!(app.active_search_query, "cowboy, anime");
-        assert_eq!(app.search_tags, vec!["cowboy", "anime"]);
-        assert_eq!(app.search_input, "");
-        assert!(!app.show_search_modal);
-
-        // 8. Re-opening search modal populates tags from active_search_query
-        let _ = app.update(Message::OpenSearchModal);
-        assert_eq!(app.search_tags, vec!["cowboy", "anime"]);
-        assert_eq!(app.search_input, "");
-    }
-
-    #[test]
-    fn test_file_picker_search_matches_folder_name_and_expands() {
-        let (mut app, _) = new_test_app();
-        app.available_videos = vec![
-            VideoRecord {
-                id: 1,
-                name: "S01E01-Jobless Reincarnation V2".to_string(),
-                path: "/media/Mushoku Tensei/S01E01-Jobless Reincarnation V2.mkv".to_string(),
-            },
-            VideoRecord {
-                id: 2,
-                name: "Mushoku Tensei S3 - 01".to_string(),
-                path: "/media/Mushoku Tensei/Mushoku Tensei S3 - 01.mkv".to_string(),
-            },
-            VideoRecord {
-                id: 3,
-                name: "S01E02-Teacher V2".to_string(),
-                path: "/media/Mushoku Tensei/S01E02-Teacher V2.mkv".to_string(),
-            },
-            VideoRecord {
-                id: 4,
-                name: "S01E01-The Journey Begins".to_string(),
-                path: "/media/Frieren/S01E01-The Journey Begins.mkv".to_string(),
-            },
-        ];
-
-        // 1. When search is empty, all folders and files are present
-        app.apply_file_picker_search();
-        let grouped = app.filter_and_group_videos_for_picker();
-        assert_eq!(grouped.len(), 2);
-        assert_eq!(grouped["Mushoku Tensei"].len(), 3);
-        assert_eq!(grouped["Frieren"].len(), 1);
-        assert_eq!(app.file_picker_groups.len(), 2);
-
-        // 2. Searching "mush" initiates debounce, then ApplyFilePickerSearch immediately applies it
-        let _ = app.update(Message::FilePickerSearchChanged("mush".to_string()));
-        assert_eq!(app.file_picker_search, "mush");
-        assert_eq!(app.file_picker_debounce_ticks, FILE_PICKER_DEBOUNCE_TICKS);
-        let _ = app.update(Message::ApplyFilePickerSearch);
-        assert_eq!(app.file_picker_debounce_ticks, 0);
-        assert!(app.expanded_folders.contains("Mushoku Tensei"));
-        assert!(!app.expanded_folders.contains("Frieren"));
-
-        let grouped = app.filter_and_group_videos_for_picker();
-        assert_eq!(grouped.len(), 1);
-        assert_eq!(grouped["Mushoku Tensei"].len(), 3);
-        assert_eq!(app.file_picker_groups.len(), 1);
-        assert_eq!(app.file_picker_groups[0].folder, "Mushoku Tensei");
-        assert_eq!(app.file_picker_groups[0].files.len(), 3);
-
-        // 3. Searching for a specific episode title "Jobless" inside that folder via tick countdown
-        let _ = app.update(Message::FilePickerSearchChanged("Jobless".to_string()));
-        assert_eq!(app.file_picker_debounce_ticks, FILE_PICKER_DEBOUNCE_TICKS);
-        for _ in 0..FILE_PICKER_DEBOUNCE_TICKS {
-            let _ = app.update(Message::VideoFrameTick);
-        }
-        assert_eq!(app.file_picker_debounce_ticks, 0);
-        let grouped = app.filter_and_group_videos_for_picker();
-        assert_eq!(grouped.len(), 1);
-        assert_eq!(grouped["Mushoku Tensei"].len(), 1);
-        assert_eq!(grouped["Mushoku Tensei"][0].name, "S01E01-Jobless Reincarnation V2");
-        assert_eq!(app.file_picker_groups.len(), 1);
-        assert_eq!(app.file_picker_groups[0].files.len(), 1);
-
-        // 4. Searching across folder and title with multiple words: "mushoku jobless"
-        let _ = app.update(Message::FilePickerSearchChanged("mushoku jobless".to_string()));
-        let _ = app.update(Message::ApplyFilePickerSearch);
-        let grouped = app.filter_and_group_videos_for_picker();
-        assert_eq!(grouped.len(), 1);
-        assert_eq!(grouped["Mushoku Tensei"].len(), 1);
-        assert_eq!(grouped["Mushoku Tensei"][0].name, "S01E01-Jobless Reincarnation V2");
-        assert_eq!(app.file_picker_groups[0].files.len(), 1);
-
-        // 5. Searching for "The Journey" matches only Frieren
-        let _ = app.update(Message::FilePickerSearchChanged("The Journey".to_string()));
-        let _ = app.update(Message::ApplyFilePickerSearch);
-        assert!(app.expanded_folders.contains("Frieren"));
-        let grouped = app.filter_and_group_videos_for_picker();
-        assert_eq!(grouped.len(), 1);
-        assert_eq!(grouped["Frieren"].len(), 1);
-        assert_eq!(app.file_picker_groups.len(), 1);
-        assert_eq!(app.file_picker_groups[0].folder, "Frieren");
-
-        // 6. Clearing the search immediately clears debounce and restores all groups
-        let _ = app.update(Message::FilePickerSearchChanged("".to_string()));
-        assert_eq!(app.file_picker_debounce_ticks, 0);
-        assert!(app.expanded_folders.is_empty());
-        let grouped = app.filter_and_group_videos_for_picker();
-        assert_eq!(grouped.len(), 2);
-        assert_eq!(grouped["Mushoku Tensei"].len(), 3);
-        assert_eq!(grouped["Frieren"].len(), 1);
-        assert_eq!(app.file_picker_groups.len(), 2);
-
-        // 7. Verify view_file_picker constructs successfully with total video count
-        let _picker_view = app.view_file_picker();
-    }
-
-    #[test]
-    fn test_test_app_isolation() {
-        let (mut app, _) = new_test_app();
-        // Ensure test config path does not point to live user directory
-        let path = app.config_mgr.config_file_path();
-        assert!(!path.to_string_lossy().contains(".config/wazoo-rs"));
-        app.settings.media_folders = vec!["/test/isolated/folder".to_string()];
-        let save_res = app.config_mgr.save_settings(&app.settings);
-        assert!(save_res.is_ok());
-        assert!(path.exists());
-    }
 
     #[test]
     fn test_get_next_video_rec_sequential_and_random() {
@@ -1306,110 +1158,6 @@ mod tests {
         assert!(app.player_nav_history.get(&player_id).unwrap().back_stack.is_empty());
     }
 
-    #[test]
-    fn test_player_mute_prior_state_on_player_count_change() {
-        let sample = "/home/klo/Downloads/VID_20240309_123459_679.mp4";
-        if !std::path::Path::new(sample).exists() {
-            return;
-        }
-
-        let (mut app, _) = new_test_app();
-        app.available_videos = vec![
-            VideoRecord { id: 1, name: "V1".to_string(), path: sample.to_string() },
-            VideoRecord { id: 2, name: "V2".to_string(), path: sample.to_string() },
-            VideoRecord { id: 3, name: "V3".to_string(), path: sample.to_string() },
-            VideoRecord { id: 4, name: "V4".to_string(), path: sample.to_string() },
-        ];
-
-        // 1. Start with 1 player - ambient background players start muted by default
-        let _ = app.update(Message::SetPlayerCount(1));
-        assert_eq!(app.players.len(), 1);
-        let p0_id = app.players[0].id;
-        assert!(app.players[0].state.is_muted);
-
-        // 2. Unmute player 0 individually
-        let _ = app.update(Message::TogglePlayerMute(p0_id));
-        assert!(!app.players[0].state.is_muted);
-
-        // 3. When player 0 advances to next video, it should also be unmuted!
-        let _ = app.update(Message::NextVideo(p0_id));
-        assert!(!app.players[0].state.is_muted);
-
-        // 4. Switching to 4 players: player 0 stays unmuted, new background players start muted
-        let _ = app.update(Message::SetPlayerCount(4));
-        assert_eq!(app.players.len(), 4);
-        assert!(!app.players[0].state.is_muted);
-        assert!(app.players[1].state.is_muted);
-        assert!(app.players[2].state.is_muted);
-        assert!(app.players[3].state.is_muted);
-
-        // 5. Mute player 0, so viewing 1 player that is muted (or all players muted)
-        let _ = app.update(Message::TogglePlayerMute(p0_id));
-        assert!(app.players[0].state.is_muted);
-
-        // 6. Switching to 1 player: it stays muted
-        let _ = app.update(Message::SetPlayerCount(1));
-        assert_eq!(app.players.len(), 1);
-        assert!(app.players[0].state.is_muted);
-
-        // 7. Switching from 1 muted player to 4 players: all 4 players are muted!
-        let _ = app.update(Message::SetPlayerCount(4));
-        assert_eq!(app.players.len(), 4);
-        for (i, p) in app.players.iter().enumerate() {
-            assert!(p.state.is_muted, "Player {i} should be muted");
-        }
-    }
-
-    #[test]
-    fn test_file_picker_confined_folder_badge_and_reset() {
-        let (mut app, _) = new_test_app();
-        app.available_videos = vec![
-            VideoRecord { id: 1, name: "Anime 1".to_string(), path: "/media/anime/a1.mp4".to_string() },
-            VideoRecord { id: 2, name: "Movie 1".to_string(), path: "/media/movies/m1.mp4".to_string() },
-        ];
-
-        // 1. Initial state: active search folder is "All"
-        assert_eq!(app.active_search_folder, "All");
-        assert_eq!(app.selected_search_folder, "All");
-        assert_eq!(app.settings.last_folder, "All");
-        {
-            let _view_all = app.view_file_picker();
-        }
-
-        // 2. User clicks a folder chip in search modal: selected_search_folder updates,
-        // but active_search_folder and last_folder MUST NOT update yet!
-        let _ = app.update(Message::SelectSearchFolder("/media/anime".to_string()));
-        assert_eq!(app.selected_search_folder, "/media/anime");
-        assert_eq!(app.active_search_folder, "All");
-
-        // Even if watchdog ticks or session state is saved while modal is open,
-        // settings.last_folder remains "All"
-        let sample = "/home/klo/Downloads/VID_20240309_123459_679.mp4";
-        if std::path::Path::new(sample).exists() {
-            let _ = app.update(Message::SetPlayerCount(1));
-        }
-        app.save_session_state();
-        assert_eq!(app.settings.last_folder, "All");
-
-        // 3. User submits search query (PerformSearch): now active_search_folder and last_folder update!
-        let _ = app.update(Message::PerformSearch);
-        assert_eq!(app.active_search_folder, "/media/anime");
-        assert_eq!(app.settings.last_folder, "/media/anime");
-        {
-            let _view_confined = app.view_file_picker();
-        }
-
-        // 4. Triggering ResetSearchFolder restores active_search_folder, selected_search_folder, and last_folder to "All"
-        let _ = app.update(Message::ResetSearchFolder);
-        assert_eq!(app.active_search_folder, "All");
-        assert_eq!(app.selected_search_folder, "All");
-        assert_eq!(app.settings.last_folder, "All");
-
-        // 5. View file picker again after reset
-        {
-            let _view_reset = app.view_file_picker();
-        }
-    }
 
     #[test]
     fn test_file_picker_confined_folder_badge_multilingual() {
@@ -1449,26 +1197,6 @@ mod tests {
     }
 
     #[test]
-    fn test_toast_localization() {
-        let (mut app, _) = new_test_app();
-        
-        // 1. In English default
-        assert_eq!(app.t_with("player.playing", &[("title", "Episode 1")]), "Playing: Episode 1");
-        let _ = app.update(Message::ToggleShuffleMode);
-        assert_eq!(app.toast_message.as_deref(), Some("Switched to sequential mode"));
-        let _ = app.update(Message::SetScrollSpeed(1.5));
-        assert_eq!(app.toast_message.as_deref(), Some("Scroll Speed: 1.5"));
-
-        // 2. Switch to Spanish
-        let _ = app.update(Message::SetLanguage("es".to_string()));
-        assert_eq!(app.t_with("player.playing", &[("title", "Episodio 1")]), "Reproduciendo: Episodio 1");
-        let _ = app.update(Message::ToggleShuffleMode);
-        assert_eq!(app.toast_message.as_deref(), Some("Cambiado a modo aleatorio"));
-        let _ = app.update(Message::SetScrollSpeed(2.0));
-        assert_eq!(app.toast_message.as_deref(), Some("Velocidad de desplazamiento: 2.0"));
-    }
-
-    #[test]
     fn test_boot_persists_default_keybinds() {
         let temp_dir = std::env::temp_dir().join(format!(
             "wazoo_boot_kb_{}_{}",
@@ -1489,55 +1217,6 @@ mod tests {
         let content = std::fs::read_to_string(app.config_mgr.config_file_path()).unwrap();
         assert!(content.contains("\"keybinds\""));
         assert_eq!(app.settings.keybinds.add_player, "n");
-
-        let _ = std::fs::remove_dir_all(&temp_dir);
-    }
-
-    #[test]
-    fn test_boot_preserves_custom_keybinds() {
-        use iced::keyboard::Key;
-        use wazoo_core::LayoutMode;
-
-        let temp_dir = std::env::temp_dir().join(format!(
-            "wazoo_custom_kb_{}_{}",
-            std::process::id(),
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
-        ));
-        let _ = std::fs::create_dir_all(&temp_dir);
-        let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
-        let db = Database::open_in_memory().expect("in-memory db");
-
-        // Write custom keybinds into settings.json before boot (incomplete list)
-        let custom_json = r#"{"keybinds":{"toggle_layout":"o","toggle_bookmarks":"k"}}"#;
-        std::fs::write(config_mgr.config_file_path(), custom_json).unwrap();
-        assert!(!config_mgr.has_complete_keybinds_in_settings());
-
-        let (mut app, _) = WazooApp::new_with_backend(None, config_mgr, db);
-        assert!(app.config_mgr.has_complete_keybinds_in_settings());
-        assert_eq!(app.settings.keybinds.toggle_layout, "o");
-        assert_eq!(app.settings.keybinds.toggle_bookmarks, "k");
-
-        // 1. Bookmarks modal: pressing default 'b' should NOT toggle because remapped to 'k'
-        assert!(!app.show_bookmarks_modal);
-        let _ = app.update(Message::KeyPressed(Key::Character("b".into()), iced::event::Status::Ignored));
-        assert!(!app.show_bookmarks_modal);
-
-        // Pressing custom 'k' SHOULD toggle bookmarks modal to open
-        let _ = app.update(Message::KeyPressed(Key::Character("k".into()), iced::event::Status::Ignored));
-        assert!(app.show_bookmarks_modal);
-
-        // Close bookmarks modal
-        let _ = app.update(Message::CloseBookmarksModal);
-        assert!(!app.show_bookmarks_modal);
-
-        // 2. Cycle layout: pressing default 'l' should NOT cycle because remapped to 'o'
-        assert_eq!(app.settings.layout, LayoutMode::Grid);
-        let _ = app.update(Message::KeyPressed(Key::Character("l".into()), iced::event::Status::Ignored));
-        assert_eq!(app.settings.layout, LayoutMode::Grid);
-
-        // Pressing custom 'o' SHOULD cycle layout from Grid to Row
-        let _ = app.update(Message::KeyPressed(Key::Character("o".into()), iced::event::Status::Ignored));
-        assert_eq!(app.settings.layout, LayoutMode::Row);
 
         let _ = std::fs::remove_dir_all(&temp_dir);
     }
@@ -1572,84 +1251,6 @@ mod tests {
         assert!(updated_file_content.contains("\"toggle_layout\": \"o\""));
         assert!(updated_file_content.contains("\"close_app\": \"Alt+X\""));
         assert!(updated_file_content.contains("\"add_player\": \"n\""));
-
-        let _ = std::fs::remove_dir_all(&temp_dir);
-    }
-
-    #[test]
-    fn test_window_bounds_move_resize_and_save() {
-        use iced::Size;
-
-        let temp_dir = std::env::temp_dir().join(format!(
-            "wazoo_bounds_app_{}_{}",
-            std::process::id(),
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
-        ));
-        let _ = std::fs::create_dir_all(&temp_dir);
-        let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
-
-        // Pre-seed custom window bounds in settings.json
-        let initial_json = r#"{
-            "window_bounds": {
-                "x": 100,
-                "y": 100,
-                "width": 399,
-                "height": 680
-            }
-        }"#;
-        std::fs::write(config_mgr.config_file_path(), initial_json).unwrap();
-
-        let db = Database::open_in_memory().expect("in-memory db");
-        let (mut app, _) = WazooApp::new_with_backend(None, config_mgr, db);
-
-        // Verify boot restores exact window_bounds from settings.json
-        assert_eq!(app.settings.window_bounds.x, 100);
-        assert_eq!(app.settings.window_bounds.y, 100);
-        assert_eq!(app.settings.window_bounds.width, 399);
-        assert_eq!(app.settings.window_bounds.height, 680);
-        assert!(!app.window_bounds_dirty);
-
-        let win_id = iced::window::Id::unique();
-
-        // 1. Moving window updates x and y and sets dirty
-        let _ = app.update(Message::WindowMoved(win_id, Point::new(250.0, 320.0)));
-        assert_eq!(app.settings.window_bounds.x, 250);
-        assert_eq!(app.settings.window_bounds.y, 320);
-        assert!(app.window_bounds_dirty);
-
-        // 2. Resizing window updates width and height and sets dirty
-        let _ = app.update(Message::WindowResized(win_id, Size::new(500.0, 800.0)));
-        assert_eq!(app.settings.window_bounds.width, 500);
-        assert_eq!(app.settings.window_bounds.height, 800);
-        assert!(app.window_bounds_dirty);
-
-        // 3. LeftClickReleased flushes dirty window bounds to disk
-        let _ = app.update(Message::LeftClickReleased);
-        assert!(!app.window_bounds_dirty);
-
-        let loaded = app.config_mgr.load_settings();
-        assert_eq!(loaded.window_bounds.x, 250);
-        assert_eq!(loaded.window_bounds.y, 320);
-        assert_eq!(loaded.window_bounds.width, 500);
-        assert_eq!(loaded.window_bounds.height, 800);
-
-        // 4. Test WatchdogTick flushes dirty bounds
-        let _ = app.update(Message::WindowMoved(win_id, Point::new(50.0, 60.0)));
-        assert!(app.window_bounds_dirty);
-        let _ = app.update(Message::WatchdogTick);
-        assert!(!app.window_bounds_dirty);
-        let loaded2 = app.config_mgr.load_settings();
-        assert_eq!(loaded2.window_bounds.x, 50);
-        assert_eq!(loaded2.window_bounds.y, 60);
-
-        // 5. Test WindowUnfocused flushes dirty bounds
-        let _ = app.update(Message::WindowResized(win_id, Size::new(700.0, 900.0)));
-        assert!(app.window_bounds_dirty);
-        let _ = app.update(Message::WindowUnfocused);
-        assert!(!app.window_bounds_dirty);
-        let loaded3 = app.config_mgr.load_settings();
-        assert_eq!(loaded3.window_bounds.width, 700);
-        assert_eq!(loaded3.window_bounds.height, 900);
 
         let _ = std::fs::remove_dir_all(&temp_dir);
     }

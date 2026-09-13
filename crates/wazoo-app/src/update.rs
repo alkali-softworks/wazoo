@@ -1167,7 +1167,6 @@ impl WazooApp {
                     _ => self.t("wazoo.flip_mode_disabled"),
                 });
                 self.toast_time_remaining = 2;
-                let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::SetScrollSpeed(speed) => {
                 self.settings.scroll_speed = speed.clamp(0.1, 10.0);
