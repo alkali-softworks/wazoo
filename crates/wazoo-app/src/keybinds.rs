@@ -204,6 +204,10 @@ mod tests {
         );
         assert_eq!(
             find_key_action(&kb, &Key::Named(Named::ArrowUp), false),
+            Some(KeyAction::NextVideo)
+        );
+        assert_eq!(
+            find_key_action(&kb, &Key::Named(Named::ArrowDown), false),
             Some(KeyAction::PrevVideo)
         );
         assert_eq!(
