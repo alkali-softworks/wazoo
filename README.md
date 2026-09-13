@@ -2,28 +2,29 @@
 
 > **Ambient media engine for non-stop viewing - built in native Rust.**
 
-**Wazoo** is an ambient video player and "moving mood-board" designed for artists, designers, and curators, who want to experience their local video collection without the burden of choice. Wazoo provides a non-stop feed of visuals that flows continuously based on your library and optional search query. 
+**Wazoo** is an ambient video player and "moving mood-board" built for artists, animators, and curators who want a continuous stream of visual reference and inspiration from their local video collection. Wazoo provides a non-stop feed of videos that flows continuously based on your library and optional search query. 
 
 Wazoo is an idea in development since 2020 - originally as a JS app, then an Electron app, and now finally a native Rust app, ported with the culmination of all the best features from the prior versions.
 
 ---
 
-## 🧠 The Philosophy of "Ambient Viewing"
+## 🧠 Built for Background Reference
 
-Wazoo was born from a simple problem: **digital fatigue.** We spend more time deciding what to watch than actually enjoying our media.
+Most video players assume you're sitting down for a movie or managing a queue. Wazoo is built for a different workflow:
 
-- **Effortless Discovery**: Rediscover forgotten gems in your library without ever having to click "Open File."
-- **A Moving Mood-Board**: Perfect for artists and designers needing continuous background inspiration.
+- **Hands-off ambient flow**: Point Wazoo at your video folders and let it run. No playlists to manage, no file dialogs to click through.
+- **Fast search & filtering**: Use text queries and negative terms to instantly narrow down files and folders across your entire collection.
 
 ---
 
 ## ⚡ High-Performance Architecture
 
+Built in native **Rust** and **Iced** with hardware-accelerated **`libmpv`**, so it can run all day in the background without hogging system resources:
 
-- **Ultra-Lightweight Footprint**: Extremely lean resource usage, typically consuming **~70 MB - 150 MB** of RAM during playback (a fraction of Electron-based apps).
-- **Built with Rust & Iced**: Pure native performance with zero web-engine bloat, instant startup, and memory safety without garbage collection pauses.
-- **Native Hardware Decoding**: Full hardware-accelerated playback for H.264, H.265/HEVC 10-bit, AV1, and VP9 through `libmpv`.
-- **Embedded SQLite Index**: Powered by `rusqlite` for lightning-fast queries across tens of thousands of video files.
+- **Lightweight resource usage**: Consumes **~70 MB - 150 MB** of RAM during playback, leaving your CPU and GPU free for Blender, Photoshop, or your DAW.
+- **Pure native stack**: Zero Electron or web-engine overhead, with instant startup and no garbage collection stutter.
+- **Hardware-accelerated decoding**: Smooth playback for H.264, HEVC 10-bit, AV1, and VP9 through `libmpv`.
+- **Fast local indexing**: SQLite (`rusqlite`) indexes tens of thousands of video files for instant search and shuffle queries.
 
 ---
 
@@ -32,59 +33,57 @@ Wazoo was born from a simple problem: **digital fatigue.** We spend more time de
 
 ### 🖼️ Multi-Tile Layouts
 - **1 to 12 Video Players**: Scale from a single minimalist player to an ambient video wall.
-- **Responsive Layout Engine**: Cycles between **Grid**, **Row**, and **Column** arrangements (<kbd>L</kbd>).
-- **Independent Audio & Seeking**: Per-player volume control, seek sliders, auto-unmute on volume adjustment, and quick random seeking (<kbd>R</kbd>).
+- **Flexible Layouts**: Cycle between **Grid**, **Row**, and **Column** arrangements (<kbd>L</kbd>).
+- **Independent Audio & Controls**: Per-tile volume control, seek sliders, auto-unmute on volume adjustment, and quick random seek (<kbd>R</kbd>).
 
 ### 🔍 Instant Library Search
-- **Smart Directory Scanner**: Recursively indexes media folders while stripping clutter from video titles.
-- **Advanced Query Parser & Negative Queries**: Easily dial in what's included in your media pool. Type just part of each name you want to match. Use comma separated terms to find several shows at once.  Then, to exclude a subset of the results, add `not ` or `!` before each term you want to exclude (e.g. `anime, not bebop`).
+- **Directory Scanner**: Recursively indexes media folders while cleaning up messy filenames in the UI.
+- **Query Parser & Negative Search**: Dial in your media pool quickly. Type partial names, separate multiple terms with commas, and exclude terms with `not ` or `!` (e.g. `anime, not bebop`).
 
 ### 🌊 The Infinity Stream ("Scroll Mode")
-Experience your media library as a continuous vertical river of content (<kbd>5</kbd>):
-- Constant, smooth vertical scroll at configurable `scroll_speed` (<kbd>+</kbd> / <kbd>-</kbd>).
-- **Virtual Viewport**: Automatically despawns players that scroll off the top edge and spawns new candidate videos at the bottom.
-- **Proportional Audio Cross-Fading**: Sound smoothly fades in and out based on the visible percentage of each video on screen.
+View your library as a continuous vertical feed (<kbd>5</kbd>):
+- Smooth vertical scroll at configurable `scroll_speed` (<kbd>+</kbd> / <kbd>-</kbd>).
+- **Virtual Viewport**: Automatically unloads players that scroll out of view and loads new candidate videos at the bottom.
+- **Proportional Audio Fading**: Audio fades in and out based on how much of the video tile is visible on screen.
 
-### ⚡ Flip Mode & Shuffle History Navigation
-Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically shuffle and seek active video tiles to random timestamps, keeping visuals fresh without manual intervention.
-- **Never Miss a Moment**: If you glance at something cool that just flipped away or was skipped in shuffle mode, simply hit **Previous** (<kbd>↓</kbd> or the on-screen Prev button) to jump right back to the previous random video at the exact timestamp you left it.
-- **Scrub Back & Forth**: Pressing **Next** (<kbd>↑</kbd> or Next button) walks forward back through the scrubbed videos before generating new random picks.
-- **Resetting the Stack**: Press <kbd>S</kbd> (or click the play-mode toggle icon on the player overlay) to switch between **Shuffle** and **Sequential** playback. Toggling playback modes clears both the back stack and forward stack, so you can switch to sequential mode and hit <kbd>↓</kbd> to immediately navigate to the previous sequential file in your folder.
+### ⚡ Flip Mode & Shuffle History
+Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</kbd>):
+- **Jump Back to Missed Videos**: If you catch an interesting frame right as it flips away, press **Previous** (<kbd>↓</kbd>) to return to that exact video and timestamp.
+- **Scrub Back & Forth**: Press **Next** (<kbd>↑</kbd>) to step forward through your recently viewed stack before generating new random picks.
+- **Toggle Modes**: Press <kbd>S</kbd> to switch between **Shuffle** and **Sequential** playback (clears navigation history so you can step sequentially through files).
 
 ### 📜 Interactive Subtitle Transcript Drawer
-- **Live Dialogue Transcript**: View a full transcript of the active video dialogue in a slide-out drawer (<kbd>V</kbd> or <kbd>[TX]</kbd> button).
-- **Click to Seek**: Click any subtitle line to jump video playback directly to that timestamp instantly - great for language learning when you want to replay a specific phrase repeatedly.
-- **Active Line Highlighting**: The currently spoken dialogue cue lights up as the video plays.
-- **Dialogue Search Filter**: Filter thousands of dialogue lines to find exact quotes and scenes.
+- **Live Transcript**: View the active video's dialogue in a side drawer (<kbd>V</kbd> or <kbd>[TX]</kbd>).
+- **Click to Seek**: Click any subtitle line to jump directly to that timestamp - great for studying dialogue or language learning.
+- **Active Line Highlighting**: Follows spoken dialogue in real time.
+- **Searchable**: Filter lines to locate specific quotes or scenes.
 
 ### 🔖 Bookmarks & Scene Memory
-- **Instant Bookmarking**: Press <kbd>+</kbd> or <kbd>=</kbd> to save a bookmark of the current video, exact timestamp, search query, and playback mode.
-- **Scene Restoration**: Open the bookmarks drawer (<kbd>B</kbd>) and jump back to any bookmarked scene with a single click.
-- **Multi-Player Reconciliation**: Restoring a bookmark restores your global search query and automatically swaps active player tiles to matching media.
+- **Save Scenes**: Press <kbd>+</kbd> or <kbd>=</kbd> to bookmark the current video, timestamp, search query, and playback mode.
+- **Quick Recall**: Open the bookmarks drawer (<kbd>B</kbd>) to return to any saved scene in one click.
 
-### 🪟 Frameless Glassmorphic Interface
-- Borderless window with sliding titlebar, quick drop-down menu, and HUD controls.
-- **Alt + Drag** navigation to position the window anywhere on screen.
-- Configurable window opacity for semi-transparent ambient desktop backgrounds.
+### 🪟 Frameless Window & HUD
+- Borderless window with a sliding titlebar, quick drop-down menu, and HUD controls.
+- **Alt + Drag** to reposition the window anywhere on screen.
+- Configurable window opacity to keep visual reference floating subtly over other tools.
 
 ### 📁 File Browser Drawer
-- **Collapsible Folder Tree**: Press <kbd>H</kbd> to slide out the library directory tree, organized with file counts per folder.
-- **Direct Tile Loading**: Click any file in the drawer to load it into the active player.
+- **Collapsible Directory Tree**: Press <kbd>H</kbd> to browse folders with file counts.
+- **Direct Tile Loading**: Click any file to load it into the active player.
 
 ### 🕒 Play History Drawer
-- **Session Play Log**: Automatically tracks every video played across all active players in your session (<kbd>Y</kbd> or via the right-click context menu).
-- **Click to Play**: Click any item in the history list to play that video in your active player.
-- **Search & Filter**: Quickly filter through played history by title, directory, or filename.
-- **Clear on Demand**: One-click clear button to reset your session history at any time.
+- **Session History**: Logs every video played during your session (<kbd>Y</kbd> or right-click menu).
+- **Click to Replay**: Click any entry in history to reload it in the active player.
+- **Search & Filter**: Filter played history by title, directory, or filename.
 
 ### 💻 Command-Line Launch & Search
-- **Instant CLI Boot**: Launch Wazoo directly with a search query from your terminal:
+- Launch Wazoo with a search query directly from your terminal:
   ```bash
   wazoo "bebop"
   ```
 
-### 🐕 Unstuck Playback Watchdog
-Ambient displays must never stall. Wazoo constantly monitors playback position progress and automatically cycles to the next video if a network stream or corrupted file encounters a stall.
+### 🐕 Playback Watchdog
+Monitors playback progress and automatically advances to the next video if a file stalls or encounters an issue, keeping your background stream running uninterrupted.
 
 ---
 
