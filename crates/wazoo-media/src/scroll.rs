@@ -20,6 +20,7 @@ pub struct ScrollItem {
 pub struct ScrollEngine {
     pub scroll_speed: f32,
     pub items: HashMap<PlayerId, ScrollItem>,
+    pub window_width: f32,
     pub window_height: f32,
     pub is_global_muted: bool,
 }
@@ -29,12 +30,28 @@ impl ScrollEngine {
         Self {
             scroll_speed: 1.0,
             items: HashMap::new(),
+            window_width: 0.0,
+            window_height,
+            is_global_muted: true,
+        }
+    }
+
+    pub fn with_window_size(window_width: f32, window_height: f32) -> Self {
+        Self {
+            scroll_speed: 1.0,
+            items: HashMap::new(),
+            window_width,
             window_height,
             is_global_muted: true,
         }
     }
 
     pub fn set_window_height(&mut self, height: f32) {
+        self.window_height = height;
+    }
+
+    pub fn set_window_size(&mut self, width: f32, height: f32) {
+        self.window_width = width;
         self.window_height = height;
     }
 
@@ -57,10 +74,17 @@ impl ScrollEngine {
         self.items.remove(&player_id);
     }
 
-    pub fn update_height(&mut self, player_id: PlayerId, height: f32) {
-        if let Some(item) = self.items.get_mut(&player_id) {
-            item.height = height;
+    pub fn update_height(&mut self, player_id: PlayerId, height: f32) -> bool {
+        if height <= 0.0 {
+            return false;
         }
+        if let Some(item) = self.items.get_mut(&player_id) {
+            if (item.height - height).abs() > 1.0 {
+                item.height = height;
+                return true;
+            }
+        }
+        false
     }
 
     pub fn clear(&mut self) {
@@ -68,7 +92,19 @@ impl ScrollEngine {
     }
 
     pub fn default_item_height(&self) -> f32 {
-        (self.window_height / 2.0).max(180.0)
+        if self.window_width > 0.0 {
+            (self.window_width / (16.0 / 9.0)).max(180.0)
+        } else {
+            (self.window_height / 2.0).max(180.0)
+        }
+    }
+
+    pub fn item_height_for_aspect_ratio(&self, aspect_ratio: f32) -> f32 {
+        if aspect_ratio > 0.05 && self.window_width > 0.0 {
+            (self.window_width / aspect_ratio).max(180.0)
+        } else {
+            self.default_item_height()
+        }
     }
 
     /// Initialize a gapless vertical stack of players starting from y = 0.0 downwards.
@@ -77,6 +113,17 @@ impl ScrollEngine {
         let item_h = self.default_item_height();
         let mut y = 0.0;
         for &id in player_ids {
+            self.add_item(id, y, item_h);
+            y += item_h;
+        }
+    }
+
+    /// Initialize a gapless vertical stack of players with custom or real heights.
+    pub fn init_stack_with_heights(&mut self, items: &[(PlayerId, f32)]) {
+        self.items.clear();
+        let mut y = 0.0;
+        for &(id, h) in items {
+            let item_h = if h > 0.0 { h } else { self.default_item_height() };
             self.add_item(id, y, item_h);
             y += item_h;
         }
@@ -278,5 +325,38 @@ mod tests {
 
         // With 100px margin: threshold is 1100 > 1050, so returns Some(1050)
         assert_eq!(engine.needs_new_player_with_margin(100.0), Some(1050.0));
+    }
+
+    #[test]
+    fn test_scroll_engine_real_aspect_ratio_heights() {
+        let mut engine = ScrollEngine::with_window_size(1920.0, 1080.0);
+        
+        // 16:9 widescreen video at 1920 width -> real height is 1080.0
+        let h_16_9 = engine.item_height_for_aspect_ratio(16.0 / 9.0);
+        assert!((h_16_9 - 1080.0).abs() < 1.0);
+
+        // 4:3 standard video at 1920 width -> real height is 1440.0
+        let h_4_3 = engine.item_height_for_aspect_ratio(4.0 / 3.0);
+        assert!((h_4_3 - 1440.0).abs() < 1.0);
+
+        // 9:16 vertical video at 1920 width -> real height is 3413.33
+        let h_9_16 = engine.item_height_for_aspect_ratio(9.0 / 16.0);
+        assert!((h_9_16 - 3413.33).abs() < 1.0);
+
+        // Initial stack with real heights
+        engine.init_stack_with_heights(&[(1, h_16_9), (2, h_4_3)]);
+        assert_eq!(engine.items.get(&1).unwrap().y_pos, 0.0);
+        assert_eq!(engine.items.get(&1).unwrap().height, h_16_9);
+        assert_eq!(engine.items.get(&2).unwrap().y_pos, h_16_9);
+        assert_eq!(engine.items.get(&2).unwrap().height, h_4_3);
+
+        // Updating height of item 1 updates position of item 2 gaplessly
+        let new_h1 = 800.0;
+        let changed = engine.update_height(1, new_h1);
+        assert!(changed);
+        engine.recalculate_positions();
+        assert_eq!(engine.items.get(&1).unwrap().y_pos, 0.0);
+        assert_eq!(engine.items.get(&1).unwrap().height, new_h1);
+        assert_eq!(engine.items.get(&2).unwrap().y_pos, 800.0);
     }
 }

@@ -219,7 +219,7 @@ impl WazooApp {
                     Ok(mut handle) => {
                         handle.set_subtitles_visible(self.subtitles_enabled);
                         handle.set_muted(self.settings.is_global_muted);
-                        let item_h = self.scroll_engine.default_item_height();
+                        let item_h = self.calculate_player_scroll_height(&handle);
                         // If scroll stream needs a player right now, attach it immediately!
                         if let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(item_h * 0.5) {
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
@@ -256,15 +256,17 @@ impl WazooApp {
                     self.settings.window_bounds.height = new_h;
                     self.window_bounds_dirty = true;
                 }
-                self.scroll_engine.set_window_height(size.height);
+                self.scroll_engine.set_window_size(size.width, size.height);
                 if self.settings.playback_mode == PlaybackMode::Scroll {
-                    let item_h = self.scroll_engine.default_item_height();
-                    for item in self.scroll_engine.items.values_mut() {
-                        item.height = item_h;
+                    for p in &self.players {
+                        let item_h = self.calculate_player_scroll_height(p);
+                        self.scroll_engine.update_height(p.id, item_h);
                     }
                     self.scroll_engine.recalculate_positions();
-                    while let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(item_h * 0.5) {
+                    let margin = self.scroll_engine.default_item_height() * 0.5;
+                    while let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(margin) {
                         if let Some(mut handle) = self.preloaded_player.take() {
+                            let item_h = self.calculate_player_scroll_height(&handle);
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
@@ -1113,9 +1115,9 @@ impl WazooApp {
                 if self.settings.playback_mode == PlaybackMode::Scroll {
                     self.settings.is_global_muted = true;
                     self.scroll_engine.is_global_muted = true;
+                    let window_w = self.settings.window_bounds.width as f32;
                     let window_h = self.settings.window_bounds.height as f32;
-                    self.scroll_engine.set_window_height(window_h);
-                    let item_h = self.scroll_engine.default_item_height();
+                    self.scroll_engine.set_window_size(window_w, window_h);
 
                     // Scroll mode requires starting from a clean single-player state.
                     // If we were in multi-player mode (e.g. 2-4 player grid), retain only
@@ -1134,11 +1136,21 @@ impl WazooApp {
                         self.add_player_internal();
                     }
 
-                    let ids: Vec<PlayerId> = self.players.iter().map(|p| p.id).collect();
-                    self.scroll_engine.init_stack(&ids);
+                    let items_with_heights: Vec<(PlayerId, f32)> = self
+                        .players
+                        .iter()
+                        .map(|p| (p.id, self.calculate_player_scroll_height(p)))
+                        .collect();
+                    self.scroll_engine.init_stack_with_heights(&items_with_heights);
 
                     while let Some(spawn_y) = self.scroll_engine.needs_new_player() {
                         if let Some(id) = self.add_player_internal() {
+                            let item_h = self
+                                .players
+                                .iter()
+                                .find(|p| p.id == id)
+                                .map(|p| self.calculate_player_scroll_height(p))
+                                .unwrap_or_else(|| self.scroll_engine.default_item_height());
                             self.scroll_engine.add_item(id, spawn_y, item_h);
                         } else {
                             break;
@@ -1882,12 +1894,13 @@ impl WazooApp {
                         }
                     }
 
-                    let item_h = self.scroll_engine.default_item_height();
+                    let margin = self.scroll_engine.default_item_height() * 0.5;
                     let mut needs_preload = false;
 
                     // Non-blocking spawn: attach preloaded player seamlessly if ready
-                    while let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(item_h * 0.5) {
+                    while let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(margin) {
                         if let Some(mut handle) = self.preloaded_player.take() {
+                            let item_h = self.calculate_player_scroll_height(&handle);
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
@@ -1972,6 +1985,21 @@ impl WazooApp {
                     if p.update_frame() {
                         self.loading_player_ids.remove(&p.id);
                         self.loading_player_ticks.remove(&p.id);
+                    }
+                }
+                if self.settings.playback_mode == PlaybackMode::Scroll {
+                    let mut heights_changed = false;
+                    for p in &self.players {
+                        let h = match p.aspect_ratio() {
+                            Some(ar) => self.scroll_engine.item_height_for_aspect_ratio(ar),
+                            None => self.scroll_engine.default_item_height(),
+                        };
+                        if self.scroll_engine.update_height(p.id, h) {
+                            heights_changed = true;
+                        }
+                    }
+                    if heights_changed {
+                        self.scroll_engine.recalculate_positions();
                     }
                 }
             }

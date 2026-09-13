@@ -555,8 +555,20 @@ impl VideoHandle {
                 Duration::ZERO
             };
 
-            let render_width = 1280u32;
-            let render_height = 720u32;
+            let mut render_width = 1280u32;
+            let mut render_height = 720u32;
+            let mut init_w: i64 = 0;
+            let mut init_h: i64 = 0;
+            let prop_w = CString::new("dwidth").unwrap();
+            let prop_h = CString::new("dheight").unwrap();
+            let res_w = mpv_ffi::mpv_get_property(mpv, prop_w.as_ptr(), mpv_ffi::MPV_FORMAT_INT64, &mut init_w as *mut _ as *mut _);
+            let res_h = mpv_ffi::mpv_get_property(mpv, prop_h.as_ptr(), mpv_ffi::MPV_FORMAT_INT64, &mut init_h as *mut _ as *mut _);
+            if res_w == 0 && res_h == 0 && init_w > 0 && init_h > 0 {
+                let max_dim = 1280.0f32;
+                let scale = (max_dim / (init_w as f32).max(init_h as f32)).min(1.0);
+                render_width = (((init_w as f32 * scale).round() as u32).max(16) / 2) * 2;
+                render_height = (((init_h as f32 * scale).round() as u32).max(16) / 2) * 2;
+            }
             let buffer_size = (render_width * render_height * 4) as usize;
             let mut pixel_buffer = vec![0u8; buffer_size];
             for chunk in pixel_buffer.chunks_exact_mut(4) {
@@ -625,6 +637,7 @@ impl VideoHandle {
                 if (*event).event_id == mpv_ffi::MPV_EVENT_FILE_LOADED
                     || (*event).event_id == mpv_ffi::MPV_EVENT_TRACKS_CHANGED
                     || (*event).event_id == mpv_ffi::MPV_EVENT_PLAYBACK_RESTART
+                    || (*event).event_id == mpv_ffi::MPV_EVENT_VIDEO_RECONFIG
                 {
                     needs_refresh_tracks = true;
                     self.tracks_loaded = true;
@@ -662,6 +675,8 @@ impl VideoHandle {
             if self.render_ctx.is_null() {
                 return false;
             }
+
+            self.check_update_render_dimensions();
 
             let flags = mpv_ffi::mpv_render_context_update(self.render_ctx);
             if (flags & mpv_ffi::MPV_RENDER_UPDATE_FRAME) != 0 {
@@ -1264,6 +1279,64 @@ impl VideoHandle {
                 Some(val != 0)
             } else {
                 None
+            }
+        }
+    }
+
+    pub fn video_dimensions(&self) -> Option<(u32, u32)> {
+        if let (Some(w), Some(h)) = (
+            self.get_property_i64("dwidth").filter(|&v| v > 0),
+            self.get_property_i64("dheight").filter(|&v| v > 0),
+        ) {
+            return Some((w as u32, h as u32));
+        }
+        if let (Some(w), Some(h)) = (
+            self.get_property_i64("video-params/dw").filter(|&v| v > 0),
+            self.get_property_i64("video-params/dh").filter(|&v| v > 0),
+        ) {
+            return Some((w as u32, h as u32));
+        }
+        if let (Some(w), Some(h)) = (
+            self.get_property_i64("video-params/w").filter(|&v| v > 0),
+            self.get_property_i64("video-params/h").filter(|&v| v > 0),
+        ) {
+            return Some((w as u32, h as u32));
+        }
+        None
+    }
+
+    pub fn aspect_ratio(&self) -> Option<f32> {
+        if let Some((w, h)) = self.video_dimensions() {
+            if h > 0 {
+                return Some(w as f32 / h as f32);
+            }
+        }
+        if let Some(s) = self.get_property_string("video-params/aspect") {
+            if let Ok(val) = s.parse::<f32>() {
+                if val > 0.05 {
+                    return Some(val);
+                }
+            }
+        }
+        None
+    }
+
+    fn check_update_render_dimensions(&mut self) {
+        if let Some((w, h)) = self.video_dimensions() {
+            if w > 0 && h > 0 {
+                let max_dim = 1280.0f32;
+                let scale = (max_dim / (w as f32).max(h as f32)).min(1.0);
+                let target_w = (((w as f32 * scale).round() as u32).max(16) / 2) * 2;
+                let target_h = (((h as f32 * scale).round() as u32).max(16) / 2) * 2;
+                if self.render_width != target_w || self.render_height != target_h {
+                    self.render_width = target_w;
+                    self.render_height = target_h;
+                    let buf_size = (target_w * target_h * 4) as usize;
+                    self.pixel_buffer.resize(buf_size, 0);
+                    for chunk in self.pixel_buffer.chunks_exact_mut(4) {
+                        chunk[3] = 255;
+                    }
+                }
             }
         }
     }
