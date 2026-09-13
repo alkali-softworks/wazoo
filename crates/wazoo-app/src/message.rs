@@ -94,7 +94,6 @@ pub enum Message {
     OpenSettingsModal,
     CloseSettingsModal,
     SetLanguage(String),
-    SetBufferDuration(u32),
     OpenHelpModal,
     CloseHelpModal,
     FolderInputChanged(String),

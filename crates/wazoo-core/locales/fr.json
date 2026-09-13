@@ -47,7 +47,13 @@
     "scan_folders": "Scanner les dossiers",
     "add_folder": "Ajouter un dossier",
     "total_videos": "Total des vidéos : {count}",
-    "language": "Langue"
+    "language": "Langue",
+    "folders_added_scanning": "Dossier(s) ajouté(s). Démarrage de l'analyse...",
+    "folder_added": "Dossier ajouté : {folder}",
+    "folder_removed": "Dossier supprimé : {folder} ({count} fichiers)",
+    "scanning_progress": "Analyse en cours{name} ({percent}% - {found} trouvés)",
+    "indexing_progress": "Ajouté : {name} ({percent}%)",
+    "scan_error": "Erreur d'analyse : {error}"
   },
   "search": {
     "folder": "Dossier :",
@@ -85,7 +91,18 @@
     "muted": "Muet",
     "unmuted": "Son activé",
     "subtitles_enabled": "Sous-titres activés",
-    "subtitles_disabled": "Sous-titres désactivés"
+    "subtitles_disabled": "Sous-titres désactivés",
+    "playing": "Lecture : {title}",
+    "seek_position": "Position [{pos} / {dur}]",
+    "seek_relative": "Position {sign}{secs}s  [{pos} / {dur}]",
+    "random_seek": "Recherche aléatoire  [{pos} / {dur}]",
+    "volume": "Volume : {percent}%",
+    "audio_track": "Audio : {label}",
+    "switched_shuffle": "Passé en mode aléatoire",
+    "switched_sequential": "Passé en mode séquentiel",
+    "scroll_speed": "Vitesse de défilement : {speed}",
+    "players_count": "Lecteurs : {count}",
+    "focused_player": "Lecteur actif : {index}"
   },
   "transcript": {
     "title": "Transcription",

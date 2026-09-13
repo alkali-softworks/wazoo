@@ -47,7 +47,13 @@
     "scan_folders": "폴더 스캔",
     "add_folder": "폴더 추가",
     "total_videos": "총 비디오 수: {count}",
-    "language": "언어"
+    "language": "언어",
+    "folders_added_scanning": "폴더 추가됨. 라이브러리 검사 시작 중...",
+    "folder_added": "폴더 추가됨: {folder}",
+    "folder_removed": "폴더 제거됨: {folder} ({count}개 파일)",
+    "scanning_progress": "검사 중{name} ({percent}% - {found}개 발견)",
+    "indexing_progress": "추가됨: {name} ({percent}%)",
+    "scan_error": "검사 오류: {error}"
   },
   "search": {
     "folder": "폴더:",
@@ -85,7 +91,18 @@
     "muted": "음소거됨",
     "unmuted": "음소거 해제됨",
     "subtitles_enabled": "자막 활성화됨",
-    "subtitles_disabled": "자막 비활성화됨"
+    "subtitles_disabled": "자막 비활성화됨",
+    "playing": "재생 중: {title}",
+    "seek_position": "탐색 [{pos} / {dur}]",
+    "seek_relative": "탐색 {sign}{secs}초  [{pos} / {dur}]",
+    "random_seek": "무작위 탐색  [{pos} / {dur}]",
+    "volume": "음량: {percent}%",
+    "audio_track": "오디오: {label}",
+    "switched_shuffle": "셔플 모드로 전환됨",
+    "switched_sequential": "순차 재생 모드로 전환됨",
+    "scroll_speed": "스크롤 속도: {speed}",
+    "players_count": "플레이어 수: {count}",
+    "focused_player": "선택된 플레이어: {index}"
   },
   "transcript": {
     "title": "스크립트",

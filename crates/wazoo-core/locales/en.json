@@ -47,7 +47,13 @@
     "scan_folders": "Scan Folders",
     "add_folder": "Add Folder",
     "total_videos": "Total Videos: {count}",
-    "language": "Language"
+    "language": "Language",
+    "folders_added_scanning": "Added folder(s). Starting library scan...",
+    "folder_added": "Added folder: {folder}",
+    "folder_removed": "Removed {folder} ({count} files)",
+    "scanning_progress": "Scanning{name} ({percent}% - {found} found)",
+    "indexing_progress": "Added: {name} ({percent}%)",
+    "scan_error": "Scan error: {error}"
   },
   "search": {
     "folder": "Folder:",
@@ -85,7 +91,18 @@
     "muted": "Muted",
     "unmuted": "Unmuted",
     "subtitles_enabled": "Subtitles enabled",
-    "subtitles_disabled": "Subtitles disabled"
+    "subtitles_disabled": "Subtitles disabled",
+    "playing": "Playing: {title}",
+    "seek_position": "Seek [{pos} / {dur}]",
+    "seek_relative": "Seek {sign}{secs}s  [{pos} / {dur}]",
+    "random_seek": "Random Seek  [{pos} / {dur}]",
+    "volume": "Volume: {percent}%",
+    "audio_track": "Audio: {label}",
+    "switched_shuffle": "Switched to shuffle mode",
+    "switched_sequential": "Switched to sequential mode",
+    "scroll_speed": "Scroll Speed: {speed}",
+    "players_count": "Players: {count}",
+    "focused_player": "Focused Player: {index}"
   },
   "transcript": {
     "title": "Transcript",

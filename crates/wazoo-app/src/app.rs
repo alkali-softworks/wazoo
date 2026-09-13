@@ -1262,5 +1262,25 @@ mod tests {
         assert_eq!(app.settings.last_folder, "Todo");
         assert!(app.is_all_folder(&app.active_search_folder));
     }
+
+    #[test]
+    fn test_toast_localization() {
+        let (mut app, _) = new_test_app();
+        
+        // 1. In English default
+        assert_eq!(app.t_with("player.playing", &[("title", "Episode 1")]), "Playing: Episode 1");
+        let _ = app.update(Message::ToggleShuffleMode);
+        assert_eq!(app.toast_message.as_deref(), Some("Switched to sequential mode"));
+        let _ = app.update(Message::SetScrollSpeed(1.5));
+        assert_eq!(app.toast_message.as_deref(), Some("Scroll Speed: 1.5"));
+
+        // 2. Switch to Spanish
+        let _ = app.update(Message::SetLanguage("es".to_string()));
+        assert_eq!(app.t_with("player.playing", &[("title", "Episodio 1")]), "Reproduciendo: Episodio 1");
+        let _ = app.update(Message::ToggleShuffleMode);
+        assert_eq!(app.toast_message.as_deref(), Some("Cambiado a modo aleatorio"));
+        let _ = app.update(Message::SetScrollSpeed(2.0));
+        assert_eq!(app.toast_message.as_deref(), Some("Velocidad de desplazamiento: 2.0"));
+    }
 }
 

@@ -47,7 +47,13 @@
     "scan_folders": "סרוק תיקיות",
     "add_folder": "הוסף תיקייה",
     "total_videos": "סך הכל סרטונים: {count}",
-    "language": "שפה"
+    "language": "שפה",
+    "folders_added_scanning": "התיקייה/ות נוספו. מתחיל סריקת ספרייה...",
+    "folder_added": "נוספה תיקייה: {folder}",
+    "folder_removed": "הוסרה תיקייה: {folder} ({count} קבצים)",
+    "scanning_progress": "סורק{name} ({percent}% - נמצאו {found})",
+    "indexing_progress": "נוסף: {name} ({percent}%)",
+    "scan_error": "שגיאת סריקה: {error}"
   },
   "search": {
     "folder": "תיקייה:",
@@ -85,7 +91,18 @@
     "muted": "מושתק",
     "unmuted": "קול פעיל",
     "subtitles_enabled": "כתוביות פעילות",
-    "subtitles_disabled": "כתוביות כבויות"
+    "subtitles_disabled": "כתוביות כבויות",
+    "playing": "מנגן: {title}",
+    "seek_position": "דילוג [{pos} / {dur}]",
+    "seek_relative": "דילוג {sign}{secs} שניות  [{pos} / {dur}]",
+    "random_seek": "דילוג אקראי  [{pos} / {dur}]",
+    "volume": "עוצמת שמע: {percent}%",
+    "audio_track": "שמע: {label}",
+    "switched_shuffle": "הועבר למצב אקראי",
+    "switched_sequential": "הועבר למצב סדרתי",
+    "scroll_speed": "מהירות גלילה: {speed}",
+    "players_count": "נגנים: {count}",
+    "focused_player": "נגן ממוקד: {index}"
   },
   "transcript": {
     "title": "תמליל",

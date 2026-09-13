@@ -47,7 +47,13 @@
     "scan_folders": "Pindai Folder",
     "add_folder": "Tambah Folder",
     "total_videos": "Total Video: {count}",
-    "language": "Bahasa"
+    "language": "Bahasa",
+    "folders_added_scanning": "Folder ditambahkan. Memulai pemindaian pustaka...",
+    "folder_added": "Folder ditambahkan: {folder}",
+    "folder_removed": "Folder dihapus: {folder} ({count} file)",
+    "scanning_progress": "Memindai{name} ({percent}% - {found} ditemukan)",
+    "indexing_progress": "Ditambahkan: {name} ({percent}%)",
+    "scan_error": "Kesalahan pemindaian: {error}"
   },
   "search": {
     "folder": "Folder:",
@@ -85,7 +91,18 @@
     "muted": "Senyap",
     "unmuted": "Suara aktif",
     "subtitles_enabled": "Subtitel aktif",
-    "subtitles_disabled": "Subtitel nonaktif"
+    "subtitles_disabled": "Subtitel nonaktif",
+    "playing": "Memutar: {title}",
+    "seek_position": "Maju/Mundur [{pos} / {dur}]",
+    "seek_relative": "Maju/Mundur {sign}{secs}d  [{pos} / {dur}]",
+    "random_seek": "Pencarian acak  [{pos} / {dur}]",
+    "volume": "Volume: {percent}%",
+    "audio_track": "Audio: {label}",
+    "switched_shuffle": "Beralih ke mode acak",
+    "switched_sequential": "Beralih ke mode berurutan",
+    "scroll_speed": "Kecepatan Gulir: {speed}",
+    "players_count": "Pemutar: {count}",
+    "focused_player": "Pemutar Fokus: {index}"
   },
   "transcript": {
     "title": "Transkrip",

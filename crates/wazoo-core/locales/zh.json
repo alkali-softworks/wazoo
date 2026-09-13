@@ -47,7 +47,13 @@
     "scan_folders": "扫描文件夹",
     "add_folder": "添加文件夹",
     "total_videos": "视频总数: {count}",
-    "language": "语言"
+    "language": "语言",
+    "folders_added_scanning": "已添加文件夹，正在开始扫描媒体库...",
+    "folder_added": "已添加文件夹：{folder}",
+    "folder_removed": "已移除文件夹：{folder}（{count} 个文件）",
+    "scanning_progress": "正在扫描{name}（{percent}% - 找到 {found} 个文件）",
+    "indexing_progress": "已添加：{name}（{percent}%）",
+    "scan_error": "扫描错误：{error}"
   },
   "search": {
     "folder": "文件夹:",
@@ -85,7 +91,18 @@
     "muted": "已静音",
     "unmuted": "已取消静音",
     "subtitles_enabled": "字幕已启用",
-    "subtitles_disabled": "字幕已禁用"
+    "subtitles_disabled": "字幕已禁用",
+    "playing": "播放中：{title}",
+    "seek_position": "快进/快退 [{pos} / {dur}]",
+    "seek_relative": "快进/快退 {sign}{secs}秒  [{pos} / {dur}]",
+    "random_seek": "随机跳转  [{pos} / {dur}]",
+    "volume": "音量：{percent}%",
+    "audio_track": "音频：{label}",
+    "switched_shuffle": "已切换到随机模式",
+    "switched_sequential": "已切换到顺序模式",
+    "scroll_speed": "滚动速度：{speed}",
+    "players_count": "播放器数量：{count}",
+    "focused_player": "焦点播放器：{index}"
   },
   "transcript": {
     "title": "字幕记录",

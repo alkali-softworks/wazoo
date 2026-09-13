@@ -47,7 +47,13 @@
     "scan_folders": "Escanear Carpetas",
     "add_folder": "Añadir Carpeta",
     "total_videos": "Total de videos: {count}",
-    "language": "Idioma"
+    "language": "Idioma",
+    "folders_added_scanning": "Carpeta(s) añadida(s). Iniciando escaneo...",
+    "folder_added": "Carpeta añadida: {folder}",
+    "folder_removed": "Carpeta eliminada: {folder} ({count} archivos)",
+    "scanning_progress": "Escaneando{name} ({percent}% - {found} encontrados)",
+    "indexing_progress": "Añadido: {name} ({percent}%)",
+    "scan_error": "Error de escaneo: {error}"
   },
   "search": {
     "folder": "Carpeta:",
@@ -85,7 +91,18 @@
     "muted": "Silenciado",
     "unmuted": "Reactivado",
     "subtitles_enabled": "Subtítulos activados",
-    "subtitles_disabled": "Subtítulos desactivados"
+    "subtitles_disabled": "Subtítulos desactivados",
+    "playing": "Reproduciendo: {title}",
+    "seek_position": "Buscar [{pos} / {dur}]",
+    "seek_relative": "Buscar {sign}{secs}s  [{pos} / {dur}]",
+    "random_seek": "Búsqueda aleatoria  [{pos} / {dur}]",
+    "volume": "Volumen: {percent}%",
+    "audio_track": "Audio: {label}",
+    "switched_shuffle": "Cambiado a modo aleatorio",
+    "switched_sequential": "Cambiado a modo secuencial",
+    "scroll_speed": "Velocidad de desplazamiento: {speed}",
+    "players_count": "Reproductores: {count}",
+    "focused_player": "Reproductor enfocado: {index}"
   },
   "transcript": {
     "title": "Transcripción",

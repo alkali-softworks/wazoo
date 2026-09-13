@@ -47,7 +47,13 @@
     "scan_folders": "مسح المجلدات",
     "add_folder": "إضافة مجلد",
     "total_videos": "إجمالي الفيديوهات: {count}",
-    "language": "اللغة"
+    "language": "اللغة",
+    "folders_added_scanning": "تمت إضافة المجلد(ات). جاري بدء فحص المكتبة...",
+    "folder_added": "تمت إضافة مجلد: {folder}",
+    "folder_removed": "تمت إزالة المجلد: {folder} ({count} ملف)",
+    "scanning_progress": "جاري الفحص{name} ({percent}% - تم العثور على {found})",
+    "indexing_progress": "تمت الإضافة: {name} ({percent}%)",
+    "scan_error": "خطأ في الفحص: {error}"
   },
   "search": {
     "folder": "مجلد:",
@@ -85,7 +91,18 @@
     "muted": "مكتوم",
     "unmuted": "غير مكتوم",
     "subtitles_enabled": "الترجمة مفعلة",
-    "subtitles_disabled": "الترجمة معطلة"
+    "subtitles_disabled": "الترجمة معطلة",
+    "playing": "تشغيل: {title}",
+    "seek_position": "تقديم/ترجيع [{pos} / {dur}]",
+    "seek_relative": "تقديم/ترجيع {sign}{secs}ثانية  [{pos} / {dur}]",
+    "random_seek": "تقديم عشوائي  [{pos} / {dur}]",
+    "volume": "مستوى الصوت: {percent}%",
+    "audio_track": "الصوت: {label}",
+    "switched_shuffle": "تم التبديل إلى الوضع العشوائي",
+    "switched_sequential": "تم التبديل إلى الوضع المتسلسل",
+    "scroll_speed": "سرعة التمرير: {speed}",
+    "players_count": "المشغلات: {count}",
+    "focused_player": "المشغل المحدد: {index}"
   },
   "transcript": {
     "title": "النص المكتوب",

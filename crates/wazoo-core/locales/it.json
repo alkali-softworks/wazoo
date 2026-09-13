@@ -47,7 +47,13 @@
     "scan_folders": "Scansiona cartelle",
     "add_folder": "Aggiungi cartella",
     "total_videos": "Video totali: {count}",
-    "language": "Lingua"
+    "language": "Lingua",
+    "folders_added_scanning": "Cartella/e aggiunta/e. Avvio scansione...",
+    "folder_added": "Cartella aggiunta: {folder}",
+    "folder_removed": "Cartella rimossa: {folder} ({count} file)",
+    "scanning_progress": "Scansione{name} ({percent}% - {found} trovati)",
+    "indexing_progress": "Aggiunto: {name} ({percent}%)",
+    "scan_error": "Errore di scansione: {error}"
   },
   "search": {
     "folder": "Cartella:",
@@ -85,7 +91,18 @@
     "muted": "Muto",
     "unmuted": "Audio attivo",
     "subtitles_enabled": "Sottotitoli abilitati",
-    "subtitles_disabled": "Sottotitoli disabilitati"
+    "subtitles_disabled": "Sottotitoli disabilitati",
+    "playing": "In riproduzione: {title}",
+    "seek_position": "Posizione [{pos} / {dur}]",
+    "seek_relative": "Posizione {sign}{secs}s  [{pos} / {dur}]",
+    "random_seek": "Posizione casuale  [{pos} / {dur}]",
+    "volume": "Volume: {percent}%",
+    "audio_track": "Audio: {label}",
+    "switched_shuffle": "Passato a modalità casuale",
+    "switched_sequential": "Passato a modalità sequenziale",
+    "scroll_speed": "Velocità di scorrimento: {speed}",
+    "players_count": "Riproduttori: {count}",
+    "focused_player": "Riproduttore selezionato: {index}"
   },
   "transcript": {
     "title": "Trascrizione",

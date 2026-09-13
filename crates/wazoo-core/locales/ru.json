@@ -47,7 +47,13 @@
     "scan_folders": "Сканировать папки",
     "add_folder": "Добавить папку",
     "total_videos": "Всего видео: {count}",
-    "language": "Язык"
+    "language": "Язык",
+    "folders_added_scanning": "Папка(и) добавлена(ы). Запуск сканирования...",
+    "folder_added": "Папка добавлена: {folder}",
+    "folder_removed": "Папка удалена: {folder} ({count} файлов)",
+    "scanning_progress": "Сканирование{name} ({percent}% - {found} найдено)",
+    "indexing_progress": "Добавлено: {name} ({percent}%)",
+    "scan_error": "Ошибка сканирования: {error}"
   },
   "search": {
     "folder": "Папка:",
@@ -85,7 +91,18 @@
     "muted": "Звук выключен",
     "unmuted": "Звук включен",
     "subtitles_enabled": "Субтитры включены",
-    "subtitles_disabled": "Субтитры выключены"
+    "subtitles_disabled": "Субтитры выключены",
+    "playing": "Воспроизведение: {title}",
+    "seek_position": "Перемотка [{pos} / {dur}]",
+    "seek_relative": "Перемотка {sign}{secs}с  [{pos} / {dur}]",
+    "random_seek": "Случайная перемотка  [{pos} / {dur}]",
+    "volume": "Громкость: {percent}%",
+    "audio_track": "Аудио: {label}",
+    "switched_shuffle": "Включен случайный режим",
+    "switched_sequential": "Включен последовательный режим",
+    "scroll_speed": "Скорость прокрутки: {speed}",
+    "players_count": "Плееры: {count}",
+    "focused_player": "Активный плеер: {index}"
   },
   "transcript": {
     "title": "Транскрипт",

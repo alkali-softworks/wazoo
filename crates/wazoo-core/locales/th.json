@@ -47,7 +47,13 @@
     "scan_folders": "สแกนโฟลเดอร์",
     "add_folder": "เพิ่มโฟลเดอร์",
     "total_videos": "วิดีโอทั้งหมด: {count}",
-    "language": "ภาษา"
+    "language": "ภาษา",
+    "folders_added_scanning": "เพิ่มโฟลเดอร์แล้ว กำลังเริ่มสแกนไลบรารี...",
+    "folder_added": "เพิ่มโฟลเดอร์แล้ว: {folder}",
+    "folder_removed": "ลบโฟลเดอร์แล้ว: {folder} ({count} ไฟล์)",
+    "scanning_progress": "กำลังสแกน{name} ({percent}% - พบ {found} ไฟล์)",
+    "indexing_progress": "เพิ่มแล้ว: {name} ({percent}%)",
+    "scan_error": "ข้อผิดพลาดในการสแกน: {error}"
   },
   "search": {
     "folder": "โฟลเดอร์:",
@@ -85,7 +91,18 @@
     "muted": "ปิดเสียงแล้ว",
     "unmuted": "เปิดเสียงแล้ว",
     "subtitles_enabled": "เปิดใช้งานคำบรรยาย",
-    "subtitles_disabled": "ปิดใช้งานคำบรรยาย"
+    "subtitles_disabled": "ปิดใช้งานคำบรรยาย",
+    "playing": "กำลังเล่น: {title}",
+    "seek_position": "ค้นหาตำแหน่ง [{pos} / {dur}]",
+    "seek_relative": "ค้นหาตำแหน่ง {sign}{secs}วิ  [{pos} / {dur}]",
+    "random_seek": "ค้นหาตำแหน่งแบบสุ่ม  [{pos} / {dur}]",
+    "volume": "ระดับเสียง: {percent}%",
+    "audio_track": "เสียง: {label}",
+    "switched_shuffle": "เปลี่ยนเป็นโหมดสุ่ม",
+    "switched_sequential": "เปลี่ยนเป็นโหมดตามลำดับ",
+    "scroll_speed": "ความเร็วในการเลื่อน: {speed}",
+    "players_count": "จำนวนผู้เล่น: {count}",
+    "focused_player": "ผู้เล่นที่เลือก: {index}"
   },
   "transcript": {
     "title": "บทสนทนา",
