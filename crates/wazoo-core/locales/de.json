@@ -47,7 +47,13 @@
     "scan_folders": "Ordner scannen",
     "add_folder": "Ordner hinzufügen",
     "total_videos": "Videos insgesamt: {count}",
-    "language": "Sprache"
+    "language": "Sprache",
+    "folders_added_scanning": "Ordner hinzugefügt. Medienscan gestartet...",
+    "folder_added": "Ordner hinzugefügt: {folder}",
+    "folder_removed": "Ordner entfernt: {folder} ({count} Dateien)",
+    "scanning_progress": "Scannen{name} ({percent}% - {found} gefunden)",
+    "indexing_progress": "Hinzugefügt: {name} ({percent}%)",
+    "scan_error": "Scanfehler: {error}"
   },
   "search": {
     "folder": "Ordner:",
@@ -85,7 +91,18 @@
     "muted": "Stummgeschaltet",
     "unmuted": "Lautgeschaltet",
     "subtitles_enabled": "Untertitel aktiviert",
-    "subtitles_disabled": "Untertitel deaktiviert"
+    "subtitles_disabled": "Untertitel deaktiviert",
+    "playing": "Wiedergabe: {title}",
+    "seek_position": "Spulen [{pos} / {dur}]",
+    "seek_relative": "Spulen {sign}{secs}s  [{pos} / {dur}]",
+    "random_seek": "Zufälliges Spulen  [{pos} / {dur}]",
+    "volume": "Lautstärke: {percent}%",
+    "audio_track": "Audio: {label}",
+    "switched_shuffle": "Zu Zufallswiedergabe gewechselt",
+    "switched_sequential": "Zu sequentieller Wiedergabe gewechselt",
+    "scroll_speed": "Scroll-Geschwindigkeit: {speed}",
+    "players_count": "Player: {count}",
+    "focused_player": "Fokussierter Player: {index}"
   },
   "transcript": {
     "title": "Transkript",

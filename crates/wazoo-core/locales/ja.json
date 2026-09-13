@@ -47,7 +47,13 @@
     "scan_folders": "フォルダをスキャン",
     "add_folder": "フォルダを追加",
     "total_videos": "合計ビデオ数: {count}",
-    "language": "言語"
+    "language": "言語",
+    "folders_added_scanning": "フォルダを追加しました。ライブラリスキャンを開始します...",
+    "folder_added": "フォルダを追加しました: {folder}",
+    "folder_removed": "フォルダを削除しました: {folder} ({count} 件のファイル)",
+    "scanning_progress": "スキャン中{name} ({percent}% - {found} 件検出)",
+    "indexing_progress": "追加: {name} ({percent}%)",
+    "scan_error": "スキャンエラー: {error}"
   },
   "search": {
     "folder": "フォルダー:",
@@ -85,7 +91,18 @@
     "muted": "ミュート",
     "unmuted": "ミュート解除",
     "subtitles_enabled": "字幕有効",
-    "subtitles_disabled": "字幕無効"
+    "subtitles_disabled": "字幕無効",
+    "playing": "再生中: {title}",
+    "seek_position": "シーク [{pos} / {dur}]",
+    "seek_relative": "シーク {sign}{secs}秒  [{pos} / {dur}]",
+    "random_seek": "ランダムシーク  [{pos} / {dur}]",
+    "volume": "音量: {percent}%",
+    "audio_track": "音声: {label}",
+    "switched_shuffle": "シャッフルモードに切り替えました",
+    "switched_sequential": "連続再生モードに切り替えました",
+    "scroll_speed": "スクロール速度: {speed}",
+    "players_count": "プレイヤー数: {count}",
+    "focused_player": "フォーカスプレイヤー: {index}"
   },
   "transcript": {
     "title": "トランスクリプト",

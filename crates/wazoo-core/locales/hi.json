@@ -47,7 +47,13 @@
     "scan_folders": "फ़ोल्डर स्कैन करें",
     "add_folder": "फ़ोल्डर जोड़ें",
     "total_videos": "कुल वीडियो: {count}",
-    "language": "भाषा"
+    "language": "भाषा",
+    "folders_added_scanning": "फ़ोल्डर जोड़ा गया। लाइब्रेरी स्कैन शुरू हो रहा है...",
+    "folder_added": "फ़ोल्डर जोड़ा गया: {folder}",
+    "folder_removed": "फ़ोल्डर हटाया गया: {folder} ({count} फ़ाइलें)",
+    "scanning_progress": "स्कैनिंग{name} ({percent}% - {found} मिले)",
+    "indexing_progress": "जोड़ा गया: {name} ({percent}%)",
+    "scan_error": "स्कैन त्रुटि: {error}"
   },
   "search": {
     "folder": "फ़ोल्डर:",
@@ -85,7 +91,18 @@
     "muted": "म्यूट",
     "unmuted": "अनम्यूट",
     "subtitles_enabled": "उपशीर्षक सक्षम",
-    "subtitles_disabled": "उपशीर्षक अक्षम"
+    "subtitles_disabled": "उपशीर्षक अक्षम",
+    "playing": "चल रहा है: {title}",
+    "seek_position": "आगे/पीछे [{pos} / {dur}]",
+    "seek_relative": "आगे/पीछे {sign}{secs}सेकंड  [{pos} / {dur}]",
+    "random_seek": "यादृच्छिक खोज  [{pos} / {dur}]",
+    "volume": "आवाज़: {percent}%",
+    "audio_track": "ऑडियो: {label}",
+    "switched_shuffle": "शफ़ल मोड में बदला गया",
+    "switched_sequential": "क्रमबद्ध मोड में बदला गया",
+    "scroll_speed": "स्क्रॉल गति: {speed}",
+    "players_count": "प्लेयर: {count}",
+    "focused_player": "चयनित प्लेयर: {index}"
   },
   "transcript": {
     "title": "प्रतिलेख",

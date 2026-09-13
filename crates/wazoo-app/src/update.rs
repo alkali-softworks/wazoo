@@ -506,7 +506,7 @@ impl WazooApp {
                         if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                             *p = handle;
                         }
-                        self.toast_message = Some(format!("Playing: {title}"));
+                        self.toast_message = Some(self.t_with("player.playing", &[("title", &title)]));
                         self.toast_time_remaining = 3;
                         if self.show_transcript {
                             return self.load_transcript_for_focused_player();
@@ -665,10 +665,11 @@ impl WazooApp {
 
                         let pos_s = target.as_secs_f64();
                         let dur_s = dur.as_secs_f64();
-                        self.toast_message = Some(format!(
-                            "Seek [{} / {}]",
-                            format::format_time_str(pos_s),
-                            format::format_time_str(dur_s)
+                        let pos_str = format::format_time_str(pos_s);
+                        let dur_str = format::format_time_str(dur_s);
+                        self.toast_message = Some(self.t_with(
+                            "player.seek_position",
+                            &[("pos", &pos_str), ("dur", &dur_str)],
                         ));
                         self.toast_time_remaining = 2;
                     }
@@ -703,11 +704,17 @@ impl WazooApp {
                         let pos = p.position();
                         let dur = p.duration();
                         let sign = if secs > 0.0 { "+" } else { "" };
-                        self.toast_message = Some(format!(
-                            "Seek {sign}{:.0}s  [{} / {}]",
-                            secs,
-                            format::format_time_str(pos.as_secs_f64()),
-                            format::format_time_str(dur.as_secs_f64())
+                        let pos_str = format::format_time_str(pos.as_secs_f64());
+                        let dur_str = format::format_time_str(dur.as_secs_f64());
+                        let secs_str = format!("{:.0}", secs);
+                        self.toast_message = Some(self.t_with(
+                            "player.seek_relative",
+                            &[
+                                ("sign", sign),
+                                ("secs", &secs_str),
+                                ("pos", &pos_str),
+                                ("dur", &dur_str),
+                            ],
                         ));
                         self.toast_time_remaining = 2;
                     }
@@ -752,7 +759,8 @@ impl WazooApp {
                         vol_display = Some(p.state.volume);
                     }
                     if let Some(v) = vol_display {
-                        self.toast_message = Some(format!("Volume: {:.0}%", v * 100.0));
+                        let pct_str = format!("{:.0}", v * 100.0);
+                        self.toast_message = Some(self.t_with("player.volume", &[("percent", &pct_str)]));
                         self.toast_time_remaining = 1;
                         self.save_session_state();
                     }
@@ -768,14 +776,17 @@ impl WazooApp {
                     }
                 }
                 let mut selected_pref = None;
+                let mut track_label = None;
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.set_audio_track(track_id);
                     if let Some(track) = p.state.audio_tracks.iter().find(|t| t.id == track_id) {
-                        let label = wazoo_media::format_audio_track_label(track, 0);
-                        self.toast_message = Some(format!("Audio: {label}"));
-                        self.toast_time_remaining = 2;
+                        track_label = Some(wazoo_media::format_audio_track_label(track, 0));
                         selected_pref = Some(wazoo_media::get_track_preference_string(track));
                     }
+                }
+                if let Some(label) = track_label {
+                    self.toast_message = Some(self.t_with("player.audio_track", &[("label", &label)]));
+                    self.toast_time_remaining = 2;
                 }
                 if let Some(pref) = selected_pref {
                     self.settings.preferred_audio_language = Some(pref.clone());
@@ -853,16 +864,16 @@ impl WazooApp {
                         p.set_muted(false);
                     }
                 }
-                self.toast_message = Some("Global Mute: OFF".to_string());
+                self.toast_message = Some(self.t("wazoo.global_mode_unmuted"));
                 self.toast_time_remaining = 2;
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::ToggleShuffleMode => {
                 self.is_shuffle_mode = !self.is_shuffle_mode;
                 self.toast_message = Some(if self.is_shuffle_mode {
-                    "Switched to shuffle mode".to_string()
+                    self.t("player.switched_shuffle")
                 } else {
-                    "Switched to sequential mode".to_string()
+                    self.t("player.switched_sequential")
                 });
                 self.toast_time_remaining = 2;
             }
@@ -1022,7 +1033,8 @@ impl WazooApp {
             Message::SetScrollSpeed(speed) => {
                 self.settings.scroll_speed = speed.clamp(0.1, 10.0);
                 self.scroll_engine.set_speed(self.settings.scroll_speed);
-                self.toast_message = Some(format!("Scroll Speed: {:.1}", self.settings.scroll_speed));
+                let speed_str = format!("{:.1}", self.settings.scroll_speed);
+                self.toast_message = Some(self.t_with("player.scroll_speed", &[("speed", &speed_str)]));
                 self.toast_time_remaining = 1;
             }
             Message::AdjustScrollSpeed(delta) => {
@@ -1055,7 +1067,8 @@ impl WazooApp {
                     if self.focused_player_idx >= self.players.len() && !self.players.is_empty() {
                         self.focused_player_idx = self.players.len() - 1;
                     }
-                    self.toast_message = Some(format!("Players: {}", self.players.len()));
+                    let count_str = self.players.len().to_string();
+                    self.toast_message = Some(self.t_with("player.players_count", &[("count", &count_str)]));
                     self.toast_time_remaining = 2;
                     let _ = self.config_mgr.save_settings(&self.settings);
                     if self.show_transcript {
@@ -1070,7 +1083,8 @@ impl WazooApp {
                         self.focus_border_ticks = 20;
                     }
                     self.focused_player_idx = next_idx;
-                    self.toast_message = Some(format!("Focused Player: {}", self.focused_player_idx + 1));
+                    let idx_str = (self.focused_player_idx + 1).to_string();
+                    self.toast_message = Some(self.t_with("player.focused_player", &[("index", &idx_str)]));
                     self.toast_time_remaining = 1;
                     if self.show_transcript {
                         return self.load_transcript_for_focused_player();
@@ -1191,12 +1205,6 @@ impl WazooApp {
             Message::CloseSettingsModal => {
                 self.show_settings_modal = false;
                 let _ = self.config_mgr.save_settings(&self.settings);
-            }
-            Message::SetBufferDuration(secs) => {
-                self.settings.buffer_duration_secs = secs;
-                let _ = self.config_mgr.save_settings(&self.settings);
-                self.toast_message = Some(format!("Buffer set to {secs}s (active on next video load)"));
-                self.toast_time_remaining = 3;
             }
             Message::OpenHelpModal => {
                 self.show_help_modal = true;
@@ -1379,10 +1387,11 @@ impl WazooApp {
                         p.seek_random();
                         let pos = p.position();
                         let dur = p.duration();
-                        self.toast_message = Some(format!(
-                            "Random Seek  [{} / {}]",
-                            format::format_time_str(pos.as_secs_f64()),
-                            format::format_time_str(dur.as_secs_f64())
+                        let pos_str = format::format_time_str(pos.as_secs_f64());
+                        let dur_str = format::format_time_str(dur.as_secs_f64());
+                        self.toast_message = Some(self.t_with(
+                            "player.random_seek",
+                            &[("pos", &pos_str), ("dur", &dur_str)],
                         ));
                         self.toast_time_remaining = 2;
                     }
@@ -1429,7 +1438,7 @@ impl WazooApp {
                 }
                 if added_any {
                     let _ = self.config_mgr.save_settings(&self.settings);
-                    self.toast_message = Some("Added folder(s). Starting library scan...".to_string());
+                    self.toast_message = Some(self.t("settings.folders_added_scanning"));
                     self.toast_time_remaining = 3;
                     return self.update(Message::StartScan);
                 }
@@ -1444,7 +1453,7 @@ impl WazooApp {
                         self.settings.media_folders.push(trimmed.clone());
                         self.folder_input.clear();
                         let _ = self.config_mgr.save_settings(&self.settings);
-                        self.toast_message = Some(format!("Added folder: {trimmed}"));
+                        self.toast_message = Some(self.t_with("settings.folder_added", &[("folder", &trimmed)]));
                         self.toast_time_remaining = 3;
                         return self.update(Message::StartScan);
                     } else {
@@ -1503,7 +1512,11 @@ impl WazooApp {
 
                 let folder_name = format::format_video_folder(&folder);
                 let display_name = if folder_name.is_empty() { folder } else { folder_name };
-                self.toast_message = Some(format!("Removed {} ({} files)", display_name, format::format_number(removed_count)));
+                let count_str = format::format_number(removed_count);
+                self.toast_message = Some(self.t_with(
+                    "settings.folder_removed",
+                    &[("folder", &display_name), ("count", &count_str)],
+                ));
                 self.toast_time_remaining = 2;
                 self.last_total_videos = self.available_videos.len();
 
@@ -1569,17 +1582,21 @@ impl WazooApp {
                         } else {
                             format!(": {}", progress.current_name)
                         };
-                        self.toast_message = Some(format!(
-                            "Scanning{} ({}% - {} found)",
-                            name_part,
-                            progress.percent,
-                            format::format_number(progress.files_found)
+                        let pct_str = progress.percent.to_string();
+                        let found_str = format::format_number(progress.files_found);
+                        self.toast_message = Some(self.t_with(
+                            "settings.scanning_progress",
+                            &[("name", &name_part), ("percent", &pct_str), ("found", &found_str)],
                         ));
                         self.toast_time_remaining = 2;
                     }
                     ScanStage::Indexing => {
                         if !progress.current_name.is_empty() {
-                            self.toast_message = Some(format!("Added: {} ({}%)", progress.current_name, progress.percent));
+                            let pct_str = progress.percent.to_string();
+                            self.toast_message = Some(self.t_with(
+                                "settings.indexing_progress",
+                                &[("name", &progress.current_name), ("percent", &pct_str)],
+                            ));
                             self.toast_time_remaining = 2;
                         }
                     }
@@ -1624,7 +1641,7 @@ impl WazooApp {
                     }
                     Err(err) => {
                         if err != "Scan cancelled" {
-                            self.toast_message = Some(format!("Scan error: {err}"));
+                            self.toast_message = Some(self.t_with("settings.scan_error", &[("error", &err)]));
                             self.toast_time_remaining = 3;
                         }
                     }
