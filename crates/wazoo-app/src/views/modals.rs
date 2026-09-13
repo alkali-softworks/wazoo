@@ -27,7 +27,6 @@ impl WazooApp {
             button(
                 text(all_label.clone())
                     .size(13)
-                    .font(theme::FONT_BOLD)
             )
             .style(theme::folder_chip_style(is_all_selected))
             .on_press(Message::SelectSearchFolder(all_label))
@@ -42,7 +41,6 @@ impl WazooApp {
                 button(
                     text(label)
                         .size(13)
-                        .font(theme::FONT_BOLD)
                 )
                 .style(theme::folder_chip_style(self.selected_search_folder == *folder))
                 .on_press(Message::SelectSearchFolder(folder.clone()))
