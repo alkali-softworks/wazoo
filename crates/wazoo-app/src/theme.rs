@@ -984,50 +984,14 @@ pub fn primary_button_style(_theme: &Theme, status: button::Status) -> button::S
     }
 }
 
-// Transcript Button Style (Controls bar [TX])
+// Transcript Button Style (Controls bar TX, matches CC button style)
+#[allow(dead_code)]
 pub fn transcript_button_style(is_open: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
-    move |_theme: &Theme, status: button::Status| {
-        let (bg, text_color) = if is_open {
-            (
-                Color::from_rgba(0.26, 0.72, 0.51, 0.25),
-                COLOR_PRIMARY,
-            )
-        } else {
-            let bg = match status {
-                button::Status::Hovered => Color::from_rgba(1.0, 1.0, 1.0, 0.2),
-                button::Status::Pressed => Color::from_rgba(1.0, 1.0, 1.0, 0.3),
-                _ => Color::TRANSPARENT,
-            };
-            (bg, COLOR_TEXT_MUTED)
-        };
-        button::Style {
-            background: Some(Background::Color(bg)),
-            text_color,
-            border: Border {
-                radius: 4.0.into(),
-                width: if is_open { 1.0 } else { 0.0 },
-                color: if is_open { COLOR_PRIMARY } else { Color::TRANSPARENT },
-            },
-            shadow: Shadow::default(),
-            ..Default::default()
-        }
-    }
+    cc_button_style(is_open)
 }
 
 pub fn transcript_button_style_with_alpha(is_open: bool, alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
-    let base_fn = transcript_button_style(is_open);
-    move |theme, status| {
-        let base = base_fn(theme, status);
-        button::Style {
-            background: base.background.map(|bg| background_with_alpha(bg, alpha)),
-            text_color: with_alpha(base.text_color, alpha),
-            border: Border {
-                color: with_alpha(base.border.color, alpha),
-                ..base.border
-            },
-            ..base
-        }
-    }
+    cc_button_style_with_alpha(is_open, alpha)
 }
 
 // Transcript Time Badge Style

@@ -285,8 +285,12 @@ impl WazooApp {
                 // Left: CC + TX + Volume Icon + Volume Slider
                 button(
                     container(
-                        text(if self.subtitles_enabled { "CC" } else { "cc" })
-                            .size(14)
+                        text("CC")
+                            .size(13)
+                            .font(iced::Font {
+                                weight: iced::font::Weight::Bold,
+                                ..Default::default()
+                            })
                     )
                     .center_x(Length::Shrink)
                     .center_y(Length::Shrink),
@@ -297,7 +301,7 @@ impl WazooApp {
                 button(
                     container(
                         text("TX")
-                            .size(12)
+                            .size(13)
                             .font(iced::Font {
                                 weight: iced::font::Weight::Bold,
                                 ..Default::default()
