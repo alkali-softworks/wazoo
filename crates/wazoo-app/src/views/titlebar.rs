@@ -40,6 +40,20 @@ impl WazooApp {
             left: 8.0,
         });
 
+        let alkali_btn = button(
+            text("ALKALI")
+                .size(11)
+                .font(theme::FONT_BOLD),
+        )
+        .style(theme::titlebar_brand_link_style_with_alpha(alpha))
+        .on_press(Message::OpenAlkaliWebsite)
+        .padding(iced::Padding {
+            top: 6.0,
+            right: 8.0,
+            bottom: 2.0,
+            left: 8.0,
+        });
+
         let drag_strip = mouse_area(
             container(Space::new())
                 .width(Length::Fill)
@@ -106,6 +120,8 @@ impl WazooApp {
         let titlebar_row = container(
             row![
                 badge_btn,
+                Space::new().width(Length::Fixed(6.0)),
+                alkali_btn,
                 drag_strip,
                 window_buttons,
             ]

@@ -84,6 +84,46 @@ pub fn titlebar_badge_style_with_alpha(alpha: f32) -> impl Fn(&Theme, button::St
     }
 }
 
+// Titlebar Brand Link Style ("ALKALI" button)
+pub fn titlebar_brand_link_style(_theme: &Theme, status: button::Status) -> button::Style {
+    let (bg, text_color) = match status {
+        button::Status::Hovered => (
+            Color::from_rgba(1.0, 1.0, 1.0, 0.12),
+            Color::WHITE,
+        ),
+        button::Status::Pressed => (
+            Color::from_rgba(1.0, 1.0, 1.0, 0.20),
+            Color::from_rgb(0.9, 0.9, 0.9),
+        ),
+        _ => (
+            Color::TRANSPARENT,
+            Color::from_rgba(1.0, 1.0, 1.0, 0.70),
+        ),
+    };
+    button::Style {
+        background: Some(Background::Color(bg)),
+        text_color,
+        border: Border {
+            radius: iced::border::Radius::from(4.0),
+            width: 0.0,
+            color: Color::TRANSPARENT,
+        },
+        shadow: Shadow::default(),
+        ..Default::default()
+    }
+}
+
+pub fn titlebar_brand_link_style_with_alpha(alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+    move |theme, status| {
+        let base = titlebar_brand_link_style(theme, status);
+        button::Style {
+            background: base.background.map(|bg| background_with_alpha(bg, alpha)),
+            text_color: with_alpha(base.text_color, alpha),
+            ..base
+        }
+    }
+}
+
 // Window Controls
 pub fn window_control_button_style(_theme: &Theme, status: button::Status) -> button::Style {
     let (bg, text_color) = match status {
