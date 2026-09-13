@@ -15,7 +15,8 @@ use wazoo_core::{LayoutMode, PlaybackMode};
 use wazoo_media::VideoHandle;
 use crate::app::WazooApp;
 use crate::assets::{
-    SVG_PLAYER_MUTE, SVG_PLAYER_NEXT, SVG_PLAYER_PAUSE, SVG_PLAYER_PLAY, SVG_PLAYER_VOLUME,
+    SVG_PLAYER_MUTE, SVG_PLAYER_NEXT, SVG_PLAYER_PAUSE, SVG_PLAYER_PLAY, SVG_PLAYER_PREV, SVG_PLAYER_REPEAT,
+    SVG_PLAYER_SHUFFLE, SVG_PLAYER_VOLUME,
 };
 use crate::cursor;
 use crate::format;
@@ -276,6 +277,23 @@ impl WazooApp {
                     .opacity(overlay_alpha)
             };
 
+            let play_mode_icon = if self.is_shuffle_mode {
+                svg(svg::Handle::from_memory(SVG_PLAYER_SHUFFLE))
+                    .width(Length::Fixed(20.0))
+                    .height(Length::Fixed(20.0))
+                    .opacity(overlay_alpha)
+            } else {
+                svg(svg::Handle::from_memory(SVG_PLAYER_REPEAT))
+                    .width(Length::Fixed(20.0))
+                    .height(Length::Fixed(20.0))
+                    .opacity(overlay_alpha)
+            };
+
+            let prev_icon = svg(svg::Handle::from_memory(SVG_PLAYER_PREV))
+                .width(Length::Fixed(20.0))
+                .height(Length::Fixed(20.0))
+                .opacity(overlay_alpha);
+
             let next_icon = svg(svg::Handle::from_memory(SVG_PLAYER_NEXT))
                 .width(Length::Fixed(20.0))
                 .height(Length::Fixed(20.0))
@@ -356,7 +374,19 @@ impl WazooApp {
 
             let controls_row = controls_row
                 .push(Space::new().width(Length::Fill))
-                // Right: Play/Pause + Skip Next
+                // Right: Play Mode (Shuffle/Sequential) + Prev + Play/Pause + Skip Next
+                .push(
+                    button(play_mode_icon)
+                        .style(theme::player_control_button_style_with_alpha(overlay_alpha))
+                        .on_press(Message::ToggleShuffleMode)
+                        .padding([4, 8]),
+                )
+                .push(
+                    button(prev_icon)
+                        .style(theme::player_control_button_style_with_alpha(overlay_alpha))
+                        .on_press(Message::PrevVideo(player_id))
+                        .padding([4, 8]),
+                )
                 .push(
                     button(play_pause_icon)
                         .style(theme::player_control_button_style_with_alpha(overlay_alpha))

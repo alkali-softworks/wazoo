@@ -32,6 +32,18 @@ pub const TITLEBAR_SHOW_DELAY_TICKS: usize = 8;
 /// File picker search input debounce delay: ~200ms at 60 FPS (12 ticks)
 pub const FILE_PICKER_DEBOUNCE_TICKS: usize = 12;
 
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct PlaybackHistoryEntry {
+    pub(crate) path: String,
+    pub(crate) position_secs: Option<f64>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub(crate) struct PlayerNavHistory {
+    pub(crate) back_stack: Vec<PlaybackHistoryEntry>,
+    pub(crate) forward_stack: Vec<PlaybackHistoryEntry>,
+}
+
 pub struct WazooApp {
     pub(crate) settings: WazooSettings,
     pub(crate) config_mgr: ConfigManager,
@@ -98,6 +110,7 @@ pub struct WazooApp {
     pub(crate) is_window_focused: bool,
     pub(crate) unfocused_frame_ticks: u32,
     pub(crate) window_bounds_dirty: bool,
+    pub(crate) player_nav_history: HashMap<PlayerId, PlayerNavHistory>,
 }
 
 impl WazooApp {
@@ -253,6 +266,7 @@ impl WazooApp {
             is_window_focused: true,
             unfocused_frame_ticks: 0,
             window_bounds_dirty: false,
+            player_nav_history: HashMap::new(),
         };
 
         // Initialize players based on settings or restore saved session
@@ -284,6 +298,7 @@ impl WazooApp {
                     handle.set_volume(session.volume);
                     handle.set_subtitles_visible(app.subtitles_enabled);
                     app.players.push(handle);
+                    app.push_player_nav_entry(id, session.path.clone(), start_secs);
                 }
             }
         }
@@ -510,17 +525,66 @@ impl WazooApp {
         if self.available_videos.is_empty() {
             return None;
         }
-        if let Some(curr) = current_path {
-            if let Some(pos) = self.available_videos.iter().position(|v| v.path == curr) {
-                let prev_pos = if pos == 0 {
-                    self.available_videos.len() - 1
-                } else {
-                    pos - 1
-                };
-                return Some(self.available_videos[prev_pos].clone());
+        if self.is_shuffle_mode {
+            if self.available_videos.len() > 1 {
+                if let Some(curr) = current_path {
+                    for _ in 0..5 {
+                        let idx = rand::random::<usize>() % self.available_videos.len();
+                        if self.available_videos[idx].path != curr {
+                            return Some(self.available_videos[idx].clone());
+                        }
+                    }
+                }
+            }
+            let idx = rand::random::<usize>() % self.available_videos.len();
+            Some(self.available_videos[idx].clone())
+        } else {
+            if let Some(curr) = current_path {
+                if let Some(pos) = self.available_videos.iter().position(|v| v.path == curr) {
+                    let prev_pos = if pos == 0 {
+                        self.available_videos.len() - 1
+                    } else {
+                        pos - 1
+                    };
+                    return Some(self.available_videos[prev_pos].clone());
+                }
+            }
+            Some(self.available_videos[0].clone())
+        }
+    }
+
+    pub(crate) fn record_current_player_nav_position(&mut self, id: PlayerId) {
+        if let Some(p) = self.players.iter().find(|pl| pl.id == id) {
+            let pos_secs = p.position().as_secs_f64();
+            let dur_secs = p.duration().as_secs_f64();
+            let saved_pos = if dur_secs > 10.0 && (dur_secs - pos_secs) < 3.0 {
+                None
+            } else if pos_secs > 0.5 {
+                Some(pos_secs)
+            } else {
+                None
+            };
+            if let Some(hist) = self.player_nav_history.get_mut(&id) {
+                if let Some(top) = hist.back_stack.last_mut() {
+                    if top.path == p.state.path {
+                        top.position_secs = saved_pos;
+                    }
+                }
             }
         }
-        Some(self.available_videos[0].clone())
+    }
+
+    pub(crate) fn push_player_nav_entry(&mut self, id: PlayerId, path: String, pos: Option<f64>) {
+        let hist = self.player_nav_history.entry(id).or_default();
+        if hist.back_stack.last().map(|e| &e.path) != Some(&path) {
+            hist.back_stack.push(PlaybackHistoryEntry {
+                path,
+                position_secs: pos,
+            });
+            if hist.back_stack.len() > 100 {
+                hist.back_stack.remove(0);
+            }
+        }
     }
 
     pub(crate) fn create_video_handle(&self, id: PlayerId, path: &str, name: &str) -> Result<VideoHandle, String> {
@@ -564,6 +628,7 @@ impl WazooApp {
                     Ok(mut handle) => {
                         handle.set_muted(initial_muted);
                         handle.set_subtitles_visible(self.subtitles_enabled);
+                        self.push_player_nav_entry(id, video_rec.path.clone(), None);
                         self.players.push(handle);
                         self.loading_player_ids.insert(id);
                         self.loading_player_ticks.insert(id, 0);
@@ -671,6 +736,7 @@ impl WazooApp {
                     new_handle.set_muted(prev_muted);
                     new_handle.set_volume(prev_volume);
                     new_handle.set_subtitles_visible(self.subtitles_enabled);
+                    self.push_player_nav_entry(id, rec_path.clone(), None);
                     if let Some(p) = self.players.iter_mut().find(|pl| pl.id == id) {
                         *p = new_handle;
                     }
@@ -1134,6 +1200,86 @@ mod tests {
             // With 3 videos, shuffle mode avoids immediately repeating current video
             assert_ne!(rand_rec.path, "/media/v1.mp4");
         }
+    }
+
+    #[test]
+    fn test_get_prev_video_rec_sequential_and_random() {
+        let (mut app, _) = new_test_app();
+        app.available_videos = vec![
+            VideoRecord { id: 1, name: "V1".to_string(), path: "/media/v1.mp4".to_string() },
+            VideoRecord { id: 2, name: "V2".to_string(), path: "/media/v2.mp4".to_string() },
+            VideoRecord { id: 3, name: "V3".to_string(), path: "/media/v3.mp4".to_string() },
+        ];
+
+        // 1. Sequential mode
+        app.is_shuffle_mode = false;
+        let prev2 = app.get_prev_video_rec(Some("/media/v2.mp4")).unwrap();
+        assert_eq!(prev2.path, "/media/v1.mp4");
+        let prev1 = app.get_prev_video_rec(Some("/media/v1.mp4")).unwrap();
+        assert_eq!(prev1.path, "/media/v3.mp4"); // Wraps around to end
+
+        // 2. Random/shuffle mode
+        app.is_shuffle_mode = true;
+        for _ in 0..10 {
+            let rand_rec = app.get_prev_video_rec(Some("/media/v1.mp4")).unwrap();
+            assert!(app.available_videos.iter().any(|v| v.path == rand_rec.path));
+            // With 3 videos, shuffle mode avoids immediately repeating current video
+            assert_ne!(rand_rec.path, "/media/v1.mp4");
+        }
+    }
+
+    #[test]
+    fn test_player_nav_history_scrub_back_and_forward() {
+        let (mut app, _) = new_test_app();
+        let player_id = 1;
+
+        // Simulate initial video A
+        app.push_player_nav_entry(player_id, "/media/A.mp4".to_string(), None);
+        // User plays random B
+        app.push_player_nav_entry(player_id, "/media/B.mp4".to_string(), Some(15.0));
+        // User plays random C
+        app.push_player_nav_entry(player_id, "/media/C.mp4".to_string(), Some(30.0));
+
+        let hist = app.player_nav_history.get(&player_id).unwrap();
+        assert_eq!(hist.back_stack.len(), 3);
+        assert_eq!(hist.forward_stack.len(), 0);
+
+        // Previous action simulation: pop C from back_stack, push to forward_stack
+        let current_c = app.player_nav_history.get_mut(&player_id).unwrap().back_stack.pop().unwrap();
+        app.player_nav_history.get_mut(&player_id).unwrap().forward_stack.push(current_c);
+        let target_b = app.player_nav_history.get(&player_id).unwrap().back_stack.last().unwrap().clone();
+        assert_eq!(target_b.path, "/media/B.mp4");
+        assert_eq!(target_b.position_secs, Some(15.0));
+
+        // Previous again: pop B from back_stack, push to forward_stack
+        let current_b = app.player_nav_history.get_mut(&player_id).unwrap().back_stack.pop().unwrap();
+        app.player_nav_history.get_mut(&player_id).unwrap().forward_stack.push(current_b);
+        let target_a = app.player_nav_history.get(&player_id).unwrap().back_stack.last().unwrap().clone();
+        assert_eq!(target_a.path, "/media/A.mp4");
+
+        // Now next action: forward_stack pop gives B!
+        let forward_b = app.player_nav_history.get_mut(&player_id).unwrap().forward_stack.pop().unwrap();
+        assert_eq!(forward_b.path, "/media/B.mp4");
+        assert_eq!(forward_b.position_secs, Some(15.0));
+        app.push_player_nav_entry(player_id, forward_b.path, forward_b.position_secs);
+
+        // Next action again: forward_stack pop gives C!
+        let forward_c = app.player_nav_history.get_mut(&player_id).unwrap().forward_stack.pop().unwrap();
+        assert_eq!(forward_c.path, "/media/C.mp4");
+        assert_eq!(forward_c.position_secs, Some(30.0));
+        app.push_player_nav_entry(player_id, forward_c.path, forward_c.position_secs);
+
+        // Forward stack is now empty
+        assert!(app.player_nav_history.get(&player_id).unwrap().forward_stack.is_empty());
+
+        // Toggling shuffle mode clears both back_stack and forward_stack
+        app.player_nav_history.get_mut(&player_id).unwrap().forward_stack.push(PlaybackHistoryEntry {
+            path: "/media/D.mp4".to_string(),
+            position_secs: None,
+        });
+        let _ = app.update(Message::ToggleShuffleMode);
+        assert!(app.player_nav_history.get(&player_id).unwrap().forward_stack.is_empty());
+        assert!(app.player_nav_history.get(&player_id).unwrap().back_stack.is_empty());
     }
 
     #[test]
