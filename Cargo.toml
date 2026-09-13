@@ -38,6 +38,8 @@ iced = { version = "0.14.0", features = ["advanced", "crisp", "image", "svg", "t
 iced_wgpu = { version = "0.14.0", default-features = false }
 bytemuck = { version = "1.25", features = ["derive"] }
 rfd = "0.15"
+libloading = "0.8"
+miniz_oxide = "0.8"
 
 [patch.crates-io]
 iced_winit = { path = "patches/iced_winit" }

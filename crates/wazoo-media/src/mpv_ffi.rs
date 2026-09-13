@@ -1,13 +1,17 @@
 /**
  * ALKALI SOFTWORKS - Wazoo
  * 
- * libmpv Foreign Function Interface
+ * libmpv Foreign Function Interface (Dynamic Loading)
  * 
- * Declares raw C bindings and data structures for interacting with the libmpv client API,
- * render contexts, and OpenGL/software frame extraction.
+ * Dynamically resolves the libmpv client API and render context symbols at runtime
+ * across Windows, Linux, and macOS without hard link-time dependencies.
+ * On Windows, supports automatic unpack and loading of the embedded compressed
+ * libmpv-2.dll for a completely self-contained single-executable experience.
  */
 
 use std::ffi::{c_char, c_double, c_int, c_void};
+use std::sync::OnceLock;
+use libloading::Library;
 
 #[repr(C)]
 pub struct MpvHandle(c_void);
@@ -65,38 +69,426 @@ pub const MPV_FORMAT_INT64: c_int = 4;
 pub const MPV_FORMAT_DOUBLE: c_int = 5;
 pub const MPV_FORMAT_NODE: c_int = 6;
 
-#[link(name = "mpv")]
-extern "C" {
-    pub fn mpv_create() -> *mut MpvHandle;
-    pub fn mpv_initialize(ctx: *mut MpvHandle) -> c_int;
-    pub fn mpv_terminate_destroy(ctx: *mut MpvHandle);
-    pub fn mpv_set_option_string(ctx: *mut MpvHandle, name: *const c_char, data: *const c_char) -> c_int;
-    pub fn mpv_set_property(
+pub struct MpvApi {
+    pub mpv_create: unsafe extern "C" fn() -> *mut MpvHandle,
+    pub mpv_initialize: unsafe extern "C" fn(ctx: *mut MpvHandle) -> c_int,
+    pub mpv_terminate_destroy: unsafe extern "C" fn(ctx: *mut MpvHandle),
+    pub mpv_set_option_string: unsafe extern "C" fn(ctx: *mut MpvHandle, name: *const c_char, data: *const c_char) -> c_int,
+    pub mpv_set_property: unsafe extern "C" fn(
         ctx: *mut MpvHandle,
         name: *const c_char,
         format: c_int,
         data: *mut c_void,
-    ) -> c_int;
-    pub fn mpv_set_property_string(ctx: *mut MpvHandle, name: *const c_char, data: *const c_char) -> c_int;
-    pub fn mpv_get_property(
+    ) -> c_int,
+    pub mpv_set_property_string: unsafe extern "C" fn(ctx: *mut MpvHandle, name: *const c_char, data: *const c_char) -> c_int,
+    pub mpv_get_property: unsafe extern "C" fn(
         ctx: *mut MpvHandle,
         name: *const c_char,
         format: c_int,
         data: *mut c_void,
-    ) -> c_int;
-    pub fn mpv_get_property_string(ctx: *mut MpvHandle, name: *const c_char) -> *mut c_char;
-    pub fn mpv_free(data: *mut c_void);
-    pub fn mpv_command(ctx: *mut MpvHandle, args: *mut *const c_char) -> c_int;
-    pub fn mpv_command_string(ctx: *mut MpvHandle, args: *const c_char) -> c_int;
-    pub fn mpv_wait_event(ctx: *mut MpvHandle, timeout: c_double) -> *mut MpvEvent;
+    ) -> c_int,
+    pub mpv_get_property_string: unsafe extern "C" fn(ctx: *mut MpvHandle, name: *const c_char) -> *mut c_char,
+    pub mpv_free: unsafe extern "C" fn(data: *mut c_void),
+    pub mpv_command: unsafe extern "C" fn(ctx: *mut MpvHandle, args: *mut *const c_char) -> c_int,
+    pub mpv_command_string: unsafe extern "C" fn(ctx: *mut MpvHandle, args: *const c_char) -> c_int,
+    pub mpv_wait_event: unsafe extern "C" fn(ctx: *mut MpvHandle, timeout: c_double) -> *mut MpvEvent,
 
-    pub fn mpv_render_context_create(
+    pub mpv_render_context_create: unsafe extern "C" fn(
         res: *mut *mut MpvRenderContext,
         mpv: *mut MpvHandle,
         params: *mut MpvRenderParam,
-    ) -> c_int;
-    pub fn mpv_render_context_render(ctx: *mut MpvRenderContext, params: *mut MpvRenderParam) -> c_int;
-    pub fn mpv_render_context_report_swap(ctx: *mut MpvRenderContext);
-    pub fn mpv_render_context_update(ctx: *mut MpvRenderContext) -> u64;
-    pub fn mpv_render_context_free(ctx: *mut MpvRenderContext);
+    ) -> c_int,
+    pub mpv_render_context_render: unsafe extern "C" fn(ctx: *mut MpvRenderContext, params: *mut MpvRenderParam) -> c_int,
+    pub mpv_render_context_report_swap: unsafe extern "C" fn(ctx: *mut MpvRenderContext),
+    pub mpv_render_context_update: unsafe extern "C" fn(ctx: *mut MpvRenderContext) -> u64,
+    pub mpv_render_context_free: unsafe extern "C" fn(ctx: *mut MpvRenderContext),
+    _lib: Library,
+}
+
+static MPV_API: OnceLock<Option<MpvApi>> = OnceLock::new();
+
+pub fn get_mpv_api() -> Option<&'static MpvApi> {
+    MPV_API.get_or_init(load_mpv_api).as_ref()
+}
+
+unsafe fn load_symbols(lib: Library) -> Option<MpvApi> {
+    macro_rules! get_sym {
+        ($name:ident) => {
+            match lib.get(concat!(stringify!($name), "\0").as_bytes()) {
+                Ok(sym) => *sym,
+                Err(err) => {
+                    log::error!("Failed to resolve libmpv symbol {}: {}", stringify!($name), err);
+                    return None;
+                }
+            }
+        };
+    }
+
+    Some(MpvApi {
+        mpv_create: get_sym!(mpv_create),
+        mpv_initialize: get_sym!(mpv_initialize),
+        mpv_terminate_destroy: get_sym!(mpv_terminate_destroy),
+        mpv_set_option_string: get_sym!(mpv_set_option_string),
+        mpv_set_property: get_sym!(mpv_set_property),
+        mpv_set_property_string: get_sym!(mpv_set_property_string),
+        mpv_get_property: get_sym!(mpv_get_property),
+        mpv_get_property_string: get_sym!(mpv_get_property_string),
+        mpv_free: get_sym!(mpv_free),
+        mpv_command: get_sym!(mpv_command),
+        mpv_command_string: get_sym!(mpv_command_string),
+        mpv_wait_event: get_sym!(mpv_wait_event),
+        mpv_render_context_create: get_sym!(mpv_render_context_create),
+        mpv_render_context_render: get_sym!(mpv_render_context_render),
+        mpv_render_context_report_swap: get_sym!(mpv_render_context_report_swap),
+        mpv_render_context_update: get_sym!(mpv_render_context_update),
+        mpv_render_context_free: get_sym!(mpv_render_context_free),
+        _lib: lib,
+    })
+}
+
+#[cfg(target_os = "windows")]
+fn load_windows_mpv() -> Option<MpvApi> {
+    // 1. Check beside executable
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(dir) = exe.parent() {
+            for name in &["libmpv-2.dll", "mpv-2.dll", "mpv.dll"] {
+                let path = dir.join(name);
+                if path.exists() {
+                    if let Ok(lib) = unsafe { Library::new(&path) } {
+                        if let Some(api) = unsafe { load_symbols(lib) } {
+                            log::info!("Loaded libmpv from executable directory: {}", path.display());
+                            return Some(api);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Check local app data cache
+    if let Some(proj_dirs) = directories::ProjectDirs::from("com", "Alkali Softworks", "Wazoo") {
+        let cached_dll = proj_dirs.data_local_dir().join("bin").join("libmpv-2.dll");
+        if cached_dll.exists() {
+            if let Ok(lib) = unsafe { Library::new(&cached_dll) } {
+                if let Some(api) = unsafe { load_symbols(lib) } {
+                    log::info!("Loaded cached libmpv: {}", cached_dll.display());
+                    return Some(api);
+                }
+            }
+        }
+
+        // 3. Extract embedded compressed DLL if present
+        #[cfg(wazoo_embed_mpv)]
+        {
+            static EMBEDDED_DLL: &[u8] = include_bytes!(env!("WAZOO_EMBED_MPV_PATH"));
+            let bin_dir = proj_dirs.data_local_dir().join("bin");
+            let _ = std::fs::create_dir_all(&bin_dir);
+            log::info!("Unpacking embedded libmpv to {}", cached_dll.display());
+            if let Ok(decompressed) = miniz_oxide::inflate::decompress_to_vec_zlib(EMBEDDED_DLL) {
+                if std::fs::write(&cached_dll, &decompressed).is_ok() {
+                    if let Ok(lib) = unsafe { Library::new(&cached_dll) } {
+                        if let Some(api) = unsafe { load_symbols(lib) } {
+                            log::info!("Loaded unpacked embedded libmpv: {}", cached_dll.display());
+                            return Some(api);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 4. System DLL search
+    for name in &["libmpv-2.dll", "mpv-2.dll", "mpv.dll"] {
+        if let Ok(lib) = unsafe { Library::new(name) } {
+            if let Some(api) = unsafe { load_symbols(lib) } {
+                log::info!("Loaded system libmpv: {}", name);
+                return Some(api);
+            }
+        }
+    }
+
+    None
+}
+
+#[cfg(target_os = "linux")]
+fn load_linux_mpv() -> Option<MpvApi> {
+    // 1. Beside executable or in ./lib
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(dir) = exe.parent() {
+            for name in &["libmpv.so.2", "libmpv.so"] {
+                let path = dir.join(name);
+                if path.exists() {
+                    if let Ok(lib) = unsafe { Library::new(&path) } {
+                        if let Some(api) = unsafe { load_symbols(lib) } {
+                            log::info!("Loaded libmpv from executable directory: {}", path.display());
+                            return Some(api);
+                        }
+                    }
+                }
+                let lib_path = dir.join("lib").join(name);
+                if lib_path.exists() {
+                    if let Ok(lib) = unsafe { Library::new(&lib_path) } {
+                        if let Some(api) = unsafe { load_symbols(lib) } {
+                            log::info!("Loaded libmpv from lib subdirectory: {}", lib_path.display());
+                            return Some(api);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Standard system locations
+    let candidates = [
+        "libmpv.so.2",
+        "libmpv.so",
+        "/usr/lib/x86_64-linux-gnu/libmpv.so.2",
+        "/usr/lib64/libmpv.so.2",
+        "/usr/lib/libmpv.so.2",
+        "/usr/local/lib/libmpv.so.2",
+        "/usr/lib/x86_64-linux-gnu/libmpv.so",
+        "/usr/lib64/libmpv.so",
+        "/usr/lib/libmpv.so",
+        "/usr/local/lib/libmpv.so",
+    ];
+
+    for c in &candidates {
+        if let Ok(lib) = unsafe { Library::new(c) } {
+            if let Some(api) = unsafe { load_symbols(lib) } {
+                log::info!("Loaded libmpv from candidate: {}", c);
+                return Some(api);
+            }
+        }
+    }
+
+    None
+}
+
+#[cfg(target_os = "macos")]
+fn load_macos_mpv() -> Option<MpvApi> {
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(dir) = exe.parent() {
+            for name in &["libmpv.2.dylib", "libmpv.dylib"] {
+                let path = dir.join(name);
+                if path.exists() {
+                    if let Ok(lib) = unsafe { Library::new(&path) } {
+                        if let Some(api) = unsafe { load_symbols(lib) } {
+                            log::info!("Loaded libmpv from executable directory: {}", path.display());
+                            return Some(api);
+                        }
+                    }
+                }
+                let fw = dir.join("../Frameworks").join(name);
+                if fw.exists() {
+                    if let Ok(lib) = unsafe { Library::new(&fw) } {
+                        if let Some(api) = unsafe { load_symbols(lib) } {
+                            log::info!("Loaded libmpv from Frameworks: {}", fw.display());
+                            return Some(api);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let candidates = [
+        "/opt/homebrew/lib/libmpv.2.dylib",
+        "/opt/homebrew/lib/libmpv.dylib",
+        "/usr/local/lib/libmpv.2.dylib",
+        "/usr/local/lib/libmpv.dylib",
+        "libmpv.2.dylib",
+        "libmpv.dylib",
+    ];
+
+    for c in &candidates {
+        if let Ok(lib) = unsafe { Library::new(c) } {
+            if let Some(api) = unsafe { load_symbols(lib) } {
+                log::info!("Loaded libmpv on macOS from candidate: {}", c);
+                return Some(api);
+            }
+        }
+    }
+
+    None
+}
+
+fn load_mpv_api() -> Option<MpvApi> {
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(api) = load_windows_mpv() {
+            return Some(api);
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        if let Some(api) = load_linux_mpv() {
+            return Some(api);
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        if let Some(api) = load_macos_mpv() {
+            return Some(api);
+        }
+    }
+
+    for fallback in &["libmpv.so.2", "libmpv.so", "mpv", "libmpv"] {
+        if let Ok(lib) = unsafe { Library::new(fallback) } {
+            if let Some(api) = unsafe { load_symbols(lib) } {
+                log::info!("Loaded libmpv via generic fallback: {}", fallback);
+                return Some(api);
+            }
+        }
+    }
+
+    log::error!("CRITICAL: Unable to locate or dynamically load libmpv runtime library");
+    None
+}
+
+// ---------------------------------------------------------------------------
+// Public API Functions (matching original FFI declarations exactly)
+// ---------------------------------------------------------------------------
+
+pub unsafe fn mpv_create() -> *mut MpvHandle {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_create)()
+    } else {
+        std::ptr::null_mut()
+    }
+}
+
+pub unsafe fn mpv_initialize(ctx: *mut MpvHandle) -> c_int {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_initialize)(ctx)
+    } else {
+        -1
+    }
+}
+
+pub unsafe fn mpv_terminate_destroy(ctx: *mut MpvHandle) {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_terminate_destroy)(ctx);
+    }
+}
+
+pub unsafe fn mpv_set_option_string(ctx: *mut MpvHandle, name: *const c_char, data: *const c_char) -> c_int {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_set_option_string)(ctx, name, data)
+    } else {
+        -1
+    }
+}
+
+pub unsafe fn mpv_set_property(
+    ctx: *mut MpvHandle,
+    name: *const c_char,
+    format: c_int,
+    data: *mut c_void,
+) -> c_int {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_set_property)(ctx, name, format, data)
+    } else {
+        -1
+    }
+}
+
+pub unsafe fn mpv_set_property_string(ctx: *mut MpvHandle, name: *const c_char, data: *const c_char) -> c_int {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_set_property_string)(ctx, name, data)
+    } else {
+        -1
+    }
+}
+
+pub unsafe fn mpv_get_property(
+    ctx: *mut MpvHandle,
+    name: *const c_char,
+    format: c_int,
+    data: *mut c_void,
+) -> c_int {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_get_property)(ctx, name, format, data)
+    } else {
+        -1
+    }
+}
+
+pub unsafe fn mpv_get_property_string(ctx: *mut MpvHandle, name: *const c_char) -> *mut c_char {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_get_property_string)(ctx, name)
+    } else {
+        std::ptr::null_mut()
+    }
+}
+
+pub unsafe fn mpv_free(data: *mut c_void) {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_free)(data);
+    }
+}
+
+pub unsafe fn mpv_command(ctx: *mut MpvHandle, args: *mut *const c_char) -> c_int {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_command)(ctx, args)
+    } else {
+        -1
+    }
+}
+
+pub unsafe fn mpv_command_string(ctx: *mut MpvHandle, args: *const c_char) -> c_int {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_command_string)(ctx, args)
+    } else {
+        -1
+    }
+}
+
+pub unsafe fn mpv_wait_event(ctx: *mut MpvHandle, timeout: c_double) -> *mut MpvEvent {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_wait_event)(ctx, timeout)
+    } else {
+        std::ptr::null_mut()
+    }
+}
+
+pub unsafe fn mpv_render_context_create(
+    res: *mut *mut MpvRenderContext,
+    mpv: *mut MpvHandle,
+    params: *mut MpvRenderParam,
+) -> c_int {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_render_context_create)(res, mpv, params)
+    } else {
+        -1
+    }
+}
+
+pub unsafe fn mpv_render_context_render(ctx: *mut MpvRenderContext, params: *mut MpvRenderParam) -> c_int {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_render_context_render)(ctx, params)
+    } else {
+        -1
+    }
+}
+
+pub unsafe fn mpv_render_context_report_swap(ctx: *mut MpvRenderContext) {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_render_context_report_swap)(ctx);
+    }
+}
+
+pub unsafe fn mpv_render_context_update(ctx: *mut MpvRenderContext) -> u64 {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_render_context_update)(ctx)
+    } else {
+        0
+    }
+}
+
+pub unsafe fn mpv_render_context_free(ctx: *mut MpvRenderContext) {
+    if let Some(api) = get_mpv_api() {
+        (api.mpv_render_context_free)(ctx);
+    }
 }
