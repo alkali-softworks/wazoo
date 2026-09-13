@@ -5,6 +5,7 @@ members = [
     "crates/wazoo-scanner",
     "crates/wazoo-media",
     "crates/wazoo-app",
+    "crates/wazoo-tutorial",
 ]
 
 [workspace.package]

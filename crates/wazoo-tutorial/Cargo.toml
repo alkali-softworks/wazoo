@@ -1,0 +1,22 @@
+[package]
+name = "wazoo-tutorial"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Interactive tutorial application for learning Rust and Iced with wazoo-rs tech"
+
+[[bin]]
+name = "wazoo-tutorial"
+path = "src/main.rs"
+
+[dependencies]
+iced.workspace = true
+tokio.workspace = true
+rusqlite.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rfd.workspace = true
+walkdir.workspace = true
+log.workspace = true
+env_logger.workspace = true
