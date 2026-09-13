@@ -9,6 +9,8 @@
 
 #[cfg(target_os = "linux")]
 pub fn init_linux_cursor_env() {
+    init_linux_desktop_entry();
+
     if std::env::var_os("XCURSOR_SIZE").is_none() {
         let size = std::process::Command::new("gsettings")
             .args(["get", "org.gnome.desktop.interface", "cursor-size"])
@@ -51,6 +53,59 @@ pub fn init_linux_cursor_env() {
 
         if let Some(th) = theme {
             std::env::set_var("XCURSOR_THEME", th);
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+pub fn init_linux_desktop_entry() {
+    // Install the .desktop file and icon into user's local XDG directories
+    // so desktop environments (Cinnamon, GNOME, KDE) properly display the icon
+    // in taskbar/panel, Alt+Tab, and application launchers.
+    if let Some(home) = std::env::var_os("HOME") {
+        let home = std::path::PathBuf::from(home);
+        let icon_dir = home.join(".local/share/icons/hicolor/512x512/apps");
+        let _ = std::fs::create_dir_all(&icon_dir);
+        let icon_path = icon_dir.join("wazoo.png");
+        let icon_bytes = include_bytes!("../resources/icon.png");
+
+        let write_icon = match std::fs::metadata(&icon_path) {
+            Ok(meta) => meta.len() != icon_bytes.len() as u64,
+            Err(_) => true,
+        };
+        if write_icon {
+            let _ = std::fs::write(&icon_path, icon_bytes);
+        }
+
+        let generic_icon_path = home.join(".local/share/icons/wazoo.png");
+        let write_generic = match std::fs::metadata(&generic_icon_path) {
+            Ok(meta) => meta.len() != icon_bytes.len() as u64,
+            Err(_) => true,
+        };
+        if write_generic {
+            let _ = std::fs::write(&generic_icon_path, icon_bytes);
+        }
+
+        let apps_dir = home.join(".local/share/applications");
+        let _ = std::fs::create_dir_all(&apps_dir);
+        let desktop_path = apps_dir.join("wazoo.desktop");
+
+        if let Ok(current_exe) = std::env::current_exe() {
+            let exe_str = current_exe.to_string_lossy();
+            let desktop_content = format!(
+                "[Desktop Entry]\n\
+                Type=Application\n\
+                Name=Wazoo\n\
+                GenericName=Ambient Media Engine\n\
+                Comment=Native Rust ambient media engine for non-stop viewing\n\
+                Exec=\"{}\"\n\
+                Icon=wazoo\n\
+                Terminal=false\n\
+                Categories=AudioVideo;Video;Player;\n\
+                StartupWMClass=wazoo\n",
+                exe_str
+            );
+            let _ = std::fs::write(&desktop_path, desktop_content);
         }
     }
 }
