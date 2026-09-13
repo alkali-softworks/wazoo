@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * Core Application State
@@ -289,7 +289,7 @@ impl WazooApp {
         let restored_sessions = if is_cli {
             Vec::new()
         } else {
-            settings.session_videos.clone()
+            settings.session_videos
         };
 
         for session in restored_sessions.into_iter().take(count) {
@@ -297,18 +297,12 @@ impl WazooApp {
                 let id = app.next_player_id;
                 app.next_player_id += 1;
                 let name = format::format_video_title(&session.path);
-                let buffer_config = BufferConfig {
-                    duration_secs: app.settings.buffer_duration_secs,
-                    size_mb: app.settings.buffer_size_mb,
-                    read_chunk_kb: 512,
-                    preferred_audio_language: app.settings.preferred_audio_language.clone(),
-                };
                 let start_secs = if session.position_secs > 0.05 {
                     Some(session.position_secs)
                 } else {
                     None
                 };
-                if let Ok(mut handle) = VideoHandle::with_buffering_and_start(id, &session.path, &name, buffer_config, start_secs) {
+                if let Ok(mut handle) = app.create_video_handle_with_start(id, &session.path, &name, start_secs) {
                     handle.set_muted(session.is_muted);
                     handle.set_volume(session.volume);
                     handle.set_subtitles_visible(app.subtitles_enabled);
@@ -623,18 +617,21 @@ impl WazooApp {
         }
     }
 
+    pub(crate) fn buffer_config(&self) -> BufferConfig {
+        BufferConfig {
+            duration_secs: self.settings.buffer_duration_secs,
+            size_mb: self.settings.buffer_size_mb,
+            read_chunk_kb: 512,
+            preferred_audio_language: self.settings.preferred_audio_language.clone(),
+        }
+    }
+
     pub(crate) fn create_video_handle(&self, id: PlayerId, path: &str, name: &str) -> Result<VideoHandle, String> {
         self.create_video_handle_with_start(id, path, name, None)
     }
 
     pub(crate) fn create_video_handle_with_start(&self, id: PlayerId, path: &str, name: &str, start_secs: Option<f64>) -> Result<VideoHandle, String> {
-        let buffer_config = BufferConfig {
-            duration_secs: self.settings.buffer_duration_secs,
-            size_mb: self.settings.buffer_size_mb,
-            read_chunk_kb: 512,
-            preferred_audio_language: self.settings.preferred_audio_language.clone(),
-        };
-        VideoHandle::with_buffering_and_start(id, path, name, buffer_config, start_secs)
+        VideoHandle::with_buffering_and_start(id, path, name, self.buffer_config(), start_secs)
     }
 
     pub fn current_opacity(&self) -> f32 {
@@ -806,12 +803,7 @@ impl WazooApp {
         self.next_player_id += 1;
         self.is_preloading = true;
 
-        let buffer_config = BufferConfig {
-            duration_secs: self.settings.buffer_duration_secs,
-            size_mb: self.settings.buffer_size_mb,
-            read_chunk_kb: 512,
-            preferred_audio_language: self.settings.preferred_audio_language.clone(),
-        };
+        let buffer_config = self.buffer_config();
         let path = video_rec.path;
         let name = video_rec.name;
 
@@ -919,11 +911,7 @@ impl WazooApp {
             let msg = if self.is_all_folder(folder_label) {
                 self.t("wazoo.no_videos_found")
             } else {
-                let folder_clean = folder_label
-                    .split(['/', '\\'])
-                    .filter(|s| !s.is_empty())
-                    .next_back()
-                    .unwrap_or(folder_label);
+                let folder_clean = format::folder_basename(folder_label);
                 self.t_with("wazoo.no_files_found_in", &[("folder", folder_clean)])
             };
             self.toast_message = Some(msg);

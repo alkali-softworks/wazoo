@@ -1,10 +1,10 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * Play History Drawer
  * 
  * Displays a reverse-chronological list of videos played across all players during the session,
- * capped at 100 entries. Features quick search filtering, index numbering, folder tags, and
+ * capped at 1,000 entries. Features quick search filtering, index numbering, folder tags, and
  * click-to-play directly into the focused playback tile.
  */
 

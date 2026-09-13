@@ -8,11 +8,7 @@ license.workspace = true
 [dependencies]
 wazoo-core.workspace = true
 walkdir.workspace = true
-rayon.workspace = true
 regex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-log.workspace = true
 tokio.workspace = true
-thiserror.workspace = true
-chrono.workspace = true

@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * Media Scanner & Library Indexer
@@ -10,7 +10,7 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 use walkdir::WalkDir;
 use regex::Regex;
 use serde::Deserialize;
@@ -18,6 +18,9 @@ use tokio::sync::mpsc;
 use wazoo_core::{Database, VideoRecord};
 
 pub const VIDEO_EXTENSIONS: &[&str] = &["mkv", "mp4", "avi", "mov", "webm"];
+
+static RE_BRACKETS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\[.*?\]").unwrap());
+static RE_SPACES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s{2,}").unwrap());
 
 pub fn is_video_file<P: AsRef<Path>>(path: P) -> bool {
     let ext = path
@@ -33,12 +36,9 @@ pub fn is_video_file<P: AsRef<Path>>(path: P) -> bool {
 }
 
 pub fn clean_video_name(filename: &str) -> String {
-    let bracket_re = Regex::new(r"\[.*?\]").unwrap();
-    let spaces_re = Regex::new(r"\s{2,}").unwrap();
-
-    let without_brackets = bracket_re.replace_all(filename, " ");
+    let without_brackets = RE_BRACKETS.replace_all(filename, " ");
     let cleaned = without_brackets.replace(['.', '_'], " ");
-    let single_spaced = spaces_re.replace_all(&cleaned, " ");
+    let single_spaced = RE_SPACES.replace_all(&cleaned, " ");
     let trimmed = single_spaced.trim().trim_matches('-');
 
     if trimmed.is_empty() {
@@ -228,6 +228,7 @@ impl Scanner {
         self.scan_and_index_with_cancel(folders, db_path, progress_tx, None).await
     }
 
+    #[allow(clippy::manual_checked_ops)]
     pub async fn scan_and_index_with_cancel(
         &self,
         folders: &[String],
@@ -265,10 +266,8 @@ impl Scanner {
                     let p = entry.path();
                     if p.is_dir() {
                         subdirs.push(p);
-                    } else if is_video_file(&p) {
-                        if seen_files.insert(p.clone()) {
-                            files.push(p);
-                        }
+                    } else if is_video_file(&p) && seen_files.insert(p.clone()) {
+                        files.push(p);
                     }
                 }
             }

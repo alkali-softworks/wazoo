@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * String & Time Formatting Utilities
@@ -186,6 +186,15 @@ pub fn format_number(n: usize) -> String {
     result
 }
 
+/// Extracts the trailing folder name from a file or directory path (e.g. "/media/Anime" -> "Anime").
+pub fn folder_basename(path: &str) -> &str {
+    let clean = path.strip_prefix("file://").unwrap_or(path);
+    clean
+        .split(['/', '\\'])
+        .rfind(|s| !s.is_empty())
+        .unwrap_or(clean)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -202,6 +211,14 @@ mod tests {
             format_video_title("/media/Movies/Interstellar.2014.1080p.mkv"),
             "Interstellar 2014"
         );
+    }
+
+    #[test]
+    fn test_folder_basename() {
+        assert_eq!(folder_basename("/media/Movies"), "Movies");
+        assert_eq!(folder_basename("/media/Movies/"), "Movies");
+        assert_eq!(folder_basename("C:\\Media\\Anime\\"), "Anime");
+        assert_eq!(folder_basename("Anime"), "Anime");
     }
 
     #[test]
