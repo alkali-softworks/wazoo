@@ -101,6 +101,7 @@ pub enum Message {
     PerformSearch,
     OpenSettingsModal,
     CloseSettingsModal,
+    OpenAlkaliWebsite,
     SetLanguage(String),
     OpenHelpModal,
     CloseHelpModal,

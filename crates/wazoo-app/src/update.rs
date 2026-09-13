@@ -1369,6 +1369,9 @@ impl WazooApp {
                 self.show_settings_modal = false;
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
+            Message::OpenAlkaliWebsite => {
+                crate::platform::open_url("https://alkalisoftworks.com/");
+            }
             Message::OpenHelpModal => {
                 self.show_help_modal = true;
                 self.show_dropdown_menu = false;

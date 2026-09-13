@@ -1359,5 +1359,11 @@ mod tests {
             assert!(!first.is_shuffle);
         }
     }
+
+    #[test]
+    fn test_view_titlebar() {
+        let (app, _) = new_test_app();
+        let _elem = app.view_titlebar();
+    }
 }
 
