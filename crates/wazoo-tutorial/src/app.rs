@@ -42,6 +42,15 @@ fn is_media_file(path: &Path) -> bool {
         .unwrap_or(false)
 }
 
+// ==============================================================================
+// STEP 1: THE DATA SHAPE (`struct`)
+// ==============================================================================
+// RUST CONCEPT: Rust has NO `class` keyword!
+// In PHP/JS, classes bundle data and functions together.
+// In Rust, we define the DATA separately in a `struct` (like a database schema or interface),
+// and then attach methods to it later inside an `impl` block below.
+//
+// Every field here is `pub` (public) so our tab modules can read them.
 /// The master application struct holding all state for our tutorial app.
 pub struct TutorialApp {
     // Navigation
@@ -73,13 +82,27 @@ pub struct TutorialApp {
     pub status_banner: Option<String>,
 }
 
+// ==============================================================================
+// STEP 2: THE BEHAVIOR (`impl`)
+// ==============================================================================
+// `impl` stands for "Implementation".
+// This is where we attach functions and methods to the `TutorialApp` struct.
+//
+// Notice the difference:
+// - `Self` (capital S): Refers to the TYPE (`TutorialApp`).
+// - `self` (lowercase s): Refers to the INSTANCE (like `$this` in PHP or `this` in JS).
 impl TutorialApp {
     /// Constructs the initial application state.
     /// 
+    /// RUST CONCEPT: Static Constructor Functions
+    /// Notice this function has NO `self` in its arguments! That makes it a static
+    /// function (called as `TutorialApp::new()`), exactly like `static function create()` in PHP.
+    /// 
     /// RUST CONCEPT: Tuple Return Type `(Self, Task<Message>)`
-    /// When starting, Iced allows you to return an initial async task (e.g. to load
-    /// settings or scan files immediately). If you don't have any initial background
-    /// work, you return `Task::none()`.
+    /// A tuple `(A, B)` bundles multiple values together without making a new struct.
+    /// Here, we return:
+    /// 1. `Self`: The newly created `TutorialApp` instance.
+    /// 2. `Task<Message>`: An optional async task to run on boot (or `Task::none()`).
     pub fn new() -> (Self, Task<Message>) {
         // Initialize an in-memory SQLite database for the tutorial
         let db = TutorialDatabase::open_in_memory().expect("Failed to initialize SQLite database");
@@ -96,6 +119,17 @@ impl TutorialApp {
 
         let initial_notes = db.get_all_notes().unwrap_or_default();
 
+        // ======================================================================
+        // RUST CONCEPT: The `let app = Self { ... }` Struct Literal
+        // ======================================================================
+        // Coming from PHP or JS, this line looks like weird recursion, but it's not!
+        // 1. `Self` (Capital S) is an alias for `TutorialApp` (the struct we are inside).
+        //    Writing `Self { ... }` is 100% IDENTICAL to writing `TutorialApp { ... }`.
+        // 2. Rust has NO `new` operator keyword. You construct structs directly using
+        //    the "Struct Literal" syntax: `StructName { field1: val1, field2: val2 }`.
+        // 3. In PHP terms, this is literally: `$app = new self();`
+        // 4. In JS terms, this is literally: `const app = new TutorialApp();`
+        // We create this instance, store it in local variable `app`, and return it below!
         let app = Self {
             active_tab: Tab::CounterAndWidgets,
             counter_value: 0,
@@ -115,6 +149,10 @@ impl TutorialApp {
             status_banner: Some("Ready! Select any tab above to explore.".to_string()),
         };
 
+        // RUST CONCEPT: Returning a Tuple `(app, task)`
+        // Notice there is no `return` keyword and no semicolon `;` on the last line!
+        // In Rust, the final expression in a function without a semicolon IS the return value.
+        // We return `app` (our new state) and `Task::none()` (no initial async task).
         (app, Task::none())
     }
 
