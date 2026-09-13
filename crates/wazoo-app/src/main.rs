@@ -12,6 +12,7 @@ mod assets;
 mod cli;
 mod cursor;
 mod format;
+mod keybinds;
 mod message;
 mod platform;
 mod scroll_view;

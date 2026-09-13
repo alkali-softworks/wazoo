@@ -13,11 +13,12 @@ use iced::{
     keyboard::{key::Named, Key},
     Point, Task,
 };
-use wazoo_core::{Bookmark, LayoutMode, PlaybackMode};
+use wazoo_core::{Bookmark, KeyAction, LayoutMode, PlaybackMode};
 use wazoo_media::{PlayerId, VideoHandle};
 use wazoo_scanner::{ScanStage, Scanner};
 use crate::app::{WazooApp, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, TITLEBAR_HIDE_TICKS, TITLEBAR_SHOW_DELAY_TICKS};
 use crate::format;
+use crate::keybinds::find_key_action;
 use crate::message::Message;
 
 impl WazooApp {
@@ -232,12 +233,10 @@ impl WazooApp {
                     return Task::none();
                 }
 
-                // If Alt is held and X is pressed: quit app
+                // If Alt is held and key matches close_app: quit app
                 if self.is_alt_pressed {
-                    if let Key::Character(ref s) = key {
-                        if s.eq_ignore_ascii_case("x") {
-                            return self.update(Message::CloseApp);
-                        }
+                    if let Some(KeyAction::CloseApp) = find_key_action(&self.settings.keybinds, &key, true) {
+                        return self.update(Message::CloseApp);
                     }
                 }
 
@@ -260,53 +259,52 @@ impl WazooApp {
                     return Task::none();
                 }
 
-                match key {
-                    Key::Named(Named::Space) => return self.update(Message::TogglePlayFocused),
-                    Key::Named(Named::ArrowUp) => return self.update(Message::NextVideoFocused),
-                    Key::Named(Named::ArrowDown) => return self.update(Message::PrevVideoFocused),
-                    Key::Named(Named::ArrowLeft) => return self.update(Message::SeekRelativeFocused(-5.0)),
-                    Key::Named(Named::ArrowRight) => return self.update(Message::SeekRelativeFocused(5.0)),
-                    Key::Named(Named::Tab) => return self.update(Message::CycleFocusedPlayer),
-                    Key::Character(s) => match s.as_str() {
-                        "b" | "B" => return self.update(Message::ToggleBookmarksModal),
-                        "r" | "R" => return self.update(Message::RandomSeekFocused),
-                        "t" | "T" => return self.update(Message::ShowTitleOverlay),
-                        "f" | "F" | "j" | "J" | "/" => return self.update(Message::OpenSearchModal),
-                        "s" | "S" => return self.update(Message::ToggleShuffleMode),
-                        "1" => return self.update(Message::SetPlayerCount(1)),
-                        "2" => return self.update(Message::SetPlayerCount(2)),
-                        "3" => return self.update(Message::SetPlayerCount(3)),
-                        "4" => return self.update(Message::SetPlayerCount(4)),
-                        "5" => return self.update(Message::ToggleScrollMode),
-                        "6" => return self.update(Message::ToggleFlipMode),
-                        "l" | "L" => return self.update(Message::CycleLayout),
-                        "n" | "N" => return self.update(Message::AddNewPlayer),
-                        "x" | "X" => return self.update(Message::RemoveFocusedPlayer),
-                        "m" | "M" => return self.update(Message::ToggleMuteFocused),
-                        "[" => return self.update(Message::AdjustVolumeFocused(-0.1)),
-                        "]" => return self.update(Message::AdjustVolumeFocused(0.1)),
-                        "-" => {
+                if let Some(action) = find_key_action(&self.settings.keybinds, &key, self.is_alt_pressed) {
+                    match action {
+                        KeyAction::CloseApp => return self.update(Message::CloseApp),
+                        KeyAction::TogglePlayPause => return self.update(Message::TogglePlayFocused),
+                        KeyAction::PrevVideo => return self.update(Message::PrevVideoFocused),
+                        KeyAction::NextVideo => return self.update(Message::NextVideoFocused),
+                        KeyAction::SeekBackward => return self.update(Message::SeekRelativeFocused(-5.0)),
+                        KeyAction::SeekForward => return self.update(Message::SeekRelativeFocused(5.0)),
+                        KeyAction::FocusNext => return self.update(Message::CycleFocusedPlayer),
+                        KeyAction::SearchVideos => return self.update(Message::OpenSearchModal),
+                        KeyAction::AddNewPlayer => return self.update(Message::AddNewPlayer),
+                        KeyAction::RemovePlayer => return self.update(Message::RemoveFocusedPlayer),
+                        KeyAction::CycleLayout => return self.update(Message::CycleLayout),
+                        KeyAction::ToggleFilePicker => return self.update(Message::ToggleFilePicker),
+                        KeyAction::ToggleTranscript => return self.update(Message::ToggleTranscript),
+                        KeyAction::ToggleBookmarks => return self.update(Message::ToggleBookmarksModal),
+                        KeyAction::ToggleMute => return self.update(Message::ToggleMuteFocused),
+                        KeyAction::TogglePlayMode => return self.update(Message::ToggleShuffleMode),
+                        KeyAction::VolumeDown => return self.update(Message::AdjustVolumeFocused(-0.1)),
+                        KeyAction::VolumeUp => return self.update(Message::AdjustVolumeFocused(0.1)),
+                        KeyAction::ToggleScroll => return self.update(Message::ToggleScrollMode),
+                        KeyAction::ToggleFlip => return self.update(Message::ToggleFlipMode),
+                        KeyAction::ToggleSubtitles => return self.update(Message::ToggleSubtitles),
+                        KeyAction::PrevFrame => return self.update(Message::SeekRelativeFocused(-0.04)),
+                        KeyAction::NextFrame => return self.update(Message::SeekRelativeFocused(0.04)),
+                        KeyAction::RandomSeek => return self.update(Message::RandomSeekFocused),
+                        KeyAction::ShowTitleOverlay => return self.update(Message::ShowTitleOverlay),
+                        KeyAction::Player1 => return self.update(Message::SetPlayerCount(1)),
+                        KeyAction::Player2 => return self.update(Message::SetPlayerCount(2)),
+                        KeyAction::Player3 => return self.update(Message::SetPlayerCount(3)),
+                        KeyAction::Player4 => return self.update(Message::SetPlayerCount(4)),
+                        KeyAction::SpeedOrBookmarkDown => {
                             if self.settings.playback_mode == PlaybackMode::Scroll {
                                 return self.update(Message::AdjustScrollSpeed(-0.1));
                             } else {
                                 return self.update(Message::RemoveBookmarkFocused);
                             }
                         }
-                        "+" | "=" => {
+                        KeyAction::SpeedOrBookmarkUp => {
                             if self.settings.playback_mode == PlaybackMode::Scroll {
                                 return self.update(Message::AdjustScrollSpeed(0.1));
                             } else {
                                 return self.update(Message::AddBookmarkFocused);
                             }
                         }
-                        "c" | "C" => return self.update(Message::ToggleSubtitles),
-                        "v" | "V" => return self.update(Message::ToggleTranscript),
-                        "h" | "H" => return self.update(Message::ToggleFilePicker),
-                        "," => return self.update(Message::SeekRelativeFocused(-0.04)),
-                        "." => return self.update(Message::SeekRelativeFocused(0.04)),
-                        _ => {}
-                    },
-                    _ => {}
+                    }
                 }
             }
             Message::KeyReleased(key) => {

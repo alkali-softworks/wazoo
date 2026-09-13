@@ -104,6 +104,8 @@ pub struct Bookmark {
     pub is_shuffle: bool,
 }
 
+use crate::keybinds::KeybindSettings;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct WazooSettings {
@@ -129,6 +131,8 @@ pub struct WazooSettings {
     pub bookmarks: Vec<Bookmark>,
     #[serde(default)]
     pub preferred_audio_language: Option<String>,
+    #[serde(default)]
+    pub keybinds: KeybindSettings,
 }
 
 impl Default for WazooSettings {
@@ -150,6 +154,7 @@ impl Default for WazooSettings {
             session_videos: Vec::new(),
             bookmarks: Vec::new(),
             preferred_audio_language: None,
+            keybinds: KeybindSettings::default(),
         }
     }
 }

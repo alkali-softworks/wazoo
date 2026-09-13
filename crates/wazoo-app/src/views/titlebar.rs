@@ -122,19 +122,9 @@ impl WazooApp {
 
         if self.show_dropdown_menu {
             let menu_dropdown = container(
-                column![
-                    button(text(format!("{} (J)", self.t("common.search")))).style(theme::menu_item_style).on_press(Message::OpenSearchModal).padding([8, 14]).width(Length::Fill),
-                    button(text(format!("{} (N)", self.t("common.add_player")))).style(theme::menu_item_style).on_press(Message::AddNewPlayer).padding([8, 14]).width(Length::Fill),
-                    button(text(format!("{} (L)", self.t("common.toggle_layout")))).style(theme::menu_item_style).on_press(Message::CycleLayout).padding([8, 14]).width(Length::Fill),
-                    button(text(format!("{} (H)", self.t("common.toggle_files")))).style(theme::menu_item_style).on_press(Message::ToggleFilePicker).padding([8, 14]).width(Length::Fill),
-                    button(text(format!("{} (V)", self.t("transcript.title")))).style(theme::menu_item_style).on_press(Message::ToggleTranscript).padding([8, 14]).width(Length::Fill),
-                    button(text(format!("{} (B)", self.t("bookmarks.title")))).style(theme::menu_item_style).on_press(Message::ToggleBookmarksModal).padding([8, 14]).width(Length::Fill),
-                    button(text(self.t("common.settings"))).style(theme::menu_item_style).on_press(Message::OpenSettingsModal).padding([8, 14]).width(Length::Fill),
-                    button(text(self.t("common.help"))).style(theme::menu_item_style).on_press(Message::OpenHelpModal).padding([8, 14]).width(Length::Fill),
-                    button(text(format!("{} (Alt+X)", self.t("common.quit")))).style(theme::menu_item_style).on_press(Message::CloseApp).padding([8, 14]).width(Length::Fill),
-                ]
-                .spacing(2)
-                .width(Length::Fixed(230.0)),
+                self.view_app_menu_list([8, 14])
+                    .spacing(2)
+                    .width(Length::Fixed(230.0)),
             )
             .padding(4)
             .style(theme::menu_dropdown_style);
@@ -143,5 +133,56 @@ impl WazooApp {
         } else {
             titlebar_row.into()
         }
+    }
+
+    pub(crate) fn view_app_menu_list(&self, padding: [u16; 2]) -> iced::widget::Column<'_, Message> {
+        let kb = &self.settings.keybinds;
+        column![
+            button(text(format!("{} ({})", self.t("common.search"), kb.menu_hint(&kb.search_videos))))
+                .style(theme::menu_item_style)
+                .on_press(Message::OpenSearchModal)
+                .padding(padding)
+                .width(Length::Fill),
+            button(text(format!("{} ({})", self.t("common.add_player"), kb.menu_hint(&kb.add_player))))
+                .style(theme::menu_item_style)
+                .on_press(Message::AddNewPlayer)
+                .padding(padding)
+                .width(Length::Fill),
+            button(text(format!("{} ({})", self.t("common.toggle_layout"), kb.menu_hint(&kb.toggle_layout))))
+                .style(theme::menu_item_style)
+                .on_press(Message::CycleLayout)
+                .padding(padding)
+                .width(Length::Fill),
+            button(text(format!("{} ({})", self.t("common.toggle_files"), kb.menu_hint(&kb.toggle_file_picker))))
+                .style(theme::menu_item_style)
+                .on_press(Message::ToggleFilePicker)
+                .padding(padding)
+                .width(Length::Fill),
+            button(text(format!("{} ({})", self.t("transcript.title"), kb.menu_hint(&kb.toggle_transcript))))
+                .style(theme::menu_item_style)
+                .on_press(Message::ToggleTranscript)
+                .padding(padding)
+                .width(Length::Fill),
+            button(text(format!("{} ({})", self.t("bookmarks.title"), kb.menu_hint(&kb.toggle_bookmarks))))
+                .style(theme::menu_item_style)
+                .on_press(Message::ToggleBookmarksModal)
+                .padding(padding)
+                .width(Length::Fill),
+            button(text(self.t("common.settings")))
+                .style(theme::menu_item_style)
+                .on_press(Message::OpenSettingsModal)
+                .padding(padding)
+                .width(Length::Fill),
+            button(text(self.t("common.help")))
+                .style(theme::menu_item_style)
+                .on_press(Message::OpenHelpModal)
+                .padding(padding)
+                .width(Length::Fill),
+            button(text(format!("{} ({})", self.t("common.quit"), kb.menu_hint(&kb.close_app))))
+                .style(theme::menu_item_style)
+                .on_press(Message::CloseApp)
+                .padding(padding)
+                .width(Length::Fill),
+        ]
     }
 }

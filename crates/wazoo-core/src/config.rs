@@ -73,6 +73,18 @@ impl ConfigManager {
         WazooSettings::default()
     }
 
+    pub fn has_keybinds_in_settings(&self) -> bool {
+        let path = self.config_file_path();
+        if path.exists() {
+            if let Ok(content) = fs::read_to_string(&path) {
+                if let Ok(val) = serde_json::from_str::<serde_json::Value>(&content) {
+                    return val.get("keybinds").is_some();
+                }
+            }
+        }
+        false
+    }
+
     pub fn save_settings(&self, settings: &WazooSettings) -> Result<(), std::io::Error> {
         let path = self.config_file_path();
         let json = serde_json::to_string_pretty(settings)?;
@@ -210,5 +222,39 @@ mod tests {
         let legacy_json = r#"{"window_opacity":1.0}"#;
         let legacy: WazooSettings = serde_json::from_str(legacy_json).unwrap();
         assert_eq!(legacy.preferred_audio_language, None);
+    }
+
+    #[test]
+    fn test_keybinds_serialization_and_has_keybinds() {
+        let temp_dir = std::env::temp_dir().join(format!("wazoo_keybinds_test_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let _ = fs::create_dir_all(&temp_dir);
+
+        let mgr = ConfigManager {
+            config_dir: temp_dir.clone(),
+            data_dir: temp_dir.clone(),
+        };
+
+        // Initially no settings file exists
+        assert!(!mgr.has_keybinds_in_settings());
+
+        // Save legacy settings without keybinds field
+        let legacy_json = r#"{"window_opacity":0.95}"#;
+        fs::write(mgr.config_file_path(), legacy_json).unwrap();
+        assert!(!mgr.has_keybinds_in_settings());
+
+        // Loading legacy settings fills in default keybinds
+        let mut loaded = mgr.load_settings();
+        assert_eq!(loaded.keybinds.add_player, "n");
+
+        // Customizing and saving persists keybinds
+        loaded.keybinds.add_player = "p".to_string();
+        mgr.save_settings(&loaded).unwrap();
+        assert!(mgr.has_keybinds_in_settings());
+
+        // Reading back preserves customized keybind
+        let reloaded = mgr.load_settings();
+        assert_eq!(reloaded.keybinds.add_player, "p");
+
+        let _ = fs::remove_dir_all(&temp_dir);
     }
 }
