@@ -81,7 +81,8 @@
       "close_app": "앱 종료",
       "move_window": "창 이동",
       "toggle_bookmarks": "북마크 전환",
-      "toggle_transcript": "자막 대본 전환"
+      "toggle_transcript": "자막 대본 전환",
+      "toggle_history": "재생 기록 전환"
     }
   },
   "file_picker": {
@@ -128,5 +129,13 @@
     "removed": "북마크 삭제됨: {name}",
     "not_found": "현재 비디오의 북마크를 찾을 수 없습니다",
     "jumped": "북마크: {name}  [{time}] ({mode})"
+  },
+  "history": {
+    "title": "재생 기록",
+    "count": "{count}개 비디오",
+    "empty": "아직 재생된 비디오가 없습니다.",
+    "clear": "기록 지우기",
+    "item_hint": "활성 플레이어에서 재생하려면 클릭",
+    "search_placeholder": "기록 검색..."
   }
 }

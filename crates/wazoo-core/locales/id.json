@@ -81,7 +81,8 @@
       "close_app": "Tutup Aplikasi",
       "move_window": "Pindahkan Jendela",
       "toggle_bookmarks": "Beralih Bookmark",
-      "toggle_transcript": "Beralih Transkrip Subtitle"
+      "toggle_transcript": "Beralih Transkrip Subtitle",
+      "toggle_history": "Alihkan riwayat putar"
     }
   },
   "file_picker": {
@@ -128,5 +129,13 @@
     "removed": "Bookmark dihapus: {name}",
     "not_found": "Tidak ada bookmark ditemukan untuk video saat ini",
     "jumped": "Bookmark: {name}  [{time}] ({mode})"
+  },
+  "history": {
+    "title": "Riwayat Putar",
+    "count": "{count} video",
+    "empty": "Belum ada video yang diputar.",
+    "clear": "Hapus riwayat",
+    "item_hint": "Klik untuk memutar di pemutar aktif",
+    "search_placeholder": "Cari riwayat..."
   }
 }

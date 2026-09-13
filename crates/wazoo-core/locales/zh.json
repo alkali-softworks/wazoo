@@ -81,7 +81,8 @@
       "close_app": "关闭应用",
       "move_window": "移动窗口",
       "toggle_bookmarks": "切换书签",
-      "toggle_transcript": "切换字幕转录"
+      "toggle_transcript": "切换字幕转录",
+      "toggle_history": "切换播放历史"
     }
   },
   "file_picker": {
@@ -128,5 +129,13 @@
     "removed": "已删除书签：{name}",
     "not_found": "未找到当前视频的书签",
     "jumped": "书签：{name}  [{time}] ({mode})"
+  },
+  "history": {
+    "title": "播放历史",
+    "count": "{count} 个视频",
+    "empty": "暂无播放记录。",
+    "clear": "清空历史",
+    "item_hint": "点击在活动播放器中播放",
+    "search_placeholder": "搜索历史..."
   }
 }

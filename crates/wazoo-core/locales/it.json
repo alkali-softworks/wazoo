@@ -81,7 +81,8 @@
       "close_app": "Chiudi app",
       "move_window": "Sposta finestra",
       "toggle_bookmarks": "Attiva/disattiva segnalibri",
-      "toggle_transcript": "Attiva/disattiva trascrizione sottotitoli"
+      "toggle_transcript": "Attiva/disattiva trascrizione sottotitoli",
+      "toggle_history": "Attiva/disattiva cronologia di riproduzione"
     }
   },
   "file_picker": {
@@ -128,5 +129,13 @@
     "removed": "Segnalibro rimosso: {name}",
     "not_found": "Nessun segnalibro trovato per il video corrente",
     "jumped": "Segnalibro: {name}  [{time}] ({mode})"
+  },
+  "history": {
+    "title": "Cronologia di riproduzione",
+    "count": "{count} video",
+    "empty": "Nessun video ancora riprodotto.",
+    "clear": "Cancella cronologia",
+    "item_hint": "Fai clic per riprodurre nel lettore attivo",
+    "search_placeholder": "Cerca nella cronologia..."
   }
 }

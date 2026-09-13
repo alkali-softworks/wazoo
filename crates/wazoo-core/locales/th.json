@@ -81,7 +81,8 @@
       "close_app": "ปิดแอป",
       "move_window": "ย้ายหน้าต่าง",
       "toggle_bookmarks": "สลับที่คั่นหน้า",
-      "toggle_transcript": "สลับคำบรรยายบทสนทนา"
+      "toggle_transcript": "สลับคำบรรยายบทสนทนา",
+      "toggle_history": "สลับประวัติการเล่น"
     }
   },
   "file_picker": {
@@ -128,5 +129,13 @@
     "removed": "ลบบุ๊กมาร์กแล้ว: {name}",
     "not_found": "ไม่พบบุ๊กมาร์กสำหรับวิดีโอปัจจุบัน",
     "jumped": "บุ๊กมาร์ก: {name}  [{time}] ({mode})"
+  },
+  "history": {
+    "title": "ประวัติการเล่น",
+    "count": "{count} วิดีโอ",
+    "empty": "ยังไม่มีวิดีโอที่เล่น",
+    "clear": "ล้างประวัติ",
+    "item_hint": "คลิกเพื่อเล่นในเครื่องเล่นที่ใช้งานอยู่",
+    "search_placeholder": "ค้นหาประวัติ..."
   }
 }

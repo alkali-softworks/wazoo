@@ -81,7 +81,8 @@
       "close_app": "סגור אפליקציה",
       "move_window": "הזז חלון",
       "toggle_bookmarks": "החלף סימניות",
-      "toggle_transcript": "החלף תמליל כתוביות"
+      "toggle_transcript": "החלף תמליל כתוביות",
+      "toggle_history": "החלף היסטוריית השמעה"
     }
   },
   "file_picker": {
@@ -128,5 +129,13 @@
     "removed": "סימנייה הוסרה: {name}",
     "not_found": "לא נמצאה סימנייה עבור הווידאו הנוכחי",
     "jumped": "סימנייה: {name}  [{time}] ({mode})"
+  },
+  "history": {
+    "title": "היסטוריית השמעה",
+    "count": "{count} סרטונים",
+    "empty": "עדיין לא הופעלו סרטונים.",
+    "clear": "נקה היסטוריה",
+    "item_hint": "לחץ להפעלה בנגן הפעיל",
+    "search_placeholder": "חיפוש בהיסטוריה..."
   }
 }

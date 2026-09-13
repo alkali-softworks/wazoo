@@ -81,7 +81,8 @@
       "close_app": "アプリを閉じる",
       "move_window": "ウィンドウを移動",
       "toggle_bookmarks": "ブックマークの切り替え",
-      "toggle_transcript": "字幕トランスクリプトの切り替え"
+      "toggle_transcript": "字幕トランスクリプトの切り替え",
+      "toggle_history": "再生履歴を切り替え"
     }
   },
   "file_picker": {
@@ -128,5 +129,13 @@
     "removed": "ブックマークを削除しました: {name}",
     "not_found": "現在の動画のブックマークは見つかりませんでした",
     "jumped": "ブックマーク: {name}  [{time}] ({mode})"
+  },
+  "history": {
+    "title": "再生履歴",
+    "count": "{count} 本の動画",
+    "empty": "まだ再生された動画はありません。",
+    "clear": "履歴を消去",
+    "item_hint": "クリックしてアクティブなプレーヤーで再生",
+    "search_placeholder": "履歴を検索..."
   }
 }

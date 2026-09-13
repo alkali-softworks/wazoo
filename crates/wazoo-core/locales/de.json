@@ -81,7 +81,8 @@
       "close_app": "Anwendung schließen",
       "move_window": "Fenster verschieben",
       "toggle_bookmarks": "Lesezeichen umschalten",
-      "toggle_transcript": "Untertitel-Transkript umschalten"
+      "toggle_transcript": "Untertitel-Transkript umschalten",
+      "toggle_history": "Wiedergabeverlauf umschalten"
     }
   },
   "file_picker": {
@@ -128,5 +129,13 @@
     "removed": "Lesezeichen entfernt: {name}",
     "not_found": "Kein Lesezeichen für aktuelles Video gefunden",
     "jumped": "Lesezeichen: {name}  [{time}] ({mode})"
+  },
+  "history": {
+    "title": "Wiedergabeverlauf",
+    "count": "{count} Videos",
+    "empty": "Noch keine Videos abgespielt.",
+    "clear": "Verlauf löschen",
+    "item_hint": "Klicken, um im aktiven Player abzuspielen",
+    "search_placeholder": "Verlauf durchsuchen..."
   }
 }
