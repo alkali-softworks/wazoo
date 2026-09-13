@@ -118,6 +118,90 @@ impl Default for KeybindSettings {
 }
 
 impl KeybindSettings {
+    pub const ALL_KEYS: &'static [&'static str] = &[
+        "search_videos",
+        "add_player",
+        "remove_player",
+        "toggle_layout",
+        "toggle_file_picker",
+        "toggle_transcript",
+        "toggle_bookmarks",
+        "toggle_mute",
+        "play_pause",
+        "toggle_play_mode",
+        "prev_video",
+        "next_video",
+        "seek_backward",
+        "seek_forward",
+        "focus_next",
+        "volume_down",
+        "volume_up",
+        "toggle_scroll",
+        "toggle_flip",
+        "toggle_subtitles",
+        "prev_frame",
+        "next_frame",
+        "close_app",
+        "random_seek",
+        "show_title_overlay",
+        "player_1",
+        "player_2",
+        "player_3",
+        "player_4",
+        "speed_or_bookmark_down",
+        "speed_or_bookmark_up",
+    ];
+
+    /// Validates if a JSON value contains the complete dictionary of non-empty key bindings.
+    pub fn is_complete_json(val: &serde_json::Value) -> bool {
+        if let Some(obj) = val.get("keybinds").and_then(|k| k.as_object()) {
+            Self::ALL_KEYS.iter().all(|&k| {
+                obj.get(k)
+                    .and_then(|v| v.as_str())
+                    .map(|s| !s.trim().is_empty())
+                    .unwrap_or(false)
+            })
+        } else {
+            false
+        }
+    }
+
+    /// Reconciles any empty or blank keybindings with the application defaults.
+    pub fn reconcile_with_defaults(&mut self) {
+        let def = Self::default();
+        if self.search_videos.trim().is_empty() { self.search_videos = def.search_videos; }
+        if self.add_player.trim().is_empty() { self.add_player = def.add_player; }
+        if self.remove_player.trim().is_empty() { self.remove_player = def.remove_player; }
+        if self.toggle_layout.trim().is_empty() { self.toggle_layout = def.toggle_layout; }
+        if self.toggle_file_picker.trim().is_empty() { self.toggle_file_picker = def.toggle_file_picker; }
+        if self.toggle_transcript.trim().is_empty() { self.toggle_transcript = def.toggle_transcript; }
+        if self.toggle_bookmarks.trim().is_empty() { self.toggle_bookmarks = def.toggle_bookmarks; }
+        if self.toggle_mute.trim().is_empty() { self.toggle_mute = def.toggle_mute; }
+        if self.play_pause.trim().is_empty() { self.play_pause = def.play_pause; }
+        if self.toggle_play_mode.trim().is_empty() { self.toggle_play_mode = def.toggle_play_mode; }
+        if self.prev_video.trim().is_empty() { self.prev_video = def.prev_video; }
+        if self.next_video.trim().is_empty() { self.next_video = def.next_video; }
+        if self.seek_backward.trim().is_empty() { self.seek_backward = def.seek_backward; }
+        if self.seek_forward.trim().is_empty() { self.seek_forward = def.seek_forward; }
+        if self.focus_next.trim().is_empty() { self.focus_next = def.focus_next; }
+        if self.volume_down.trim().is_empty() { self.volume_down = def.volume_down; }
+        if self.volume_up.trim().is_empty() { self.volume_up = def.volume_up; }
+        if self.toggle_scroll.trim().is_empty() { self.toggle_scroll = def.toggle_scroll; }
+        if self.toggle_flip.trim().is_empty() { self.toggle_flip = def.toggle_flip; }
+        if self.toggle_subtitles.trim().is_empty() { self.toggle_subtitles = def.toggle_subtitles; }
+        if self.prev_frame.trim().is_empty() { self.prev_frame = def.prev_frame; }
+        if self.next_frame.trim().is_empty() { self.next_frame = def.next_frame; }
+        if self.close_app.trim().is_empty() { self.close_app = def.close_app; }
+        if self.random_seek.trim().is_empty() { self.random_seek = def.random_seek; }
+        if self.show_title_overlay.trim().is_empty() { self.show_title_overlay = def.show_title_overlay; }
+        if self.player_1.trim().is_empty() { self.player_1 = def.player_1; }
+        if self.player_2.trim().is_empty() { self.player_2 = def.player_2; }
+        if self.player_3.trim().is_empty() { self.player_3 = def.player_3; }
+        if self.player_4.trim().is_empty() { self.player_4 = def.player_4; }
+        if self.speed_or_bookmark_down.trim().is_empty() { self.speed_or_bookmark_down = def.speed_or_bookmark_down; }
+        if self.speed_or_bookmark_up.trim().is_empty() { self.speed_or_bookmark_up = def.speed_or_bookmark_up; }
+    }
+
     /// Formats a keybinding into a clean uppercase hint suitable for menu labels.
     /// E.g. "n" -> "N", "j, /" -> "J", "Alt+X" -> "Alt+X"
     pub fn menu_hint(&self, binding: &str) -> String {
@@ -228,5 +312,35 @@ mod tests {
         assert_eq!(shortcuts[7], ("n".to_string(), "help.shortcuts.add_player".to_string()));
         assert_eq!(shortcuts[12], ("+ / =".to_string(), "bookmarks.bookmark_current".to_string()));
         assert_eq!(shortcuts[19], ("Alt + X".to_string(), "help.shortcuts.close_app".to_string()));
+    }
+
+    #[test]
+    fn test_is_complete_json_and_reconcile_with_defaults() {
+        // Incomplete json missing most keys
+        let incomplete_json: serde_json::Value = serde_json::json!({
+            "keybinds": {
+                "add_player": "p"
+            }
+        });
+        assert!(!KeybindSettings::is_complete_json(&incomplete_json));
+
+        // Incomplete json with blank value
+        let mut full_map = serde_json::Map::new();
+        for &k in KeybindSettings::ALL_KEYS {
+            full_map.insert(k.to_string(), serde_json::Value::String("x".to_string()));
+        }
+        full_map.insert("add_player".to_string(), serde_json::Value::String("   ".to_string()));
+        let blank_json = serde_json::json!({ "keybinds": full_map });
+        assert!(!KeybindSettings::is_complete_json(&blank_json));
+
+        // Reconcile blank value
+        let mut kb = KeybindSettings::default();
+        kb.add_player = "  ".to_string();
+        kb.reconcile_with_defaults();
+        assert_eq!(kb.add_player, "n");
+
+        // Complete json with non-empty values
+        let complete_json = serde_json::to_value(crate::models::WazooSettings::default()).unwrap();
+        assert!(KeybindSettings::is_complete_json(&complete_json));
     }
 }

@@ -112,11 +112,11 @@ impl WazooApp {
         config_mgr: ConfigManager,
         db: Database,
     ) -> (Self, Task<Message>) {
-        let has_keybinds = config_mgr.has_keybinds_in_settings();
+        let has_complete_keybinds = config_mgr.has_complete_keybinds_in_settings();
         let mut settings = config_mgr.load_settings();
 
-        // On boot, write the keybind setting to the settings file if not already present
-        if !has_keybinds {
+        // On boot, write the complete keybind settings to the settings file if missing or incomplete
+        if !has_complete_keybinds {
             let _ = config_mgr.save_settings(&settings);
         }
 
@@ -1328,12 +1328,13 @@ mod tests {
         let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
         let db = Database::open_in_memory().expect("in-memory db");
 
-        // Write custom keybinds into settings.json before boot
+        // Write custom keybinds into settings.json before boot (incomplete list)
         let custom_json = r#"{"keybinds":{"toggle_layout":"o","toggle_bookmarks":"k"}}"#;
         std::fs::write(config_mgr.config_file_path(), custom_json).unwrap();
-        assert!(config_mgr.has_keybinds_in_settings());
+        assert!(!config_mgr.has_complete_keybinds_in_settings());
 
         let (mut app, _) = WazooApp::new_with_backend(None, config_mgr, db);
+        assert!(app.config_mgr.has_complete_keybinds_in_settings());
         assert_eq!(app.settings.keybinds.toggle_layout, "o");
         assert_eq!(app.settings.keybinds.toggle_bookmarks, "k");
 
@@ -1358,6 +1359,40 @@ mod tests {
         // Pressing custom 'o' SHOULD cycle layout from Grid to Row
         let _ = app.update(Message::KeyPressed(Key::Character("o".into()), iced::event::Status::Ignored));
         assert_eq!(app.settings.layout, LayoutMode::Row);
+
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_boot_reconciles_and_persists_incomplete_keybinds() {
+        let temp_dir = std::env::temp_dir().join(format!(
+            "wazoo_incomplete_kb_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let _ = std::fs::create_dir_all(&temp_dir);
+        let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
+        let db = Database::open_in_memory().expect("in-memory db");
+
+        // Write incomplete keybinds list into settings.json (only 1 key specified)
+        let incomplete_json = r#"{"keybinds":{"toggle_layout":"o"}}"#;
+        std::fs::write(config_mgr.config_file_path(), incomplete_json).unwrap();
+        assert!(!config_mgr.has_complete_keybinds_in_settings());
+
+        // Boot the app
+        let (app, _) = WazooApp::new_with_backend(None, config_mgr, db);
+
+        // Custom key is preserved, missing keys are filled with defaults
+        assert_eq!(app.settings.keybinds.toggle_layout, "o");
+        assert_eq!(app.settings.keybinds.close_app, "Alt+X");
+        assert_eq!(app.settings.keybinds.add_player, "n");
+
+        // Boot should have written the complete list to settings.json
+        assert!(app.config_mgr.has_complete_keybinds_in_settings());
+        let updated_file_content = std::fs::read_to_string(app.config_mgr.config_file_path()).unwrap();
+        assert!(updated_file_content.contains("\"toggle_layout\": \"o\""));
+        assert!(updated_file_content.contains("\"close_app\": \"Alt+X\""));
+        assert!(updated_file_content.contains("\"add_player\": \"n\""));
 
         let _ = std::fs::remove_dir_all(&temp_dir);
     }
