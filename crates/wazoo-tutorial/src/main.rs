@@ -29,48 +29,103 @@
  *   RUST_LOG=info cargo run -p wazoo-tutorial
  */
 
+// ==============================================================================
+// STEP 1: MODULE DECLARATIONS (`mod`)
+// ==============================================================================
+// In Rust, files on your hard drive are NOT automatically compiled or autoloaded!
+// Writing `mod app;` tells the compiler:
+// "Go find `src/app.rs`, compile it, and attach it as a child module named `app`."
 mod app;
 mod db;
 mod message;
 mod style;
 mod tabs;
 
+// ==============================================================================
+// STEP 2: IMPORTS (`use`)
+// ==============================================================================
+// Now that `mod app;` declared the module, we use `use` as a shortcut so we can
+// refer to `TutorialApp` directly instead of writing `crate::app::TutorialApp`.
 use app::TutorialApp;
 
 /// The entry point of the executable.
 /// 
-/// RUST CONCEPT: `iced::Result` in `main()`
-/// In C/C++, `main` returns an `int` (0 for success).
-/// In Rust, `main` can return `()` or a `Result<(), E>`.
-/// `iced::Result` is an alias for `Result<(), iced::Error>`.
-/// If the application exits normally, it returns `Ok(())`.
-/// If window creation fails (e.g. no display server / Wayland / X11 error),
-/// the error is cleanly printed to stderr!
+/// RUST CONCEPT 1: `pub fn main() -> iced::Result`
+/// - `pub`: Public visibility (standard in Rust binaries).
+/// - `fn`: Function keyword.
+/// - `-> iced::Result`: The return type!
+///   In C, `main` returns an `int` (0 for success).
+///   In Rust, `main` can return `Result<(), iced::Error>`.
+///   - If everything succeeds, it returns `Ok(())` (where `()` is the "unit type", like void).
+///   - If window creation fails (e.g. no display server / Wayland / X11 error),
+///     it returns `Err(...)` and Rust cleanly prints the error to stderr!
 pub fn main() -> iced::Result {
-    // Initialize logging from environment variables (e.g. RUST_LOG=info)
+    // Initialize logging from environment variables (e.g. RUST_LOG=info cargo run).
+    // If you don't set RUST_LOG, logging stays quiet.
     env_logger::init();
 
     log::info!("Starting Wazoo Rust & Iced Tutorial Application...");
 
-    // Configure the main application window
+    // ==========================================================================
+    // STEP 3: WINDOW CONFIGURATION (Structs & Default Syntax)
+    // ==========================================================================
+    // RUST CONCEPT 2: Struct Update Syntax `..Default::default()`
+    // `iced::window::Settings` has dozens of fields (icons, transparency, min/max size).
+    // Instead of specifying all 20+ fields manually, Rust lets us specify the ones
+    // we care about, then use `..Default::default()` to fill in the rest with defaults!
     let window_settings = iced::window::Settings {
-        size: iced::Size::new(1020.0, 760.0),
-        position: iced::window::Position::Centered,
-        min_size: Some(iced::Size::new(720.0, 500.0)),
-        resizable: true,
-        decorations: true, // Native window title bar & border for ease of use
-        ..Default::default()
+        size: iced::Size::new(1020.0, 760.0),            // Default width & height in points
+        position: iced::window::Position::Centered,      // Center the window on the active monitor
+        min_size: Some(iced::Size::new(720.0, 500.0)),   // Prevent users from making it too tiny
+        resizable: true,                                 // Allow window edge dragging
+        decorations: true,                               // Enable standard OS titlebar, minimize, and [X] close buttons
+        ..Default::default()                             // Fill remaining fields (icons, platform settings) with defaults
     };
 
-    // Boot the Iced application runtime
+    // ==========================================================================
+    // STEP 4: THE ICED APPLICATION BUILDER (Method Chaining & Function Pointers)
+    // ==========================================================================
+    // RUST CONCEPT 3: Passing Function Pointers (Notice NO parentheses!)
+    // Notice we pass `TutorialApp::new`, NOT `TutorialApp::new()`.
+    // - With parentheses `TutorialApp::new()` = "Call this function RIGHT NOW".
+    // - WITHOUT parentheses `TutorialApp::new` = "Here is the address/pointer to this function.
+    //   Iced, YOU call it when you are ready!"
+    //
+    // The three core functions passed here define The Elm Architecture (TEA):
+    // 1. `TutorialApp::new`:    Constructs the initial state struct.
+    // 2. `TutorialApp::update`: The state-mutation function: handles every `Message`.
+    // 3. `TutorialApp::view`:   The pure UI layout function: converts state -> widgets.
     iced::application(
         TutorialApp::new,
         TutorialApp::update,
         TutorialApp::view,
     )
+    // RUST CONCEPT 4: The Builder Pattern
+    // Each method takes `self` by value, configures a hook, and returns the modified builder.
+    //
+    // `.title(...)`: Callback returning the dynamic window title string.
     .title(TutorialApp::title)
+    // `.subscription(...)`: Hook for listening to external event streams (e.g. 1-sec timer ticks).
     .subscription(TutorialApp::subscription)
+    // `.theme(...)`: Callback returning the active color theme (Dark, Light, TokyoNight, etc.).
     .theme(TutorialApp::theme)
+    // `.window(...)`: Attaches the window geometry and decoration settings configured above.
     .window(window_settings)
+    // ==========================================================================
+    // STEP 5: `.run()` — WHERE DOES EXECUTION GO?
+    // ==========================================================================
+    // Calling `.run()` BLOCKS the main thread and starts the desktop Event Loop.
+    //
+    // Here is what happens under the hood right now:
+    // 1. Iced calls `TutorialApp::new()` to initialize memory and open SQLite.
+    // 2. Iced creates the OS window via `winit` and attaches `wgpu` for GPU rendering.
+    // 3. Iced calls `TutorialApp::view()` to render Frame 1 to the screen.
+    // 4. Execution enters an infinite loop:
+    //    - Sleeps until an OS event occurs (click, typing, window resize, timer tick).
+    //    - Maps the event into a `Message`.
+    //    - Calls `TutorialApp::update(&mut state, message)`.
+    //    - If state changed, calls `TutorialApp::view(&state)` to repaint at 60+ FPS.
+    // 5. When the user closes the window, `.run()` breaks the loop, frees all resources,
+    //    and returns `Ok(())`!
     .run()
 }
