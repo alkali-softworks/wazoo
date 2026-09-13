@@ -1431,5 +1431,33 @@ mod tests {
         let resized_h_16_9 = app.scroll_engine.item_height_for_aspect_ratio(16.0 / 9.0);
         assert!((resized_h_16_9 - 720.0).abs() < 1.0);
     }
+
+    #[test]
+    fn test_unfocused_window_fps_throttling_30fps() {
+        let (mut app, _) = new_test_app();
+        app.is_window_focused = false;
+        app.unfocused_frame_ticks = 0;
+
+        // Tick 1: increments counter to 1, odd tick throttled
+        let _ = app.update(Message::VideoFrameTick);
+        assert_eq!(app.unfocused_frame_ticks, 1);
+
+        // Tick 2: increments counter to 2, even tick executes (~30 FPS rate from 60 FPS base)
+        let _ = app.update(Message::VideoFrameTick);
+        assert_eq!(app.unfocused_frame_ticks, 2);
+
+        // Tick 3: odd tick throttled
+        let _ = app.update(Message::VideoFrameTick);
+        assert_eq!(app.unfocused_frame_ticks, 3);
+
+        // Tick 4: even tick executes
+        let _ = app.update(Message::VideoFrameTick);
+        assert_eq!(app.unfocused_frame_ticks, 4);
+
+        // Regaining focus resets unfocused_frame_ticks
+        let _ = app.update(Message::WindowFocused);
+        assert!(app.is_window_focused);
+        assert_eq!(app.unfocused_frame_ticks, 0);
+    }
 }
 
