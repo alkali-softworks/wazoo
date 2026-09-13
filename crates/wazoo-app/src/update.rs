@@ -82,6 +82,10 @@ impl WazooApp {
                 if self.hovered_player_id.is_some() {
                     self.player_overlay_ticks = self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                 }
+                if self.window_bounds_dirty {
+                    self.window_bounds_dirty = false;
+                    let _ = self.config_mgr.save_settings(&self.settings);
+                }
             }
             Message::ModifiersChanged(modifiers) => {
                 self.is_alt_pressed = modifiers.alt();
@@ -132,10 +136,25 @@ impl WazooApp {
                     }
                 }
             }
+            Message::WindowMoved(id, point) => {
+                self.window_id = Some(id);
+                let new_x = point.x as i32;
+                let new_y = point.y as i32;
+                if self.settings.window_bounds.x != new_x || self.settings.window_bounds.y != new_y {
+                    self.settings.window_bounds.x = new_x;
+                    self.settings.window_bounds.y = new_y;
+                    self.window_bounds_dirty = true;
+                }
+            }
             Message::WindowResized(id, size) => {
                 self.window_id = Some(id);
-                self.settings.window_bounds.width = size.width as u32;
-                self.settings.window_bounds.height = size.height as u32;
+                let new_w = (size.width as u32).clamp(200, 7680);
+                let new_h = (size.height as u32).clamp(150, 4320);
+                if self.settings.window_bounds.width != new_w || self.settings.window_bounds.height != new_h {
+                    self.settings.window_bounds.width = new_w;
+                    self.settings.window_bounds.height = new_h;
+                    self.window_bounds_dirty = true;
+                }
                 self.scroll_engine.set_window_height(size.height);
                 if self.settings.playback_mode == PlaybackMode::Scroll {
                     let item_h = self.scroll_engine.default_item_height();
@@ -218,6 +237,10 @@ impl WazooApp {
             Message::LeftClickReleased => {
                 self.titlebar_drag_pending = false;
                 self.titlebar_press_origin = None;
+                if self.window_bounds_dirty {
+                    self.window_bounds_dirty = false;
+                    let _ = self.config_mgr.save_settings(&self.settings);
+                }
             }
             Message::RightClickPressed(win_id) => {
                 self.window_id = Some(win_id);
@@ -336,6 +359,11 @@ impl WazooApp {
             Message::DragWindow => {
                 if let Some(id) = self.window_id {
                     return iced::window::drag(id);
+                }
+            }
+            Message::DragResize(direction) => {
+                if let Some(id) = self.window_id {
+                    return iced::window::drag_resize(id, direction);
                 }
             }
             Message::ToggleDropdownMenu => {
@@ -1796,6 +1824,10 @@ impl WazooApp {
                 }
             }
             Message::WatchdogTick => {
+                if self.window_bounds_dirty {
+                    self.window_bounds_dirty = false;
+                    let _ = self.config_mgr.save_settings(&self.settings);
+                }
                 // Auto-clear loading state if it exceeds 10 seconds to avoid indefinite spinner
                 let stale_loading: Vec<PlayerId> = self.loading_player_ticks.iter_mut()
                     .filter_map(|(&id, ticks)| {

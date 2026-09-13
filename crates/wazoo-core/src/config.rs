@@ -66,6 +66,8 @@ impl ConfigManager {
                 if let Ok(mut settings) = serde_json::from_str::<WazooSettings>(&content) {
                     settings.buffer_size_mb = settings.buffer_size_mb.clamp(16, 4096);
                     settings.buffer_duration_secs = settings.buffer_duration_secs.clamp(2, 300);
+                    settings.window_bounds.width = settings.window_bounds.width.clamp(200, 7680);
+                    settings.window_bounds.height = settings.window_bounds.height.clamp(150, 4320);
                     settings.keybinds.reconcile_with_defaults();
                     return settings;
                 }
@@ -269,6 +271,52 @@ mod tests {
         let reconciled = mgr.load_settings();
         assert_eq!(reconciled.keybinds.add_player, "p");
         assert_eq!(reconciled.keybinds.close_app, "Alt+X");
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_window_bounds_serialization_and_clamping() {
+        let temp_dir = std::env::temp_dir().join(format!("wazoo_bounds_test_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let _ = fs::create_dir_all(&temp_dir);
+
+        let mgr = ConfigManager {
+            config_dir: temp_dir.clone(),
+            data_dir: temp_dir.clone(),
+        };
+
+        let custom_json = r#"{
+            "window_bounds": {
+                "x": 100,
+                "y": 150,
+                "width": 399,
+                "height": 680
+            }
+        }"#;
+        fs::write(mgr.config_file_path(), custom_json).unwrap();
+
+        let loaded = mgr.load_settings();
+        assert_eq!(loaded.window_bounds.x, 100);
+        assert_eq!(loaded.window_bounds.y, 150);
+        assert_eq!(loaded.window_bounds.width, 399);
+        assert_eq!(loaded.window_bounds.height, 680);
+
+        // Clamping invalid bounds
+        let tiny_json = r#"{
+            "window_bounds": {
+                "x": -50,
+                "y": 20,
+                "width": 50,
+                "height": 20
+            }
+        }"#;
+        fs::write(mgr.config_file_path(), tiny_json).unwrap();
+
+        let clamped = mgr.load_settings();
+        assert_eq!(clamped.window_bounds.x, -50);
+        assert_eq!(clamped.window_bounds.y, 20);
+        assert_eq!(clamped.window_bounds.width, 200);
+        assert_eq!(clamped.window_bounds.height, 150);
 
         let _ = fs::remove_dir_all(&temp_dir);
     }

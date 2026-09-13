@@ -42,6 +42,15 @@ pub fn main() -> iced::Result {
         }
     }
 
+    let config_mgr = wazoo_core::ConfigManager::new();
+    let initial_settings = config_mgr.load_settings();
+    let win_w = (initial_settings.window_bounds.width as f32).clamp(200.0, 7680.0);
+    let win_h = (initial_settings.window_bounds.height as f32).clamp(150.0, 4320.0);
+    let win_pos = iced::window::Position::Specific(iced::Point::new(
+        initial_settings.window_bounds.x as f32,
+        initial_settings.window_bounds.y as f32,
+    ));
+
     let initial_query = cli.query;
     iced::application(
         move || WazooApp::new(initial_query.clone()),
@@ -60,7 +69,8 @@ pub fn main() -> iced::Result {
         text_color: Color::WHITE,
     })
     .window(iced::window::Settings {
-        size: iced::Size::new(1280.0, 720.0),
+        size: iced::Size::new(win_w, win_h),
+        position: win_pos,
         decorations: false,
         transparent: true,
         platform_specific: iced::window::settings::PlatformSpecific {

@@ -69,126 +69,128 @@ impl WazooApp {
             None
         };
 
-        if let Some(modal_el) = modal {
-            return Stack::with_children(vec![main_content, modal_el])
+        let root: Element<'_, Message> = if let Some(modal_el) = modal {
+            Stack::with_children(vec![main_content, modal_el])
                 .width(Length::Fill)
                 .height(Length::Fill)
-                .into();
-        }
+                .into()
+        } else {
+            let mut root_stack_children: Vec<Element<'_, Message>> = vec![main_content];
 
-        let mut root_stack_children: Vec<Element<'_, Message>> = vec![main_content];
+            // 1.5. Dropdown backdrop for dismissal when clicking outside
+            if self.show_dropdown_menu {
+                root_stack_children.push(Element::from(
+                    mouse_area(container(Space::new()).width(Length::Fill).height(Length::Fill))
+                        .on_press(Message::CloseDropdownMenu),
+                ));
+            }
 
-        // 1.5. Dropdown backdrop for dismissal when clicking outside
-        if self.show_dropdown_menu {
-            root_stack_children.push(Element::from(
-                mouse_area(container(Space::new()).width(Length::Fill).height(Length::Fill))
-                    .on_press(Message::CloseDropdownMenu),
-            ));
-        }
+            // 2. Sliding Titlebar & Dropdown Menu Overlay
+            if self.show_titlebar {
+                root_stack_children.push(self.view_titlebar());
+            }
 
-        // 2. Sliding Titlebar & Dropdown Menu Overlay
-        if self.show_titlebar {
-            root_stack_children.push(self.view_titlebar());
-        }
+            // 3. Floating Notice (Matches Electron Notice.vue)
+            if let Some(ref toast) = self.toast_message {
+                let toast_widget = container(
+                    row![
+                        text(toast).size(16).color(iced::Color::WHITE),
+                        button(text("✕").size(12))
+                            .style(theme::window_control_button_style)
+                            .on_press(Message::DismissToast)
+                            .padding(2),
+                    ]
+                    .spacing(12)
+                    .align_y(Alignment::Center),
+                )
+                .padding([6, 18])
+                .style(theme::notice_pill_style);
 
-        // 3. Floating Notice (Matches Electron Notice.vue)
-        if let Some(ref toast) = self.toast_message {
-            let toast_widget = container(
-                row![
-                    text(toast).size(16).color(iced::Color::WHITE),
-                    button(text("✕").size(12))
-                        .style(theme::window_control_button_style)
-                        .on_press(Message::DismissToast)
-                        .padding(2),
-                ]
-                .spacing(12)
-                .align_y(Alignment::Center),
-            )
-            .padding([6, 18])
-            .style(theme::notice_pill_style);
+                let toast_layer = container(
+                    column![
+                        Space::new().height(Length::Fixed(35.0)),
+                        toast_widget,
+                    ]
+                    .align_x(Alignment::Center),
+                )
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center_x(Length::Fill);
 
-            let toast_layer = container(
-                column![
-                    Space::new().height(Length::Fixed(35.0)),
-                    toast_widget,
-                ]
-                .align_x(Alignment::Center),
-            )
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .center_x(Length::Fill);
+                root_stack_children.push(Element::from(toast_layer));
+            }
 
-            root_stack_children.push(Element::from(toast_layer));
-        }
-
-        // 4. Scan Toast Banner (Matches Electron scan toast across top)
-        if self.is_scanning {
-            let (label, status_text) = if let Some(ref progress) = self.scan_progress {
-                match progress.stage {
-                    ScanStage::Listing => {
-                        let name = if progress.current_name.is_empty() {
-                            "Discovering files...".to_string()
-                        } else {
-                            format!("Listing: {}", progress.current_name)
-                        };
-                        let stat = format!("{}% ({} found)", progress.percent, format::format_number(progress.files_found));
-                        (name, stat)
+            // 4. Scan Toast Banner (Matches Electron scan toast across top)
+            if self.is_scanning {
+                let (label, status_text) = if let Some(ref progress) = self.scan_progress {
+                    match progress.stage {
+                        ScanStage::Listing => {
+                            let name = if progress.current_name.is_empty() {
+                                "Discovering files...".to_string()
+                            } else {
+                                format!("Listing: {}", progress.current_name)
+                            };
+                            let stat = format!("{}% ({} found)", progress.percent, format::format_number(progress.files_found));
+                            (name, stat)
+                        }
+                        ScanStage::Indexing => {
+                            let name = if progress.current_name.is_empty() {
+                                "Indexing library...".to_string()
+                            } else {
+                                format!("Indexing: {}", progress.current_name)
+                            };
+                            let stat = format!("{}% ({} files)", progress.percent, format::format_number(progress.total));
+                            (name, stat)
+                        }
                     }
-                    ScanStage::Indexing => {
-                        let name = if progress.current_name.is_empty() {
-                            "Indexing library...".to_string()
-                        } else {
-                            format!("Indexing: {}", progress.current_name)
-                        };
-                        let stat = format!("{}% ({} files)", progress.percent, format::format_number(progress.total));
-                        (name, stat)
-                    }
-                }
-            } else {
-                ("Scanning media folders...".to_string(), "In progress".to_string())
-            };
+                } else {
+                    ("Scanning media folders...".to_string(), "In progress".to_string())
+                };
 
-            let scan_banner = container(
-                row![
-                    text(label).size(13).color(iced::Color::WHITE),
-                    Space::new().width(Length::Fill),
-                    text(status_text).size(13).color(theme::COLOR_PRIMARY),
-                ]
-                .padding([4, 24])
-                .align_y(Alignment::Center),
-            )
-            .width(Length::Fill)
-            .height(Length::Fixed(28.0))
-            .style(theme::scan_toast_banner_style);
+                let scan_banner = container(
+                    row![
+                        text(label).size(13).color(iced::Color::WHITE),
+                        Space::new().width(Length::Fill),
+                        text(status_text).size(13).color(theme::COLOR_PRIMARY),
+                    ]
+                    .padding([4, 24])
+                    .align_y(Alignment::Center),
+                )
+                .width(Length::Fill)
+                .height(Length::Fixed(28.0))
+                .style(theme::scan_toast_banner_style);
 
-            root_stack_children.push(Element::from(scan_banner));
-        }
+                root_stack_children.push(Element::from(scan_banner));
+            }
 
-        // 5. Alt Drag Overlay (Matches Electron Alt overlay)
-        if self.is_alt_pressed {
-            let alt_overlay = container(
-                column![
-                    text(self.t("app.drag_to_move")).size(22).color(iced::Color::WHITE),
-                    text(self.t("app.x_to_quit")).size(16).color(theme::COLOR_TEXT_DIM),
-                ]
-                .spacing(8)
-                .align_x(Alignment::Center),
-            )
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .center_x(Length::Fill)
-            .center_y(Length::Fill)
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5))),
-                ..Default::default()
-            });
+            // 5. Alt Drag Overlay (Matches Electron Alt overlay)
+            if self.is_alt_pressed {
+                let alt_overlay = container(
+                    column![
+                        text(self.t("app.drag_to_move")).size(22).color(iced::Color::WHITE),
+                        text(self.t("app.x_to_quit")).size(16).color(theme::COLOR_TEXT_DIM),
+                    ]
+                    .spacing(8)
+                    .align_x(Alignment::Center),
+                )
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center_x(Length::Fill)
+                .center_y(Length::Fill)
+                .style(|_theme: &Theme| container::Style {
+                    background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5))),
+                    ..Default::default()
+                });
 
-            root_stack_children.push(Element::from(mouse_area(alt_overlay).on_press(Message::DragWindow)));
-        }
+                root_stack_children.push(Element::from(mouse_area(alt_overlay).on_press(Message::DragWindow)));
+            }
 
-        Stack::with_children(root_stack_children)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .into()
+            Stack::with_children(root_stack_children)
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .into()
+        };
+
+        crate::cursor::WindowBorderResizer::new(root, Message::DragResize).into()
     }
 }
