@@ -1,6 +1,6 @@
 # 🦀 Rust for PHP & JS Survivors: Baby Steps Guide
 
-*A no-nonsense handbook for understanding Rust & Iced without the academic jargon.*
+*A no-nonsense handbook for understanding Rust & Iced.*
 
 ---
 
@@ -451,3 +451,148 @@ It looks like the function is referencing itself in a circle, but here is what i
    Notice line `(app, Task::none())` at the bottom of `new()`.
    In Rust, **the last expression in a function without a semicolon `;` is automatically returned**!
    You don't need to write `return (app, Task::none());`. Leaving off the semicolon makes it the return value.
+
+---
+
+## 🎯 Chapter 5: Pattern Matching (`match`), Arrows (`=>` vs `->`), & Destructuring
+
+When looking at `app.rs`:
+```rust
+pub fn update(&mut self, message: Message) -> Task<Message> {
+    match message {
+        Message::TabSelected(tab) => {
+            self.active_tab = tab;
+            ...
+        }
+    }
+}
+```
+
+### 1. The Two Arrows in Rust (`->` vs `=>`)
+
+Don't confuse them:
+- **`->` (Thin Arrow)**: Used exclusively for **Function Return Types**.
+  - `fn update(...) -> Task<Message>` means *"this function returns a `Task<Message>`"*.
+- **`=>` (Fat Arrow)**: Used in **`match` expressions**.
+  - It means: *"IF THIS PATTERN MATCHES $\implies$ EXECUTE THIS CODE"*.
+
+---
+
+### 2. How `match` Replaces Ugly `switch` Statements
+
+In JS or old PHP, handling events looked like:
+```js
+// JavaScript switch:
+switch (message.type) {
+    case 'TabSelected':
+        const tab = message.payload; // Manual unpacking
+        this.activeTab = tab;
+        break; // Forgot break? Bug!
+}
+```
+
+In Rust, `match` does pattern matching and variable extraction in one shot:
+```rust
+Message::TabSelected(tab) => {
+// ^^^^^^^^^^^^^^^^^ ^^^  ^^
+//        1           2    3
+```
+1. **Match Variant**: Checks if `message` is the `TabSelected` variant.
+2. **Destructure / Unpack**: `(tab)` creates a brand-new local variable holding the payload data!
+3. **`=>`**: Executes the block on the right.
+
+---
+
+### 3. Exhaustiveness: Why You Can't Forget Cases
+
+In JS and PHP, if you add a new event to your app and forget to update your `switch`, the code runs and silently fails.
+
+**In Rust, `match` is 100% EXHAUSTIVE.**
+If your `enum Message` has 15 variants, your `match` MUST handle all 15. If you miss even one, the compiler stops you:
+```
+error[E0004]: non-exhaustive patterns: `Message::ResetCounter` not covered
+```
+This is why Rust refactoring feels like magic: when you change a feature, the compiler gives you a complete todo list of every place that needs updating!
+
+---
+
+### 4. Unit Variants vs Data Variants & `Task::none()`
+
+In `app.rs`:
+```rust
+Message::Tick => {
+    self.uptime_seconds += 1;
+    Task::none()
+}
+```
+
+Notice two big differences from `TabSelected(tab)`:
+
+1. **No Parentheses (Unit Variant)**:
+   - `Message::TabSelected(Tab)` carries data (a `Tab`).
+   - `Message::Tick` carries **no data**. In Rust, an enum variant with no data is called a **Unit Variant**. It acts like a pure event trigger or signal (no payload to unpack).
+
+2. **Subscriptions vs `setInterval()`**:
+   - In JS, you'd do: `setInterval(() => { this.seconds++ }, 1000)`. It directly mutates state whenever the timer fires.
+   - In Iced, all state changes must pass through `update()`. You declare a `Subscription` on line 185: `time::every(1s).map(|_| Message::Tick)`. Every second, Iced sends a `Message::Tick` into the main event loop!
+
+3. **What is `Task::none()`?**:
+   - `update()` returns `Task<Message>`. A `Task` tells Iced: *"Go do background async work on Tokio (like an HTTP request or file dialog), then send me another Message when done."*
+   - Returning `Task::none()` simply means: *"I changed state in memory. No background async tasks needed!"*
+
+---
+
+## 🪈 Chapter 6: Closures (`|x|`), The Underscore `_`, & `.map()`
+
+On line 186 in `app.rs`, you see this:
+```rust
+pub fn subscription(&self) -> Subscription<Message> {
+    time::every(Duration::from_secs(1)).map(|_| Message::Tick)
+}
+```
+
+### 1. Pipes `| |` are Arrow Functions!
+
+In JavaScript and PHP, you write arrow functions like:
+```js
+// JavaScript:
+(x) => x * 2
+```
+```php
+// PHP:
+fn($x) => $x * 2
+```
+
+In Rust, closures use **pipes `| |`** around the parameters:
+```rust
+// Rust:
+|x| x * 2
+```
+
+Why pipes? Because Rust already uses parentheses `(x, y)` for **Tuples**. To keep the syntax unambiguous, closures use pipes!
+
+```rust
+// Multi-argument closure:
+let add = |a, b| a + b;
+println!("{}", add(10, 20)); // 30
+```
+
+---
+
+### 2. What Does the Underscore `_` Mean?
+
+In Rust, the underscore `_` means: **"Ignore this parameter."**
+
+`time::every(...)` actually produces an `Instant` (the exact clock timestamp when the timer ticked).
+We don't need the timestamp—we just want to know that 1 second passed!
+- If you wrote `|timestamp| Message::Tick`, Rust would complain: `warning: unused variable: timestamp`.
+- Writing `|_|` tells Rust: *"Yes, I know a timestamp is being passed here, but intentionally discard it."*
+
+---
+
+### 3. What is `.map(...)` Doing?
+
+Just like `array.map()` in JavaScript or `array_map()` in PHP:
+- `time::every(...)` produces a stream of timestamps: `Subscription<Instant>`.
+- But Iced requires our function to return a stream of messages: `Subscription<Message>`.
+- `.map(|_| Message::Tick)` intercepts each tick and converts it into `Message::Tick`!

@@ -120,16 +120,22 @@ impl TutorialApp {
         let initial_notes = db.get_all_notes().unwrap_or_default();
 
         // ======================================================================
-        // RUST CONCEPT: The `let app = Self { ... }` Struct Literal
+        // RUST CONCEPT: The "Constructor Factory" Pattern (`let app = Self { ... }`)
         // ======================================================================
-        // Coming from PHP or JS, this line looks like weird recursion, but it's not!
-        // 1. `Self` (Capital S) is an alias for `TutorialApp` (the struct we are inside).
+        // Since Rust has no classes, there is no magic `__construct()` or `constructor()`.
+        // Instead, Rust uses the "Static Factory Method" pattern:
+        //
+        // 1. FACTORY ROLE: `TutorialApp::new()` acts as a factory. It performs setup
+        //    (opens SQLite, seeds sample notes), constructs the instance, and returns it.
+        // 2. `Self` (Capital S) is just a clean alias for `TutorialApp` (the struct we are inside).
         //    Writing `Self { ... }` is 100% IDENTICAL to writing `TutorialApp { ... }`.
-        // 2. Rust has NO `new` operator keyword. You construct structs directly using
+        // 3. NO `new` KEYWORD: Rust has no `new` operator. You instantiate structs using
         //    the "Struct Literal" syntax: `StructName { field1: val1, field2: val2 }`.
-        // 3. In PHP terms, this is literally: `$app = new self();`
-        // 4. In JS terms, this is literally: `const app = new TutorialApp();`
-        // We create this instance, store it in local variable `app`, and return it below!
+        // 4. PHP/JS EQUIVALENT:
+        //    - PHP: `public static function create(): array { $app = new self(); ... return [$app, null]; }`
+        //    - JS:  `static create() { const app = new TutorialApp(); ... return [app, null]; }`
+        //
+        // We build the instance here, store it in the local variable `app`, and return it below!
         let app = Self {
             active_tab: Tab::CounterAndWidgets,
             counter_value: 0,
@@ -175,7 +181,15 @@ impl TutorialApp {
     /// RUST CONCEPT: Subscriptions & Periodic Timers
     /// Subscriptions let you listen to external events like keyboard keypresses,
     /// mouse motion, window resizing, or periodic time intervals.
+    ///
     /// Here, we emit a `Message::Tick` every 1 second to increment `uptime_seconds`.
+    /// 
+    /// RUST CONCEPT: Closures `|_|` and `.map()`
+    /// - `time::every(...)` emits a timestamp (`Instant`) every 1 second.
+    /// - `|_|` is an anonymous closure (like `(_) => ...` in JS or `fn($_) => ...` in PHP).
+    ///   The pipes `| |` enclose the parameters.
+    /// - `_` means: "Ignore this timestamp argument; we don't need it."
+    /// - `.map(...)` transforms the stream from `Subscription<Instant>` into `Subscription<Message>`!
     pub fn subscription(&self) -> Subscription<Message> {
         time::every(Duration::from_secs(1)).map(|_| Message::Tick)
     }
@@ -199,6 +213,25 @@ impl TutorialApp {
                 Task::none()
             }
 
+            // ==================================================================
+            // RUST CONCEPT: Subscriptions, Unit Variants & `Task::none()`
+            // ==================================================================
+            // 1. WHERE DID THIS COME FROM?
+            //    In JS, you would write an imperative `setInterval(() => { ... }, 1000)`.
+            //    In Iced/Elm, you DECLARE a subscription in `subscription()` above:
+            //    `time::every(1s).map(|_| Message::Tick)`.
+            //    Every 1 second, the runtime pushes `Message::Tick` into this loop.
+            //
+            // 2. UNIT VARIANT (No Parentheses!):
+            //    Notice `TabSelected(tab)` had data attached to it.
+            //    `Message::Tick` carries NO payload data. In Rust, this is called a
+            //    "Unit Variant" (like a simple flag or signal).
+            //
+            // 3. WHAT IS `Task::none()`?
+            //    The `update()` function MUST return a `Task<Message>`.
+            //    A `Task` is an instruction telling Iced to do background async work
+            //    (like making an API request, opening a file picker, or running a query).
+            //    Returning `Task::none()` means: "State is updated. No background work needed!"
             Message::Tick => {
                 self.uptime_seconds += 1;
                 Task::none()
