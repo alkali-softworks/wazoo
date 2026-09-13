@@ -19,6 +19,7 @@ use wazoo_scanner::ScanProgress;
 pub enum Message {
     // Window management & Events
     WindowIdReceived(Id),
+    WindowMoved(Id, Point),
     WindowResized(Id, Size),
     WindowFocused,
     WindowUnfocused,
@@ -34,6 +35,7 @@ pub enum Message {
     MaximizeWindow,
     CloseApp,
     DragWindow,
+    DragResize(iced::window::Direction),
     TitleBarPressed,
     LeftClickReleased,
     ToggleDropdownMenu,

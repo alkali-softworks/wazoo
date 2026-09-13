@@ -97,6 +97,7 @@ pub struct WazooApp {
     pub(crate) show_transcript_menu: bool,
     pub(crate) is_window_focused: bool,
     pub(crate) unfocused_frame_ticks: u32,
+    pub(crate) window_bounds_dirty: bool,
 }
 
 impl WazooApp {
@@ -251,6 +252,7 @@ impl WazooApp {
             show_transcript_menu: false,
             is_window_focused: true,
             unfocused_frame_ticks: 0,
+            window_bounds_dirty: false,
         };
 
         // Initialize players based on settings or restore saved session
@@ -590,10 +592,11 @@ impl WazooApp {
                 })
                 .collect();
             self.settings.session_videos = sessions;
-            self.settings.last_query = self.active_search_query.clone();
-            self.settings.last_folder = self.active_search_folder.clone();
-            let _ = self.config_mgr.save_settings(&self.settings);
         }
+        self.settings.last_query = self.active_search_query.clone();
+        self.settings.last_folder = self.active_search_folder.clone();
+        let _ = self.config_mgr.save_settings(&self.settings);
+        self.window_bounds_dirty = false;
     }
 
     /// Reconciles active players against `self.available_videos`.
@@ -876,6 +879,12 @@ impl WazooApp {
                 }
                 iced::Event::Window(iced::window::Event::Resized(size)) => {
                     Some(Message::WindowResized(window_id, size))
+                }
+                iced::Event::Window(iced::window::Event::Moved(point)) => {
+                    Some(Message::WindowMoved(window_id, point))
+                }
+                iced::Event::Window(iced::window::Event::CloseRequested) => {
+                    Some(Message::CloseApp)
                 }
                 iced::Event::Window(iced::window::Event::Focused) => {
                     Some(Message::WindowFocused)
@@ -1393,6 +1402,84 @@ mod tests {
         assert!(updated_file_content.contains("\"toggle_layout\": \"o\""));
         assert!(updated_file_content.contains("\"close_app\": \"Alt+X\""));
         assert!(updated_file_content.contains("\"add_player\": \"n\""));
+
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_window_bounds_move_resize_and_save() {
+        use iced::Size;
+
+        let temp_dir = std::env::temp_dir().join(format!(
+            "wazoo_bounds_app_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let _ = std::fs::create_dir_all(&temp_dir);
+        let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
+
+        // Pre-seed custom window bounds in settings.json
+        let initial_json = r#"{
+            "window_bounds": {
+                "x": 100,
+                "y": 100,
+                "width": 399,
+                "height": 680
+            }
+        }"#;
+        std::fs::write(config_mgr.config_file_path(), initial_json).unwrap();
+
+        let db = Database::open_in_memory().expect("in-memory db");
+        let (mut app, _) = WazooApp::new_with_backend(None, config_mgr, db);
+
+        // Verify boot restores exact window_bounds from settings.json
+        assert_eq!(app.settings.window_bounds.x, 100);
+        assert_eq!(app.settings.window_bounds.y, 100);
+        assert_eq!(app.settings.window_bounds.width, 399);
+        assert_eq!(app.settings.window_bounds.height, 680);
+        assert!(!app.window_bounds_dirty);
+
+        let win_id = iced::window::Id::unique();
+
+        // 1. Moving window updates x and y and sets dirty
+        let _ = app.update(Message::WindowMoved(win_id, Point::new(250.0, 320.0)));
+        assert_eq!(app.settings.window_bounds.x, 250);
+        assert_eq!(app.settings.window_bounds.y, 320);
+        assert!(app.window_bounds_dirty);
+
+        // 2. Resizing window updates width and height and sets dirty
+        let _ = app.update(Message::WindowResized(win_id, Size::new(500.0, 800.0)));
+        assert_eq!(app.settings.window_bounds.width, 500);
+        assert_eq!(app.settings.window_bounds.height, 800);
+        assert!(app.window_bounds_dirty);
+
+        // 3. LeftClickReleased flushes dirty window bounds to disk
+        let _ = app.update(Message::LeftClickReleased);
+        assert!(!app.window_bounds_dirty);
+
+        let loaded = app.config_mgr.load_settings();
+        assert_eq!(loaded.window_bounds.x, 250);
+        assert_eq!(loaded.window_bounds.y, 320);
+        assert_eq!(loaded.window_bounds.width, 500);
+        assert_eq!(loaded.window_bounds.height, 800);
+
+        // 4. Test WatchdogTick flushes dirty bounds
+        let _ = app.update(Message::WindowMoved(win_id, Point::new(50.0, 60.0)));
+        assert!(app.window_bounds_dirty);
+        let _ = app.update(Message::WatchdogTick);
+        assert!(!app.window_bounds_dirty);
+        let loaded2 = app.config_mgr.load_settings();
+        assert_eq!(loaded2.window_bounds.x, 50);
+        assert_eq!(loaded2.window_bounds.y, 60);
+
+        // 5. Test WindowUnfocused flushes dirty bounds
+        let _ = app.update(Message::WindowResized(win_id, Size::new(700.0, 900.0)));
+        assert!(app.window_bounds_dirty);
+        let _ = app.update(Message::WindowUnfocused);
+        assert!(!app.window_bounds_dirty);
+        let loaded3 = app.config_mgr.load_settings();
+        assert_eq!(loaded3.window_bounds.width, 700);
+        assert_eq!(loaded3.window_bounds.height, 900);
 
         let _ = std::fs::remove_dir_all(&temp_dir);
     }
