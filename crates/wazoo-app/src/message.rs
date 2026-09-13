@@ -46,6 +46,7 @@ pub enum Message {
     ApplyFilePickerSearch,
     PlayFileInFocused(String),
     SelectSearchFolder(String),
+    ResetSearchFolder,
     SetWindowOpacity(f32),
 
     // Playback controls

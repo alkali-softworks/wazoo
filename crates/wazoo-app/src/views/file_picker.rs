@@ -202,18 +202,55 @@ impl WazooApp {
             })
             .width(Length::Fill);
 
+        let is_confined = !self.settings.last_folder.is_empty() && self.settings.last_folder != "All";
+        let mut header_row = row![
+            text(self.t_with("settings.total_videos", &[("count", &format::format_number(self.available_videos.len()))]))
+                .size(17)
+                .color(iced::Color::WHITE),
+        ]
+        .spacing(8)
+        .align_y(Alignment::Center);
+
+        if is_confined {
+            let folder_label = self
+                .settings
+                .last_folder
+                .split(['/', '\\'])
+                .filter(|s| !s.is_empty())
+                .next_back()
+                .unwrap_or(&self.settings.last_folder);
+
+            let display_name = if folder_label.chars().count() > 18 {
+                format!("{}...", folder_label.chars().take(16).collect::<String>())
+            } else {
+                folder_label.to_string()
+            };
+
+            let badge = button(
+                row![
+                    text(display_name).size(11).color(iced::Color::WHITE),
+                    text("✕").size(9).color(iced::Color::from_rgba(1.0, 1.0, 1.0, 0.8)),
+                ]
+                .spacing(5)
+                .align_y(Alignment::Center),
+            )
+            .style(theme::folder_chip_style(true))
+            .on_press(Message::ResetSearchFolder)
+            .padding([3, 8]);
+
+            header_row = header_row.push(badge);
+        }
+
+        header_row = header_row.push(Space::new().width(Length::Fill));
+        header_row = header_row.push(
+            button(text("✕").size(14))
+                .style(theme::window_control_button_style)
+                .on_press(Message::ToggleFilePicker),
+        );
+
         let content = column![
             Space::new().height(Length::Fixed(24.0)),
-            row![
-                text(self.t_with("settings.total_videos", &[("count", &format::format_number(self.available_videos.len()))]))
-                    .size(18)
-                    .color(iced::Color::WHITE),
-                Space::new().width(Length::Fill),
-                button(text("✕").size(14))
-                    .style(theme::window_control_button_style)
-                    .on_press(Message::ToggleFilePicker),
-            ]
-            .align_y(Alignment::Center),
+            header_row,
             text_input(&self.t("file_picker.search_placeholder"), &self.file_picker_search)
                 .on_input(Message::FilePickerSearchChanged)
                 .on_submit(Message::ApplyFilePickerSearch)
