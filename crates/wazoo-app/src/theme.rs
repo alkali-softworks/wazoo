@@ -287,40 +287,20 @@ pub fn action_button_style(_theme: &Theme, status: button::Status) -> button::St
 /// Folder Chip in Search Modal
 pub fn folder_chip_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_theme: &Theme, status: button::Status| {
-        let (bg, border_color, border_width, shadow) = if is_active {
+        let (bg, border_color, border_width) = if is_active {
             let (bg, border) = match status {
                 button::Status::Hovered => (COLOR_BTN_BG, COLOR_PRIMARY_BORDER),
                 button::Status::Pressed => (Color::from_rgb(0.14, 0.14, 0.14), COLOR_PRIMARY),
                 _ => (COLOR_CARD_BG, COLOR_PRIMARY),
             };
-            let shadow = match status {
-                button::Status::Hovered => Shadow {
-                    color: Color::from_rgba(0.259, 0.722, 0.514, 0.35),
-                    offset: Vector::new(0.0, 1.0),
-                    blur_radius: 5.0,
-                },
-                _ => Shadow {
-                    color: Color::from_rgba(0.259, 0.722, 0.514, 0.20),
-                    offset: Vector::new(0.0, 1.0),
-                    blur_radius: 3.0,
-                },
-            };
-            (bg, border, 1.5, shadow)
+            (bg, border, 1.5)
         } else {
             let (bg, border) = match status {
                 button::Status::Hovered => (COLOR_BTN_BG, Color::from_rgb(0.35, 0.35, 0.35)),
                 button::Status::Pressed => (Color::from_rgb(0.14, 0.14, 0.14), COLOR_BORDER),
                 _ => (COLOR_CARD_BG, COLOR_BORDER),
             };
-            let shadow = match status {
-                button::Status::Hovered => Shadow {
-                    color: Color::from_rgba(0.0, 0.0, 0.0, 0.25),
-                    offset: Vector::new(0.0, 1.0),
-                    blur_radius: 3.0,
-                },
-                _ => Shadow::default(),
-            };
-            (bg, border, 1.0, shadow)
+            (bg, border, 1.0)
         };
         button::Style {
             background: Some(Background::Color(bg)),
@@ -330,7 +310,7 @@ pub fn folder_chip_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> 
                 width: border_width,
                 color: border_color,
             },
-            shadow,
+            shadow: Shadow::default(),
             ..Default::default()
         }
     }
