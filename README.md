@@ -4,7 +4,7 @@
 
 **Wazoo** is an ambient video player and "moving mood-board" designed for artists, designers, and curators, who want to experience their local video collection without the burden of choice. Wazoo provides a non-stop, feed of visuals that flows continuously based on your library and optional search query. 
 
-Wazoo is an idea in development since 2020, originally as a JS app, then an Electron app, and now finally as a native Rust app, ported with the culmination of all the best features from the previous versions.
+Wazoo is an idea in development since 2020 - originally as a JS app, then an Electron app, and now finally a native Rust app, ported with the culmination of all the best features from the prior versions.
 
 ---
 
