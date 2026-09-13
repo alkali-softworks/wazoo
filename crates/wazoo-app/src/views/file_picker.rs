@@ -202,7 +202,7 @@ impl WazooApp {
             })
             .width(Length::Fill);
 
-        let is_confined = !self.settings.last_folder.is_empty() && self.settings.last_folder != "All";
+        let is_confined = !self.is_all_folder(&self.active_search_folder);
         let mut header_row = row![
             text(self.t_with("settings.total_videos", &[("count", &format::format_number(self.available_videos.len()))]))
                 .size(17)
@@ -213,12 +213,11 @@ impl WazooApp {
 
         if is_confined {
             let folder_label = self
-                .settings
-                .last_folder
+                .active_search_folder
                 .split(['/', '\\'])
                 .filter(|s| !s.is_empty())
                 .next_back()
-                .unwrap_or(&self.settings.last_folder);
+                .unwrap_or(&self.active_search_folder);
 
             let display_name = if folder_label.chars().count() > 18 {
                 format!("{}...", folder_label.chars().take(16).collect::<String>())

@@ -146,6 +146,20 @@ pub fn t_with(lang: &str, key: &str, args: &[(&str, &str)]) -> String {
     text
 }
 
+/// Returns true if the given folder name represents the "All" media folders option in any language or default sentinel.
+pub fn is_all_folder(folder: &str) -> bool {
+    let trimmed = folder.trim();
+    if trimmed.is_empty() || trimmed.eq_ignore_ascii_case("all") {
+        return true;
+    }
+    for lang in Language::ALL {
+        if trimmed == t(lang.code, "common.all") {
+            return true;
+        }
+    }
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -212,5 +226,19 @@ mod tests {
         assert_eq!(t("es", "bookmarks.not_found"), "No se encontró ningún marcador para el video actual");
         assert_eq!(t_with("en", "bookmarks.added", &[("name", "Test")]), "Added bookmark: Test");
         assert_eq!(t_with("es", "bookmarks.added", &[("name", "Test")]), "Marcador añadido: Test");
+    }
+
+    #[test]
+    fn test_is_all_folder() {
+        assert!(is_all_folder(""));
+        assert!(is_all_folder("All"));
+        assert!(is_all_folder("all"));
+        assert!(is_all_folder("ALL"));
+        assert!(is_all_folder("Todo")); // Spanish
+        assert!(is_all_folder("Alle")); // German
+        assert!(is_all_folder("Tout")); // French
+        assert!(is_all_folder("すべて")); // Japanese
+        assert!(!is_all_folder("anime"));
+        assert!(!is_all_folder("/media/movies"));
     }
 }

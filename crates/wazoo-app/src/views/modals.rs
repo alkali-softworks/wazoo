@@ -21,10 +21,12 @@ use crate::theme;
 
 impl WazooApp {
     pub(crate) fn view_search_modal(&self) -> Element<'_, Message> {
+        let all_label = self.t("common.all");
+        let is_all_selected = self.is_all_folder(&self.selected_search_folder);
         let mut folder_chips = row![
-            button(text(self.t("common.all")))
-                .style(theme::folder_chip_style(self.selected_search_folder == "All"))
-                .on_press(Message::SelectSearchFolder("All".to_string()))
+            button(text(all_label.clone()))
+                .style(theme::folder_chip_style(is_all_selected))
+                .on_press(Message::SelectSearchFolder(all_label))
                 .padding([4, 12]),
         ]
         .spacing(8)

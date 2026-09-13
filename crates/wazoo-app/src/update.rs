@@ -518,8 +518,10 @@ impl WazooApp {
                 self.selected_search_folder = folder;
             }
             Message::ResetSearchFolder => {
-                self.selected_search_folder = "All".to_string();
-                self.settings.last_folder = "All".to_string();
+                let all_label = self.t("common.all");
+                self.active_search_folder = all_label.clone();
+                self.selected_search_folder = all_label.clone();
+                self.settings.last_folder = all_label.clone();
                 let _ = self.config_mgr.save_settings(&self.settings);
 
                 let folders: Vec<String> = Vec::new();
@@ -528,7 +530,7 @@ impl WazooApp {
                     self.available_videos = results;
                     self.file_picker_entries.clear();
                     self.apply_file_picker_search();
-                    self.show_video_totals_notice(total, "All");
+                    self.show_video_totals_notice(total, &all_label);
                     self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
                     if self.show_transcript {
@@ -541,7 +543,19 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::SetLanguage(lang) => {
+                let was_all_active = self.is_all_folder(&self.active_search_folder);
+                let was_all_selected = self.is_all_folder(&self.selected_search_folder);
+                let was_all_last = self.is_all_folder(&self.settings.last_folder);
                 self.settings.language = lang;
+                if was_all_active {
+                    self.active_search_folder = self.t("common.all");
+                }
+                if was_all_selected {
+                    self.selected_search_folder = self.t("common.all");
+                }
+                if was_all_last {
+                    self.settings.last_folder = self.t("common.all");
+                }
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::PlayerClicked(id) => {
@@ -1092,6 +1106,7 @@ impl WazooApp {
                     .map(|s| s.trim().to_string())
                     .filter(|s| !s.is_empty())
                     .collect();
+                self.selected_search_folder = self.active_search_folder.clone();
                 self.search_input.clear();
                 return Task::batch([
                     iced::widget::operation::focus("search_input"),
@@ -1129,12 +1144,13 @@ impl WazooApp {
                 }
                 self.search_input.clear();
                 self.active_search_query = self.search_tags.join(", ");
+                self.active_search_folder = self.selected_search_folder.clone();
                 self.settings.last_query = self.active_search_query.clone();
-                self.settings.last_folder = self.selected_search_folder.clone();
+                self.settings.last_folder = self.active_search_folder.clone();
                 let _ = self.config_mgr.save_settings(&self.settings);
 
-                let folder = self.selected_search_folder.clone();
-                let folders = if folder.is_empty() || folder == "All" {
+                let folder = self.active_search_folder.clone();
+                let folders = if self.is_all_folder(&folder) {
                     Vec::new()
                 } else {
                     vec![folder.clone()]
@@ -1145,7 +1161,12 @@ impl WazooApp {
                     self.available_videos = results;
                     self.file_picker_entries.clear();
                     self.apply_file_picker_search();
-                    self.show_video_totals_notice(total, &folder);
+                    let notice_folder = if self.is_all_folder(&folder) {
+                        self.t("common.all")
+                    } else {
+                        folder
+                    };
+                    self.show_video_totals_notice(total, &notice_folder);
 
                     self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
@@ -1279,14 +1300,14 @@ impl WazooApp {
                     .collect();
                 self.search_input.clear();
                 self.settings.last_query = b.query.clone();
-                self.settings.last_folder = self.selected_search_folder.clone();
+                self.settings.last_folder = self.active_search_folder.clone();
                 let _ = self.config_mgr.save_settings(&self.settings);
 
                 // 3. Query the database using the updated search query
-                let folders = if self.selected_search_folder.is_empty() || self.selected_search_folder == "All" {
+                let folders = if self.is_all_folder(&self.active_search_folder) {
                     Vec::new()
                 } else {
-                    vec![self.selected_search_folder.clone()]
+                    vec![self.active_search_folder.clone()]
                 };
 
                 if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
@@ -1445,10 +1466,10 @@ impl WazooApp {
 
                 // 2. Immediately refresh in-memory available_videos from DB
                 if !self.active_search_query.is_empty() {
-                    let folders = if self.selected_search_folder.is_empty() || self.selected_search_folder == "All" {
+                    let folders = if self.is_all_folder(&self.active_search_folder) {
                         self.settings.media_folders.clone()
                     } else {
-                        vec![self.selected_search_folder.clone()]
+                        vec![self.active_search_folder.clone()]
                     };
                     self.available_videos = self.db.search_videos(&self.active_search_query, &folders).unwrap_or_default();
                 } else {
@@ -1468,11 +1489,15 @@ impl WazooApp {
                     self.save_session_state();
                 }
 
+                let all_label = self.t("common.all");
+                if self.active_search_folder == folder {
+                    self.active_search_folder = all_label.clone();
+                }
                 if self.selected_search_folder == folder {
-                    self.selected_search_folder = "All".to_string();
+                    self.selected_search_folder = all_label.clone();
                 }
                 if self.settings.last_folder == folder {
-                    self.settings.last_folder = "All".to_string();
+                    self.settings.last_folder = all_label;
                     let _ = self.config_mgr.save_settings(&self.settings);
                 }
 
@@ -1570,8 +1595,8 @@ impl WazooApp {
                 self.scan_cancel = None;
                 match res {
                     Ok(_count) => {
-                        let folder = self.selected_search_folder.clone();
-                        let folders = if folder.is_empty() || folder == "All" {
+                        let folder = self.active_search_folder.clone();
+                        let folders = if self.is_all_folder(&folder) {
                             Vec::new()
                         } else {
                             vec![folder.clone()]
@@ -1581,7 +1606,12 @@ impl WazooApp {
                             self.available_videos = videos;
                             self.file_picker_entries.clear();
                             self.apply_file_picker_search();
-                            self.show_video_totals_notice(total, &folder);
+                            let notice_folder = if self.is_all_folder(&folder) {
+                                self.t("common.all")
+                            } else {
+                                folder
+                            };
+                            self.show_video_totals_notice(total, &notice_folder);
                             if self.players.is_empty() && !self.available_videos.is_empty() {
                                 let count = self.settings.player_count.clamp(1, 12);
                                 for _ in 0..count {
