@@ -81,7 +81,8 @@
       "close_app": "Fechar aplicativo",
       "move_window": "Mover janela",
       "toggle_bookmarks": "Alternar favoritos",
-      "toggle_transcript": "Alternar transcrição de legendas"
+      "toggle_transcript": "Alternar transcrição de legendas",
+      "toggle_history": "Alternar histórico de reprodução"
     }
   },
   "file_picker": {
@@ -128,5 +129,13 @@
     "removed": "Marcador removido: {name}",
     "not_found": "Nenhum marcador encontrado para o vídeo atual",
     "jumped": "Marcador: {name}  [{time}] ({mode})"
+  },
+  "history": {
+    "title": "Histórico de reprodução",
+    "count": "{count} vídeos",
+    "empty": "Nenhum vídeo reproduzido ainda.",
+    "clear": "Limpar histórico",
+    "item_hint": "Clique para reproduzir no player ativo",
+    "search_placeholder": "Pesquisar no histórico..."
   }
 }

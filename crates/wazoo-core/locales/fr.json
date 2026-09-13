@@ -81,7 +81,8 @@
       "close_app": "Quitter l'application",
       "move_window": "Déplacer la fenêtre",
       "toggle_bookmarks": "Basculer les favoris",
-      "toggle_transcript": "Basculer la transcription des sous-titres"
+      "toggle_transcript": "Basculer la transcription des sous-titres",
+      "toggle_history": "Basculer l'historique de lecture"
     }
   },
   "file_picker": {
@@ -128,5 +129,13 @@
     "removed": "Signet supprimé : {name}",
     "not_found": "Aucun signet trouvé pour la vidéo actuelle",
     "jumped": "Signet : {name}  [{time}] ({mode})"
+  },
+  "history": {
+    "title": "Historique de lecture",
+    "count": "{count} vidéos",
+    "empty": "Aucune vidéo lue pour le moment.",
+    "clear": "Effacer l'historique",
+    "item_hint": "Cliquer pour lire dans le lecteur actif",
+    "search_placeholder": "Rechercher dans l'historique..."
   }
 }
