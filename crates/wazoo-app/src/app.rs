@@ -123,6 +123,7 @@ pub struct WazooApp {
     pub(crate) unfocused_frame_ticks: u32,
     pub(crate) window_bounds_dirty: bool,
     pub(crate) player_nav_history: HashMap<PlayerId, PlayerNavHistory>,
+    pub(crate) player_shuffle_modes: HashMap<PlayerId, bool>,
 }
 
 impl WazooApp {
@@ -282,6 +283,7 @@ impl WazooApp {
             unfocused_frame_ticks: 0,
             window_bounds_dirty: false,
             player_nav_history: HashMap::new(),
+            player_shuffle_modes: HashMap::new(),
         };
 
         // Initialize players based on settings or restore saved session
@@ -296,6 +298,10 @@ impl WazooApp {
             if std::path::Path::new(&session.path).exists() {
                 let id = app.next_player_id;
                 app.next_player_id += 1;
+                app.player_shuffle_modes.insert(id, session.is_shuffle);
+                if app.players.is_empty() {
+                    app.is_shuffle_mode = session.is_shuffle;
+                }
                 let name = format::format_video_title(&session.path);
                 let start_secs = if session.position_secs > 0.05 {
                     Some(session.position_secs)
@@ -496,11 +502,19 @@ impl WazooApp {
         )
     }
 
-    pub(crate) fn get_next_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
+    pub(crate) fn is_player_shuffle(&self, id: PlayerId) -> bool {
+        self.player_shuffle_modes.get(&id).copied().unwrap_or(self.is_shuffle_mode)
+    }
+
+    pub(crate) fn get_next_video_rec_with_mode(
+        &self,
+        current_path: Option<&str>,
+        is_shuffle: bool,
+    ) -> Option<VideoRecord> {
         if self.available_videos.is_empty() {
             return None;
         }
-        if self.is_shuffle_mode {
+        if is_shuffle {
             if self.available_videos.len() > 1 {
                 if let Some(curr) = current_path {
                     for _ in 0..5 {
@@ -530,11 +544,19 @@ impl WazooApp {
         }
     }
 
-    pub(crate) fn get_prev_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
+    pub(crate) fn get_next_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
+        self.get_next_video_rec_with_mode(current_path, self.is_shuffle_mode)
+    }
+
+    pub(crate) fn get_prev_video_rec_with_mode(
+        &self,
+        current_path: Option<&str>,
+        is_shuffle: bool,
+    ) -> Option<VideoRecord> {
         if self.available_videos.is_empty() {
             return None;
         }
-        if self.is_shuffle_mode {
+        if is_shuffle {
             if self.available_videos.len() > 1 {
                 if let Some(curr) = current_path {
                     for _ in 0..5 {
@@ -551,15 +573,20 @@ impl WazooApp {
             if let Some(curr) = current_path {
                 if let Some(pos) = self.available_videos.iter().position(|v| v.path == curr) {
                     let prev_pos = if pos == 0 {
-                        self.available_videos.len() - 1
+                        self.available_videos.len().saturating_sub(1)
                     } else {
                         pos - 1
                     };
                     return Some(self.available_videos[prev_pos].clone());
                 }
             }
-            Some(self.available_videos[0].clone())
+            self.available_videos.last().cloned()
         }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn get_prev_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
+        self.get_prev_video_rec_with_mode(current_path, self.is_shuffle_mode)
     }
 
     pub(crate) fn record_current_player_nav_position(&mut self, id: PlayerId) {
@@ -662,6 +689,7 @@ impl WazooApp {
                         handle.set_muted(initial_muted);
                         handle.set_subtitles_visible(self.subtitles_enabled);
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
+                        self.player_shuffle_modes.insert(id, self.is_shuffle_mode);
                         self.players.push(handle);
                         self.loading_player_ids.insert(id);
                         self.loading_player_ticks.insert(id, 0);
@@ -676,7 +704,7 @@ impl WazooApp {
         None
     }
 
-    /// Persists the exact current playback session (file, timestamp, mute, volume) to settings
+    /// Persists the exact current playback session (file, timestamp, mute, volume, shuffle) to settings
     pub(crate) fn save_session_state(&mut self) {
         if !self.players.is_empty() {
             let sessions: Vec<VideoSession> = self
@@ -687,6 +715,7 @@ impl WazooApp {
                     position_secs: p.position().as_secs_f64(),
                     is_muted: p.state.is_muted,
                     volume: p.state.volume,
+                    is_shuffle: self.is_player_shuffle(p.id),
                 })
                 .collect();
             self.settings.session_videos = sessions;
@@ -741,15 +770,16 @@ impl WazooApp {
                 .filter(|v| !used_paths.contains(&v.path))
                 .collect();
 
+            let is_shuffle = self.is_player_shuffle(id);
             let candidate = if !unused.is_empty() {
-                if self.is_shuffle_mode {
+                if is_shuffle {
                     let r = rand::random::<usize>() % unused.len();
                     Some(unused[r])
                 } else {
                     Some(unused[0])
                 }
             } else {
-                let fallback_idx = if self.is_shuffle_mode {
+                let fallback_idx = if is_shuffle {
                     rand::random::<usize>() % self.available_videos.len()
                 } else {
                     idx % self.available_videos.len()
@@ -1303,6 +1333,31 @@ mod tests {
         let _ = app.update(Message::ClearPlayHistory);
         assert!(app.play_history.is_empty());
         let _ = app.view_history_drawer();
+    }
+
+    #[test]
+    fn test_session_videos_shuffle_persistence() {
+        let (mut app, _) = new_test_app();
+        app.available_videos = vec![
+            VideoRecord { id: 1, name: "V1".to_string(), path: "/media/v1.mp4".to_string() },
+            VideoRecord { id: 2, name: "V2".to_string(), path: "/media/v2.mp4".to_string() },
+        ];
+
+        // Default should be shuffle mode
+        assert!(app.is_shuffle_mode);
+
+        // Toggle shuffle mode -> sequential
+        let _ = app.update(Message::ToggleShuffleMode);
+        assert!(!app.is_shuffle_mode);
+
+        // Save session state
+        app.save_session_state();
+
+        // If there were players, session_videos records is_shuffle: false
+        let loaded = app.config_mgr.load_settings();
+        if let Some(first) = loaded.session_videos.first() {
+            assert!(!first.is_shuffle);
+        }
     }
 }
 

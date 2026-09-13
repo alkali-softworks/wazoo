@@ -88,7 +88,7 @@ impl WazooApp {
         // 2. If forward_stack had no entries (or loading failed), generate next video (random or sequential)
         if !loaded {
             for _ in 0..3 {
-                if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
+                if let Some(video_rec) = self.get_next_video_rec_with_mode(curr_path.as_deref(), self.is_player_shuffle(id)) {
                     if let Ok(new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
                         self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
@@ -146,7 +146,7 @@ impl WazooApp {
         // 3. Fallback if back_stack had no earlier entries (or loading failed)
         if !loaded {
             for _ in 0..3 {
-                if let Some(video_rec) = self.get_prev_video_rec(curr_path.as_deref()) {
+                if let Some(video_rec) = self.get_prev_video_rec_with_mode(curr_path.as_deref(), self.is_player_shuffle(id)) {
                     if let Ok(new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
                         self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
@@ -1003,18 +1003,41 @@ impl WazooApp {
                 self.toast_time_remaining = 2;
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
-            Message::ToggleShuffleMode => {
-                self.is_shuffle_mode = !self.is_shuffle_mode;
-                for hist in self.player_nav_history.values_mut() {
+            Message::TogglePlayerShuffle(id) => {
+                let new_mode = !self.is_player_shuffle(id);
+                self.player_shuffle_modes.insert(id, new_mode);
+                if self.focused_player_id() == Some(id) {
+                    self.is_shuffle_mode = new_mode;
+                }
+                if let Some(hist) = self.player_nav_history.get_mut(&id) {
                     hist.back_stack.clear();
                     hist.forward_stack.clear();
                 }
-                self.toast_message = Some(if self.is_shuffle_mode {
+                self.toast_message = Some(if new_mode {
                     self.t("player.switched_shuffle")
                 } else {
                     self.t("player.switched_sequential")
                 });
                 self.toast_time_remaining = 2;
+                self.save_session_state();
+            }
+            Message::ToggleShuffleMode => {
+                if let Some(id) = self.focused_player_id() {
+                    return self.update(Message::TogglePlayerShuffle(id));
+                } else {
+                    self.is_shuffle_mode = !self.is_shuffle_mode;
+                    for hist in self.player_nav_history.values_mut() {
+                        hist.back_stack.clear();
+                        hist.forward_stack.clear();
+                    }
+                    self.toast_message = Some(if self.is_shuffle_mode {
+                        self.t("player.switched_shuffle")
+                    } else {
+                        self.t("player.switched_sequential")
+                    });
+                    self.toast_time_remaining = 2;
+                    self.save_session_state();
+                }
             }
             Message::CycleLayout => {
                 self.show_dropdown_menu = false;
@@ -1202,6 +1225,7 @@ impl WazooApp {
                 if let Some(id) = self.focused_player_id() {
                     self.players.retain(|p| p.id != id);
                     self.player_nav_history.remove(&id);
+                    self.player_shuffle_modes.remove(&id);
                     self.settings.player_count = self.players.len();
                     if self.focused_player_idx >= self.players.len() && !self.players.is_empty() {
                         self.focused_player_idx = self.players.len() - 1;
@@ -1385,7 +1409,7 @@ impl WazooApp {
                             let name = format::format_descriptive_title(&path);
                             let query = self.active_search_query.clone();
                             let position_secs = p.position().as_secs_f64();
-                            let is_shuffle = self.is_shuffle_mode;
+                            let is_shuffle = self.is_player_shuffle(id);
 
                             if let Some(existing) = self.settings.bookmarks.iter_mut().find(|b| b.path == path) {
                                 existing.name = name.clone();
@@ -1436,6 +1460,9 @@ impl WazooApp {
             Message::JumpToBookmark(b) => {
                 // 1. Restore shuffle vs linear mode
                 self.is_shuffle_mode = b.is_shuffle;
+                if let Some(id) = self.focused_player_id() {
+                    self.player_shuffle_modes.insert(id, b.is_shuffle);
+                }
 
                 // 2. Update the global search query to match the bookmark's query
                 self.active_search_query = b.query.clone();

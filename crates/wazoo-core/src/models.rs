@@ -84,6 +84,8 @@ pub struct VideoSession {
     pub is_muted: bool,
     #[serde(default = "default_session_volume")]
     pub volume: f64,
+    #[serde(default = "default_true")]
+    pub is_shuffle: bool,
 }
 
 fn default_true() -> bool {
