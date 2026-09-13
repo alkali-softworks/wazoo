@@ -246,7 +246,7 @@ impl WazooApp {
                     .push(
                         container(time_display)
                             .width(Length::Fill)
-                            .height(Length::Fixed(22.0))
+                            .height(Length::Fixed(24.0))
                             .center_x(Length::Fill)
                             .center_y(Length::Fill),
                     ),

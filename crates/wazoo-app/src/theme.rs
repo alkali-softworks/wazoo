@@ -287,53 +287,47 @@ pub fn action_button_style(_theme: &Theme, status: button::Status) -> button::St
 /// Folder Chip in Search Modal
 pub fn folder_chip_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_theme: &Theme, status: button::Status| {
-        let (bg, border_color, text_color) = if is_active {
+        let (bg, border_color, border_width, shadow) = if is_active {
             let (bg, border) = match status {
-                button::Status::Hovered => (Color::from_rgb(0.29, 0.76, 0.55), Color::from_rgb(0.38, 0.82, 0.63)),
-                _ => (COLOR_PRIMARY, COLOR_PRIMARY_BORDER),
+                button::Status::Hovered => (COLOR_BTN_BG, COLOR_PRIMARY_BORDER),
+                button::Status::Pressed => (Color::from_rgb(0.14, 0.14, 0.14), COLOR_PRIMARY),
+                _ => (COLOR_CARD_BG, COLOR_PRIMARY),
             };
-            (bg, border, Color::from_rgb(0.06, 0.06, 0.06))
-        } else {
-            let (bg, border) = match status {
-                button::Status::Hovered => (COLOR_BTN_BG, Color::from_rgb(0.35, 0.35, 0.35)),
-                _ => (COLOR_CARD_BG, COLOR_BORDER),
-            };
-            (bg, border, Color::WHITE)
-        };
-        let shadow = if is_active {
-            match status {
+            let shadow = match status {
                 button::Status::Hovered => Shadow {
-                    color: Color::from_rgba(0.0, 0.0, 0.0, 0.45),
-                    offset: Vector::new(0.0, 2.0),
+                    color: Color::from_rgba(0.259, 0.722, 0.514, 0.35),
+                    offset: Vector::new(0.0, 1.0),
                     blur_radius: 5.0,
                 },
-                button::Status::Pressed => Shadow {
-                    color: Color::from_rgba(0.0, 0.0, 0.0, 0.25),
+                _ => Shadow {
+                    color: Color::from_rgba(0.259, 0.722, 0.514, 0.20),
                     offset: Vector::new(0.0, 1.0),
                     blur_radius: 3.0,
                 },
-                _ => Shadow {
-                    color: Color::from_rgba(0.0, 0.0, 0.0, 0.35),
-                    offset: Vector::new(0.0, 2.0),
-                    blur_radius: 4.0,
-                },
-            }
+            };
+            (bg, border, 1.5, shadow)
         } else {
-            match status {
+            let (bg, border) = match status {
+                button::Status::Hovered => (COLOR_BTN_BG, Color::from_rgb(0.35, 0.35, 0.35)),
+                button::Status::Pressed => (Color::from_rgb(0.14, 0.14, 0.14), COLOR_BORDER),
+                _ => (COLOR_CARD_BG, COLOR_BORDER),
+            };
+            let shadow = match status {
                 button::Status::Hovered => Shadow {
                     color: Color::from_rgba(0.0, 0.0, 0.0, 0.25),
                     offset: Vector::new(0.0, 1.0),
                     blur_radius: 3.0,
                 },
                 _ => Shadow::default(),
-            }
+            };
+            (bg, border, 1.0, shadow)
         };
         button::Style {
             background: Some(Background::Color(bg)),
-            text_color,
+            text_color: Color::WHITE,
             border: Border {
                 radius: 20.0.into(),
-                width: 1.0,
+                width: border_width,
                 color: border_color,
             },
             shadow,
@@ -653,7 +647,7 @@ pub fn progress_slider_style_with_alpha(alpha: f32) -> impl Fn(&Theme, slider::S
                     Background::Color(with_alpha(COLOR_PRIMARY, alpha)),
                     Background::Color(with_alpha(COLOR_TRACK_BG, alpha)),
                 ),
-                width: 22.0,
+                width: 24.0,
                 border: Border {
                     radius: 3.0.into(),
                     ..Default::default()
