@@ -27,16 +27,16 @@ cargo test -p wazoo-tutorial
 
 | File | What it Teaches | Key Technologies |
 | :--- | :--- | :--- |
-| [`src/main.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/main.rs) | Application entry point, window settings, runtime loop | `iced::application`, `winit`, `wgpu` |
-| [`src/message.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/message.rs) | Events, algebraic data types, sum types, Rust enums | The Elm Architecture (TEA), Enums |
-| [`src/app.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/app.rs) | Central state, `update` logic, `Task<Message>`, subscriptions | Single Source of Truth, Borrow Checker |
-| [`src/style.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/style.rs) | Type-safe styling closures, cards, badges, buttons | `iced::Theme`, `Border`, `Shadow` |
-| [`src/db.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/db.rs) | Embedded SQLite persistence, CRUD, `Result` & `?` operator | `rusqlite`, Parameterized SQL |
-| [`src/tabs/counter_tab.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/tabs/counter_tab.rs) | Buttons, text input, slider, checkbox, pure views | `column!`, `row!`, `text_input`, `slider` |
-| [`src/tabs/async_scanner_tab.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/tabs/async_scanner_tab.rs) | Non-blocking async background tasks, folder pickers | `rfd`, `walkdir`, `tokio`, `Task::perform` |
-| [`src/tabs/database_tab.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/tabs/database_tab.rs) | Live UI for creating, listing, and deleting database records | SQLite CRUD, Dynamic lists |
-| [`src/tabs/theming_tab.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/tabs/theming_tab.rs) | Dynamic theme switching, palette color inspector | `pick_list`, `Theme::TokyoNight`, etc. |
-| [`src/tabs/guide_tab.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/tabs/guide_tab.rs) | Interactive in-app cheat sheet and reference guide | Built-in UI Reference |
+| [`src/main.rs`] | Application entry point, window settings, runtime loop | `iced::application`, `winit`, `wgpu` |
+| [`src/message.rs`] | Events, algebraic data types, sum types, Rust enums | The Elm Architecture (TEA), Enums |
+| [`src/app.rs`] | Central state, `update` logic, `Task<Message>`, subscriptions | Single Source of Truth, Borrow Checker |
+| [`src/style.rs`] | Type-safe styling closures, cards, badges, buttons | `iced::Theme`, `Border`, `Shadow` |
+| [`src/db.rs`] | Embedded SQLite persistence, CRUD, `Result` & `?` operator | `rusqlite`, Parameterized SQL |
+| [`src/tabs/counter_tab.rs`] | Buttons, text input, slider, checkbox, pure views | `column!`, `row!`, `text_input`, `slider` |
+| [`src/tabs/async_scanner_tab.rs`] | Non-blocking async background tasks, folder pickers | `rfd`, `walkdir`, `tokio`, `Task::perform` |
+| [`src/tabs/database_tab.rs`] | Live UI for creating, listing, and deleting database records | SQLite CRUD, Dynamic lists |
+| [`src/tabs/theming_tab.rs`] | Dynamic theme switching, palette color inspector | `pick_list`, `Theme::TokyoNight`, etc. |
+| [`src/tabs/guide_tab.rs`] | Interactive in-app cheat sheet and reference guide | Built-in UI Reference |
 
 ---
 
