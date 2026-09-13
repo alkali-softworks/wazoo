@@ -9,8 +9,8 @@
 
 use iced::{
     overlay::menu,
-    widget::{button, container, slider, text_input},
-    Background, Border, Color, Shadow, Theme, Vector,
+    widget::{button, container, slider, text, text_input, Stack},
+    Background, Border, Color, Element, Pixels, Shadow, Theme, Vector,
 };
 
 pub const COLOR_PRIMARY: Color = Color::from_rgb(0.259, 0.722, 0.514); // #42b883 Emerald
@@ -28,6 +28,13 @@ pub const COLOR_PRIMARY_BORDER: Color = Color::from_rgb(0.35, 0.80, 0.60);
 pub const COLOR_TRACK_BG: Color = Color::from_rgba(1.0, 1.0, 1.0, 0.2);
 pub const COLOR_OVERLAY_DARK: Color = Color::from_rgba(0.0, 0.0, 0.0, 0.4);
 pub const COLOR_DRAWER_BG: Color = Color::from_rgb(0.2, 0.2, 0.2); // #333
+
+pub const FONT_BOLD: iced::Font = iced::Font {
+    family: iced::font::Family::SansSerif,
+    weight: iced::font::Weight::Bold,
+    stretch: iced::font::Stretch::Normal,
+    style: iced::font::Style::Normal,
+};
 
 #[inline]
 pub fn with_alpha(color: Color, alpha: f32) -> Color {
@@ -277,29 +284,59 @@ pub fn action_button_style(_theme: &Theme, status: button::Status) -> button::St
     }
 }
 
-// Folder Chip in Search Modal
+/// Folder Chip in Search Modal
 pub fn folder_chip_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_theme: &Theme, status: button::Status| {
-        let (bg, border_color) = if is_active {
-            match status {
+        let (bg, border_color, text_color) = if is_active {
+            let (bg, border) = match status {
                 button::Status::Hovered => (Color::from_rgb(0.29, 0.76, 0.55), Color::from_rgb(0.38, 0.82, 0.63)),
                 _ => (COLOR_PRIMARY, COLOR_PRIMARY_BORDER),
+            };
+            (bg, border, Color::from_rgb(0.06, 0.06, 0.06))
+        } else {
+            let (bg, border) = match status {
+                button::Status::Hovered => (COLOR_BTN_BG, Color::from_rgb(0.35, 0.35, 0.35)),
+                _ => (COLOR_CARD_BG, COLOR_BORDER),
+            };
+            (bg, border, Color::WHITE)
+        };
+        let shadow = if is_active {
+            match status {
+                button::Status::Hovered => Shadow {
+                    color: Color::from_rgba(0.0, 0.0, 0.0, 0.45),
+                    offset: Vector::new(0.0, 2.0),
+                    blur_radius: 5.0,
+                },
+                button::Status::Pressed => Shadow {
+                    color: Color::from_rgba(0.0, 0.0, 0.0, 0.25),
+                    offset: Vector::new(0.0, 1.0),
+                    blur_radius: 3.0,
+                },
+                _ => Shadow {
+                    color: Color::from_rgba(0.0, 0.0, 0.0, 0.35),
+                    offset: Vector::new(0.0, 2.0),
+                    blur_radius: 4.0,
+                },
             }
         } else {
             match status {
-                button::Status::Hovered => (COLOR_BTN_BG, Color::from_rgb(0.35, 0.35, 0.35)),
-                _ => (COLOR_CARD_BG, COLOR_BORDER),
+                button::Status::Hovered => Shadow {
+                    color: Color::from_rgba(0.0, 0.0, 0.0, 0.25),
+                    offset: Vector::new(0.0, 1.0),
+                    blur_radius: 3.0,
+                },
+                _ => Shadow::default(),
             }
         };
         button::Style {
             background: Some(Background::Color(bg)),
-            text_color: Color::WHITE,
+            text_color,
             border: Border {
                 radius: 20.0.into(),
                 width: 1.0,
                 color: border_color,
             },
-            shadow: Shadow::default(),
+            shadow,
             ..Default::default()
         }
     }
@@ -349,6 +386,11 @@ pub fn tag_chip_style(_theme: &Theme) -> container::Style {
             width: 1.0,
             color: Color::from_rgb8(0x4f, 0x4f, 0x4f),
         },
+        shadow: Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.30),
+            offset: Vector::new(0.0, 1.0),
+            blur_radius: 3.0,
+        },
         text_color: Some(Color::WHITE),
         ..Default::default()
     }
@@ -392,15 +434,32 @@ pub fn search_button_style(_theme: &Theme, status: button::Status) -> button::St
         button::Status::Pressed => Color::from_rgb(0.22, 0.65, 0.46),
         _ => COLOR_PRIMARY,
     };
+    let shadow = match status {
+        button::Status::Hovered => Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.50),
+            offset: Vector::new(0.0, 2.0),
+            blur_radius: 6.0,
+        },
+        button::Status::Pressed => Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.30),
+            offset: Vector::new(0.0, 1.0),
+            blur_radius: 3.0,
+        },
+        _ => Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.40),
+            offset: Vector::new(0.0, 2.0),
+            blur_radius: 5.0,
+        },
+    };
     button::Style {
         background: Some(Background::Color(bg)),
-        text_color: Color::WHITE,
+        text_color: Color::from_rgb(0.06, 0.06, 0.06),
         border: Border {
             radius: 6.0.into(),
             width: 0.0,
             color: Color::TRANSPARENT,
         },
-        shadow: Shadow::default(),
+        shadow,
         ..Default::default()
     }
 }
@@ -433,7 +492,7 @@ pub fn dark_pick_list_menu_style(_theme: &Theme) -> menu::Style {
             color: COLOR_BORDER,
         },
         text_color: Color::WHITE,
-        selected_text_color: Color::WHITE,
+        selected_text_color: Color::from_rgb(0.06, 0.06, 0.06),
         selected_background: Background::Color(COLOR_PRIMARY),
         shadow: Shadow {
             color: Color::from_rgba(0.0, 0.0, 0.0, 0.6),
@@ -608,6 +667,90 @@ pub fn progress_slider_style_with_alpha(alpha: f32) -> impl Fn(&Theme, slider::S
             },
         }
     }
+}
+
+/// Renders bold white text with a significant, diffuse multi-layer ambient shadow
+/// for high readability across varying bright and dark backgrounds.
+pub fn diffuse_shadowed_text<'a, Message: 'a>(
+    content: impl Into<std::borrow::Cow<'a, str>>,
+    size: impl Into<Pixels>,
+    alpha: f32,
+) -> Element<'a, Message> {
+    let s: std::borrow::Cow<'a, str> = content.into();
+    let sz: Pixels = size.into();
+    let text_val: String = s.into_owned();
+
+    const MAX_SPREAD: f32 = 3.0;
+
+    // Radially symmetric samples producing a smooth, diffuse Gaussian-like ambient halo with zero directional bias:
+    // (dx, dy, base_alpha)
+    const SHADOW_SAMPLES: &[(f32, f32, f32)] = &[
+        // Core ring (r ≈ 1.0px)
+        (0.0, 1.0, 0.20),
+        (0.0, -1.0, 0.20),
+        (-1.0, 0.0, 0.20),
+        (1.0, 0.0, 0.20),
+        (-0.7, 0.7, 0.18),
+        (0.7, 0.7, 0.18),
+        (-0.7, -0.7, 0.18),
+        (0.7, -0.7, 0.18),
+        // Mid ring (r ≈ 2.0px)
+        (0.0, 2.0, 0.12),
+        (0.0, -2.0, 0.12),
+        (-2.0, 0.0, 0.12),
+        (2.0, 0.0, 0.12),
+        (-1.4, 1.4, 0.10),
+        (1.4, 1.4, 0.10),
+        (-1.4, -1.4, 0.10),
+        (1.4, -1.4, 0.10),
+        // Outer diffuse halo (r ≈ 3.0px)
+        (0.0, 3.0, 0.06),
+        (0.0, -3.0, 0.06),
+        (-3.0, 0.0, 0.06),
+        (3.0, 0.0, 0.06),
+        (-2.1, 2.1, 0.05),
+        (2.1, 2.1, 0.05),
+        (-2.1, -2.1, 0.05),
+        (2.1, -2.1, 0.05),
+    ];
+
+    let mut stack = Stack::new();
+
+    // Push diffuse shadow layers underneath
+    for &(dx, dy, sample_alpha) in SHADOW_SAMPLES {
+        let layer = container(
+            text(text_val.clone())
+                .size(sz)
+                .font(FONT_BOLD)
+                .color(Color::from_rgba(0.0, 0.0, 0.0, sample_alpha * alpha)),
+        )
+        .padding(iced::Padding {
+            top: MAX_SPREAD + dy,
+            left: MAX_SPREAD + dx,
+            right: MAX_SPREAD - dx,
+            bottom: MAX_SPREAD - dy,
+        });
+
+        stack = stack.push(layer);
+    }
+
+    // Foreground bold white text centered in the same bounding envelope
+    let foreground = container(
+        text(text_val)
+            .size(sz)
+            .font(FONT_BOLD)
+            .color(with_alpha(Color::WHITE, alpha)),
+    )
+    .padding(iced::Padding {
+        top: MAX_SPREAD,
+        left: MAX_SPREAD,
+        right: MAX_SPREAD,
+        bottom: MAX_SPREAD,
+    });
+
+    stack = stack.push(foreground);
+
+    stack.into()
 }
 
 // Volume Bar Slider Style (Vue emerald green #42b883)
@@ -838,6 +981,23 @@ pub fn primary_button_style(_theme: &Theme, status: button::Status) -> button::S
         button::Status::Pressed => Color::from_rgb(0.2, 0.65, 0.45),
         _ => COLOR_PRIMARY,
     };
+    let shadow = match status {
+        button::Status::Hovered => Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.45),
+            offset: Vector::new(0.0, 2.0),
+            blur_radius: 6.0,
+        },
+        button::Status::Pressed => Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.25),
+            offset: Vector::new(0.0, 1.0),
+            blur_radius: 3.0,
+        },
+        _ => Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.35),
+            offset: Vector::new(0.0, 2.0),
+            blur_radius: 5.0,
+        },
+    };
     button::Style {
         background: Some(Background::Color(bg)),
         text_color: Color::from_rgb(0.06, 0.06, 0.06),
@@ -845,7 +1005,7 @@ pub fn primary_button_style(_theme: &Theme, status: button::Status) -> button::S
             radius: 6.0.into(),
             ..Default::default()
         },
-        shadow: Shadow::default(),
+        shadow,
         ..Default::default()
     }
 }
