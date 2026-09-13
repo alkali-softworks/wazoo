@@ -112,7 +112,13 @@ impl WazooApp {
         config_mgr: ConfigManager,
         db: Database,
     ) -> (Self, Task<Message>) {
+        let has_keybinds = config_mgr.has_keybinds_in_settings();
         let mut settings = config_mgr.load_settings();
+
+        // On boot, write the keybind setting to the settings file if not already present
+        if !has_keybinds {
+            let _ = config_mgr.save_settings(&settings);
+        }
 
         let cli_query_clean = cli_query.map(|q| q.trim().to_string()).filter(|q| !q.is_empty());
         let is_cli = cli_query_clean.is_some();
@@ -1281,6 +1287,79 @@ mod tests {
         assert_eq!(app.toast_message.as_deref(), Some("Cambiado a modo aleatorio"));
         let _ = app.update(Message::SetScrollSpeed(2.0));
         assert_eq!(app.toast_message.as_deref(), Some("Velocidad de desplazamiento: 2.0"));
+    }
+
+    #[test]
+    fn test_boot_persists_default_keybinds() {
+        let temp_dir = std::env::temp_dir().join(format!(
+            "wazoo_boot_kb_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let _ = std::fs::create_dir_all(&temp_dir);
+        let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
+        let db = Database::open_in_memory().expect("in-memory db");
+
+        assert!(!config_mgr.config_file_path().exists());
+        assert!(!config_mgr.has_keybinds_in_settings());
+
+        let (app, _) = WazooApp::new_with_backend(None, config_mgr, db);
+
+        assert!(app.config_mgr.config_file_path().exists());
+        assert!(app.config_mgr.has_keybinds_in_settings());
+        let content = std::fs::read_to_string(app.config_mgr.config_file_path()).unwrap();
+        assert!(content.contains("\"keybinds\""));
+        assert_eq!(app.settings.keybinds.add_player, "n");
+
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_boot_preserves_custom_keybinds() {
+        use iced::keyboard::Key;
+        use wazoo_core::LayoutMode;
+
+        let temp_dir = std::env::temp_dir().join(format!(
+            "wazoo_custom_kb_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let _ = std::fs::create_dir_all(&temp_dir);
+        let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
+        let db = Database::open_in_memory().expect("in-memory db");
+
+        // Write custom keybinds into settings.json before boot
+        let custom_json = r#"{"keybinds":{"toggle_layout":"o","toggle_bookmarks":"k"}}"#;
+        std::fs::write(config_mgr.config_file_path(), custom_json).unwrap();
+        assert!(config_mgr.has_keybinds_in_settings());
+
+        let (mut app, _) = WazooApp::new_with_backend(None, config_mgr, db);
+        assert_eq!(app.settings.keybinds.toggle_layout, "o");
+        assert_eq!(app.settings.keybinds.toggle_bookmarks, "k");
+
+        // 1. Bookmarks modal: pressing default 'b' should NOT toggle because remapped to 'k'
+        assert!(!app.show_bookmarks_modal);
+        let _ = app.update(Message::KeyPressed(Key::Character("b".into()), iced::event::Status::Ignored));
+        assert!(!app.show_bookmarks_modal);
+
+        // Pressing custom 'k' SHOULD toggle bookmarks modal to open
+        let _ = app.update(Message::KeyPressed(Key::Character("k".into()), iced::event::Status::Ignored));
+        assert!(app.show_bookmarks_modal);
+
+        // Close bookmarks modal
+        let _ = app.update(Message::CloseBookmarksModal);
+        assert!(!app.show_bookmarks_modal);
+
+        // 2. Cycle layout: pressing default 'l' should NOT cycle because remapped to 'o'
+        assert_eq!(app.settings.layout, LayoutMode::Grid);
+        let _ = app.update(Message::KeyPressed(Key::Character("l".into()), iced::event::Status::Ignored));
+        assert_eq!(app.settings.layout, LayoutMode::Grid);
+
+        // Pressing custom 'o' SHOULD cycle layout from Grid to Row
+        let _ = app.update(Message::KeyPressed(Key::Character("o".into()), iced::event::Status::Ignored));
+        assert_eq!(app.settings.layout, LayoutMode::Row);
+
+        let _ = std::fs::remove_dir_all(&temp_dir);
     }
 }
 
