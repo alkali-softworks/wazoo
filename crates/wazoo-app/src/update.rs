@@ -35,26 +35,149 @@ impl WazooApp {
         }
         self.loading_player_ids.insert(id);
         self.loading_player_ticks.insert(id, 0);
+
+        // 1. Record current playback position before moving away
+        self.record_current_player_nav_position(id);
+
         let curr_player = self.players.iter().find(|p| p.id == id);
         let curr_path = curr_player.map(|p| p.state.path.clone());
         let prev_muted = curr_player.map(|p| p.state.is_muted);
         let prev_volume = curr_player.map(|p| p.state.volume);
 
-        for _ in 0..3 {
-            if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
-                if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
-                    new_handle.set_muted(prev_muted.unwrap_or(true));
-                    if let Some(vol) = prev_volume {
-                        new_handle.set_volume(vol);
+        // 2. Check forward_stack for undone videos from previous navigation
+        let forward_candidate = self
+            .player_nav_history
+            .get_mut(&id)
+            .and_then(|hist| hist.forward_stack.pop());
+
+        let mut loaded = false;
+        if let Some(target) = forward_candidate {
+            let name = self
+                .available_videos
+                .iter()
+                .find(|v| v.path == target.path)
+                .map(|v| v.name.clone())
+                .unwrap_or_else(|| format::format_video_title(&target.path));
+
+            if let Ok(mut new_handle) = self.create_video_handle_with_start(id, &target.path, &name, target.position_secs) {
+                new_handle.set_muted(prev_muted.unwrap_or(true));
+                if let Some(vol) = prev_volume {
+                    new_handle.set_volume(vol);
+                }
+                new_handle.set_subtitles_visible(self.subtitles_enabled);
+                self.push_player_nav_entry(id, target.path.clone(), target.position_secs);
+                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                    *p = new_handle;
+                }
+                loaded = true;
+            }
+        }
+
+        // 3. If forward_stack had no entries (or loading failed), generate next video (random or sequential)
+        if !loaded {
+            for _ in 0..3 {
+                if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
+                    if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
+                        new_handle.set_muted(prev_muted.unwrap_or(true));
+                        if let Some(vol) = prev_volume {
+                            new_handle.set_volume(vol);
+                        }
+                        new_handle.set_subtitles_visible(self.subtitles_enabled);
+                        self.push_player_nav_entry(id, video_rec.path.clone(), None);
+                        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                            *p = new_handle;
+                        }
+                        break;
                     }
-                    new_handle.set_subtitles_visible(self.subtitles_enabled);
-                    if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
-                        *p = new_handle;
-                    }
-                    break;
                 }
             }
         }
+        if self.show_transcript && self.focused_player_id() == Some(id) {
+            return self.load_transcript_for_focused_player();
+        }
+        Task::none()
+    }
+
+    pub(crate) fn advance_player_to_prev_video(&mut self, id: PlayerId, request_focus: bool) -> Task<Message> {
+        if request_focus {
+            if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                let was_already_active = self.focused_player_idx == pos;
+                self.focused_player_idx = pos;
+                if !was_already_active {
+                    self.focus_border_ticks = 20;
+                }
+            }
+            self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+        }
+        self.loading_player_ids.insert(id);
+        self.loading_player_ticks.insert(id, 0);
+
+        // 1. Record current playback position before moving away
+        self.record_current_player_nav_position(id);
+
+        let curr_player = self.players.iter().find(|p| p.id == id);
+        let curr_path = curr_player.map(|p| p.state.path.clone());
+        let prev_muted = curr_player.map(|p| p.state.is_muted);
+        let prev_volume = curr_player.map(|p| p.state.volume);
+
+        // 2. Adjust navigation history:
+        // Pop the current video from back_stack and push onto forward_stack
+        let mut target_candidate = None;
+        if let Some(hist) = self.player_nav_history.get_mut(&id) {
+            if let Some(curr) = curr_path.as_deref() {
+                if hist.back_stack.last().map(|e| e.path.as_str()) == Some(curr) {
+                    let current_entry = hist.back_stack.pop().unwrap();
+                    hist.forward_stack.push(current_entry);
+                }
+            }
+            if let Some(prev_entry) = hist.back_stack.last() {
+                target_candidate = Some(prev_entry.clone());
+            }
+        }
+
+        // 3. Try playing target from back_stack if available
+        let mut loaded = false;
+        if let Some(target) = target_candidate {
+            let name = self
+                .available_videos
+                .iter()
+                .find(|v| v.path == target.path)
+                .map(|v| v.name.clone())
+                .unwrap_or_else(|| format::format_video_title(&target.path));
+
+            if let Ok(mut new_handle) = self.create_video_handle_with_start(id, &target.path, &name, target.position_secs) {
+                new_handle.set_muted(prev_muted.unwrap_or(true));
+                if let Some(vol) = prev_volume {
+                    new_handle.set_volume(vol);
+                }
+                new_handle.set_subtitles_visible(self.subtitles_enabled);
+                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                    *p = new_handle;
+                }
+                loaded = true;
+            }
+        }
+
+        // 4. Fallback if back_stack had no earlier entries (or loading failed)
+        if !loaded {
+            for _ in 0..3 {
+                if let Some(video_rec) = self.get_prev_video_rec(curr_path.as_deref()) {
+                    if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
+                        new_handle.set_muted(prev_muted.unwrap_or(true));
+                        if let Some(vol) = prev_volume {
+                            new_handle.set_volume(vol);
+                        }
+                        new_handle.set_subtitles_visible(self.subtitles_enabled);
+                        self.push_player_nav_entry(id, video_rec.path.clone(), None);
+                        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                            *p = new_handle;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
         if self.show_transcript && self.focused_player_id() == Some(id) {
             return self.load_transcript_for_focused_player();
         }
@@ -518,6 +641,10 @@ impl WazooApp {
                 if let Some(id) = self.focused_player_id() {
                     self.loading_player_ids.insert(id);
                     self.loading_player_ticks.insert(id, 0);
+                    self.record_current_player_nav_position(id);
+                    if let Some(hist) = self.player_nav_history.get_mut(&id) {
+                        hist.forward_stack.clear();
+                    }
                     let title = format::format_video_title(&path);
                     let curr_player = self.players.iter().find(|p| p.id == id);
                     let prev_muted = curr_player.map(|p| p.state.is_muted);
@@ -529,6 +656,7 @@ impl WazooApp {
                             handle.set_volume(vol);
                         }
                         handle.set_subtitles_visible(self.subtitles_enabled);
+                        self.push_player_nav_entry(id, path.clone(), None);
                         if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                             *p = handle;
                         }
@@ -632,33 +760,12 @@ impl WazooApp {
                     return self.update(Message::NextVideo(id));
                 }
             }
+            Message::PrevVideo(id) => {
+                return self.advance_player_to_prev_video(id, true);
+            }
             Message::PrevVideoFocused => {
                 if let Some(id) = self.focused_player_id() {
-                    self.loading_player_ids.insert(id);
-                    self.loading_player_ticks.insert(id, 0);
-                    let curr_player = self.players.iter().find(|p| p.id == id);
-                    let curr_path = curr_player.map(|p| p.state.path.clone());
-                    let prev_muted = curr_player.map(|p| p.state.is_muted);
-                    let prev_volume = curr_player.map(|p| p.state.volume);
-
-                    for _ in 0..3 {
-                        if let Some(prev_rec) = self.get_prev_video_rec(curr_path.as_deref()) {
-                            if let Ok(mut new_handle) = self.create_video_handle(id, &prev_rec.path, &prev_rec.name) {
-                                new_handle.set_muted(prev_muted.unwrap_or(true));
-                                if let Some(vol) = prev_volume {
-                                    new_handle.set_volume(vol);
-                                }
-                                new_handle.set_subtitles_visible(self.subtitles_enabled);
-                                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
-                                    *p = new_handle;
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    if self.show_transcript {
-                        return self.load_transcript_for_focused_player();
-                    }
+                    return self.update(Message::PrevVideo(id));
                 }
             }
             Message::Seek(id, pos) => {
@@ -896,6 +1003,10 @@ impl WazooApp {
             }
             Message::ToggleShuffleMode => {
                 self.is_shuffle_mode = !self.is_shuffle_mode;
+                for hist in self.player_nav_history.values_mut() {
+                    hist.back_stack.clear();
+                    hist.forward_stack.clear();
+                }
                 self.toast_message = Some(if self.is_shuffle_mode {
                     self.t("player.switched_shuffle")
                 } else {
@@ -1089,6 +1200,7 @@ impl WazooApp {
                 }
                 if let Some(id) = self.focused_player_id() {
                     self.players.retain(|p| p.id != id);
+                    self.player_nav_history.remove(&id);
                     self.settings.player_count = self.players.len();
                     if self.focused_player_idx >= self.players.len() && !self.players.is_empty() {
                         self.focused_player_idx = self.players.len() - 1;
@@ -1355,6 +1467,10 @@ impl WazooApp {
                 let focused_id = if let Some(id) = self.focused_player_id() {
                     self.loading_player_ids.insert(id);
                     self.loading_player_ticks.insert(id, 0);
+                    self.record_current_player_nav_position(id);
+                    if let Some(hist) = self.player_nav_history.get_mut(&id) {
+                        hist.forward_stack.clear();
+                    }
                     let title = format::format_video_title(&b.path);
                     let curr_player = self.players.iter().find(|p| p.id == id);
                     let prev_muted = curr_player.map(|p| p.state.is_muted);
@@ -1366,6 +1482,7 @@ impl WazooApp {
                             handle.set_volume(vol);
                         }
                         handle.set_subtitles_visible(self.subtitles_enabled);
+                        self.push_player_nav_entry(id, b.path.clone(), Some(b.position_secs));
                         if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                             *p = handle;
                         }
@@ -1378,6 +1495,7 @@ impl WazooApp {
                     if let Ok(mut handle) = self.create_video_handle_with_start(id, &b.path, &title, Some(b.position_secs)) {
                         handle.set_muted(true);
                         handle.set_subtitles_visible(self.subtitles_enabled);
+                        self.push_player_nav_entry(id, b.path.clone(), Some(b.position_secs));
                         self.players.push(handle);
                         self.focused_player_idx = 0;
                         Some(id)

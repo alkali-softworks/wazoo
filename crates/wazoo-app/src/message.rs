@@ -56,6 +56,7 @@ pub enum Message {
     TogglePlay(PlayerId),
     TogglePlayFocused,
     NextVideo(PlayerId),
+    PrevVideo(PlayerId),
     AutoAdvanceVideo(PlayerId),
     NextVideoFocused,
     PrevVideoFocused,
