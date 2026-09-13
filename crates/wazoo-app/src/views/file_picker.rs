@@ -227,8 +227,14 @@ impl WazooApp {
 
             let badge = button(
                 row![
-                    text(display_name).size(11).color(iced::Color::WHITE),
-                    text("✕").size(9).color(iced::Color::from_rgba(1.0, 1.0, 1.0, 0.8)),
+                    text(display_name)
+                        .size(13)
+                        .font(theme::FONT_BOLD)
+                        .color(iced::Color::from_rgb(0.06, 0.06, 0.06)),
+                    text("✕")
+                        .size(12)
+                        .font(theme::FONT_BOLD)
+                        .color(iced::Color::from_rgba(0.06, 0.06, 0.06, 0.8)),
                 ]
                 .spacing(5)
                 .align_y(Alignment::Center),

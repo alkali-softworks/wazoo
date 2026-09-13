@@ -24,10 +24,14 @@ impl WazooApp {
         let all_label = self.t("common.all");
         let is_all_selected = self.is_all_folder(&self.selected_search_folder);
         let mut folder_chips = row![
-            button(text(all_label.clone()))
-                .style(theme::folder_chip_style(is_all_selected))
-                .on_press(Message::SelectSearchFolder(all_label))
-                .padding([4, 12]),
+            button(
+                text(all_label.clone())
+                    .size(13)
+                    .font(theme::FONT_BOLD)
+            )
+            .style(theme::folder_chip_style(is_all_selected))
+            .on_press(Message::SelectSearchFolder(all_label))
+            .padding([4, 12]),
         ]
         .spacing(8)
         .align_y(Alignment::Center);
@@ -35,10 +39,14 @@ impl WazooApp {
         for folder in &self.settings.media_folders {
             let label = folder.split(['/', '\\']).filter(|s| !s.is_empty()).next_back().unwrap_or(folder);
             folder_chips = folder_chips.push(
-                button(text(label))
-                    .style(theme::folder_chip_style(self.selected_search_folder == *folder))
-                    .on_press(Message::SelectSearchFolder(folder.clone()))
-                    .padding([4, 12]),
+                button(
+                    text(label)
+                        .size(13)
+                        .font(theme::FONT_BOLD)
+                )
+                .style(theme::folder_chip_style(self.selected_search_folder == *folder))
+                .on_press(Message::SelectSearchFolder(folder.clone()))
+                .padding([4, 12]),
             );
         }
 

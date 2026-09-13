@@ -234,14 +234,17 @@ impl WazooApp {
                 move |ratio| Message::SeekRatio(player_id, ratio),
             )
             .step(0.001)
+            .height(24.0)
             .style(theme::progress_slider_style_with_alpha(overlay_alpha))
             .width(Length::Fill);
+
+            let time_display = theme::diffuse_shadowed_text(time_str, 14, overlay_alpha);
 
             let progress_bar_with_timestamp = cursor::PointerCursor::new(
                 Stack::new()
                     .push(seek_slider)
                     .push(
-                        container(text(time_str).size(13).color(theme::with_alpha(iced::Color::WHITE, overlay_alpha)))
+                        container(time_display)
                             .width(Length::Fill)
                             .height(Length::Fixed(22.0))
                             .center_x(Length::Fill)
