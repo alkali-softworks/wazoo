@@ -66,6 +66,7 @@ impl ConfigManager {
                 if let Ok(mut settings) = serde_json::from_str::<WazooSettings>(&content) {
                     settings.buffer_size_mb = settings.buffer_size_mb.clamp(16, 4096);
                     settings.buffer_duration_secs = settings.buffer_duration_secs.clamp(2, 300);
+                    settings.keybinds.reconcile_with_defaults();
                     return settings;
                 }
             }
@@ -74,11 +75,15 @@ impl ConfigManager {
     }
 
     pub fn has_keybinds_in_settings(&self) -> bool {
+        self.has_complete_keybinds_in_settings()
+    }
+
+    pub fn has_complete_keybinds_in_settings(&self) -> bool {
         let path = self.config_file_path();
         if path.exists() {
             if let Ok(content) = fs::read_to_string(&path) {
                 if let Ok(val) = serde_json::from_str::<serde_json::Value>(&content) {
-                    return val.get("keybinds").is_some();
+                    return crate::keybinds::KeybindSettings::is_complete_json(&val);
                 }
             }
         }
@@ -254,6 +259,16 @@ mod tests {
         // Reading back preserves customized keybind
         let reloaded = mgr.load_settings();
         assert_eq!(reloaded.keybinds.add_player, "p");
+
+        // Saving an incomplete list of keybinds
+        let incomplete_json = r#"{"keybinds":{"add_player":"p"}}"#;
+        fs::write(mgr.config_file_path(), incomplete_json).unwrap();
+        assert!(!mgr.has_complete_keybinds_in_settings());
+
+        // Loading reconciles missing keys with defaults while preserving existing custom key
+        let reconciled = mgr.load_settings();
+        assert_eq!(reconciled.keybinds.add_player, "p");
+        assert_eq!(reconciled.keybinds.close_app, "Alt+X");
 
         let _ = fs::remove_dir_all(&temp_dir);
     }
