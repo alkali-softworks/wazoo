@@ -38,6 +38,13 @@ pub(crate) struct PlaybackHistoryEntry {
     pub(crate) position_secs: Option<f64>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct PlayHistoryItem {
+    pub(crate) path: String,
+    pub(crate) title: String,
+    pub(crate) folder: String,
+}
+
 #[derive(Debug, Clone, Default)]
 pub(crate) struct PlayerNavHistory {
     pub(crate) back_stack: Vec<PlaybackHistoryEntry>,
@@ -67,6 +74,9 @@ pub struct WazooApp {
     pub(crate) file_picker_debounce_ticks: usize,
     pub(crate) file_picker_entries: Vec<crate::views::file_picker::PrecomputedVideoMeta>,
     pub(crate) file_picker_groups: Vec<crate::views::file_picker::FilePickerGroup>,
+    pub(crate) show_history_drawer: bool,
+    pub(crate) play_history: Vec<PlayHistoryItem>,
+    pub(crate) history_search: String,
     pub(crate) show_titlebar: bool,
     pub(crate) titlebar_hide_ticks: usize,
     pub(crate) titlebar_hover_ticks: usize,
@@ -263,6 +273,9 @@ impl WazooApp {
             transcript_video_path: None,
             transcript_track_index: 0,
             show_transcript_menu: false,
+            show_history_drawer: false,
+            play_history: Vec::new(),
+            history_search: String::new(),
             is_window_focused: true,
             unfocused_frame_ticks: 0,
             window_bounds_dirty: false,
@@ -574,7 +587,28 @@ impl WazooApp {
         }
     }
 
+    pub(crate) fn record_play_history(&mut self, path: &str) {
+        let trimmed = path.trim();
+        if trimmed.is_empty() {
+            return;
+        }
+        if self.play_history.last().map(|e| e.path.as_str()) == Some(trimmed) {
+            return;
+        }
+        let title = format::format_video_title(trimmed);
+        let folder = format::format_video_folder(trimmed);
+        self.play_history.push(PlayHistoryItem {
+            path: trimmed.to_string(),
+            title,
+            folder,
+        });
+        if self.play_history.len() > 100 {
+            self.play_history.remove(0);
+        }
+    }
+
     pub(crate) fn push_player_nav_entry(&mut self, id: PlayerId, path: String, pos: Option<f64>) {
+        self.record_play_history(&path);
         let hist = self.player_nav_history.entry(id).or_default();
         if hist.back_stack.last().map(|e| &e.path) != Some(&path) {
             hist.back_stack.push(PlaybackHistoryEntry {
@@ -1628,6 +1662,56 @@ mod tests {
         assert_eq!(loaded3.window_bounds.height, 900);
 
         let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_play_history_cap_deduplication_and_drawer() {
+        let (mut app, _) = new_test_app();
+
+        // 1. Initial state is empty and closed
+        assert!(app.play_history.is_empty());
+        assert!(!app.show_history_drawer);
+
+        // 2. Record items with consecutive duplicates
+        app.record_play_history("/media/video1.mp4");
+        app.record_play_history("/media/video1.mp4"); // should be deduplicated
+        assert_eq!(app.play_history.len(), 1);
+        assert_eq!(app.play_history[0].path, "/media/video1.mp4");
+        assert_eq!(app.play_history[0].title, "video1");
+
+        app.record_play_history("/media/video2.mp4");
+        assert_eq!(app.play_history.len(), 2);
+
+        // 3. Cap at 100 entries
+        for i in 3..=150 {
+            app.record_play_history(&format!("/media/video{}.mp4", i));
+        }
+        assert_eq!(app.play_history.len(), 100);
+        // The oldest items (video1 to video50) should be dropped; oldest in list should be video51
+        assert_eq!(app.play_history.first().unwrap().path, "/media/video51.mp4");
+        assert_eq!(app.play_history.last().unwrap().path, "/media/video150.mp4");
+
+        // 4. Toggle drawer
+        let _ = app.update(Message::ToggleHistoryDrawer);
+        assert!(app.show_history_drawer);
+        assert!(!app.show_file_picker);
+        assert!(!app.show_transcript);
+
+        // 5. Search filter
+        let _ = app.update(Message::HistorySearchChanged("video100".to_string()));
+        assert_eq!(app.history_search, "video100");
+
+        // 6. View rendering does not panic
+        let _ = app.view_history_drawer();
+
+        // 7. Escape closes drawer
+        let _ = app.update(Message::EscapePressed);
+        assert!(!app.show_history_drawer);
+
+        // 8. Clear history
+        let _ = app.update(Message::ClearPlayHistory);
+        assert!(app.play_history.is_empty());
+        let _ = app.view_history_drawer();
     }
 }
 

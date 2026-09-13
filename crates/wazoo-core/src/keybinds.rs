@@ -41,6 +41,7 @@ pub enum KeyAction {
     Player4,
     SpeedOrBookmarkDown,
     SpeedOrBookmarkUp,
+    ToggleHistory,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -53,6 +54,7 @@ pub struct KeybindSettings {
     pub toggle_file_picker: String,
     pub toggle_transcript: String,
     pub toggle_bookmarks: String,
+    pub toggle_history: String,
     pub toggle_mute: String,
     pub play_pause: String,
     pub toggle_play_mode: String,
@@ -89,6 +91,7 @@ impl Default for KeybindSettings {
             toggle_file_picker: "h".to_string(),
             toggle_transcript: "v".to_string(),
             toggle_bookmarks: "b".to_string(),
+            toggle_history: "y".to_string(),
             toggle_mute: "m".to_string(),
             play_pause: "Space".to_string(),
             toggle_play_mode: "s".to_string(),
@@ -126,6 +129,7 @@ impl KeybindSettings {
         "toggle_file_picker",
         "toggle_transcript",
         "toggle_bookmarks",
+        "toggle_history",
         "toggle_mute",
         "play_pause",
         "toggle_play_mode",
@@ -176,6 +180,7 @@ impl KeybindSettings {
         if self.toggle_file_picker.trim().is_empty() { self.toggle_file_picker = def.toggle_file_picker; }
         if self.toggle_transcript.trim().is_empty() { self.toggle_transcript = def.toggle_transcript; }
         if self.toggle_bookmarks.trim().is_empty() { self.toggle_bookmarks = def.toggle_bookmarks; }
+        if self.toggle_history.trim().is_empty() { self.toggle_history = def.toggle_history; }
         if self.toggle_mute.trim().is_empty() { self.toggle_mute = def.toggle_mute; }
         if self.play_pause.trim().is_empty() { self.play_pause = def.play_pause; }
         if self.toggle_play_mode.trim().is_empty() { self.toggle_play_mode = def.toggle_play_mode; }
@@ -274,6 +279,7 @@ impl KeybindSettings {
             (self.focus_next.clone(), t("help.shortcuts.focus_next")),
             (volume_display, t("help.shortcuts.adjust_volume")),
             (self.toggle_bookmarks.clone(), t("help.shortcuts.toggle_bookmarks")),
+            (self.toggle_history.clone(), t("help.shortcuts.toggle_history")),
             (speed_or_bookmark_display, t("bookmarks.bookmark_current")),
             (self.toggle_scroll.clone(), t("help.shortcuts.toggle_scroll")),
             (self.toggle_flip.clone(), t("help.shortcuts.toggle_flip")),
@@ -300,6 +306,7 @@ mod tests {
         assert_eq!(kb.menu_hint(&kb.toggle_file_picker), "H");
         assert_eq!(kb.menu_hint(&kb.toggle_transcript), "V");
         assert_eq!(kb.menu_hint(&kb.toggle_bookmarks), "B");
+        assert_eq!(kb.menu_hint(&kb.toggle_history), "Y");
         assert_eq!(kb.menu_hint(&kb.close_app), "Alt+X");
     }
 
@@ -307,11 +314,12 @@ mod tests {
     fn test_help_shortcuts_generation() {
         let kb = KeybindSettings::default();
         let shortcuts = kb.help_shortcuts_with_descriptions(|key| key.to_string());
-        assert_eq!(shortcuts.len(), 21);
+        assert_eq!(shortcuts.len(), 22);
         assert_eq!(shortcuts[0], ("j OR /".to_string(), "help.shortcuts.search_videos".to_string()));
         assert_eq!(shortcuts[7], ("n".to_string(), "help.shortcuts.add_player".to_string()));
-        assert_eq!(shortcuts[12], ("+ / =".to_string(), "bookmarks.bookmark_current".to_string()));
-        assert_eq!(shortcuts[19], ("Alt + X".to_string(), "help.shortcuts.close_app".to_string()));
+        assert_eq!(shortcuts[12], ("y".to_string(), "help.shortcuts.toggle_history".to_string()));
+        assert_eq!(shortcuts[13], ("+ / =".to_string(), "bookmarks.bookmark_current".to_string()));
+        assert_eq!(shortcuts[20], ("Alt + X".to_string(), "help.shortcuts.close_app".to_string()));
     }
 
     #[test]

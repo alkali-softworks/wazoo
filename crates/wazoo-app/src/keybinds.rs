@@ -119,6 +119,9 @@ pub fn find_key_action(keybinds: &KeybindSettings, key: &Key, is_alt_pressed: bo
     if key_matches_binding(&keybinds.toggle_bookmarks, key, false) {
         return Some(KeyAction::ToggleBookmarks);
     }
+    if key_matches_binding(&keybinds.toggle_history, key, false) {
+        return Some(KeyAction::ToggleHistory);
+    }
     if key_matches_binding(&keybinds.toggle_mute, key, false) {
         return Some(KeyAction::ToggleMute);
     }
@@ -213,6 +216,10 @@ mod tests {
         assert_eq!(
             find_key_action(&kb, &Key::Character("x".into()), true),
             Some(KeyAction::CloseApp)
+        );
+        assert_eq!(
+            find_key_action(&kb, &Key::Character("y".into()), false),
+            Some(KeyAction::ToggleHistory)
         );
         // Ordinary keys when Alt is pressed should NOT match
         assert_eq!(
