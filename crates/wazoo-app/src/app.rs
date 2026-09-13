@@ -537,11 +537,20 @@ impl WazooApp {
         let id = self.next_player_id;
         self.next_player_id += 1;
 
+        // In scroll mode, mute follows the scroll feed's global mute setting.
+        // In ambient grid mode, new players start muted by default so they don't
+        // create unexpected noise or audio overlap.
+        let initial_muted = if self.settings.playback_mode == PlaybackMode::Scroll {
+            self.settings.is_global_muted
+        } else {
+            true
+        };
+
         for _ in 0..3 {
             if let Some(video_rec) = self.get_next_video_rec(None) {
                 match self.create_video_handle(id, &video_rec.path, &video_rec.name) {
                     Ok(mut handle) => {
-                        handle.set_muted(self.settings.is_global_muted);
+                        handle.set_muted(initial_muted);
                         handle.set_subtitles_visible(self.subtitles_enabled);
                         self.players.push(handle);
                         self.loading_player_ids.insert(id);
@@ -769,9 +778,19 @@ impl WazooApp {
             self.scroll_engine.clear();
             self.preloaded_player = None;
             self.is_preloading = false;
-            for p in &mut self.players {
-                p.set_muted(self.settings.is_global_muted);
-                p.set_volume(1.0);
+            if self.settings.is_global_muted {
+                for p in &mut self.players {
+                    p.set_muted(true);
+                }
+            } else {
+                for (i, p) in self.players.iter_mut().enumerate() {
+                    if i == self.focused_player_idx {
+                        p.set_muted(false);
+                        p.set_volume(1.0);
+                    } else {
+                        p.set_muted(true);
+                    }
+                }
             }
         }
     }
@@ -1091,6 +1110,60 @@ mod tests {
             assert!(app.available_videos.iter().any(|v| v.path == rand_rec.path));
             // With 3 videos, shuffle mode avoids immediately repeating current video
             assert_ne!(rand_rec.path, "/media/v1.mp4");
+        }
+    }
+
+    #[test]
+    fn test_player_mute_prior_state_on_player_count_change() {
+        let sample = "/home/klo/Downloads/VID_20240309_123459_679.mp4";
+        if !std::path::Path::new(sample).exists() {
+            return;
+        }
+
+        let (mut app, _) = new_test_app();
+        app.available_videos = vec![
+            VideoRecord { id: 1, name: "V1".to_string(), path: sample.to_string() },
+            VideoRecord { id: 2, name: "V2".to_string(), path: sample.to_string() },
+            VideoRecord { id: 3, name: "V3".to_string(), path: sample.to_string() },
+            VideoRecord { id: 4, name: "V4".to_string(), path: sample.to_string() },
+        ];
+
+        // 1. Start with 1 player - ambient background players start muted by default
+        let _ = app.update(Message::SetPlayerCount(1));
+        assert_eq!(app.players.len(), 1);
+        let p0_id = app.players[0].id;
+        assert!(app.players[0].state.is_muted);
+
+        // 2. Unmute player 0 individually
+        let _ = app.update(Message::TogglePlayerMute(p0_id));
+        assert!(!app.players[0].state.is_muted);
+
+        // 3. When player 0 advances to next video, it should also be unmuted!
+        let _ = app.update(Message::NextVideo(p0_id));
+        assert!(!app.players[0].state.is_muted);
+
+        // 4. Switching to 4 players: player 0 stays unmuted, new background players start muted
+        let _ = app.update(Message::SetPlayerCount(4));
+        assert_eq!(app.players.len(), 4);
+        assert!(!app.players[0].state.is_muted);
+        assert!(app.players[1].state.is_muted);
+        assert!(app.players[2].state.is_muted);
+        assert!(app.players[3].state.is_muted);
+
+        // 5. Mute player 0, so viewing 1 player that is muted (or all players muted)
+        let _ = app.update(Message::TogglePlayerMute(p0_id));
+        assert!(app.players[0].state.is_muted);
+
+        // 6. Switching to 1 player: it stays muted
+        let _ = app.update(Message::SetPlayerCount(1));
+        assert_eq!(app.players.len(), 1);
+        assert!(app.players[0].state.is_muted);
+
+        // 7. Switching from 1 muted player to 4 players: all 4 players are muted!
+        let _ = app.update(Message::SetPlayerCount(4));
+        assert_eq!(app.players.len(), 4);
+        for (i, p) in app.players.iter().enumerate() {
+            assert!(p.state.is_muted, "Player {i} should be muted");
         }
     }
 }

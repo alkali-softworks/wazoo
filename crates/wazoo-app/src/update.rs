@@ -42,7 +42,7 @@ impl WazooApp {
         for _ in 0..3 {
             if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
                 if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
-                    new_handle.set_muted(prev_muted.unwrap_or(self.settings.is_global_muted));
+                    new_handle.set_muted(prev_muted.unwrap_or(true));
                     if let Some(vol) = prev_volume {
                         new_handle.set_volume(vol);
                     }
@@ -498,7 +498,7 @@ impl WazooApp {
                     let prev_volume = curr_player.map(|p| p.state.volume);
 
                     if let Ok(mut handle) = self.create_video_handle(id, &path, &title) {
-                        handle.set_muted(prev_muted.unwrap_or(self.settings.is_global_muted));
+                        handle.set_muted(prev_muted.unwrap_or(true));
                         if let Some(vol) = prev_volume {
                             handle.set_volume(vol);
                         }
@@ -585,7 +585,7 @@ impl WazooApp {
                     for _ in 0..3 {
                         if let Some(prev_rec) = self.get_prev_video_rec(curr_path.as_deref()) {
                             if let Ok(mut new_handle) = self.create_video_handle(id, &prev_rec.path, &prev_rec.name) {
-                                new_handle.set_muted(prev_muted.unwrap_or(self.settings.is_global_muted));
+                                new_handle.set_muted(prev_muted.unwrap_or(true));
                                 if let Some(vol) = prev_volume {
                                     new_handle.set_volume(vol);
                                 }
@@ -694,13 +694,11 @@ impl WazooApp {
                         if p.state.is_muted {
                             p.set_muted(false);
                         }
-                        self.settings.is_global_muted = false;
-                        self.scroll_engine.is_global_muted = false;
-                        let _ = self.config_mgr.save_settings(&self.settings);
                     } else {
                         p.set_muted(true);
                     }
                 }
+                self.save_session_state();
                 self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
             }
             Message::AdjustVolumeFocused(delta) => {
@@ -708,20 +706,22 @@ impl WazooApp {
                     return self.update(Message::GlobalUnmute);
                 }
                 if let Some(id) = self.focused_player_id() {
+                    let mut vol_display = None;
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                         p.adjust_volume(delta);
                         if p.state.volume > 0.0 {
                             if p.state.is_muted {
                                 p.set_muted(false);
                             }
-                            self.settings.is_global_muted = false;
-                            self.scroll_engine.is_global_muted = false;
-                            let _ = self.config_mgr.save_settings(&self.settings);
                         } else {
                             p.set_muted(true);
                         }
-                        self.toast_message = Some(format!("Volume: {:.0}%", p.state.volume * 100.0));
+                        vol_display = Some(p.state.volume);
+                    }
+                    if let Some(v) = vol_display {
+                        self.toast_message = Some(format!("Volume: {:.0}%", v * 100.0));
                         self.toast_time_remaining = 1;
+                        self.save_session_state();
                     }
                 }
             }
@@ -776,13 +776,10 @@ impl WazooApp {
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     let muted = !p.state.is_muted;
                     p.set_muted(muted);
-                    if !muted {
-                        self.settings.is_global_muted = false;
-                        let _ = self.config_mgr.save_settings(&self.settings);
-                    }
                     self.toast_message = Some(if muted { self.t("player.muted") } else { self.t("player.unmuted") });
                     self.toast_time_remaining = 2;
                 }
+                self.save_session_state();
                 self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
             }
             Message::ToggleMuteFocused => {
@@ -868,25 +865,37 @@ impl WazooApp {
                 if was_scroll {
                     self.cleanup_scroll_mode();
                 }
+
                 self.settings.player_count = target;
-                while self.players.len() > target {
-                    self.players.pop();
-                }
-                while self.players.len() < target {
-                    if self.add_player_internal().is_none() {
-                        break;
+
+                // If shrinking player count, preserve the focused player
+                if target < self.players.len() {
+                    if self.focused_player_idx < self.players.len() && self.focused_player_idx >= target {
+                        let focused = self.players.remove(self.focused_player_idx);
+                        self.players.insert(0, focused);
+                        self.focused_player_idx = 0;
+                    }
+                    while self.players.len() > target {
+                        self.players.pop();
+                    }
+                    if self.focused_player_idx >= self.players.len() && !self.players.is_empty() {
+                        self.focused_player_idx = self.players.len() - 1;
+                    }
+                } else {
+                    while self.players.len() < target {
+                        if self.add_player_internal().is_none() {
+                            break;
+                        }
                     }
                 }
-                for p in &mut self.players {
-                    p.set_muted(self.settings.is_global_muted);
-                    p.set_volume(1.0);
-                }
+
                 self.toast_message = Some(self.t_with("wazoo.set_players_count", &[
                     ("count", &target.to_string()),
                     ("suffix", if target == 1 { "" } else { "s" }),
                 ]));
                 self.toast_time_remaining = 2;
                 let _ = self.config_mgr.save_settings(&self.settings);
+                self.save_session_state();
             }
             Message::ToggleScrollMode => {
                 self.show_menu_modal = false;
@@ -949,10 +958,6 @@ impl WazooApp {
                     }
                     while self.players.len() < target_count {
                         self.add_player_internal();
-                    }
-                    for p in &mut self.players {
-                        p.set_muted(self.settings.is_global_muted);
-                        p.set_volume(1.0);
                     }
                     self.toast_message = Some(self.t("wazoo.scroll_mode_disabled"));
                 }
@@ -1282,7 +1287,7 @@ impl WazooApp {
                     let prev_volume = curr_player.map(|p| p.state.volume);
 
                     if let Ok(mut handle) = self.create_video_handle_with_start(id, &b.path, &title, Some(b.position_secs)) {
-                        handle.set_muted(prev_muted.unwrap_or(self.settings.is_global_muted));
+                        handle.set_muted(prev_muted.unwrap_or(true));
                         if let Some(vol) = prev_volume {
                             handle.set_volume(vol);
                         }
@@ -1297,7 +1302,7 @@ impl WazooApp {
                     self.next_player_id += 1;
                     let title = format::format_video_title(&b.path);
                     if let Ok(mut handle) = self.create_video_handle_with_start(id, &b.path, &title, Some(b.position_secs)) {
-                        handle.set_muted(self.settings.is_global_muted);
+                        handle.set_muted(true);
                         handle.set_subtitles_visible(self.subtitles_enabled);
                         self.players.push(handle);
                         self.focused_player_idx = 0;
