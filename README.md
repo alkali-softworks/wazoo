@@ -117,7 +117,7 @@ brew install mpv ffmpeg
 ```
 
 #### Windows
-No manual library setup required! Cargo's build script automatically downloads and configures the required `libmpv` prebuilt binaries on the first build.
+No manual library setup or separate DLLs required! The build process automatically embeds and pre-compresses `libmpv` into a 100% self-contained, single-file executable (`wazoo.exe`) with official application icon and PE metadata embedded.
 
 *(Optional)* For embedded subtitle extraction in the transcript drawer, install `ffmpeg`:
 ```powershell
@@ -128,7 +128,7 @@ scoop install ffmpeg
 
 ---
 
-### Building & Running
+### Building & Packaging
 
 1. **Clone the repository:**
    ```bash
@@ -136,15 +136,18 @@ scoop install ffmpeg
    cd wazoo-rs
    ```
 
-2. **Build an optimized release binary:**
+2. **Build a self-contained single executable:**
    ```bash
    cargo build --release
    ```
+   - **Windows:** Outputs `target/release/wazoo.exe` with all runtime dependencies packed into the single `.exe` file.
+   - **Linux:** Outputs `target/release/wazoo` with portable dynamic linking.
 
-3. **Launch Wazoo:**
+3. **Package a Linux Single-Executable AppImage (Optional):**
    ```bash
-   ./target/release/wazoo
+   ./scripts/build-appimage.sh
    ```
+   Generates `dist/wazoo-x86_64.AppImage`.
 
 ---
 

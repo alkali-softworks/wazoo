@@ -3,9 +3,9 @@
  * 
  * Native Build Script
  * 
- * Detects libmpv dependencies on Linux/macOS and configured search paths.
- * On Windows, automatically detects or downloads prebuilt libmpv binaries
- * so builds succeed out-of-the-box without manual file hunting.
+ * Configures library search paths and embedding for libmpv.
+ * On Windows, downloads prebuilt libmpv binaries if needed, and pre-compresses
+ * libmpv-2.dll so that it is embedded directly into the executable for single-file distribution.
  */
 
 fn main() {
@@ -63,61 +63,60 @@ mod windows {
         let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_default();
         let root = Path::new(&manifest_dir).join("../..");
 
-        // 1. Check if user or environment already provided an mpv library
         let candidates = [
             PathBuf::from("."),
             root.clone(),
             root.join("target/mpv-win64"),
         ];
 
-        for dir in &candidates {
-            if dir.join("mpv.lib").exists() || dir.join("libmpv.dll.a").exists() {
-                println!("cargo:rustc-link-search=native={}", dir.display());
-                return;
-            }
-        }
-
-        // Check VCPKG_ROOT if set
-        if let Ok(vcpkg_root) = std::env::var("VCPKG_ROOT") {
-            let vcpkg_lib = Path::new(&vcpkg_root).join("installed/x64-windows/lib");
-            if vcpkg_lib.join("mpv.lib").exists() {
-                println!("cargo:rustc-link-search=native={}", vcpkg_lib.display());
-                return;
-            }
-        }
-
-        // 2. Not found: auto-download and extract mpv-dev package into target
         let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap_or_else(|_| ".".to_string()));
         let mpv_dir = out_dir.join("mpv-win64");
         let _ = std::fs::create_dir_all(&mpv_dir);
 
-        let archive_path = mpv_dir.join("mpv-dev.7z");
+        let mut found_dll: Option<PathBuf> = None;
+        for dir in &candidates {
+            let p = dir.join("libmpv-2.dll");
+            if p.exists() {
+                found_dll = Some(p);
+                break;
+            }
+        }
 
-        // Download if libmpv files aren't extracted yet
-        if !mpv_dir.join("libmpv-2.dll").exists() && !mpv_dir.join("mpv.lib").exists() {
-            println!("cargo:warning=libmpv not found on Windows. Downloading prebuilt mpv-dev binaries...");
+        if found_dll.is_none() && mpv_dir.join("libmpv-2.dll").exists() {
+            found_dll = Some(mpv_dir.join("libmpv-2.dll"));
+        }
 
-            // Download using curl.exe or powershell.exe (both built into Windows 10/11)
-            let downloaded = Command::new("curl.exe")
-                .args(["-sL", MPV_WIN_DOWNLOAD_URL, "-o", archive_path.to_str().unwrap()])
-                .status()
-                .map(|s| s.success())
-                .unwrap_or(false)
-                || Command::new("powershell")
-                    .args([
-                        "-NoProfile",
-                        "-Command",
-                        &format!(
-                            "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('{}', '{}')",
-                            MPV_WIN_DOWNLOAD_URL,
-                            archive_path.display()
-                        ),
-                    ])
+        // Auto-download if libmpv files aren't found yet
+        if found_dll.is_none() {
+            let archive_path = mpv_dir.join("mpv-dev.7z");
+            if !archive_path.exists() {
+                println!("cargo:warning=libmpv not found on Windows. Downloading prebuilt mpv-dev binaries...");
+
+                let downloaded = Command::new("curl.exe")
+                    .args(["-sL", MPV_WIN_DOWNLOAD_URL, "-o", archive_path.to_str().unwrap()])
                     .status()
                     .map(|s| s.success())
-                    .unwrap_or(false);
+                    .unwrap_or(false)
+                    || Command::new("powershell")
+                        .args([
+                            "-NoProfile",
+                            "-Command",
+                            &format!(
+                                "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('{}', '{}')",
+                                MPV_WIN_DOWNLOAD_URL,
+                                archive_path.display()
+                            ),
+                        ])
+                        .status()
+                        .map(|s| s.success())
+                        .unwrap_or(false);
 
-            if downloaded && archive_path.exists() {
+                if !downloaded || !archive_path.exists() {
+                    println!("cargo:warning=Failed to auto-download mpv-dev archive.");
+                }
+            }
+
+            if archive_path.exists() {
                 if !verify_sha256(&archive_path, MPV_WIN_DOWNLOAD_SHA256) {
                     let _ = std::fs::remove_file(&archive_path);
                     panic!(
@@ -126,7 +125,6 @@ mod windows {
                     );
                 }
 
-                // Extract using tar.exe (bsdtar included with Windows 10/11) or 7z.exe
                 let extracted = Command::new("tar.exe")
                     .args(["-xf", archive_path.to_str().unwrap(), "-C", mpv_dir.to_str().unwrap()])
                     .status()
@@ -138,25 +136,34 @@ mod windows {
                         .map(|s| s.success())
                         .unwrap_or(false);
 
-                if extracted {
-                    // Create mpv.lib from libmpv.dll.a for MSVC linker
-                    let dll_a = mpv_dir.join("libmpv.dll.a");
-                    let mpv_lib = mpv_dir.join("mpv.lib");
-                    if dll_a.exists() && !mpv_lib.exists() {
-                        let _ = std::fs::copy(&dll_a, &mpv_lib);
-                    }
-
-                    // Copy runtime DLL to target profile directory (target/debug or target/release)
-                    if let Some(target_profile_dir) = out_dir.ancestors().nth(3) {
-                        for dll_name in &["libmpv-2.dll", "mpv-2.dll"] {
-                            let src = mpv_dir.join("libmpv-2.dll");
-                            if src.exists() {
-                                let _ = std::fs::copy(&src, target_profile_dir.join(dll_name));
-                                let _ = std::fs::copy(&src, root.join(dll_name));
-                            }
-                        }
-                    }
+                if extracted && mpv_dir.join("libmpv-2.dll").exists() {
+                    found_dll = Some(mpv_dir.join("libmpv-2.dll"));
                 }
+            }
+        }
+
+        // Copy runtime DLL to target profile directory for convenience
+        if let Some(ref src) = found_dll {
+            if let Some(target_profile_dir) = out_dir.ancestors().nth(3) {
+                for dll_name in &["libmpv-2.dll", "mpv-2.dll"] {
+                    let _ = std::fs::copy(src, target_profile_dir.join(dll_name));
+                    let _ = std::fs::copy(src, root.join(dll_name));
+                }
+            }
+
+            // Pre-compress libmpv-2.dll for embedding into single-file executable
+            let deflate_path = out_dir.join("libmpv-2.dll.deflate");
+            if !deflate_path.exists() || std::fs::metadata(&deflate_path).map(|m| m.len()).unwrap_or(0) == 0 {
+                println!("cargo:warning=Compressing libmpv-2.dll for embedding into single-file executable...");
+                if let Ok(bytes) = std::fs::read(src) {
+                    let compressed = miniz_oxide::deflate::compress_to_vec_zlib(&bytes, 6);
+                    let _ = std::fs::write(&deflate_path, &compressed);
+                }
+            }
+
+            if deflate_path.exists() {
+                println!("cargo:rustc-env=WAZOO_EMBED_MPV_PATH={}", deflate_path.display());
+                println!("cargo:rustc-cfg=wazoo_embed_mpv");
             }
         }
 
@@ -173,48 +180,9 @@ mod linux {
         let root = Path::new(&manifest_dir).join("../..");
         let sysroot = root.join(".sysroot/usr/lib/x86_64-linux-gnu");
 
-        // 1. If sysroot already exists and has libmpv.so, add it to link search
-        if sysroot.join("libmpv.so").exists() {
+        // If sysroot already exists, add it to link search path
+        if sysroot.exists() {
             println!("cargo:rustc-link-search=native={}", sysroot.display());
-            return;
-        }
-
-        // 2. Check if libmpv.so is already in standard search paths
-        let standard_dirs = [
-            "/usr/lib/x86_64-linux-gnu",
-            "/usr/lib64",
-            "/usr/lib",
-            "/usr/local/lib",
-            "/lib/x86_64-linux-gnu",
-            "/lib64",
-            "/lib",
-        ];
-
-        let has_dev_lib = standard_dirs.iter().any(|dir| {
-            Path::new(dir).join("libmpv.so").exists()
-        });
-
-        if has_dev_lib {
-            return;
-        }
-
-        // 3. If libmpv.so is missing, check for versioned libmpv (e.g. libmpv.so.2)
-        // provided by libmpv2 runtime packages
-        for dir in standard_dirs {
-            let path = Path::new(dir);
-            for version in &["libmpv.so.2", "libmpv.so.1"] {
-                let candidate = path.join(version);
-                if candidate.exists() {
-                    let _ = std::fs::create_dir_all(&sysroot);
-                    let target_link = sysroot.join("libmpv.so");
-                    if !target_link.exists() {
-                        let _ = std::os::unix::fs::symlink(&candidate, &target_link);
-                    }
-                    println!("cargo:rustc-link-search=native={}", sysroot.display());
-                    return;
-                }
-            }
         }
     }
 }
-

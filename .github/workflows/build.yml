@@ -62,36 +62,57 @@ jobs:
 
           if [ "$RUNNER_OS" = "Windows" ]; then
             PKG_NAME="wazoo-windows-x86_64"
-            mkdir -p "dist/${PKG_NAME}"
-            cp target/release/wazoo.exe "dist/${PKG_NAME}/"
+            # 1. Single standalone executable
+            cp target/release/wazoo.exe "dist/${PKG_NAME}.exe"
+            cp target/release/wazoo.exe "dist/wazoo.exe"
+
+            # 2. Also package zip
+            mkdir -p "dist/tmp_${PKG_NAME}"
+            cp target/release/wazoo.exe "dist/tmp_${PKG_NAME}/"
             if [ -f target/release/libmpv-2.dll ]; then
-              cp target/release/libmpv-2.dll "dist/${PKG_NAME}/"
+              cp target/release/libmpv-2.dll "dist/tmp_${PKG_NAME}/"
             elif [ -f libmpv-2.dll ]; then
-              cp libmpv-2.dll "dist/${PKG_NAME}/"
+              cp libmpv-2.dll "dist/tmp_${PKG_NAME}/"
             fi
-            cp README.md LICENSE "dist/${PKG_NAME}/" 2>/dev/null || true
+            cp README.md LICENSE "dist/tmp_${PKG_NAME}/" 2>/dev/null || true
 
             if command -v 7z &> /dev/null; then
-              7z a "dist/${PKG_NAME}.zip" "./dist/${PKG_NAME}/*"
+              7z a "dist/${PKG_NAME}.zip" "./dist/tmp_${PKG_NAME}/*"
             elif command -v powershell &> /dev/null; then
-              powershell -Command "Compress-Archive -Path 'dist/${PKG_NAME}/*' -DestinationPath 'dist/${PKG_NAME}.zip' -Force"
+              powershell -Command "Compress-Archive -Path 'dist/tmp_${PKG_NAME}/*' -DestinationPath 'dist/${PKG_NAME}.zip' -Force"
             fi
+            rm -rf "dist/tmp_${PKG_NAME}"
           elif [ "$RUNNER_OS" = "macOS" ]; then
             ARCH=$(uname -m)
             PKG_NAME="wazoo-macos-${ARCH}"
-            mkdir -p "dist/${PKG_NAME}"
-            cp target/release/wazoo "dist/${PKG_NAME}/"
-            chmod +x "dist/${PKG_NAME}/wazoo"
-            cp README.md LICENSE "dist/${PKG_NAME}/" 2>/dev/null || true
-            tar -czf "dist/${PKG_NAME}.tar.gz" -C dist "${PKG_NAME}"
+            cp target/release/wazoo "dist/${PKG_NAME}"
+            chmod +x "dist/${PKG_NAME}"
+            mkdir -p "dist/tmp_${PKG_NAME}"
+            cp target/release/wazoo "dist/tmp_${PKG_NAME}/"
+            chmod +x "dist/tmp_${PKG_NAME}/wazoo"
+            cp README.md LICENSE "dist/tmp_${PKG_NAME}/" 2>/dev/null || true
+            tar -czf "dist/${PKG_NAME}.tar.gz" -C "dist/tmp_${PKG_NAME}" .
+            rm -rf "dist/tmp_${PKG_NAME}"
           else
             # Linux
             PKG_NAME="wazoo-linux-x86_64"
-            mkdir -p "dist/${PKG_NAME}"
-            cp target/release/wazoo "dist/${PKG_NAME}/"
-            chmod +x "dist/${PKG_NAME}/wazoo"
-            cp README.md LICENSE "dist/${PKG_NAME}/" 2>/dev/null || true
-            tar -czf "dist/${PKG_NAME}.tar.gz" -C dist "${PKG_NAME}"
+            cp target/release/wazoo "dist/${PKG_NAME}"
+            chmod +x "dist/${PKG_NAME}"
+
+            # Build single-executable AppImage
+            if [ -f scripts/build-appimage.sh ]; then
+              ./scripts/build-appimage.sh || true
+              if [ -f dist/wazoo-x86_64.AppImage ]; then
+                cp dist/wazoo-x86_64.AppImage "dist/${PKG_NAME}.AppImage"
+              fi
+            fi
+
+            mkdir -p "dist/tmp_${PKG_NAME}"
+            cp target/release/wazoo "dist/tmp_${PKG_NAME}/"
+            chmod +x "dist/tmp_${PKG_NAME}/wazoo"
+            cp README.md LICENSE "dist/tmp_${PKG_NAME}/" 2>/dev/null || true
+            tar -czf "dist/${PKG_NAME}.tar.gz" -C "dist/tmp_${PKG_NAME}" .
+            rm -rf "dist/tmp_${PKG_NAME}"
           fi
 
       - name: Upload Build Artifacts
@@ -99,6 +120,8 @@ jobs:
         with:
           name: wazoo-build-${{ matrix.os }}
           path: |
+            dist/*.exe
+            dist/*.AppImage
             dist/*.zip
             dist/*.tar.gz
           if-no-files-found: warn
@@ -108,7 +131,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            dist/*.exe
+            dist/*.AppImage
             dist/*.zip
             dist/*.tar.gz
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

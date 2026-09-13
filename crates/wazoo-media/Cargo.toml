@@ -16,4 +16,10 @@ log.workspace = true
 url.workspace = true
 thiserror.workspace = true
 serde.workspace = true
+libloading.workspace = true
+miniz_oxide.workspace = true
+directories.workspace = true
+
+[build-dependencies]
+miniz_oxide = { workspace = true }
 

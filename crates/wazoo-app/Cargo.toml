@@ -22,3 +22,6 @@ directories.workspace = true
 rfd.workspace = true
 regex.workspace = true
 
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"
+
