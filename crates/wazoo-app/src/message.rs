@@ -79,6 +79,7 @@ pub enum Message {
     ToggleGlobalMute,
     GlobalUnmute,
     ToggleShuffleMode,
+    TogglePlayerShuffle(PlayerId),
 
     // Layout & Modes
     CycleLayout,

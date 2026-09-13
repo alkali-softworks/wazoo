@@ -277,7 +277,8 @@ impl WazooApp {
                     .opacity(overlay_alpha)
             };
 
-            let play_mode_icon = if self.is_shuffle_mode {
+            let is_shuffle = self.is_player_shuffle(player_id);
+            let play_mode_icon = if is_shuffle {
                 svg(svg::Handle::from_memory(SVG_PLAYER_SHUFFLE))
                     .width(Length::Fixed(20.0))
                     .height(Length::Fixed(20.0))
@@ -378,7 +379,7 @@ impl WazooApp {
                 .push(
                     button(play_mode_icon)
                         .style(theme::player_control_button_style_with_alpha(overlay_alpha))
-                        .on_press(Message::ToggleShuffleMode)
+                        .on_press(Message::TogglePlayerShuffle(player_id))
                         .padding([4, 8]),
                 )
                 .push(
