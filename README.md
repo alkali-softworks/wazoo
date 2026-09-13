@@ -2,9 +2,9 @@
 
 > **Ambient media engine for non-stop viewing - built in native Rust.**
 
-**Wazoo** is an ambient video player and "moving mood-board" built for artists, animators, and curators who want a continuous stream of visual reference and inspiration from their local video collection. Wazoo provides a non-stop feed of videos that flows continuously based on your library and optional search query. 
+**Wazoo** is an ambient video player and "moving mood-board" built for artists and curators who want a continuous stream of visual reference and inspiration from their local video collection. It provides a non-stop feed of videos based on your library and optional search query. 
 
-Wazoo is an idea in development since 2020 - originally as a JS app, then an Electron app, and now finally a native Rust app, ported with the culmination of all the best features from the prior versions.
+Wazoo is an idea in development since 2020 - originally as a JS app, then Electron, and now finally a native Rust app, ported with the culmination of all the best features from prior versions.
 
 ---
 
