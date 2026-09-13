@@ -188,6 +188,48 @@ scoop install ffmpeg
 
 ---
 
+## ⚙️ Configuration & Environment Variables
+
+### Environment Variables
+
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `WAZOO_FLIP_INTERVAL` | Overrides the Flip Mode rotation interval in seconds. Clamped between 1 and 3600 seconds. | `45` |
+| `WAZOO_HWDEC` | Overrides the `libmpv` hardware video decoding profile (e.g. `auto-copy`, `vaapi`, `nvdec`, `no`). Software decoding is used by default (`no`) to prevent thread deadlocks and driver issues when windows are occluded or behind other applications. | `no` |
+| `WGPU_POWER_PREF` | Selects GPU power profile for the Iced/WGPU renderer (`low-power` or `high-performance`). Automatically defaults to `low-power` on Linux dual-GPU hybrid laptops when unset. | `low-power` / system default |
+
+### Configuration File (`settings.json`)
+
+Wazoo automatically persists user preferences and window state in `settings.json`:
+
+- **Linux:** `~/.config/wazoo-rs/settings.json`
+- **Windows:** `%APPDATA%\alkalisoftworks\wazoo-rs\config\settings.json`
+- **macOS:** `~/Library/Application Support/com.alkalisoftworks.wazoo-rs/settings.json`
+
+Key properties configurable in `settings.json`:
+
+```json
+{
+  "flip_interval_secs": 45,
+  "buffer_duration_secs": 10,
+  "buffer_size_mb": 64,
+  "window_opacity": 1.0,
+  "language": "en",
+  "preferred_audio_language": "Japanese",
+  "layout": "grid",
+  "player_count": 1
+}
+```
+
+- **`flip_interval_secs`**: Interval in seconds between random video switches in Flip Mode (range: 1–3600s, default: `45`). Can also be temporarily overridden with `WAZOO_FLIP_INTERVAL_SECS`.
+- **`buffer_duration_secs`**: Demuxer readahead buffer duration in seconds (range: 2–300s, default: `10`).
+- **`buffer_size_mb`**: Maximum demuxer cache size in megabytes (range: 16–4096 MB, default: `64`).
+- **`window_opacity`**: Opacity of the main window (0.1 to 1.0, default: `1.0`).
+- **`language`**: Interface language code (`en`, `es`, `ja`, `zh`, `de`, `fr`, etc.).
+- **`preferred_audio_language`**: Preferred audio stream language for multi-track video playback.
+
+---
+
 ## 📄 License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.

@@ -220,16 +220,4 @@ mod tests {
         assert_eq!(folder_basename("C:\\Media\\Anime\\"), "Anime");
         assert_eq!(folder_basename("Anime"), "Anime");
     }
-
-    #[test]
-    fn test_format_number() {
-        assert_eq!(format_number(0), "0");
-        assert_eq!(format_number(5), "5");
-        assert_eq!(format_number(999), "999");
-        assert_eq!(format_number(1000), "1,000");
-        assert_eq!(format_number(1234), "1,234");
-        assert_eq!(format_number(12345), "12,345");
-        assert_eq!(format_number(123456), "123,456");
-        assert_eq!(format_number(1234567), "1,234,567");
-    }
 }

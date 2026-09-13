@@ -69,6 +69,12 @@ fn default_language() -> String {
     "en".to_string()
 }
 
+pub const DEFAULT_FLIP_INTERVAL_SECS: u64 = 45;
+
+fn default_flip_interval_secs() -> u64 {
+    DEFAULT_FLIP_INTERVAL_SECS
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct VideoSession {
     pub path: String,
@@ -115,6 +121,8 @@ pub struct WazooSettings {
     pub buffer_size_mb: u32,
     #[serde(default = "default_language")]
     pub language: String,
+    #[serde(default = "default_flip_interval_secs")]
+    pub flip_interval_secs: u64,
     #[serde(default)]
     pub session_videos: Vec<VideoSession>,
     #[serde(default)]
@@ -141,6 +149,7 @@ impl Default for WazooSettings {
             buffer_duration_secs: 10,
             buffer_size_mb: 64,
             language: "en".to_string(),
+            flip_interval_secs: DEFAULT_FLIP_INTERVAL_SECS,
             session_videos: Vec::new(),
             bookmarks: Vec::new(),
             preferred_audio_language: None,
