@@ -361,10 +361,8 @@ impl WazooApp {
                     break;
                 }
             }
-            if app.settings.session_videos.is_empty() || is_cli {
-                for p in &mut app.players {
-                    p.seek_random();
-                }
+            for p in &mut app.players {
+                p.seek_random();
             }
             for p in &mut app.players {
                 let vol = app.scroll_engine.calculate_player_volume(p.id);
@@ -529,11 +527,14 @@ impl WazooApp {
         if is_shuffle {
             if self.available_videos.len() > 1 {
                 if let Some(curr) = current_path {
-                    for _ in 0..5 {
-                        let idx = rand::random::<usize>() % self.available_videos.len();
-                        if self.available_videos[idx].path != curr {
-                            return Some(self.available_videos[idx].clone());
-                        }
+                    let candidates: Vec<&VideoRecord> = self
+                        .available_videos
+                        .iter()
+                        .filter(|v| v.path != curr)
+                        .collect();
+                    if !candidates.is_empty() {
+                        let idx = rand::random::<usize>() % candidates.len();
+                        return Some(candidates[idx].clone());
                     }
                 }
             }
@@ -571,11 +572,14 @@ impl WazooApp {
         if is_shuffle {
             if self.available_videos.len() > 1 {
                 if let Some(curr) = current_path {
-                    for _ in 0..5 {
-                        let idx = rand::random::<usize>() % self.available_videos.len();
-                        if self.available_videos[idx].path != curr {
-                            return Some(self.available_videos[idx].clone());
-                        }
+                    let candidates: Vec<&VideoRecord> = self
+                        .available_videos
+                        .iter()
+                        .filter(|v| v.path != curr)
+                        .collect();
+                    if !candidates.is_empty() {
+                        let idx = rand::random::<usize>() % candidates.len();
+                        return Some(candidates[idx].clone());
                     }
                 }
             }
@@ -700,6 +704,9 @@ impl WazooApp {
                     Ok(mut handle) => {
                         handle.set_muted(initial_muted);
                         handle.set_subtitles_visible(self.subtitles_enabled);
+                        if self.settings.playback_mode == PlaybackMode::Scroll {
+                            handle.seek_random();
+                        }
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
                         self.player_shuffle_modes.insert(id, self.is_shuffle_mode);
                         self.players.push(handle);
@@ -856,6 +863,11 @@ impl WazooApp {
             async move {
                 let res = tokio::task::spawn_blocking(move || {
                     let mut handle = VideoHandle::with_buffering(id, &path, &name, buffer_config)?;
+                    let start = std::time::Instant::now();
+                    while handle.duration() <= Duration::from_secs(2) && start.elapsed() < Duration::from_millis(200) {
+                        handle.update_frame();
+                        std::thread::sleep(Duration::from_millis(5));
+                    }
                     handle.seek_random();
                     Ok::<VideoHandle, String>(handle)
                 })
