@@ -52,6 +52,11 @@ pub fn main() -> iced::Result {
     ));
 
     let initial_query = cli.query;
+    let app_icon = iced::window::icon::from_file_data(
+        include_bytes!("../resources/icon.png"),
+        None,
+    ).ok();
+
     iced::application(
         move || WazooApp::new(initial_query.clone()),
         WazooApp::update,
@@ -71,6 +76,7 @@ pub fn main() -> iced::Result {
     .window(iced::window::Settings {
         size: iced::Size::new(win_w, win_h),
         position: win_pos,
+        icon: app_icon,
         decorations: false,
         transparent: true,
         platform_specific: iced::window::settings::PlatformSpecific {

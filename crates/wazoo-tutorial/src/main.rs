@@ -73,12 +73,22 @@ pub fn main() -> iced::Result {
     // `iced::window::Settings` has dozens of fields (icons, transparency, min/max size).
     // Instead of specifying all 20+ fields manually, Rust lets us specify the ones
     // we care about, then use `..Default::default()` to fill in the rest with defaults!
+    let app_icon = iced::window::icon::from_file_data(
+        include_bytes!("../../wazoo-app/resources/icon.png"),
+        None,
+    ).ok();
+
     let window_settings = iced::window::Settings {
         size: iced::Size::new(1020.0, 760.0),            // Default width & height in points
         position: iced::window::Position::Centered,      // Center the window on the active monitor
         min_size: Some(iced::Size::new(720.0, 500.0)),   // Prevent users from making it too tiny
         resizable: true,                                 // Allow window edge dragging
         decorations: true,                               // Enable standard OS titlebar, minimize, and [X] close buttons
+        icon: app_icon,
+        platform_specific: iced::window::settings::PlatformSpecific {
+            application_id: "wazoo-tutorial".to_string(),
+            override_redirect: false,
+        },
         ..Default::default()                             // Fill remaining fields (icons, platform settings) with defaults
     };
 
