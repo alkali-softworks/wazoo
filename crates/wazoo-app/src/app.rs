@@ -43,6 +43,7 @@ pub struct WazooApp {
     pub(crate) search_input: String,
     pub(crate) search_tags: Vec<String>,
     pub(crate) folder_input: String,
+    pub(crate) active_search_folder: String,
     pub(crate) selected_search_folder: String,
     pub(crate) show_search_modal: bool,
     pub(crate) show_settings_modal: bool,
@@ -116,19 +117,21 @@ impl WazooApp {
         let cli_query_clean = cli_query.map(|q| q.trim().to_string()).filter(|q| !q.is_empty());
         let is_cli = cli_query_clean.is_some();
 
+        let all_label = wazoo_core::i18n::t(&settings.language, "common.all");
         let (folders, active_query, selected_folder) = if let Some(ref q) = cli_query_clean {
             settings.last_query = q.clone();
-            settings.last_folder = "All".to_string();
+            settings.last_folder = all_label.clone();
             let _ = config_mgr.save_settings(&settings);
-            (Vec::new(), q.clone(), "All".to_string())
+            (Vec::new(), q.clone(), all_label)
         } else {
-            let f = if settings.last_folder.is_empty() || settings.last_folder == "All" {
+            let is_all = wazoo_core::i18n::is_all_folder(&settings.last_folder);
+            let f = if is_all {
                 Vec::new()
             } else {
                 vec![settings.last_folder.clone()]
             };
-            let sel = if settings.last_folder.is_empty() {
-                "All".to_string()
+            let sel = if is_all {
+                all_label
             } else {
                 settings.last_folder.clone()
             };
@@ -188,6 +191,7 @@ impl WazooApp {
                 .collect(),
             search_input: String::new(),
             folder_input: String::new(),
+            active_search_folder: selected_folder.clone(),
             selected_search_folder: selected_folder,
             show_search_modal: false,
             show_settings_modal: false,
@@ -581,7 +585,7 @@ impl WazooApp {
                 .collect();
             self.settings.session_videos = sessions;
             self.settings.last_query = self.active_search_query.clone();
-            self.settings.last_folder = self.selected_search_folder.clone();
+            self.settings.last_folder = self.active_search_folder.clone();
             let _ = self.config_mgr.save_settings(&self.settings);
         }
     }
@@ -795,9 +799,13 @@ impl WazooApp {
         }
     }
 
+    pub(crate) fn is_all_folder(&self, folder: &str) -> bool {
+        wazoo_core::i18n::is_all_folder(folder)
+    }
+
     pub(crate) fn show_video_totals_notice(&mut self, total: usize, folder_label: &str) {
         if total == 0 {
-            let msg = if folder_label.is_empty() || folder_label == "All" {
+            let msg = if self.is_all_folder(folder_label) {
                 self.t("wazoo.no_videos_found")
             } else {
                 let folder_clean = folder_label
@@ -1175,27 +1183,84 @@ mod tests {
             VideoRecord { id: 2, name: "Movie 1".to_string(), path: "/media/movies/m1.mp4".to_string() },
         ];
 
-        // 1. When last_folder is "All", no confined badge
-        app.settings.last_folder = "All".to_string();
+        // 1. Initial state: active search folder is "All"
+        assert_eq!(app.active_search_folder, "All");
+        assert_eq!(app.selected_search_folder, "All");
+        assert_eq!(app.settings.last_folder, "All");
         {
             let _view_all = app.view_file_picker();
         }
 
-        // 2. When last_folder is confined to "anime"
-        app.settings.last_folder = "/media/anime".to_string();
+        // 2. User clicks a folder chip in search modal: selected_search_folder updates,
+        // but active_search_folder and last_folder MUST NOT update yet!
+        let _ = app.update(Message::SelectSearchFolder("/media/anime".to_string()));
+        assert_eq!(app.selected_search_folder, "/media/anime");
+        assert_eq!(app.active_search_folder, "All");
+
+        // Even if watchdog ticks or session state is saved while modal is open,
+        // settings.last_folder remains "All"
+        let sample = "/home/klo/Downloads/VID_20240309_123459_679.mp4";
+        if std::path::Path::new(sample).exists() {
+            let _ = app.update(Message::SetPlayerCount(1));
+        }
+        app.save_session_state();
+        assert_eq!(app.settings.last_folder, "All");
+
+        // 3. User submits search query (PerformSearch): now active_search_folder and last_folder update!
+        let _ = app.update(Message::PerformSearch);
+        assert_eq!(app.active_search_folder, "/media/anime");
+        assert_eq!(app.settings.last_folder, "/media/anime");
         {
             let _view_confined = app.view_file_picker();
         }
 
-        // 3. Triggering ResetSearchFolder restores last_folder and selected_search_folder to "All"
+        // 4. Triggering ResetSearchFolder restores active_search_folder, selected_search_folder, and last_folder to "All"
         let _ = app.update(Message::ResetSearchFolder);
-        assert_eq!(app.settings.last_folder, "All");
+        assert_eq!(app.active_search_folder, "All");
         assert_eq!(app.selected_search_folder, "All");
+        assert_eq!(app.settings.last_folder, "All");
 
-        // 4. View file picker again after reset
+        // 5. View file picker again after reset
         {
             let _view_reset = app.view_file_picker();
         }
+    }
+
+    #[test]
+    fn test_file_picker_confined_folder_badge_multilingual() {
+        let (mut app, _) = new_test_app();
+        app.available_videos = vec![
+            VideoRecord { id: 1, name: "Anime 1".to_string(), path: "/media/anime/a1.mp4".to_string() },
+            VideoRecord { id: 2, name: "Movie 1".to_string(), path: "/media/movies/m1.mp4".to_string() },
+        ];
+
+        // 1. Switch language to Spanish
+        let _ = app.update(Message::SetLanguage("es".to_string()));
+        let all_es = app.t("common.all");
+        assert_eq!(all_es, "Todo");
+        assert_eq!(app.active_search_folder, "Todo");
+        assert_eq!(app.selected_search_folder, "Todo");
+        assert_eq!(app.settings.last_folder, "Todo");
+        assert!(app.is_all_folder(&app.active_search_folder));
+
+        // 2. File picker in Spanish does not show badge for Todo
+        {
+            let _view_all = app.view_file_picker();
+        }
+
+        // 3. Search confined to anime
+        let _ = app.update(Message::SelectSearchFolder("/media/anime".to_string()));
+        assert_eq!(app.active_search_folder, "Todo"); // Still Todo before search
+        let _ = app.update(Message::PerformSearch);
+        assert_eq!(app.active_search_folder, "/media/anime");
+        assert!(!app.is_all_folder(&app.active_search_folder));
+
+        // 4. Reset search folder returns to Spanish All ("Todo")
+        let _ = app.update(Message::ResetSearchFolder);
+        assert_eq!(app.active_search_folder, "Todo");
+        assert_eq!(app.selected_search_folder, "Todo");
+        assert_eq!(app.settings.last_folder, "Todo");
+        assert!(app.is_all_folder(&app.active_search_folder));
     }
 }
 

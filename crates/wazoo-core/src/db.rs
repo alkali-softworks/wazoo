@@ -266,7 +266,7 @@ impl Database {
         // Process folder filters
         let active_folders: Vec<&String> = folders
             .iter()
-            .filter(|f| !f.trim().is_empty() && f.as_str() != "All")
+            .filter(|f| !crate::i18n::is_all_folder(f))
             .collect();
 
         if !active_folders.is_empty() {
