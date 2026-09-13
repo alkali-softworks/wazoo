@@ -8,6 +8,7 @@
  */
 
 pub mod file_picker;
+pub mod history;
 pub mod modals;
 pub mod player;
 pub mod titlebar;
@@ -40,6 +41,14 @@ impl WazooApp {
             row![
                 container(self.view_players()).width(Length::Fill).height(Length::Fill),
                 self.view_transcript_drawer(),
+            ]
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .into()
+        } else if self.show_history_drawer {
+            row![
+                container(self.view_players()).width(Length::Fill).height(Length::Fill),
+                self.view_history_drawer(),
             ]
             .width(Length::Fill)
             .height(Length::Fill)

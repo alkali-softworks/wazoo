@@ -81,6 +81,7 @@
       "close_app": "Cerrar Aplicación",
       "move_window": "Mover Ventana",
       "toggle_bookmarks": "Alternar marcadores",
+      "toggle_history": "Alternar historial de reproducción",
       "toggle_transcript": "Alternar transcripción de subtítulos"
     }
   },
@@ -89,7 +90,7 @@
   },
   "player": {
     "muted": "Silenciado",
-    "unmuted": "Reactivado",
+    "unmuted": "Con sonido",
     "subtitles_enabled": "Subtítulos activados",
     "subtitles_disabled": "Subtítulos desactivados",
     "playing": "Reproduciendo: {title}",
@@ -106,9 +107,9 @@
   },
   "transcript": {
     "title": "Transcripción",
-    "cues_count": "{count} líneas",
+    "cues_count": "{count} fragmentos",
     "subtitle_track": "Subtítulos:",
-    "search_placeholder": "Buscar diálogo en la transcripción...",
+    "search_placeholder": "Buscar diálogo de transcripción...",
     "extracting": "Extrayendo pistas de diálogo...",
     "loading_subtitles": "Cargando subtítulos integrados",
     "no_subtitles_found": "No se encontraron subtítulos",
@@ -128,5 +129,13 @@
     "removed": "Marcador eliminado: {name}",
     "not_found": "No se encontró ningún marcador para el video actual",
     "jumped": "Marcador: {name}  [{time}] ({mode})"
+  },
+  "history": {
+    "title": "Historial de reproducción",
+    "count": "{count} videos",
+    "empty": "Aún no hay videos reproducidos.",
+    "clear": "Borrar historial",
+    "item_hint": "Haga clic para reproducir en el reproductor activo",
+    "search_placeholder": "Buscar en el historial..."
   }
 }

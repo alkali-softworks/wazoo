@@ -168,6 +168,11 @@ impl WazooApp {
                 .on_press(Message::ToggleBookmarksModal)
                 .padding(padding)
                 .width(Length::Fill),
+            button(text(format!("{} ({})", self.t("history.title"), kb.menu_hint(&kb.toggle_history))))
+                .style(theme::menu_item_style)
+                .on_press(Message::ToggleHistoryDrawer)
+                .padding(padding)
+                .width(Length::Fill),
             button(text(self.t("common.settings")))
                 .style(theme::menu_item_style)
                 .on_press(Message::OpenSettingsModal)

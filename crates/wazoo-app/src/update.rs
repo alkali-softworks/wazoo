@@ -151,6 +151,7 @@ impl WazooApp {
                     new_handle.set_volume(vol);
                 }
                 new_handle.set_subtitles_visible(self.subtitles_enabled);
+                self.record_play_history(&target.path);
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     *p = new_handle;
                 }
@@ -290,6 +291,7 @@ impl WazooApp {
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
+                            self.record_play_history(&handle.state.path);
                             self.players.push(handle);
                         } else {
                             break;
@@ -421,6 +423,7 @@ impl WazooApp {
                         KeyAction::ToggleFilePicker => return self.update(Message::ToggleFilePicker),
                         KeyAction::ToggleTranscript => return self.update(Message::ToggleTranscript),
                         KeyAction::ToggleBookmarks => return self.update(Message::ToggleBookmarksModal),
+                        KeyAction::ToggleHistory => return self.update(Message::ToggleHistoryDrawer),
                         KeyAction::ToggleMute => return self.update(Message::ToggleMuteFocused),
                         KeyAction::TogglePlayMode => return self.update(Message::ToggleShuffleMode),
                         KeyAction::VolumeDown => return self.update(Message::AdjustVolumeFocused(-0.1)),
@@ -519,6 +522,7 @@ impl WazooApp {
                 self.show_file_picker = !self.show_file_picker;
                 if self.show_file_picker {
                     self.show_transcript = false;
+                    self.show_history_drawer = false;
                     if self.file_picker_groups.is_empty() && !self.available_videos.is_empty() {
                         self.apply_file_picker_search();
                     }
@@ -535,6 +539,7 @@ impl WazooApp {
                 self.show_menu_modal = false;
                 if self.show_transcript {
                     self.show_file_picker = false;
+                    self.show_history_drawer = false;
                     return self.load_transcript_for_focused_player();
                 }
             }
@@ -551,9 +556,29 @@ impl WazooApp {
                 self.show_transcript = true;
                 self.show_transcript_menu = false;
                 self.show_file_picker = false;
+                self.show_history_drawer = false;
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
                 return self.load_transcript_for_focused_player();
+            }
+            Message::ToggleHistoryDrawer => {
+                self.show_history_drawer = !self.show_history_drawer;
+                if self.show_history_drawer {
+                    self.show_file_picker = false;
+                    self.show_transcript = false;
+                    self.show_transcript_menu = false;
+                }
+                self.show_dropdown_menu = false;
+                self.show_menu_modal = false;
+            }
+            Message::CloseHistoryDrawer => {
+                self.show_history_drawer = false;
+            }
+            Message::HistorySearchChanged(s) => {
+                self.history_search = s;
+            }
+            Message::ClearPlayHistory => {
+                self.play_history.clear();
             }
             Message::CloseTranscript => {
                 self.show_transcript = false;
@@ -1816,6 +1841,7 @@ impl WazooApp {
                     || self.show_dropdown_menu
                     || self.show_file_picker
                     || self.show_transcript
+                    || self.show_history_drawer
                 {
                     self.show_help_modal = false;
                     self.show_search_modal = false;
@@ -1826,6 +1852,7 @@ impl WazooApp {
                     self.show_file_picker = false;
                     self.show_transcript = false;
                     self.show_transcript_menu = false;
+                    self.show_history_drawer = false;
                 } else {
                     self.show_menu_modal = true;
                     self.show_dropdown_menu = false;
@@ -1858,6 +1885,7 @@ impl WazooApp {
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
+                            self.record_play_history(&handle.state.path);
                             self.players.push(handle);
                             needs_preload = true;
                         } else {

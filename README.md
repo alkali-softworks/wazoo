@@ -76,6 +76,12 @@ Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically 
 - **Collapsible Folder Tree**: Press <kbd>H</kbd> to slide out the library directory tree, organized cleanly with file counts.
 - **Direct Tile Loading**: Click any file in the drawer to immediately load it into the currently focused player.
 
+### 🕒 Play History Drawer
+- **Session Play Log**: Automatically tracks every video played across all active players in your session, strictly capped to 100 entries (<kbd>Y</kbd> or via the right-click context menu).
+- **Click to Play**: Click any item in the history list to immediately play that video in your currently active player tile.
+- **Search & Filter**: Quickly filter through played history by title, directory, or filename.
+- **Clear on Demand**: One-click clear button to reset your session history at any time.
+
 ### 💻 Command-Line Launch & Search
 - **Instant CLI Boot**: Launch Wazoo directly with a search query from your terminal:
   ```bash
@@ -160,6 +166,7 @@ scoop install ffmpeg
 | :--- | :--- |
 | <kbd>V</kbd> | Toggle **Interactive Subtitle Transcript** drawer |
 | <kbd>B</kbd> | Toggle **Bookmarks** modal |
+| <kbd>Y</kbd> | Toggle **Play History** drawer (capped to 100 session videos) |
 | <kbd>+</kbd> / <kbd>=</kbd> | Add Bookmark (or increase Scroll Speed in Scroll Mode) |
 | <kbd>-</kbd> | Remove Bookmark (or decrease Scroll Speed in Scroll Mode) |
 | <kbd>R</kbd> | **Random Seek** on focused player |

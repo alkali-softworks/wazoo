@@ -81,6 +81,7 @@
       "close_app": "Close App",
       "move_window": "Move Window",
       "toggle_bookmarks": "Toggle Bookmarks",
+      "toggle_history": "Toggle Play History",
       "toggle_transcript": "Toggle Subtitle Transcript"
     }
   },
@@ -128,5 +129,13 @@
     "removed": "Removed bookmark: {name}",
     "not_found": "No bookmark found for current video",
     "jumped": "Bookmark: {name}  [{time}] ({mode})"
+  },
+  "history": {
+    "title": "Play History",
+    "count": "{count} videos",
+    "empty": "No played videos yet.",
+    "clear": "Clear History",
+    "item_hint": "Click to play in active player",
+    "search_placeholder": "Search history..."
   }
 }
