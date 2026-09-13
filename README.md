@@ -2,10 +2,9 @@
 
 > **Ambient media engine for non-stop viewing - built in native Rust.**
 
-**Wazoo** is an ambient video player and "moving mood-board" designed for artists, designers, and curators, who want to experience their local video collection without the burden of choice. Wazoo provides a non-stop, feed of visuals that flows continuously based on your library and optional search queries. 
+**Wazoo** is an ambient video player and "moving mood-board" designed for artists, designers, and curators, who want to experience their local video collection without the burden of choice. Wazoo provides a non-stop, feed of visuals that flows continuously based on your library and optional search query. 
 
-Forget the play button. Open Wazoo and let your media collection become the atmosphere.
-
+Wazoo is an idea in development since 2020, originally as a JS app, then an Electron app, and now finally as a native Rust app, ported with the culmination of all the best features from the previous versions.
 
 ---
 
@@ -13,10 +12,8 @@ Forget the play button. Open Wazoo and let your media collection become the atmo
 
 Wazoo was born from a simple problem: **digital fatigue.** We spend more time deciding what to watch than actually enjoying our media.
 
-Wazoo flips the script. Instead of making you "pick," it creates a **continuous, non-stop feed** based on your entire collection or search queries:
-
 - **Effortless Discovery**: Rediscover forgotten gems in your library without ever having to click "Open File."
-- **A Moving Mood-Board**: Perfect for artists, writers, and designers needing continuous background inspiration.
+- **A Moving Mood-Board**: Perfect for artists and designers needing continuous background inspiration.
 
 ---
 
@@ -27,7 +24,6 @@ Built with native **Rust** and **Iced** for zero-overhead performance, digital s
 - **Ultra-Lightweight Footprint**: Extremely lean resource usage, typically consuming **~70 MB – 150 MB** of RAM during playback (a fraction of Electron-based apps).
 - **Built with Rust & Iced**: Pure native performance with zero web-engine bloat, instant startup, and memory safety without garbage collection pauses.
 - **Native Hardware Decoding**: Full hardware-accelerated playback for H.264, H.265/HEVC 10-bit, AV1, and VP9 through `libmpv`.
-- **`wgpu`-Accelerated Interface**: Rendered with **Iced** using GPU rendering pipelines for 60fps animations and glassmorphic overlays.
 - **Embedded SQLite Index**: Powered by `rusqlite` for lightning-fast queries across tens of thousands of video files.
 
 ---
@@ -40,6 +36,10 @@ Built with native **Rust** and **Iced** for zero-overhead performance, digital s
 - **Responsive Layout Engine**: Effortlessly cycles between **Grid**, **Row**, and **Column** arrangements (<kbd>L</kbd>).
 - **Independent Audio & Seeking**: Per-player volume control, seek sliders, auto-unmute on volume adjustment, and quick random seeking (<kbd>R</kbd>).
 
+### 🔍 Instant Library Search
+- **Smart Directory Scanner**: Recursively indexes media folders while stripping clutter from video titles.
+- **Advanced Query Parser & Negative Queries**: Easily dial in what's included in your media pool. Type just part of each name you want to match. Use comma separated terms to find several shows at once.  Then, to exclude a subset of the results, add `not ` or `!` before each term you want to exclude (e.g. `anime, not bebop`).
+
 ### 🌊 The Infinity Stream ("Scroll Mode")
 Experience your media library as a continuous vertical river of content (<kbd>5</kbd>):
 - Constant, smooth vertical scroll at configurable `scroll_speed` (<kbd>+</kbd> / <kbd>-</kbd>).
@@ -51,10 +51,6 @@ Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically 
 - **Never Miss a Moment**: If you glance at something cool that just flipped away or was skipped in shuffle mode, simply hit **Previous** (<kbd>↓</kbd> or the on-screen Prev button) to jump right back to the previous random video at the exact timestamp you left it.
 - **Scrub Back & Forth**: Pressing **Next** (<kbd>↑</kbd> or Next button) walks forward back through the scrubbed videos before generating new random picks.
 - **Resetting the Stack**: Press <kbd>S</kbd> (or click the play-mode toggle icon on the player overlay) to switch between **Shuffle** and **Sequential** playback. Toggling playback modes clears both the back stack and forward stack, so you can switch to sequential mode and hit <kbd>↓</kbd> to immediately navigate to the previous sequential file in your folder.
-
-### 🔍 Instant Library Search
-- **Smart Directory Scanner**: Recursively indexes media folders while stripping clutter from video titles.
-- **Advanced Query Parser & Negative Queries**: Easily dial in what's included in your media pool. Type just part of each name you want to match. Use comma separated terms to find several shows at once.  Then, to exclude a subset of the results, add `not ` or `!` before each term you want to exclude (e.g. `anime, not bebop`).
 
 ### 📜 Interactive Subtitle Transcript Drawer
 - **Live Dialogue Transcript**: View a full transcript of the active video dialogue in a sleek slide-out drawer (<kbd>V</kbd> or <kbd>[TX]</kbd> button).
@@ -73,12 +69,12 @@ Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically 
 - Configurable window opacity for semi-transparent ambient desktop backgrounds.
 
 ### 📁 File Browser Drawer
-- **Collapsible Folder Tree**: Press <kbd>H</kbd> to slide out the library directory tree, organized cleanly with file counts.
-- **Direct Tile Loading**: Click any file in the drawer to immediately load it into the currently focused player.
+- **Collapsible Folder Tree**: Press <kbd>H</kbd> to slide out the library directory tree, organized with file counts per folder.
+- **Direct Tile Loading**: Click any file in the drawer to load it into the active player.
 
 ### 🕒 Play History Drawer
-- **Session Play Log**: Automatically tracks every video played across all active players in your session, generously capped to 1,000 entries (<kbd>Y</kbd> or via the right-click context menu).
-- **Click to Play**: Click any item in the history list to immediately play that video in your currently active player tile.
+- **Session Play Log**: Automatically tracks every video played across all active players in your session, (<kbd>Y</kbd> or via the right-click context menu).
+- **Click to Play**: Click any item in the history list to play that video in your active player.
 - **Search & Filter**: Quickly filter through played history by title, directory, or filename.
 - **Clear on Demand**: One-click clear button to reset your session history at any time.
 
@@ -87,7 +83,6 @@ Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically 
   ```bash
   wazoo "bebop"
   ```
-- **Console Focus Acquisition**: Automatically claims active OS window focus upon startup so keyboard hotkeys work immediately without clicking.
 
 ### 🐕 Unstuck Playback Watchdog
 Ambient displays must never stall. Wazoo constantly monitors playback position progress and automatically cycles to the next video if a network stream or corrupted file encounters a stall.
