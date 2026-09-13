@@ -2,7 +2,7 @@
 
 > **Ambient media engine for non-stop viewing - built in native Rust.**
 
-**Wazoo** is an ambient video player and "moving mood-board" designed for artists, designers, and curators, who want to experience their local video collection without the burden of choice. Wazoo provides a non-stop, feed of visuals that flows continuously based on your library and optional search query. 
+**Wazoo** is an ambient video player and "moving mood-board" designed for artists, designers, and curators, who want to experience their local video collection without the burden of choice. Wazoo provides a non-stop feed of visuals that flows continuously based on your library and optional search query. 
 
 Wazoo is an idea in development since 2020 - originally as a JS app, then an Electron app, and now finally a native Rust app, ported with the culmination of all the best features from the prior versions.
 
@@ -19,9 +19,8 @@ Wazoo was born from a simple problem: **digital fatigue.** We spend more time de
 
 ## ⚡ High-Performance Architecture
 
-Built with native **Rust** and **Iced** for zero-overhead performance, digital sovereignty, and hardware-accelerated rendering:
 
-- **Ultra-Lightweight Footprint**: Extremely lean resource usage, typically consuming **~70 MB – 150 MB** of RAM during playback (a fraction of Electron-based apps).
+- **Ultra-Lightweight Footprint**: Extremely lean resource usage, typically consuming **~70 MB - 150 MB** of RAM during playback (a fraction of Electron-based apps).
 - **Built with Rust & Iced**: Pure native performance with zero web-engine bloat, instant startup, and memory safety without garbage collection pauses.
 - **Native Hardware Decoding**: Full hardware-accelerated playback for H.264, H.265/HEVC 10-bit, AV1, and VP9 through `libmpv`.
 - **Embedded SQLite Index**: Powered by `rusqlite` for lightning-fast queries across tens of thousands of video files.
@@ -31,9 +30,9 @@ Built with native **Rust** and **Iced** for zero-overhead performance, digital s
 ## ✨ Features
 
 
-### 🖼️ Ambient Orchestration & Multi-Tile Layouts
+### 🖼️ Multi-Tile Layouts
 - **1 to 12 Video Players**: Scale from a single minimalist player to an ambient video wall.
-- **Responsive Layout Engine**: Effortlessly cycles between **Grid**, **Row**, and **Column** arrangements (<kbd>L</kbd>).
+- **Responsive Layout Engine**: Cycles between **Grid**, **Row**, and **Column** arrangements (<kbd>L</kbd>).
 - **Independent Audio & Seeking**: Per-player volume control, seek sliders, auto-unmute on volume adjustment, and quick random seeking (<kbd>R</kbd>).
 
 ### 🔍 Instant Library Search
@@ -43,7 +42,7 @@ Built with native **Rust** and **Iced** for zero-overhead performance, digital s
 ### 🌊 The Infinity Stream ("Scroll Mode")
 Experience your media library as a continuous vertical river of content (<kbd>5</kbd>):
 - Constant, smooth vertical scroll at configurable `scroll_speed` (<kbd>+</kbd> / <kbd>-</kbd>).
-- **Virtual Viewport**: Automatically despawns players that scroll off the top edge and seamlessly spawns new candidate videos at the bottom.
+- **Virtual Viewport**: Automatically despawns players that scroll off the top edge and spawns new candidate videos at the bottom.
 - **Proportional Audio Cross-Fading**: Sound smoothly fades in and out based on the visible percentage of each video on screen.
 
 ### ⚡ Flip Mode & Shuffle History Navigation
@@ -53,7 +52,7 @@ Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically 
 - **Resetting the Stack**: Press <kbd>S</kbd> (or click the play-mode toggle icon on the player overlay) to switch between **Shuffle** and **Sequential** playback. Toggling playback modes clears both the back stack and forward stack, so you can switch to sequential mode and hit <kbd>↓</kbd> to immediately navigate to the previous sequential file in your folder.
 
 ### 📜 Interactive Subtitle Transcript Drawer
-- **Live Dialogue Transcript**: View a full transcript of the active video dialogue in a sleek slide-out drawer (<kbd>V</kbd> or <kbd>[TX]</kbd> button).
+- **Live Dialogue Transcript**: View a full transcript of the active video dialogue in a slide-out drawer (<kbd>V</kbd> or <kbd>[TX]</kbd> button).
 - **Click to Seek**: Click any subtitle line to jump video playback directly to that timestamp instantly - great for language learning when you want to replay a specific phrase repeatedly.
 - **Active Line Highlighting**: The currently spoken dialogue cue lights up as the video plays.
 - **Dialogue Search Filter**: Filter thousands of dialogue lines to find exact quotes and scenes.
@@ -73,7 +72,7 @@ Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically 
 - **Direct Tile Loading**: Click any file in the drawer to load it into the active player.
 
 ### 🕒 Play History Drawer
-- **Session Play Log**: Automatically tracks every video played across all active players in your session, (<kbd>Y</kbd> or via the right-click context menu).
+- **Session Play Log**: Automatically tracks every video played across all active players in your session (<kbd>Y</kbd> or via the right-click context menu).
 - **Click to Play**: Click any item in the history list to play that video in your active player.
 - **Search & Filter**: Quickly filter through played history by title, directory, or filename.
 - **Clear on Demand**: One-click clear button to reset your session history at any time.
