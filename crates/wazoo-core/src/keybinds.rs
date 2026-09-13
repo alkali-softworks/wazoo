@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * Keybind Settings & Actions
@@ -342,8 +342,10 @@ mod tests {
         assert!(!KeybindSettings::is_complete_json(&blank_json));
 
         // Reconcile blank value
-        let mut kb = KeybindSettings::default();
-        kb.add_player = "  ".to_string();
+        let mut kb = KeybindSettings {
+            add_player: "  ".to_string(),
+            ..Default::default()
+        };
         kb.reconcile_with_defaults();
         assert_eq!(kb.add_player, "n");
 

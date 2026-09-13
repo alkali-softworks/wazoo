@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * Modal Dialogs Subsystem
@@ -36,7 +36,7 @@ impl WazooApp {
         .align_y(Alignment::Center);
 
         for folder in &self.settings.media_folders {
-            let label = folder.split(['/', '\\']).filter(|s| !s.is_empty()).next_back().unwrap_or(folder);
+            let label = format::folder_basename(folder);
             folder_chips = folder_chips.push(
                 button(
                     text(label)

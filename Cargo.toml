@@ -24,15 +24,11 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
 walkdir = "2.5"
-rayon = "1.10"
 regex = "1.11"
 rand = "0.8"
 directories = "5.0"
 log = "0.4"
 env_logger = "0.11"
-chrono = { version = "0.4", features = ["serde"] }
-thiserror = "2.0"
-url = "2.5"
 
 iced = { version = "0.14.0", features = ["advanced", "crisp", "image", "svg", "tokio", "wgpu", "wayland", "x11"], default-features = false }
 iced_wgpu = { version = "0.14.0", default-features = false }

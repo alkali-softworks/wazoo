@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * Window Titlebar & Quick Menu

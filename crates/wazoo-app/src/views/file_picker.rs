@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * File Browser Drawer
@@ -212,12 +212,7 @@ impl WazooApp {
         .align_y(Alignment::Center);
 
         if is_confined {
-            let folder_label = self
-                .active_search_folder
-                .split(['/', '\\'])
-                .filter(|s| !s.is_empty())
-                .next_back()
-                .unwrap_or(&self.active_search_folder);
+            let folder_label = format::folder_basename(&self.active_search_folder);
 
             let display_name = if folder_label.chars().count() > 18 {
                 format!("{}...", folder_label.chars().take(16).collect::<String>())

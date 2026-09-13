@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * Interactive Subtitle Transcript Drawer

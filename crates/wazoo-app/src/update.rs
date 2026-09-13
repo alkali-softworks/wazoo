@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * State Reducer & Event Dispatcher
@@ -22,7 +22,7 @@ use crate::keybinds::find_key_action;
 use crate::message::Message;
 
 impl WazooApp {
-    pub(crate) fn advance_player_to_next_video(&mut self, id: PlayerId, request_focus: bool) -> Task<Message> {
+    fn focus_player_for_navigation(&mut self, id: PlayerId, request_focus: bool) {
         if request_focus {
             if let Some(pos) = self.players.iter().position(|p| p.id == id) {
                 let was_already_active = self.focused_player_idx == pos;
@@ -35,16 +35,35 @@ impl WazooApp {
         }
         self.loading_player_ids.insert(id);
         self.loading_player_ticks.insert(id, 0);
-
-        // 1. Record current playback position before moving away
         self.record_current_player_nav_position(id);
+    }
+
+    fn apply_playback_state_and_replace(
+        &mut self,
+        id: PlayerId,
+        mut new_handle: VideoHandle,
+        prev_muted: Option<bool>,
+        prev_volume: Option<f64>,
+    ) {
+        new_handle.set_muted(prev_muted.unwrap_or(true));
+        if let Some(vol) = prev_volume {
+            new_handle.set_volume(vol);
+        }
+        new_handle.set_subtitles_visible(self.subtitles_enabled);
+        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+            *p = new_handle;
+        }
+    }
+
+    pub(crate) fn advance_player_to_next_video(&mut self, id: PlayerId, request_focus: bool) -> Task<Message> {
+        self.focus_player_for_navigation(id, request_focus);
 
         let curr_player = self.players.iter().find(|p| p.id == id);
         let curr_path = curr_player.map(|p| p.state.path.clone());
         let prev_muted = curr_player.map(|p| p.state.is_muted);
         let prev_volume = curr_player.map(|p| p.state.volume);
 
-        // 2. Check forward_stack for undone videos from previous navigation
+        // 1. Check forward_stack for undone videos from previous navigation
         let forward_candidate = self
             .player_nav_history
             .get_mut(&id)
@@ -59,34 +78,20 @@ impl WazooApp {
                 .map(|v| v.name.clone())
                 .unwrap_or_else(|| format::format_video_title(&target.path));
 
-            if let Ok(mut new_handle) = self.create_video_handle_with_start(id, &target.path, &name, target.position_secs) {
-                new_handle.set_muted(prev_muted.unwrap_or(true));
-                if let Some(vol) = prev_volume {
-                    new_handle.set_volume(vol);
-                }
-                new_handle.set_subtitles_visible(self.subtitles_enabled);
+            if let Ok(new_handle) = self.create_video_handle_with_start(id, &target.path, &name, target.position_secs) {
+                self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
                 self.push_player_nav_entry(id, target.path.clone(), target.position_secs);
-                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
-                    *p = new_handle;
-                }
                 loaded = true;
             }
         }
 
-        // 3. If forward_stack had no entries (or loading failed), generate next video (random or sequential)
+        // 2. If forward_stack had no entries (or loading failed), generate next video (random or sequential)
         if !loaded {
             for _ in 0..3 {
                 if let Some(video_rec) = self.get_next_video_rec(curr_path.as_deref()) {
-                    if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
-                        new_handle.set_muted(prev_muted.unwrap_or(true));
-                        if let Some(vol) = prev_volume {
-                            new_handle.set_volume(vol);
-                        }
-                        new_handle.set_subtitles_visible(self.subtitles_enabled);
+                    if let Ok(new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
+                        self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
-                        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
-                            *p = new_handle;
-                        }
                         break;
                     }
                 }
@@ -99,28 +104,14 @@ impl WazooApp {
     }
 
     pub(crate) fn advance_player_to_prev_video(&mut self, id: PlayerId, request_focus: bool) -> Task<Message> {
-        if request_focus {
-            if let Some(pos) = self.players.iter().position(|p| p.id == id) {
-                let was_already_active = self.focused_player_idx == pos;
-                self.focused_player_idx = pos;
-                if !was_already_active {
-                    self.focus_border_ticks = 20;
-                }
-            }
-            self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
-        }
-        self.loading_player_ids.insert(id);
-        self.loading_player_ticks.insert(id, 0);
-
-        // 1. Record current playback position before moving away
-        self.record_current_player_nav_position(id);
+        self.focus_player_for_navigation(id, request_focus);
 
         let curr_player = self.players.iter().find(|p| p.id == id);
         let curr_path = curr_player.map(|p| p.state.path.clone());
         let prev_muted = curr_player.map(|p| p.state.is_muted);
         let prev_volume = curr_player.map(|p| p.state.volume);
 
-        // 2. Adjust navigation history:
+        // 1. Adjust navigation history:
         // Pop the current video from back_stack and push onto forward_stack
         let mut target_candidate = None;
         if let Some(hist) = self.player_nav_history.get_mut(&id) {
@@ -135,7 +126,7 @@ impl WazooApp {
             }
         }
 
-        // 3. Try playing target from back_stack if available
+        // 2. Try playing target from back_stack if available
         let mut loaded = false;
         if let Some(target) = target_candidate {
             let name = self
@@ -145,34 +136,20 @@ impl WazooApp {
                 .map(|v| v.name.clone())
                 .unwrap_or_else(|| format::format_video_title(&target.path));
 
-            if let Ok(mut new_handle) = self.create_video_handle_with_start(id, &target.path, &name, target.position_secs) {
-                new_handle.set_muted(prev_muted.unwrap_or(true));
-                if let Some(vol) = prev_volume {
-                    new_handle.set_volume(vol);
-                }
-                new_handle.set_subtitles_visible(self.subtitles_enabled);
+            if let Ok(new_handle) = self.create_video_handle_with_start(id, &target.path, &name, target.position_secs) {
+                self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
                 self.record_play_history(&target.path);
-                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
-                    *p = new_handle;
-                }
                 loaded = true;
             }
         }
 
-        // 4. Fallback if back_stack had no earlier entries (or loading failed)
+        // 3. Fallback if back_stack had no earlier entries (or loading failed)
         if !loaded {
             for _ in 0..3 {
                 if let Some(video_rec) = self.get_prev_video_rec(curr_path.as_deref()) {
-                    if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
-                        new_handle.set_muted(prev_muted.unwrap_or(true));
-                        if let Some(vol) = prev_volume {
-                            new_handle.set_volume(vol);
-                        }
-                        new_handle.set_subtitles_visible(self.subtitles_enabled);
+                    if let Ok(new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
+                        self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
-                        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
-                            *p = new_handle;
-                        }
                         break;
                     }
                 }
@@ -1910,7 +1887,7 @@ impl WazooApp {
                     // When the window is behind another window or unfocused, throttle frame updates
                     // to ~6 FPS (every 10th tick) so audio keeps playing without hammering WGPU
                     // surface swapchains and triggering X11/Vulkan presentation deadlocks.
-                    if self.unfocused_frame_ticks % 10 != 0 {
+                    if !self.unfocused_frame_ticks.is_multiple_of(10) {
                         return Task::none();
                     }
                 }

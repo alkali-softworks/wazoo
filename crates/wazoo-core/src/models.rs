@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * Domain Models & Settings
@@ -16,32 +16,22 @@ pub struct VideoRecord {
     pub path: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LayoutMode {
     Column,
     Row,
+    #[default]
     Grid,
 }
 
-impl Default for LayoutMode {
-    fn default() -> Self {
-        Self::Grid
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum PlaybackMode {
+    #[default]
     Normal,
     Scroll,
     Flip,
-}
-
-impl Default for PlaybackMode {
-    fn default() -> Self {
-        Self::Normal
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

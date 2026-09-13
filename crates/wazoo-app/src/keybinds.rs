@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * Keybind Matching & Resolution
@@ -230,8 +230,10 @@ mod tests {
 
     #[test]
     fn test_find_key_action_custom() {
-        let mut kb = KeybindSettings::default();
-        kb.add_player = "p".to_string();
+        let kb = KeybindSettings {
+            add_player: "p".to_string(),
+            ..Default::default()
+        };
 
         assert_eq!(
             find_key_action(&kb, &Key::Character("n".into()), false),

@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * libmpv Foreign Function Interface (Dynamic Loading)
@@ -8,6 +8,8 @@
  * On Windows, supports automatic unpack and loading of the embedded compressed
  * libmpv-2.dll for a completely self-contained single-executable experience.
  */
+
+#![allow(clippy::missing_safety_doc)]
 
 use std::ffi::{c_char, c_double, c_int, c_void};
 use std::sync::OnceLock;

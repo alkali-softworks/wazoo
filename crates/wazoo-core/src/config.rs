@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * Configuration & Persistence Manager
@@ -135,7 +135,7 @@ mod tests {
         assert_eq!(deserialized.session_videos.len(), 1);
         assert_eq!(deserialized.session_videos[0].path, "/path/to/video1.mp4");
         assert_eq!(deserialized.session_videos[0].position_secs, 42.5);
-        assert_eq!(deserialized.session_videos[0].is_muted, false);
+        assert!(!deserialized.session_videos[0].is_muted);
         assert_eq!(deserialized.session_videos[0].volume, 0.8);
 
         // Verify backwards compatibility when session_videos is omitted from JSON
@@ -163,12 +163,12 @@ mod tests {
         assert_eq!(deserialized.bookmarks[0].query, "scifi");
         assert_eq!(deserialized.bookmarks[0].path, "/media/scifi/ep01.mp4");
         assert_eq!(deserialized.bookmarks[0].position_secs, 125.4);
-        assert_eq!(deserialized.bookmarks[0].is_shuffle, false);
+        assert!(!deserialized.bookmarks[0].is_shuffle);
 
         // Verify legacy bookmark JSON without is_shuffle defaults to true
         let legacy_bookmark_json = r#"{"name":"Legacy","query":"test","path":"/path/test.mp4","position_secs":10.0}"#;
         let legacy_bookmark: crate::models::Bookmark = serde_json::from_str(legacy_bookmark_json).unwrap();
-        assert_eq!(legacy_bookmark.is_shuffle, true);
+        assert!(legacy_bookmark.is_shuffle);
     }
 
     #[test]
@@ -202,8 +202,10 @@ mod tests {
             data_dir: temp_dir.clone(),
         };
 
-        let mut settings = WazooSettings::default();
-        settings.last_query = "secure_query".to_string();
+        let settings = WazooSettings {
+            last_query: "secure_query".to_string(),
+            ..Default::default()
+        };
         mgr.save_settings(&settings).unwrap();
 
         assert!(mgr.config_file_path().exists());

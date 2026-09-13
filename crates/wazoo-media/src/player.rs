@@ -1,4 +1,4 @@
-/**
+/*!
  * ALKALI SOFTWORKS - Wazoo
  * 
  * Video Player Handle
@@ -127,7 +127,7 @@ pub fn format_subtitle_track_label(track: &SubtitleTrack, index: usize) -> Strin
         let display = language_display_name(l);
         if !display.is_empty() {
             Some(display.to_string())
-        } else if l.to_ascii_lowercase() == "enm" {
+        } else if l.eq_ignore_ascii_case("enm") {
             Some("English".to_string())
         } else {
             let trimmed = l.trim().to_ascii_uppercase();
@@ -378,7 +378,6 @@ pub struct VideoHandle {
     render_width: u32,
     render_height: u32,
     pixel_buffer: Vec<u8>,
-    current_frame: iced::widget::image::Handle,
     frame: Arc<Mutex<FrameData>>,
     alive: Arc<AtomicBool>,
     is_eos: bool,
@@ -563,12 +562,6 @@ impl VideoHandle {
             for chunk in pixel_buffer.chunks_exact_mut(4) {
                 chunk[3] = 255;
             }
-            let current_frame = iced::widget::image::Handle::from_rgba(
-                render_width,
-                render_height,
-                pixel_buffer.clone(),
-            );
-
             let alive = Arc::new(AtomicBool::new(true));
             let frame = Arc::new(Mutex::new(FrameData {
                 width: render_width,
@@ -599,7 +592,6 @@ impl VideoHandle {
                 render_width,
                 render_height,
                 pixel_buffer,
-                current_frame,
                 frame,
                 alive,
                 is_eos: false,
@@ -750,19 +742,6 @@ impl VideoHandle {
             fit_cover,
         );
         iced::Element::new(crate::pipeline::video_shader(program))
-    }
-
-    /// Retrieve the current decoded video frame for rendering in Iced
-    pub fn frame_handle(&self) -> iced::widget::image::Handle {
-        self.current_frame.clone()
-    }
-
-    pub fn dimensions(&self) -> (u32, u32) {
-        (self.render_width, self.render_height)
-    }
-
-    pub fn pixel_buffer(&self) -> &[u8] {
-        &self.pixel_buffer
     }
 
     pub fn set_volume(&mut self, volume: f64) {

@@ -13,8 +13,6 @@ bytemuck = { workspace = true }
 tokio.workspace = true
 rand.workspace = true
 log.workspace = true
-url.workspace = true
-thiserror.workspace = true
 serde.workspace = true
 libloading.workspace = true
 miniz_oxide.workspace = true
