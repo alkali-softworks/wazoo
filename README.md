@@ -1,50 +1,42 @@
-# 🌊 Wazoo
+# <img src="crates/wazoo-app/resources/icon.png" width="48" align="center" /> Wazoo
 
-> **Ambient media engine for non-stop viewing - built in native Rust.**
+> **Ambient multi-player for non-stop viewing.**
 
-**Wazoo** is an ambient video player and "moving mood-board" built for artists and curators who want a continuous stream of visual reference and inspiration from their local video collection. It provides a non-stop feed of videos based on your library and optional search query. 
+**Wazoo** is a video player and "moving mood-board" made for artists and curators who want a continuous stream of visual reference and inspiration from their local video collection. It provides a continuous **multi-player** view based on your library and optional search query. 
 
-Wazoo is an idea in development since 2020 - originally as a JS app, then Electron, and now finally a native Rust app, ported with the culmination of all the best features from prior versions.
-
----
-
-## 🧠 Built for Background Reference
-
-Most video players assume you're sitting down for a movie or managing a queue. Wazoo is built for a different workflow:
-
-- **Hands-off ambient flow**: Point Wazoo at your video folders and let it run. No playlists to manage, no file dialogs to click through.
-- **Fast search & filtering**: Use text queries and negative terms to instantly narrow down files and folders across your entire collection.
+Wazoo is an idea in development since 2020 - originally as a JS app, then Electron, and now finally a native Rust app, ported with all the best features from prior versions.
 
 ---
 
-## ⚡ High-Performance Architecture
 
-Built in native **Rust** and **Iced** with hardware-accelerated **`libmpv`**, so it can run all day in the background without hogging system resources:
+## 🧠 High-Performance Architecture
 
-- **Lightweight resource usage**: Consumes **~70 MB - 150 MB** of RAM during playback, leaving your CPU and GPU free for Blender, Photoshop, or your DAW.
-- **Pure native stack**: Zero Electron or web-engine overhead, with instant startup and no garbage collection stutter.
-- **Hardware-accelerated decoding**: Smooth playback for H.264, HEVC 10-bit, AV1, and VP9 through `libmpv`.
-- **Fast local indexing**: SQLite (`rusqlite`) indexes tens of thousands of video files for instant search and shuffle queries.
+Built in native **Rust** and **Iced** with hardware-accelerated **`libmpv`**:
+
+- **Lightweight resource usage**: Consumes **less than 70 MB of RAM** during playback.
+- **Pure native stack**: Zero Electron or web-engine overhead, with instant startup.
+- **Hardware-accelerated decoding**: Playback for H.264, HEVC 10-bit, AV1, and VP9.
+- **Fast SQLite indexing**: Query tens of thousands of video files instantly.
 
 ---
 
-## ✨ Features
+## Features
 
 
 ### 🖼️ Multi-Tile Layouts
 - **1 to 12 Video Players**: Scale from a single minimalist player to an ambient video wall.
 - **Flexible Layouts**: Cycle between **Grid**, **Row**, and **Column** arrangements (<kbd>L</kbd>).
-- **Independent Audio & Controls**: Per-tile volume control, seek sliders, auto-unmute on volume adjustment, and quick random seek (<kbd>R</kbd>).
+- **Independent Audio & Controls**: Per-tile volume control, seek slider, language select, and play mode.
 
 ### 🔍 Instant Library Search
 - **Directory Scanner**: Recursively indexes media folders while cleaning up messy filenames in the UI.
-- **Query Parser & Negative Search**: Dial in your media pool quickly. Type partial names, separate multiple terms with commas, and exclude terms with `not ` or `!` (e.g. `anime, not bebop`).
+- **Dial in your media pool**:  Type partial names, separate multiple terms with commas, and exclude terms with `not ` or `!` (e.g. `anime, not bebop`).
 
 ### 🌊 The Infinity Stream ("Scroll Mode")
 View your library as a continuous vertical feed (<kbd>5</kbd>):
 - Smooth vertical scroll at configurable `scroll_speed` (<kbd>+</kbd> / <kbd>-</kbd>).
 - **Virtual Viewport**: Automatically unloads players that scroll out of view and loads new candidate videos at the bottom.
-- **Proportional Audio Fading**: Audio fades in and out based on how much of the video tile is visible on screen.
+- **Proportional Audio Fading**: Audio fades in and out based on how much of the video is visible on screen.
 
 ### ⚡ Flip Mode & Shuffle History
 Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</kbd>):
@@ -83,7 +75,7 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
   ```
 
 ### 🐕 Playback Watchdog
-Monitors playback progress and automatically advances to the next video if a file stalls or encounters an issue, keeping your background stream running uninterrupted.
+Monitors playback progress and automatically advances to the next video if a file stalls or encounters an issue.
 
 ---
 
@@ -216,17 +208,12 @@ Key properties configurable in `settings.json`:
   "window_opacity": 1.0,
   "language": "en",
   "preferred_audio_language": "Japanese",
-  "layout": "grid",
-  "player_count": 1
+  "keybinds": {}
 }
 ```
 
-- **`flip_interval_secs`**: Interval in seconds between random video switches in Flip Mode (range: 1–3600s, default: `45`). Can also be temporarily overridden with `WAZOO_FLIP_INTERVAL_SECS`.
 - **`buffer_duration_secs`**: Demuxer readahead buffer duration in seconds (range: 2–300s, default: `10`).
 - **`buffer_size_mb`**: Maximum demuxer cache size in megabytes (range: 16–4096 MB, default: `64`).
-- **`window_opacity`**: Opacity of the main window (0.1 to 1.0, default: `1.0`).
-- **`language`**: Interface language code (`en`, `es`, `ja`, `zh`, `de`, `fr`, etc.).
-- **`preferred_audio_language`**: Preferred audio stream language for multi-track video playback.
 
 ---
 
