@@ -14,7 +14,7 @@ use iced::{
     Point, Task,
 };
 use wazoo_core::{Bookmark, KeyAction, LayoutMode, PlaybackMode};
-use wazoo_media::{PlayerId, VideoHandle};
+use wazoo_media::{PlayerId, StartTime, VideoHandle};
 use wazoo_scanner::{ScanStage, Scanner};
 use crate::app::{WazooApp, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, TITLEBAR_HIDE_TICKS, TITLEBAR_SHOW_DELAY_TICKS};
 use crate::format;
@@ -87,12 +87,14 @@ impl WazooApp {
 
         // 2. If forward_stack had no entries (or loading failed), generate next video (random or sequential)
         if !loaded {
+            let start_time = if self.settings.playback_mode == PlaybackMode::Scroll || self.settings.playback_mode == PlaybackMode::Flip {
+                StartTime::Random
+            } else {
+                StartTime::Beginning
+            };
             for _ in 0..3 {
                 if let Some(video_rec) = self.get_next_video_rec_with_mode(curr_path.as_deref(), self.is_player_shuffle(id)) {
-                    if let Ok(mut new_handle) = self.create_video_handle(id, &video_rec.path, &video_rec.name) {
-                        if self.settings.playback_mode == PlaybackMode::Scroll || self.settings.playback_mode == PlaybackMode::Flip {
-                            new_handle.seek_random();
-                        }
+                    if let Ok(new_handle) = self.create_video_handle_with_start_time(id, &video_rec.path, &video_rec.name, start_time) {
                         self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
                         break;
@@ -222,10 +224,10 @@ impl WazooApp {
                     Ok(mut handle) => {
                         handle.set_subtitles_visible(self.subtitles_enabled);
                         handle.set_muted(self.settings.is_global_muted);
-                        handle.seek_random();
                         let item_h = self.calculate_player_scroll_height(&handle);
+                        let margin = self.scroll_engine.default_item_height() * 1.5;
                         // If scroll stream needs a player right now, attach it immediately!
-                        if let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(item_h * 0.5) {
+                        if let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(margin) {
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
@@ -268,14 +270,13 @@ impl WazooApp {
                         self.scroll_engine.update_height(p.id, item_h);
                     }
                     self.scroll_engine.recalculate_positions();
-                    let margin = self.scroll_engine.default_item_height() * 0.5;
+                    let margin = self.scroll_engine.default_item_height() * 1.5;
                     while let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(margin) {
                         if let Some(mut handle) = self.preloaded_player.take() {
                             let item_h = self.calculate_player_scroll_height(&handle);
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
-                            handle.seek_random();
                             self.record_play_history(&handle.state.path);
                             self.players.push(handle);
                         } else {
@@ -1164,7 +1165,6 @@ impl WazooApp {
                     }
 
                     for p in &mut self.players {
-                        p.seek_random();
                         let vol = self.scroll_engine.calculate_player_volume(p.id);
                         p.set_volume(vol);
                     }
@@ -1900,7 +1900,7 @@ impl WazooApp {
                         }
                     }
 
-                    let margin = self.scroll_engine.default_item_height() * 0.5;
+                    let margin = self.scroll_engine.default_item_height() * 1.5;
                     let mut needs_preload = false;
 
                     // Non-blocking spawn: attach preloaded player seamlessly if ready
@@ -1910,7 +1910,6 @@ impl WazooApp {
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
-                            handle.seek_random();
                             self.record_play_history(&handle.state.path);
                             self.players.push(handle);
                             needs_preload = true;

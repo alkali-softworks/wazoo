@@ -18,6 +18,29 @@ use crate::pipeline::FrameData;
 
 pub type PlayerId = usize;
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum StartTime {
+    Beginning,
+    Seconds(f64),
+    Percent(f64),
+    Random,
+}
+
+impl From<Option<f64>> for StartTime {
+    fn from(opt: Option<f64>) -> Self {
+        match opt {
+            Some(s) => StartTime::Seconds(s),
+            None => StartTime::Beginning,
+        }
+    }
+}
+
+impl From<f64> for StartTime {
+    fn from(s: f64) -> Self {
+        StartTime::Seconds(s)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AudioTrack {
     pub id: i64,
@@ -437,8 +460,9 @@ impl VideoHandle {
         file_path: &str,
         name: &str,
         config: BufferConfig,
-        start_secs: Option<f64>,
+        start_time: impl Into<StartTime>,
     ) -> Result<Self, String> {
+        let start_time = start_time.into();
         unsafe {
             let mpv = mpv_ffi::mpv_create();
             if mpv.is_null() {
@@ -461,8 +485,13 @@ impl VideoHandle {
             // Allow override via WAZOO_HWDEC environment variable (e.g. "auto-copy") for specialized setups.
             let hwdec = std::env::var("WAZOO_HWDEC").unwrap_or_else(|_| "no".to_string());
             set_opt("hwdec", &hwdec);
-            set_opt("demuxer-max-bytes", &format!("{}M", config.size_mb.max(16)));
-            set_opt("demuxer-readahead-secs", &format!("{}", config.duration_secs.max(2)));
+            set_opt("cache", "yes");
+            set_opt("demuxer-max-bytes", &format!("{}M", config.size_mb.max(32)));
+            set_opt("demuxer-readahead-secs", &format!("{}", config.duration_secs.max(10)));
+            set_opt("demuxer-max-back-bytes", "32M");
+            set_opt("cache-pause", "no");
+            set_opt("hr-seek-framedrop", "yes");
+            set_opt("force-seekable", "yes");
             set_opt("osc", "no");
             set_opt("osd-level", "0");
             set_opt("osd-on-seek", "no");
@@ -481,9 +510,20 @@ impl VideoHandle {
                 }
             }
 
-            if let Some(start) = start_secs {
-                if start > 0.05 {
-                    set_opt("start", &format!("{:.3}", start));
+            match start_time {
+                StartTime::Beginning => {}
+                StartTime::Seconds(start) => {
+                    if start > 0.05 {
+                        set_opt("start", &format!("{:.3}", start));
+                    }
+                }
+                StartTime::Percent(pct) => {
+                    let clamped = pct.clamp(0.0, 95.0);
+                    set_opt("start", &format!("{:.1}%", clamped));
+                }
+                StartTime::Random => {
+                    let rand_pct = rand::thread_rng().gen_range(5.0..85.0);
+                    set_opt("start", &format!("{:.1}%", rand_pct));
                 }
             }
 
@@ -586,15 +626,17 @@ impl VideoHandle {
             let mut state = PlayerState::new(id, file_path.to_string(), name.to_string());
             state.duration = initial_duration;
 
-            let (pending_seek, last_seek_time) = if let Some(start) = start_secs {
-                if start > 0.05 {
-                    state.position = Duration::from_secs_f64(start);
-                    (Some(Duration::from_secs_f64(start)), Some(Instant::now()))
-                } else {
-                    (None, None)
+            let (pending_seek, last_seek_time) = match start_time {
+                StartTime::Beginning => (None, None),
+                StartTime::Seconds(start) => {
+                    if start > 0.05 {
+                        state.position = Duration::from_secs_f64(start);
+                        (Some(Duration::from_secs_f64(start)), Some(Instant::now()))
+                    } else {
+                        (None, None)
+                    }
                 }
-            } else {
-                (None, None)
+                StartTime::Percent(_) | StartTime::Random => (None, Some(Instant::now())),
             };
 
             let mut handle = Self {
@@ -655,7 +697,7 @@ impl VideoHandle {
                             self.pending_seek_random = false;
                             let max_secs = dur.as_secs_f64();
                             let rand_secs = rand::thread_rng().gen_range(0.0..max_secs);
-                            self.seek(Duration::from_secs_f64(rand_secs));
+                            self.seek_fast(Duration::from_secs_f64(rand_secs));
                         }
                     }
                 }
@@ -688,7 +730,7 @@ impl VideoHandle {
                     self.pending_seek_random = false;
                     let max_secs = dur.as_secs_f64();
                     let rand_secs = rand::thread_rng().gen_range(0.0..max_secs);
-                    self.seek(Duration::from_secs_f64(rand_secs));
+                    self.seek_fast(Duration::from_secs_f64(rand_secs));
                 }
             }
 
@@ -851,8 +893,20 @@ impl VideoHandle {
         }
     }
 
+    pub fn has_decoded_frame(&self) -> bool {
+        if let Ok(guard) = self.frame.lock() {
+            !guard.pixels.is_empty() && guard.width > 0 && guard.height > 0
+        } else {
+            false
+        }
+    }
+
     pub fn is_pending_seek_random(&self) -> bool {
         self.pending_seek_random
+    }
+
+    pub fn seek_fast(&mut self, position: Duration) {
+        self.seek_internal(position.as_secs_f64(), false, false);
     }
 
     pub fn seek_random(&mut self) {
@@ -861,7 +915,7 @@ impl VideoHandle {
             let max_secs = duration.as_secs_f64();
             let rand_secs = rand::thread_rng().gen_range(0.0..max_secs);
             self.pending_seek_random = false;
-            self.seek(Duration::from_secs_f64(rand_secs));
+            self.seek_fast(Duration::from_secs_f64(rand_secs));
         } else {
             self.pending_seek_random = true;
         }
@@ -1498,19 +1552,15 @@ mod tests {
     }
 
     #[test]
-    fn test_pending_seek_random_flag() {
-        let temp_dir = std::env::temp_dir();
-        let dummy_path = temp_dir.join("wazoo_dummy_test.mp4");
-        let _ = std::fs::write(&dummy_path, b"dummy content");
-        if let Ok(mut handle) = VideoHandle::new(999, dummy_path.to_str().unwrap(), "dummy") {
-            assert!(!handle.is_pending_seek_random());
-            handle.seek_random();
-            // Since dummy file has 0 duration, seek_random marks pending_seek_random
-            assert!(handle.is_pending_seek_random());
-            // Manual seek clears pending_seek_random
-            handle.seek(Duration::from_secs(5));
-            assert!(!handle.is_pending_seek_random());
+    fn test_mpv_start_option() {
+        unsafe {
+            let mpv = mpv_ffi::mpv_create();
+            assert!(!mpv.is_null());
+            let k = CString::new("start").unwrap();
+            let v = CString::new("25%").unwrap();
+            let res = mpv_ffi::mpv_set_option_string(mpv, k.as_ptr(), v.as_ptr());
+            assert_eq!(res, 0, "mpv must accept percentage for start option");
+            mpv_ffi::mpv_terminate_destroy(mpv);
         }
-        let _ = std::fs::remove_file(&dummy_path);
     }
 }

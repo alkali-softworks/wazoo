@@ -12,7 +12,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use iced::{Point, Subscription, Task, Theme};
 use wazoo_core::{ConfigManager, Database, PlaybackMode, VideoRecord, VideoSession, WazooSettings};
-use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, VideoHandle};
+use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, StartTime, VideoHandle};
 use wazoo_scanner::ScanProgress;
 use crate::assets::APP_ICON_BYTES;
 use crate::format;
@@ -362,9 +362,6 @@ impl WazooApp {
                 }
             }
             for p in &mut app.players {
-                p.seek_random();
-            }
-            for p in &mut app.players {
                 let vol = app.scroll_engine.calculate_player_volume(p.id);
                 p.set_volume(vol);
             }
@@ -670,11 +667,21 @@ impl WazooApp {
     }
 
     pub(crate) fn create_video_handle(&self, id: PlayerId, path: &str, name: &str) -> Result<VideoHandle, String> {
-        self.create_video_handle_with_start(id, path, name, None)
+        self.create_video_handle_with_start_time(id, path, name, StartTime::Beginning)
     }
 
     pub(crate) fn create_video_handle_with_start(&self, id: PlayerId, path: &str, name: &str, start_secs: Option<f64>) -> Result<VideoHandle, String> {
-        VideoHandle::with_buffering_and_start(id, path, name, self.buffer_config(), start_secs)
+        self.create_video_handle_with_start_time(id, path, name, start_secs)
+    }
+
+    pub(crate) fn create_video_handle_with_start_time(
+        &self,
+        id: PlayerId,
+        path: &str,
+        name: &str,
+        start_time: impl Into<StartTime>,
+    ) -> Result<VideoHandle, String> {
+        VideoHandle::with_buffering_and_start(id, path, name, self.buffer_config(), start_time)
     }
 
     pub fn current_opacity(&self) -> f32 {
@@ -697,16 +704,18 @@ impl WazooApp {
         } else {
             true
         };
+        let start_time = if self.settings.playback_mode == PlaybackMode::Scroll {
+            StartTime::Random
+        } else {
+            StartTime::Beginning
+        };
 
         for _ in 0..3 {
             if let Some(video_rec) = self.get_next_video_rec(None) {
-                match self.create_video_handle(id, &video_rec.path, &video_rec.name) {
+                match self.create_video_handle_with_start_time(id, &video_rec.path, &video_rec.name, start_time) {
                     Ok(mut handle) => {
                         handle.set_muted(initial_muted);
                         handle.set_subtitles_visible(self.subtitles_enabled);
-                        if self.settings.playback_mode == PlaybackMode::Scroll {
-                            handle.seek_random();
-                        }
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
                         self.player_shuffle_modes.insert(id, self.is_shuffle_mode);
                         self.players.push(handle);
@@ -862,13 +871,24 @@ impl WazooApp {
         Task::perform(
             async move {
                 let res = tokio::task::spawn_blocking(move || {
-                    let mut handle = VideoHandle::with_buffering(id, &path, &name, buffer_config)?;
+                    let mut handle = VideoHandle::with_buffering_and_start(
+                        id,
+                        &path,
+                        &name,
+                        buffer_config,
+                        StartTime::Random,
+                    )?;
+
+                    // Background pre-buffer: decode initial presentation frame off-thread
+                    // so the player is 100% ready when attached to the scroll feed without hitching.
                     let start = std::time::Instant::now();
-                    while handle.duration() <= Duration::from_secs(2) && start.elapsed() < Duration::from_millis(200) {
-                        handle.update_frame();
-                        std::thread::sleep(Duration::from_millis(5));
+                    while !handle.has_decoded_frame() && start.elapsed() < Duration::from_millis(2000) {
+                        if handle.update_frame() {
+                            break;
+                        }
+                        std::thread::sleep(Duration::from_millis(10));
                     }
-                    handle.seek_random();
+
                     Ok::<VideoHandle, String>(handle)
                 })
                 .await
