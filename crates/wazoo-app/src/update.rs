@@ -1927,9 +1927,9 @@ impl WazooApp {
                 if !self.is_window_focused {
                     self.unfocused_frame_ticks = self.unfocused_frame_ticks.wrapping_add(1);
                     // When the window is behind another window or unfocused, throttle frame updates
-                    // to ~6 FPS (every 10th tick) so audio keeps playing without hammering WGPU
-                    // surface swapchains and triggering X11/Vulkan presentation deadlocks.
-                    if !self.unfocused_frame_ticks.is_multiple_of(10) {
+                    // to ~30 FPS (every 2nd tick) so background playback remains smooth (movie standard)
+                    // without hammering GPU presentation swapchains.
+                    if !self.unfocused_frame_ticks.is_multiple_of(2) {
                         return Task::none();
                     }
                 }
