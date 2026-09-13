@@ -46,8 +46,11 @@ Experience your media library as a continuous vertical river of content (<kbd>5<
 - **Virtual Viewport**: Automatically despawns players that scroll off the top edge and seamlessly spawns new candidate videos at the bottom.
 - **Proportional Audio Cross-Fading**: Sound smoothly fades in and out based on the visible percentage of each video on screen.
 
-### ⚡ Flip Mode
+### ⚡ Flip Mode & Shuffle History Navigation
 Rapid ambient variety (<kbd>6</kbd>). Staggered background timers automatically shuffle and seek active video tiles to random timestamps, keeping visuals fresh without manual intervention.
+- **Never Miss a Moment**: If you glance at something cool that just flipped away or was skipped in shuffle mode, simply hit **Previous** (<kbd>↓</kbd> or the on-screen Prev button) to jump right back to the previous random video at the exact timestamp you left it.
+- **Scrub Back & Forth**: Pressing **Next** (<kbd>↑</kbd> or Next button) walks forward back through the scrubbed videos before generating new random picks.
+- **Resetting the Stack**: Press <kbd>S</kbd> (or click the play-mode toggle icon on the player overlay) to switch between **Shuffle** and **Sequential** playback. Toggling playback modes clears both the back stack and forward stack, so you can switch to sequential mode and hit <kbd>↓</kbd> to immediately navigate to the previous sequential file in your folder.
 
 ### 🔍 Instant Library Search
 - **Smart Directory Scanner**: Recursively indexes media folders while stripping clutter from video titles.
@@ -164,11 +167,11 @@ scoop install ffmpeg
 | <kbd>H</kbd> | Toggle **File Browser** drawer |
 | <kbd>C</kbd> | Toggle Subtitles on/off |
 | <kbd>J</kbd> / <kbd>F</kbd> / <kbd>/</kbd> | Open **Find / Search** modal |
-| <kbd>S</kbd> | Toggle **Shuffle** vs. Sequential playback |
+| <kbd>S</kbd> | Toggle **Shuffle** vs. Sequential playback (resets navigation stack) |
 | <kbd>M</kbd> | Toggle **Mute** (unmutes automatically when volume changes) |
 | <kbd>[</kbd> / <kbd>]</kbd> | Adjust Volume down / up |
 | <kbd>Space</kbd> | Play / Pause focused player |
-| <kbd>↑</kbd> / <kbd>↓</kbd> | Next / Previous video in focused player |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Next / Previous video in focused player (navigates random history in shuffle mode) |
 | <kbd>←</kbd> / <kbd>→</kbd> | Seek backward / forward 5 seconds |
 | <kbd>,</kbd> / <kbd>.</kbd> | Step backward / forward one frame |
 | <kbd>1</kbd> – <kbd>4</kbd> | Set active player count (1 to 4) |
