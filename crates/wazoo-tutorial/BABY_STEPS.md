@@ -958,3 +958,95 @@ If you ever hit this compile-time tax:
 | :--- | :--- | :--- |
 | **Runtime Performance** | The User's CPU & RAM | **0% (Free / Inlined)** |
 | **Compile-Time Friction** | The Developer (You!) | **Paid during `cargo check`** |
+
+---
+
+## 📂 Chapter 13: Splitting `impl Struct` Across Multiple Files
+
+In languages like PHP, a class definition must live in a single file:
+```php
+// PHP: All 3,000 lines of methods for WazooApp must live inside this single class!
+class WazooApp {
+    public function update() { ... }
+    public function save_session_state() { ... }
+    public function view() { ... }
+}
+```
+If a PHP class grows to 3,000 lines, you either live with a "god class" or break it up using PHP Traits or dependency-injected service objects.
+
+In Rust, **data (`struct`) and behavior (`impl`) are completely decoupled**, and you can write as many `impl` blocks as you want across different files in the same crate!
+
+---
+
+### How Wazoo Splits `WazooApp`
+
+#### 1. In `app.rs`: The Struct and Core Logic
+```rust
+// app.rs defines the data shape (fields):
+pub struct WazooApp {
+    pub settings: Settings,
+    pub players: Vec<VideoHandle>,
+    // ...
+}
+
+// app.rs implements constructor and session persistence:
+impl WazooApp {
+    pub fn new() -> (Self, Task<Message>) { ... }
+
+    pub(crate) fn save_session_state(&mut self) {
+        // saves window positions and playback states
+    }
+}
+```
+
+#### 2. In `update.rs`: The Event Reducer
+```rust
+// update.rs imports the struct:
+use crate::app::WazooApp;
+
+// update.rs opens ANOTHER impl block on the exact same struct!
+impl WazooApp {
+    pub fn update(&mut self, message: Message) -> Task<Message> {
+        match message {
+            Message::CloseApp => {
+                // Look! We call save_session_state() directly on `self`!
+                self.save_session_state(); 
+                // ...
+            }
+        }
+    }
+}
+```
+
+Because both files say `impl WazooApp`, Rust combines all these methods into the **exact same `WazooApp` type**. 
+
+Inside `update.rs`, `self` is an instance of `WazooApp`. It has direct access to:
+- Fields defined in `app.rs` (`self.settings`, `self.players`).
+- Methods defined in `app.rs` (`self.save_session_state()`).
+- Methods defined in `update.rs` (`self.handle_cursor_moved(...)`).
+
+---
+
+### The JavaScript Prototype Analogy
+If you've written JavaScript before ES6 classes:
+```javascript
+// In app.js:
+function WazooApp() {}
+WazooApp.prototype.saveSessionState = function() { ... };
+
+// In update.js:
+WazooApp.prototype.update = function() {
+    // `this` has saveSessionState(), even though it was written in app.js!
+    this.saveSessionState();
+};
+```
+
+---
+
+### Key Takeaway:
+You never have to cram an entire struct's logic into one giant file. You can organize your Rust code by feature or lifecycle:
+- `app.rs` $\rightarrow$ struct fields, constructor (`new()`), background subscriptions
+- `update.rs` $\rightarrow$ event reducer and message handling
+- `view.rs` $\rightarrow$ UI layouts and widgets
+
+All of them share the exact same `self`!
