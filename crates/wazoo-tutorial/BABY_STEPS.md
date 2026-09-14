@@ -779,3 +779,65 @@ Now the background worker has its very own copy in memory. It can run safely for
 ### Rule of Thumb:
 Whenever you see `.clone()` right before `Task::perform(async move { ... })`, remember:
 **Worker threads must own their data—they cannot borrow temporary references from the UI!**
+
+---
+
+## 🚚 Chapter 10: The `move` Keyword — Stealing Ownership into Closures & Tasks
+
+In `wazoo-app/src/update.rs`:
+```rust
+let path_clone = path.clone();
+
+return Task::perform(
+    // Move #1: The Background Async Task
+    async move {
+        wazoo_media::load_subtitles_for_stream(path, ...).await
+    },
+    // Move #2: The Completion Callback
+    move |cues| Message::TranscriptLoaded(path_clone, cues),
+);
+```
+
+Notice the **two `move` keywords**! What are they doing?
+
+### 1. By Default, Closures Try to Borrow (`&`)
+
+In PHP, you explicitly bring variables into a closure with `function() use ($var)`.
+In JavaScript, closures silently hold a reference to whatever is in the outer scope.
+
+In Rust, closures try to **borrow** variables by reference (`&path`).
+
+### 2. What `move` Does: "Steal It!"
+
+When you add the `move` keyword before a closure or async block:
+```rust
+async move { ... }
+move |cues| { ... }
+```
+You tell the compiler:
+> *"Do NOT just borrow this variable with a temporary reference `&`. **Take full ownership of it!** Pack it into a box and take it with you."*
+
+### 3. The Two Moves Explained:
+
+1. **Move #1 (`async move { ... }`)**:
+   - This block is being sent away to a **Tokio background worker thread**.
+   - `move` steals `path` from the current function and gives full ownership to the background thread.
+2. **Move #2 (`move |cues| ...`)**:
+   - This is the **completion callback** that Iced will run later when the async task finishes.
+   - `move` packs `path_clone` directly inside the callback closure so it stays alive until the background task is done.
+
+### 4. Why We Had to Clone on Line 752
+
+Now the whole puzzle connects:
+- Rust rule: **A value can only have ONE owner at a time.**
+- Move #1 needed `path`.
+- Move #2 also needed `path`.
+- You can't move the same value into two different places!
+- That's why we wrote:
+  ```rust
+  let path_clone = path.clone(); // Create a second copy!
+  ```
+  - Copy 1 (`path`) is moved into the **Background Worker Thread**.
+  - Copy 2 (`path_clone`) is moved into the **Completion Callback Closure**.
+
+Each thread and callback gets its own safe copy, preventing memory corruption, data races, and segfaults!
