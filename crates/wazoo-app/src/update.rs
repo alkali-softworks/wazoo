@@ -298,17 +298,12 @@ impl WazooApp {
                 self.is_window_focused = true;
                 self.unfocused_frame_ticks = 0;
 
-                // If pointer motion resumes from the OS, any active OS window drag has concluded
                 if self.is_window_dragging {
-                    self.is_window_dragging = false;
-                    self.titlebar_drag_pending = false;
-                    self.titlebar_press_origin = None;
-                    if !self.is_point_in_titlebar(pos) {
-                        self.titlebar_hide_ticks = self.titlebar_hide_ticks.min(TITLEBAR_FADE_TICKS);
-                    }
-                }
-
-                if self.show_dropdown_menu {
+                    // While dragging, keep titlebar visible even if cursor wobbles or flies around
+                    self.show_titlebar = true;
+                    self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                    self.titlebar_hover_ticks = 0;
+                } else if self.show_dropdown_menu {
                     self.show_titlebar = true;
                     self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
                     self.titlebar_hover_ticks = 0;
@@ -324,8 +319,8 @@ impl WazooApp {
                     }
                 } else {
                     self.titlebar_hover_ticks = 0;
-                    // When cursor leaves the titlebar area, start fading out without sticky delay
-                    if self.show_titlebar && !self.show_dropdown_menu && !self.is_window_dragging && !self.titlebar_drag_pending {
+                    // When cursor leaves the titlebar area, start fading out smoothly without sticky delay
+                    if self.show_titlebar && !self.show_dropdown_menu && !self.titlebar_drag_pending {
                         self.titlebar_hide_ticks = self.titlebar_hide_ticks.min(TITLEBAR_FADE_TICKS);
                     }
                 }
@@ -377,9 +372,13 @@ impl WazooApp {
                 self.titlebar_drag_pending = false;
                 self.titlebar_press_origin = None;
                 if was_dragging {
-                    // Invalidate stale pre-drag titlebar coordinate and begin clean fade out
-                    self.cursor_position = Point::new(-1000.0, -1000.0);
-                    self.titlebar_hide_ticks = TITLEBAR_FADE_TICKS;
+                    // On mouseup, drag has ended.
+                    // If cursor is outside titlebar (e.g. over video due to wobbly drag), fade out immediately.
+                    if self.is_point_in_titlebar(self.cursor_position) {
+                        self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                    } else {
+                        self.titlebar_hide_ticks = TITLEBAR_FADE_TICKS;
+                    }
                 } else if !self.is_point_in_titlebar(self.cursor_position) {
                     self.titlebar_hide_ticks = self.titlebar_hide_ticks.min(TITLEBAR_FADE_TICKS);
                 }

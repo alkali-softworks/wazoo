@@ -1452,10 +1452,11 @@ mod tests {
         assert!(!app.titlebar_drag_pending);
         assert_eq!(app.titlebar_alpha(), 1.0);
 
-        // Simulate OS pointer grab causing CursorLeft event
-        let _ = app.update(Message::CursorLeft);
-        assert_ne!(app.cursor_position, Point::new(-1000.0, -1000.0));
+        // Simulate wobbly windows: cursor flies around over video while dragging
+        let _ = app.update(Message::CursorMoved(win_id, Point::new(400.0, 500.0)));
         assert!(app.is_window_dragging);
+        assert!(app.show_titlebar);
+        assert_eq!(app.titlebar_alpha(), 1.0);
 
         // Run 100 frame ticks (well beyond TITLEBAR_HIDE_TICKS = 50)
         for _ in 0..100 {
@@ -1466,10 +1467,9 @@ mod tests {
         assert!(app.show_titlebar);
         assert_eq!(app.titlebar_alpha(), 1.0);
 
-        // Release mouse button to conclude drag
+        // Release mouse button (mouseup) to conclude drag
         let _ = app.update(Message::LeftClickReleased);
         assert!(!app.is_window_dragging);
-        assert_eq!(app.cursor_position, Point::new(-1000.0, -1000.0));
         assert_eq!(app.titlebar_hide_ticks, TITLEBAR_FADE_TICKS);
 
         // After fading out over TITLEBAR_FADE_TICKS frames, titlebar is completely dismissed without wiggling
