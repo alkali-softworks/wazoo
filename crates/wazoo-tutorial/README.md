@@ -8,7 +8,7 @@ Every file in this crate is loaded with in-depth pedagogical comments explaining
 
 ## 🚀 Quick Start
 
-From the root of `wazoo-rs` (`/home/klo/wazoo/wazoo-rs`):
+From the root of `wazoo-rs`:
 
 ```bash
 # Run the interactive tutorial app
@@ -92,13 +92,13 @@ Task::perform(
 Once you have run the app, try these fun challenges to level up your skills:
 
 1. **Add a "Clear" button to the Text Input**:
-   - Add a variant `ClearTextInput` to `enum Message` in [`src/message.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/message.rs).
-   - In [`src/app.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/app.rs), handle `Message::ClearTextInput` by clearing `self.text_input_value.clear()`.
-   - In [`src/tabs/counter_tab.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/tabs/counter_tab.rs), add a button with `.on_press(Message::ClearTextInput)`.
+   - Add a variant `ClearTextInput` to `enum Message` in [`src/message.rs`](src/message.rs).
+   - In [`src/app.rs`](src/app.rs), handle `Message::ClearTextInput` by clearing `self.text_input_value.clear()`.
+   - In [`src/tabs/counter_tab.rs`](src/tabs/counter_tab.rs), add a button with `.on_press(Message::ClearTextInput)`.
 
 2. **Add a Note Filter/Search in the SQLite Tab**:
-   - Add a search input field in [`src/tabs/database_tab.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/tabs/database_tab.rs).
+   - Add a search input field in [`src/tabs/database_tab.rs`](src/tabs/database_tab.rs).
    - Filter `self.cached_notes` by note title!
 
 3. **Experiment with Custom Themes**:
-   - In [`src/tabs/theming_tab.rs`](file:///home/klo/wazoo/wazoo-rs/crates/wazoo-tutorial/src/tabs/theming_tab.rs), add `Theme::CatppuccinMacchiato` or `Theme::Oxocarbon` to `AVAILABLE_THEMES` and observe how the entire UI styling transforms.
+   - In [`src/tabs/theming_tab.rs`](src/tabs/theming_tab.rs), add `Theme::CatppuccinMacchiato` or `Theme::Oxocarbon` to `AVAILABLE_THEMES` and observe how the entire UI styling transforms.

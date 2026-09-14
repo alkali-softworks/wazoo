@@ -253,18 +253,18 @@ impl User {
 
 ---
 
-### ❓ "Wait, if it's not a class, how does it have a constructor? Do I say `new User('klo', 42)`?"
+### ❓ "Wait, if it's not a class, how does it have a constructor? Do I say `new User('Alice', 42)`?"
 
 **NO! There is NO `new` keyword in Rust!**
 
 In JS and PHP, `new` is a built-in language operator that allocates an object on the heap and triggers `__construct()`:
 ```js
 // JavaScript:
-const user = new User("klo", 42);
+const user = new User("Alice", 42);
 ```
 ```php
 // PHP:
-$user = new User("klo", 42);
+$user = new User("Alice", 42);
 ```
 
 **In Rust, `new` is NOT a language keyword.**
@@ -274,19 +274,19 @@ Rust doesn't have constructors at the language level. Instead, there are **two w
 Because `new` is just a regular static function in `impl User`, you call it using double colons `::`:
 ```rust
 // How you call it in Rust:
-let mut user = User::new(String::from("klo"), 42);
+let mut user = User::new(String::from("Alice"), 42);
 
 // Now you can call methods on it with a dot:
 user.celebrate_birthday();
 println!("Age is now: {}", user.age); // 43
 ```
-*(Notice `String::from("klo")` because `"klo"` in quotes is a borrowed `&str`, but our struct owns a heap `String`. And `42` is an integer number, not a string `'42'`!)*
+*(Notice `String::from("Alice")` because `"Alice"` in quotes is a borrowed `&str`, but our struct owns a heap `String`. And `42` is an integer number, not a string `'42'`!)*
 
 #### Method B: Direct Struct Literal (No function needed at all!)
 If a struct's fields are public, you don't even need a `new()` function! You can instantiate it directly in place (like a JS object literal):
 ```rust
 let user = User {
-    name: String::from("klo"),
+    name: String::from("Alice"),
     age: 42,
 };
 ```
@@ -373,7 +373,7 @@ impl TutorialApp {
 
 **NO! You do NOT pass `self`!**
 
-You just call it with the dot operator like in JS/PHP:
+You just call it with the dot operator like in JS:
 ```rust
 app.view();                // <-- NO arguments passed for self!
 app.update(my_message);    // <-- Only pass the other arguments!
@@ -422,7 +422,7 @@ Whenever you see:
 
 ---
 
-### 💡 "WTF is `let app = Self { ... }` in `app.rs` line 122?"
+### 💡 "WTF is `let app = Self { ... }` in `app.rs`"
 
 When you see:
 ```rust
@@ -826,7 +826,7 @@ You tell the compiler:
    - This is the **completion callback** that Iced will run later when the async task finishes.
    - `move` packs `path_clone` directly inside the callback closure so it stays alive until the background task is done.
 
-### 4. Why We Had to Clone on Line 752
+### 4. Why We Had to Clone
 
 Now the whole puzzle connects:
 - Rust rule: **A value can only have ONE owner at a time.**
