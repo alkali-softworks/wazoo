@@ -1152,12 +1152,6 @@ mod tests {
         WazooApp::new_with_backend(None, config_mgr, db)
     }
 
-    impl WazooApp {
-        fn get_prev_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
-            self.get_prev_video_rec_with_mode(current_path, self.is_shuffle_mode)
-        }
-    }
-
     #[test]
     fn test_test_app_isolation() {
         let (mut app, _) = new_test_app();
@@ -1251,16 +1245,20 @@ mod tests {
         ];
 
         // 1. Sequential mode
-        app.is_shuffle_mode = false;
-        let prev2 = app.get_prev_video_rec(Some("/media/v2.mp4")).unwrap();
+        let prev2 = app
+            .get_prev_video_rec_with_mode(Some("/media/v2.mp4"), false)
+            .unwrap();
         assert_eq!(prev2.path, "/media/v1.mp4");
-        let prev1 = app.get_prev_video_rec(Some("/media/v1.mp4")).unwrap();
+        let prev1 = app
+            .get_prev_video_rec_with_mode(Some("/media/v1.mp4"), false)
+            .unwrap();
         assert_eq!(prev1.path, "/media/v3.mp4"); // Wraps around to end
 
         // 2. Random/shuffle mode
-        app.is_shuffle_mode = true;
         for _ in 0..10 {
-            let rand_rec = app.get_prev_video_rec(Some("/media/v1.mp4")).unwrap();
+            let rand_rec = app
+                .get_prev_video_rec_with_mode(Some("/media/v1.mp4"), true)
+                .unwrap();
             assert!(app.available_videos.iter().any(|v| v.path == rand_rec.path));
             // With 3 videos, shuffle mode avoids immediately repeating current video
             assert_ne!(rand_rec.path, "/media/v1.mp4");
