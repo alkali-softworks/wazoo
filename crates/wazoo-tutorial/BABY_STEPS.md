@@ -886,3 +886,75 @@ impl WazooApp {
 1. **`update()` stays a high-level Table of Contents**: Anyone opening the file can skim every event handled by the app in 30 seconds.
 2. **Kills Indentation Hell**: Resets deeply nested blocks back to line 1.
 3. **Easier to Test**: You can test `app.handle_key_pressed(key, status)` directly in unit tests without wrapping everything in messages.
+
+---
+
+## ⚡ Chapter 12: Zero-Cost Abstractions vs The "Split Borrow" Tax
+
+When refactoring code into helper methods, developers coming from PHP or JavaScript often wonder:
+*"Am I paying a performance penalty by creating extra function calls?"*
+
+The answer highlights one of the most fundamental concepts in Rust:
+
+### 1. The Runtime Tax: ZERO (0.00 nanoseconds)
+
+In PHP and JavaScript, every function call incurs runtime bookkeeping:
+- **PHP**: Resolves `$this->method()`, allocates a Zend VM execution frame, and pushes arguments onto the stack.
+- **JS / V8**: Checks object shapes / hidden classes, checks inline caches (IC), and manages stack frames.
+
+In **Rust**, structs use **static dispatch** by default:
+- Rust resolves the method address at compile time (no dynamic lookup table, no `vtable`).
+- When compiling in release mode, **LLVM inlines the helper function directly into `update()`**.
+- In the final machine code, the helper disappears completely. The instructions are byte-for-byte identical to having written the entire block inline.
+- Result: **0 extra CPU instructions, 0 bytes of RAM allocated.**
+
+```
+Your Rust Code:                   What the CPU executes:
+update() {                        update() {
+    self.handle_cursor_moved()        [Inlined Cursor Logic]
+}                                 }
+```
+
+### 2. The Compile-Time Tax: The "Split Borrow" Dilemma
+
+So why do Rust developers sometimes talk about a "tax" when creating helpers?
+They are talking about **compile-time brain friction**, specifically **Split Borrows**.
+
+#### Why Inline Code is Permissive:
+When logic lives inline inside a single method, the borrow checker can inspect individual fields of `self`:
+```rust
+// The compiler can see: you're reading `settings`, and mutating `titlebar_ticks`.
+// They are separate struct fields, so the compiler allows it!
+if self.settings.auto_hide {
+    self.titlebar_ticks += 1;
+}
+```
+
+#### Why Helper Methods Can Lock `self`:
+The moment you extract a helper taking `&mut self`:
+```rust
+pub fn my_helper(&mut self)
+```
+The compiler treats `&mut self` as an **exclusive lock on the ENTIRE struct**. Nobody else can borrow ANY field on `self` while that helper is running!
+
+```rust
+// In PHP/JS, this is completely normal:
+// this.players.forEach(p => this.updatePlayer(p));
+
+// In Rust, this triggers a compiler error!
+for player in &mut self.players {
+    self.my_helper(); // 💥 Error: cannot borrow `*self` as mutable more than once at a time
+}
+```
+
+#### The Workaround:
+If you ever hit this compile-time tax:
+1. Don't pass `&mut self` if the helper only needs one or two fields. Pass only those specific fields: `fn helper(player: &mut Player, settings: &Settings)`.
+2. Or use sequential steps (finish modifying the field, then call the helper).
+
+### Summary Cheat-Sheet:
+
+| Tax Type | Who Pays? | Cost |
+| :--- | :--- | :--- |
+| **Runtime Performance** | The User's CPU & RAM | **0% (Free / Inlined)** |
+| **Compile-Time Friction** | The Developer (You!) | **Paid during `cargo check`** |
