@@ -2067,9 +2067,6 @@ impl WazooApp {
                     self.loading_player_ids.insert(rand_id);
                     self.loading_player_ticks.insert(rand_id, 0);
                     let _ = self.update(Message::NextVideo(rand_id));
-                    if let Some(p) = self.players.iter_mut().find(|p| p.id == rand_id) {
-                        p.seek_random();
-                    }
                 }
             }
             Message::DismissToast => {

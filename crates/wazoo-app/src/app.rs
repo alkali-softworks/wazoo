@@ -704,7 +704,9 @@ impl WazooApp {
         } else {
             true
         };
-        let start_time = if self.settings.playback_mode == PlaybackMode::Scroll {
+        let start_time = if self.settings.playback_mode == PlaybackMode::Scroll
+            || self.settings.playback_mode == PlaybackMode::Flip
+        {
             StartTime::Random
         } else {
             StartTime::Beginning
