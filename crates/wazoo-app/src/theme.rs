@@ -1,8 +1,8 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Application Design System & Theme
- * 
+ *
  * Defines colors, container styles, button appearances, inputs, modal backdrops,
  * focus rings, and visual styling rules for the dark ambient aesthetic.
  */
@@ -73,7 +73,9 @@ pub fn titlebar_badge_style(_theme: &Theme, status: button::Status) -> button::S
     }
 }
 
-pub fn titlebar_badge_style_with_alpha(alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+pub fn titlebar_badge_style_with_alpha(
+    alpha: f32,
+) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |theme, status| {
         let base = titlebar_badge_style(theme, status);
         button::Style {
@@ -87,18 +89,12 @@ pub fn titlebar_badge_style_with_alpha(alpha: f32) -> impl Fn(&Theme, button::St
 // Titlebar Brand Link Style ("ALKALI" button)
 pub fn titlebar_brand_link_style(_theme: &Theme, status: button::Status) -> button::Style {
     let (bg, text_color) = match status {
-        button::Status::Hovered => (
-            Color::from_rgba(1.0, 1.0, 1.0, 0.12),
-            Color::WHITE,
-        ),
+        button::Status::Hovered => (Color::from_rgba(1.0, 1.0, 1.0, 0.12), Color::WHITE),
         button::Status::Pressed => (
             Color::from_rgba(1.0, 1.0, 1.0, 0.20),
             Color::from_rgb(0.9, 0.9, 0.9),
         ),
-        _ => (
-            Color::TRANSPARENT,
-            Color::from_rgba(1.0, 1.0, 1.0, 0.70),
-        ),
+        _ => (Color::TRANSPARENT, Color::from_rgba(1.0, 1.0, 1.0, 0.70)),
     };
     button::Style {
         background: Some(Background::Color(bg)),
@@ -113,7 +109,9 @@ pub fn titlebar_brand_link_style(_theme: &Theme, status: button::Status) -> butt
     }
 }
 
-pub fn titlebar_brand_link_style_with_alpha(alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+pub fn titlebar_brand_link_style_with_alpha(
+    alpha: f32,
+) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |theme, status| {
         let base = titlebar_brand_link_style(theme, status);
         button::Style {
@@ -139,7 +137,9 @@ pub fn window_control_button_style(_theme: &Theme, status: button::Status) -> bu
     }
 }
 
-pub fn window_control_button_style_with_alpha(alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+pub fn window_control_button_style_with_alpha(
+    alpha: f32,
+) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |theme, status| {
         let base = window_control_button_style(theme, status);
         button::Style {
@@ -164,7 +164,9 @@ pub fn close_window_button_style(_theme: &Theme, status: button::Status) -> butt
     }
 }
 
-pub fn close_window_button_style_with_alpha(alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+pub fn close_window_button_style_with_alpha(
+    alpha: f32,
+) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |theme, status| {
         let base = close_window_button_style(theme, status);
         button::Style {
@@ -254,7 +256,9 @@ pub fn player_control_button_style(_theme: &Theme, status: button::Status) -> bu
     }
 }
 
-pub fn player_control_button_style_with_alpha(alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+pub fn player_control_button_style_with_alpha(
+    alpha: f32,
+) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |theme, status| {
         let base = player_control_button_style(theme, status);
         button::Style {
@@ -291,7 +295,10 @@ pub fn cc_button_style(is_enabled: bool) -> impl Fn(&Theme, button::Status) -> b
     }
 }
 
-pub fn cc_button_style_with_alpha(is_enabled: bool, alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+pub fn cc_button_style_with_alpha(
+    is_enabled: bool,
+    alpha: f32,
+) -> impl Fn(&Theme, button::Status) -> button::Style {
     let base_fn = cc_button_style(is_enabled);
     move |theme, status| {
         let base = base_fn(theme, status);
@@ -478,7 +485,10 @@ pub fn search_button_style(_theme: &Theme, status: button::Status) -> button::St
     }
 }
 
-pub fn dark_pick_list_style(_theme: &Theme, status: iced::widget::pick_list::Status) -> iced::widget::pick_list::Style {
+pub fn dark_pick_list_style(
+    _theme: &Theme,
+    status: iced::widget::pick_list::Status,
+) -> iced::widget::pick_list::Style {
     let border_color = match status {
         iced::widget::pick_list::Status::Opened { .. } => COLOR_PRIMARY,
         iced::widget::pick_list::Status::Hovered => Color::from_rgb(0.35, 0.35, 0.35),
@@ -516,23 +526,20 @@ pub fn dark_pick_list_menu_style(_theme: &Theme) -> menu::Style {
     }
 }
 
-pub fn audio_track_button_style_with_alpha(is_open: bool, alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+pub fn audio_track_button_style_with_alpha(
+    is_open: bool,
+    alpha: f32,
+) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_theme, status| {
         let (bg, border_color) = if is_open {
-            (
-                Color::from_rgba(0.15, 0.24, 0.18, 0.95),
-                COLOR_PRIMARY,
-            )
+            (Color::from_rgba(0.15, 0.24, 0.18, 0.95), COLOR_PRIMARY)
         } else {
             match status {
                 button::Status::Hovered => (
                     Color::from_rgba(0.24, 0.24, 0.27, 0.9),
                     Color::from_rgba(0.5, 0.5, 0.5, 0.8),
                 ),
-                button::Status::Pressed => (
-                    Color::from_rgba(0.18, 0.24, 0.20, 0.9),
-                    COLOR_PRIMARY,
-                ),
+                button::Status::Pressed => (Color::from_rgba(0.18, 0.24, 0.20, 0.9), COLOR_PRIMARY),
                 _ => (
                     Color::from_rgba(0.12, 0.12, 0.14, 0.75),
                     Color::from_rgba(0.35, 0.35, 0.35, 0.5),
@@ -553,23 +560,19 @@ pub fn audio_track_button_style_with_alpha(is_open: bool, alpha: f32) -> impl Fn
     }
 }
 
-pub fn transcript_track_button_style(is_open: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
+pub fn transcript_track_button_style(
+    is_open: bool,
+) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_theme, status| {
         let (bg, border_color) = if is_open {
-            (
-                Color::from_rgba(0.15, 0.24, 0.18, 0.95),
-                COLOR_PRIMARY,
-            )
+            (Color::from_rgba(0.15, 0.24, 0.18, 0.95), COLOR_PRIMARY)
         } else {
             match status {
                 button::Status::Hovered => (
                     Color::from_rgba(0.24, 0.24, 0.27, 0.9),
                     Color::from_rgba(0.5, 0.5, 0.5, 0.8),
                 ),
-                button::Status::Pressed => (
-                    Color::from_rgba(0.18, 0.24, 0.20, 0.9),
-                    COLOR_PRIMARY,
-                ),
+                button::Status::Pressed => (Color::from_rgba(0.18, 0.24, 0.20, 0.9), COLOR_PRIMARY),
                 _ => (
                     Color::from_rgba(0.14, 0.14, 0.17, 0.85),
                     Color::from_rgba(0.30, 0.30, 0.35, 0.6),
@@ -659,27 +662,27 @@ pub fn progress_slider_style(theme: &Theme, status: slider::Status) -> slider::S
     progress_slider_style_with_alpha(1.0)(theme, status)
 }
 
-pub fn progress_slider_style_with_alpha(alpha: f32) -> impl Fn(&Theme, slider::Status) -> slider::Style {
-    move |_theme, _status| {
-        slider::Style {
-            rail: slider::Rail {
-                backgrounds: (
-                    Background::Color(with_alpha(COLOR_PRIMARY, alpha)),
-                    Background::Color(with_alpha(COLOR_TRACK_BG, alpha)),
-                ),
-                width: 24.0,
-                border: Border {
-                    radius: 3.0.into(),
-                    ..Default::default()
-                },
+pub fn progress_slider_style_with_alpha(
+    alpha: f32,
+) -> impl Fn(&Theme, slider::Status) -> slider::Style {
+    move |_theme, _status| slider::Style {
+        rail: slider::Rail {
+            backgrounds: (
+                Background::Color(with_alpha(COLOR_PRIMARY, alpha)),
+                Background::Color(with_alpha(COLOR_TRACK_BG, alpha)),
+            ),
+            width: 24.0,
+            border: Border {
+                radius: 3.0.into(),
+                ..Default::default()
             },
-            handle: slider::Handle {
-                shape: slider::HandleShape::Circle { radius: 0.0 },
-                background: Background::Color(Color::TRANSPARENT),
-                border_width: 0.0,
-                border_color: Color::TRANSPARENT,
-            },
-        }
+        },
+        handle: slider::Handle {
+            shape: slider::HandleShape::Circle { radius: 0.0 },
+            background: Background::Color(Color::TRANSPARENT),
+            border_width: 0.0,
+            border_color: Color::TRANSPARENT,
+        },
     }
 }
 
@@ -790,27 +793,27 @@ pub fn volume_slider_style(_theme: &Theme, _status: slider::Status) -> slider::S
     }
 }
 
-pub fn volume_slider_style_with_alpha(alpha: f32) -> impl Fn(&Theme, slider::Status) -> slider::Style {
-    move |_theme, _status| {
-        slider::Style {
-            rail: slider::Rail {
-                backgrounds: (
-                    Background::Color(with_alpha(COLOR_PRIMARY, alpha)),
-                    Background::Color(with_alpha(COLOR_TRACK_BG, alpha)),
-                ),
-                width: 8.0,
-                border: Border {
-                    radius: 3.0.into(),
-                    ..Default::default()
-                },
+pub fn volume_slider_style_with_alpha(
+    alpha: f32,
+) -> impl Fn(&Theme, slider::Status) -> slider::Style {
+    move |_theme, _status| slider::Style {
+        rail: slider::Rail {
+            backgrounds: (
+                Background::Color(with_alpha(COLOR_PRIMARY, alpha)),
+                Background::Color(with_alpha(COLOR_TRACK_BG, alpha)),
+            ),
+            width: 8.0,
+            border: Border {
+                radius: 3.0.into(),
+                ..Default::default()
             },
-            handle: slider::Handle {
-                shape: slider::HandleShape::Circle { radius: 0.0 },
-                background: Background::Color(Color::TRANSPARENT),
-                border_width: 0.0,
-                border_color: Color::TRANSPARENT,
-            },
-        }
+        },
+        handle: slider::Handle {
+            shape: slider::HandleShape::Circle { radius: 0.0 },
+            background: Background::Color(Color::TRANSPARENT),
+            border_width: 0.0,
+            border_color: Color::TRANSPARENT,
+        },
     }
 }
 
@@ -868,21 +871,19 @@ pub fn title_pill_style(theme: &Theme) -> container::Style {
 }
 
 pub fn title_pill_style_with_alpha(alpha: f32) -> impl Fn(&Theme) -> container::Style {
-    move |_theme| {
-        container::Style {
-            background: Some(Background::Color(with_alpha(COLOR_OVERLAY_DARK, alpha))),
-            border: Border {
-                radius: iced::border::Radius {
-                    top_left: 0.0,
-                    top_right: 10.0,
-                    bottom_right: 10.0,
-                    bottom_left: 0.0,
-                },
-                width: 0.0,
-                color: Color::TRANSPARENT,
+    move |_theme| container::Style {
+        background: Some(Background::Color(with_alpha(COLOR_OVERLAY_DARK, alpha))),
+        border: Border {
+            radius: iced::border::Radius {
+                top_left: 0.0,
+                top_right: 10.0,
+                bottom_right: 10.0,
+                bottom_left: 0.0,
             },
-            ..Default::default()
-        }
+            width: 0.0,
+            color: Color::TRANSPARENT,
+        },
+        ..Default::default()
     }
 }
 
@@ -893,11 +894,14 @@ pub fn controls_overlay_style(theme: &Theme) -> container::Style {
 }
 
 pub fn controls_overlay_style_with_alpha(alpha: f32) -> impl Fn(&Theme) -> container::Style {
-    move |_theme| {
-        container::Style {
-            background: Some(Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.75 * alpha))),
-            ..Default::default()
-        }
+    move |_theme| container::Style {
+        background: Some(Background::Color(Color::from_rgba(
+            0.0,
+            0.0,
+            0.0,
+            0.75 * alpha,
+        ))),
+        ..Default::default()
     }
 }
 
@@ -1030,7 +1034,10 @@ pub fn transcript_button_style(is_open: bool) -> impl Fn(&Theme, button::Status)
     cc_button_style(is_open)
 }
 
-pub fn transcript_button_style_with_alpha(is_open: bool, alpha: f32) -> impl Fn(&Theme, button::Status) -> button::Style {
+pub fn transcript_button_style_with_alpha(
+    is_open: bool,
+    alpha: f32,
+) -> impl Fn(&Theme, button::Status) -> button::Style {
     cc_button_style_with_alpha(is_open, alpha)
 }
 
@@ -1063,7 +1070,9 @@ pub fn transcript_time_badge_style(is_active: bool) -> impl Fn(&Theme) -> contai
 }
 
 // Transcript Cue Row Button Style
-pub fn transcript_cue_button_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
+pub fn transcript_cue_button_style(
+    is_active: bool,
+) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_theme: &Theme, status: button::Status| {
         if is_active {
             let bg = match status {
@@ -1119,4 +1128,3 @@ pub fn transcript_count_badge_style(_theme: &Theme) -> container::Style {
         ..Default::default()
     }
 }
-

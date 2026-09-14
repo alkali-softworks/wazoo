@@ -2,7 +2,7 @@
  * ==============================================================================
  * TUTORIAL LESSON: Rust & Iced In-App Cheat Sheet & Architecture Guide
  * ==============================================================================
- * 
+ *
  * This tab acts as an interactive, built-in study reference guide.
  * It synthesizes the key concepts you need to read, write, and understand
  * Rust applications like `wazoo-rs`.

@@ -1,20 +1,20 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Media Scanner & Library Indexer
- * 
+ *
  * Discovers video files across media directories, cleans filenames, extracts metadata,
  * and batches database updates with real-time progress reporting.
  */
 
+use regex::Regex;
+use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock};
-use walkdir::WalkDir;
-use regex::Regex;
-use serde::Deserialize;
 use tokio::sync::mpsc;
+use walkdir::WalkDir;
 use wazoo_core::{Database, VideoRecord};
 
 pub const VIDEO_EXTENSIONS: &[&str] = &["mkv", "mp4", "avi", "mov", "webm"];
@@ -90,11 +90,16 @@ pub fn probe_video_metadata<P: AsRef<Path>>(path: P, ffprobe_bin: Option<&str>) 
     let bin = ffprobe_bin.unwrap_or("ffprobe");
     let output = Command::new(bin)
         .args([
-            "-v", "error",
-            "-analyzeduration", "100000",
-            "-probesize", "5000000",
-            "-show_entries", "stream=codec_name,profile,width,height,codec_type:format=duration",
-            "-of", "json",
+            "-v",
+            "error",
+            "-analyzeduration",
+            "100000",
+            "-probesize",
+            "5000000",
+            "-show_entries",
+            "stream=codec_name,profile,width,height,codec_type:format=duration",
+            "-of",
+            "json",
             "--",
             path.as_ref().to_str().unwrap_or_default(),
         ])
@@ -225,7 +230,8 @@ impl Scanner {
         db_path: PathBuf,
         progress_tx: Option<mpsc::Sender<ScanProgress>>,
     ) -> Result<usize, String> {
-        self.scan_and_index_with_cancel(folders, db_path, progress_tx, None).await
+        self.scan_and_index_with_cancel(folders, db_path, progress_tx, None)
+            .await
     }
 
     #[allow(clippy::manual_checked_ops)]
@@ -334,14 +340,16 @@ impl Scanner {
                 let percent = (idx * 100) / total_dirs;
 
                 if let Some(ref tx) = progress_tx {
-                    let _ = tx.send(ScanProgress {
-                        stage: ScanStage::Listing,
-                        processed: idx,
-                        total: total_dirs,
-                        percent,
-                        current_name: dir_name.clone(),
-                        files_found: files.len(),
-                    }).await;
+                    let _ = tx
+                        .send(ScanProgress {
+                            stage: ScanStage::Listing,
+                            processed: idx,
+                            total: total_dirs,
+                            percent,
+                            current_name: dir_name.clone(),
+                            files_found: files.len(),
+                        })
+                        .await;
                 }
 
                 let prev_files = files.len();
@@ -356,14 +364,16 @@ impl Scanner {
                             files.push(pb);
                             if (files.len() - prev_files) % 15 == 0 {
                                 if let Some(ref tx) = progress_tx {
-                                    let _ = tx.send(ScanProgress {
-                                        stage: ScanStage::Listing,
-                                        processed: idx,
-                                        total: total_dirs,
-                                        percent,
-                                        current_name: dir_name.clone(),
-                                        files_found: files.len(),
-                                    }).await;
+                                    let _ = tx
+                                        .send(ScanProgress {
+                                            stage: ScanStage::Listing,
+                                            processed: idx,
+                                            total: total_dirs,
+                                            percent,
+                                            current_name: dir_name.clone(),
+                                            files_found: files.len(),
+                                        })
+                                        .await;
                                 }
                             }
                         }
@@ -372,25 +382,29 @@ impl Scanner {
 
                 let end_percent = ((idx + 1) * 100) / total_dirs;
                 if let Some(ref tx) = progress_tx {
-                    let _ = tx.send(ScanProgress {
-                        stage: ScanStage::Listing,
-                        processed: idx + 1,
-                        total: total_dirs,
-                        percent: end_percent,
-                        current_name: dir_name,
-                        files_found: files.len(),
-                    }).await;
+                    let _ = tx
+                        .send(ScanProgress {
+                            stage: ScanStage::Listing,
+                            processed: idx + 1,
+                            total: total_dirs,
+                            percent: end_percent,
+                            current_name: dir_name,
+                            files_found: files.len(),
+                        })
+                        .await;
                 }
             }
         } else if let Some(ref tx) = progress_tx {
-            let _ = tx.send(ScanProgress {
-                stage: ScanStage::Listing,
-                processed: 1,
-                total: 1,
-                percent: 100,
-                current_name: format!("{} files discovered", files.len()),
-                files_found: files.len(),
-            }).await;
+            let _ = tx
+                .send(ScanProgress {
+                    stage: ScanStage::Listing,
+                    processed: 1,
+                    total: 1,
+                    percent: 100,
+                    current_name: format!("{} files discovered", files.len()),
+                    files_found: files.len(),
+                })
+                .await;
         }
 
         if is_cancelled() {
@@ -432,14 +446,16 @@ impl Scanner {
 
             if let Some(ref tx) = progress_tx {
                 if processed % 15 == 0 || processed == total {
-                    let _ = tx.send(ScanProgress {
-                        stage: ScanStage::Indexing,
-                        processed,
-                        total,
-                        percent,
-                        current_name: cleaned_name,
-                        files_found: total,
-                    }).await;
+                    let _ = tx
+                        .send(ScanProgress {
+                            stage: ScanStage::Indexing,
+                            processed,
+                            total,
+                            percent,
+                            current_name: cleaned_name,
+                            files_found: total,
+                        })
+                        .await;
                 }
             }
         }
@@ -448,7 +464,9 @@ impl Scanner {
             return Err("Scan cancelled".to_string());
         }
 
-        let inserted = db.batch_insert_videos(&records).map_err(|e| e.to_string())?;
+        let inserted = db
+            .batch_insert_videos(&records)
+            .map_err(|e| e.to_string())?;
         let _ = db.prune_missing_videos(&existing_paths);
         Ok(inserted)
     }
@@ -460,8 +478,14 @@ mod tests {
 
     #[test]
     fn test_clean_video_name() {
-        assert_eq!(clean_video_name("[1080p] My_Great.Movie-Part1"), "My Great Movie-Part1");
-        assert_eq!(clean_video_name("[Group] Nature_Documentary_[HEVC]"), "Nature Documentary");
+        assert_eq!(
+            clean_video_name("[1080p] My_Great.Movie-Part1"),
+            "My Great Movie-Part1"
+        );
+        assert_eq!(
+            clean_video_name("[Group] Nature_Documentary_[HEVC]"),
+            "Nature Documentary"
+        );
     }
 
     #[test]
@@ -475,7 +499,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_scanner_no_ffprobe() {
-        let tmp = std::env::temp_dir().join(format!("wazoo_test_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let tmp = std::env::temp_dir().join(format!(
+            "wazoo_test_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         let _ = std::fs::create_dir_all(&tmp);
         let test_file = tmp.join("Test.Video.2026.mkv");
         let _ = std::fs::write(&test_file, b"dummy video content");
@@ -499,7 +529,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_scanner_listing_percentage() {
-        let tmp = std::env::temp_dir().join(format!("wazoo_test_pct_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let tmp = std::env::temp_dir().join(format!(
+            "wazoo_test_pct_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         let dir_a = tmp.join("Anime").join("ShowA");
         let dir_b = tmp.join("Anime").join("ShowB");
         let _ = std::fs::create_dir_all(&dir_a);
@@ -522,7 +558,10 @@ mod tests {
             }
         }
 
-        assert!(!listing_stages.is_empty(), "Should have received Listing progress events");
+        assert!(
+            !listing_stages.is_empty(),
+            "Should have received Listing progress events"
+        );
         // Verify we get percentage and file count
         let last_listing = listing_stages.last().unwrap();
         assert_eq!(last_listing.percent, 100);
@@ -533,7 +572,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_scanner_cancellation() {
-        let tmp = std::env::temp_dir().join(format!("wazoo_test_cancel_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let tmp = std::env::temp_dir().join(format!(
+            "wazoo_test_cancel_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         let dir = tmp.join("Videos");
         let _ = std::fs::create_dir_all(&dir);
         let _ = std::fs::write(dir.join("video.mp4"), b"dummy content");
@@ -543,7 +588,9 @@ mod tests {
         let scanner = Scanner::default();
         let folders = vec![dir.to_string_lossy().to_string()];
 
-        let res = scanner.scan_and_index_with_cancel(&folders, db_file, None, Some(cancel)).await;
+        let res = scanner
+            .scan_and_index_with_cancel(&folders, db_file, None, Some(cancel))
+            .await;
         assert!(res.is_err());
         assert_eq!(res.err().as_deref(), Some("Scan cancelled"));
 
@@ -558,4 +605,3 @@ mod tests {
         assert_eq!(meta.width, 0);
     }
 }
-

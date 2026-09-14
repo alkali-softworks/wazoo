@@ -1,8 +1,8 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Native Build Script
- * 
+ *
  * Configures library search paths and embedding for libmpv.
  * On Windows, downloads prebuilt libmpv binaries if needed, and pre-compresses
  * libmpv-2.dll so that it is embedded directly into the executable for single-file distribution.
@@ -126,12 +126,22 @@ mod windows {
                 }
 
                 let extracted = Command::new("tar.exe")
-                    .args(["-xf", archive_path.to_str().unwrap(), "-C", mpv_dir.to_str().unwrap()])
+                    .args([
+                        "-xf",
+                        archive_path.to_str().unwrap(),
+                        "-C",
+                        mpv_dir.to_str().unwrap(),
+                    ])
                     .status()
                     .map(|s| s.success())
                     .unwrap_or(false)
                     || Command::new("7z.exe")
-                        .args(["x", archive_path.to_str().unwrap(), &format!("-o{}", mpv_dir.display()), "-y"])
+                        .args([
+                            "x",
+                            archive_path.to_str().unwrap(),
+                            &format!("-o{}", mpv_dir.display()),
+                            "-y",
+                        ])
                         .status()
                         .map(|s| s.success())
                         .unwrap_or(false);
@@ -153,7 +163,12 @@ mod windows {
 
             // Pre-compress libmpv-2.dll for embedding into single-file executable
             let deflate_path = out_dir.join("libmpv-2.dll.deflate");
-            if !deflate_path.exists() || std::fs::metadata(&deflate_path).map(|m| m.len()).unwrap_or(0) == 0 {
+            if !deflate_path.exists()
+                || std::fs::metadata(&deflate_path)
+                    .map(|m| m.len())
+                    .unwrap_or(0)
+                    == 0
+            {
                 println!("cargo:warning=Compressing libmpv-2.dll for embedding into single-file executable...");
                 if let Ok(bytes) = std::fs::read(src) {
                     let compressed = miniz_oxide::deflate::compress_to_vec_zlib(&bytes, 6);
@@ -162,7 +177,10 @@ mod windows {
             }
 
             if deflate_path.exists() {
-                println!("cargo:rustc-env=WAZOO_EMBED_MPV_PATH={}", deflate_path.display());
+                println!(
+                    "cargo:rustc-env=WAZOO_EMBED_MPV_PATH={}",
+                    deflate_path.display()
+                );
                 println!("cargo:rustc-cfg=wazoo_embed_mpv");
             }
         }

@@ -2,7 +2,7 @@
  * ==============================================================================
  * TUTORIAL LESSON: Theming & Custom Design Systems in Iced
  * ==============================================================================
- * 
+ *
  * One of the best features of Iced is its rich, built-in theming system.
  * Iced ships with dozens of popular developer themes:
  * - `Theme::Dark`
@@ -13,12 +13,12 @@
  * - `Theme::Nord`
  * - `Theme::SolarizedDark`
  * - `Theme::SolarizedLight`
- * 
+ *
  * How dynamic theming works in Iced:
  * 1. Your application registers a theme function: `.theme(TutorialApp::theme)`
  * 2. When the user selects a different theme, `self.theme` updates.
  * 3. Iced re-renders the UI using the new theme's color palette!
- * 
+ *
  * In this tab, you can switch themes on the fly and see how standard widgets
  * and custom-styled widgets adapt automatically.
  */
@@ -182,14 +182,9 @@ impl TutorialApp {
         .style(style::highlight_box_style)
         .width(Length::Fill);
 
-        let content = column![
-            selector_card,
-            palette_card,
-            showcase_card,
-            concept_box,
-        ]
-        .spacing(20)
-        .padding(20);
+        let content = column![selector_card, palette_card, showcase_card, concept_box,]
+            .spacing(20)
+            .padding(20);
 
         scrollable(content)
             .width(Length::Fill)

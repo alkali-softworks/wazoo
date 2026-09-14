@@ -1,50 +1,47 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Modal Dialogs Subsystem
- * 
+ *
  * Renders dialogs for video search with folder filters, application settings, keyboard shortcut
  * references, bookmark manager, and context menus with dismissable backdrops.
  */
 
-use iced::{
-    widget::{button, column, container, mouse_area, pick_list, row, scrollable, slider, text, text_input, Space},
-    Alignment, Element, Length, Theme,
-};
-use wazoo_core::Language;
-use wazoo_scanner::ScanStage;
 use crate::app::WazooApp;
 use crate::cursor;
 use crate::format;
 use crate::message::Message;
 use crate::theme;
+use iced::{
+    widget::{
+        button, column, container, mouse_area, pick_list, row, scrollable, slider, text,
+        text_input, Space,
+    },
+    Alignment, Element, Length, Theme,
+};
+use wazoo_core::Language;
+use wazoo_scanner::ScanStage;
 
 impl WazooApp {
     pub(crate) fn view_search_modal(&self) -> Element<'_, Message> {
         let all_label = self.t("common.all");
         let is_all_selected = self.is_all_folder(&self.selected_search_folder);
-        let mut folder_chips = row![
-            button(
-                text(all_label.clone())
-                    .size(13)
-            )
+        let mut folder_chips = row![button(text(all_label.clone()).size(13))
             .style(theme::folder_chip_style(is_all_selected))
             .on_press(Message::SelectSearchFolder(all_label))
-            .padding([4, 12]),
-        ]
+            .padding([4, 12]),]
         .spacing(8)
         .align_y(Alignment::Center);
 
         for folder in &self.settings.media_folders {
             let label = format::folder_basename(folder);
             folder_chips = folder_chips.push(
-                button(
-                    text(label)
-                        .size(13)
-                )
-                .style(theme::folder_chip_style(self.selected_search_folder == *folder))
-                .on_press(Message::SelectSearchFolder(folder.clone()))
-                .padding([4, 12]),
+                button(text(label).size(13))
+                    .style(theme::folder_chip_style(
+                        self.selected_search_folder == *folder,
+                    ))
+                    .on_press(Message::SelectSearchFolder(folder.clone()))
+                    .padding([4, 12]),
             );
         }
 
@@ -102,18 +99,25 @@ impl WazooApp {
         let card = container(
             column![
                 row![
-                    text(self.t("search.folder")).size(14).color(theme::COLOR_TEXT_MUTED),
+                    text(self.t("search.folder"))
+                        .size(14)
+                        .color(theme::COLOR_TEXT_MUTED),
                     Space::new().width(Length::Fill),
                     button(text("✕").size(14))
                         .style(theme::window_control_button_style)
                         .on_press(Message::CloseSearchModal),
                 ]
                 .align_y(Alignment::Center),
-                scrollable(folder_chips).direction(scrollable::Direction::Horizontal(scrollable::Scrollbar::default())),
+                scrollable(folder_chips).direction(scrollable::Direction::Horizontal(
+                    scrollable::Scrollbar::default()
+                )),
                 search_bar_row,
-                text(self.t_with("settings.total_videos", &[("count", &format::format_number(self.available_videos.len()))]))
-                    .size(12)
-                    .color(theme::COLOR_TEXT_MUTED),
+                text(self.t_with(
+                    "settings.total_videos",
+                    &[("count", &format::format_number(self.available_videos.len()))]
+                ))
+                .size(12)
+                .color(theme::COLOR_TEXT_MUTED),
             ]
             .spacing(14)
             .width(Length::Fixed(480.0)),
@@ -125,7 +129,10 @@ impl WazooApp {
     }
 
     pub(crate) fn view_settings_modal(&self) -> Element<'_, Message> {
-        let mut folders_col = column![text(self.t("settings.media_folders")).size(14).color(theme::COLOR_TEXT_MUTED)].spacing(6);
+        let mut folders_col = column![text(self.t("settings.media_folders"))
+            .size(14)
+            .color(theme::COLOR_TEXT_MUTED)]
+        .spacing(6);
         for folder in &self.settings.media_folders {
             let f = folder.clone();
             folders_col = folders_col.push(
@@ -158,15 +165,26 @@ impl WazooApp {
                 match progress.stage {
                     ScanStage::Listing => {
                         if progress.percent > 0 {
-                            format!("Listing... {}% ({} found)", progress.percent, format::format_number(progress.files_found))
+                            format!(
+                                "Listing... {}% ({} found)",
+                                progress.percent,
+                                format::format_number(progress.files_found)
+                            )
                         } else if progress.files_found > 0 {
-                            format!("Listing... ({} found)", format::format_number(progress.files_found))
+                            format!(
+                                "Listing... ({} found)",
+                                format::format_number(progress.files_found)
+                            )
                         } else {
                             self.t("wazoo.listing_files")
                         }
                     }
                     ScanStage::Indexing => {
-                        format!("Loading... {}% ({} files)", progress.percent, format::format_number(progress.total))
+                        format!(
+                            "Loading... {}% ({} files)",
+                            progress.percent,
+                            format::format_number(progress.total)
+                        )
                     }
                 }
             } else {
@@ -187,16 +205,14 @@ impl WazooApp {
                 .padding([8, 14])
         };
 
-        let mut scan_controls = column![
-            row![
-                button(text(self.t("settings.add_folder")))
-                    .style(theme::action_button_style)
-                    .on_press(Message::PickFolders)
-                    .padding([8, 14]),
-                scan_btn,
-            ]
-            .spacing(10),
+        let mut scan_controls = column![row![
+            button(text(self.t("settings.add_folder")))
+                .style(theme::action_button_style)
+                .on_press(Message::PickFolders)
+                .padding([8, 14]),
+            scan_btn,
         ]
+        .spacing(10),]
         .spacing(6);
 
         if self.is_scanning {
@@ -204,46 +220,60 @@ impl WazooApp {
                 let info_str = match progress.stage {
                     ScanStage::Listing => {
                         if progress.current_name.is_empty() {
-                            format!("Discovering files: {}% ({} found)", progress.percent, format::format_number(progress.files_found))
+                            format!(
+                                "Discovering files: {}% ({} found)",
+                                progress.percent,
+                                format::format_number(progress.files_found)
+                            )
                         } else {
-                            format!("Scanning {}: {}% ({} found)", progress.current_name, progress.percent, format::format_number(progress.files_found))
+                            format!(
+                                "Scanning {}: {}% ({} found)",
+                                progress.current_name,
+                                progress.percent,
+                                format::format_number(progress.files_found)
+                            )
                         }
                     }
                     ScanStage::Indexing => {
                         if progress.current_name.is_empty() {
-                            format!("Indexing database: {}% ({} files)", progress.percent, format::format_number(progress.total))
+                            format!(
+                                "Indexing database: {}% ({} files)",
+                                progress.percent,
+                                format::format_number(progress.total)
+                            )
                         } else {
                             format!("Adding {}: {}%", progress.current_name, progress.percent)
                         }
                     }
                 };
-                scan_controls = scan_controls.push(
-                    text(info_str).size(12).color(theme::COLOR_PRIMARY)
-                );
+                scan_controls =
+                    scan_controls.push(text(info_str).size(12).color(theme::COLOR_PRIMARY));
             }
         }
 
         // Language dropdown selector (16 supported languages matching wazoo-desktop)
         let current_lang = Language::from_code(&self.settings.language);
-        let language_dropdown = pick_list(
-            Language::ALL,
-            Some(current_lang),
-            |lang| Message::SetLanguage(lang.code.to_string()),
-        )
+        let language_dropdown = pick_list(Language::ALL, Some(current_lang), |lang| {
+            Message::SetLanguage(lang.code.to_string())
+        })
         .style(theme::dark_pick_list_style)
         .menu_style(theme::dark_pick_list_menu_style)
         .width(Length::Fill)
         .padding([8, 12]);
 
         let language_group = column![
-            text(self.t("settings.language")).size(14).color(theme::COLOR_TEXT_MUTED),
+            text(self.t("settings.language"))
+                .size(14)
+                .color(theme::COLOR_TEXT_MUTED),
             language_dropdown,
         ]
         .spacing(8);
 
         let content = column![
             row![
-                text(self.t("settings.title")).size(20).color(iced::Color::WHITE),
+                text(self.t("settings.title"))
+                    .size(20)
+                    .color(iced::Color::WHITE),
                 Space::new().width(Length::Fill),
                 button(text("✕").size(14))
                     .style(theme::window_control_button_style)
@@ -252,15 +282,23 @@ impl WazooApp {
             .align_y(Alignment::Center),
             language_group,
             column![
-                text(self.t("settings.window_opacity")).size(14).color(theme::COLOR_TEXT_MUTED),
+                text(self.t("settings.window_opacity"))
+                    .size(14)
+                    .color(theme::COLOR_TEXT_MUTED),
                 row![
                     cursor::PointerCursor::new(
-                        slider(0.05..=1.0, self.settings.window_opacity, Message::SetWindowOpacity)
-                            .step(0.01)
-                            .style(theme::volume_slider_style)
-                            .width(Length::Fill),
+                        slider(
+                            0.05..=1.0,
+                            self.settings.window_opacity,
+                            Message::SetWindowOpacity
+                        )
+                        .step(0.01)
+                        .style(theme::volume_slider_style)
+                        .width(Length::Fill),
                     ),
-                    text(format!("{opacity_val}%")).size(13).color(theme::COLOR_TEXT_DIM),
+                    text(format!("{opacity_val}%"))
+                        .size(13)
+                        .color(theme::COLOR_TEXT_DIM),
                 ]
                 .spacing(12)
                 .align_y(Alignment::Center),
@@ -268,9 +306,12 @@ impl WazooApp {
             .spacing(6),
             folders_col,
             scan_controls,
-            text(self.t_with("settings.total_videos", &[("count", &format::format_number(self.total_video_count()))]))
-                .size(13)
-                .color(theme::COLOR_TEXT_MUTED),
+            text(self.t_with(
+                "settings.total_videos",
+                &[("count", &format::format_number(self.total_video_count()))]
+            ))
+            .size(13)
+            .color(theme::COLOR_TEXT_MUTED),
         ]
         .spacing(16)
         .width(Length::Fixed(480.0));
@@ -283,7 +324,10 @@ impl WazooApp {
     }
 
     pub(crate) fn view_help_modal(&self) -> Element<'_, Message> {
-        let shortcuts = self.settings.keybinds.help_shortcuts_with_descriptions(|k| self.t(k));
+        let shortcuts = self
+            .settings
+            .keybinds
+            .help_shortcuts_with_descriptions(|k| self.t(k));
 
         let mut shortcuts_list = column![].spacing(8);
         for (key, desc) in shortcuts {
@@ -320,7 +364,9 @@ impl WazooApp {
         let card = container(
             column![
                 row![
-                    text(self.t("help.title")).size(20).color(iced::Color::WHITE),
+                    text(self.t("help.title"))
+                        .size(20)
+                        .color(iced::Color::WHITE),
                     Space::new().width(Length::Fill),
                     button(text("✕").size(14))
                         .style(theme::window_control_button_style)
@@ -343,22 +389,32 @@ impl WazooApp {
     pub(crate) fn view_bookmarks_modal(&self) -> Element<'_, Message> {
         let count = self.settings.bookmarks.len();
         let header_row = row![
-            text(self.t("bookmarks.title")).size(20).color(iced::Color::WHITE),
-            container(text(format::format_number(count)).size(12).color(theme::COLOR_TEXT_DIM))
-                .padding([2, 8])
-                .style(|_theme: &Theme| container::Style {
-                    background: Some(iced::Background::Color(theme::COLOR_BTN_BG)),
-                    border: iced::Border {
-                        radius: 10.0.into(),
-                        ..Default::default()
-                    },
+            text(self.t("bookmarks.title"))
+                .size(20)
+                .color(iced::Color::WHITE),
+            container(
+                text(format::format_number(count))
+                    .size(12)
+                    .color(theme::COLOR_TEXT_DIM)
+            )
+            .padding([2, 8])
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(theme::COLOR_BTN_BG)),
+                border: iced::Border {
+                    radius: 10.0.into(),
                     ..Default::default()
-                }),
+                },
+                ..Default::default()
+            }),
             Space::new().width(Length::Fill),
             button(
                 row![
-                    text("+").size(14).color(iced::Color::from_rgb(0.06, 0.06, 0.06)),
-                    text(self.t("bookmarks.bookmark_current")).size(12).color(iced::Color::from_rgb(0.06, 0.06, 0.06)),
+                    text("+")
+                        .size(14)
+                        .color(iced::Color::from_rgb(0.06, 0.06, 0.06)),
+                    text(self.t("bookmarks.bookmark_current"))
+                        .size(12)
+                        .color(iced::Color::from_rgb(0.06, 0.06, 0.06)),
                 ]
                 .spacing(4)
                 .align_y(Alignment::Center),
@@ -376,7 +432,9 @@ impl WazooApp {
         let content_element: Element<'_, Message> = if self.settings.bookmarks.is_empty() {
             container(
                 column![
-                    text(self.t("bookmarks.no_bookmarks")).size(15).color(theme::COLOR_TEXT_DIM),
+                    text(self.t("bookmarks.no_bookmarks"))
+                        .size(15)
+                        .color(theme::COLOR_TEXT_DIM),
                     text(self.t("bookmarks.hint"))
                         .size(13)
                         .color(theme::COLOR_TEXT_MUTED),
@@ -393,39 +451,54 @@ impl WazooApp {
                 let time_str = format::format_time_str(b.position_secs);
                 let bookmark_clone = b.clone();
 
-                let mut meta_row = row![
-                    container(text(time_str).size(11).color(theme::COLOR_PRIMARY))
-                        .padding([2, 6])
-                        .style(|_theme: &Theme| container::Style {
-                            background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.9, 0.7, 0.15))),
-                            border: iced::Border {
-                                radius: 4.0.into(),
-                                ..Default::default()
-                            },
-                            ..Default::default()
-                        }),
-                ]
-                .spacing(6)
-                .align_y(Alignment::Center);
-
-                if !b.query.is_empty() {
-                    meta_row = meta_row.push(
-                        container(text(format!("#{}", b.query)).size(11).color(theme::COLOR_TEXT_MUTED))
+                let mut meta_row =
+                    row![
+                        container(text(time_str).size(11).color(theme::COLOR_PRIMARY))
                             .padding([2, 6])
                             .style(|_theme: &Theme| container::Style {
-                                background: Some(iced::Background::Color(theme::COLOR_BTN_BG)),
+                                background: Some(iced::Background::Color(iced::Color::from_rgba(
+                                    0.0, 0.9, 0.7, 0.15
+                                ))),
                                 border: iced::Border {
                                     radius: 4.0.into(),
                                     ..Default::default()
                                 },
                                 ..Default::default()
                             }),
+                    ]
+                    .spacing(6)
+                    .align_y(Alignment::Center);
+
+                if !b.query.is_empty() {
+                    meta_row = meta_row.push(
+                        container(
+                            text(format!("#{}", b.query))
+                                .size(11)
+                                .color(theme::COLOR_TEXT_MUTED),
+                        )
+                        .padding([2, 6])
+                        .style(|_theme: &Theme| container::Style {
+                            background: Some(iced::Background::Color(theme::COLOR_BTN_BG)),
+                            border: iced::Border {
+                                radius: 4.0.into(),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        }),
                     );
                 }
 
                 let is_shuffle = b.is_shuffle;
-                let mode_label = if is_shuffle { self.t("bookmarks.shuffle") } else { self.t("bookmarks.linear") };
-                let mode_color = if is_shuffle { theme::COLOR_PRIMARY } else { theme::COLOR_TEXT_MUTED };
+                let mode_label = if is_shuffle {
+                    self.t("bookmarks.shuffle")
+                } else {
+                    self.t("bookmarks.linear")
+                };
+                let mode_color = if is_shuffle {
+                    theme::COLOR_PRIMARY
+                } else {
+                    theme::COLOR_TEXT_MUTED
+                };
                 meta_row = meta_row.push(
                     container(text(mode_label).size(11).color(mode_color))
                         .padding([2, 6])
@@ -439,12 +512,9 @@ impl WazooApp {
                         }),
                 );
 
-                let info_col = column![
-                    text(&b.name).size(14).color(iced::Color::WHITE),
-                    meta_row,
-                ]
-                .spacing(4)
-                .width(Length::Fill);
+                let info_col = column![text(&b.name).size(14).color(iced::Color::WHITE), meta_row,]
+                    .spacing(4)
+                    .width(Length::Fill);
 
                 let play_btn = button(info_col)
                     .style(theme::bookmark_item_button_style)
@@ -457,12 +527,9 @@ impl WazooApp {
                     .padding([8, 10])
                     .on_press(Message::RemoveBookmark(idx));
 
-                let row_item = row![
-                    play_btn,
-                    delete_btn,
-                ]
-                .spacing(6)
-                .align_y(Alignment::Center);
+                let row_item = row![play_btn, delete_btn,]
+                    .spacing(6)
+                    .align_y(Alignment::Center);
 
                 list = list.push(row_item);
             }
@@ -483,12 +550,9 @@ impl WazooApp {
         };
 
         let card = container(
-            column![
-                header_row,
-                content_element,
-            ]
-            .spacing(16)
-            .width(Length::Fixed(560.0)),
+            column![header_row, content_element,]
+                .spacing(16)
+                .width(Length::Fixed(560.0)),
         )
         .padding(20)
         .style(theme::modal_card_style);
@@ -500,7 +564,9 @@ impl WazooApp {
         let card = container(
             column![
                 row![
-                    text(self.t("common.menu")).size(18).color(iced::Color::WHITE),
+                    text(self.t("common.menu"))
+                        .size(18)
+                        .color(iced::Color::WHITE),
                     Space::new().width(Length::Fill),
                     button(text("✕").size(14))
                         .style(theme::window_control_button_style)
@@ -552,22 +618,14 @@ impl WazooApp {
 
         let card_area = mouse_area(card).on_press(Message::ModalCardClicked);
 
-        let center_row = row![
-            backdrop_left,
-            card_area,
-            backdrop_right,
-        ]
-        .align_y(Alignment::Center)
-        .width(Length::Fill)
-        .height(Length::Shrink);
+        let center_row = row![backdrop_left, card_area, backdrop_right,]
+            .align_y(Alignment::Center)
+            .width(Length::Fill)
+            .height(Length::Shrink);
 
-        let modal_layout = column![
-            backdrop_top,
-            center_row,
-            backdrop_bottom,
-        ]
-        .width(Length::Fill)
-        .height(Length::Fill);
+        let modal_layout = column![backdrop_top, center_row, backdrop_bottom,]
+            .width(Length::Fill)
+            .height(Length::Fill);
 
         container(modal_layout)
             .width(Length::Fill)

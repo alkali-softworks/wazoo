@@ -1,17 +1,17 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Video Player Handle
- * 
+ *
  * Encapsulates an individual video player instance powered by libmpv, providing playback
  * controls (play, pause, seek, volume, mute), texture rendering, and watchdog monitoring.
  */
 
+use rand::Rng;
 use std::ffi::{c_int, c_void, CString};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
-use rand::Rng;
 
 use crate::mpv_ffi;
 use crate::pipeline::FrameData;
@@ -111,7 +111,10 @@ pub fn format_audio_track_label(track: &AudioTrack, index: usize) -> String {
         if first_seg.is_empty() {
             Some(trimmed.to_string())
         } else if first_seg.chars().count() > 30 {
-            Some(format!("{}...", first_seg.chars().take(27).collect::<String>()))
+            Some(format!(
+                "{}...",
+                first_seg.chars().take(27).collect::<String>()
+            ))
         } else {
             Some(first_seg.to_string())
         }
@@ -133,7 +136,10 @@ pub fn format_audio_track_label(track: &AudioTrack, index: usize) -> String {
 
     match (cleaned_title, lang_display) {
         (Some(title), Some(lang)) => {
-            if title.to_ascii_lowercase().contains(&lang.to_ascii_lowercase()) {
+            if title
+                .to_ascii_lowercase()
+                .contains(&lang.to_ascii_lowercase())
+            {
                 title
             } else {
                 format!("{lang} ({title})")
@@ -188,7 +194,9 @@ pub fn format_subtitle_track_label(track: &SubtitleTrack, index: usize) -> Strin
         let first_lower = first_seg.to_ascii_lowercase();
         if let Some(q) = qualifier {
             let already_has_qualifier = match q {
-                "Honorifics" => first_lower.contains("honorific") || first_lower.contains("honorofic"),
+                "Honorifics" => {
+                    first_lower.contains("honorific") || first_lower.contains("honorofic")
+                }
                 "Signs & Songs" => first_lower.contains("sign") || first_lower.contains("song"),
                 "SDH" => first_lower.contains("sdh"),
                 "Forced" => first_lower.contains("forced"),
@@ -202,7 +210,10 @@ pub fn format_subtitle_track_label(track: &SubtitleTrack, index: usize) -> Strin
         } else if first_seg.is_empty() {
             Some(trimmed.to_string())
         } else if first_seg.chars().count() > 30 {
-            Some(format!("{}...", first_seg.chars().take(27).collect::<String>()))
+            Some(format!(
+                "{}...",
+                first_seg.chars().take(27).collect::<String>()
+            ))
         } else {
             Some(first_seg.to_string())
         }
@@ -210,7 +221,10 @@ pub fn format_subtitle_track_label(track: &SubtitleTrack, index: usize) -> Strin
 
     match (cleaned_title, lang_display) {
         (Some(title), Some(lang)) => {
-            if title.to_ascii_lowercase().contains(&lang.to_ascii_lowercase()) {
+            if title
+                .to_ascii_lowercase()
+                .contains(&lang.to_ascii_lowercase())
+            {
                 title
             } else {
                 format!("{lang} ({title})")
@@ -227,7 +241,12 @@ pub fn language_aliases(name_or_code: &str) -> Vec<String> {
     let mut aliases = Vec::new();
     match lower.as_str() {
         "ja" | "jpn" | "jp" | "japanese" => {
-            aliases.extend(vec!["ja".into(), "jpn".into(), "jp".into(), "japanese".into()]);
+            aliases.extend(vec![
+                "ja".into(),
+                "jpn".into(),
+                "jp".into(),
+                "japanese".into(),
+            ]);
         }
         "en" | "eng" | "english" => {
             aliases.extend(vec!["en".into(), "eng".into(), "english".into()]);
@@ -236,10 +255,20 @@ pub fn language_aliases(name_or_code: &str) -> Vec<String> {
             aliases.extend(vec!["es".into(), "spa".into(), "spanish".into()]);
         }
         "fr" | "fra" | "fre" | "french" => {
-            aliases.extend(vec!["fr".into(), "fra".into(), "fre".into(), "french".into()]);
+            aliases.extend(vec![
+                "fr".into(),
+                "fra".into(),
+                "fre".into(),
+                "french".into(),
+            ]);
         }
         "de" | "deu" | "ger" | "german" => {
-            aliases.extend(vec!["de".into(), "deu".into(), "ger".into(), "german".into()]);
+            aliases.extend(vec![
+                "de".into(),
+                "deu".into(),
+                "ger".into(),
+                "german".into(),
+            ]);
         }
         "it" | "ita" | "italian" => {
             aliases.extend(vec!["it".into(), "ita".into(), "italian".into()]);
@@ -251,7 +280,12 @@ pub fn language_aliases(name_or_code: &str) -> Vec<String> {
             aliases.extend(vec!["ru".into(), "rus".into(), "russian".into()]);
         }
         "zh" | "zho" | "chi" | "chinese" => {
-            aliases.extend(vec!["zh".into(), "zho".into(), "chi".into(), "chinese".into()]);
+            aliases.extend(vec![
+                "zh".into(),
+                "zho".into(),
+                "chi".into(),
+                "chinese".into(),
+            ]);
         }
         "ko" | "kor" | "korean" => {
             aliases.extend(vec!["ko".into(), "kor".into(), "korean".into()]);
@@ -487,7 +521,10 @@ impl VideoHandle {
             set_opt("hwdec", &hwdec);
             set_opt("cache", "yes");
             set_opt("demuxer-max-bytes", &format!("{}M", config.size_mb.max(32)));
-            set_opt("demuxer-readahead-secs", &format!("{}", config.duration_secs.max(10)));
+            set_opt(
+                "demuxer-readahead-secs",
+                &format!("{}", config.duration_secs.max(10)),
+            );
             set_opt("demuxer-max-back-bytes", "32M");
             set_opt("cache-pause", "no");
             set_opt("hr-seek-framedrop", "yes");
@@ -558,18 +595,18 @@ impl VideoHandle {
             } else {
                 file_path
             };
-            if !clean_path.starts_with("http://") && !clean_path.starts_with("https://") && !std::path::Path::new(clean_path).exists() {
+            if !clean_path.starts_with("http://")
+                && !clean_path.starts_with("https://")
+                && !std::path::Path::new(clean_path).exists()
+            {
                 mpv_ffi::mpv_render_context_free(render_ctx);
                 mpv_ffi::mpv_terminate_destroy(mpv);
                 return Err(format!("Media file does not exist: {clean_path}"));
             }
             let cmd_loadfile = CString::new("loadfile").map_err(|e| e.to_string())?;
             let path_arg = CString::new(clean_path).map_err(|e| e.to_string())?;
-            let mut args: [*const std::ffi::c_char; 3] = [
-                cmd_loadfile.as_ptr(),
-                path_arg.as_ptr(),
-                std::ptr::null(),
-            ];
+            let mut args: [*const std::ffi::c_char; 3] =
+                [cmd_loadfile.as_ptr(), path_arg.as_ptr(), std::ptr::null()];
             mpv_ffi::mpv_command(mpv, args.as_mut_ptr());
 
             // Non-blocking pump of initial events so the UI thread is not frozen (bounded)
@@ -602,8 +639,18 @@ impl VideoHandle {
             let mut init_h: i64 = 0;
             let prop_w = CString::new("dwidth").unwrap();
             let prop_h = CString::new("dheight").unwrap();
-            let res_w = mpv_ffi::mpv_get_property(mpv, prop_w.as_ptr(), mpv_ffi::MPV_FORMAT_INT64, &mut init_w as *mut _ as *mut _);
-            let res_h = mpv_ffi::mpv_get_property(mpv, prop_h.as_ptr(), mpv_ffi::MPV_FORMAT_INT64, &mut init_h as *mut _ as *mut _);
+            let res_w = mpv_ffi::mpv_get_property(
+                mpv,
+                prop_w.as_ptr(),
+                mpv_ffi::MPV_FORMAT_INT64,
+                &mut init_w as *mut _ as *mut _,
+            );
+            let res_h = mpv_ffi::mpv_get_property(
+                mpv,
+                prop_h.as_ptr(),
+                mpv_ffi::MPV_FORMAT_INT64,
+                &mut init_h as *mut _ as *mut _,
+            );
             if res_w == 0 && res_h == 0 && init_w > 0 && init_h > 0 {
                 let max_dim = 1280.0f32;
                 let scale = (max_dim / (init_w as f32).max(init_h as f32)).min(1.0);
@@ -773,7 +820,8 @@ impl VideoHandle {
                     },
                 ];
 
-                let err = mpv_ffi::mpv_render_context_render(self.render_ctx, render_params.as_mut_ptr());
+                let err =
+                    mpv_ffi::mpv_render_context_render(self.render_ctx, render_params.as_mut_ptr());
                 if err == 0 {
                     mpv_ffi::mpv_render_context_report_swap(self.render_ctx);
 
@@ -810,7 +858,11 @@ impl VideoHandle {
     }
 
     /// Render video frame with custom fit mode (fit_cover = true for edge-to-edge ambient fill)
-    pub fn view_with_fit<'a, Message: 'a>(&'a self, opacity: f32, fit_cover: bool) -> iced::Element<'a, Message> {
+    pub fn view_with_fit<'a, Message: 'a>(
+        &'a self,
+        opacity: f32,
+        fit_cover: bool,
+    ) -> iced::Element<'a, Message> {
         let program = crate::pipeline::VideoProgram::new_with_fit(
             self.id as u64,
             Arc::clone(&self.frame),
@@ -952,9 +1004,17 @@ impl VideoHandle {
         }
 
         let mode = if relative {
-            if accurate { "relative+exact" } else { "relative" }
+            if accurate {
+                "relative+exact"
+            } else {
+                "relative"
+            }
         } else {
-            if accurate { "absolute+exact" } else { "absolute" }
+            if accurate {
+                "absolute+exact"
+            } else {
+                "absolute"
+            }
         };
 
         let cmd = format!("no-osd seek {} {}", val, mode);
@@ -1156,11 +1216,15 @@ impl VideoHandle {
         let mut sub_tracks = Vec::new();
         for i in 0..count {
             let track_type = self.get_property_string(&format!("track-list/{}/type", i));
-            let id = self.get_property_i64(&format!("track-list/{}/id", i)).unwrap_or(0);
+            let id = self
+                .get_property_i64(&format!("track-list/{}/id", i))
+                .unwrap_or(0);
             let title = self.get_property_string(&format!("track-list/{}/title", i));
             let lang = self.get_property_string(&format!("track-list/{}/lang", i));
             let codec = self.get_property_string(&format!("track-list/{}/codec", i));
-            let selected = self.get_property_bool(&format!("track-list/{}/selected", i)).unwrap_or(false);
+            let selected = self
+                .get_property_bool(&format!("track-list/{}/selected", i))
+                .unwrap_or(false);
 
             if track_type.as_deref() == Some("audio") {
                 audio_tracks.push(AudioTrack {
@@ -1171,7 +1235,8 @@ impl VideoHandle {
                     is_selected: selected,
                 });
             } else if track_type.as_deref() == Some("sub") {
-                let external_filename = self.get_property_string(&format!("track-list/{}/external-filename", i));
+                let external_filename =
+                    self.get_property_string(&format!("track-list/{}/external-filename", i));
                 let ff_index = self.get_property_i64(&format!("track-list/{}/ff-index", i));
                 sub_tracks.push(SubtitleTrack {
                     id,
@@ -1223,28 +1288,19 @@ impl VideoHandle {
         if is_initial_load {
             if let Some(sid) = current_sid {
                 if let Some(active_track) = sub_tracks.iter().find(|t| t.id == sid) {
-                    let is_signs = active_track.title.as_ref().map(|t| {
-                        let l = t.to_ascii_lowercase();
-                        l.contains("sign") || l.contains("song")
-                    }).unwrap_or(false);
+                    let is_signs = active_track
+                        .title
+                        .as_ref()
+                        .map(|t| {
+                            let l = t.to_ascii_lowercase();
+                            l.contains("sign") || l.contains("song")
+                        })
+                        .unwrap_or(false);
 
                     if is_signs {
-                        let preferred_full_track = sub_tracks.iter().find(|t| {
-                            if t.id == sid {
-                                return false;
-                            }
-                            if let Some(ref title) = t.title {
-                                let l = title.to_ascii_lowercase();
-                                if l.contains("sign") || l.contains("song") {
-                                    return false;
-                                }
-                                if l.contains("full") {
-                                    return true;
-                                }
-                            }
-                            t.external_filename.is_some()
-                        }).or_else(|| {
-                            sub_tracks.iter().find(|t| {
+                        let preferred_full_track = sub_tracks
+                            .iter()
+                            .find(|t| {
                                 if t.id == sid {
                                     return false;
                                 }
@@ -1253,10 +1309,26 @@ impl VideoHandle {
                                     if l.contains("sign") || l.contains("song") {
                                         return false;
                                     }
+                                    if l.contains("full") {
+                                        return true;
+                                    }
                                 }
-                                true
+                                t.external_filename.is_some()
                             })
-                        });
+                            .or_else(|| {
+                                sub_tracks.iter().find(|t| {
+                                    if t.id == sid {
+                                        return false;
+                                    }
+                                    if let Some(ref title) = t.title {
+                                        let l = title.to_ascii_lowercase();
+                                        if l.contains("sign") || l.contains("song") {
+                                            return false;
+                                        }
+                                    }
+                                    true
+                                })
+                            });
 
                         if let Some(full_track) = preferred_full_track {
                             log::info!(
@@ -1289,7 +1361,11 @@ impl VideoHandle {
                 if let (Ok(c_prop), Ok(c_val)) = (CString::new("alang"), CString::new(alang)) {
                     unsafe {
                         if !self.mpv.is_null() {
-                            mpv_ffi::mpv_set_property_string(self.mpv, c_prop.as_ptr(), c_val.as_ptr());
+                            mpv_ffi::mpv_set_property_string(
+                                self.mpv,
+                                c_prop.as_ptr(),
+                                c_val.as_ptr(),
+                            );
                         }
                     }
                 }
@@ -1489,7 +1565,10 @@ mod tests {
             codec: None,
             is_selected: false,
         };
-        assert_eq!(get_track_preference_string(&track_commentary), "Director's Commentary");
+        assert_eq!(
+            get_track_preference_string(&track_commentary),
+            "Director's Commentary"
+        );
     }
 
     #[test]
@@ -1508,7 +1587,10 @@ mod tests {
             is_selected: true,
             ..Default::default()
         };
-        assert_eq!(format_subtitle_track_label(&t1, 0), "English (Full Subtitles)");
+        assert_eq!(
+            format_subtitle_track_label(&t1, 0),
+            "English (Full Subtitles)"
+        );
 
         let t2 = SubtitleTrack {
             id: 2,
@@ -1518,7 +1600,10 @@ mod tests {
             is_selected: false,
             ..Default::default()
         };
-        assert_eq!(format_subtitle_track_label(&t2, 1), "English (Full Subtitles - Honorifics)");
+        assert_eq!(
+            format_subtitle_track_label(&t2, 1),
+            "English (Full Subtitles - Honorifics)"
+        );
 
         let t3 = SubtitleTrack {
             id: 3,
@@ -1528,7 +1613,10 @@ mod tests {
             is_selected: false,
             ..Default::default()
         };
-        assert_eq!(format_subtitle_track_label(&t3, 2), "English (Signs and Songs)");
+        assert_eq!(
+            format_subtitle_track_label(&t3, 2),
+            "English (Signs and Songs)"
+        );
 
         let t4 = SubtitleTrack {
             id: 4,

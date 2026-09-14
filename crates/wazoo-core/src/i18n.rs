@@ -1,8 +1,8 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Internationalization & Localization (i18n) Engine
- * 
+ *
  * Provides translation lookup, placeholder interpolation, and language metadata across
  * 16 supported languages matching wazoo-desktop. Translation files are embedded at compile time.
  */
@@ -19,22 +19,86 @@ pub struct Language {
 
 impl Language {
     pub const ALL: &'static [Language] = &[
-        Language { code: "en", display_name: "English", is_rtl: false },
-        Language { code: "es", display_name: "Español", is_rtl: false },
-        Language { code: "fr", display_name: "Français", is_rtl: false },
-        Language { code: "de", display_name: "Deutsch", is_rtl: false },
-        Language { code: "it", display_name: "Italiano", is_rtl: false },
-        Language { code: "pt", display_name: "Português", is_rtl: false },
-        Language { code: "ru", display_name: "Русский (Russian)", is_rtl: false },
-        Language { code: "zh", display_name: "简体中文 (Chinese)", is_rtl: false },
-        Language { code: "ja", display_name: "日本語 (Japanese)", is_rtl: false },
-        Language { code: "ko", display_name: "한국어 (Korean)", is_rtl: false },
-        Language { code: "th", display_name: "ไทย (Thai)", is_rtl: false },
-        Language { code: "he", display_name: "עברית (Hebrew)", is_rtl: true },
-        Language { code: "ar", display_name: "العربية (Arabic)", is_rtl: true },
-        Language { code: "hi", display_name: "हिन्दी (Hindi)", is_rtl: false },
-        Language { code: "bn", display_name: "বাংলা (Bengali)", is_rtl: false },
-        Language { code: "id", display_name: "Bahasa Indonesia", is_rtl: false },
+        Language {
+            code: "en",
+            display_name: "English",
+            is_rtl: false,
+        },
+        Language {
+            code: "es",
+            display_name: "Español",
+            is_rtl: false,
+        },
+        Language {
+            code: "fr",
+            display_name: "Français",
+            is_rtl: false,
+        },
+        Language {
+            code: "de",
+            display_name: "Deutsch",
+            is_rtl: false,
+        },
+        Language {
+            code: "it",
+            display_name: "Italiano",
+            is_rtl: false,
+        },
+        Language {
+            code: "pt",
+            display_name: "Português",
+            is_rtl: false,
+        },
+        Language {
+            code: "ru",
+            display_name: "Русский (Russian)",
+            is_rtl: false,
+        },
+        Language {
+            code: "zh",
+            display_name: "简体中文 (Chinese)",
+            is_rtl: false,
+        },
+        Language {
+            code: "ja",
+            display_name: "日本語 (Japanese)",
+            is_rtl: false,
+        },
+        Language {
+            code: "ko",
+            display_name: "한국어 (Korean)",
+            is_rtl: false,
+        },
+        Language {
+            code: "th",
+            display_name: "ไทย (Thai)",
+            is_rtl: false,
+        },
+        Language {
+            code: "he",
+            display_name: "עברית (Hebrew)",
+            is_rtl: true,
+        },
+        Language {
+            code: "ar",
+            display_name: "العربية (Arabic)",
+            is_rtl: true,
+        },
+        Language {
+            code: "hi",
+            display_name: "हिन्दी (Hindi)",
+            is_rtl: false,
+        },
+        Language {
+            code: "bn",
+            display_name: "বাংলা (Bengali)",
+            is_rtl: false,
+        },
+        Language {
+            code: "id",
+            display_name: "Bahasa Indonesia",
+            is_rtl: false,
+        },
     ];
 
     pub fn from_code(code: &str) -> Language {
@@ -169,10 +233,18 @@ mod tests {
         let dict = get_dictionary();
         assert_eq!(dict.len(), 16);
         for lang in Language::ALL {
-            assert!(dict.contains_key(lang.code), "Missing locale for {}", lang.code);
+            assert!(
+                dict.contains_key(lang.code),
+                "Missing locale for {}",
+                lang.code
+            );
             let map = dict.get(lang.code).unwrap();
             assert!(!map.is_empty(), "Locale map empty for {}", lang.code);
-            assert!(map.contains_key("common.settings"), "Missing common.settings in {}", lang.code);
+            assert!(
+                map.contains_key("common.settings"),
+                "Missing common.settings in {}",
+                lang.code
+            );
         }
     }
 
@@ -192,10 +264,18 @@ mod tests {
 
     #[test]
     fn test_t_with_interpolation() {
-        let formatted = t_with("en", "wazoo.loading_progress", &[("percent", "50"), ("total", "100")]);
+        let formatted = t_with(
+            "en",
+            "wazoo.loading_progress",
+            &[("percent", "50"), ("total", "100")],
+        );
         assert_eq!(formatted, "Loading... 50% (100 files)");
 
-        let formatted_es = t_with("es", "wazoo.loading_progress", &[("percent", "50"), ("total", "100")]);
+        let formatted_es = t_with(
+            "es",
+            "wazoo.loading_progress",
+            &[("percent", "50"), ("total", "100")],
+        );
         assert_eq!(formatted_es, "Cargando... 50% (100 archivos)");
     }
 

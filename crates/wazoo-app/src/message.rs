@@ -1,15 +1,15 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Application Message Definitions
- * 
+ *
  * Enumerates all user interactions, playback commands, background scanner updates,
  * timer ticks, and window system events routed through the Iced application loop.
  */
 
+use iced::{event::Status, keyboard::Key, window::Id, Point, Size};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use iced::{keyboard::Key, Point, Size, window::Id, event::Status};
 use wazoo_core::Bookmark;
 use wazoo_media::{PlayerId, VideoHandle};
 use wazoo_scanner::ScanProgress;

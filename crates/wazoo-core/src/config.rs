@@ -1,16 +1,16 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Configuration & Persistence Manager
- * 
+ *
  * Resolves standard platform directories for config and database storage, loading and saving
  * JSON settings files and managing database paths.
  */
 
+use crate::models::WazooSettings;
+use directories::ProjectDirs;
 use std::fs;
 use std::path::PathBuf;
-use directories::ProjectDirs;
-use crate::models::WazooSettings;
 
 pub struct ConfigManager {
     config_dir: PathBuf,
@@ -136,7 +136,10 @@ mod tests {
     #[test]
     fn test_config_manager_paths() {
         let mgr = ConfigManager::new();
-        assert!(mgr.config_file_path().to_string_lossy().contains("wazoo-rs"));
+        assert!(mgr
+            .config_file_path()
+            .to_string_lossy()
+            .contains("wazoo-rs"));
         assert!(mgr.database_path().to_string_lossy().contains("wazoo-rs"));
         assert!(mgr.config_dir.exists());
         assert!(mgr.data_dir.exists());
@@ -164,7 +167,8 @@ mod tests {
 
         // Verify legacy video session JSON without is_shuffle defaults to true
         let legacy_session_json = r#"{"path":"/path/legacy.mp4","position_secs":12.0}"#;
-        let legacy_session: crate::models::VideoSession = serde_json::from_str(legacy_session_json).unwrap();
+        let legacy_session: crate::models::VideoSession =
+            serde_json::from_str(legacy_session_json).unwrap();
         assert!(legacy_session.is_shuffle);
 
         // Verify backwards compatibility when session_videos is omitted from JSON
@@ -195,14 +199,22 @@ mod tests {
         assert!(!deserialized.bookmarks[0].is_shuffle);
 
         // Verify legacy bookmark JSON without is_shuffle defaults to true
-        let legacy_bookmark_json = r#"{"name":"Legacy","query":"test","path":"/path/test.mp4","position_secs":10.0}"#;
-        let legacy_bookmark: crate::models::Bookmark = serde_json::from_str(legacy_bookmark_json).unwrap();
+        let legacy_bookmark_json =
+            r#"{"name":"Legacy","query":"test","path":"/path/test.mp4","position_secs":10.0}"#;
+        let legacy_bookmark: crate::models::Bookmark =
+            serde_json::from_str(legacy_bookmark_json).unwrap();
         assert!(legacy_bookmark.is_shuffle);
     }
 
     #[test]
     fn test_buffer_settings_clamping() {
-        let temp_dir = std::env::temp_dir().join(format!("wazoo_clamp_test_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let temp_dir = std::env::temp_dir().join(format!(
+            "wazoo_clamp_test_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         let _ = fs::create_dir_all(&temp_dir);
         let config_file = temp_dir.join("settings.json");
 
@@ -223,7 +235,13 @@ mod tests {
 
     #[test]
     fn test_atomic_save_settings() {
-        let temp_dir = std::env::temp_dir().join(format!("wazoo_atomic_test_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let temp_dir = std::env::temp_dir().join(format!(
+            "wazoo_atomic_test_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         let _ = fs::create_dir_all(&temp_dir);
 
         let mgr = ConfigManager {
@@ -254,7 +272,10 @@ mod tests {
         settings.preferred_audio_language = Some("Japanese".to_string());
         let json = serde_json::to_string(&settings).unwrap();
         let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
-        assert_eq!(deserialized.preferred_audio_language.as_deref(), Some("Japanese"));
+        assert_eq!(
+            deserialized.preferred_audio_language.as_deref(),
+            Some("Japanese")
+        );
 
         // Backwards compatibility when omitted
         let legacy_json = r#"{"window_opacity":1.0}"#;
@@ -264,7 +285,13 @@ mod tests {
 
     #[test]
     fn test_keybinds_serialization_and_has_keybinds() {
-        let temp_dir = std::env::temp_dir().join(format!("wazoo_keybinds_test_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let temp_dir = std::env::temp_dir().join(format!(
+            "wazoo_keybinds_test_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         let _ = fs::create_dir_all(&temp_dir);
 
         let mgr = ConfigManager {
@@ -308,7 +335,13 @@ mod tests {
 
     #[test]
     fn test_window_bounds_serialization_and_clamping() {
-        let temp_dir = std::env::temp_dir().join(format!("wazoo_bounds_test_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let temp_dir = std::env::temp_dir().join(format!(
+            "wazoo_bounds_test_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         let _ = fs::create_dir_all(&temp_dir);
 
         let mgr = ConfigManager {
@@ -369,7 +402,13 @@ mod tests {
         assert_eq!(legacy.flip_interval_secs, 45);
 
         // Verify clamping in load_settings
-        let temp_dir = std::env::temp_dir().join(format!("wazoo_flip_test_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let temp_dir = std::env::temp_dir().join(format!(
+            "wazoo_flip_test_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         let _ = fs::create_dir_all(&temp_dir);
         let mgr = ConfigManager {
             config_dir: temp_dir.clone(),
@@ -391,7 +430,13 @@ mod tests {
     fn test_flip_mode_does_not_persist() {
         use crate::models::PlaybackMode;
 
-        let temp_dir = std::env::temp_dir().join(format!("wazoo_flip_persist_test_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let temp_dir = std::env::temp_dir().join(format!(
+            "wazoo_flip_persist_test_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         let _ = fs::create_dir_all(&temp_dir);
 
         let mgr = ConfigManager {

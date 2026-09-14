@@ -1,16 +1,16 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * SQLite Database Manager
- * 
+ *
  * Provides database initialization, indexing, full-text pattern search, folder filtering,
  * and bulk upsert operations for indexed video files.
  */
 
+use crate::models::VideoRecord;
+use rusqlite::{params, Connection, Result};
 use std::collections::HashSet;
 use std::path::Path;
-use rusqlite::{params, Connection, Result};
-use crate::models::VideoRecord;
 
 pub struct Database {
     conn: Connection,
@@ -41,15 +41,11 @@ impl Database {
             [],
         )?;
 
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS path_idx ON Video(path)",
-            [],
-        )?;
+        self.conn
+            .execute("CREATE INDEX IF NOT EXISTS path_idx ON Video(path)", [])?;
 
-        self.conn.execute(
-            "CREATE INDEX IF NOT EXISTS name_idx ON Video(name)",
-            [],
-        )?;
+        self.conn
+            .execute("CREATE INDEX IF NOT EXISTS name_idx ON Video(name)", [])?;
 
         Ok(())
     }
@@ -60,10 +56,7 @@ impl Database {
              VALUES (?1, ?2)
              ON CONFLICT(path) DO UPDATE SET
                 name = excluded.name",
-            params![
-                video.name,
-                video.path,
-            ],
+            params![video.name, video.path,],
         )?;
 
         Ok(self.conn.last_insert_rowid())
@@ -77,14 +70,11 @@ impl Database {
                 "INSERT INTO Video (name, path)
                  VALUES (?1, ?2)
                  ON CONFLICT(path) DO UPDATE SET
-                    name = excluded.name"
+                    name = excluded.name",
             )?;
 
             for video in videos {
-                stmt.execute(params![
-                    video.name,
-                    video.path,
-                ])?;
+                stmt.execute(params![video.name, video.path,])?;
                 count += 1;
             }
         }
@@ -168,11 +158,9 @@ impl Database {
     }
 
     pub fn get_video_count(&self) -> Result<usize> {
-        let count: usize = self.conn.query_row(
-            "SELECT COUNT(*) FROM Video",
-            [],
-            |row| row.get(0),
-        )?;
+        let count: usize = self
+            .conn
+            .query_row("SELECT COUNT(*) FROM Video", [], |row| row.get(0))?;
         Ok(count)
     }
 
@@ -214,13 +202,14 @@ impl Database {
 
             for clause in clauses {
                 let trimmed = clause.trim();
-                let (is_not, term) = if trimmed.len() >= 4 && trimmed[..4].eq_ignore_ascii_case("not ") {
-                    (true, trimmed[4..].trim())
-                } else if let Some(rest) = trimmed.strip_prefix('!') {
-                    (true, rest.trim())
-                } else {
-                    (false, trimmed)
-                };
+                let (is_not, term) =
+                    if trimmed.len() >= 4 && trimmed[..4].eq_ignore_ascii_case("not ") {
+                        (true, trimmed[4..].trim())
+                    } else if let Some(rest) = trimmed.strip_prefix('!') {
+                        (true, rest.trim())
+                    } else {
+                        (false, trimmed)
+                    };
 
                 if term.is_empty() {
                     continue;
@@ -315,7 +304,8 @@ impl Database {
 
     pub fn delete_missing_paths(&mut self, existing_paths: &[String]) -> Result<usize> {
         let all_videos = self.get_all_videos()?;
-        let existing_set: std::collections::HashSet<&str> = existing_paths.iter().map(|s| s.as_str()).collect();
+        let existing_set: std::collections::HashSet<&str> =
+            existing_paths.iter().map(|s| s.as_str()).collect();
 
         let tx = self.conn.transaction()?;
         let mut deleted = 0;
@@ -370,15 +360,34 @@ mod tests {
     fn test_remove_videos_in_folder() {
         let mut db = Database::open_in_memory().unwrap();
         db.batch_insert_videos(&[
-            VideoRecord { id: 0, name: "Vid 1".to_string(), path: "/home/user/media/folder_a/1.mp4".to_string() },
-            VideoRecord { id: 0, name: "Vid 2".to_string(), path: "/home/user/media/folder_a/sub/2.mp4".to_string() },
-            VideoRecord { id: 0, name: "Vid 3".to_string(), path: "/home/user/media/folder_b/3.mp4".to_string() },
-            VideoRecord { id: 0, name: "Vid 4".to_string(), path: "/home/user/media/folder_a_other/4.mp4".to_string() },
-        ]).unwrap();
+            VideoRecord {
+                id: 0,
+                name: "Vid 1".to_string(),
+                path: "/home/user/media/folder_a/1.mp4".to_string(),
+            },
+            VideoRecord {
+                id: 0,
+                name: "Vid 2".to_string(),
+                path: "/home/user/media/folder_a/sub/2.mp4".to_string(),
+            },
+            VideoRecord {
+                id: 0,
+                name: "Vid 3".to_string(),
+                path: "/home/user/media/folder_b/3.mp4".to_string(),
+            },
+            VideoRecord {
+                id: 0,
+                name: "Vid 4".to_string(),
+                path: "/home/user/media/folder_a_other/4.mp4".to_string(),
+            },
+        ])
+        .unwrap();
         assert_eq!(db.get_video_count().unwrap(), 4);
 
         // Remove folder_a
-        let removed = db.remove_videos_in_folder("/home/user/media/folder_a").unwrap();
+        let removed = db
+            .remove_videos_in_folder("/home/user/media/folder_a")
+            .unwrap();
         assert_eq!(removed, 2);
         assert_eq!(db.get_video_count().unwrap(), 2);
 
@@ -392,16 +401,33 @@ mod tests {
     fn test_search_videos_filtering_for_reconciliation() {
         let mut db = Database::open_in_memory().unwrap();
         db.batch_insert_videos(&[
-            VideoRecord { id: 0, name: "Breaking Bad S01E01".to_string(), path: "/media/BreakingBad/S01E01.mp4".to_string() },
-            VideoRecord { id: 0, name: "Breaking Bad S01E02".to_string(), path: "/media/BreakingBad/S01E02.mp4".to_string() },
-            VideoRecord { id: 0, name: "Game of Thrones S01E01".to_string(), path: "/media/GameOfThrones/S01E01.mp4".to_string() },
-        ]).unwrap();
+            VideoRecord {
+                id: 0,
+                name: "Breaking Bad S01E01".to_string(),
+                path: "/media/BreakingBad/S01E01.mp4".to_string(),
+            },
+            VideoRecord {
+                id: 0,
+                name: "Breaking Bad S01E02".to_string(),
+                path: "/media/BreakingBad/S01E02.mp4".to_string(),
+            },
+            VideoRecord {
+                id: 0,
+                name: "Game of Thrones S01E01".to_string(),
+                path: "/media/GameOfThrones/S01E01.mp4".to_string(),
+            },
+        ])
+        .unwrap();
 
         // Search for Breaking Bad
         let bb_results = db.search_videos("Breaking Bad", &[]).unwrap();
         assert_eq!(bb_results.len(), 2);
-        assert!(bb_results.iter().any(|v| v.path == "/media/BreakingBad/S01E01.mp4"));
-        assert!(bb_results.iter().any(|v| v.path == "/media/BreakingBad/S01E02.mp4"));
+        assert!(bb_results
+            .iter()
+            .any(|v| v.path == "/media/BreakingBad/S01E01.mp4"));
+        assert!(bb_results
+            .iter()
+            .any(|v| v.path == "/media/BreakingBad/S01E02.mp4"));
 
         // Currently playing GoT does not exist in the new queried list of files
         let got_playing_path = "/media/GameOfThrones/S01E01.mp4";
@@ -441,11 +467,15 @@ mod tests {
         assert_eq!(mixed.len(), 2);
         assert!(mixed.iter().any(|v| v.path.contains("01-AsteroidBlues")));
         assert!(mixed.iter().any(|v| v.path.contains("EekTheCat")));
-        assert!(!mixed.iter().any(|v| v.path.contains("BalladOfFallenAngels")));
+        assert!(!mixed
+            .iter()
+            .any(|v| v.path.contains("BalladOfFallenAngels")));
 
         // 2. Multiple negative queries: cowboy, not fallen, !asteroid
         // "cowboy, not fallen, !asteroid" -> (cowboy) AND (NOT fallen AND NOT asteroid)
-        let multi_not = db.search_videos("cowboy, not fallen, !asteroid", &[]).unwrap();
+        let multi_not = db
+            .search_videos("cowboy, not fallen, !asteroid", &[])
+            .unwrap();
         assert_eq!(multi_not.len(), 0);
 
         // 3. Pure negative query: not eek, not trigun
@@ -499,4 +529,3 @@ mod tests {
         assert_eq!(res_underscore[0].path, "/media/100_literal.mkv");
     }
 }
-

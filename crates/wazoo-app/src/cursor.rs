@@ -1,8 +1,8 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Interactive Cursor Widget
- * 
+ *
  * Wraps arbitrary Iced elements to report custom mouse cursor shapes, such as pointer
  * cursors for clickable seekbars and playback controls.
  */
@@ -66,9 +66,15 @@ where
         cursor: mouse::Cursor,
         viewport: &Rectangle,
     ) {
-        self.content
-            .as_widget()
-            .draw(&tree.children[0], renderer, theme, style, layout, cursor, viewport);
+        self.content.as_widget().draw(
+            &tree.children[0],
+            renderer,
+            theme,
+            style,
+            layout,
+            cursor,
+            viewport,
+        );
     }
 
     fn operate(
@@ -123,7 +129,9 @@ where
         );
         match child_interaction {
             mouse::Interaction::Grab | mouse::Interaction::Grabbing => mouse::Interaction::Pointer,
-            mouse::Interaction::None if cursor.is_over(layout.bounds()) => mouse::Interaction::Pointer,
+            mouse::Interaction::None if cursor.is_over(layout.bounds()) => {
+                mouse::Interaction::Pointer
+            }
             other => other,
         }
     }
@@ -136,9 +144,13 @@ where
         viewport: &Rectangle,
         translation: iced::Vector,
     ) -> Option<iced::advanced::overlay::Element<'b, Message, Theme, Renderer>> {
-        self.content
-            .as_widget_mut()
-            .overlay(&mut tree.children[0], layout, renderer, viewport, translation)
+        self.content.as_widget_mut().overlay(
+            &mut tree.children[0],
+            layout,
+            renderer,
+            viewport,
+            translation,
+        )
     }
 }
 
@@ -275,9 +287,15 @@ where
         cursor: mouse::Cursor,
         viewport: &Rectangle,
     ) {
-        self.content
-            .as_widget()
-            .draw(&tree.children[0], renderer, theme, style, layout, cursor, viewport);
+        self.content.as_widget().draw(
+            &tree.children[0],
+            renderer,
+            theme,
+            style,
+            layout,
+            cursor,
+            viewport,
+        );
     }
 
     fn operate(
@@ -366,9 +384,13 @@ where
         viewport: &Rectangle,
         translation: iced::Vector,
     ) -> Option<iced::advanced::overlay::Element<'b, Message, Theme, Renderer>> {
-        self.content
-            .as_widget_mut()
-            .overlay(&mut tree.children[0], layout, renderer, viewport, translation)
+        self.content.as_widget_mut().overlay(
+            &mut tree.children[0],
+            layout,
+            renderer,
+            viewport,
+            translation,
+        )
     }
 }
 
@@ -396,46 +418,104 @@ mod tests {
         let corner = 14.0;
 
         // Inside center: None
-        assert!(determine_resize_direction(bounds, Point::new(400.0, 300.0), border, corner).is_none());
+        assert!(
+            determine_resize_direction(bounds, Point::new(400.0, 300.0), border, corner).is_none()
+        );
 
         // North edge
-        assert!(matches!(determine_resize_direction(bounds, Point::new(400.0, 2.0), border, corner), Some(Direction::North)));
+        assert!(matches!(
+            determine_resize_direction(bounds, Point::new(400.0, 2.0), border, corner),
+            Some(Direction::North)
+        ));
 
         // South edge
-        assert!(matches!(determine_resize_direction(bounds, Point::new(400.0, 598.0), border, corner), Some(Direction::South)));
+        assert!(matches!(
+            determine_resize_direction(bounds, Point::new(400.0, 598.0), border, corner),
+            Some(Direction::South)
+        ));
 
         // West edge
-        assert!(matches!(determine_resize_direction(bounds, Point::new(2.0, 300.0), border, corner), Some(Direction::West)));
+        assert!(matches!(
+            determine_resize_direction(bounds, Point::new(2.0, 300.0), border, corner),
+            Some(Direction::West)
+        ));
 
         // East edge
-        assert!(matches!(determine_resize_direction(bounds, Point::new(798.0, 300.0), border, corner), Some(Direction::East)));
+        assert!(matches!(
+            determine_resize_direction(bounds, Point::new(798.0, 300.0), border, corner),
+            Some(Direction::East)
+        ));
 
         // NorthWest corner
-        assert!(matches!(determine_resize_direction(bounds, Point::new(2.0, 2.0), border, corner), Some(Direction::NorthWest)));
-        assert!(matches!(determine_resize_direction(bounds, Point::new(10.0, 2.0), border, corner), Some(Direction::NorthWest)));
-        assert!(matches!(determine_resize_direction(bounds, Point::new(2.0, 10.0), border, corner), Some(Direction::NorthWest)));
+        assert!(matches!(
+            determine_resize_direction(bounds, Point::new(2.0, 2.0), border, corner),
+            Some(Direction::NorthWest)
+        ));
+        assert!(matches!(
+            determine_resize_direction(bounds, Point::new(10.0, 2.0), border, corner),
+            Some(Direction::NorthWest)
+        ));
+        assert!(matches!(
+            determine_resize_direction(bounds, Point::new(2.0, 10.0), border, corner),
+            Some(Direction::NorthWest)
+        ));
 
         // NorthEast corner
-        assert!(matches!(determine_resize_direction(bounds, Point::new(798.0, 2.0), border, corner), Some(Direction::NorthEast)));
-        assert!(matches!(determine_resize_direction(bounds, Point::new(790.0, 2.0), border, corner), Some(Direction::NorthEast)));
+        assert!(matches!(
+            determine_resize_direction(bounds, Point::new(798.0, 2.0), border, corner),
+            Some(Direction::NorthEast)
+        ));
+        assert!(matches!(
+            determine_resize_direction(bounds, Point::new(790.0, 2.0), border, corner),
+            Some(Direction::NorthEast)
+        ));
 
         // SouthWest corner
-        assert!(matches!(determine_resize_direction(bounds, Point::new(2.0, 598.0), border, corner), Some(Direction::SouthWest)));
+        assert!(matches!(
+            determine_resize_direction(bounds, Point::new(2.0, 598.0), border, corner),
+            Some(Direction::SouthWest)
+        ));
 
         // SouthEast corner
-        assert!(matches!(determine_resize_direction(bounds, Point::new(798.0, 598.0), border, corner), Some(Direction::SouthEast)));
+        assert!(matches!(
+            determine_resize_direction(bounds, Point::new(798.0, 598.0), border, corner),
+            Some(Direction::SouthEast)
+        ));
     }
 
     #[test]
     fn test_direction_to_interaction_mappings() {
-        assert_eq!(direction_to_interaction(Direction::North), mouse::Interaction::ResizingVertically);
-        assert_eq!(direction_to_interaction(Direction::South), mouse::Interaction::ResizingVertically);
-        assert_eq!(direction_to_interaction(Direction::East), mouse::Interaction::ResizingHorizontally);
-        assert_eq!(direction_to_interaction(Direction::West), mouse::Interaction::ResizingHorizontally);
-        assert_eq!(direction_to_interaction(Direction::NorthWest), mouse::Interaction::ResizingDiagonallyDown);
-        assert_eq!(direction_to_interaction(Direction::SouthEast), mouse::Interaction::ResizingDiagonallyDown);
-        assert_eq!(direction_to_interaction(Direction::NorthEast), mouse::Interaction::ResizingDiagonallyUp);
-        assert_eq!(direction_to_interaction(Direction::SouthWest), mouse::Interaction::ResizingDiagonallyUp);
+        assert_eq!(
+            direction_to_interaction(Direction::North),
+            mouse::Interaction::ResizingVertically
+        );
+        assert_eq!(
+            direction_to_interaction(Direction::South),
+            mouse::Interaction::ResizingVertically
+        );
+        assert_eq!(
+            direction_to_interaction(Direction::East),
+            mouse::Interaction::ResizingHorizontally
+        );
+        assert_eq!(
+            direction_to_interaction(Direction::West),
+            mouse::Interaction::ResizingHorizontally
+        );
+        assert_eq!(
+            direction_to_interaction(Direction::NorthWest),
+            mouse::Interaction::ResizingDiagonallyDown
+        );
+        assert_eq!(
+            direction_to_interaction(Direction::SouthEast),
+            mouse::Interaction::ResizingDiagonallyDown
+        );
+        assert_eq!(
+            direction_to_interaction(Direction::NorthEast),
+            mouse::Interaction::ResizingDiagonallyUp
+        );
+        assert_eq!(
+            direction_to_interaction(Direction::SouthWest),
+            mouse::Interaction::ResizingDiagonallyUp
+        );
     }
 }
-
