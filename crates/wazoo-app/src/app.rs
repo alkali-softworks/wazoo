@@ -111,6 +111,7 @@ pub struct WazooApp {
     pub(crate) titlebar_press_origin: Option<Point>,
     pub(crate) titlebar_drag_pending: bool,
     pub(crate) is_window_dragging: bool,
+    pub(crate) last_window_drag_move: Option<Instant>,
     pub(crate) last_titlebar_click: Option<Instant>,
     pub(crate) expanded_folders: HashSet<String>,
     pub(crate) show_transcript: bool,
@@ -272,6 +273,7 @@ impl WazooApp {
             titlebar_press_origin: None,
             titlebar_drag_pending: false,
             is_window_dragging: false,
+            last_window_drag_move: None,
             last_titlebar_click: None,
             expanded_folders: HashSet::new(),
             show_transcript: false,
@@ -1452,18 +1454,20 @@ mod tests {
         assert!(!app.titlebar_drag_pending);
         assert_eq!(app.titlebar_alpha(), 1.0);
 
-        // Simulate wobbly windows: cursor flies around over video while dragging
+        // Simulate wobbly windows: window moves and cursor flies around over video while dragging
+        let _ = app.update(Message::WindowMoved(win_id, Point::new(105.0, 105.0)));
         let _ = app.update(Message::CursorMoved(win_id, Point::new(400.0, 500.0)));
         assert!(app.is_window_dragging);
         assert!(app.show_titlebar);
         assert_eq!(app.titlebar_alpha(), 1.0);
 
-        // Run 100 frame ticks (well beyond TITLEBAR_HIDE_TICKS = 50)
-        for _ in 0..100 {
+        // Run 50 frame ticks with window moving (well beyond TITLEBAR_HIDE_TICKS = 50)
+        for i in 0..50 {
+            let _ = app.update(Message::WindowMoved(win_id, Point::new(110.0 + i as f32, 110.0 + i as f32)));
             let _ = app.update(Message::VideoFrameTick);
         }
 
-        // Titlebar MUST still be fully visible and alpha == 1.0
+        // Titlebar MUST still be fully visible and alpha == 1.0 while moving
         assert!(app.show_titlebar);
         assert_eq!(app.titlebar_alpha(), 1.0);
 
@@ -1473,6 +1477,36 @@ mod tests {
         assert_eq!(app.titlebar_hide_ticks, TITLEBAR_FADE_TICKS);
 
         // After fading out over TITLEBAR_FADE_TICKS frames, titlebar is completely dismissed without wiggling
+        for _ in 0..TITLEBAR_FADE_TICKS {
+            let _ = app.update(Message::VideoFrameTick);
+        }
+        assert!(!app.show_titlebar);
+        assert_eq!(app.titlebar_alpha(), 0.0);
+    }
+
+    #[test]
+    fn test_titlebar_dismisses_when_wm_eats_mouseup() {
+        let (mut app, _) = new_test_app();
+        let win_id = iced::window::Id::unique();
+        app.window_id = Some(win_id);
+
+        let _ = app.update(Message::CursorMoved(win_id, Point::new(200.0, 15.0)));
+        let _ = app.update(Message::TitleBarPressed);
+        let _ = app.update(Message::CursorMoved(win_id, Point::new(200.0, 25.0)));
+        assert!(app.is_window_dragging);
+
+        // Window moves
+        let _ = app.update(Message::WindowMoved(win_id, Point::new(100.0, 100.0)));
+        assert!(app.show_titlebar);
+
+        // Simulate WM eating mouseup: window stops moving and time elapses
+        std::thread::sleep(Duration::from_millis(320));
+
+        // User moves mouse over video without clicking
+        let _ = app.update(Message::CursorMoved(win_id, Point::new(300.0, 300.0)));
+        assert!(!app.is_window_dragging);
+
+        // Titlebar smoothly fades out without needing a click on the video
         for _ in 0..TITLEBAR_FADE_TICKS {
             let _ = app.update(Message::VideoFrameTick);
         }
