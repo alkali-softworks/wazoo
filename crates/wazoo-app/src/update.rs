@@ -1386,10 +1386,18 @@ impl WazooApp {
                 }
             }
             Message::AddNewPlayer => {
-                let new_count = (self.players.len() + 1).min(12);
+                let prev_len = self.players.len();
+                let new_count = (prev_len + 1).min(12);
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
-                return self.update(Message::SetPlayerCount(new_count));
+                let task = self.update(Message::SetPlayerCount(new_count));
+                if self.players.len() > prev_len {
+                    let new_idx = self.players.len() - 1;
+                    let focus_task = self.update(Message::SetFocusedPlayer(new_idx));
+                    self.focus_border_ticks = 0;
+                    return Task::batch([task, focus_task]);
+                }
+                return task;
             }
             Message::RemoveFocusedPlayer => {
                 if self.settings.playback_mode == PlaybackMode::Scroll {

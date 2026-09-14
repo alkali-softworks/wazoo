@@ -1754,4 +1754,67 @@ mod tests {
         assert!(app.is_window_focused);
         assert_eq!(app.unfocused_frame_ticks, 0);
     }
+
+    #[test]
+    fn test_add_new_player_focuses_new_player_and_can_be_removed() {
+        let (mut app, _) = new_test_app();
+        let temp_dir = std::env::temp_dir().join(format!(
+            "wazoo_test_players_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let _ = std::fs::create_dir_all(&temp_dir);
+        let f1 = temp_dir.join("v1.mp4");
+        let f2 = temp_dir.join("v2.mp4");
+        let f3 = temp_dir.join("v3.mp4");
+        let _ = std::fs::File::create(&f1);
+        let _ = std::fs::File::create(&f2);
+        let _ = std::fs::File::create(&f3);
+
+        app.available_videos = vec![
+            VideoRecord {
+                id: 1,
+                name: "V1".to_string(),
+                path: f1.to_string_lossy().to_string(),
+            },
+            VideoRecord {
+                id: 2,
+                name: "V2".to_string(),
+                path: f2.to_string_lossy().to_string(),
+            },
+            VideoRecord {
+                id: 3,
+                name: "V3".to_string(),
+                path: f3.to_string_lossy().to_string(),
+            },
+        ];
+
+        // Start with 1 player
+        let _ = app.update(Message::SetPlayerCount(1));
+        assert_eq!(app.players.len(), 1);
+        assert_eq!(app.focused_player_idx, 0);
+        let first_player_id = app.players[0].id;
+
+        // Manually add a new player (such as pressing N)
+        let _ = app.update(Message::AddNewPlayer);
+        assert_eq!(app.players.len(), 2);
+        assert_eq!(app.focused_player_idx, 1);
+        let second_player_id = app.players[1].id;
+        assert_ne!(first_player_id, second_player_id);
+        assert_eq!(app.focused_player_id(), Some(second_player_id));
+        assert_eq!(app.focus_border_ticks, 0);
+
+        // Press X (RemoveFocusedPlayer) removes the newly added active player
+        let _ = app.update(Message::RemoveFocusedPlayer);
+        assert_eq!(app.players.len(), 1);
+        assert_eq!(app.players[0].id, first_player_id);
+        assert_eq!(app.focused_player_idx, 0);
+        assert_eq!(app.focused_player_id(), Some(first_player_id));
+        assert_eq!(app.focus_border_ticks, 0);
+
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
 }
