@@ -841,3 +841,48 @@ Now the whole puzzle connects:
   - Copy 2 (`path_clone`) is moved into the **Completion Callback Closure**.
 
 Each thread and callback gets its own safe copy, preventing memory corruption, data races, and segfaults!
+
+---
+
+## 🧹 Chapter 11: Refactoring "Fat Match Arms" into Helper Methods
+
+When your `update()` function grows to hundreds of lines, having massive blocks of code inside a single `match` arm becomes hard to read.
+
+### Before: The "Fat Match Arm" (113 lines inlined)
+```rust
+pub fn update(&mut self, message: Message) -> Task<Message> {
+    match message {
+        Message::KeyPressed(key, status) => {
+            // 113 lines of key parsing, Alt-checks, modal checks, and nested switches...
+            // Indentation reaches 5+ levels deep!
+        }
+    }
+}
+```
+
+### After: Clean Delegating Helper Method (3 lines in `update()`)
+```rust
+pub fn update(&mut self, message: Message) -> Task<Message> {
+    match message {
+        Message::KeyPressed(key, status) => {
+            return self.handle_key_pressed(key, status);
+        }
+    }
+}
+
+// Extracted into its own focused helper method:
+impl WazooApp {
+    pub(crate) fn handle_key_pressed(
+        &mut self,
+        key: Key,
+        status: iced::event::Status,
+    ) -> Task<Message> {
+        // Keyboard routing logic lives cleanly here, with level 1 indentation!
+    }
+}
+```
+
+### Why this is great:
+1. **`update()` stays a high-level Table of Contents**: Anyone opening the file can skim every event handled by the app in 30 seconds.
+2. **Kills Indentation Hell**: Resets deeply nested blocks back to line 1.
+3. **Easier to Test**: You can test `app.handle_key_pressed(key, status)` directly in unit tests without wrapping everything in messages.
