@@ -12,8 +12,8 @@ use crate::format;
 use crate::message::Message;
 use crate::theme;
 use iced::{
-    widget::{button, column, container, row, scrollable, text, text_input, Space},
     Alignment, Element, Length,
+    widget::{Space, button, column, container, row, scrollable, text, text_input},
 };
 use std::collections::BTreeMap;
 
@@ -181,12 +181,14 @@ impl WazooApp {
             .width(Length::Fill);
 
         let is_confined = !self.is_all_folder(&self.active_search_folder);
-        let mut header_row = row![text(self.t_with(
-            "settings.total_videos",
-            &[("count", &format::format_number(self.available_videos.len()))]
-        ))
-        .size(17)
-        .color(iced::Color::WHITE),]
+        let mut header_row = row![
+            text(self.t_with(
+                "settings.total_videos",
+                &[("count", &format::format_number(self.available_videos.len()))]
+            ))
+            .size(17)
+            .color(iced::Color::WHITE),
+        ]
         .spacing(8)
         .align_y(Alignment::Center);
 

@@ -8,7 +8,7 @@
  */
 
 use crate::models::VideoRecord;
-use rusqlite::{params, Connection, Result};
+use rusqlite::{Connection, Result, params};
 use std::collections::HashSet;
 use std::path::Path;
 
@@ -422,12 +422,16 @@ mod tests {
         // Search for Breaking Bad
         let bb_results = db.search_videos("Breaking Bad", &[]).unwrap();
         assert_eq!(bb_results.len(), 2);
-        assert!(bb_results
-            .iter()
-            .any(|v| v.path == "/media/BreakingBad/S01E01.mp4"));
-        assert!(bb_results
-            .iter()
-            .any(|v| v.path == "/media/BreakingBad/S01E02.mp4"));
+        assert!(
+            bb_results
+                .iter()
+                .any(|v| v.path == "/media/BreakingBad/S01E01.mp4")
+        );
+        assert!(
+            bb_results
+                .iter()
+                .any(|v| v.path == "/media/BreakingBad/S01E02.mp4")
+        );
 
         // Currently playing GoT does not exist in the new queried list of files
         let got_playing_path = "/media/GameOfThrones/S01E01.mp4";
@@ -467,9 +471,11 @@ mod tests {
         assert_eq!(mixed.len(), 2);
         assert!(mixed.iter().any(|v| v.path.contains("01-AsteroidBlues")));
         assert!(mixed.iter().any(|v| v.path.contains("EekTheCat")));
-        assert!(!mixed
-            .iter()
-            .any(|v| v.path.contains("BalladOfFallenAngels")));
+        assert!(
+            !mixed
+                .iter()
+                .any(|v| v.path.contains("BalladOfFallenAngels"))
+        );
 
         // 2. Multiple negative queries: cowboy, not fallen, !asteroid
         // "cowboy, not fallen, !asteroid" -> (cowboy) AND (NOT fallen AND NOT asteroid)

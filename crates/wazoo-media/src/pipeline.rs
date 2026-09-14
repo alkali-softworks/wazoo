@@ -14,7 +14,7 @@ use std::sync::{Arc, Mutex};
 use bytemuck::{Pod, Zeroable};
 use iced::advanced::graphics::Viewport;
 use iced::widget::shader::{Pipeline, Primitive, Program, Shader};
-use iced::{mouse, Length, Rectangle};
+use iced::{Length, Rectangle, mouse};
 use iced_wgpu::wgpu;
 
 #[repr(C)]

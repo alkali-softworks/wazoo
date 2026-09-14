@@ -18,8 +18,8 @@ use crate::message::Message;
 use crate::scroll_view;
 use crate::theme;
 use iced::{
-    widget::{button, column, container, mouse_area, row, slider, svg, text, Space, Stack},
     Alignment, Element, Length, Theme,
+    widget::{Space, Stack, button, column, container, mouse_area, row, slider, svg, text},
 };
 use wazoo_core::{LayoutMode, PlaybackMode};
 use wazoo_media::VideoHandle;

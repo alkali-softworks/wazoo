@@ -8,16 +8,16 @@
  */
 
 use crate::app::{
-    WazooApp, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, TITLEBAR_FADE_TICKS,
-    TITLEBAR_HIDE_TICKS, TITLEBAR_SHOW_DELAY_TICKS,
+    PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS,
+    TITLEBAR_SHOW_DELAY_TICKS, WazooApp,
 };
 use crate::format;
 use crate::keybinds::find_key_action;
 use crate::message::Message;
 use iced::futures::SinkExt;
 use iced::{
-    keyboard::{key::Named, Key},
     Point, Task,
+    keyboard::{Key, key::Named},
 };
 use std::time::{Duration, Instant};
 use wazoo_core::{Bookmark, KeyAction, LayoutMode, PlaybackMode};
@@ -2238,11 +2238,7 @@ impl WazooApp {
                     .iter_mut()
                     .filter_map(|(&id, ticks)| {
                         *ticks += 1;
-                        if *ticks >= 10 {
-                            Some(id)
-                        } else {
-                            None
-                        }
+                        if *ticks >= 10 { Some(id) } else { None }
                     })
                     .collect();
                 for id in stale_loading {

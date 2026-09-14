@@ -126,42 +126,44 @@ pub fn get_mpv_api() -> Option<&'static MpvApi> {
 }
 
 unsafe fn load_symbols(lib: Library) -> Option<MpvApi> {
-    macro_rules! get_sym {
-        ($name:ident) => {
-            match lib.get(concat!(stringify!($name), "\0").as_bytes()) {
-                Ok(sym) => *sym,
-                Err(err) => {
-                    log::error!(
-                        "Failed to resolve libmpv symbol {}: {}",
-                        stringify!($name),
-                        err
-                    );
-                    return None;
+    unsafe {
+        macro_rules! get_sym {
+            ($name:ident) => {
+                match lib.get(concat!(stringify!($name), "\0").as_bytes()) {
+                    Ok(sym) => *sym,
+                    Err(err) => {
+                        log::error!(
+                            "Failed to resolve libmpv symbol {}: {}",
+                            stringify!($name),
+                            err
+                        );
+                        return None;
+                    }
                 }
-            }
-        };
-    }
+            };
+        }
 
-    Some(MpvApi {
-        mpv_create: get_sym!(mpv_create),
-        mpv_initialize: get_sym!(mpv_initialize),
-        mpv_terminate_destroy: get_sym!(mpv_terminate_destroy),
-        mpv_set_option_string: get_sym!(mpv_set_option_string),
-        mpv_set_property: get_sym!(mpv_set_property),
-        mpv_set_property_string: get_sym!(mpv_set_property_string),
-        mpv_get_property: get_sym!(mpv_get_property),
-        mpv_get_property_string: get_sym!(mpv_get_property_string),
-        mpv_free: get_sym!(mpv_free),
-        mpv_command: get_sym!(mpv_command),
-        mpv_command_string: get_sym!(mpv_command_string),
-        mpv_wait_event: get_sym!(mpv_wait_event),
-        mpv_render_context_create: get_sym!(mpv_render_context_create),
-        mpv_render_context_render: get_sym!(mpv_render_context_render),
-        mpv_render_context_report_swap: get_sym!(mpv_render_context_report_swap),
-        mpv_render_context_update: get_sym!(mpv_render_context_update),
-        mpv_render_context_free: get_sym!(mpv_render_context_free),
-        _lib: lib,
-    })
+        Some(MpvApi {
+            mpv_create: get_sym!(mpv_create),
+            mpv_initialize: get_sym!(mpv_initialize),
+            mpv_terminate_destroy: get_sym!(mpv_terminate_destroy),
+            mpv_set_option_string: get_sym!(mpv_set_option_string),
+            mpv_set_property: get_sym!(mpv_set_property),
+            mpv_set_property_string: get_sym!(mpv_set_property_string),
+            mpv_get_property: get_sym!(mpv_get_property),
+            mpv_get_property_string: get_sym!(mpv_get_property_string),
+            mpv_free: get_sym!(mpv_free),
+            mpv_command: get_sym!(mpv_command),
+            mpv_command_string: get_sym!(mpv_command_string),
+            mpv_wait_event: get_sym!(mpv_wait_event),
+            mpv_render_context_create: get_sym!(mpv_render_context_create),
+            mpv_render_context_render: get_sym!(mpv_render_context_render),
+            mpv_render_context_report_swap: get_sym!(mpv_render_context_report_swap),
+            mpv_render_context_update: get_sym!(mpv_render_context_update),
+            mpv_render_context_free: get_sym!(mpv_render_context_free),
+            _lib: lib,
+        })
+    }
 }
 
 #[cfg(target_os = "windows")]
@@ -382,24 +384,30 @@ fn load_mpv_api() -> Option<MpvApi> {
 // ---------------------------------------------------------------------------
 
 pub unsafe fn mpv_create() -> *mut MpvHandle {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_create)()
-    } else {
-        std::ptr::null_mut()
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_create)()
+        } else {
+            std::ptr::null_mut()
+        }
     }
 }
 
 pub unsafe fn mpv_initialize(ctx: *mut MpvHandle) -> c_int {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_initialize)(ctx)
-    } else {
-        -1
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_initialize)(ctx)
+        } else {
+            -1
+        }
     }
 }
 
 pub unsafe fn mpv_terminate_destroy(ctx: *mut MpvHandle) {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_terminate_destroy)(ctx);
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_terminate_destroy)(ctx);
+        }
     }
 }
 
@@ -408,10 +416,12 @@ pub unsafe fn mpv_set_option_string(
     name: *const c_char,
     data: *const c_char,
 ) -> c_int {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_set_option_string)(ctx, name, data)
-    } else {
-        -1
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_set_option_string)(ctx, name, data)
+        } else {
+            -1
+        }
     }
 }
 
@@ -421,10 +431,12 @@ pub unsafe fn mpv_set_property(
     format: c_int,
     data: *mut c_void,
 ) -> c_int {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_set_property)(ctx, name, format, data)
-    } else {
-        -1
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_set_property)(ctx, name, format, data)
+        } else {
+            -1
+        }
     }
 }
 
@@ -433,10 +445,12 @@ pub unsafe fn mpv_set_property_string(
     name: *const c_char,
     data: *const c_char,
 ) -> c_int {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_set_property_string)(ctx, name, data)
-    } else {
-        -1
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_set_property_string)(ctx, name, data)
+        } else {
+            -1
+        }
     }
 }
 
@@ -446,48 +460,60 @@ pub unsafe fn mpv_get_property(
     format: c_int,
     data: *mut c_void,
 ) -> c_int {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_get_property)(ctx, name, format, data)
-    } else {
-        -1
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_get_property)(ctx, name, format, data)
+        } else {
+            -1
+        }
     }
 }
 
 pub unsafe fn mpv_get_property_string(ctx: *mut MpvHandle, name: *const c_char) -> *mut c_char {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_get_property_string)(ctx, name)
-    } else {
-        std::ptr::null_mut()
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_get_property_string)(ctx, name)
+        } else {
+            std::ptr::null_mut()
+        }
     }
 }
 
 pub unsafe fn mpv_free(data: *mut c_void) {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_free)(data);
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_free)(data);
+        }
     }
 }
 
 pub unsafe fn mpv_command(ctx: *mut MpvHandle, args: *mut *const c_char) -> c_int {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_command)(ctx, args)
-    } else {
-        -1
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_command)(ctx, args)
+        } else {
+            -1
+        }
     }
 }
 
 pub unsafe fn mpv_command_string(ctx: *mut MpvHandle, args: *const c_char) -> c_int {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_command_string)(ctx, args)
-    } else {
-        -1
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_command_string)(ctx, args)
+        } else {
+            -1
+        }
     }
 }
 
 pub unsafe fn mpv_wait_event(ctx: *mut MpvHandle, timeout: c_double) -> *mut MpvEvent {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_wait_event)(ctx, timeout)
-    } else {
-        std::ptr::null_mut()
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_wait_event)(ctx, timeout)
+        } else {
+            std::ptr::null_mut()
+        }
     }
 }
 
@@ -496,10 +522,12 @@ pub unsafe fn mpv_render_context_create(
     mpv: *mut MpvHandle,
     params: *mut MpvRenderParam,
 ) -> c_int {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_render_context_create)(res, mpv, params)
-    } else {
-        -1
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_render_context_create)(res, mpv, params)
+        } else {
+            -1
+        }
     }
 }
 
@@ -507,29 +535,37 @@ pub unsafe fn mpv_render_context_render(
     ctx: *mut MpvRenderContext,
     params: *mut MpvRenderParam,
 ) -> c_int {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_render_context_render)(ctx, params)
-    } else {
-        -1
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_render_context_render)(ctx, params)
+        } else {
+            -1
+        }
     }
 }
 
 pub unsafe fn mpv_render_context_report_swap(ctx: *mut MpvRenderContext) {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_render_context_report_swap)(ctx);
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_render_context_report_swap)(ctx);
+        }
     }
 }
 
 pub unsafe fn mpv_render_context_update(ctx: *mut MpvRenderContext) -> u64 {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_render_context_update)(ctx)
-    } else {
-        0
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_render_context_update)(ctx)
+        } else {
+            0
+        }
     }
 }
 
 pub unsafe fn mpv_render_context_free(ctx: *mut MpvRenderContext) {
-    if let Some(api) = get_mpv_api() {
-        (api.mpv_render_context_free)(ctx);
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_render_context_free)(ctx);
+        }
     }
 }

@@ -9,8 +9,8 @@
  */
 
 use iced::{
-    widget::{column, container, rule, scrollable, text},
     Element, Length,
+    widget::{column, container, rule, scrollable, text},
 };
 
 use crate::app::TutorialApp;

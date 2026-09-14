@@ -14,14 +14,13 @@ pub mod scroll;
 pub mod subtitles;
 
 pub use player::{
+    AudioTrack, BufferConfig, PlayerId, PlayerState, StartTime, SubtitleTrack, VideoHandle,
     build_alang_string, find_matching_audio_track, format_audio_track_label,
     format_subtitle_track_label, get_track_preference_string, language_aliases,
-    language_display_name, AudioTrack, BufferConfig, PlayerId, PlayerState, StartTime,
-    SubtitleTrack, VideoHandle,
+    language_display_name,
 };
 pub use scroll::{ScrollEngine, ScrollItem};
 pub use subtitles::{
-    load_subtitles, load_subtitles_for_stream, load_subtitles_for_stream_sync,
+    SubtitleCue, load_subtitles, load_subtitles_for_stream, load_subtitles_for_stream_sync,
     load_subtitles_for_track, load_subtitles_for_track_sync, load_subtitles_sync, parse_subtitles,
-    SubtitleCue,
 };

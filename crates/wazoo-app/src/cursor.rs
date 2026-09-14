@@ -8,7 +8,7 @@
  */
 
 use iced::advanced::widget::{Tree, Widget};
-use iced::advanced::{layout, renderer, Clipboard, Layout, Shell};
+use iced::advanced::{Clipboard, Layout, Shell, layout, renderer};
 use iced::mouse;
 use iced::{Element, Event, Length, Point, Rectangle, Size};
 

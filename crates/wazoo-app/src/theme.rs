@@ -8,9 +8,9 @@
  */
 
 use iced::{
-    overlay::menu,
-    widget::{button, container, slider, text, text_input, Stack},
     Background, Border, Color, Element, Pixels, Shadow, Theme, Vector,
+    overlay::menu,
+    widget::{Stack, button, container, slider, text, text_input},
 };
 
 pub const COLOR_PRIMARY: Color = Color::from_rgb(0.259, 0.722, 0.514); // #42b883 Emerald

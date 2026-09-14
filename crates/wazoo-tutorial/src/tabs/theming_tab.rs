@@ -24,8 +24,8 @@
  */
 
 use iced::{
-    widget::{button, column, container, pick_list, row, rule, scrollable, text},
     Alignment, Element, Length, Theme,
+    widget::{button, column, container, pick_list, row, rule, scrollable, text},
 };
 
 use crate::app::TutorialApp;

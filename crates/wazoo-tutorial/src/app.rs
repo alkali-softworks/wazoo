@@ -19,9 +19,8 @@
  */
 
 use iced::{
-    time,
+    Alignment, Element, Length, Subscription, Task, Theme, time,
     widget::{button, column, container, row, rule, text},
-    Alignment, Element, Length, Subscription, Task, Theme,
 };
 use std::path::Path;
 use std::time::Duration;
@@ -544,7 +543,7 @@ impl TutorialApp {
                     .size(12)
                     .color(style::COLOR_ACCENT)
                     .width(Length::Fill),
-                text("Rust 2021 • Iced 0.14 • Tokio • SQLite")
+                text("Rust 2024 • Iced 0.14 • Tokio • SQLite")
                     .size(11)
                     .color(style::COLOR_TEXT_DIM),
             ]

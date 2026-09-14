@@ -13,8 +13,8 @@ use crate::format;
 use crate::message::Message;
 use crate::theme;
 use iced::{
-    widget::{button, column, container, row, scrollable, text, text_input, Space},
     Alignment, Element, Length,
+    widget::{Space, button, column, container, row, scrollable, text, text_input},
 };
 
 impl WazooApp {
@@ -22,13 +22,15 @@ impl WazooApp {
         let filter = self.history_search.trim().to_lowercase();
 
         // 1. Header row
-        let mut header_left = row![text(self.t("history.title"))
-            .size(18)
-            .font(iced::Font {
-                weight: iced::font::Weight::Bold,
-                ..Default::default()
-            })
-            .color(iced::Color::WHITE),]
+        let mut header_left = row![
+            text(self.t("history.title"))
+                .size(18)
+                .font(iced::Font {
+                    weight: iced::font::Weight::Bold,
+                    ..Default::default()
+                })
+                .color(iced::Color::WHITE),
+        ]
         .spacing(8)
         .align_y(Alignment::Center);
 

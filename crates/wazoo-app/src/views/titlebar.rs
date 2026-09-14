@@ -12,8 +12,8 @@ use crate::assets::{SVG_WINDOW_CLOSE, SVG_WINDOW_MAXIMIZE, SVG_WINDOW_MINIMIZE};
 use crate::message::Message;
 use crate::theme;
 use iced::{
-    widget::{button, column, container, mouse_area, row, svg, text, Space},
     Alignment, Element, Length, Theme,
+    widget::{Space, button, column, container, mouse_area, row, svg, text},
 };
 
 impl WazooApp {
