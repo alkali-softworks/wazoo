@@ -416,6 +416,17 @@ impl WazooApp {
                     });
                 }
             }
+            Message::KeyPressed(key, status) => {
+                return self.handle_key_pressed(key, status);
+            }
+            Message::KeyReleased(key) => {
+                if key == Key::Named(Named::Alt) || key == Key::Named(Named::AltGraph) {
+                    self.is_alt_pressed = false;
+                }
+            }
+            Message::CursorMoved(win_id, pos) => {
+                return self.handle_cursor_moved(win_id, pos);
+            }
             Message::PreloadedPlayerReady(holder) => {
                 self.is_preloading = false;
                 if self.settings.playback_mode != PlaybackMode::Scroll {
@@ -505,9 +516,7 @@ impl WazooApp {
                     return self.trigger_preload_task();
                 }
             }
-            Message::CursorMoved(win_id, pos) => {
-                return self.handle_cursor_moved(win_id, pos);
-            }
+
             Message::CursorLeft => {
                 if !self.is_window_dragging && !self.titlebar_drag_pending {
                     self.cursor_position = Point::new(-1000.0, -1000.0);
@@ -563,14 +572,6 @@ impl WazooApp {
                 self.show_dropdown_menu = false;
                 self.hovered_player_id = None;
                 self.player_overlay_ticks = 0;
-            }
-            Message::KeyPressed(key, status) => {
-                return self.handle_key_pressed(key, status);
-            }
-            Message::KeyReleased(key) => {
-                if key == Key::Named(Named::Alt) || key == Key::Named(Named::AltGraph) {
-                    self.is_alt_pressed = false;
-                }
             }
             Message::MinimizeWindow => {
                 if let Some(id) = self.window_id {
