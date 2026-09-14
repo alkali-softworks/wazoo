@@ -373,7 +373,7 @@ impl TutorialApp {
 
 **NO! You do NOT pass `self`!**
 
-You just call it with the dot operator like in JS/PHP:
+You just call it with the dot operator like in JS:
 ```rust
 app.view();                // <-- NO arguments passed for self!
 app.update(my_message);    // <-- Only pass the other arguments!
@@ -422,7 +422,7 @@ Whenever you see:
 
 ---
 
-### 💡 "WTF is `let app = Self { ... }` in `app.rs` line 122?"
+### 💡 "WTF is `let app = Self { ... }` in `app.rs`"
 
 When you see:
 ```rust
@@ -826,7 +826,7 @@ You tell the compiler:
    - This is the **completion callback** that Iced will run later when the async task finishes.
    - `move` packs `path_clone` directly inside the callback closure so it stays alive until the background task is done.
 
-### 4. Why We Had to Clone on Line 752
+### 4. Why We Had to Clone
 
 Now the whole puzzle connects:
 - Rust rule: **A value can only have ONE owner at a time.**
