@@ -110,6 +110,7 @@ pub struct WazooApp {
     pub(crate) cursor_position: Point,
     pub(crate) titlebar_press_origin: Option<Point>,
     pub(crate) titlebar_drag_pending: bool,
+    pub(crate) is_window_dragging: bool,
     pub(crate) last_titlebar_click: Option<Instant>,
     pub(crate) expanded_folders: HashSet<String>,
     pub(crate) show_transcript: bool,
@@ -270,6 +271,7 @@ impl WazooApp {
             cursor_position: Point::new(-1000.0, -1000.0),
             titlebar_press_origin: None,
             titlebar_drag_pending: false,
+            is_window_dragging: false,
             last_titlebar_click: None,
             expanded_folders: HashSet::new(),
             show_transcript: false,
@@ -409,7 +411,12 @@ impl WazooApp {
     pub(crate) fn titlebar_alpha(&self) -> f32 {
         if !self.show_titlebar {
             0.0
-        } else if self.is_point_in_titlebar(self.cursor_position) || self.show_dropdown_menu || self.titlebar_hide_ticks >= TITLEBAR_FADE_TICKS {
+        } else if self.is_window_dragging
+            || self.titlebar_drag_pending
+            || self.is_point_in_titlebar(self.cursor_position)
+            || self.show_dropdown_menu
+            || self.titlebar_hide_ticks >= TITLEBAR_FADE_TICKS
+        {
             1.0
         } else {
             (self.titlebar_hide_ticks as f32 / TITLEBAR_FADE_TICKS as f32).clamp(0.0, 1.0)
@@ -1420,6 +1427,48 @@ mod tests {
     fn test_view_titlebar() {
         let (app, _) = new_test_app();
         let _elem = app.view_titlebar();
+    }
+
+    #[test]
+    fn test_titlebar_persists_during_window_drag() {
+        let (mut app, _) = new_test_app();
+        let win_id = iced::window::Id::unique();
+        app.window_id = Some(win_id);
+
+        // Move cursor to titlebar and show it
+        let _ = app.update(Message::CursorMoved(win_id, Point::new(200.0, 15.0)));
+        app.show_titlebar = true;
+        app.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+        assert_eq!(app.titlebar_alpha(), 1.0);
+
+        // Press titlebar
+        let _ = app.update(Message::TitleBarPressed);
+        assert!(app.titlebar_drag_pending);
+        assert_eq!(app.titlebar_alpha(), 1.0);
+
+        // Move mouse by > 5px to initiate window drag
+        let _ = app.update(Message::CursorMoved(win_id, Point::new(200.0, 25.0)));
+        assert!(app.is_window_dragging);
+        assert!(!app.titlebar_drag_pending);
+        assert_eq!(app.titlebar_alpha(), 1.0);
+
+        // Simulate OS pointer grab causing CursorLeft event
+        let _ = app.update(Message::CursorLeft);
+        assert_ne!(app.cursor_position, Point::new(-1000.0, -1000.0));
+        assert!(app.is_window_dragging);
+
+        // Run 100 frame ticks (well beyond TITLEBAR_HIDE_TICKS = 50)
+        for _ in 0..100 {
+            let _ = app.update(Message::VideoFrameTick);
+        }
+
+        // Titlebar MUST still be fully visible and alpha == 1.0
+        assert!(app.show_titlebar);
+        assert_eq!(app.titlebar_alpha(), 1.0);
+
+        // Release mouse button to conclude drag
+        let _ = app.update(Message::LeftClickReleased);
+        assert!(!app.is_window_dragging);
     }
 
     #[test]

@@ -181,12 +181,14 @@ impl WazooApp {
             Message::WindowUnfocused => {
                 self.is_window_focused = false;
                 self.is_alt_pressed = false;
-                self.cursor_position = Point::new(-1000.0, -1000.0);
-                self.titlebar_drag_pending = false;
-                self.titlebar_press_origin = None;
-                self.titlebar_hover_ticks = 0;
-                if self.hovered_player_id.is_some() {
-                    self.player_overlay_ticks = self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                if !self.is_window_dragging {
+                    self.cursor_position = Point::new(-1000.0, -1000.0);
+                    self.titlebar_drag_pending = false;
+                    self.titlebar_press_origin = None;
+                    self.titlebar_hover_ticks = 0;
+                    if self.hovered_player_id.is_some() {
+                        self.player_overlay_ticks = self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                    }
                 }
                 if self.window_bounds_dirty {
                     self.window_bounds_dirty = false;
@@ -253,6 +255,10 @@ impl WazooApp {
                     self.settings.window_bounds.y = new_y;
                     self.window_bounds_dirty = true;
                 }
+                if self.is_window_dragging {
+                    self.show_titlebar = true;
+                    self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                }
             }
             Message::WindowResized(id, size) => {
                 self.window_id = Some(id);
@@ -314,21 +320,24 @@ impl WazooApp {
                     if let Some(origin) = self.titlebar_press_origin {
                         let dist = (pos.x - origin.x).hypot(pos.y - origin.y);
                         if dist > 5.0 {
+                            self.is_window_dragging = true;
                             self.titlebar_drag_pending = false;
                             self.titlebar_press_origin = None;
                             self.last_titlebar_click = None;
+                            self.show_titlebar = true;
+                            self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
                             return iced::window::drag(win_id);
                         }
                     }
                 }
             }
             Message::CursorLeft => {
-                self.cursor_position = Point::new(-1000.0, -1000.0);
-                self.titlebar_drag_pending = false;
-                self.titlebar_press_origin = None;
-                self.titlebar_hover_ticks = 0;
-                if self.hovered_player_id.is_some() {
-                    self.player_overlay_ticks = self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                if !self.is_window_dragging && !self.titlebar_drag_pending {
+                    self.cursor_position = Point::new(-1000.0, -1000.0);
+                    self.titlebar_hover_ticks = 0;
+                    if self.hovered_player_id.is_some() {
+                        self.player_overlay_ticks = self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                    }
                 }
             }
             Message::TitleBarPressed => {
@@ -337,6 +346,7 @@ impl WazooApp {
                     if now.duration_since(last_click) < Duration::from_millis(400) {
                         self.last_titlebar_click = None;
                         self.titlebar_drag_pending = false;
+                        self.is_window_dragging = false;
                         self.titlebar_press_origin = None;
                         return self.update(Message::MaximizeWindow);
                     }
@@ -344,10 +354,14 @@ impl WazooApp {
                 self.last_titlebar_click = Some(now);
                 self.titlebar_drag_pending = true;
                 self.titlebar_press_origin = Some(self.cursor_position);
+                self.show_titlebar = true;
+                self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
             }
             Message::LeftClickReleased => {
+                self.is_window_dragging = false;
                 self.titlebar_drag_pending = false;
                 self.titlebar_press_origin = None;
+                self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
                 if self.window_bounds_dirty {
                     self.window_bounds_dirty = false;
                     let _ = self.config_mgr.save_settings(&self.settings);
@@ -470,6 +484,9 @@ impl WazooApp {
             }
             Message::DragWindow => {
                 if let Some(id) = self.window_id {
+                    self.is_window_dragging = true;
+                    self.show_titlebar = true;
+                    self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
                     return iced::window::drag(id);
                 }
             }
@@ -1960,8 +1977,16 @@ impl WazooApp {
                         self.apply_file_picker_search();
                     }
                 }
-                if self.is_point_in_titlebar(self.cursor_position) || self.show_dropdown_menu {
-                    if self.show_dropdown_menu {
+                if self.is_window_dragging
+                    || self.titlebar_drag_pending
+                    || self.is_point_in_titlebar(self.cursor_position)
+                    || self.show_dropdown_menu
+                {
+                    if self.is_window_dragging || self.titlebar_drag_pending {
+                        self.show_titlebar = true;
+                        self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                        self.titlebar_hover_ticks = 0;
+                    } else if self.show_dropdown_menu {
                         self.show_titlebar = true;
                         self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
                         self.titlebar_hover_ticks = 0;
