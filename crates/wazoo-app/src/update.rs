@@ -295,6 +295,82 @@ impl WazooApp {
         Task::none()
     }
 
+    /// Handles cursor movement, tracking window focus, titlebar auto-hide/fade ticks,
+    /// and initiating window drag operations if the titlebar was pressed.
+    pub(crate) fn handle_cursor_moved(
+        &mut self,
+        win_id: iced::window::Id,
+        pos: Point,
+    ) -> Task<Message> {
+        self.window_id = Some(win_id);
+        self.cursor_position = pos;
+        self.is_window_focused = true;
+        self.unfocused_frame_ticks = 0;
+
+        if self.is_window_dragging {
+            let is_still_moving = self
+                .last_window_drag_move
+                .map(|t| t.elapsed() < Duration::from_millis(250))
+                .unwrap_or(false);
+            if is_still_moving {
+                // While window is actively moving during drag, keep titlebar visible
+                // even if cursor wobbles or flies around across the window
+                self.show_titlebar = true;
+                self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                self.titlebar_hover_ticks = 0;
+            } else {
+                // Window stopped moving! The OS drag has concluded (handles WM eating mouseup)
+                self.is_window_dragging = false;
+                self.titlebar_drag_pending = false;
+                self.titlebar_press_origin = None;
+                self.last_window_drag_move = None;
+                if !self.is_point_in_titlebar(pos) {
+                    self.titlebar_hide_ticks = self.titlebar_hide_ticks.min(TITLEBAR_FADE_TICKS);
+                }
+            }
+        } else if self.show_dropdown_menu {
+            self.show_titlebar = true;
+            self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+            self.titlebar_hover_ticks = 0;
+            if self.hovered_player_id.is_some() {
+                self.player_overlay_ticks =
+                    self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+            }
+        } else if self.is_point_in_titlebar(pos) {
+            if self.show_titlebar {
+                self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                if self.hovered_player_id.is_some() {
+                    self.player_overlay_ticks =
+                        self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                }
+            }
+        } else {
+            self.titlebar_hover_ticks = 0;
+            // When cursor leaves the titlebar area, start fading out smoothly without sticky delay
+            if self.show_titlebar && !self.show_dropdown_menu && !self.titlebar_drag_pending {
+                self.titlebar_hide_ticks = self.titlebar_hide_ticks.min(TITLEBAR_FADE_TICKS);
+            }
+        }
+
+        if self.titlebar_drag_pending {
+            if let Some(origin) = self.titlebar_press_origin {
+                let dist = (pos.x - origin.x).hypot(pos.y - origin.y);
+                if dist > 5.0 {
+                    self.is_window_dragging = true;
+                    self.last_window_drag_move = Some(Instant::now());
+                    self.titlebar_drag_pending = false;
+                    self.titlebar_press_origin = None;
+                    self.last_titlebar_click = None;
+                    self.show_titlebar = true;
+                    self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                    return iced::window::drag(win_id);
+                }
+            }
+        }
+
+        Task::none()
+    }
+
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::WindowIdReceived(id) => {
@@ -430,74 +506,7 @@ impl WazooApp {
                 }
             }
             Message::CursorMoved(win_id, pos) => {
-                self.window_id = Some(win_id);
-                self.cursor_position = pos;
-                self.is_window_focused = true;
-                self.unfocused_frame_ticks = 0;
-
-                if self.is_window_dragging {
-                    let is_still_moving = self
-                        .last_window_drag_move
-                        .map(|t| t.elapsed() < Duration::from_millis(250))
-                        .unwrap_or(false);
-                    if is_still_moving {
-                        // While window is actively moving during drag, keep titlebar visible
-                        // even if cursor wobbles or flies around across the window
-                        self.show_titlebar = true;
-                        self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
-                        self.titlebar_hover_ticks = 0;
-                    } else {
-                        // Window stopped moving! The OS drag has concluded (handles WM eating mouseup)
-                        self.is_window_dragging = false;
-                        self.titlebar_drag_pending = false;
-                        self.titlebar_press_origin = None;
-                        self.last_window_drag_move = None;
-                        if !self.is_point_in_titlebar(pos) {
-                            self.titlebar_hide_ticks =
-                                self.titlebar_hide_ticks.min(TITLEBAR_FADE_TICKS);
-                        }
-                    }
-                } else if self.show_dropdown_menu {
-                    self.show_titlebar = true;
-                    self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
-                    self.titlebar_hover_ticks = 0;
-                    if self.hovered_player_id.is_some() {
-                        self.player_overlay_ticks =
-                            self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
-                    }
-                } else if self.is_point_in_titlebar(pos) {
-                    if self.show_titlebar {
-                        self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
-                        if self.hovered_player_id.is_some() {
-                            self.player_overlay_ticks =
-                                self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
-                        }
-                    }
-                } else {
-                    self.titlebar_hover_ticks = 0;
-                    // When cursor leaves the titlebar area, start fading out smoothly without sticky delay
-                    if self.show_titlebar && !self.show_dropdown_menu && !self.titlebar_drag_pending
-                    {
-                        self.titlebar_hide_ticks =
-                            self.titlebar_hide_ticks.min(TITLEBAR_FADE_TICKS);
-                    }
-                }
-
-                if self.titlebar_drag_pending {
-                    if let Some(origin) = self.titlebar_press_origin {
-                        let dist = (pos.x - origin.x).hypot(pos.y - origin.y);
-                        if dist > 5.0 {
-                            self.is_window_dragging = true;
-                            self.last_window_drag_move = Some(Instant::now());
-                            self.titlebar_drag_pending = false;
-                            self.titlebar_press_origin = None;
-                            self.last_titlebar_click = None;
-                            self.show_titlebar = true;
-                            self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
-                            return iced::window::drag(win_id);
-                        }
-                    }
-                }
+                return self.handle_cursor_moved(win_id, pos);
             }
             Message::CursorLeft => {
                 if !self.is_window_dragging && !self.titlebar_drag_pending {
