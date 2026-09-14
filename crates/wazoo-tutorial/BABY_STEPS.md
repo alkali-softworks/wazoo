@@ -596,3 +596,47 @@ Just like `array.map()` in JavaScript or `array_map()` in PHP:
 - `time::every(...)` produces a stream of timestamps: `Subscription<Instant>`.
 - But Iced requires our function to return a stream of messages: `Subscription<Message>`.
 - `.map(|_| Message::Tick)` intercepts each tick and converts it into `Message::Tick`!
+
+---
+
+## 👁️ Chapter 7: Scoped Visibility (`pub` vs `pub(crate)` vs Private)
+
+In `wazoo-app/src/app.rs`, you see fields defined like:
+```rust
+pub struct WazooApp {
+    pub(crate) db: Database,
+    pub(crate) settings: WazooSettings,
+    pub(crate) players: Vec<VideoHandle>,
+}
+```
+
+In PHP, you only have three blunt options: `public`, `protected`, and `private`.
+
+Rust gives you fine-grained **scoped visibility** to build clean, leak-proof architectures:
+
+### 1. The Problem with Just `pub` and `private`
+
+- **If you leave it private (no keyword)**: 
+  Only code inside `src/app.rs` could touch `self.db`. Other internal files like `src/update.rs` or `src/views/history.rs` would get compile errors: *"Cannot access private field `db`"*.
+- **If you make it `pub`**: 
+  Now it's public to the entire outside world! Anyone who imports `wazoo-app` could reach in and corrupt your database handle directly.
+
+### 2. The Solution: `pub(crate)` (Internal Package Visibility)
+
+Writing:
+```rust
+pub(crate) db: Database
+```
+Tells the compiler:
+> *"Make this field accessible to **any file inside `crates/wazoo-app`**, but keep it **strictly hidden (private)** to any outside code or crates!"*
+
+It's the exact equivalent of `internal` in C# or package-private in Java.
+
+### 3. Visibility Cheat Sheet
+
+| Syntax | Scope | PHP / C# Equivalent |
+| :--- | :--- | :--- |
+| `field: Type` *(no keyword)* | Only inside **its own file/module** | `private` |
+| `pub(crate) field: Type` | Visible to **all files in the same crate** | `internal` (C#) |
+| `pub(super) field: Type` | Visible to its **parent module** (`../`) | `protected` (roughly) |
+| `pub field: Type` | Visible to **the entire universe** | `public` |
