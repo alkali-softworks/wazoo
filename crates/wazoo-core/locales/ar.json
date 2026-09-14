@@ -51,8 +51,7 @@
     "folders_added_scanning": "تمت إضافة المجلد(ات). جاري بدء فحص المكتبة...",
     "folder_added": "تمت إضافة مجلد: {folder}",
     "folder_removed": "تمت إزالة المجلد: {folder} ({count} ملف)",
-    "scanning_progress": "جاري الفحص{name} ({percent}% - تم العثور على {found})",
-    "indexing_progress": "تمت الإضافة: {name} ({percent}%)",
+    "scanning_progress": "جاري الفحص {name} ({percent}% - تم العثور على {found})",
     "scan_error": "خطأ في الفحص: {error}"
   },
   "search": {

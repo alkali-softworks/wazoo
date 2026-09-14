@@ -51,8 +51,7 @@
     "folders_added_scanning": "폴더 추가됨. 라이브러리 검사 시작 중...",
     "folder_added": "폴더 추가됨: {folder}",
     "folder_removed": "폴더 제거됨: {folder} ({count}개 파일)",
-    "scanning_progress": "검사 중{name} ({percent}% - {found}개 발견)",
-    "indexing_progress": "추가됨: {name} ({percent}%)",
+    "scanning_progress": "검사 중 {name} ({percent}% - {found}개 발견)",
     "scan_error": "검사 오류: {error}"
   },
   "search": {

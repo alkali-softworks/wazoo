@@ -51,8 +51,7 @@
     "folders_added_scanning": "Dossier(s) ajouté(s). Démarrage de l'analyse...",
     "folder_added": "Dossier ajouté : {folder}",
     "folder_removed": "Dossier supprimé : {folder} ({count} fichiers)",
-    "scanning_progress": "Analyse en cours{name} ({percent}% - {found} trouvés)",
-    "indexing_progress": "Ajouté : {name} ({percent}%)",
+    "scanning_progress": "Analyse en cours {name} ({percent}% - {found} trouvés)",
     "scan_error": "Erreur d'analyse : {error}"
   },
   "search": {

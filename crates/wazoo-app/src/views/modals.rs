@@ -165,25 +165,22 @@ impl WazooApp {
                 match progress.stage {
                     ScanStage::Listing => {
                         if progress.percent > 0 {
-                            format!(
-                                "Listing... {}% ({} found)",
-                                progress.percent,
-                                format::format_number(progress.files_found)
-                            )
-                        } else if progress.files_found > 0 {
-                            format!(
-                                "Listing... ({} found)",
-                                format::format_number(progress.files_found)
+                            let pct = progress.percent.to_string();
+                            let found = format::format_number(progress.files_found);
+                            self.t_with(
+                                "settings.scanning_progress",
+                                &[("name", "..."), ("percent", &pct), ("found", &found)],
                             )
                         } else {
                             self.t("wazoo.listing_files")
                         }
                     }
                     ScanStage::Indexing => {
-                        format!(
-                            "Loading... {}% ({} files)",
-                            progress.percent,
-                            format::format_number(progress.total)
+                        let pct = progress.percent.to_string();
+                        let total = format::format_number(progress.total);
+                        self.t_with(
+                            "wazoo.loading_progress",
+                            &[("percent", &pct), ("total", &total)],
                         )
                     }
                 }
@@ -217,37 +214,13 @@ impl WazooApp {
 
         if self.is_scanning {
             if let Some(ref progress) = self.scan_progress {
-                let info_str = match progress.stage {
-                    ScanStage::Listing => {
-                        if progress.current_name.is_empty() {
-                            format!(
-                                "Discovering files: {}% ({} found)",
-                                progress.percent,
-                                format::format_number(progress.files_found)
-                            )
-                        } else {
-                            format!(
-                                "Scanning {}: {}% ({} found)",
-                                progress.current_name,
-                                progress.percent,
-                                format::format_number(progress.files_found)
-                            )
-                        }
-                    }
-                    ScanStage::Indexing => {
-                        if progress.current_name.is_empty() {
-                            format!(
-                                "Indexing database: {}% ({} files)",
-                                progress.percent,
-                                format::format_number(progress.total)
-                            )
-                        } else {
-                            format!("Adding {}: {}%", progress.current_name, progress.percent)
-                        }
-                    }
-                };
-                scan_controls =
-                    scan_controls.push(text(info_str).size(12).color(theme::COLOR_PRIMARY));
+                if !progress.current_name.is_empty() {
+                    scan_controls = scan_controls.push(
+                        text(&progress.current_name)
+                            .size(12)
+                            .color(theme::COLOR_PRIMARY),
+                    );
+                }
             }
         }
 

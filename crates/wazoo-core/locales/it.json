@@ -51,8 +51,7 @@
     "folders_added_scanning": "Cartella/e aggiunta/e. Avvio scansione...",
     "folder_added": "Cartella aggiunta: {folder}",
     "folder_removed": "Cartella rimossa: {folder} ({count} file)",
-    "scanning_progress": "Scansione{name} ({percent}% - {found} trovati)",
-    "indexing_progress": "Aggiunto: {name} ({percent}%)",
+    "scanning_progress": "Scansione {name} ({percent}% - {found} trovati)",
     "scan_error": "Errore di scansione: {error}"
   },
   "search": {

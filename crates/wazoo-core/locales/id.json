@@ -51,8 +51,7 @@
     "folders_added_scanning": "Folder ditambahkan. Memulai pemindaian pustaka...",
     "folder_added": "Folder ditambahkan: {folder}",
     "folder_removed": "Folder dihapus: {folder} ({count} file)",
-    "scanning_progress": "Memindai{name} ({percent}% - {found} ditemukan)",
-    "indexing_progress": "Ditambahkan: {name} ({percent}%)",
+    "scanning_progress": "Memindai {name} ({percent}% - {found} ditemukan)",
     "scan_error": "Kesalahan pemindaian: {error}"
   },
   "search": {
