@@ -1,6 +1,6 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Media Pipeline Integration Tests
  */
 
@@ -82,7 +82,10 @@ fn test_video_handle_auto_finish() {
                     break;
                 }
             }
-            assert!(finished, "Video handle must detect completion at end of file");
+            assert!(
+                finished,
+                "Video handle must detect completion at end of file"
+            );
         }
     }
 }

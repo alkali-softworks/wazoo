@@ -1,55 +1,53 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Play History Drawer
- * 
+ *
  * Displays a reverse-chronological list of videos played across all players during the session,
  * capped at 1,000 entries. Features quick search filtering, index numbering, folder tags, and
  * click-to-play directly into the focused playback tile.
  */
 
-use iced::{
-    widget::{button, column, container, row, scrollable, text, text_input, Space},
-    Alignment, Element, Length,
-};
 use crate::app::WazooApp;
 use crate::format;
 use crate::message::Message;
 use crate::theme;
+use iced::{
+    widget::{button, column, container, row, scrollable, text, text_input, Space},
+    Alignment, Element, Length,
+};
 
 impl WazooApp {
     pub(crate) fn view_history_drawer(&self) -> Element<'_, Message> {
         let filter = self.history_search.trim().to_lowercase();
 
         // 1. Header row
-        let mut header_left = row![
-            text(self.t("history.title"))
-                .size(18)
-                .font(iced::Font {
-                    weight: iced::font::Weight::Bold,
-                    ..Default::default()
-                })
-                .color(iced::Color::WHITE),
-        ]
+        let mut header_left = row![text(self.t("history.title"))
+            .size(18)
+            .font(iced::Font {
+                weight: iced::font::Weight::Bold,
+                ..Default::default()
+            })
+            .color(iced::Color::WHITE),]
         .spacing(8)
         .align_y(Alignment::Center);
 
         if !self.play_history.is_empty() {
             let badge = container(
-                text(self.t_with("history.count", &[("count", &format::format_number(self.play_history.len()))]))
-                    .size(11)
+                text(self.t_with(
+                    "history.count",
+                    &[("count", &format::format_number(self.play_history.len()))],
+                ))
+                .size(11),
             )
             .padding([2, 8])
             .style(theme::transcript_count_badge_style);
             header_left = header_left.push(badge);
         }
 
-        let mut header_row = row![
-            header_left,
-            Space::new().width(Length::Fill),
-        ]
-        .align_y(Alignment::Center)
-        .spacing(8);
+        let mut header_row = row![header_left, Space::new().width(Length::Fill),]
+            .align_y(Alignment::Center)
+            .spacing(8);
 
         if !self.play_history.is_empty() {
             header_row = header_row.push(
@@ -116,20 +114,13 @@ impl WazooApp {
                 let item_number = idx + 1; // 1-based original index
                 let p_clone = item.path.clone();
 
-                let mut item_info = column![
-                    text(&item.title)
-                        .size(13)
-                        .color(iced::Color::WHITE),
-                ]
-                .spacing(2)
-                .width(Length::Fill);
+                let mut item_info = column![text(&item.title).size(13).color(iced::Color::WHITE),]
+                    .spacing(2)
+                    .width(Length::Fill);
 
                 if !item.folder.is_empty() {
-                    item_info = item_info.push(
-                        text(&item.folder)
-                            .size(11)
-                            .color(theme::COLOR_TEXT_MUTED),
-                    );
+                    item_info =
+                        item_info.push(text(&item.folder).size(11).color(theme::COLOR_TEXT_MUTED));
                 }
 
                 let row_content = row![

@@ -1,21 +1,21 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Interactive Subtitle Transcript Drawer
- * 
+ *
  * Displays timestamped subtitle cues extracted from embedded media streams or external
  * sidecar files (.srt, .vtt, .ass, .ssa). Features real-time cue highlighting synchronized
  * with the focused video player, instant click-to-seek, and dialogue search filtering.
  */
 
-use iced::{
-    widget::{button, column, container, row, scrollable, text, text_input, Space},
-    Alignment, Element, Length,
-};
 use crate::app::WazooApp;
 use crate::format;
 use crate::message::Message;
 use crate::theme;
+use iced::{
+    widget::{button, column, container, row, scrollable, text, text_input, Space},
+    Alignment, Element, Length,
+};
 
 impl WazooApp {
     pub(crate) fn view_transcript_drawer(&self) -> Element<'_, Message> {
@@ -31,22 +31,23 @@ impl WazooApp {
         let filter = self.transcript_search.trim().to_lowercase();
 
         // 1. Header row
-        let mut header_left = row![
-            text(self.t("transcript.title"))
-                .size(18)
-                .font(iced::Font {
-                    weight: iced::font::Weight::Bold,
-                    ..Default::default()
-                })
-                .color(iced::Color::WHITE),
-        ]
+        let mut header_left = row![text(self.t("transcript.title"))
+            .size(18)
+            .font(iced::Font {
+                weight: iced::font::Weight::Bold,
+                ..Default::default()
+            })
+            .color(iced::Color::WHITE),]
         .spacing(8)
         .align_y(Alignment::Center);
 
         if !self.transcript_cues.is_empty() {
             let badge = container(
-                text(self.t_with("transcript.cues_count", &[("count", &format::format_number(self.transcript_cues.len()))]))
-                    .size(11)
+                text(self.t_with(
+                    "transcript.cues_count",
+                    &[("count", &format::format_number(self.transcript_cues.len()))],
+                ))
+                .size(11),
             )
             .padding([2, 8])
             .style(theme::transcript_count_badge_style);
@@ -63,12 +64,13 @@ impl WazooApp {
         .align_y(Alignment::Center);
 
         // 2. Video Title Subheading
-        let video_subheading = text(video_title)
-            .size(12)
-            .color(theme::COLOR_TEXT_MUTED);
+        let video_subheading = text(video_title).size(12).color(theme::COLOR_TEXT_MUTED);
 
         // 2b. Subtitle Track Selector (if more than 1 subtitle stream available)
-        let sub_tracks = self.focused_player().map(|p| p.subtitle_tracks()).unwrap_or(&[]);
+        let sub_tracks = self
+            .focused_player()
+            .map(|p| p.subtitle_tracks())
+            .unwrap_or(&[]);
         let subtitle_selector: Option<Element<'_, Message>> = if sub_tracks.len() > 1 {
             let current_track_idx = if self.transcript_track_index < sub_tracks.len() {
                 self.transcript_track_index
@@ -80,7 +82,11 @@ impl WazooApp {
                 .map(|t| wazoo_media::format_subtitle_track_label(t, current_track_idx))
                 .unwrap_or_else(|| format!("Track {}", current_track_idx + 1));
 
-            let arrow = if self.show_transcript_menu { "▴" } else { "▾" };
+            let arrow = if self.show_transcript_menu {
+                "▴"
+            } else {
+                "▾"
+            };
             let track_btn_content = row![
                 text(self.t("transcript.subtitle_track"))
                     .size(12)
@@ -93,7 +99,9 @@ impl WazooApp {
             .align_y(Alignment::Center);
 
             let track_btn = button(track_btn_content)
-                .style(theme::transcript_track_button_style(self.show_transcript_menu))
+                .style(theme::transcript_track_button_style(
+                    self.show_transcript_menu,
+                ))
                 .on_press(Message::ToggleTranscriptSubtitleMenu)
                 .padding([5, 10]);
 
@@ -110,11 +118,17 @@ impl WazooApp {
                         let item_row = row![
                             text(if is_selected { "✓" } else { "" })
                                 .size(13)
-                                .color(if is_selected { theme::COLOR_PRIMARY } else { iced::Color::TRANSPARENT })
+                                .color(if is_selected {
+                                    theme::COLOR_PRIMARY
+                                } else {
+                                    iced::Color::TRANSPARENT
+                                })
                                 .width(Length::Fixed(14.0)),
-                            text(label)
-                                .size(12)
-                                .color(if is_selected { theme::COLOR_PRIMARY } else { iced::Color::WHITE }),
+                            text(label).size(12).color(if is_selected {
+                                theme::COLOR_PRIMARY
+                            } else {
+                                iced::Color::WHITE
+                            }),
                         ]
                         .spacing(6)
                         .align_y(Alignment::Center);
@@ -133,13 +147,9 @@ impl WazooApp {
                     })
                     .collect();
 
-                let sub_menu_card = container(
-                    column(menu_items)
-                        .spacing(2)
-                        .width(Length::Fill)
-                )
-                .padding(4)
-                .style(theme::audio_menu_card_style);
+                let sub_menu_card = container(column(menu_items).spacing(2).width(Length::Fill))
+                    .padding(4)
+                    .style(theme::audio_menu_card_style);
 
                 selector_col = selector_col.push(sub_menu_card);
             }
@@ -150,10 +160,13 @@ impl WazooApp {
         };
 
         // 3. Dialogue Search Filter Input
-        let search_box = text_input(&self.t("transcript.search_placeholder"), &self.transcript_search)
-            .on_input(Message::TranscriptSearchChanged)
-            .style(theme::dark_input_style)
-            .padding(8);
+        let search_box = text_input(
+            &self.t("transcript.search_placeholder"),
+            &self.transcript_search,
+        )
+        .on_input(Message::TranscriptSearchChanged)
+        .style(theme::dark_input_style)
+        .padding(8);
 
         // 4. Content Area: Loading, Empty, or Scrollable Cues List
         let content_body: Element<'_, Message> = if self.transcript_loading {
@@ -200,7 +213,8 @@ impl WazooApp {
         } else {
             // Determine the single active cue for the current playback position.
             // If cues overlap or share boundaries, select the one with the latest start_secs <= current_pos.
-            let active_cue_idx = self.transcript_cues
+            let active_cue_idx = self
+                .transcript_cues
                 .iter()
                 .enumerate()
                 .filter(|(_, cue)| current_pos >= cue.start_secs && current_pos < cue.end_secs)
@@ -223,35 +237,26 @@ impl WazooApp {
                 let is_active = active_cue_idx == Some(orig_idx);
                 let time_str = format::format_time_str(cue.start_secs);
 
-                let time_badge = container(
-                    text(time_str)
-                        .size(11)
-                        .font(iced::Font {
-                            weight: if is_active {
-                                iced::font::Weight::Bold
-                            } else {
-                                iced::font::Weight::Normal
-                            },
-                            ..Default::default()
-                        })
-                )
+                let time_badge = container(text(time_str).size(11).font(iced::Font {
+                    weight: if is_active {
+                        iced::font::Weight::Bold
+                    } else {
+                        iced::font::Weight::Normal
+                    },
+                    ..Default::default()
+                }))
                 .padding([2, 6])
                 .style(theme::transcript_time_badge_style(is_active));
 
-                let cue_text = text(&cue.text)
-                    .size(13)
-                    .color(if is_active {
-                        iced::Color::WHITE
-                    } else {
-                        iced::Color::from_rgb(0.85, 0.85, 0.85)
-                    });
+                let cue_text = text(&cue.text).size(13).color(if is_active {
+                    iced::Color::WHITE
+                } else {
+                    iced::Color::from_rgb(0.85, 0.85, 0.85)
+                });
 
-                let row_content = row![
-                    time_badge,
-                    cue_text,
-                ]
-                .spacing(10)
-                .align_y(Alignment::Center);
+                let row_content = row![time_badge, cue_text,]
+                    .spacing(10)
+                    .align_y(Alignment::Center);
 
                 let cue_btn = button(row_content)
                     .style(theme::transcript_cue_button_style(is_active))
@@ -301,10 +306,7 @@ impl WazooApp {
             content = content.push(selector);
         }
 
-        let content = content
-            .push(search_box)
-            .push(content_body)
-            .padding(16);
+        let content = content.push(search_box).push(content_body).padding(16);
 
         container(content)
             .width(Length::Fixed(440.0))

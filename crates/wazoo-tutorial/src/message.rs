@@ -2,22 +2,22 @@
  * ==============================================================================
  * TUTORIAL LESSON: The Elm Architecture & The `Message` Enum
  * ==============================================================================
- * 
+ *
  * At the core of every Iced application is "The Elm Architecture" (TEA).
  * TEA organizes UI code into three fundamental parts:
- * 
+ *
  * 1. MODEL (State): The data your application holds (defined in `app.rs`).
  * 2. VIEW: A pure function converting your State into visible UI widgets.
  * 3. UPDATE: A function handling user interactions or events to transition state.
- * 
+ *
  * What connects the View to the Update function?
  * MESSAGES!
- * 
+ *
  * In Rust, the `Message` type is almost always an `enum`.
  * Unlike enums in languages like C, Java, or TypeScript (which are just numbers
  * or string constants), Rust enums are "Algebraic Data Types" (sum types).
  * Each variant can hold completely different kinds of payload data!
- * 
+ *
  * For example:
  * - `Increment` holds no data (unit variant).
  * - `InputChanged(String)` holds the new text typed into an input.
@@ -71,7 +71,7 @@ pub struct ScannedItem {
 }
 
 /// The unified `Message` enum for the entire tutorial application.
-/// 
+///
 /// Note the derives:
 /// - `#[derive(Debug)]`: Allows printing messages for debugging/logging.
 /// - `#[derive(Clone)]`: Allows Iced to clone messages when dispatching events.

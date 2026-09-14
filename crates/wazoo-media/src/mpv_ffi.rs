@@ -1,8 +1,8 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * libmpv Foreign Function Interface (Dynamic Loading)
- * 
+ *
  * Dynamically resolves the libmpv client API and render context symbols at runtime
  * across Windows, Linux, and macOS without hard link-time dependencies.
  * On Windows, supports automatic unpack and loading of the embedded compressed
@@ -11,9 +11,9 @@
 
 #![allow(clippy::missing_safety_doc)]
 
+use libloading::Library;
 use std::ffi::{c_char, c_double, c_int, c_void};
 use std::sync::OnceLock;
-use libloading::Library;
 
 #[repr(C)]
 pub struct MpvHandle(c_void);
@@ -76,32 +76,43 @@ pub struct MpvApi {
     pub mpv_create: unsafe extern "C" fn() -> *mut MpvHandle,
     pub mpv_initialize: unsafe extern "C" fn(ctx: *mut MpvHandle) -> c_int,
     pub mpv_terminate_destroy: unsafe extern "C" fn(ctx: *mut MpvHandle),
-    pub mpv_set_option_string: unsafe extern "C" fn(ctx: *mut MpvHandle, name: *const c_char, data: *const c_char) -> c_int,
+    pub mpv_set_option_string: unsafe extern "C" fn(
+        ctx: *mut MpvHandle,
+        name: *const c_char,
+        data: *const c_char,
+    ) -> c_int,
     pub mpv_set_property: unsafe extern "C" fn(
         ctx: *mut MpvHandle,
         name: *const c_char,
         format: c_int,
         data: *mut c_void,
     ) -> c_int,
-    pub mpv_set_property_string: unsafe extern "C" fn(ctx: *mut MpvHandle, name: *const c_char, data: *const c_char) -> c_int,
+    pub mpv_set_property_string: unsafe extern "C" fn(
+        ctx: *mut MpvHandle,
+        name: *const c_char,
+        data: *const c_char,
+    ) -> c_int,
     pub mpv_get_property: unsafe extern "C" fn(
         ctx: *mut MpvHandle,
         name: *const c_char,
         format: c_int,
         data: *mut c_void,
     ) -> c_int,
-    pub mpv_get_property_string: unsafe extern "C" fn(ctx: *mut MpvHandle, name: *const c_char) -> *mut c_char,
+    pub mpv_get_property_string:
+        unsafe extern "C" fn(ctx: *mut MpvHandle, name: *const c_char) -> *mut c_char,
     pub mpv_free: unsafe extern "C" fn(data: *mut c_void),
     pub mpv_command: unsafe extern "C" fn(ctx: *mut MpvHandle, args: *mut *const c_char) -> c_int,
     pub mpv_command_string: unsafe extern "C" fn(ctx: *mut MpvHandle, args: *const c_char) -> c_int,
-    pub mpv_wait_event: unsafe extern "C" fn(ctx: *mut MpvHandle, timeout: c_double) -> *mut MpvEvent,
+    pub mpv_wait_event:
+        unsafe extern "C" fn(ctx: *mut MpvHandle, timeout: c_double) -> *mut MpvEvent,
 
     pub mpv_render_context_create: unsafe extern "C" fn(
         res: *mut *mut MpvRenderContext,
         mpv: *mut MpvHandle,
         params: *mut MpvRenderParam,
     ) -> c_int,
-    pub mpv_render_context_render: unsafe extern "C" fn(ctx: *mut MpvRenderContext, params: *mut MpvRenderParam) -> c_int,
+    pub mpv_render_context_render:
+        unsafe extern "C" fn(ctx: *mut MpvRenderContext, params: *mut MpvRenderParam) -> c_int,
     pub mpv_render_context_report_swap: unsafe extern "C" fn(ctx: *mut MpvRenderContext),
     pub mpv_render_context_update: unsafe extern "C" fn(ctx: *mut MpvRenderContext) -> u64,
     pub mpv_render_context_free: unsafe extern "C" fn(ctx: *mut MpvRenderContext),
@@ -120,7 +131,11 @@ unsafe fn load_symbols(lib: Library) -> Option<MpvApi> {
             match lib.get(concat!(stringify!($name), "\0").as_bytes()) {
                 Ok(sym) => *sym,
                 Err(err) => {
-                    log::error!("Failed to resolve libmpv symbol {}: {}", stringify!($name), err);
+                    log::error!(
+                        "Failed to resolve libmpv symbol {}: {}",
+                        stringify!($name),
+                        err
+                    );
                     return None;
                 }
             }
@@ -159,7 +174,10 @@ fn load_windows_mpv() -> Option<MpvApi> {
                 if path.exists() {
                     if let Ok(lib) = unsafe { Library::new(&path) } {
                         if let Some(api) = unsafe { load_symbols(lib) } {
-                            log::info!("Loaded libmpv from executable directory: {}", path.display());
+                            log::info!(
+                                "Loaded libmpv from executable directory: {}",
+                                path.display()
+                            );
                             return Some(api);
                         }
                     }
@@ -223,7 +241,10 @@ fn load_linux_mpv() -> Option<MpvApi> {
                 if path.exists() {
                     if let Ok(lib) = unsafe { Library::new(&path) } {
                         if let Some(api) = unsafe { load_symbols(lib) } {
-                            log::info!("Loaded libmpv from executable directory: {}", path.display());
+                            log::info!(
+                                "Loaded libmpv from executable directory: {}",
+                                path.display()
+                            );
                             return Some(api);
                         }
                     }
@@ -232,7 +253,10 @@ fn load_linux_mpv() -> Option<MpvApi> {
                 if lib_path.exists() {
                     if let Ok(lib) = unsafe { Library::new(&lib_path) } {
                         if let Some(api) = unsafe { load_symbols(lib) } {
-                            log::info!("Loaded libmpv from lib subdirectory: {}", lib_path.display());
+                            log::info!(
+                                "Loaded libmpv from lib subdirectory: {}",
+                                lib_path.display()
+                            );
                             return Some(api);
                         }
                     }
@@ -276,7 +300,10 @@ fn load_macos_mpv() -> Option<MpvApi> {
                 if path.exists() {
                     if let Ok(lib) = unsafe { Library::new(&path) } {
                         if let Some(api) = unsafe { load_symbols(lib) } {
-                            log::info!("Loaded libmpv from executable directory: {}", path.display());
+                            log::info!(
+                                "Loaded libmpv from executable directory: {}",
+                                path.display()
+                            );
                             return Some(api);
                         }
                     }
@@ -376,7 +403,11 @@ pub unsafe fn mpv_terminate_destroy(ctx: *mut MpvHandle) {
     }
 }
 
-pub unsafe fn mpv_set_option_string(ctx: *mut MpvHandle, name: *const c_char, data: *const c_char) -> c_int {
+pub unsafe fn mpv_set_option_string(
+    ctx: *mut MpvHandle,
+    name: *const c_char,
+    data: *const c_char,
+) -> c_int {
     if let Some(api) = get_mpv_api() {
         (api.mpv_set_option_string)(ctx, name, data)
     } else {
@@ -397,7 +428,11 @@ pub unsafe fn mpv_set_property(
     }
 }
 
-pub unsafe fn mpv_set_property_string(ctx: *mut MpvHandle, name: *const c_char, data: *const c_char) -> c_int {
+pub unsafe fn mpv_set_property_string(
+    ctx: *mut MpvHandle,
+    name: *const c_char,
+    data: *const c_char,
+) -> c_int {
     if let Some(api) = get_mpv_api() {
         (api.mpv_set_property_string)(ctx, name, data)
     } else {
@@ -468,7 +503,10 @@ pub unsafe fn mpv_render_context_create(
     }
 }
 
-pub unsafe fn mpv_render_context_render(ctx: *mut MpvRenderContext, params: *mut MpvRenderParam) -> c_int {
+pub unsafe fn mpv_render_context_render(
+    ctx: *mut MpvRenderContext,
+    params: *mut MpvRenderParam,
+) -> c_int {
     if let Some(api) = get_mpv_api() {
         (api.mpv_render_context_render)(ctx, params)
     } else {

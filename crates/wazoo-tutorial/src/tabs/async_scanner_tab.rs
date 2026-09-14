@@ -2,20 +2,20 @@
  * ==============================================================================
  * TUTORIAL LESSON: Async Background Tasks, `rfd`, & `walkdir`
  * ==============================================================================
- * 
+ *
  * In desktop media applications like `wazoo-rs`, file operations (like scanning
  * a folder with thousands of videos) can take several seconds or minutes.
- * 
+ *
  * IF YOU RUN THIS ON THE MAIN THREAD:
  * The GUI will freeze completely, the window will become unresponsive, and the OS
  * might display "Application Not Responding".
- * 
+ *
  * THE ICED SOLUTION: `Task::perform`
  * Iced integrates seamlessly with the `tokio` async runtime.
  * You can spawn a background `async` future using `Task::perform(future, MessageMapper)`.
  * The future runs asynchronously on a background worker thread. When it finishes,
  * Iced automatically dispatches the mapped `Message` back into the main `update()` loop!
- * 
+ *
  * In this module, you will learn:
  * 1. Using `rfd::AsyncFileDialog` to show native OS folder pickers.
  * 2. Using `walkdir` to recursively search directories.
@@ -48,12 +48,9 @@ impl TutorialApp {
         };
 
         let pick_btn = button(
-            row![
-                text("📂").size(16),
-                text("Pick Folder (rfd)").size(14),
-            ]
-            .spacing(8)
-            .align_y(Alignment::Center),
+            row![text("📂").size(16), text("Pick Folder (rfd)").size(14),]
+                .spacing(8)
+                .align_y(Alignment::Center),
         )
         .style(style::secondary_button_style)
         .on_press(Message::PickFolderClicked)
@@ -63,7 +60,12 @@ impl TutorialApp {
         let mut scan_btn = button(
             row![
                 text(if self.is_scanning { "⏳" } else { "▶️" }).size(16),
-                text(if self.is_scanning { "Scanning..." } else { "Start Scan" }).size(14),
+                text(if self.is_scanning {
+                    "Scanning..."
+                } else {
+                    "Start Scan"
+                })
+                .size(14),
             ]
             .spacing(8)
             .align_y(Alignment::Center),
@@ -124,7 +126,11 @@ impl TutorialApp {
                     true
                 } else {
                     item.filename.to_lowercase().contains(&query_lower)
-                        || item.path.to_string_lossy().to_lowercase().contains(&query_lower)
+                        || item
+                            .path
+                            .to_string_lossy()
+                            .to_lowercase()
+                            .contains(&query_lower)
                 }
             })
             .collect();
@@ -136,9 +142,7 @@ impl TutorialApp {
             filtered_items.len()
         );
 
-        let results_header = row![
-            text(count_text).size(13).color(style::COLOR_TEXT_MUTED),
-        ];
+        let results_header = row![text(count_text).size(13).color(style::COLOR_TEXT_MUTED),];
 
         let results_list: Element<'_, Message> = if self.scanned_items.is_empty() {
             container(
@@ -173,9 +177,11 @@ impl TutorialApp {
                     row![
                         text(icon).size(18),
                         column![
-                            text(&item.filename)
-                                .size(14)
-                                .color(if item.is_video { style::COLOR_ACCENT } else { iced::Color::WHITE }),
+                            text(&item.filename).size(14).color(if item.is_video {
+                                style::COLOR_ACCENT
+                            } else {
+                                iced::Color::WHITE
+                            }),
                             text(item.path.to_string_lossy().to_string())
                                 .size(11)
                                 .color(style::COLOR_TEXT_DIM),
@@ -241,13 +247,9 @@ impl TutorialApp {
         .style(style::highlight_box_style)
         .width(Length::Fill);
 
-        let content = column![
-            controls_card,
-            results_card,
-            concept_box,
-        ]
-        .spacing(20)
-        .padding(20);
+        let content = column![controls_card, results_card, concept_box,]
+            .spacing(20)
+            .padding(20);
 
         scrollable(content)
             .width(Length::Fill)

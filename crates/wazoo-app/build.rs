@@ -1,8 +1,8 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Windows Resource Build Script
- * 
+ *
  * Embeds high-resolution application icon, product metadata, and version
  * information directly into the Windows executable (.exe).
  */

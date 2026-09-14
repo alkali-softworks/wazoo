@@ -2,29 +2,29 @@
  * ==============================================================================
  * TUTORIAL LESSON: The Central Application State & Lifecycle
  * ==============================================================================
- * 
+ *
  * This file contains the primary `TutorialApp` state struct and the core functions
  * required by the `iced::application` runtime:
- * 
+ *
  * 1. `new()`: Constructs initial state and returns an initial async `Task`.
  * 2. `update()`: Mutates state in response to `Message` events.
  * 3. `view()`: Purely renders the UI based on current state.
  * 4. `subscription()`: Listens to external/runtime event streams (e.g. timers, keyboard).
  * 5. `theme()`: Informs Iced of the active color scheme.
- * 
+ *
  * RUST CONCEPT: The Single Source of Truth
  * Unlike frameworks that scatter state across many individual UI components
  * (leading to sync bugs and race conditions), TEA stores the ENTIRE application
  * state in a single, coherent struct (`TutorialApp`).
  */
 
-use std::path::Path;
-use std::time::Duration;
 use iced::{
     time,
     widget::{button, column, container, row, rule, text},
     Alignment, Element, Length, Subscription, Task, Theme,
 };
+use std::path::Path;
+use std::time::Duration;
 use walkdir::WalkDir;
 
 use crate::db::{NoteRecord, TutorialDatabase};
@@ -93,11 +93,11 @@ pub struct TutorialApp {
 // - `self` (lowercase s): Refers to the INSTANCE (like `$this` in PHP or `this` in JS).
 impl TutorialApp {
     /// Constructs the initial application state.
-    /// 
+    ///
     /// RUST CONCEPT: Static Constructor Functions
     /// Notice this function has NO `self` in its arguments! That makes it a static
     /// function (called as `TutorialApp::new()`), exactly like `static function create()` in PHP.
-    /// 
+    ///
     /// RUST CONCEPT: Tuple Return Type `(Self, Task<Message>)`
     /// A tuple `(A, B)` bundles multiple values together without making a new struct.
     /// Here, we return:
@@ -177,13 +177,13 @@ impl TutorialApp {
     }
 
     /// Subscribes to runtime event streams.
-    /// 
+    ///
     /// RUST CONCEPT: Subscriptions & Periodic Timers
     /// Subscriptions let you listen to external events like keyboard keypresses,
     /// mouse motion, window resizing, or periodic time intervals.
     ///
     /// Here, we emit a `Message::Tick` every 1 second to increment `uptime_seconds`.
-    /// 
+    ///
     /// RUST CONCEPT: Closures `|_|` and `.map()`
     /// - `time::every(...)` emits a timestamp (`Instant`) every 1 second.
     /// - `|_|` is an anonymous closure (like `(_) => ...` in JS or `fn($_) => ...` in PHP).
@@ -195,11 +195,11 @@ impl TutorialApp {
     }
 
     /// The state transition engine: handles incoming messages and mutates state.
-    /// 
+    ///
     /// RUST CONCEPT: `&mut self` and Exhaustive `match`
     /// Notice `&mut self`. Rust's borrow checker guarantees that while `update` is running,
     /// no other thread or function can read or write to `TutorialApp`.
-    /// 
+    ///
     /// Furthermore, the `match message` statement is EXHAUSTIVE: if we add a new variant
     /// to `enum Message`, the compiler will refuse to build until we handle it here!
     pub fn update(&mut self, message: Message) -> Task<Message> {
@@ -408,7 +408,8 @@ impl TutorialApp {
                         self.new_note_title.clear();
                         self.new_note_content.clear();
                         self.cached_notes = self.db.get_all_notes().unwrap_or_default();
-                        self.status_banner = Some(format!("Saved note #{} to SQLite database!", id));
+                        self.status_banner =
+                            Some(format!("Saved note #{} to SQLite database!", id));
                     }
                     Err(err) => {
                         self.status_banner = Some(format!("SQLite error: {}", err));
@@ -421,10 +422,12 @@ impl TutorialApp {
                 match self.db.delete_note(id) {
                     Ok(_) => {
                         self.cached_notes = self.db.get_all_notes().unwrap_or_default();
-                        self.status_banner = Some(format!("Deleted note #{} from SQLite database.", id));
+                        self.status_banner =
+                            Some(format!("Deleted note #{} from SQLite database.", id));
                     }
                     Err(err) => {
-                        self.status_banner = Some(format!("Failed to delete note #{}: {}", id, err));
+                        self.status_banner =
+                            Some(format!("Failed to delete note #{}: {}", id, err));
                     }
                 }
                 Task::none()
@@ -451,7 +454,7 @@ impl TutorialApp {
     }
 
     /// Renders the entire application UI layout.
-    /// 
+    ///
     /// RUST CONCEPT: Declarative Layout Composition
     /// In Iced, layouts are composed like Russian nesting dolls:
     /// `column![ header, tab_bar, active_tab_view, footer ]`
@@ -505,12 +508,9 @@ impl TutorialApp {
         for tab in tabs {
             let is_active = self.active_tab == tab;
             let tab_btn = button(
-                row![
-                    text(tab.icon()).size(15),
-                    text(tab.title()).size(13),
-                ]
-                .spacing(6)
-                .align_y(Alignment::Center),
+                row![text(tab.icon()).size(15), text(tab.title()).size(13),]
+                    .spacing(6)
+                    .align_y(Alignment::Center),
             )
             .style(style::tab_button_style(is_active))
             .on_press(Message::TabSelected(tab))
@@ -519,9 +519,7 @@ impl TutorialApp {
             tab_buttons = tab_buttons.push(tab_btn);
         }
 
-        let tab_bar = container(tab_buttons)
-            .padding([4, 20])
-            .width(Length::Fill);
+        let tab_bar = container(tab_buttons).padding([4, 20]).width(Length::Fill);
 
         // ======================================================================
         // Active Tab View Content
@@ -537,10 +535,7 @@ impl TutorialApp {
         // ======================================================================
         // Bottom Status Bar
         // ======================================================================
-        let status_text = self
-            .status_banner
-            .as_deref()
-            .unwrap_or("Ready.");
+        let status_text = self.status_banner.as_deref().unwrap_or("Ready.");
 
         let status_bar = container(
             row![

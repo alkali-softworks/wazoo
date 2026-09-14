@@ -1,14 +1,14 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Continuous Scroll Engine
- * 
+ *
  * Calculates player positioning, seamless lookahead loading, despawning offscreen players,
  * and proximity-based audio volume transitions for the infinite stream mode.
  */
 
-use std::collections::HashMap;
 use crate::player::PlayerId;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct ScrollItem {
@@ -123,7 +123,11 @@ impl ScrollEngine {
         self.items.clear();
         let mut y = 0.0;
         for &(id, h) in items {
-            let item_h = if h > 0.0 { h } else { self.default_item_height() };
+            let item_h = if h > 0.0 {
+                h
+            } else {
+                self.default_item_height()
+            };
             self.add_item(id, y, item_h);
             y += item_h;
         }
@@ -330,7 +334,7 @@ mod tests {
     #[test]
     fn test_scroll_engine_real_aspect_ratio_heights() {
         let mut engine = ScrollEngine::with_window_size(1920.0, 1080.0);
-        
+
         // 16:9 widescreen video at 1920 width -> real height is 1080.0
         let h_16_9 = engine.item_height_for_aspect_ratio(16.0 / 9.0);
         assert!((h_16_9 - 1080.0).abs() < 1.0);

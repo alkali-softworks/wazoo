@@ -1,8 +1,8 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Application Entry Point
- * 
+ *
  * Initializes logging, platform-specific cursor environments, and parses CLI arguments.
  * Boots the Iced application runtime with global styles, window configuration, and lifecycle hooks.
  */
@@ -19,10 +19,9 @@ mod scroll_view;
 mod theme;
 mod update;
 mod views;
-
-use iced::{Color, Theme};
 use crate::app::WazooApp;
 use crate::cli::parse_cli_args;
+use iced::{Color, Theme};
 
 pub fn main() -> iced::Result {
     let cli = parse_cli_args();
@@ -52,10 +51,8 @@ pub fn main() -> iced::Result {
     ));
 
     let initial_query = cli.query;
-    let app_icon = iced::window::icon::from_file_data(
-        include_bytes!("../resources/icon.png"),
-        None,
-    ).ok();
+    let app_icon =
+        iced::window::icon::from_file_data(include_bytes!("../resources/icon.png"), None).ok();
 
     iced::application(
         move || WazooApp::new(initial_query.clone()),

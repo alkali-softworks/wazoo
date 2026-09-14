@@ -1,21 +1,21 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * File Browser Drawer
- * 
+ *
  * Displays an expandable side drawer grouping indexed media by folder, featuring search
  * filtering and direct file selection into the active playback tile.
  */
 
-use std::collections::BTreeMap;
-use iced::{
-    widget::{button, column, container, row, scrollable, text, text_input, Space},
-    Alignment, Element, Length,
-};
 use crate::app::WazooApp;
 use crate::format;
 use crate::message::Message;
 use crate::theme;
+use iced::{
+    widget::{button, column, container, row, scrollable, text, text_input, Space},
+    Alignment, Element, Length,
+};
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct FilePickerItem {
@@ -42,14 +42,19 @@ impl WazooApp {
     pub(crate) fn ensure_file_picker_meta(&mut self) {
         let needs_rebuild = self.file_picker_entries.len() != self.available_videos.len()
             || (!self.available_videos.is_empty()
-                && self.file_picker_entries.first().map(|e| &e.path) != self.available_videos.first().map(|v| &v.path));
+                && self.file_picker_entries.first().map(|e| &e.path)
+                    != self.available_videos.first().map(|v| &v.path));
         if needs_rebuild {
             self.file_picker_entries = self
                 .available_videos
                 .iter()
                 .map(|v| {
                     let folder = format::format_video_folder(&v.path);
-                    let folder_key = if folder.is_empty() { "Other".to_string() } else { folder };
+                    let folder_key = if folder.is_empty() {
+                        "Other".to_string()
+                    } else {
+                        folder
+                    };
                     let title = format::format_video_title(&v.path);
                     let folder_lower = folder_key.to_lowercase();
                     let title_lower = title.to_lowercase();
@@ -125,9 +130,13 @@ impl WazooApp {
             let header_btn = button(
                 row![
                     text(chevron).size(10).color(theme::COLOR_PRIMARY),
-                    text(group.folder.clone()).size(13).color(iced::Color::WHITE),
+                    text(group.folder.clone())
+                        .size(13)
+                        .color(iced::Color::WHITE),
                     Space::new().width(Length::Fill),
-                    text(format!("({})", format::format_number(count))).size(12).color(theme::COLOR_TEXT_MUTED),
+                    text(format!("({})", format::format_number(count)))
+                        .size(12)
+                        .color(theme::COLOR_TEXT_MUTED),
                     Space::new().width(Length::Fixed(4.0)),
                 ]
                 .spacing(8)
@@ -172,11 +181,12 @@ impl WazooApp {
             .width(Length::Fill);
 
         let is_confined = !self.is_all_folder(&self.active_search_folder);
-        let mut header_row = row![
-            text(self.t_with("settings.total_videos", &[("count", &format::format_number(self.available_videos.len()))]))
-                .size(17)
-                .color(iced::Color::WHITE),
-        ]
+        let mut header_row = row![text(self.t_with(
+            "settings.total_videos",
+            &[("count", &format::format_number(self.available_videos.len()))]
+        ))
+        .size(17)
+        .color(iced::Color::WHITE),]
         .spacing(8)
         .align_y(Alignment::Center);
 
@@ -191,9 +201,7 @@ impl WazooApp {
 
             let badge = button(
                 row![
-                    text(display_name)
-                        .size(13)
-                        .color(iced::Color::WHITE),
+                    text(display_name).size(13).color(iced::Color::WHITE),
                     text("✕")
                         .size(12)
                         .color(iced::Color::from_rgba(1.0, 1.0, 1.0, 0.8)),
@@ -218,11 +226,14 @@ impl WazooApp {
         let content = column![
             Space::new().height(Length::Fixed(24.0)),
             header_row,
-            text_input(&self.t("file_picker.search_placeholder"), &self.file_picker_search)
-                .on_input(Message::FilePickerSearchChanged)
-                .on_submit(Message::ApplyFilePickerSearch)
-                .style(theme::dark_input_style)
-                .padding(8),
+            text_input(
+                &self.t("file_picker.search_placeholder"),
+                &self.file_picker_search
+            )
+            .on_input(Message::FilePickerSearchChanged)
+            .on_submit(Message::ApplyFilePickerSearch)
+            .style(theme::dark_input_style)
+            .padding(8),
             scrollable(scrollable_folders)
                 .height(Length::Fill)
                 .width(Length::Fill),

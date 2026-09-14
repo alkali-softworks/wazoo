@@ -1,8 +1,8 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Keybind Matching & Resolution
- * 
+ *
  * Maps incoming iced keyboard events to defined KeyActions using configured KeybindSettings.
  */
 
@@ -48,10 +48,26 @@ fn match_single_key(token: &str, key: &Key) -> bool {
     match key {
         Key::Named(named) => match named {
             Named::Space => token.eq_ignore_ascii_case("space") || token == " ",
-            Named::ArrowUp => token.eq_ignore_ascii_case("up") || token.eq_ignore_ascii_case("arrowup") || token == "↑",
-            Named::ArrowDown => token.eq_ignore_ascii_case("down") || token.eq_ignore_ascii_case("arrowdown") || token == "↓",
-            Named::ArrowLeft => token.eq_ignore_ascii_case("left") || token.eq_ignore_ascii_case("arrowleft") || token == "←",
-            Named::ArrowRight => token.eq_ignore_ascii_case("right") || token.eq_ignore_ascii_case("arrowright") || token == "→",
+            Named::ArrowUp => {
+                token.eq_ignore_ascii_case("up")
+                    || token.eq_ignore_ascii_case("arrowup")
+                    || token == "↑"
+            }
+            Named::ArrowDown => {
+                token.eq_ignore_ascii_case("down")
+                    || token.eq_ignore_ascii_case("arrowdown")
+                    || token == "↓"
+            }
+            Named::ArrowLeft => {
+                token.eq_ignore_ascii_case("left")
+                    || token.eq_ignore_ascii_case("arrowleft")
+                    || token == "←"
+            }
+            Named::ArrowRight => {
+                token.eq_ignore_ascii_case("right")
+                    || token.eq_ignore_ascii_case("arrowright")
+                    || token == "→"
+            }
             Named::Tab => token.eq_ignore_ascii_case("tab"),
             _ => false,
         },
@@ -71,7 +87,11 @@ fn match_single_key(token: &str, key: &Key) -> bool {
     }
 }
 
-pub fn find_key_action(keybinds: &KeybindSettings, key: &Key, is_alt_pressed: bool) -> Option<KeyAction> {
+pub fn find_key_action(
+    keybinds: &KeybindSettings,
+    key: &Key,
+    is_alt_pressed: bool,
+) -> Option<KeyAction> {
     if is_alt_pressed {
         if key_matches_binding(&keybinds.close_app, key, true) {
             return Some(KeyAction::CloseApp);

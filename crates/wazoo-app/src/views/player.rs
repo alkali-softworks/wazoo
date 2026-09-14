@@ -1,38 +1,42 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Video Player View Components
- * 
+ *
  * Renders individual video player containers, multi-player layouts (grid, row, column),
  * title overlays, loading spinners, and interactive playback control bars.
  */
 
-use iced::{
-    widget::{button, column, container, mouse_area, row, slider, svg, text, Space, Stack},
-    Alignment, Element, Length, Theme,
-};
-use wazoo_core::{LayoutMode, PlaybackMode};
-use wazoo_media::VideoHandle;
 use crate::app::WazooApp;
 use crate::assets::{
-    SVG_PLAYER_FLIP, SVG_PLAYER_MUTE, SVG_PLAYER_NEXT, SVG_PLAYER_PAUSE, SVG_PLAYER_PLAY, SVG_PLAYER_PREV,
-    SVG_PLAYER_REPEAT, SVG_PLAYER_SHUFFLE, SVG_PLAYER_VOLUME,
+    SVG_PLAYER_FLIP, SVG_PLAYER_MUTE, SVG_PLAYER_NEXT, SVG_PLAYER_PAUSE, SVG_PLAYER_PLAY,
+    SVG_PLAYER_PREV, SVG_PLAYER_REPEAT, SVG_PLAYER_SHUFFLE, SVG_PLAYER_VOLUME,
 };
 use crate::cursor;
 use crate::format;
 use crate::message::Message;
 use crate::scroll_view;
 use crate::theme;
+use iced::{
+    widget::{button, column, container, mouse_area, row, slider, svg, text, Space, Stack},
+    Alignment, Element, Length, Theme,
+};
+use wazoo_core::{LayoutMode, PlaybackMode};
+use wazoo_media::VideoHandle;
 
 impl WazooApp {
     pub(crate) fn view_players(&self) -> Element<'_, Message> {
         if self.players.is_empty() {
-            return container(text(self.t("wazoo.no_players")).size(18).color(theme::COLOR_TEXT_MUTED))
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .center_x(Length::Fill)
-                .center_y(Length::Fill)
-                .into();
+            return container(
+                text(self.t("wazoo.no_players"))
+                    .size(18)
+                    .color(theme::COLOR_TEXT_MUTED),
+            )
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill)
+            .into();
         }
 
         if self.settings.playback_mode == PlaybackMode::Scroll {
@@ -48,7 +52,10 @@ impl WazooApp {
                 r.into()
             }
             LayoutMode::Column => {
-                let mut c = column![].spacing(0).width(Length::Fill).height(Length::Fill);
+                let mut c = column![]
+                    .spacing(0)
+                    .width(Length::Fill)
+                    .height(Length::Fill);
                 for p in &self.players {
                     c = c.push(self.view_single_player(p));
                 }
@@ -86,8 +93,17 @@ impl WazooApp {
                     .height(Length::Fill)
                     .into()
                 } else {
-                    let cols = if count <= 4 { 2 } else if count <= 9 { 3 } else { 4 };
-                    let mut rows = column![].spacing(0).width(Length::Fill).height(Length::Fill);
+                    let cols = if count <= 4 {
+                        2
+                    } else if count <= 9 {
+                        3
+                    } else {
+                        4
+                    };
+                    let mut rows = column![]
+                        .spacing(0)
+                        .width(Length::Fill)
+                        .height(Length::Fill);
                     for chunk in self.players.chunks(cols) {
                         let mut r = row![].spacing(0).width(Length::Fill).height(Length::Fill);
                         for p in chunk {
@@ -108,7 +124,11 @@ impl WazooApp {
             .iter()
             .filter_map(|p| self.scroll_engine.items.get(&p.id).map(|item| (p, item)))
             .collect();
-        scroll_items.sort_by(|a, b| a.1.y_pos.partial_cmp(&b.1.y_pos).unwrap_or(std::cmp::Ordering::Equal));
+        scroll_items.sort_by(|a, b| {
+            a.1.y_pos
+                .partial_cmp(&b.1.y_pos)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         for (p, item) in scroll_items {
             stream = stream.push(self.view_scroll_player(p), item.y_pos, item.height);
@@ -125,7 +145,11 @@ impl WazooApp {
         self.view_player_internal(p, true)
     }
 
-    pub(crate) fn view_player_internal<'a>(&self, p: &'a VideoHandle, is_scroll_mode: bool) -> Element<'a, Message> {
+    pub(crate) fn view_player_internal<'a>(
+        &self,
+        p: &'a VideoHandle,
+        is_scroll_mode: bool,
+    ) -> Element<'a, Message> {
         let player_id = p.id;
         let is_focused = self.focused_player_id() == Some(player_id);
         let is_hovered = !self.is_modal_or_menu_open() && self.hovered_player_id == Some(player_id);
@@ -174,7 +198,9 @@ impl WazooApp {
             )
             .padding([16, 24])
             .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(iced::Color::from_rgba(0.08, 0.08, 0.08, 0.88))),
+                background: Some(iced::Background::Color(iced::Color::from_rgba(
+                    0.08, 0.08, 0.08, 0.88,
+                ))),
                 border: iced::Border {
                     radius: 12.0.into(),
                     width: 1.0,
@@ -200,7 +226,10 @@ impl WazooApp {
         let is_audio_menu_open = self.open_audio_menu_player_id == Some(player_id);
 
         // Overlays show when mouse is actively moving over this specific player (fades after delay), or when audio menu is open, or while player is loading
-        let show_overlay = (!self.is_modal_or_menu_open() && (is_hovered || is_audio_menu_open) && self.player_overlay_ticks > 0) || is_loading;
+        let show_overlay = (!self.is_modal_or_menu_open()
+            && (is_hovered || is_audio_menu_open)
+            && self.player_overlay_ticks > 0)
+            || is_loading;
         let overlay_alpha = if is_loading || is_audio_menu_open {
             1.0
         } else {
@@ -221,19 +250,13 @@ impl WazooApp {
         .padding([10, 18])
         .style(theme::title_pill_style_with_alpha(overlay_alpha));
 
-        let top_row = row![
-            title_pill,
-            Space::new().width(Length::Fill),
-        ]
-        .width(Length::Fill);
+        let top_row = row![title_pill, Space::new().width(Length::Fill),].width(Length::Fill);
 
         if show_overlay {
             // 2. Bottom Progress & Control Overlay (Vue emerald green theme #42b883)
-            let seek_slider = slider(
-                0.0..=1.0,
-                progress_ratio,
-                move |ratio| Message::SeekRatio(player_id, ratio),
-            )
+            let seek_slider = slider(0.0..=1.0, progress_ratio, move |ratio| {
+                Message::SeekRatio(player_id, ratio)
+            })
             .step(0.001)
             .height(24.0)
             .style(theme::progress_slider_style_with_alpha(overlay_alpha))
@@ -242,15 +265,13 @@ impl WazooApp {
             let time_display = theme::diffuse_shadowed_text(time_str, 14, overlay_alpha);
 
             let progress_bar_with_timestamp = cursor::PointerCursor::new(
-                Stack::new()
-                    .push(seek_slider)
-                    .push(
-                        container(time_display)
-                            .width(Length::Fill)
-                            .height(Length::Fixed(24.0))
-                            .center_x(Length::Fill)
-                            .center_y(Length::Fill),
-                    ),
+                Stack::new().push(seek_slider).push(
+                    container(time_display)
+                        .width(Length::Fill)
+                        .height(Length::Fixed(24.0))
+                        .center_x(Length::Fill)
+                        .center_y(Length::Fill),
+                ),
             );
 
             let play_pause_icon = if p.state.is_playing {
@@ -303,33 +324,31 @@ impl WazooApp {
             let mut controls_row = row![
                 // Left: CC + TX + Volume Icon + Volume Slider
                 button(
-                    container(
-                        text("CC")
-                            .size(13)
-                            .font(iced::Font {
-                                weight: iced::font::Weight::Bold,
-                                ..Default::default()
-                            })
-                    )
+                    container(text("CC").size(13).font(iced::Font {
+                        weight: iced::font::Weight::Bold,
+                        ..Default::default()
+                    }))
                     .center_x(Length::Shrink)
                     .center_y(Length::Shrink),
                 )
-                .style(theme::cc_button_style_with_alpha(self.subtitles_enabled, overlay_alpha))
+                .style(theme::cc_button_style_with_alpha(
+                    self.subtitles_enabled,
+                    overlay_alpha
+                ))
                 .on_press(Message::ToggleSubtitles)
                 .padding([4, 8]),
                 button(
-                    container(
-                        text("TX")
-                            .size(13)
-                            .font(iced::Font {
-                                weight: iced::font::Weight::Bold,
-                                ..Default::default()
-                            })
-                    )
+                    container(text("TX").size(13).font(iced::Font {
+                        weight: iced::font::Weight::Bold,
+                        ..Default::default()
+                    }))
                     .center_x(Length::Shrink)
                     .center_y(Length::Shrink),
                 )
-                .style(theme::transcript_button_style_with_alpha(self.show_transcript && is_focused, overlay_alpha))
+                .style(theme::transcript_button_style_with_alpha(
+                    self.show_transcript && is_focused,
+                    overlay_alpha
+                ))
                 .on_press(Message::ToggleTranscriptForPlayer(player_id))
                 .padding([4, 8]),
                 button(volume_icon)
@@ -337,11 +356,9 @@ impl WazooApp {
                     .on_press(Message::TogglePlayerMute(player_id))
                     .padding([4, 6]),
                 cursor::PointerCursor::new(
-                    slider(
-                        0.0..=1.0,
-                        p.state.volume as f32,
-                        move |v| Message::SetVolume(player_id, v as f64),
-                    )
+                    slider(0.0..=1.0, p.state.volume as f32, move |v| {
+                        Message::SetVolume(player_id, v as f64)
+                    },)
                     .step(0.01)
                     .style(theme::volume_slider_style_with_alpha(overlay_alpha))
                     .width(Length::Fixed(80.0)),
@@ -351,30 +368,37 @@ impl WazooApp {
             .align_y(Alignment::Center);
 
             if p.state.audio_tracks.len() > 1 {
-                let active_label = p.state.current_audio_track_id
+                let active_label = p
+                    .state
+                    .current_audio_track_id
                     .and_then(|cid| p.state.audio_tracks.iter().find(|t| t.id == cid))
                     .map(|t| wazoo_media::format_audio_track_label(t, 0))
-                    .or_else(|| p.state.audio_tracks.first().map(|t| wazoo_media::format_audio_track_label(t, 0)))
+                    .or_else(|| {
+                        p.state
+                            .audio_tracks
+                            .first()
+                            .map(|t| wazoo_media::format_audio_track_label(t, 0))
+                    })
                     .unwrap_or_else(|| "Audio".to_string());
 
                 let arrow = if is_audio_menu_open { "▴" } else { "▾" };
 
                 let audio_button = button(
-                    container(
-                        text(format!("{active_label} {arrow}")).size(12)
-                    )
-                    .center_x(Length::Shrink)
-                    .center_y(Length::Shrink),
+                    container(text(format!("{active_label} {arrow}")).size(12))
+                        .center_x(Length::Shrink)
+                        .center_y(Length::Shrink),
                 )
-                .style(theme::audio_track_button_style_with_alpha(is_audio_menu_open, overlay_alpha))
+                .style(theme::audio_track_button_style_with_alpha(
+                    is_audio_menu_open,
+                    overlay_alpha,
+                ))
                 .on_press(Message::ToggleAudioMenu(player_id))
                 .padding([4, 10]);
 
                 controls_row = controls_row.push(cursor::PointerCursor::new(audio_button));
             }
 
-            let mut controls_row = controls_row
-                .push(Space::new().width(Length::Fill));
+            let mut controls_row = controls_row.push(Space::new().width(Length::Fill));
 
             if self.settings.playback_mode == PlaybackMode::Flip {
                 let flip_icon = svg(svg::Handle::from_memory(SVG_PLAYER_FLIP))
@@ -420,7 +444,9 @@ impl WazooApp {
             let mut bottom_col = column![];
 
             if is_audio_menu_open && p.state.audio_tracks.len() > 1 {
-                let menu_items: Vec<Element<'a, Message>> = p.state.audio_tracks
+                let menu_items: Vec<Element<'a, Message>> = p
+                    .state
+                    .audio_tracks
                     .iter()
                     .enumerate()
                     .map(|(i, t)| {
@@ -430,11 +456,17 @@ impl WazooApp {
                         let item_row = row![
                             text(if is_selected { "✓" } else { "" })
                                 .size(13)
-                                .color(if is_selected { theme::COLOR_PRIMARY } else { iced::Color::TRANSPARENT })
+                                .color(if is_selected {
+                                    theme::COLOR_PRIMARY
+                                } else {
+                                    iced::Color::TRANSPARENT
+                                })
                                 .width(Length::Fixed(14.0)),
-                            text(label)
-                                .size(12)
-                                .color(if is_selected { theme::COLOR_PRIMARY } else { iced::Color::WHITE }),
+                            text(label).size(12).color(if is_selected {
+                                theme::COLOR_PRIMARY
+                            } else {
+                                iced::Color::WHITE
+                            }),
                         ]
                         .spacing(6)
                         .align_y(Alignment::Center);
@@ -453,13 +485,10 @@ impl WazooApp {
                     })
                     .collect();
 
-                let audio_menu_card = container(
-                    column(menu_items)
-                        .spacing(2)
-                        .width(Length::Fixed(200.0))
-                )
-                .padding(4)
-                .style(theme::audio_menu_card_style);
+                let audio_menu_card =
+                    container(column(menu_items).spacing(2).width(Length::Fixed(200.0)))
+                        .padding(4)
+                        .style(theme::audio_menu_card_style);
 
                 let menu_row = row![
                     Space::new().width(Length::Fixed(230.0)),

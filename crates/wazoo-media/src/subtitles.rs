@@ -1,15 +1,15 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Subtitle Transcript Engine & Parser
- * 
+ *
  * Extracts and parses subtitle cues from external sidecar files (.srt, .vtt, .ass, .ssa)
  * or embedded container streams via ffmpeg, providing timestamped, cleaned text cues
  * for interactive seeking and real-time transcript synchronization.
  */
 
-use std::path::Path;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SubtitleCue {
@@ -27,7 +27,11 @@ pub fn parse_timestamp(s: &str) -> Option<f64> {
 
     let parts: Vec<&str> = s.split(':').collect();
     let (hours, mins, sec_part) = match parts.len() {
-        3 => (parts[0].parse::<f64>().ok()?, parts[1].parse::<f64>().ok()?, parts[2]),
+        3 => (
+            parts[0].parse::<f64>().ok()?,
+            parts[1].parse::<f64>().ok()?,
+            parts[2],
+        ),
         2 => (0.0, parts[0].parse::<f64>().ok()?, parts[1]),
         1 => (0.0, 0.0, parts[0]),
         _ => return None,
@@ -36,7 +40,13 @@ pub fn parse_timestamp(s: &str) -> Option<f64> {
     let sec_clean = sec_part.replace(',', ".");
     let secs = sec_clean.parse::<f64>().ok()?;
 
-    if !hours.is_finite() || !mins.is_finite() || !secs.is_finite() || hours < 0.0 || mins < 0.0 || secs < 0.0 {
+    if !hours.is_finite()
+        || !mins.is_finite()
+        || !secs.is_finite()
+        || hours < 0.0
+        || mins < 0.0
+        || secs < 0.0
+    {
         return None;
     }
 
@@ -95,7 +105,9 @@ pub fn parse_srt_or_vtt(content: &str) -> Vec<SubtitleCue> {
                 let end_part = parts[1].trim();
                 let end_str = end_part.split_whitespace().next().unwrap_or(end_part);
 
-                if let (Some(start), Some(end)) = (parse_timestamp(start_str), parse_timestamp(end_str)) {
+                if let (Some(start), Some(end)) =
+                    (parse_timestamp(start_str), parse_timestamp(end_str))
+                {
                     idx += 1;
                     let mut text_lines = Vec::new();
                     while idx < lines.len() && !lines[idx].trim().is_empty() {
@@ -133,7 +145,9 @@ pub fn parse_ass(content: &str) -> Vec<SubtitleCue> {
                 let end_str = parts[2].trim();
                 let text_raw = parts[9].trim();
 
-                if let (Some(start), Some(end)) = (parse_timestamp(start_str), parse_timestamp(end_str)) {
+                if let (Some(start), Some(end)) =
+                    (parse_timestamp(start_str), parse_timestamp(end_str))
+                {
                     let cleaned = clean_subtitle_text(text_raw);
                     if !cleaned.is_empty() {
                         cues.push(SubtitleCue {
@@ -165,11 +179,16 @@ fn run_ffmpeg_subtitle_extract(video_path: &str, map_arg: &str) -> Option<Vec<Su
     let output = std::process::Command::new("ffmpeg")
         .args([
             "-nostdin",
-            "-protocol_whitelist", "file,crypto",
-            "-v", "error",
-            "-i", video_path,
-            "-map", map_arg,
-            "-f", "srt",
+            "-protocol_whitelist",
+            "file,crypto",
+            "-v",
+            "error",
+            "-i",
+            video_path,
+            "-map",
+            map_arg,
+            "-f",
+            "srt",
             "-",
         ])
         .output()
@@ -196,7 +215,12 @@ pub fn load_subtitles_for_stream_sync(
     if let Some(idx) = ff_index {
         let map_arg = format!("0:{idx}");
         if let Some(cues) = run_ffmpeg_subtitle_extract(video_path, &map_arg) {
-            log::info!("Extracted {} subtitle cues via ffmpeg (-map {}) from {}", cues.len(), map_arg, video_path);
+            log::info!(
+                "Extracted {} subtitle cues via ffmpeg (-map {}) from {}",
+                cues.len(),
+                map_arg,
+                video_path
+            );
             return cues;
         }
     }
@@ -204,7 +228,12 @@ pub fn load_subtitles_for_stream_sync(
     // 2. Otherwise/fallback: map by subtitle stream index: -map 0:s:{sub_index}
     let map_arg = format!("0:s:{sub_index}");
     if let Some(cues) = run_ffmpeg_subtitle_extract(video_path, &map_arg) {
-        log::info!("Extracted {} subtitle cues via ffmpeg (-map {}) from {}", cues.len(), map_arg, video_path);
+        log::info!(
+            "Extracted {} subtitle cues via ffmpeg (-map {}) from {}",
+            cues.len(),
+            map_arg,
+            video_path
+        );
         return cues;
     }
 
@@ -225,7 +254,11 @@ pub fn load_subtitles_for_stream_sync(
                     if let Ok(content) = std::fs::read_to_string(&cand) {
                         let cues = parse_subtitles(&content);
                         if !cues.is_empty() {
-                            log::info!("Loaded {} subtitle cues from sidecar {:?}", cues.len(), cand);
+                            log::info!(
+                                "Loaded {} subtitle cues from sidecar {:?}",
+                                cues.len(),
+                                cand
+                            );
                             return cues;
                         }
                     }
@@ -243,9 +276,11 @@ pub async fn load_subtitles_for_stream(
     ff_index: Option<i64>,
     sub_index: usize,
 ) -> Vec<SubtitleCue> {
-    tokio::task::spawn_blocking(move || load_subtitles_for_stream_sync(&video_path, ff_index, sub_index))
-        .await
-        .unwrap_or_default()
+    tokio::task::spawn_blocking(move || {
+        load_subtitles_for_stream_sync(&video_path, ff_index, sub_index)
+    })
+    .await
+    .unwrap_or_default()
 }
 
 /// Synchronously loads subtitles for a given video path and subtitle stream index.

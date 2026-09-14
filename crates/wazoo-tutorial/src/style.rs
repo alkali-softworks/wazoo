@@ -2,12 +2,12 @@
  * ==============================================================================
  * TUTORIAL LESSON: Styling & Design Systems in Iced 0.14
  * ==============================================================================
- * 
+ *
  * In Iced 0.14, styling is declarative and type-safe.
  * Instead of string-based CSS stylesheets with class names, Iced uses Rust closures
  * and functions that take the current `&Theme` (and widget status like `button::Status`)
  * and return strongly-typed style structs like `button::Style` or `container::Style`.
- * 
+ *
  * Key Advantages of Iced Styling in Rust:
  * 1. Zero runtime CSS parsing overhead — everything is compiled to native code.
  * 2. Type safety: compiler guarantees colors, borders, and shadows are valid.
@@ -41,7 +41,7 @@ pub const COLOR_DANGER_HOVER: Color = Color::from_rgb(1.00, 0.38, 0.42);
 // ==============================================================================
 
 /// A sleek modern card style with rounded corners and a subtle border.
-/// 
+///
 /// RUST CONCEPT: Function Signature as a Callback
 /// This function matches the signature `Fn(&Theme) -> container::Style`,
 /// so it can be passed directly to `.style(style::card_style)`!
@@ -93,7 +93,7 @@ pub fn badge_style(_theme: &Theme) -> container::Style {
 // ==============================================================================
 
 /// Primary button style with vibrant accent color and interactive hover/press states.
-/// 
+///
 /// RUST CONCEPT: Pattern Matching on Enums (`match status`)
 /// `button::Status` is an enum with variants: `Active`, `Hovered`, `Pressed`, `Disabled`.
 /// Using exhaustive pattern matching, Rust guarantees at compile time that every possible
@@ -197,11 +197,7 @@ pub fn tab_button_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> b
                     Color::WHITE,
                     COLOR_CARD_BORDER,
                 ),
-                _ => (
-                    Color::TRANSPARENT,
-                    COLOR_TEXT_MUTED,
-                    Color::TRANSPARENT,
-                ),
+                _ => (Color::TRANSPARENT, COLOR_TEXT_MUTED, Color::TRANSPARENT),
             }
         };
 

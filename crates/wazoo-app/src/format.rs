@@ -1,8 +1,8 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * String & Time Formatting Utilities
- * 
+ *
  * Sanitizes and cleans video file titles, extracts folder names, formats timestamps
  * (HH:MM:SS / MM:SS), and produces descriptive media labels.
  */
@@ -14,7 +14,8 @@ static RE_SQUARE_BRACKETS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\[[^\
 static RE_PARENS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\(([^)]*)\)").unwrap());
 static RE_SEASON_PATTERN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)\(S\d+\)").unwrap());
 static RE_MULTIPLE_SPACES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
-static RE_TRAILING_GROUP: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"-[A-Z0-9]{2,}$").unwrap());
+static RE_TRAILING_GROUP: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"-[A-Z0-9]{2,}$").unwrap());
 
 static METADATA_TAGS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     vec![
@@ -105,7 +106,10 @@ pub fn is_generic_folder(name: &str) -> bool {
 
 pub fn format_video_folder(path: &str) -> String {
     let clean_path = path.strip_prefix("file://").unwrap_or(path);
-    let segments: Vec<&str> = clean_path.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
+    let segments: Vec<&str> = clean_path
+        .split(['/', '\\'])
+        .filter(|s| !s.is_empty())
+        .collect();
 
     if segments.len() < 2 {
         return String::new();
@@ -201,8 +205,14 @@ mod tests {
 
     #[test]
     fn test_clean_name() {
-        assert_eq!(clean_name("The.Matrix.1999.1080p.x264-VXT"), "The Matrix 1999");
-        assert_eq!(clean_name("[SubsPlease] Frieren - 01 (1080p) [HEVC]"), "Frieren - 01");
+        assert_eq!(
+            clean_name("The.Matrix.1999.1080p.x264-VXT"),
+            "The Matrix 1999"
+        );
+        assert_eq!(
+            clean_name("[SubsPlease] Frieren - 01 (1080p) [HEVC]"),
+            "Frieren - 01"
+        );
     }
 
     #[test]

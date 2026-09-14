@@ -1,8 +1,8 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Video Demuxing & Decoding Pipeline
- * 
+ *
  * Manages low-level video stream decoding, frame rate tracking, buffer status monitoring,
  * and format negotiation for media playback.
  */
@@ -290,7 +290,8 @@ impl Pipeline for VideoPipeline {
     }
 
     fn trim(&mut self) {
-        self.videos.retain(|_, entry| entry.alive.load(Ordering::SeqCst));
+        self.videos
+            .retain(|_, entry| entry.alive.load(Ordering::SeqCst));
     }
 }
 
@@ -394,11 +395,7 @@ impl Primitive for VideoPrimitive {
         queue.write_buffer(&entry.uniform_buffer, 0, bytemuck::bytes_of(&uniforms));
     }
 
-    fn draw(
-        &self,
-        pipeline: &Self::Pipeline,
-        render_pass: &mut wgpu::RenderPass<'_>,
-    ) -> bool {
+    fn draw(&self, pipeline: &Self::Pipeline, render_pass: &mut wgpu::RenderPass<'_>) -> bool {
         if let Some(entry) = pipeline.videos.get(&self.player_id) {
             render_pass.set_pipeline(&pipeline.pipeline);
             render_pass.set_bind_group(0, &entry.bind_group, &[]);
@@ -465,5 +462,7 @@ impl<Message> Program<Message> for VideoProgram {
 }
 
 pub fn video_shader<Message>(program: VideoProgram) -> Shader<Message, VideoProgram> {
-    Shader::new(program).width(Length::Fill).height(Length::Fill)
+    Shader::new(program)
+        .width(Length::Fill)
+        .height(Length::Fill)
 }

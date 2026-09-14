@@ -2,15 +2,15 @@
  * ==============================================================================
  * TUTORIAL LESSON: SQLite Persistence UI & `rusqlite` CRUD
  * ==============================================================================
- * 
+ *
  * This tab provides a live interactive interface for interacting with the
  * embedded SQLite database implemented in `src/db.rs`.
- * 
+ *
  * In `wazoo-rs`:
  * - `wazoo-core/src/db.rs` stores indexed videos, bookmarks, and playback positions.
  * - This tutorial app provides a lightweight "Notes & Bookmarks Vault" to teach
  *   the exact same mechanics.
- * 
+ *
  * Key Lessons:
  * 1. Building input forms that dispatch data to database transactions.
  * 2. Mapping dynamic SQLite query results into Iced widgets.
@@ -33,10 +33,13 @@ impl TutorialApp {
         // ======================================================================
         // Section 1: Note Creation Form
         // ======================================================================
-        let title_input = text_input("Note title (e.g. 'Rust Borrow Checker Tips')...", &self.new_note_title)
-            .on_input(Message::NoteTitleChanged)
-            .padding(10)
-            .size(14);
+        let title_input = text_input(
+            "Note title (e.g. 'Rust Borrow Checker Tips')...",
+            &self.new_note_title,
+        )
+        .on_input(Message::NoteTitleChanged)
+        .padding(10)
+        .size(14);
 
         let content_input = text_input("Note content...", &self.new_note_content)
             .on_input(Message::NoteContentChanged)
@@ -45,12 +48,9 @@ impl TutorialApp {
 
         let can_save = !self.new_note_title.trim().is_empty();
         let mut save_btn = button(
-            row![
-                text("💾").size(16),
-                text("Save Note to SQLite").size(14),
-            ]
-            .spacing(8)
-            .align_y(Alignment::Center),
+            row![text("💾").size(16), text("Save Note to SQLite").size(14),]
+                .spacing(8)
+                .align_y(Alignment::Center),
         )
         .style(style::primary_button_style)
         .padding([8, 16]);
@@ -60,12 +60,9 @@ impl TutorialApp {
         }
 
         let refresh_btn = button(
-            row![
-                text("🔄").size(16),
-                text("Refresh List").size(14),
-            ]
-            .spacing(8)
-            .align_y(Alignment::Center),
+            row![text("🔄").size(16), text("Refresh List").size(14),]
+                .spacing(8)
+                .align_y(Alignment::Center),
         )
         .style(style::secondary_button_style)
         .on_press(Message::RefreshNotesClicked)
@@ -100,8 +97,7 @@ impl TutorialApp {
         // Section 2: Stored Notes List (SELECT Query Results)
         // ======================================================================
         let count = self.cached_notes.len();
-        let list_header = text(format!("Stored Records in Database ({} total):", count))
-            .size(16);
+        let list_header = text(format!("Stored Records in Database ({} total):", count)).size(16);
 
         let notes_view: Element<'_, Message> = if self.cached_notes.is_empty() {
             container(
@@ -119,12 +115,9 @@ impl TutorialApp {
                 let note_id = note.id;
 
                 let delete_btn = button(
-                    row![
-                        text("🗑️").size(14),
-                        text("Delete").size(12),
-                    ]
-                    .spacing(6)
-                    .align_y(Alignment::Center),
+                    row![text("🗑️").size(14), text("Delete").size(12),]
+                        .spacing(6)
+                        .align_y(Alignment::Center),
                 )
                 .style(style::danger_button_style)
                 .on_press(Message::DeleteNoteClicked(note_id))
@@ -134,9 +127,13 @@ impl TutorialApp {
                     row![
                         column![
                             row![
-                                text(format!("#{}", note.id)).size(12).color(style::COLOR_TEXT_DIM),
+                                text(format!("#{}", note.id))
+                                    .size(12)
+                                    .color(style::COLOR_TEXT_DIM),
                                 text(&note.title).size(15).color(style::COLOR_ACCENT),
-                                text(format!("({})", note.created_at)).size(11).color(style::COLOR_TEXT_DIM),
+                                text(format!("({})", note.created_at))
+                                    .size(11)
+                                    .color(style::COLOR_TEXT_DIM),
                             ]
                             .spacing(8)
                             .align_y(Alignment::Center),
@@ -159,17 +156,11 @@ impl TutorialApp {
             list_col.into()
         };
 
-        let list_card = container(
-            column![
-                list_header,
-                rule::horizontal(1),
-                notes_view,
-            ]
-            .spacing(12),
-        )
-        .padding(20)
-        .style(style::card_style)
-        .width(Length::Fill);
+        let list_card =
+            container(column![list_header, rule::horizontal(1), notes_view,].spacing(12))
+                .padding(20)
+                .style(style::card_style)
+                .width(Length::Fill);
 
         // ======================================================================
         // Section 3: Rust Concept Explainer Box
@@ -187,13 +178,9 @@ impl TutorialApp {
         .style(style::highlight_box_style)
         .width(Length::Fill);
 
-        let content = column![
-            form_card,
-            list_card,
-            concept_box,
-        ]
-        .spacing(20)
-        .padding(20);
+        let content = column![form_card, list_card, concept_box,]
+            .spacing(20)
+            .padding(20);
 
         scrollable(content)
             .width(Length::Fill)

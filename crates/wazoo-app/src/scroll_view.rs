@@ -1,8 +1,8 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Infinite Scroll Stream Layout
- * 
+ *
  * Implements a custom Iced widget that arranges child video players into a smooth,
  * continuously scrolling vertical stream with precise pixel positioning.
  */
@@ -80,22 +80,16 @@ where
         let size = limits.resolve(self.width, self.height, Size::ZERO);
         let mut nodes = Vec::with_capacity(self.children.len());
 
-        for (i, (child, &(y_pos, item_h))) in self
-            .children
-            .iter_mut()
-            .zip(&self.positions)
-            .enumerate()
+        for (i, (child, &(y_pos, item_h))) in
+            self.children.iter_mut().zip(&self.positions).enumerate()
         {
-            let child_limits = layout::Limits::new(
-                Size::new(size.width, item_h),
-                Size::new(size.width, item_h),
-            );
+            let child_limits =
+                layout::Limits::new(Size::new(size.width, item_h), Size::new(size.width, item_h));
 
-            let mut child_node = child.as_widget_mut().layout(
-                &mut tree.children[i],
-                renderer,
-                &child_limits,
-            );
+            let mut child_node =
+                child
+                    .as_widget_mut()
+                    .layout(&mut tree.children[i], renderer, &child_limits);
             child_node.move_to_mut(Point::new(0.0, y_pos));
             nodes.push(child_node);
         }
@@ -123,7 +117,11 @@ where
                     .zip(layout.children())
                 {
                     // Draw only elements whose bounding box intersects the clipped viewport
-                    if child_layout.bounds().intersection(&clipped_viewport).is_some() {
+                    if child_layout
+                        .bounds()
+                        .intersection(&clipped_viewport)
+                        .is_some()
+                    {
                         child.as_widget().draw(
                             tree,
                             renderer,

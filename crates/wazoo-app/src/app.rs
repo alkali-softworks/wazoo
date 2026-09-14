@@ -1,28 +1,27 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Core Application State
- * 
+ *
  * Defines the central WazooApp struct, initial state construction, player lifecycle management,
  * active session persistence, search reconciliation, and event subscription bindings.
  */
 
-use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
-use iced::{Point, Subscription, Task, Theme};
-use wazoo_core::{ConfigManager, Database, PlaybackMode, VideoRecord, VideoSession, WazooSettings};
-use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, StartTime, VideoHandle};
-use wazoo_scanner::ScanProgress;
 use crate::assets::APP_ICON_BYTES;
 use crate::format;
 use crate::message::Message;
+use iced::{Point, Subscription, Task, Theme};
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
+use wazoo_core::{ConfigManager, Database, PlaybackMode, VideoRecord, VideoSession, WazooSettings};
+use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, StartTime, VideoHandle};
+use wazoo_scanner::ScanProgress;
 
 /// Player controls overlay visibility duration: 2.5 seconds at 60 FPS (150 ticks)
 pub const PLAYER_OVERLAY_HIDE_TICKS: usize = 150;
 /// Player controls overlay fade out duration: ~200ms at 60 FPS (12 ticks)
 pub const PLAYER_OVERLAY_FADE_TICKS: usize = 12;
-
 /// Window titlebar hide delay: ~400ms at 60 FPS (25 ticks)
 pub const TITLEBAR_HIDE_TICKS: usize = 50;
 /// Window titlebar fade out duration: ~200ms at 60 FPS (12 ticks)
@@ -149,7 +148,9 @@ impl WazooApp {
             let _ = config_mgr.save_settings(&settings);
         }
 
-        let cli_query_clean = cli_query.map(|q| q.trim().to_string()).filter(|q| !q.is_empty());
+        let cli_query_clean = cli_query
+            .map(|q| q.trim().to_string())
+            .filter(|q| !q.is_empty());
         let is_cli = cli_query_clean.is_some();
 
         let all_label = wazoo_core::i18n::t(&settings.language, "common.all");
@@ -174,7 +175,9 @@ impl WazooApp {
         };
 
         let videos: Vec<VideoRecord> = if !active_query.is_empty() {
-            let filtered = db.search_videos(&active_query, &folders).unwrap_or_default();
+            let filtered = db
+                .search_videos(&active_query, &folders)
+                .unwrap_or_default();
             if filtered.is_empty() {
                 if is_cli {
                     Vec::new()
@@ -315,7 +318,9 @@ impl WazooApp {
                 } else {
                     None
                 };
-                if let Ok(mut handle) = app.create_video_handle_with_start(id, &session.path, &name, start_secs) {
+                if let Ok(mut handle) =
+                    app.create_video_handle_with_start(id, &session.path, &name, start_secs)
+                {
                     handle.set_muted(session.is_muted);
                     handle.set_volume(session.volume);
                     handle.set_subtitles_visible(app.subtitles_enabled);
@@ -351,7 +356,8 @@ impl WazooApp {
                 .iter()
                 .map(|p| (p.id, app.calculate_player_scroll_height(p)))
                 .collect();
-            app.scroll_engine.init_stack_with_heights(&items_with_heights);
+            app.scroll_engine
+                .init_stack_with_heights(&items_with_heights);
             while let Some(spawn_y) = app.scroll_engine.needs_new_player() {
                 if let Some(id) = app.add_player_internal() {
                     let item_h = app
@@ -519,7 +525,10 @@ impl WazooApp {
     }
 
     pub(crate) fn is_player_shuffle(&self, id: PlayerId) -> bool {
-        self.player_shuffle_modes.get(&id).copied().unwrap_or(self.is_shuffle_mode)
+        self.player_shuffle_modes
+            .get(&id)
+            .copied()
+            .unwrap_or(self.is_shuffle_mode)
     }
 
     pub(crate) fn get_next_video_rec_with_mode(
@@ -675,11 +684,22 @@ impl WazooApp {
         }
     }
 
-    pub(crate) fn create_video_handle(&self, id: PlayerId, path: &str, name: &str) -> Result<VideoHandle, String> {
+    pub(crate) fn create_video_handle(
+        &self,
+        id: PlayerId,
+        path: &str,
+        name: &str,
+    ) -> Result<VideoHandle, String> {
         self.create_video_handle_with_start_time(id, path, name, StartTime::Beginning)
     }
 
-    pub(crate) fn create_video_handle_with_start(&self, id: PlayerId, path: &str, name: &str, start_secs: Option<f64>) -> Result<VideoHandle, String> {
+    pub(crate) fn create_video_handle_with_start(
+        &self,
+        id: PlayerId,
+        path: &str,
+        name: &str,
+        start_secs: Option<f64>,
+    ) -> Result<VideoHandle, String> {
         self.create_video_handle_with_start_time(id, path, name, start_secs)
     }
 
@@ -723,7 +743,12 @@ impl WazooApp {
 
         for _ in 0..3 {
             if let Some(video_rec) = self.get_next_video_rec(None) {
-                match self.create_video_handle_with_start_time(id, &video_rec.path, &video_rec.name, start_time) {
+                match self.create_video_handle_with_start_time(
+                    id,
+                    &video_rec.path,
+                    &video_rec.name,
+                    start_time,
+                ) {
                     Ok(mut handle) => {
                         handle.set_muted(initial_muted);
                         handle.set_subtitles_visible(self.subtitles_enabled);
@@ -735,7 +760,11 @@ impl WazooApp {
                         return Some(id);
                     }
                     Err(err) => {
-                        log::error!("Failed to create VideoHandle for {}: {}", video_rec.path, err);
+                        log::error!(
+                            "Failed to create VideoHandle for {}: {}",
+                            video_rec.path,
+                            err
+                        );
                     }
                 }
             }
@@ -769,7 +798,10 @@ impl WazooApp {
     /// Any player currently playing a file that does NOT exist in `self.available_videos`
     /// is switched to play a video that DOES exist in `self.available_videos`.
     /// Each switching player is assigned a distinct video when possible.
-    pub(crate) fn reconcile_players_with_available_videos(&mut self, skip_player_id: Option<PlayerId>) {
+    pub(crate) fn reconcile_players_with_available_videos(
+        &mut self,
+        skip_player_id: Option<PlayerId>,
+    ) {
         if self.available_videos.is_empty() {
             return;
         }
@@ -795,7 +827,8 @@ impl WazooApp {
         }
 
         // Track paths already being played by players that are NOT switching
-        let mut used_paths: HashSet<String> = self.players.iter().map(|p| p.state.path.clone()).collect();
+        let mut used_paths: HashSet<String> =
+            self.players.iter().map(|p| p.state.path.clone()).collect();
         for &(id, _, _) in &needs_switch {
             if let Some(p) = self.players.iter().find(|pl| pl.id == id) {
                 used_paths.remove(&p.state.path);
@@ -848,7 +881,11 @@ impl WazooApp {
 
         if self.settings.playback_mode == PlaybackMode::Scroll {
             if let Some(ref preloaded) = self.preloaded_player {
-                if !self.available_videos.iter().any(|v| v.path == preloaded.state.path) {
+                if !self
+                    .available_videos
+                    .iter()
+                    .any(|v| v.path == preloaded.state.path)
+                {
                     self.preloaded_player = None;
                     self.is_preloading = false;
                 }
@@ -858,7 +895,10 @@ impl WazooApp {
 
     /// Triggers an asynchronous background preload task for the next video in scroll mode
     pub(crate) fn trigger_preload_task(&mut self) -> Task<Message> {
-        if self.preloaded_player.is_some() || self.is_preloading || self.settings.playback_mode != PlaybackMode::Scroll {
+        if self.preloaded_player.is_some()
+            || self.is_preloading
+            || self.settings.playback_mode != PlaybackMode::Scroll
+        {
             return Task::none();
         }
 
@@ -893,7 +933,9 @@ impl WazooApp {
                     // Background pre-buffer: decode initial presentation frame off-thread
                     // so the player is 100% ready when attached to the scroll feed without hitching.
                     let start = std::time::Instant::now();
-                    while !handle.has_decoded_frame() && start.elapsed() < Duration::from_millis(2000) {
+                    while !handle.has_decoded_frame()
+                        && start.elapsed() < Duration::from_millis(2000)
+                    {
                         if handle.update_frame() {
                             break;
                         }
@@ -970,7 +1012,9 @@ impl WazooApp {
     }
 
     pub(crate) fn total_video_count(&self) -> usize {
-        self.db.get_video_count().unwrap_or(self.available_videos.len())
+        self.db
+            .get_video_count()
+            .unwrap_or(self.available_videos.len())
     }
 
     /// Resets scroll engine and transitions playback mode back to Normal
@@ -1053,27 +1097,21 @@ impl WazooApp {
                 iced::Event::Mouse(iced::mouse::Event::CursorMoved { position }) => {
                     Some(Message::CursorMoved(window_id, position))
                 }
-                iced::Event::Mouse(iced::mouse::Event::CursorLeft) => {
-                    Some(Message::CursorLeft)
-                }
-                iced::Event::Mouse(iced::mouse::Event::ButtonPressed(iced::mouse::Button::Right)) => {
-                    Some(Message::RightClickPressed(window_id))
-                }
-                iced::Event::Mouse(iced::mouse::Event::ButtonReleased(iced::mouse::Button::Left)) => {
-                    Some(Message::LeftClickReleased)
-                }
+                iced::Event::Mouse(iced::mouse::Event::CursorLeft) => Some(Message::CursorLeft),
+                iced::Event::Mouse(iced::mouse::Event::ButtonPressed(
+                    iced::mouse::Button::Right,
+                )) => Some(Message::RightClickPressed(window_id)),
+                iced::Event::Mouse(iced::mouse::Event::ButtonReleased(
+                    iced::mouse::Button::Left,
+                )) => Some(Message::LeftClickReleased),
                 iced::Event::Window(iced::window::Event::Resized(size)) => {
                     Some(Message::WindowResized(window_id, size))
                 }
                 iced::Event::Window(iced::window::Event::Moved(point)) => {
                     Some(Message::WindowMoved(window_id, point))
                 }
-                iced::Event::Window(iced::window::Event::CloseRequested) => {
-                    Some(Message::CloseApp)
-                }
-                iced::Event::Window(iced::window::Event::Focused) => {
-                    Some(Message::WindowFocused)
-                }
+                iced::Event::Window(iced::window::Event::CloseRequested) => Some(Message::CloseApp),
+                iced::Event::Window(iced::window::Event::Focused) => Some(Message::WindowFocused),
                 iced::Event::Window(iced::window::Event::Unfocused) => {
                     Some(Message::WindowUnfocused)
                 }
@@ -1090,7 +1128,10 @@ impl WazooApp {
 
         if self.settings.playback_mode == PlaybackMode::Flip {
             let interval_secs = self.settings.flip_interval_secs.max(1);
-            subs.push(iced::time::every(Duration::from_secs(interval_secs)).map(|_| Message::FlipModeTick));
+            subs.push(
+                iced::time::every(Duration::from_secs(interval_secs))
+                    .map(|_| Message::FlipModeTick),
+            );
         }
 
         Subscription::batch(subs)
@@ -1105,7 +1146,10 @@ mod tests {
         let temp_dir = std::env::temp_dir().join(format!(
             "wazoo_test_app_{}_{}",
             std::process::id(),
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
         ));
         let _ = std::fs::create_dir_all(&temp_dir);
         let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir);
@@ -1144,14 +1188,25 @@ mod tests {
         assert!(!app.is_point_in_titlebar(Point::new(801.0, 10.0)));
     }
 
-
     #[test]
     fn test_get_next_video_rec_sequential_and_random() {
         let (mut app, _) = new_test_app();
         app.available_videos = vec![
-            VideoRecord { id: 1, name: "V1".to_string(), path: "/media/v1.mp4".to_string() },
-            VideoRecord { id: 2, name: "V2".to_string(), path: "/media/v2.mp4".to_string() },
-            VideoRecord { id: 3, name: "V3".to_string(), path: "/media/v3.mp4".to_string() },
+            VideoRecord {
+                id: 1,
+                name: "V1".to_string(),
+                path: "/media/v1.mp4".to_string(),
+            },
+            VideoRecord {
+                id: 2,
+                name: "V2".to_string(),
+                path: "/media/v2.mp4".to_string(),
+            },
+            VideoRecord {
+                id: 3,
+                name: "V3".to_string(),
+                path: "/media/v3.mp4".to_string(),
+            },
         ];
 
         // 1. Sequential mode
@@ -1177,9 +1232,21 @@ mod tests {
     fn test_get_prev_video_rec_sequential_and_random() {
         let (mut app, _) = new_test_app();
         app.available_videos = vec![
-            VideoRecord { id: 1, name: "V1".to_string(), path: "/media/v1.mp4".to_string() },
-            VideoRecord { id: 2, name: "V2".to_string(), path: "/media/v2.mp4".to_string() },
-            VideoRecord { id: 3, name: "V3".to_string(), path: "/media/v3.mp4".to_string() },
+            VideoRecord {
+                id: 1,
+                name: "V1".to_string(),
+                path: "/media/v1.mp4".to_string(),
+            },
+            VideoRecord {
+                id: 2,
+                name: "V2".to_string(),
+                path: "/media/v2.mp4".to_string(),
+            },
+            VideoRecord {
+                id: 3,
+                name: "V3".to_string(),
+                path: "/media/v3.mp4".to_string(),
+            },
         ];
 
         // 1. Sequential mode
@@ -1216,50 +1283,122 @@ mod tests {
         assert_eq!(hist.forward_stack.len(), 0);
 
         // Previous action simulation: pop C from back_stack, push to forward_stack
-        let current_c = app.player_nav_history.get_mut(&player_id).unwrap().back_stack.pop().unwrap();
-        app.player_nav_history.get_mut(&player_id).unwrap().forward_stack.push(current_c);
-        let target_b = app.player_nav_history.get(&player_id).unwrap().back_stack.last().unwrap().clone();
+        let current_c = app
+            .player_nav_history
+            .get_mut(&player_id)
+            .unwrap()
+            .back_stack
+            .pop()
+            .unwrap();
+        app.player_nav_history
+            .get_mut(&player_id)
+            .unwrap()
+            .forward_stack
+            .push(current_c);
+        let target_b = app
+            .player_nav_history
+            .get(&player_id)
+            .unwrap()
+            .back_stack
+            .last()
+            .unwrap()
+            .clone();
         assert_eq!(target_b.path, "/media/B.mp4");
         assert_eq!(target_b.position_secs, Some(15.0));
 
         // Previous again: pop B from back_stack, push to forward_stack
-        let current_b = app.player_nav_history.get_mut(&player_id).unwrap().back_stack.pop().unwrap();
-        app.player_nav_history.get_mut(&player_id).unwrap().forward_stack.push(current_b);
-        let target_a = app.player_nav_history.get(&player_id).unwrap().back_stack.last().unwrap().clone();
+        let current_b = app
+            .player_nav_history
+            .get_mut(&player_id)
+            .unwrap()
+            .back_stack
+            .pop()
+            .unwrap();
+        app.player_nav_history
+            .get_mut(&player_id)
+            .unwrap()
+            .forward_stack
+            .push(current_b);
+        let target_a = app
+            .player_nav_history
+            .get(&player_id)
+            .unwrap()
+            .back_stack
+            .last()
+            .unwrap()
+            .clone();
         assert_eq!(target_a.path, "/media/A.mp4");
 
         // Now next action: forward_stack pop gives B!
-        let forward_b = app.player_nav_history.get_mut(&player_id).unwrap().forward_stack.pop().unwrap();
+        let forward_b = app
+            .player_nav_history
+            .get_mut(&player_id)
+            .unwrap()
+            .forward_stack
+            .pop()
+            .unwrap();
         assert_eq!(forward_b.path, "/media/B.mp4");
         assert_eq!(forward_b.position_secs, Some(15.0));
         app.push_player_nav_entry(player_id, forward_b.path, forward_b.position_secs);
 
         // Next action again: forward_stack pop gives C!
-        let forward_c = app.player_nav_history.get_mut(&player_id).unwrap().forward_stack.pop().unwrap();
+        let forward_c = app
+            .player_nav_history
+            .get_mut(&player_id)
+            .unwrap()
+            .forward_stack
+            .pop()
+            .unwrap();
         assert_eq!(forward_c.path, "/media/C.mp4");
         assert_eq!(forward_c.position_secs, Some(30.0));
         app.push_player_nav_entry(player_id, forward_c.path, forward_c.position_secs);
 
         // Forward stack is now empty
-        assert!(app.player_nav_history.get(&player_id).unwrap().forward_stack.is_empty());
+        assert!(app
+            .player_nav_history
+            .get(&player_id)
+            .unwrap()
+            .forward_stack
+            .is_empty());
 
         // Toggling shuffle mode clears both back_stack and forward_stack
-        app.player_nav_history.get_mut(&player_id).unwrap().forward_stack.push(PlaybackHistoryEntry {
-            path: "/media/D.mp4".to_string(),
-            position_secs: None,
-        });
+        app.player_nav_history
+            .get_mut(&player_id)
+            .unwrap()
+            .forward_stack
+            .push(PlaybackHistoryEntry {
+                path: "/media/D.mp4".to_string(),
+                position_secs: None,
+            });
         let _ = app.update(Message::ToggleShuffleMode);
-        assert!(app.player_nav_history.get(&player_id).unwrap().forward_stack.is_empty());
-        assert!(app.player_nav_history.get(&player_id).unwrap().back_stack.is_empty());
+        assert!(app
+            .player_nav_history
+            .get(&player_id)
+            .unwrap()
+            .forward_stack
+            .is_empty());
+        assert!(app
+            .player_nav_history
+            .get(&player_id)
+            .unwrap()
+            .back_stack
+            .is_empty());
     }
-
 
     #[test]
     fn test_file_picker_confined_folder_badge_multilingual() {
         let (mut app, _) = new_test_app();
         app.available_videos = vec![
-            VideoRecord { id: 1, name: "Anime 1".to_string(), path: "/media/anime/a1.mp4".to_string() },
-            VideoRecord { id: 2, name: "Movie 1".to_string(), path: "/media/movies/m1.mp4".to_string() },
+            VideoRecord {
+                id: 1,
+                name: "Anime 1".to_string(),
+                path: "/media/anime/a1.mp4".to_string(),
+            },
+            VideoRecord {
+                id: 2,
+                name: "Movie 1".to_string(),
+                path: "/media/movies/m1.mp4".to_string(),
+            },
         ];
 
         // 1. Switch language to Spanish
@@ -1296,7 +1435,10 @@ mod tests {
         let temp_dir = std::env::temp_dir().join(format!(
             "wazoo_boot_kb_{}_{}",
             std::process::id(),
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
         ));
         let _ = std::fs::create_dir_all(&temp_dir);
         let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
@@ -1321,7 +1463,10 @@ mod tests {
         let temp_dir = std::env::temp_dir().join(format!(
             "wazoo_incomplete_kb_{}_{}",
             std::process::id(),
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
         ));
         let _ = std::fs::create_dir_all(&temp_dir);
         let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
@@ -1342,7 +1487,8 @@ mod tests {
 
         // Boot should have written the complete list to settings.json
         assert!(app.config_mgr.has_complete_keybinds_in_settings());
-        let updated_file_content = std::fs::read_to_string(app.config_mgr.config_file_path()).unwrap();
+        let updated_file_content =
+            std::fs::read_to_string(app.config_mgr.config_file_path()).unwrap();
         assert!(updated_file_content.contains("\"toggle_layout\": \"o\""));
         assert!(updated_file_content.contains("\"close_app\": \"Alt+X\""));
         assert!(updated_file_content.contains("\"add_player\": \"n\""));
@@ -1375,7 +1521,10 @@ mod tests {
         assert_eq!(app.play_history.len(), 1000);
         // The oldest items (video1 to video50) should be dropped; oldest in list should be video51
         assert_eq!(app.play_history.first().unwrap().path, "/media/video51.mp4");
-        assert_eq!(app.play_history.last().unwrap().path, "/media/video1050.mp4");
+        assert_eq!(
+            app.play_history.last().unwrap().path,
+            "/media/video1050.mp4"
+        );
 
         // 4. Toggle drawer
         let _ = app.update(Message::ToggleHistoryDrawer);
@@ -1404,8 +1553,16 @@ mod tests {
     fn test_session_videos_shuffle_persistence() {
         let (mut app, _) = new_test_app();
         app.available_videos = vec![
-            VideoRecord { id: 1, name: "V1".to_string(), path: "/media/v1.mp4".to_string() },
-            VideoRecord { id: 2, name: "V2".to_string(), path: "/media/v2.mp4".to_string() },
+            VideoRecord {
+                id: 1,
+                name: "V1".to_string(),
+                path: "/media/v1.mp4".to_string(),
+            },
+            VideoRecord {
+                id: 2,
+                name: "V2".to_string(),
+                path: "/media/v2.mp4".to_string(),
+            },
         ];
 
         // Default should be shuffle mode
@@ -1463,7 +1620,10 @@ mod tests {
 
         // Run 50 frame ticks with window moving (well beyond TITLEBAR_HIDE_TICKS = 50)
         for i in 0..50 {
-            let _ = app.update(Message::WindowMoved(win_id, Point::new(110.0 + i as f32, 110.0 + i as f32)));
+            let _ = app.update(Message::WindowMoved(
+                win_id,
+                Point::new(110.0 + i as f32, 110.0 + i as f32),
+            ));
             let _ = app.update(Message::VideoFrameTick);
         }
 
@@ -1534,7 +1694,8 @@ mod tests {
         assert!((h_9_16 - 3413.33).abs() < 1.0);
 
         // When toggling scroll mode with items, stack initializes with real heights
-        app.scroll_engine.init_stack_with_heights(&[(1, h_16_9), (2, h_4_3)]);
+        app.scroll_engine
+            .init_stack_with_heights(&[(1, h_16_9), (2, h_4_3)]);
         assert_eq!(app.scroll_engine.items.get(&1).unwrap().y_pos, 0.0);
         assert_eq!(app.scroll_engine.items.get(&1).unwrap().height, h_16_9);
         assert_eq!(app.scroll_engine.items.get(&2).unwrap().y_pos, h_16_9);
@@ -1542,7 +1703,10 @@ mod tests {
 
         // Dynamic update on aspect ratio resolution
         let changed = app.scroll_engine.update_height(1, 1080.0);
-        assert!(!changed, "Height did not change significantly, so returns false");
+        assert!(
+            !changed,
+            "Height did not change significantly, so returns false"
+        );
         let changed = app.scroll_engine.update_height(1, 1200.0);
         assert!(changed, "Height changed by > 1px, so returns true");
         app.scroll_engine.recalculate_positions();
@@ -1551,7 +1715,10 @@ mod tests {
         assert_eq!(app.scroll_engine.items.get(&2).unwrap().y_pos, 1200.0);
 
         // Window resize updates window size and recalculates scroll item heights
-        let _ = app.update(Message::WindowResized(iced::window::Id::unique(), iced::Size::new(1280.0, 720.0)));
+        let _ = app.update(Message::WindowResized(
+            iced::window::Id::unique(),
+            iced::Size::new(1280.0, 720.0),
+        ));
         assert_eq!(app.scroll_engine.window_width, 1280.0);
         assert_eq!(app.scroll_engine.window_height, 720.0);
         let resized_h_16_9 = app.scroll_engine.item_height_for_aspect_ratio(16.0 / 9.0);
@@ -1586,4 +1753,3 @@ mod tests {
         assert_eq!(app.unfocused_frame_ticks, 0);
     }
 }
-

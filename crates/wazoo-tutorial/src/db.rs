@@ -2,13 +2,13 @@
  * ==============================================================================
  * TUTORIAL LESSON: Embedded SQLite Persistence with `rusqlite`
  * ==============================================================================
- * 
+ *
  * In desktop applications (including `wazoo-rs`), you often need to persist data
  * locally without running an external database server like PostgreSQL or MySQL.
- * 
+ *
  * In `wazoo-rs`, `wazoo-core` uses SQLite (via the `rusqlite` crate with "bundled"
  * SQLite C library) to store library metadata, playback history, and bookmarks.
- * 
+ *
  * In this module, you will learn:
  * 1. How to open or create an SQLite database in Rust.
  * 2. How to run migrations / schema creation (`CREATE TABLE IF NOT EXISTS`).
@@ -21,7 +21,7 @@ use rusqlite::{params, Connection, Result};
 use std::path::Path;
 
 /// A strongly-typed Rust struct representing a note stored in SQLite.
-/// 
+///
 /// Note the `derive` attributes:
 /// - `Debug`: Allows formatting with `println!("{:?}", note)` or `format!("{:?}", note)`.
 /// - `Clone`: Allows duplicating the struct data in memory (e.g. `note.clone()`).
@@ -66,7 +66,7 @@ impl TutorialDatabase {
 
     /// Initializes the database schema.
     /// Notice the `?` operator at the end of `execute`.
-    /// 
+    ///
     /// RUST CONCEPT: The `?` Operator
     /// In Rust, functions that can fail return `Result<T, E>`.
     /// The `?` operator is syntactic sugar that says:
@@ -86,7 +86,7 @@ impl TutorialDatabase {
     }
 
     /// Inserts a new note into SQLite.
-    /// 
+    ///
     /// RUST CONCEPT: Borrowing (`&str`)
     /// Notice we take `&str` (string slices) instead of `String`.
     /// `&str` is a borrowed reference to string data. It avoids allocating a new
@@ -102,16 +102,16 @@ impl TutorialDatabase {
     }
 
     /// Fetches all notes ordered by most recently created.
-    /// 
+    ///
     /// RUST CONCEPT: Iterator Mapping
     /// We use `query_map` to convert each database row into a `NoteRecord`.
     /// SQLite data types map naturally to Rust types:
     /// - `INTEGER` -> `i64`
     /// - `TEXT`    -> `String`
     pub fn get_all_notes(&self) -> Result<Vec<NoteRecord>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT id, title, content, created_at FROM notes ORDER BY id DESC",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT id, title, content, created_at FROM notes ORDER BY id DESC")?;
 
         let note_iter = stmt.query_map([], |row| {
             Ok(NoteRecord {
@@ -136,20 +136,15 @@ impl TutorialDatabase {
     /// Deletes a note by its primary key ID.
     /// Returns the number of rows affected (should be 1 if found, 0 if not).
     pub fn delete_note(&self, id: i64) -> Result<usize> {
-        self.conn.execute(
-            "DELETE FROM notes WHERE id = ?1",
-            params![id],
-        )
+        self.conn
+            .execute("DELETE FROM notes WHERE id = ?1", params![id])
     }
 
     /// Returns the total count of notes.
     #[allow(dead_code)]
     pub fn count_notes(&self) -> Result<i64> {
-        self.conn.query_row(
-            "SELECT COUNT(*) FROM notes",
-            [],
-            |row| row.get(0),
-        )
+        self.conn
+            .query_row("SELECT COUNT(*) FROM notes", [], |row| row.get(0))
     }
 }
 
@@ -166,11 +161,15 @@ mod tests {
         assert_eq!(db.count_notes().unwrap(), 0);
 
         // Add a note
-        let id1 = db.add_note("Learn Rust", "Master ownership and borrowing").unwrap();
+        let id1 = db
+            .add_note("Learn Rust", "Master ownership and borrowing")
+            .unwrap();
         assert!(id1 > 0);
 
         // Add a second note
-        let _id2 = db.add_note("Learn Iced", "Understand The Elm Architecture").unwrap();
+        let _id2 = db
+            .add_note("Learn Iced", "Understand The Elm Architecture")
+            .unwrap();
         assert_eq!(db.count_notes().unwrap(), 2);
 
         // Fetch notes and verify content

@@ -1,8 +1,8 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
- * 
+ *
  * Root View Assembly
- * 
+ *
  * Assembles the primary UI layer stack, rendering video players, transient overlays,
  * sliding titlebars, floating toast notices, scan banners, and modal dialogs.
  */
@@ -15,15 +15,15 @@ pub mod titlebar;
 pub mod transcript;
 pub mod welcome;
 
+use crate::app::WazooApp;
+use crate::format;
+use crate::message::Message;
+use crate::theme;
 use iced::{
     widget::{button, column, container, mouse_area, row, text, Space, Stack},
     Alignment, Element, Length, Theme,
 };
 use wazoo_scanner::ScanStage;
-use crate::app::WazooApp;
-use crate::format;
-use crate::message::Message;
-use crate::theme;
 
 impl WazooApp {
     pub fn view(&self) -> Element<'_, Message> {
@@ -31,7 +31,9 @@ impl WazooApp {
             self.view_welcome()
         } else if self.show_file_picker {
             row![
-                container(self.view_players()).width(Length::Fill).height(Length::Fill),
+                container(self.view_players())
+                    .width(Length::Fill)
+                    .height(Length::Fill),
                 self.view_file_picker(),
             ]
             .width(Length::Fill)
@@ -39,7 +41,9 @@ impl WazooApp {
             .into()
         } else if self.show_transcript {
             row![
-                container(self.view_players()).width(Length::Fill).height(Length::Fill),
+                container(self.view_players())
+                    .width(Length::Fill)
+                    .height(Length::Fill),
                 self.view_transcript_drawer(),
             ]
             .width(Length::Fill)
@@ -47,17 +51,21 @@ impl WazooApp {
             .into()
         } else if self.show_history_drawer {
             row![
-                container(self.view_players()).width(Length::Fill).height(Length::Fill),
+                container(self.view_players())
+                    .width(Length::Fill)
+                    .height(Length::Fill),
                 self.view_history_drawer(),
             ]
             .width(Length::Fill)
             .height(Length::Fill)
             .into()
         } else {
-            row![container(self.view_players()).width(Length::Fill).height(Length::Fill)]
+            row![container(self.view_players())
                 .width(Length::Fill)
-                .height(Length::Fill)
-                .into()
+                .height(Length::Fill)]
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .into()
         };
 
         // If any modal is active, display only main content in the background and the modal layer.
@@ -89,8 +97,12 @@ impl WazooApp {
             // 1.5. Dropdown backdrop for dismissal when clicking outside
             if self.show_dropdown_menu {
                 root_stack_children.push(Element::from(
-                    mouse_area(container(Space::new()).width(Length::Fill).height(Length::Fill))
-                        .on_press(Message::CloseDropdownMenu),
+                    mouse_area(
+                        container(Space::new())
+                            .width(Length::Fill)
+                            .height(Length::Fill),
+                    )
+                    .on_press(Message::CloseDropdownMenu),
                 ));
             }
 
@@ -116,11 +128,8 @@ impl WazooApp {
                 .style(theme::notice_pill_style);
 
                 let toast_layer = container(
-                    column![
-                        Space::new().height(Length::Fixed(35.0)),
-                        toast_widget,
-                    ]
-                    .align_x(Alignment::Center),
+                    column![Space::new().height(Length::Fixed(35.0)), toast_widget,]
+                        .align_x(Alignment::Center),
                 )
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -139,7 +148,11 @@ impl WazooApp {
                             } else {
                                 format!("Listing: {}", progress.current_name)
                             };
-                            let stat = format!("{}% ({} found)", progress.percent, format::format_number(progress.files_found));
+                            let stat = format!(
+                                "{}% ({} found)",
+                                progress.percent,
+                                format::format_number(progress.files_found)
+                            );
                             (name, stat)
                         }
                         ScanStage::Indexing => {
@@ -148,12 +161,19 @@ impl WazooApp {
                             } else {
                                 format!("Indexing: {}", progress.current_name)
                             };
-                            let stat = format!("{}% ({} files)", progress.percent, format::format_number(progress.total));
+                            let stat = format!(
+                                "{}% ({} files)",
+                                progress.percent,
+                                format::format_number(progress.total)
+                            );
                             (name, stat)
                         }
                     }
                 } else {
-                    ("Scanning media folders...".to_string(), "In progress".to_string())
+                    (
+                        "Scanning media folders...".to_string(),
+                        "In progress".to_string(),
+                    )
                 };
 
                 let scan_banner = container(
@@ -176,8 +196,12 @@ impl WazooApp {
             if self.is_alt_pressed {
                 let alt_overlay = container(
                     column![
-                        text(self.t("app.drag_to_move")).size(22).color(iced::Color::WHITE),
-                        text(self.t("app.x_to_quit")).size(16).color(theme::COLOR_TEXT_DIM),
+                        text(self.t("app.drag_to_move"))
+                            .size(22)
+                            .color(iced::Color::WHITE),
+                        text(self.t("app.x_to_quit"))
+                            .size(16)
+                            .color(theme::COLOR_TEXT_DIM),
                     ]
                     .spacing(8)
                     .align_x(Alignment::Center),
@@ -187,11 +211,15 @@ impl WazooApp {
                 .center_x(Length::Fill)
                 .center_y(Length::Fill)
                 .style(|_theme: &Theme| container::Style {
-                    background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5))),
+                    background: Some(iced::Background::Color(iced::Color::from_rgba(
+                        0.0, 0.0, 0.0, 0.5,
+                    ))),
                     ..Default::default()
                 });
 
-                root_stack_children.push(Element::from(mouse_area(alt_overlay).on_press(Message::DragWindow)));
+                root_stack_children.push(Element::from(
+                    mouse_area(alt_overlay).on_press(Message::DragWindow),
+                ));
             }
 
             Stack::with_children(root_stack_children)
