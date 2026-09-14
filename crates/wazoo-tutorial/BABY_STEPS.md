@@ -645,3 +645,84 @@ PHP has always lacked this! In PHP, if you make a method `public` so another fil
 | `pub(crate) field: Type` | Entire Crate | **Package-Internal**: Any file in this crate can see it, but outside crates can't |
 | `pub(super) field: Type` | Parent Module | **Parent-Only**: Only the parent folder/module (`../`) can see it |
 | `pub field: Type` | Entire Universe | **`public`**: Anyone who imports this crate can see it |
+
+---
+
+## 🎁 Chapter 8: The Death of `null` — Understanding `Option`, `Some`, & `None`
+
+In `wazoo-app/src/update.rs`, you see code like:
+```rust
+if let Some(player) = self.focused_player_mut() {
+    player.set_subtitles_visible(true);
+}
+```
+
+This is the solution to what Tony Hoare (the inventor of `null`) famously called his **"Billion Dollar Mistake"**.
+
+---
+
+### 1. Why `null` Sucks in PHP and JS
+
+In PHP and JavaScript, when something might not exist, functions return `null` or `undefined`:
+```php
+// PHP:
+$player = $this->getFocusedPlayer(); 
+// If no player is focused, $player is null!
+// If you forget to check, your whole app CRASHES in production:
+// "Fatal Error: Call to a member function set_subtitles_visible() on null"
+$player->set_subtitles_visible(true); 
+```
+
+```js
+// JavaScript:
+const player = this.getFocusedPlayer();
+// "TypeError: Cannot read properties of undefined (reading 'set_subtitles_visible')"
+player.set_subtitles_visible(true);
+```
+
+---
+
+### 2. Rust's Solution: Zero Nulls, Ever
+
+Rust **completely deleted `null` and `undefined` from the language**.
+
+If a value might be missing, Rust forces the function to return an enum called **`Option<T>`**:
+
+```rust
+enum Option<T> {
+    Some(T),  // ✅ The value exists! It's wrapped safely inside `Some`.
+    None,     // ❌ The value doesn't exist.
+}
+```
+
+Because `focused_player_mut()` returns `Option<&mut VideoHandle>`, the compiler **physically forbids** you from calling methods on it directly:
+```rust
+self.focused_player_mut().set_subtitles_visible(true); // 💥 COMPILE ERROR!
+// error[E0599]: no method named `set_subtitles_visible` found for enum `Option`
+```
+The compiler protects you: *"You cannot touch the player until you check if it's actually there!"*
+
+---
+
+### 3. How to Unpack It: `if let Some(...)`
+
+To get the player out of the `Option` wrapper, you write:
+```rust
+if let Some(player) = self.focused_player_mut() {
+    player.set_subtitles_visible(true);
+}
+```
+
+In plain English, this means:
+> *"If `focused_player_mut()` returned a **`Some`**, unwrap the inner value, name it **`player`**, and run the `{ ... }` block. If it returned **`None`**, do nothing and safely skip the block!"*
+
+---
+
+### 4. Comparison Table
+
+| Scenario | In PHP / JS | In Rust |
+| :--- | :--- | :--- |
+| Value exists | `$val = "hello"` | `Some("hello")` |
+| Value missing | `$val = null` / `undefined` | `None` |
+| Checking for value | `if ($val !== null)` | `if let Some(val) = ...` |
+| If you forget to check | 💥 App crashes at runtime | 🛡️ **Compile error!** Impossible to forget. |
