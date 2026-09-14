@@ -1,4 +1,4 @@
-# 🦀 Rust for PHP & JS Survivors: Baby Steps Guide
+# 🦀 Rust for PHP & JS Survivors: Baby Steps Guide 👶
 
 *A no-nonsense handbook for understanding Rust & Iced.*
 
