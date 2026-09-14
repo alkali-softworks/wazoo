@@ -621,7 +621,7 @@ Rust gives you fine-grained **scoped visibility** to build clean, leak-proof arc
 - **If you make it `pub`**: 
   Now it's public to the entire outside world! Anyone who imports `wazoo-app` could reach in and corrupt your database handle directly.
 
-### 2. The Solution: `pub(crate)` (Internal Package Visibility)
+### 2. The Solution: `pub(crate)` (Package-Internal Visibility)
 
 Writing:
 ```rust
@@ -630,13 +630,18 @@ pub(crate) db: Database
 Tells the compiler:
 > *"Make this field accessible to **any file inside `crates/wazoo-app`**, but keep it **strictly hidden (private)** to any outside code or crates!"*
 
-It's the exact equivalent of `internal` in C# or package-private in Java.
+In **JavaScript / npm** terms:
+Think of an npm library. You might have 20 internal helper files that import each other, but your `package.json` only exports 1 clean class in `index.js`.
+`pub(crate)` is for all those internal files to talk to each other without exposing those guts to people who `npm install` your package!
+
+In **PHP** terms:
+PHP has always lacked this! In PHP, if you make a method `public` so another file in your Composer library can call it, you've accidentally made it public to your library's consumers too. Rust's `pub(crate)` solves this: public inside the package, private outside.
 
 ### 3. Visibility Cheat Sheet
 
-| Syntax | Scope | PHP / C# Equivalent |
+| Syntax | Scope | In Plain English |
 | :--- | :--- | :--- |
-| `field: Type` *(no keyword)* | Only inside **its own file/module** | `private` |
-| `pub(crate) field: Type` | Visible to **all files in the same crate** | `internal` (C#) |
-| `pub(super) field: Type` | Visible to its **parent module** (`../`) | `protected` (roughly) |
-| `pub field: Type` | Visible to **the entire universe** | `public` |
+| `field: Type` *(no keyword)* | File / Module | **`private`**: Only code in this exact file can see it |
+| `pub(crate) field: Type` | Entire Crate | **Package-Internal**: Any file in this crate can see it, but outside crates can't |
+| `pub(super) field: Type` | Parent Module | **Parent-Only**: Only the parent folder/module (`../`) can see it |
+| `pub field: Type` | Entire Universe | **`public`**: Anyone who imports this crate can see it |
