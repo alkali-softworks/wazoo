@@ -615,11 +615,6 @@ impl WazooApp {
         }
     }
 
-    #[cfg(test)]
-    pub(crate) fn get_prev_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
-        self.get_prev_video_rec_with_mode(current_path, self.is_shuffle_mode)
-    }
-
     pub(crate) fn record_current_player_nav_position(&mut self, id: PlayerId) {
         if let Some(p) = self.players.iter().find(|pl| pl.id == id) {
             let pos_secs = p.position().as_secs_f64();
@@ -1155,6 +1150,12 @@ mod tests {
         let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir);
         let db = Database::open_in_memory().expect("in-memory db");
         WazooApp::new_with_backend(None, config_mgr, db)
+    }
+
+    impl WazooApp {
+        fn get_prev_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
+            self.get_prev_video_rec_with_mode(current_path, self.is_shuffle_mode)
+        }
     }
 
     #[test]
