@@ -51,8 +51,7 @@
     "folders_added_scanning": "Pasta(s) adicionada(s). Iniciando verificação...",
     "folder_added": "Pasta adicionada: {folder}",
     "folder_removed": "Pasta removida: {folder} ({count} arquivos)",
-    "scanning_progress": "Verificando{name} ({percent}% - {found} encontrados)",
-    "indexing_progress": "Adicionado: {name} ({percent}%)",
+    "scanning_progress": "Verificando {name} ({percent}% - {found} encontrados)",
     "scan_error": "Erro de verificação: {error}"
   },
   "search": {

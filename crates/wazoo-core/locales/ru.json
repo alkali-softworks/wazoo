@@ -51,8 +51,7 @@
     "folders_added_scanning": "Папка(и) добавлена(ы). Запуск сканирования...",
     "folder_added": "Папка добавлена: {folder}",
     "folder_removed": "Папка удалена: {folder} ({count} файлов)",
-    "scanning_progress": "Сканирование{name} ({percent}% - {found} найдено)",
-    "indexing_progress": "Добавлено: {name} ({percent}%)",
+    "scanning_progress": "Сканирование {name} ({percent}% - {found} найдено)",
     "scan_error": "Ошибка сканирования: {error}"
   },
   "search": {

@@ -51,8 +51,7 @@
     "folders_added_scanning": "ফোল্ডার যুক্ত হয়েছে। লাইব্রেরি স্ক্যান শুরু হচ্ছে...",
     "folder_added": "ফোল্ডার যোগ হয়েছে: {folder}",
     "folder_removed": "ফোল্ডার সরানো হয়েছে: {folder} ({count} ফাইল)",
-    "scanning_progress": "স্ক্যান করা হচ্ছে{name} ({percent}% - {found} পাওয়া গেছে)",
-    "indexing_progress": "যোগ হয়েছে: {name} ({percent}%)",
+    "scanning_progress": "স্ক্যান করা হচ্ছে {name} ({percent}% - {found} পাওয়া গেছে)",
     "scan_error": "স্ক্যান ত্রুটি: {error}"
   },
   "search": {

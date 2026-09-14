@@ -51,8 +51,7 @@
     "folders_added_scanning": "Added folder(s). Starting library scan...",
     "folder_added": "Added folder: {folder}",
     "folder_removed": "Removed {folder} ({count} files)",
-    "scanning_progress": "Scanning{name} ({percent}% - {found} found)",
-    "indexing_progress": "Added: {name} ({percent}%)",
+    "scanning_progress": "Scanning {name} ({percent}% - {found} found)",
     "scan_error": "Scan error: {error}"
   },
   "search": {

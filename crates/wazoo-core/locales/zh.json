@@ -51,8 +51,7 @@
     "folders_added_scanning": "已添加文件夹，正在开始扫描媒体库...",
     "folder_added": "已添加文件夹：{folder}",
     "folder_removed": "已移除文件夹：{folder}（{count} 个文件）",
-    "scanning_progress": "正在扫描{name}（{percent}% - 找到 {found} 个文件）",
-    "indexing_progress": "已添加：{name}（{percent}%）",
+    "scanning_progress": "正在扫描 {name}（{percent}% - 找到 {found} 个文件）",
     "scan_error": "扫描错误：{error}"
   },
   "search": {

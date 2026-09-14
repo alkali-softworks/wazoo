@@ -51,8 +51,7 @@
     "folders_added_scanning": "התיקייה/ות נוספו. מתחיל סריקת ספרייה...",
     "folder_added": "נוספה תיקייה: {folder}",
     "folder_removed": "הוסרה תיקייה: {folder} ({count} קבצים)",
-    "scanning_progress": "סורק{name} ({percent}% - נמצאו {found})",
-    "indexing_progress": "נוסף: {name} ({percent}%)",
+    "scanning_progress": "סורק {name} ({percent}% - נמצאו {found})",
     "scan_error": "שגיאת סריקה: {error}"
   },
   "search": {

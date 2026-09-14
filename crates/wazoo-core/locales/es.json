@@ -51,8 +51,7 @@
     "folders_added_scanning": "Carpeta(s) añadida(s). Iniciando escaneo...",
     "folder_added": "Carpeta añadida: {folder}",
     "folder_removed": "Carpeta eliminada: {folder} ({count} archivos)",
-    "scanning_progress": "Escaneando{name} ({percent}% - {found} encontrados)",
-    "indexing_progress": "Añadido: {name} ({percent}%)",
+    "scanning_progress": "Escaneando {name} ({percent}% - {found} encontrados)",
     "scan_error": "Error de escaneo: {error}"
   },
   "search": {

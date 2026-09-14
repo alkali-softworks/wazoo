@@ -51,8 +51,7 @@
     "folders_added_scanning": "フォルダを追加しました。ライブラリスキャンを開始します...",
     "folder_added": "フォルダを追加しました: {folder}",
     "folder_removed": "フォルダを削除しました: {folder} ({count} 件のファイル)",
-    "scanning_progress": "スキャン中{name} ({percent}% - {found} 件検出)",
-    "indexing_progress": "追加: {name} ({percent}%)",
+    "scanning_progress": "スキャン中 {name} ({percent}% - {found} 件検出)",
     "scan_error": "スキャンエラー: {error}"
   },
   "search": {

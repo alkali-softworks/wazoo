@@ -2003,14 +2003,13 @@ impl WazooApp {
                         self.toast_time_remaining = 2;
                     }
                     ScanStage::Indexing => {
-                        if !progress.current_name.is_empty() {
-                            let pct_str = progress.percent.to_string();
-                            self.toast_message = Some(self.t_with(
-                                "settings.indexing_progress",
-                                &[("name", &progress.current_name), ("percent", &pct_str)],
-                            ));
-                            self.toast_time_remaining = 2;
-                        }
+                        let pct_str = progress.percent.to_string();
+                        let total_str = format::format_number(progress.total);
+                        self.toast_message = Some(self.t_with(
+                            "wazoo.loading_progress",
+                            &[("percent", &pct_str), ("total", &total_str)],
+                        ));
+                        self.toast_time_remaining = 2;
                     }
                 }
                 self.scan_progress = Some(progress);

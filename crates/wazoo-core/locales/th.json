@@ -51,8 +51,7 @@
     "folders_added_scanning": "เพิ่มโฟลเดอร์แล้ว กำลังเริ่มสแกนไลบรารี...",
     "folder_added": "เพิ่มโฟลเดอร์แล้ว: {folder}",
     "folder_removed": "ลบโฟลเดอร์แล้ว: {folder} ({count} ไฟล์)",
-    "scanning_progress": "กำลังสแกน{name} ({percent}% - พบ {found} ไฟล์)",
-    "indexing_progress": "เพิ่มแล้ว: {name} ({percent}%)",
+    "scanning_progress": "กำลังสแกน {name} ({percent}% - พบ {found} ไฟล์)",
     "scan_error": "ข้อผิดพลาดในการสแกน: {error}"
   },
   "search": {

@@ -51,8 +51,7 @@
     "folders_added_scanning": "Ordner hinzugefügt. Medienscan gestartet...",
     "folder_added": "Ordner hinzugefügt: {folder}",
     "folder_removed": "Ordner entfernt: {folder} ({count} Dateien)",
-    "scanning_progress": "Scannen{name} ({percent}% - {found} gefunden)",
-    "indexing_progress": "Hinzugefügt: {name} ({percent}%)",
+    "scanning_progress": "Scannen {name} ({percent}% - {found} gefunden)",
     "scan_error": "Scanfehler: {error}"
   },
   "search": {

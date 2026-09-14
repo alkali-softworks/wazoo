@@ -51,8 +51,7 @@
     "folders_added_scanning": "फ़ोल्डर जोड़ा गया। लाइब्रेरी स्कैन शुरू हो रहा है...",
     "folder_added": "फ़ोल्डर जोड़ा गया: {folder}",
     "folder_removed": "फ़ोल्डर हटाया गया: {folder} ({count} फ़ाइलें)",
-    "scanning_progress": "स्कैनिंग{name} ({percent}% - {found} मिले)",
-    "indexing_progress": "जोड़ा गया: {name} ({percent}%)",
+    "scanning_progress": "स्कैनिंग {name} ({percent}% - {found} मिले)",
     "scan_error": "स्कैन त्रुटि: {error}"
   },
   "search": {
