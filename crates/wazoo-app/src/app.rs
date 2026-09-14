@@ -1469,6 +1469,15 @@ mod tests {
         // Release mouse button to conclude drag
         let _ = app.update(Message::LeftClickReleased);
         assert!(!app.is_window_dragging);
+        assert_eq!(app.cursor_position, Point::new(-1000.0, -1000.0));
+        assert_eq!(app.titlebar_hide_ticks, TITLEBAR_FADE_TICKS);
+
+        // After fading out over TITLEBAR_FADE_TICKS frames, titlebar is completely dismissed without wiggling
+        for _ in 0..TITLEBAR_FADE_TICKS {
+            let _ = app.update(Message::VideoFrameTick);
+        }
+        assert!(!app.show_titlebar);
+        assert_eq!(app.titlebar_alpha(), 0.0);
     }
 
     #[test]

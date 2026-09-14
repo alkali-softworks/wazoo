@@ -16,7 +16,7 @@ use iced::{
 use wazoo_core::{Bookmark, KeyAction, LayoutMode, PlaybackMode};
 use wazoo_media::{PlayerId, StartTime, VideoHandle};
 use wazoo_scanner::{ScanStage, Scanner};
-use crate::app::{WazooApp, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, TITLEBAR_HIDE_TICKS, TITLEBAR_SHOW_DELAY_TICKS};
+use crate::app::{WazooApp, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS, TITLEBAR_SHOW_DELAY_TICKS};
 use crate::format;
 use crate::keybinds::find_key_action;
 use crate::message::Message;
@@ -298,6 +298,16 @@ impl WazooApp {
                 self.is_window_focused = true;
                 self.unfocused_frame_ticks = 0;
 
+                // If pointer motion resumes from the OS, any active OS window drag has concluded
+                if self.is_window_dragging {
+                    self.is_window_dragging = false;
+                    self.titlebar_drag_pending = false;
+                    self.titlebar_press_origin = None;
+                    if !self.is_point_in_titlebar(pos) {
+                        self.titlebar_hide_ticks = self.titlebar_hide_ticks.min(TITLEBAR_FADE_TICKS);
+                    }
+                }
+
                 if self.show_dropdown_menu {
                     self.show_titlebar = true;
                     self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
@@ -314,6 +324,10 @@ impl WazooApp {
                     }
                 } else {
                     self.titlebar_hover_ticks = 0;
+                    // When cursor leaves the titlebar area, start fading out without sticky delay
+                    if self.show_titlebar && !self.show_dropdown_menu && !self.is_window_dragging && !self.titlebar_drag_pending {
+                        self.titlebar_hide_ticks = self.titlebar_hide_ticks.min(TITLEBAR_FADE_TICKS);
+                    }
                 }
 
                 if self.titlebar_drag_pending {
@@ -358,10 +372,17 @@ impl WazooApp {
                 self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
             }
             Message::LeftClickReleased => {
+                let was_dragging = self.is_window_dragging;
                 self.is_window_dragging = false;
                 self.titlebar_drag_pending = false;
                 self.titlebar_press_origin = None;
-                self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                if was_dragging {
+                    // Invalidate stale pre-drag titlebar coordinate and begin clean fade out
+                    self.cursor_position = Point::new(-1000.0, -1000.0);
+                    self.titlebar_hide_ticks = TITLEBAR_FADE_TICKS;
+                } else if !self.is_point_in_titlebar(self.cursor_position) {
+                    self.titlebar_hide_ticks = self.titlebar_hide_ticks.min(TITLEBAR_FADE_TICKS);
+                }
                 if self.window_bounds_dirty {
                     self.window_bounds_dirty = false;
                     let _ = self.config_mgr.save_settings(&self.settings);
