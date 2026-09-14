@@ -22,7 +22,7 @@ use iced::{
 use std::time::{Duration, Instant};
 use wazoo_core::{Bookmark, KeyAction, LayoutMode, PlaybackMode};
 use wazoo_media::{PlayerId, StartTime, VideoHandle};
-use wazoo_scanner::{ScanStage, Scanner};
+use wazoo_scanner::Scanner;
 
 impl WazooApp {
     fn focus_player_for_navigation(&mut self, id: PlayerId, request_focus: bool) {
@@ -1982,35 +1982,6 @@ impl WazooApp {
             Message::ScanProgressUpdate(scan_id, progress) => {
                 if scan_id != self.current_scan_id {
                     return Task::none();
-                }
-                match progress.stage {
-                    ScanStage::Listing => {
-                        let name_part = if progress.current_name.is_empty() {
-                            String::new()
-                        } else {
-                            format!(": {}", progress.current_name)
-                        };
-                        let pct_str = progress.percent.to_string();
-                        let found_str = format::format_number(progress.files_found);
-                        self.toast_message = Some(self.t_with(
-                            "settings.scanning_progress",
-                            &[
-                                ("name", &name_part),
-                                ("percent", &pct_str),
-                                ("found", &found_str),
-                            ],
-                        ));
-                        self.toast_time_remaining = 2;
-                    }
-                    ScanStage::Indexing => {
-                        let pct_str = progress.percent.to_string();
-                        let total_str = format::format_number(progress.total);
-                        self.toast_message = Some(self.t_with(
-                            "wazoo.loading_progress",
-                            &[("percent", &pct_str), ("total", &total_str)],
-                        ));
-                        self.toast_time_remaining = 2;
-                    }
                 }
                 self.scan_progress = Some(progress);
             }
