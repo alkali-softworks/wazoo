@@ -15,6 +15,6 @@ pub mod models;
 
 pub use config::ConfigManager;
 pub use db::Database;
-pub use i18n::{t, t_with, Language};
+pub use i18n::{Language, t, t_with};
 pub use keybinds::{KeyAction, KeybindSettings};
 pub use models::*;

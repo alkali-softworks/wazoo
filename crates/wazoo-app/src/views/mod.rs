@@ -20,8 +20,8 @@ use crate::format;
 use crate::message::Message;
 use crate::theme;
 use iced::{
-    widget::{button, column, container, mouse_area, row, text, Space, Stack},
     Alignment, Element, Length, Theme,
+    widget::{Space, Stack, button, column, container, mouse_area, row, text},
 };
 use wazoo_scanner::ScanStage;
 
@@ -60,9 +60,11 @@ impl WazooApp {
             .height(Length::Fill)
             .into()
         } else {
-            row![container(self.view_players())
-                .width(Length::Fill)
-                .height(Length::Fill)]
+            row![
+                container(self.view_players())
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+            ]
             .width(Length::Fill)
             .height(Length::Fill)
             .into()

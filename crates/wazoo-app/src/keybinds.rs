@@ -6,7 +6,7 @@
  * Maps incoming iced keyboard events to defined KeyActions using configured KeybindSettings.
  */
 
-use iced::keyboard::{key::Named, Key};
+use iced::keyboard::{Key, key::Named};
 use wazoo_core::{KeyAction, KeybindSettings};
 
 /// Check whether an iced keyboard key matches a key binding string (e.g. "n", "j, /", "Space", "Alt+X").

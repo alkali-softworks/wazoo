@@ -8,7 +8,7 @@
  */
 
 use rand::Rng;
-use std::ffi::{c_int, c_void, CString};
+use std::ffi::{CString, c_int, c_void};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -1412,11 +1412,7 @@ impl VideoHandle {
                 mpv_ffi::MPV_FORMAT_INT64,
                 &mut val as *mut _ as *mut _,
             );
-            if res == 0 {
-                Some(val)
-            } else {
-                None
-            }
+            if res == 0 { Some(val) } else { None }
         }
     }
 
@@ -1433,11 +1429,7 @@ impl VideoHandle {
                 mpv_ffi::MPV_FORMAT_FLAG,
                 &mut val as *mut _ as *mut _,
             );
-            if res == 0 {
-                Some(val != 0)
-            } else {
-                None
-            }
+            if res == 0 { Some(val != 0) } else { None }
         }
     }
 

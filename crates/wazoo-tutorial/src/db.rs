@@ -17,7 +17,7 @@
  * 5. Rust's `Result<T, E>` pattern for elegant error handling.
  */
 
-use rusqlite::{params, Connection, Result};
+use rusqlite::{Connection, Result, params};
 use std::path::Path;
 
 /// A strongly-typed Rust struct representing a note stored in SQLite.

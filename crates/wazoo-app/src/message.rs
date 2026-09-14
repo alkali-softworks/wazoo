@@ -7,7 +7,7 @@
  * timer ticks, and window system events routed through the Iced application loop.
  */
 
-use iced::{event::Status, keyboard::Key, window::Id, Point, Size};
+use iced::{Point, Size, event::Status, keyboard::Key, window::Id};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use wazoo_core::Bookmark;

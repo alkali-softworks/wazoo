@@ -1353,12 +1353,13 @@ mod tests {
         app.push_player_nav_entry(player_id, forward_c.path, forward_c.position_secs);
 
         // Forward stack is now empty
-        assert!(app
-            .player_nav_history
-            .get(&player_id)
-            .unwrap()
-            .forward_stack
-            .is_empty());
+        assert!(
+            app.player_nav_history
+                .get(&player_id)
+                .unwrap()
+                .forward_stack
+                .is_empty()
+        );
 
         // Toggling shuffle mode clears both back_stack and forward_stack
         app.player_nav_history
@@ -1370,18 +1371,20 @@ mod tests {
                 position_secs: None,
             });
         let _ = app.update(Message::ToggleShuffleMode);
-        assert!(app
-            .player_nav_history
-            .get(&player_id)
-            .unwrap()
-            .forward_stack
-            .is_empty());
-        assert!(app
-            .player_nav_history
-            .get(&player_id)
-            .unwrap()
-            .back_stack
-            .is_empty());
+        assert!(
+            app.player_nav_history
+                .get(&player_id)
+                .unwrap()
+                .forward_stack
+                .is_empty()
+        );
+        assert!(
+            app.player_nav_history
+                .get(&player_id)
+                .unwrap()
+                .back_stack
+                .is_empty()
+        );
     }
 
     #[test]

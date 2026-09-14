@@ -37,7 +37,10 @@ pub fn main() -> iced::Result {
         // On desktop PCs, monitors are plugged directly into the dGPU,
         // so the dedicated GPU is preferred without PRIME offload sync issues.
         if std::env::var("WGPU_POWER_PREF").is_err() && crate::platform::is_hybrid_laptop() {
-            std::env::set_var("WGPU_POWER_PREF", "low");
+            // SAFETY: Setting environment variables at startup before background worker threads run.
+            unsafe {
+                std::env::set_var("WGPU_POWER_PREF", "low");
+            }
         }
     }
 

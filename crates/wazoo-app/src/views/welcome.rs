@@ -11,8 +11,8 @@ use crate::app::WazooApp;
 use crate::message::Message;
 use crate::theme;
 use iced::{
-    widget::{button, column, container, text},
     Alignment, Element, Length,
+    widget::{button, column, container, text},
 };
 
 impl WazooApp {

@@ -18,10 +18,10 @@
  */
 
 use iced::{
+    Alignment, Element, Length,
     widget::{
         button, checkbox, column, container, row, rule, scrollable, slider, text, text_input,
     },
-    Alignment, Element, Length,
 };
 
 use crate::app::TutorialApp;

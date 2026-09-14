@@ -31,8 +31,7 @@ mod windows {
     use std::path::{Path, PathBuf};
     use std::process::Command;
 
-    const MPV_WIN_DOWNLOAD_URL: &str =
-        "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260903/mpv-dev-x86_64-20260903-git-69e63f425a.7z";
+    const MPV_WIN_DOWNLOAD_URL: &str = "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260903/mpv-dev-x86_64-20260903-git-69e63f425a.7z";
     const MPV_WIN_DOWNLOAD_SHA256: &str =
         "fac135c68a35b7639e39d72c0c365104edbaebdea39a0dfdd8c36e8c8e80faef";
 
@@ -90,7 +89,9 @@ mod windows {
         if found_dll.is_none() {
             let archive_path = mpv_dir.join("mpv-dev.7z");
             if !archive_path.exists() {
-                println!("cargo:warning=libmpv not found on Windows. Downloading prebuilt mpv-dev binaries...");
+                println!(
+                    "cargo:warning=libmpv not found on Windows. Downloading prebuilt mpv-dev binaries..."
+                );
 
                 let downloaded = Command::new("curl.exe")
                     .args(["-sL", MPV_WIN_DOWNLOAD_URL, "-o", archive_path.to_str().unwrap()])
@@ -169,7 +170,9 @@ mod windows {
                     .unwrap_or(0)
                     == 0
             {
-                println!("cargo:warning=Compressing libmpv-2.dll for embedding into single-file executable...");
+                println!(
+                    "cargo:warning=Compressing libmpv-2.dll for embedding into single-file executable..."
+                );
                 if let Ok(bytes) = std::fs::read(src) {
                     let compressed = miniz_oxide::deflate::compress_to_vec_zlib(&bytes, 6);
                     let _ = std::fs::write(&deflate_path, &compressed);

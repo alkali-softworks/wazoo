@@ -136,10 +136,11 @@ mod tests {
     #[test]
     fn test_config_manager_paths() {
         let mgr = ConfigManager::new();
-        assert!(mgr
-            .config_file_path()
-            .to_string_lossy()
-            .contains("wazoo-rs"));
+        assert!(
+            mgr.config_file_path()
+                .to_string_lossy()
+                .contains("wazoo-rs")
+        );
         assert!(mgr.database_path().to_string_lossy().contains("wazoo-rs"));
         assert!(mgr.config_dir.exists());
         assert!(mgr.data_dir.exists());

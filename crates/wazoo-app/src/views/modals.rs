@@ -13,11 +13,11 @@ use crate::format;
 use crate::message::Message;
 use crate::theme;
 use iced::{
-    widget::{
-        button, column, container, mouse_area, pick_list, row, scrollable, slider, text,
-        text_input, Space,
-    },
     Alignment, Element, Length, Theme,
+    widget::{
+        Space, button, column, container, mouse_area, pick_list, row, scrollable, slider, text,
+        text_input,
+    },
 };
 use wazoo_core::Language;
 use wazoo_scanner::ScanStage;
@@ -26,10 +26,12 @@ impl WazooApp {
     pub(crate) fn view_search_modal(&self) -> Element<'_, Message> {
         let all_label = self.t("common.all");
         let is_all_selected = self.is_all_folder(&self.selected_search_folder);
-        let mut folder_chips = row![button(text(all_label.clone()).size(13))
-            .style(theme::folder_chip_style(is_all_selected))
-            .on_press(Message::SelectSearchFolder(all_label))
-            .padding([4, 12]),]
+        let mut folder_chips = row![
+            button(text(all_label.clone()).size(13))
+                .style(theme::folder_chip_style(is_all_selected))
+                .on_press(Message::SelectSearchFolder(all_label))
+                .padding([4, 12]),
+        ]
         .spacing(8)
         .align_y(Alignment::Center);
 
@@ -129,9 +131,11 @@ impl WazooApp {
     }
 
     pub(crate) fn view_settings_modal(&self) -> Element<'_, Message> {
-        let mut folders_col = column![text(self.t("settings.media_folders"))
-            .size(14)
-            .color(theme::COLOR_TEXT_MUTED)]
+        let mut folders_col = column![
+            text(self.t("settings.media_folders"))
+                .size(14)
+                .color(theme::COLOR_TEXT_MUTED)
+        ]
         .spacing(6);
         for folder in &self.settings.media_folders {
             let f = folder.clone();
@@ -202,14 +206,16 @@ impl WazooApp {
                 .padding([8, 14])
         };
 
-        let mut scan_controls = column![row![
-            button(text(self.t("settings.add_folder")))
-                .style(theme::action_button_style)
-                .on_press(Message::PickFolders)
-                .padding([8, 14]),
-            scan_btn,
+        let mut scan_controls = column![
+            row![
+                button(text(self.t("settings.add_folder")))
+                    .style(theme::action_button_style)
+                    .on_press(Message::PickFolders)
+                    .padding([8, 14]),
+                scan_btn,
+            ]
+            .spacing(10),
         ]
-        .spacing(10),]
         .spacing(6);
 
         if self.is_scanning {
@@ -424,23 +430,22 @@ impl WazooApp {
                 let time_str = format::format_time_str(b.position_secs);
                 let bookmark_clone = b.clone();
 
-                let mut meta_row =
-                    row![
-                        container(text(time_str).size(11).color(theme::COLOR_PRIMARY))
-                            .padding([2, 6])
-                            .style(|_theme: &Theme| container::Style {
-                                background: Some(iced::Background::Color(iced::Color::from_rgba(
-                                    0.0, 0.9, 0.7, 0.15
-                                ))),
-                                border: iced::Border {
-                                    radius: 4.0.into(),
-                                    ..Default::default()
-                                },
+                let mut meta_row = row![
+                    container(text(time_str).size(11).color(theme::COLOR_PRIMARY))
+                        .padding([2, 6])
+                        .style(|_theme: &Theme| container::Style {
+                            background: Some(iced::Background::Color(iced::Color::from_rgba(
+                                0.0, 0.9, 0.7, 0.15
+                            ))),
+                            border: iced::Border {
+                                radius: 4.0.into(),
                                 ..Default::default()
-                            }),
-                    ]
-                    .spacing(6)
-                    .align_y(Alignment::Center);
+                            },
+                            ..Default::default()
+                        }),
+                ]
+                .spacing(6)
+                .align_y(Alignment::Center);
 
                 if !b.query.is_empty() {
                     meta_row = meta_row.push(

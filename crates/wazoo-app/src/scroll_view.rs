@@ -10,7 +10,7 @@
 use iced::advanced::layout::{self, Layout};
 use iced::advanced::renderer;
 use iced::advanced::widget::{Tree, Widget};
-use iced::advanced::{overlay, Clipboard, Shell};
+use iced::advanced::{Clipboard, Shell, overlay};
 use iced::mouse;
 use iced::{Element, Event, Length, Point, Rectangle, Size};
 

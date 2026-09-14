@@ -28,7 +28,10 @@ pub fn init_linux_cursor_env() {
 
         if let Some(sz) = size {
             if sz > 0 {
-                std::env::set_var("XCURSOR_SIZE", sz.to_string());
+                // SAFETY: Setting environment variables at startup before background worker threads run.
+                unsafe {
+                    std::env::set_var("XCURSOR_SIZE", sz.to_string());
+                }
             }
         }
     }
@@ -48,15 +51,14 @@ pub fn init_linux_cursor_env() {
                     .trim()
                     .trim_matches('\'')
                     .to_string();
-                if s.is_empty() {
-                    None
-                } else {
-                    Some(s)
-                }
+                if s.is_empty() { None } else { Some(s) }
             });
 
         if let Some(th) = theme {
-            std::env::set_var("XCURSOR_THEME", th);
+            // SAFETY: Setting environment variables at startup before background worker threads run.
+            unsafe {
+                std::env::set_var("XCURSOR_THEME", th);
+            }
         }
     }
 }
