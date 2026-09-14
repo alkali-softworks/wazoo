@@ -256,6 +256,7 @@ impl WazooApp {
                     self.window_bounds_dirty = true;
                 }
                 if self.is_window_dragging {
+                    self.last_window_drag_move = Some(Instant::now());
                     self.show_titlebar = true;
                     self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
                 }
@@ -299,10 +300,26 @@ impl WazooApp {
                 self.unfocused_frame_ticks = 0;
 
                 if self.is_window_dragging {
-                    // While dragging, keep titlebar visible even if cursor wobbles or flies around
-                    self.show_titlebar = true;
-                    self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
-                    self.titlebar_hover_ticks = 0;
+                    let is_still_moving = self
+                        .last_window_drag_move
+                        .map(|t| t.elapsed() < Duration::from_millis(250))
+                        .unwrap_or(false);
+                    if is_still_moving {
+                        // While window is actively moving during drag, keep titlebar visible
+                        // even if cursor wobbles or flies around across the window
+                        self.show_titlebar = true;
+                        self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                        self.titlebar_hover_ticks = 0;
+                    } else {
+                        // Window stopped moving! The OS drag has concluded (handles WM eating mouseup)
+                        self.is_window_dragging = false;
+                        self.titlebar_drag_pending = false;
+                        self.titlebar_press_origin = None;
+                        self.last_window_drag_move = None;
+                        if !self.is_point_in_titlebar(pos) {
+                            self.titlebar_hide_ticks = self.titlebar_hide_ticks.min(TITLEBAR_FADE_TICKS);
+                        }
+                    }
                 } else if self.show_dropdown_menu {
                     self.show_titlebar = true;
                     self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
@@ -330,6 +347,7 @@ impl WazooApp {
                         let dist = (pos.x - origin.x).hypot(pos.y - origin.y);
                         if dist > 5.0 {
                             self.is_window_dragging = true;
+                            self.last_window_drag_move = Some(Instant::now());
                             self.titlebar_drag_pending = false;
                             self.titlebar_press_origin = None;
                             self.last_titlebar_click = None;
@@ -371,6 +389,7 @@ impl WazooApp {
                 self.is_window_dragging = false;
                 self.titlebar_drag_pending = false;
                 self.titlebar_press_origin = None;
+                self.last_window_drag_move = None;
                 if was_dragging {
                     // On mouseup, drag has ended.
                     // If cursor is outside titlebar (e.g. over video due to wobbly drag), fade out immediately.
@@ -505,6 +524,7 @@ impl WazooApp {
             Message::DragWindow => {
                 if let Some(id) = self.window_id {
                     self.is_window_dragging = true;
+                    self.last_window_drag_move = Some(Instant::now());
                     self.show_titlebar = true;
                     self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
                     return iced::window::drag(id);
@@ -2003,9 +2023,21 @@ impl WazooApp {
                     || self.show_dropdown_menu
                 {
                     if self.is_window_dragging || self.titlebar_drag_pending {
-                        self.show_titlebar = true;
-                        self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
-                        self.titlebar_hover_ticks = 0;
+                        let is_still_moving = self
+                            .last_window_drag_move
+                            .map(|t| t.elapsed() < Duration::from_millis(300))
+                            .unwrap_or(false);
+                        if !is_still_moving && !self.titlebar_drag_pending && !self.is_point_in_titlebar(self.cursor_position) {
+                            self.is_window_dragging = false;
+                            self.last_window_drag_move = None;
+                            if self.titlebar_hide_ticks > TITLEBAR_FADE_TICKS {
+                                self.titlebar_hide_ticks = TITLEBAR_FADE_TICKS;
+                            }
+                        } else {
+                            self.show_titlebar = true;
+                            self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                            self.titlebar_hover_ticks = 0;
+                        }
                     } else if self.show_dropdown_menu {
                         self.show_titlebar = true;
                         self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
