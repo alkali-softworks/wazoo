@@ -373,9 +373,25 @@ impl WazooApp {
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            // =========================================================================
+            // Window Lifecycle, Geometry & State
+            // =========================================================================
             Message::WindowIdReceived(id) => {
                 self.window_id = Some(id);
                 return iced::window::gain_focus(id);
+            }
+            Message::GainWindowFocus => {
+                if let Some(id) = self.window_id {
+                    return iced::window::gain_focus(id);
+                } else {
+                    return iced::window::oldest().then(|maybe_id| {
+                        if let Some(id) = maybe_id {
+                            iced::window::gain_focus(id)
+                        } else {
+                            Task::none()
+                        }
+                    });
+                }
             }
             Message::WindowFocused => {
                 self.is_window_focused = true;
@@ -398,70 +414,6 @@ impl WazooApp {
                 if self.window_bounds_dirty {
                     self.window_bounds_dirty = false;
                     let _ = self.config_mgr.save_settings(&self.settings);
-                }
-            }
-            Message::ModifiersChanged(modifiers) => {
-                self.is_alt_pressed = modifiers.alt();
-            }
-            Message::GainWindowFocus => {
-                if let Some(id) = self.window_id {
-                    return iced::window::gain_focus(id);
-                } else {
-                    return iced::window::oldest().then(|maybe_id| {
-                        if let Some(id) = maybe_id {
-                            iced::window::gain_focus(id)
-                        } else {
-                            Task::none()
-                        }
-                    });
-                }
-            }
-            Message::KeyPressed(key, status) => {
-                return self.handle_key_pressed(key, status);
-            }
-            Message::KeyReleased(key) => {
-                if key == Key::Named(Named::Alt) || key == Key::Named(Named::AltGraph) {
-                    self.is_alt_pressed = false;
-                }
-            }
-            Message::CursorMoved(win_id, pos) => {
-                return self.handle_cursor_moved(win_id, pos);
-            }
-            Message::PreloadedPlayerReady(holder) => {
-                self.is_preloading = false;
-                if self.settings.playback_mode != PlaybackMode::Scroll {
-                    return Task::none();
-                }
-
-                let result = match holder.lock().ok().and_then(|mut g| g.take()) {
-                    Some(r) => r,
-                    None => return Task::none(),
-                };
-
-                match result {
-                    Ok(mut handle) => {
-                        handle.set_subtitles_visible(self.subtitles_enabled);
-                        handle.set_muted(self.settings.is_global_muted);
-                        let item_h = self.calculate_player_scroll_height(&handle);
-                        let margin = self.scroll_engine.default_item_height() * 1.5;
-                        // If scroll stream needs a player right now, attach it immediately!
-                        if let Some(spawn_y) =
-                            self.scroll_engine.needs_new_player_with_margin(margin)
-                        {
-                            self.scroll_engine.add_item(handle.id, spawn_y, item_h);
-                            let vol = self.scroll_engine.calculate_player_volume(handle.id);
-                            handle.set_volume(vol);
-                            self.record_play_history(&handle.state.path);
-                            self.players.push(handle);
-                            return self.trigger_preload_task();
-                        } else {
-                            self.preloaded_player = Some(handle);
-                        }
-                    }
-                    Err(err) => {
-                        log::error!("Background player preload failed: {err}");
-                        return self.trigger_preload_task();
-                    }
                 }
             }
             Message::WindowMoved(id, point) => {
@@ -516,7 +468,59 @@ impl WazooApp {
                     return self.trigger_preload_task();
                 }
             }
+            Message::MinimizeWindow => {
+                if let Some(id) = self.window_id {
+                    return iced::window::minimize(id, true);
+                }
+            }
+            Message::MaximizeWindow => {
+                self.last_titlebar_click = None;
+                self.titlebar_drag_pending = false;
+                self.titlebar_press_origin = None;
+                if let Some(id) = self.window_id {
+                    return iced::window::toggle_maximize(id);
+                }
+            }
+            Message::DragWindow => {
+                if let Some(id) = self.window_id {
+                    self.is_window_dragging = true;
+                    self.last_window_drag_move = Some(Instant::now());
+                    self.show_titlebar = true;
+                    self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                    return iced::window::drag(id);
+                }
+            }
+            Message::DragResize(direction) => {
+                if let Some(id) = self.window_id {
+                    return iced::window::drag_resize(id, direction);
+                }
+            }
+            Message::CloseApp => {
+                self.save_session_state();
+                if let Some(id) = self.window_id {
+                    return iced::window::close(id);
+                } else {
+                    std::process::exit(0);
+                }
+            }
 
+            // =========================================================================
+            // Hardware Input (Keyboard, Mouse & Titlebar Drag/Click)
+            // =========================================================================
+            Message::ModifiersChanged(modifiers) => {
+                self.is_alt_pressed = modifiers.alt();
+            }
+            Message::KeyPressed(key, status) => {
+                return self.handle_key_pressed(key, status);
+            }
+            Message::KeyReleased(key) => {
+                if key == Key::Named(Named::Alt) || key == Key::Named(Named::AltGraph) {
+                    self.is_alt_pressed = false;
+                }
+            }
+            Message::CursorMoved(win_id, pos) => {
+                return self.handle_cursor_moved(win_id, pos);
+            }
             Message::CursorLeft => {
                 if !self.is_window_dragging && !self.titlebar_drag_pending {
                     self.cursor_position = Point::new(-1000.0, -1000.0);
@@ -572,41 +576,6 @@ impl WazooApp {
                 self.show_dropdown_menu = false;
                 self.hovered_player_id = None;
                 self.player_overlay_ticks = 0;
-            }
-            Message::MinimizeWindow => {
-                if let Some(id) = self.window_id {
-                    return iced::window::minimize(id, true);
-                }
-            }
-            Message::MaximizeWindow => {
-                self.last_titlebar_click = None;
-                self.titlebar_drag_pending = false;
-                self.titlebar_press_origin = None;
-                if let Some(id) = self.window_id {
-                    return iced::window::toggle_maximize(id);
-                }
-            }
-            Message::CloseApp => {
-                self.save_session_state();
-                if let Some(id) = self.window_id {
-                    return iced::window::close(id);
-                } else {
-                    std::process::exit(0);
-                }
-            }
-            Message::DragWindow => {
-                if let Some(id) = self.window_id {
-                    self.is_window_dragging = true;
-                    self.last_window_drag_move = Some(Instant::now());
-                    self.show_titlebar = true;
-                    self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
-                    return iced::window::drag(id);
-                }
-            }
-            Message::DragResize(direction) => {
-                if let Some(id) = self.window_id {
-                    return iced::window::drag_resize(id, direction);
-                }
             }
             Message::ToggleDropdownMenu => {
                 self.show_dropdown_menu = !self.show_dropdown_menu;
@@ -1378,6 +1347,43 @@ impl WazooApp {
             Message::AdjustScrollSpeed(delta) => {
                 let new_speed = (self.settings.scroll_speed + delta).clamp(0.1, 10.0);
                 return self.update(Message::SetScrollSpeed(new_speed));
+            }
+            Message::PreloadedPlayerReady(holder) => {
+                self.is_preloading = false;
+                if self.settings.playback_mode != PlaybackMode::Scroll {
+                    return Task::none();
+                }
+
+                let result = match holder.lock().ok().and_then(|mut g| g.take()) {
+                    Some(r) => r,
+                    None => return Task::none(),
+                };
+
+                match result {
+                    Ok(mut handle) => {
+                        handle.set_subtitles_visible(self.subtitles_enabled);
+                        handle.set_muted(self.settings.is_global_muted);
+                        let item_h = self.calculate_player_scroll_height(&handle);
+                        let margin = self.scroll_engine.default_item_height() * 1.5;
+                        // If scroll stream needs a player right now, attach it immediately!
+                        if let Some(spawn_y) =
+                            self.scroll_engine.needs_new_player_with_margin(margin)
+                        {
+                            self.scroll_engine.add_item(handle.id, spawn_y, item_h);
+                            let vol = self.scroll_engine.calculate_player_volume(handle.id);
+                            handle.set_volume(vol);
+                            self.record_play_history(&handle.state.path);
+                            self.players.push(handle);
+                            return self.trigger_preload_task();
+                        } else {
+                            self.preloaded_player = Some(handle);
+                        }
+                    }
+                    Err(err) => {
+                        log::error!("Background player preload failed: {err}");
+                        return self.trigger_preload_task();
+                    }
+                }
             }
             Message::AddNewPlayer => {
                 let new_count = (self.players.len() + 1).min(12);
