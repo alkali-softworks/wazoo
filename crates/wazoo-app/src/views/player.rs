@@ -257,7 +257,7 @@ impl WazooApp {
             let seek_slider = slider(0.0..=1.0, progress_ratio, move |ratio| {
                 Message::SeekRatio(player_id, ratio)
             })
-            .step(0.001)
+            .step(0.001_f32)
             .height(24.0)
             .style(theme::progress_slider_style_with_alpha(overlay_alpha))
             .width(Length::Fill);
@@ -359,7 +359,7 @@ impl WazooApp {
                     slider(0.0..=1.0, p.state.volume as f32, move |v| {
                         Message::SetVolume(player_id, v as f64)
                     },)
-                    .step(0.01)
+                    .step(0.01_f32)
                     .style(theme::volume_slider_style_with_alpha(overlay_alpha))
                     .width(Length::Fixed(80.0)),
                 ),
