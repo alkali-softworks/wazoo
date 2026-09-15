@@ -271,7 +271,7 @@ impl WazooApp {
                             self.settings.window_opacity,
                             Message::SetWindowOpacity
                         )
-                        .step(0.01)
+                        .step(0.01_f32)
                         .style(theme::volume_slider_style)
                         .width(Length::Fill),
                     ),
