@@ -9,6 +9,8 @@
  */
 
 fn main() {
+    println!("cargo::rustc-check-cfg=cfg(wazoo_embed_mpv)");
+
     #[cfg(target_os = "macos")]
     {
         println!("cargo:rustc-link-search=native=/opt/homebrew/lib");

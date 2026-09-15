@@ -86,6 +86,7 @@ pub fn main() -> iced::Result {
         resizable: true,                      // Allow window edge dragging
         decorations: true, // Enable standard OS titlebar, minimize, and [X] close buttons
         icon: app_icon,
+        #[cfg(target_os = "linux")]
         platform_specific: iced::window::settings::PlatformSpecific {
             application_id: "wazoo-tutorial".to_string(),
             override_redirect: false,

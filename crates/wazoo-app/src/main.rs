@@ -79,6 +79,7 @@ pub fn main() -> iced::Result {
         icon: app_icon,
         decorations: false,
         transparent: true,
+        #[cfg(target_os = "linux")]
         platform_specific: iced::window::settings::PlatformSpecific {
             application_id: "wazoo".to_string(),
             override_redirect: false,
