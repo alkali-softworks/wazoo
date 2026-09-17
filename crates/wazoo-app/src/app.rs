@@ -34,99 +34,99 @@ pub const FILE_PICKER_DEBOUNCE_TICKS: usize = 12;
 pub const MAX_PLAY_HISTORY_ENTRIES: usize = 1000;
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct PlaybackHistoryEntry {
-    pub(crate) path: String,
-    pub(crate) position_secs: Option<f64>,
+pub struct PlaybackHistoryEntry {
+    pub path: String,
+    pub position_secs: Option<f64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct PlayHistoryItem {
-    pub(crate) path: String,
-    pub(crate) title: String,
-    pub(crate) folder: String,
+pub struct PlayHistoryItem {
+    pub path: String,
+    pub title: String,
+    pub folder: String,
 }
 
 #[derive(Debug, Clone, Default)]
-pub(crate) struct PlayerNavHistory {
-    pub(crate) back_stack: Vec<PlaybackHistoryEntry>,
-    pub(crate) forward_stack: Vec<PlaybackHistoryEntry>,
+pub struct PlayerNavHistory {
+    pub back_stack: Vec<PlaybackHistoryEntry>,
+    pub forward_stack: Vec<PlaybackHistoryEntry>,
 }
 
 pub struct WazooApp {
-    pub(crate) settings: WazooSettings,
-    pub(crate) config_mgr: ConfigManager,
-    pub(crate) db: Database,
-    pub(crate) players: Vec<VideoHandle>,
-    pub(crate) scroll_engine: ScrollEngine,
-    pub(crate) available_videos: Vec<VideoRecord>,
-    pub(crate) active_search_query: String,
-    pub(crate) search_input: String,
-    pub(crate) search_tags: Vec<String>,
-    pub(crate) folder_input: String,
-    pub(crate) active_search_folders: Vec<String>,
-    pub(crate) selected_search_folders: Vec<String>,
-    pub(crate) active_search_folder: String,
-    pub(crate) selected_search_folder: String,
-    pub(crate) show_search_modal: bool,
-    pub(crate) show_settings_modal: bool,
-    pub(crate) show_help_modal: bool,
-    pub(crate) show_menu_modal: bool,
-    pub(crate) show_bookmarks_modal: bool,
-    pub(crate) show_file_picker: bool,
-    pub(crate) file_picker_search: String,
-    pub(crate) file_picker_debounce_ticks: usize,
-    pub(crate) file_picker_entries: Vec<crate::views::file_picker::PrecomputedVideoMeta>,
-    pub(crate) file_picker_groups: Vec<crate::views::file_picker::FilePickerGroup>,
-    pub(crate) show_history_drawer: bool,
-    pub(crate) play_history: Vec<PlayHistoryItem>,
-    pub(crate) history_search: String,
-    pub(crate) show_titlebar: bool,
-    pub(crate) titlebar_hide_ticks: usize,
-    pub(crate) titlebar_hover_ticks: usize,
-    pub(crate) show_dropdown_menu: bool,
-    pub(crate) is_alt_pressed: bool,
-    pub(crate) player_overlay_ticks: usize,
-    pub(crate) title_pill_ticks: usize,
-    pub(crate) window_id: Option<iced::window::Id>,
-    pub(crate) app_icon_handle: iced::widget::image::Handle,
-    pub(crate) toast_message: Option<String>,
-    pub(crate) toast_time_remaining: usize,
-    pub(crate) last_total_videos: usize,
-    pub(crate) next_player_id: PlayerId,
-    pub(crate) is_scanning: bool,
-    pub(crate) current_scan_id: u64,
-    pub(crate) scan_cancel: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
-    pub(crate) scan_progress: Option<ScanProgress>,
-    pub(crate) focused_player_idx: usize,
-    pub(crate) focus_border_ticks: usize,
-    pub(crate) is_shuffle_mode: bool,
-    pub(crate) hovered_player_id: Option<PlayerId>,
-    pub(crate) open_audio_menu_player_id: Option<PlayerId>,
-    pub(crate) subtitles_enabled: bool,
-    pub(crate) loading_player_ids: HashSet<PlayerId>,
-    pub(crate) loading_player_ticks: HashMap<PlayerId, usize>,
-    pub(crate) spinner_ticks: u32,
-    pub(crate) preloaded_player: Option<VideoHandle>,
-    pub(crate) is_preloading: bool,
-    pub(crate) cursor_position: Point,
-    pub(crate) titlebar_press_origin: Option<Point>,
-    pub(crate) titlebar_drag_pending: bool,
-    pub(crate) is_window_dragging: bool,
-    pub(crate) last_window_drag_move: Option<Instant>,
-    pub(crate) last_titlebar_click: Option<Instant>,
-    pub(crate) expanded_folders: HashSet<String>,
-    pub(crate) show_transcript: bool,
-    pub(crate) transcript_cues: Vec<wazoo_media::SubtitleCue>,
-    pub(crate) transcript_search: String,
-    pub(crate) transcript_loading: bool,
-    pub(crate) transcript_video_path: Option<String>,
-    pub(crate) transcript_track_index: usize,
-    pub(crate) show_transcript_menu: bool,
-    pub(crate) is_window_focused: bool,
-    pub(crate) unfocused_frame_ticks: u32,
-    pub(crate) window_bounds_dirty: bool,
-    pub(crate) player_nav_history: HashMap<PlayerId, PlayerNavHistory>,
-    pub(crate) player_shuffle_modes: HashMap<PlayerId, bool>,
+    pub settings: WazooSettings,
+    pub config_mgr: ConfigManager,
+    pub db: Database,
+    pub players: Vec<VideoHandle>,
+    pub scroll_engine: ScrollEngine,
+    pub available_videos: Vec<VideoRecord>,
+    pub active_search_query: String,
+    pub search_input: String,
+    pub search_tags: Vec<String>,
+    pub folder_input: String,
+    pub active_search_folders: Vec<String>,
+    pub selected_search_folders: Vec<String>,
+    pub active_search_folder: String,
+    pub selected_search_folder: String,
+    pub show_search_modal: bool,
+    pub show_settings_modal: bool,
+    pub show_help_modal: bool,
+    pub show_menu_modal: bool,
+    pub show_bookmarks_modal: bool,
+    pub show_file_picker: bool,
+    pub file_picker_search: String,
+    pub file_picker_debounce_ticks: usize,
+    pub file_picker_entries: Vec<crate::views::file_picker::PrecomputedVideoMeta>,
+    pub file_picker_groups: Vec<crate::views::file_picker::FilePickerGroup>,
+    pub show_history_drawer: bool,
+    pub play_history: Vec<PlayHistoryItem>,
+    pub history_search: String,
+    pub show_titlebar: bool,
+    pub titlebar_hide_ticks: usize,
+    pub titlebar_hover_ticks: usize,
+    pub show_dropdown_menu: bool,
+    pub is_alt_pressed: bool,
+    pub player_overlay_ticks: usize,
+    pub title_pill_ticks: usize,
+    pub window_id: Option<iced::window::Id>,
+    pub app_icon_handle: iced::widget::image::Handle,
+    pub toast_message: Option<String>,
+    pub toast_time_remaining: usize,
+    pub last_total_videos: usize,
+    pub next_player_id: PlayerId,
+    pub is_scanning: bool,
+    pub current_scan_id: u64,
+    pub scan_cancel: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
+    pub scan_progress: Option<ScanProgress>,
+    pub focused_player_idx: usize,
+    pub focus_border_ticks: usize,
+    pub is_shuffle_mode: bool,
+    pub hovered_player_id: Option<PlayerId>,
+    pub open_audio_menu_player_id: Option<PlayerId>,
+    pub subtitles_enabled: bool,
+    pub loading_player_ids: HashSet<PlayerId>,
+    pub loading_player_ticks: HashMap<PlayerId, usize>,
+    pub spinner_ticks: u32,
+    pub preloaded_player: Option<VideoHandle>,
+    pub is_preloading: bool,
+    pub cursor_position: Point,
+    pub titlebar_press_origin: Option<Point>,
+    pub titlebar_drag_pending: bool,
+    pub is_window_dragging: bool,
+    pub last_window_drag_move: Option<Instant>,
+    pub last_titlebar_click: Option<Instant>,
+    pub expanded_folders: HashSet<String>,
+    pub show_transcript: bool,
+    pub transcript_cues: Vec<wazoo_media::SubtitleCue>,
+    pub transcript_search: String,
+    pub transcript_loading: bool,
+    pub transcript_video_path: Option<String>,
+    pub transcript_track_index: usize,
+    pub show_transcript_menu: bool,
+    pub is_window_focused: bool,
+    pub unfocused_frame_ticks: u32,
+    pub window_bounds_dirty: bool,
+    pub player_nav_history: HashMap<PlayerId, PlayerNavHistory>,
+    pub player_shuffle_modes: HashMap<PlayerId, bool>,
 }
 
 impl WazooApp {
@@ -413,7 +413,7 @@ impl WazooApp {
         self.is_any_modal_open() || self.show_dropdown_menu
     }
 
-    pub(crate) fn is_point_in_titlebar(&self, pos: Point) -> bool {
+    pub fn is_point_in_titlebar(&self, pos: Point) -> bool {
         let width = if self.settings.window_bounds.width > 0 {
             self.settings.window_bounds.width as f32
         } else {
@@ -422,7 +422,7 @@ impl WazooApp {
         pos.x >= 0.0 && pos.x <= width && pos.y >= 0.0 && pos.y < 35.0
     }
 
-    pub(crate) fn titlebar_alpha(&self) -> f32 {
+    pub fn titlebar_alpha(&self) -> f32 {
         if !self.show_titlebar {
             0.0
         } else if self.is_window_dragging
@@ -445,7 +445,7 @@ impl WazooApp {
         }
     }
 
-    pub(crate) fn focused_player_id(&self) -> Option<PlayerId> {
+    pub fn focused_player_id(&self) -> Option<PlayerId> {
         if self.players.is_empty() {
             None
         } else {
@@ -578,11 +578,11 @@ impl WazooApp {
         }
     }
 
-    pub(crate) fn get_next_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
+    pub fn get_next_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
         self.get_next_video_rec_with_mode(current_path, self.is_shuffle_mode)
     }
 
-    pub(crate) fn get_prev_video_rec_with_mode(
+    pub fn get_prev_video_rec_with_mode(
         &self,
         current_path: Option<&str>,
         is_shuffle: bool,
@@ -642,7 +642,7 @@ impl WazooApp {
         }
     }
 
-    pub(crate) fn record_play_history(&mut self, path: &str) {
+    pub fn record_play_history(&mut self, path: &str) {
         let trimmed = path.trim();
         if trimmed.is_empty() {
             return;
@@ -662,7 +662,7 @@ impl WazooApp {
         }
     }
 
-    pub(crate) fn push_player_nav_entry(&mut self, id: PlayerId, path: String, pos: Option<f64>) {
+    pub fn push_player_nav_entry(&mut self, id: PlayerId, path: String, pos: Option<f64>) {
         self.record_play_history(&path);
         let hist = self.player_nav_history.entry(id).or_default();
         if hist.back_stack.last().map(|e| &e.path) != Some(&path) {
@@ -774,7 +774,7 @@ impl WazooApp {
     }
 
     /// Persists the exact current playback session (file, timestamp, mute, volume, shuffle) to settings
-    pub(crate) fn save_session_state(&mut self) {
+    pub fn save_session_state(&mut self) {
         if !self.players.is_empty() {
             let sessions: Vec<VideoSession> = self
                 .players
@@ -799,7 +799,7 @@ impl WazooApp {
     /// Any player currently playing a file that does NOT exist in `self.available_videos`
     /// is switched to play a video that DOES exist in `self.available_videos`.
     /// Each switching player is assigned a distinct video when possible.
-    pub(crate) fn reconcile_players_with_available_videos(
+    pub fn reconcile_players_with_available_videos(
         &mut self,
         skip_player_id: Option<PlayerId>,
     ) {
@@ -1042,11 +1042,11 @@ impl WazooApp {
         }
     }
 
-    pub(crate) fn is_all_folder(&self, folder: &str) -> bool {
+    pub fn is_all_folder(&self, folder: &str) -> bool {
         wazoo_core::i18n::is_all_folder(folder)
     }
 
-    pub(crate) fn is_all_search_selected(&self) -> bool {
+    pub fn is_all_search_selected(&self) -> bool {
         self.selected_search_folders.is_empty()
             || (self.selected_search_folders.len() == 1
                 && self.is_all_folder(&self.selected_search_folders[0]))
@@ -1169,13 +1169,8 @@ impl WazooApp {
 
         Subscription::batch(subs)
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn new_test_app() -> (WazooApp, Task<Message>) {
+    pub fn new_test_app() -> (Self, Task<Message>) {
         let temp_dir = std::env::temp_dir().join(format!(
             "wazoo_test_app_{}_{}",
             std::process::id(),
@@ -1187,773 +1182,11 @@ mod tests {
         let _ = std::fs::create_dir_all(&temp_dir);
         let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir);
         let db = Database::open_in_memory().expect("in-memory db");
-        WazooApp::new_with_backend(None, config_mgr, db)
-    }
-
-    #[test]
-    fn test_test_app_isolation() {
-        let (mut app, _) = new_test_app();
-        // Ensure test config path does not point to live user directory
-        let path = app.config_mgr.config_file_path();
-        assert!(!path.to_string_lossy().contains(".config/wazoo-rs"));
-        app.settings.media_folders = vec!["/test/isolated/folder".to_string()];
-        let save_res = app.config_mgr.save_settings(&app.settings);
-        assert!(save_res.is_ok());
-        assert!(path.exists());
-    }
-
-    #[test]
-    fn test_is_point_in_titlebar() {
-        let (mut app, _) = new_test_app();
-        app.settings.window_bounds.width = 800;
-        app.settings.window_bounds.height = 600;
-
-        // Inside titlebar bounds (0 <= x <= 800, 0 <= y < 35)
-        assert!(app.is_point_in_titlebar(Point::new(0.0, 0.0)));
-        assert!(app.is_point_in_titlebar(Point::new(400.0, 20.0)));
-        assert!(app.is_point_in_titlebar(Point::new(800.0, 34.9)));
-
-        // Outside titlebar bounds
-        assert!(!app.is_point_in_titlebar(Point::new(400.0, 35.0)));
-        assert!(!app.is_point_in_titlebar(Point::new(400.0, 100.0)));
-        assert!(!app.is_point_in_titlebar(Point::new(400.0, -1.0)));
-        assert!(!app.is_point_in_titlebar(Point::new(-10.0, 10.0)));
-        assert!(!app.is_point_in_titlebar(Point::new(801.0, 10.0)));
-    }
-
-    #[test]
-    fn test_get_next_video_rec_sequential_and_random() {
-        let (mut app, _) = new_test_app();
-        app.available_videos = vec![
-            VideoRecord {
-                id: 1,
-                name: "V1".to_string(),
-                path: "/media/v1.mp4".to_string(),
-            },
-            VideoRecord {
-                id: 2,
-                name: "V2".to_string(),
-                path: "/media/v2.mp4".to_string(),
-            },
-            VideoRecord {
-                id: 3,
-                name: "V3".to_string(),
-                path: "/media/v3.mp4".to_string(),
-            },
-        ];
-
-        // 1. Sequential mode
-        app.is_shuffle_mode = false;
-        let next1 = app.get_next_video_rec(Some("/media/v1.mp4")).unwrap();
-        assert_eq!(next1.path, "/media/v2.mp4");
-        let next2 = app.get_next_video_rec(Some("/media/v2.mp4")).unwrap();
-        assert_eq!(next2.path, "/media/v3.mp4");
-        let next3 = app.get_next_video_rec(Some("/media/v3.mp4")).unwrap();
-        assert_eq!(next3.path, "/media/v1.mp4"); // Wraps around
-
-        // 2. Random/shuffle mode
-        app.is_shuffle_mode = true;
-        for _ in 0..10 {
-            let rand_rec = app.get_next_video_rec(Some("/media/v1.mp4")).unwrap();
-            assert!(app.available_videos.iter().any(|v| v.path == rand_rec.path));
-            // With 3 videos, shuffle mode avoids immediately repeating current video
-            assert_ne!(rand_rec.path, "/media/v1.mp4");
-        }
-    }
-
-    #[test]
-    fn test_get_prev_video_rec_sequential_and_random() {
-        let (mut app, _) = new_test_app();
-        app.available_videos = vec![
-            VideoRecord {
-                id: 1,
-                name: "V1".to_string(),
-                path: "/media/v1.mp4".to_string(),
-            },
-            VideoRecord {
-                id: 2,
-                name: "V2".to_string(),
-                path: "/media/v2.mp4".to_string(),
-            },
-            VideoRecord {
-                id: 3,
-                name: "V3".to_string(),
-                path: "/media/v3.mp4".to_string(),
-            },
-        ];
-
-        // 1. Sequential mode
-        let prev2 = app
-            .get_prev_video_rec_with_mode(Some("/media/v2.mp4"), false)
-            .unwrap();
-        assert_eq!(prev2.path, "/media/v1.mp4");
-        let prev1 = app
-            .get_prev_video_rec_with_mode(Some("/media/v1.mp4"), false)
-            .unwrap();
-        assert_eq!(prev1.path, "/media/v3.mp4"); // Wraps around to end
-
-        // 2. Random/shuffle mode
-        for _ in 0..10 {
-            let rand_rec = app
-                .get_prev_video_rec_with_mode(Some("/media/v1.mp4"), true)
-                .unwrap();
-            assert!(app.available_videos.iter().any(|v| v.path == rand_rec.path));
-            // With 3 videos, shuffle mode avoids immediately repeating current video
-            assert_ne!(rand_rec.path, "/media/v1.mp4");
-        }
-    }
-
-    #[test]
-    fn test_player_nav_history_scrub_back_and_forward() {
-        let (mut app, _) = new_test_app();
-        let player_id = 1;
-
-        // Simulate initial video A
-        app.push_player_nav_entry(player_id, "/media/A.mp4".to_string(), None);
-        // User plays random B
-        app.push_player_nav_entry(player_id, "/media/B.mp4".to_string(), Some(15.0));
-        // User plays random C
-        app.push_player_nav_entry(player_id, "/media/C.mp4".to_string(), Some(30.0));
-
-        let hist = app.player_nav_history.get(&player_id).unwrap();
-        assert_eq!(hist.back_stack.len(), 3);
-        assert_eq!(hist.forward_stack.len(), 0);
-
-        // Previous action simulation: pop C from back_stack, push to forward_stack
-        let current_c = app
-            .player_nav_history
-            .get_mut(&player_id)
-            .unwrap()
-            .back_stack
-            .pop()
-            .unwrap();
-        app.player_nav_history
-            .get_mut(&player_id)
-            .unwrap()
-            .forward_stack
-            .push(current_c);
-        let target_b = app
-            .player_nav_history
-            .get(&player_id)
-            .unwrap()
-            .back_stack
-            .last()
-            .unwrap()
-            .clone();
-        assert_eq!(target_b.path, "/media/B.mp4");
-        assert_eq!(target_b.position_secs, Some(15.0));
-
-        // Previous again: pop B from back_stack, push to forward_stack
-        let current_b = app
-            .player_nav_history
-            .get_mut(&player_id)
-            .unwrap()
-            .back_stack
-            .pop()
-            .unwrap();
-        app.player_nav_history
-            .get_mut(&player_id)
-            .unwrap()
-            .forward_stack
-            .push(current_b);
-        let target_a = app
-            .player_nav_history
-            .get(&player_id)
-            .unwrap()
-            .back_stack
-            .last()
-            .unwrap()
-            .clone();
-        assert_eq!(target_a.path, "/media/A.mp4");
-
-        // Now next action: forward_stack pop gives B!
-        let forward_b = app
-            .player_nav_history
-            .get_mut(&player_id)
-            .unwrap()
-            .forward_stack
-            .pop()
-            .unwrap();
-        assert_eq!(forward_b.path, "/media/B.mp4");
-        assert_eq!(forward_b.position_secs, Some(15.0));
-        app.push_player_nav_entry(player_id, forward_b.path, forward_b.position_secs);
-
-        // Next action again: forward_stack pop gives C!
-        let forward_c = app
-            .player_nav_history
-            .get_mut(&player_id)
-            .unwrap()
-            .forward_stack
-            .pop()
-            .unwrap();
-        assert_eq!(forward_c.path, "/media/C.mp4");
-        assert_eq!(forward_c.position_secs, Some(30.0));
-        app.push_player_nav_entry(player_id, forward_c.path, forward_c.position_secs);
-
-        // Forward stack is now empty
-        assert!(
-            app.player_nav_history
-                .get(&player_id)
-                .unwrap()
-                .forward_stack
-                .is_empty()
-        );
-
-        // Toggling shuffle mode clears both back_stack and forward_stack
-        app.player_nav_history
-            .get_mut(&player_id)
-            .unwrap()
-            .forward_stack
-            .push(PlaybackHistoryEntry {
-                path: "/media/D.mp4".to_string(),
-                position_secs: None,
-            });
-        let _ = app.update(Message::ToggleShuffleMode);
-        assert!(
-            app.player_nav_history
-                .get(&player_id)
-                .unwrap()
-                .forward_stack
-                .is_empty()
-        );
-        assert!(
-            app.player_nav_history
-                .get(&player_id)
-                .unwrap()
-                .back_stack
-                .is_empty()
-        );
-    }
-
-    #[test]
-    fn test_file_picker_confined_folder_badge_multilingual() {
-        let (mut app, _) = new_test_app();
-        app.available_videos = vec![
-            VideoRecord {
-                id: 1,
-                name: "Anime 1".to_string(),
-                path: "/media/anime/a1.mp4".to_string(),
-            },
-            VideoRecord {
-                id: 2,
-                name: "Movie 1".to_string(),
-                path: "/media/movies/m1.mp4".to_string(),
-            },
-        ];
-
-        // 1. Switch language to Spanish
-        let _ = app.update(Message::SetLanguage("es".to_string()));
-        let all_es = app.t("common.all");
-        assert_eq!(all_es, "Todo");
-        assert_eq!(app.active_search_folder, "Todo");
-        assert_eq!(app.selected_search_folder, "Todo");
-        assert!(app.settings.last_folders.is_empty());
-        assert!(app.is_all_folder(&app.active_search_folder));
-
-        // 2. File picker in Spanish does not show badge for Todo
-        {
-            let _view_all = app.view_file_picker();
-        }
-
-        // 3. Search confined to anime
-        let _ = app.update(Message::SelectSearchFolder("/media/anime".to_string()));
-        assert_eq!(app.active_search_folder, "Todo"); // Still Todo before search
-        let _ = app.update(Message::PerformSearch);
-        assert_eq!(app.active_search_folder, "/media/anime");
-        assert_eq!(app.settings.last_folders, vec!["/media/anime".to_string()]);
-        assert!(!app.is_all_folder(&app.active_search_folder));
-
-        // 4. Reset search folder returns to Spanish All ("Todo")
-        let _ = app.update(Message::ResetSearchFolder);
-        assert_eq!(app.active_search_folder, "Todo");
-        assert_eq!(app.selected_search_folder, "Todo");
-        assert!(app.settings.last_folders.is_empty());
-        assert!(app.is_all_folder(&app.active_search_folder));
-    }
-
-    #[test]
-    fn test_search_modal_folder_toggles_and_reset_to_all() {
-        let (mut app, _) = new_test_app();
-        app.settings.media_folders = vec![
-            "/media/anime".to_string(),
-            "/media/movies".to_string(),
-            "/media/music".to_string(),
-        ];
-
-        // Populate database
-        app.db
-            .batch_insert_videos(&[
-                VideoRecord {
-                    id: 1,
-                    name: "Anime Ep 1".to_string(),
-                    path: "/media/anime/ep1.mp4".to_string(),
-                },
-                VideoRecord {
-                    id: 2,
-                    name: "Blockbuster Movie".to_string(),
-                    path: "/media/movies/movie.mp4".to_string(),
-                },
-                VideoRecord {
-                    id: 3,
-                    name: "Music Video".to_string(),
-                    path: "/media/music/clip.mp4".to_string(),
-                },
-            ])
-            .unwrap();
-
-        // 1. Initially "All" is active and selected
-        assert!(app.is_all_search_selected());
-        assert!(app.selected_search_folders.is_empty());
-
-        // 2. Toggle folder 1: /media/anime
-        let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
-        assert!(!app.is_all_search_selected());
-        assert_eq!(app.selected_search_folders, vec!["/media/anime".to_string()]);
-
-        // 3. Toggle folder 2: /media/movies (mix and match!)
-        let _ = app.update(Message::ToggleSearchFolder("/media/movies".to_string()));
-        assert!(!app.is_all_search_selected());
-        assert_eq!(
-            app.selected_search_folders,
-            vec!["/media/anime".to_string(), "/media/movies".to_string()]
-        );
-
-        // 4. Toggle folder 1 off
-        let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
-        assert!(!app.is_all_search_selected());
-        assert_eq!(app.selected_search_folders, vec!["/media/movies".to_string()]);
-
-        // 5. Toggle folder 2 off -> auto-reverts to All
-        let _ = app.update(Message::ToggleSearchFolder("/media/movies".to_string()));
-        assert!(app.is_all_search_selected());
-        assert!(app.selected_search_folders.is_empty());
-        assert!(app.is_all_folder(&app.selected_search_folder));
-
-        // 6. Select multiple folders again, then click "All" button
-        let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
-        let _ = app.update(Message::ToggleSearchFolder("/media/music".to_string()));
-        assert_eq!(app.selected_search_folders.len(), 2);
-
-        let all_label = app.t("common.all");
-        let _ = app.update(Message::SelectSearchFolder(all_label));
-        assert!(app.is_all_search_selected());
-        assert!(app.selected_search_folders.is_empty());
-
-        // 7. Mix and match /media/anime and /media/movies, then PerformSearch
-        let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
-        let _ = app.update(Message::ToggleSearchFolder("/media/movies".to_string()));
-        let _ = app.update(Message::PerformSearch);
-
-        assert_eq!(
-            app.active_search_folders,
-            vec!["/media/anime".to_string(), "/media/movies".to_string()]
-        );
-        assert_eq!(
-            app.settings.last_folders,
-            vec!["/media/anime".to_string(), "/media/movies".to_string()]
-        );
-        // Only anime and movies should be in available_videos (2 out of 3)
-        assert_eq!(app.available_videos.len(), 2);
-        assert!(app.available_videos.iter().any(|v| v.path.starts_with("/media/anime")));
-        assert!(app.available_videos.iter().any(|v| v.path.starts_with("/media/movies")));
-        assert!(!app.available_videos.iter().any(|v| v.path.starts_with("/media/music")));
-
-        // 8. Remove one active folder from filter badge
-        let _ = app.update(Message::RemoveActiveSearchFolder("/media/anime".to_string()));
-        assert_eq!(app.active_search_folders, vec!["/media/movies".to_string()]);
-        assert_eq!(app.available_videos.len(), 1);
-        assert_eq!(app.available_videos[0].path, "/media/movies/movie.mp4");
-
-        // 9. Remove remaining folder -> returns to All
-        let _ = app.update(Message::RemoveActiveSearchFolder("/media/movies".to_string()));
-        assert!(app.active_search_folders.is_empty());
-        assert!(app.is_all_folder(&app.active_search_folder));
-        assert_eq!(app.available_videos.len(), 3);
-    }
-
-    #[test]
-    fn test_boot_persists_default_keybinds() {
-        let temp_dir = std::env::temp_dir().join(format!(
-            "wazoo_boot_kb_{}_{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        let _ = std::fs::create_dir_all(&temp_dir);
-        let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
-        let db = Database::open_in_memory().expect("in-memory db");
-
-        assert!(!config_mgr.config_file_path().exists());
-        assert!(!config_mgr.has_keybinds_in_settings());
-
-        let (app, _) = WazooApp::new_with_backend(None, config_mgr, db);
-
-        assert!(app.config_mgr.config_file_path().exists());
-        assert!(app.config_mgr.has_keybinds_in_settings());
-        let content = std::fs::read_to_string(app.config_mgr.config_file_path()).unwrap();
-        assert!(content.contains("\"keybinds\""));
-        assert_eq!(app.settings.keybinds.add_player, "n");
-
-        let _ = std::fs::remove_dir_all(&temp_dir);
-    }
-
-    #[test]
-    fn test_boot_reconciles_and_persists_incomplete_keybinds() {
-        let temp_dir = std::env::temp_dir().join(format!(
-            "wazoo_incomplete_kb_{}_{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        let _ = std::fs::create_dir_all(&temp_dir);
-        let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
-        let db = Database::open_in_memory().expect("in-memory db");
-
-        // Write incomplete keybinds list into settings.json (only 1 key specified)
-        let incomplete_json = r#"{"keybinds":{"toggle_layout":"o"}}"#;
-        std::fs::write(config_mgr.config_file_path(), incomplete_json).unwrap();
-        assert!(!config_mgr.has_complete_keybinds_in_settings());
-
-        // Boot the app
-        let (app, _) = WazooApp::new_with_backend(None, config_mgr, db);
-
-        // Custom key is preserved, missing keys are filled with defaults
-        assert_eq!(app.settings.keybinds.toggle_layout, "o");
-        assert_eq!(app.settings.keybinds.close_app, "Alt+X");
-        assert_eq!(app.settings.keybinds.add_player, "n");
-
-        // Boot should have written the complete list to settings.json
-        assert!(app.config_mgr.has_complete_keybinds_in_settings());
-        let updated_file_content =
-            std::fs::read_to_string(app.config_mgr.config_file_path()).unwrap();
-        assert!(updated_file_content.contains("\"toggle_layout\": \"o\""));
-        assert!(updated_file_content.contains("\"close_app\": \"Alt+X\""));
-        assert!(updated_file_content.contains("\"add_player\": \"n\""));
-
-        let _ = std::fs::remove_dir_all(&temp_dir);
-    }
-
-    #[test]
-    fn test_play_history_cap_deduplication_and_drawer() {
-        let (mut app, _) = new_test_app();
-
-        // 1. Initial state is empty and closed
-        assert!(app.play_history.is_empty());
-        assert!(!app.show_history_drawer);
-
-        // 2. Record items with consecutive duplicates
-        app.record_play_history("/media/video1.mp4");
-        app.record_play_history("/media/video1.mp4"); // should be deduplicated
-        assert_eq!(app.play_history.len(), 1);
-        assert_eq!(app.play_history[0].path, "/media/video1.mp4");
-        assert_eq!(app.play_history[0].title, "video1");
-
-        app.record_play_history("/media/video2.mp4");
-        assert_eq!(app.play_history.len(), 2);
-
-        // 3. Cap at 1000 entries
-        for i in 3..=1050 {
-            app.record_play_history(&format!("/media/video{}.mp4", i));
-        }
-        assert_eq!(app.play_history.len(), 1000);
-        // The oldest items (video1 to video50) should be dropped; oldest in list should be video51
-        assert_eq!(app.play_history.first().unwrap().path, "/media/video51.mp4");
-        assert_eq!(
-            app.play_history.last().unwrap().path,
-            "/media/video1050.mp4"
-        );
-
-        // 4. Toggle drawer
-        let _ = app.update(Message::ToggleHistoryDrawer);
-        assert!(app.show_history_drawer);
-        assert!(!app.show_file_picker);
-        assert!(!app.show_transcript);
-
-        // 5. Search filter
-        let _ = app.update(Message::HistorySearchChanged("video100".to_string()));
-        assert_eq!(app.history_search, "video100");
-
-        // 6. View rendering does not panic
-        let _ = app.view_history_drawer();
-
-        // 7. Escape closes drawer
-        let _ = app.update(Message::EscapePressed);
-        assert!(!app.show_history_drawer);
-
-        // 8. Clear history
-        let _ = app.update(Message::ClearPlayHistory);
-        assert!(app.play_history.is_empty());
-        let _ = app.view_history_drawer();
-    }
-
-    #[test]
-    fn test_session_videos_shuffle_persistence() {
-        let (mut app, _) = new_test_app();
-        app.available_videos = vec![
-            VideoRecord {
-                id: 1,
-                name: "V1".to_string(),
-                path: "/media/v1.mp4".to_string(),
-            },
-            VideoRecord {
-                id: 2,
-                name: "V2".to_string(),
-                path: "/media/v2.mp4".to_string(),
-            },
-        ];
-
-        // Default should be shuffle mode
-        assert!(app.is_shuffle_mode);
-
-        // Toggle shuffle mode -> sequential
-        let _ = app.update(Message::ToggleShuffleMode);
-        assert!(!app.is_shuffle_mode);
-
-        // Save session state
-        app.save_session_state();
-
-        // If there were players, session_videos records is_shuffle: false
-        let loaded = app.config_mgr.load_settings();
-        if let Some(first) = loaded.session_videos.first() {
-            assert!(!first.is_shuffle);
-        }
-    }
-
-    #[test]
-    fn test_view_titlebar() {
-        let (app, _) = new_test_app();
-        let _elem = app.view_titlebar();
-    }
-
-    #[test]
-    fn test_titlebar_persists_during_window_drag() {
-        let (mut app, _) = new_test_app();
-        let win_id = iced::window::Id::unique();
-        app.window_id = Some(win_id);
-
-        // Move cursor to titlebar and show it
-        let _ = app.update(Message::CursorMoved(win_id, Point::new(200.0, 15.0)));
-        app.show_titlebar = true;
-        app.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
-        assert_eq!(app.titlebar_alpha(), 1.0);
-
-        // Press titlebar
-        let _ = app.update(Message::TitleBarPressed);
-        assert!(app.titlebar_drag_pending);
-        assert_eq!(app.titlebar_alpha(), 1.0);
-
-        // Move mouse by > 5px to initiate window drag
-        let _ = app.update(Message::CursorMoved(win_id, Point::new(200.0, 25.0)));
-        assert!(app.is_window_dragging);
-        assert!(!app.titlebar_drag_pending);
-        assert_eq!(app.titlebar_alpha(), 1.0);
-
-        // Simulate wobbly windows: window moves and cursor flies around over video while dragging
-        let _ = app.update(Message::WindowMoved(win_id, Point::new(105.0, 105.0)));
-        let _ = app.update(Message::CursorMoved(win_id, Point::new(400.0, 500.0)));
-        assert!(app.is_window_dragging);
-        assert!(app.show_titlebar);
-        assert_eq!(app.titlebar_alpha(), 1.0);
-
-        // Run 50 frame ticks with window moving (well beyond TITLEBAR_HIDE_TICKS = 50)
-        for i in 0..50 {
-            let _ = app.update(Message::WindowMoved(
-                win_id,
-                Point::new(110.0 + i as f32, 110.0 + i as f32),
-            ));
-            let _ = app.update(Message::VideoFrameTick);
-        }
-
-        // Titlebar MUST still be fully visible and alpha == 1.0 while moving
-        assert!(app.show_titlebar);
-        assert_eq!(app.titlebar_alpha(), 1.0);
-
-        // Release mouse button (mouseup) to conclude drag
-        let _ = app.update(Message::LeftClickReleased);
-        assert!(!app.is_window_dragging);
-        assert_eq!(app.titlebar_hide_ticks, TITLEBAR_FADE_TICKS);
-
-        // After fading out over TITLEBAR_FADE_TICKS frames, titlebar is completely dismissed without wiggling
-        for _ in 0..TITLEBAR_FADE_TICKS {
-            let _ = app.update(Message::VideoFrameTick);
-        }
-        assert!(!app.show_titlebar);
-        assert_eq!(app.titlebar_alpha(), 0.0);
-    }
-
-    #[test]
-    fn test_titlebar_dismisses_when_wm_eats_mouseup() {
-        let (mut app, _) = new_test_app();
-        let win_id = iced::window::Id::unique();
-        app.window_id = Some(win_id);
-
-        let _ = app.update(Message::CursorMoved(win_id, Point::new(200.0, 15.0)));
-        let _ = app.update(Message::TitleBarPressed);
-        let _ = app.update(Message::CursorMoved(win_id, Point::new(200.0, 25.0)));
-        assert!(app.is_window_dragging);
-
-        // Window moves
-        let _ = app.update(Message::WindowMoved(win_id, Point::new(100.0, 100.0)));
-        assert!(app.show_titlebar);
-
-        // Simulate WM eating mouseup: window stops moving and time elapses
-        std::thread::sleep(Duration::from_millis(320));
-
-        // User moves mouse over video without clicking
-        let _ = app.update(Message::CursorMoved(win_id, Point::new(300.0, 300.0)));
-        assert!(!app.is_window_dragging);
-
-        // Titlebar smoothly fades out without needing a click on the video
-        for _ in 0..TITLEBAR_FADE_TICKS {
-            let _ = app.update(Message::VideoFrameTick);
-        }
-        assert!(!app.show_titlebar);
-        assert_eq!(app.titlebar_alpha(), 0.0);
-    }
-
-    #[test]
-    fn test_scroll_mode_real_heights_and_recalculation() {
-        let (mut app, _) = new_test_app();
-        app.settings.window_bounds.width = 1920;
-        app.settings.window_bounds.height = 1080;
-        app.scroll_engine.set_window_size(1920.0, 1080.0);
-
-        // Standard 16:9 widescreen video at 1920 width -> real height is 1080.0
-        let h_16_9 = app.scroll_engine.item_height_for_aspect_ratio(16.0 / 9.0);
-        assert!((h_16_9 - 1080.0).abs() < 1.0);
-
-        // 4:3 video at 1920 width -> real height is 1440.0
-        let h_4_3 = app.scroll_engine.item_height_for_aspect_ratio(4.0 / 3.0);
-        assert!((h_4_3 - 1440.0).abs() < 1.0);
-
-        // 9:16 vertical video at 1920 width -> real height is 3413.33
-        let h_9_16 = app.scroll_engine.item_height_for_aspect_ratio(9.0 / 16.0);
-        assert!((h_9_16 - 3413.33).abs() < 1.0);
-
-        // When toggling scroll mode with items, stack initializes with real heights
-        app.scroll_engine
-            .init_stack_with_heights(&[(1, h_16_9), (2, h_4_3)]);
-        assert_eq!(app.scroll_engine.items.get(&1).unwrap().y_pos, 0.0);
-        assert_eq!(app.scroll_engine.items.get(&1).unwrap().height, h_16_9);
-        assert_eq!(app.scroll_engine.items.get(&2).unwrap().y_pos, h_16_9);
-        assert_eq!(app.scroll_engine.items.get(&2).unwrap().height, h_4_3);
-
-        // Dynamic update on aspect ratio resolution
-        let changed = app.scroll_engine.update_height(1, 1080.0);
-        assert!(
-            !changed,
-            "Height did not change significantly, so returns false"
-        );
-        let changed = app.scroll_engine.update_height(1, 1200.0);
-        assert!(changed, "Height changed by > 1px, so returns true");
-        app.scroll_engine.recalculate_positions();
-        assert_eq!(app.scroll_engine.items.get(&1).unwrap().y_pos, 0.0);
-        assert_eq!(app.scroll_engine.items.get(&1).unwrap().height, 1200.0);
-        assert_eq!(app.scroll_engine.items.get(&2).unwrap().y_pos, 1200.0);
-
-        // Window resize updates window size and recalculates scroll item heights
-        let _ = app.update(Message::WindowResized(
-            iced::window::Id::unique(),
-            iced::Size::new(1280.0, 720.0),
-        ));
-        assert_eq!(app.scroll_engine.window_width, 1280.0);
-        assert_eq!(app.scroll_engine.window_height, 720.0);
-        let resized_h_16_9 = app.scroll_engine.item_height_for_aspect_ratio(16.0 / 9.0);
-        assert!((resized_h_16_9 - 720.0).abs() < 1.0);
-    }
-
-    #[test]
-    fn test_unfocused_window_fps_throttling_30fps() {
-        let (mut app, _) = new_test_app();
-        app.is_window_focused = false;
-        app.unfocused_frame_ticks = 0;
-
-        // Tick 1: increments counter to 1, odd tick throttled
-        let _ = app.update(Message::VideoFrameTick);
-        assert_eq!(app.unfocused_frame_ticks, 1);
-
-        // Tick 2: increments counter to 2, even tick executes (~30 FPS rate from 60 FPS base)
-        let _ = app.update(Message::VideoFrameTick);
-        assert_eq!(app.unfocused_frame_ticks, 2);
-
-        // Tick 3: odd tick throttled
-        let _ = app.update(Message::VideoFrameTick);
-        assert_eq!(app.unfocused_frame_ticks, 3);
-
-        // Tick 4: even tick executes
-        let _ = app.update(Message::VideoFrameTick);
-        assert_eq!(app.unfocused_frame_ticks, 4);
-
-        // Regaining focus resets unfocused_frame_ticks
-        let _ = app.update(Message::WindowFocused);
-        assert!(app.is_window_focused);
-        assert_eq!(app.unfocused_frame_ticks, 0);
-    }
-
-    #[test]
-    fn test_add_new_player_focuses_new_player_and_can_be_removed() {
-        let (mut app, _) = new_test_app();
-        let temp_dir = std::env::temp_dir().join(format!(
-            "wazoo_test_players_{}_{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        let _ = std::fs::create_dir_all(&temp_dir);
-        let f1 = temp_dir.join("v1.mp4");
-        let f2 = temp_dir.join("v2.mp4");
-        let f3 = temp_dir.join("v3.mp4");
-        let _ = std::fs::File::create(&f1);
-        let _ = std::fs::File::create(&f2);
-        let _ = std::fs::File::create(&f3);
-
-        app.available_videos = vec![
-            VideoRecord {
-                id: 1,
-                name: "V1".to_string(),
-                path: f1.to_string_lossy().to_string(),
-            },
-            VideoRecord {
-                id: 2,
-                name: "V2".to_string(),
-                path: f2.to_string_lossy().to_string(),
-            },
-            VideoRecord {
-                id: 3,
-                name: "V3".to_string(),
-                path: f3.to_string_lossy().to_string(),
-            },
-        ];
-
-        // Start with 1 player
-        let _ = app.update(Message::SetPlayerCount(1));
-        assert_eq!(app.players.len(), 1);
-        assert_eq!(app.focused_player_idx, 0);
-        let first_player_id = app.players[0].id;
-
-        // Manually add a new player (such as pressing N)
-        let _ = app.update(Message::AddNewPlayer);
-        assert_eq!(app.players.len(), 2);
-        assert_eq!(app.focused_player_idx, 1);
-        let second_player_id = app.players[1].id;
-        assert_ne!(first_player_id, second_player_id);
-        assert_eq!(app.focused_player_id(), Some(second_player_id));
-        assert_eq!(app.focus_border_ticks, 0);
-
-        // Press X (RemoveFocusedPlayer) removes the newly added active player
-        let _ = app.update(Message::RemoveFocusedPlayer);
-        assert_eq!(app.players.len(), 1);
-        assert_eq!(app.players[0].id, first_player_id);
-        assert_eq!(app.focused_player_idx, 0);
-        assert_eq!(app.focused_player_id(), Some(first_player_id));
-        assert_eq!(app.focus_border_ticks, 0);
-
-        let _ = std::fs::remove_dir_all(&temp_dir);
+        Self::new_with_backend(None, config_mgr, db)
     }
 }
+
+pub fn new_test_app() -> (WazooApp, Task<Message>) {
+    WazooApp::new_test_app()
+}
+

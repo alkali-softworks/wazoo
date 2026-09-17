@@ -5,6 +5,10 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[lib]
+name = "wazoo_app"
+path = "src/lib.rs"
+
 [[bin]]
 name = "wazoo"
 path = "src/main.rs"
