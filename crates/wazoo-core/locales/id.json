@@ -61,10 +61,18 @@
   },
   "help": {
     "title": "Pintasan Keyboard",
+    "subtitle": "Kontrol Sistem & Navigasi Cepat",
+    "categories": {
+      "playback": "Pemutaran & Pencarian",
+      "drawers": "Panel & Laci",
+      "layout": "Kisi & Multi-Pemutar",
+      "audio": "Audio & Tampilan",
+      "system": "Sistem & Jendela"
+    },
     "shortcuts": {
       "toggle_scroll": "Ganti Mode Gulir Tak Terbatas",
       "toggle_flip": "Ganti Mode Balik",
-      "toggle_file_picker": "Tampilkan/Sembunyikan Pemilih Berkas",
+      "toggle_file_picker": "Tampilkan/Sembunyikan Laci Berkas",
       "add_player": "Tambah Pemutar",
       "remove_player": "Hapus Pemutar",
       "focus_next": "Fokus ke Pemutar Berikutnya",
@@ -82,7 +90,9 @@
       "move_window": "Pindahkan Jendela",
       "toggle_bookmarks": "Beralih Bookmark",
       "toggle_transcript": "Beralih Transkrip Subtitle",
-      "toggle_history": "Alihkan riwayat putar"
+      "toggle_history": "Alihkan riwayat putar",
+      "random_seek": "Pencarian Acak",
+      "show_title_overlay": "Tampilkan HUD Judul"
     }
   },
   "file_picker": {

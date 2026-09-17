@@ -61,10 +61,18 @@
   },
   "help": {
     "title": "단축키",
+    "subtitle": "시스템 제어 및 빠른 탐색",
+    "categories": {
+      "playback": "재생 및 탐색",
+      "drawers": "패널 및 드로어",
+      "layout": "그리드 및 멀티 플레이어",
+      "audio": "오디오 및 디스플레이",
+      "system": "시스템 및 창"
+    },
     "shortcuts": {
       "toggle_scroll": "무한 스크롤 모드 토글",
       "toggle_flip": "플립 모드 토글",
-      "toggle_file_picker": "파일 선택기 토글",
+      "toggle_file_picker": "파일 드로어 토글",
       "add_player": "플레이어 추가",
       "remove_player": "플레이어 제거",
       "focus_next": "다음 플레이어로 포커스",
@@ -82,7 +90,9 @@
       "move_window": "창 이동",
       "toggle_bookmarks": "북마크 전환",
       "toggle_transcript": "자막 대본 전환",
-      "toggle_history": "재생 기록 전환"
+      "toggle_history": "재생 기록 전환",
+      "random_seek": "랜덤 탐색",
+      "show_title_overlay": "제목 HUD 표시"
     }
   },
   "file_picker": {

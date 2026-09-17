@@ -32,7 +32,7 @@
     "global_mode_unmuted": "全局模式已取消静音",
     "set_players_count": "已设置为 {count} 个播放器{suffix}",
     "layout_row": "行布局",
-    "grid_layout": "网格布局",
+    "layout_grid": "网格布局",
     "layout_column": "列布局",
     "scroll_mode_enabled": "滚动模式已启用",
     "scroll_mode_disabled": "滚动模式已禁用",
@@ -61,10 +61,18 @@
   },
   "help": {
     "title": "键盘快捷键",
+    "subtitle": "系统控制与快速导航",
+    "categories": {
+      "playback": "播放与搜寻",
+      "drawers": "面板与抽屉",
+      "layout": "网格与多播放器",
+      "audio": "音频与显示",
+      "system": "系统与窗口"
+    },
     "shortcuts": {
       "toggle_scroll": "切换无限滚动模式",
       "toggle_flip": "切换翻转模式",
-      "toggle_file_picker": "切换文件选择器",
+      "toggle_file_picker": "切换文件抽屉",
       "add_player": "添加播放器",
       "remove_player": "移除播放器",
       "focus_next": "聚焦下一个播放器",
@@ -82,7 +90,9 @@
       "move_window": "移动窗口",
       "toggle_bookmarks": "切换书签",
       "toggle_transcript": "切换字幕转录",
-      "toggle_history": "切换播放历史"
+      "toggle_history": "切换播放历史",
+      "random_seek": "随机定位",
+      "show_title_overlay": "显示标题HUD"
     }
   },
   "file_picker": {

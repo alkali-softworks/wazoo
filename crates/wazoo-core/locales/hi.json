@@ -61,10 +61,18 @@
   },
   "help": {
     "title": "कीबोर्ड शॉर्टकट",
+    "subtitle": "सिस्टम नियंत्रण और त्वरित नेविगेशन",
+    "categories": {
+      "playback": "प्लेबैक और सीक",
+      "drawers": "पैनल और दराज",
+      "layout": "ग्रिड और मल्टी-प्लेयर",
+      "audio": "ऑडियो और डिस्प्ले",
+      "system": "सिस्टम और विंडो"
+    },
     "shortcuts": {
       "toggle_scroll": "अनंत स्क्रॉल मोड बदलें",
       "toggle_flip": "फ्लिप मोड बदलें",
-      "toggle_file_picker": "फ़ाइल चयनकर्ता दिखाएं/छिपाएं",
+      "toggle_file_picker": "फ़ाइल ड्रॉअर दिखाएं/छिपाएं",
       "add_player": "प्लेयर जोड़ें",
       "remove_player": "प्लेयर निकालें",
       "focus_next": "अगले प्लेयर पर ध्यान दें",
@@ -82,7 +90,9 @@
       "move_window": "विंडो ले जाएं",
       "toggle_bookmarks": "बुकमार्क टॉगल करें",
       "toggle_transcript": "उपशीर्षक प्रतिलेख टॉगल करें",
-      "toggle_history": "प्लेबैक इतिहास टॉगल करें"
+      "toggle_history": "प्लेबैक इतिहास टॉगल करें",
+      "random_seek": "रैंडम सीक",
+      "show_title_overlay": "शीर्षक HUD दिखाएं"
     }
   },
   "file_picker": {

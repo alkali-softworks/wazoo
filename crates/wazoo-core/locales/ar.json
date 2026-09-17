@@ -61,10 +61,18 @@
   },
   "help": {
     "title": "اختصارات لوحة المفاتيح",
+    "subtitle": "عناصر التحكم في النظام والتنقل السريع",
+    "categories": {
+      "playback": "التشغيل والبحث",
+      "drawers": "اللوحات والأدراج",
+      "layout": "الشبكة ومشغلات متعددة",
+      "audio": "الصوت والعرض",
+      "system": "النظام والنافذة"
+    },
     "shortcuts": {
       "toggle_scroll": "تبديل وضع التمرير اللانهائي",
       "toggle_flip": "تبديل وضع التقليب",
-      "toggle_file_picker": "تبديل منتقي الملفات",
+      "toggle_file_picker": "تبديل درج الملفات",
       "add_player": "إضافة لاعب",
       "remove_player": "إزالة لاعب",
       "focus_next": "التركيز على اللاعب التالي",
@@ -82,7 +90,9 @@
       "move_window": "تحريك النافذة",
       "toggle_bookmarks": "تبديل الإشارات المرجعية",
       "toggle_transcript": "تبديل نصوص الترجمة",
-      "toggle_history": "تبديل سجل التشغيل"
+      "toggle_history": "تبديل سجل التشغيل",
+      "random_seek": "بحث عشوائي",
+      "show_title_overlay": "إظهار شاشة العنوان (HUD)"
     }
   },
   "file_picker": {

@@ -61,10 +61,18 @@
   },
   "help": {
     "title": "Tastenkombinationen",
+    "subtitle": "Systemsteuerung & Schnellnavigation",
+    "categories": {
+      "playback": "Wiedergabe & Suche",
+      "drawers": "Bereiche & Schubladen",
+      "layout": "Raster & Multi-Player",
+      "audio": "Audio & Anzeige",
+      "system": "System & Fenster"
+    },
     "shortcuts": {
       "toggle_scroll": "Unendlichen Scroll-Modus umschalten",
       "toggle_flip": "Flip-Modus umschalten",
-      "toggle_file_picker": "Dateiauswahl umschalten",
+      "toggle_file_picker": "Dateischublade umschalten",
       "add_player": "Player hinzufügen",
       "remove_player": "Player entfernen",
       "focus_next": "Nächsten Player fokussieren",
@@ -82,7 +90,9 @@
       "move_window": "Fenster verschieben",
       "toggle_bookmarks": "Lesezeichen umschalten",
       "toggle_transcript": "Untertitel-Transkript umschalten",
-      "toggle_history": "Wiedergabeverlauf umschalten"
+      "toggle_history": "Wiedergabeverlauf umschalten",
+      "random_seek": "Zufällige Suche",
+      "show_title_overlay": "Titel-HUD anzeigen"
     }
   },
   "file_picker": {

@@ -61,10 +61,18 @@
   },
   "help": {
     "title": "Atalhos de teclado",
+    "subtitle": "Controles do Sistema e Navegação Rápida",
+    "categories": {
+      "playback": "Reprodução e Busca",
+      "drawers": "Painéis e Gavetas",
+      "layout": "Grade e Multi-Player",
+      "audio": "Áudio e Tela",
+      "system": "Sistema e Janela"
+    },
     "shortcuts": {
       "toggle_scroll": "Alternar modo de rolagem infinita",
       "toggle_flip": "Alternar modo de inversão",
-      "toggle_file_picker": "Alternar selecionador de arquivos",
+      "toggle_file_picker": "Alternar gaveta de arquivos",
       "add_player": "Adicionar reprodutor",
       "remove_player": "Remover reprodutor",
       "focus_next": "Focar próximo reprodutor",
@@ -82,7 +90,9 @@
       "move_window": "Mover janela",
       "toggle_bookmarks": "Alternar favoritos",
       "toggle_transcript": "Alternar transcrição de legendas",
-      "toggle_history": "Alternar histórico de reprodução"
+      "toggle_history": "Alternar histórico de reprodução",
+      "random_seek": "Busca aleatória",
+      "show_title_overlay": "Mostrar HUD do título"
     }
   },
   "file_picker": {

@@ -61,10 +61,18 @@
   },
   "help": {
     "title": "Atajos de Teclado",
+    "subtitle": "Controles del Sistema y Navegación Rápida",
+    "categories": {
+      "playback": "Reproducción y Búsqueda",
+      "drawers": "Paneles y Cajones",
+      "layout": "Cuadrícula y Multi-Reproductor",
+      "audio": "Audio y Pantalla",
+      "system": "Sistema y Ventana"
+    },
     "shortcuts": {
       "toggle_scroll": "Alternar Modo de Desplazamiento Infinito",
       "toggle_flip": "Alternar Modo de Volteo",
-      "toggle_file_picker": "Alternar Selector de Archivos",
+      "toggle_file_picker": "Alternar Cajón de Archivos",
       "add_player": "Añadir Reproductor",
       "remove_player": "Eliminar Reproductor",
       "focus_next": "Enfocar Siguiente Reproductor",
@@ -82,7 +90,9 @@
       "move_window": "Mover Ventana",
       "toggle_bookmarks": "Alternar marcadores",
       "toggle_history": "Alternar historial de reproducción",
-      "toggle_transcript": "Alternar transcripción de subtítulos"
+      "toggle_transcript": "Alternar transcripción de subtítulos",
+      "random_seek": "Búsqueda Aleatoria",
+      "show_title_overlay": "Mostrar HUD de Título"
     }
   },
   "file_picker": {

@@ -61,10 +61,18 @@
   },
   "help": {
     "title": "Scorciatoie da tastiera",
+    "subtitle": "Controlli di Sistema e Navigazione Rapida",
+    "categories": {
+      "playback": "Riproduzione e Ricerca",
+      "drawers": "Pannelli e Cassetti",
+      "layout": "Griglia e Multi-Lettore",
+      "audio": "Audio e Schermo",
+      "system": "Sistema e Finestra"
+    },
     "shortcuts": {
       "toggle_scroll": "Cambia modalità scorrimento infinito",
       "toggle_flip": "Cambia modalità ribaltamento",
-      "toggle_file_picker": "Mostra/Nascondi selettore file",
+      "toggle_file_picker": "Mostra/Nascondi cassetto file",
       "add_player": "Aggiungi lettore",
       "remove_player": "Rimuovi lettore",
       "focus_next": "Passa al lettore successivo",
@@ -82,7 +90,9 @@
       "move_window": "Sposta finestra",
       "toggle_bookmarks": "Attiva/disattiva segnalibri",
       "toggle_transcript": "Attiva/disattiva trascrizione sottotitoli",
-      "toggle_history": "Attiva/disattiva cronologia di riproduzione"
+      "toggle_history": "Attiva/disattiva cronologia di riproduzione",
+      "random_seek": "Ricerca casuale",
+      "show_title_overlay": "Mostra HUD titolo"
     }
   },
   "file_picker": {
