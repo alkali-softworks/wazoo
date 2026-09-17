@@ -18,6 +18,11 @@ fn test_all_16_languages_parsed() {
             "Missing common.settings in {}",
             lang.code
         );
+        assert!(
+            map.contains_key("common.or"),
+            "Missing common.or in {}",
+            lang.code
+        );
     }
 }
 

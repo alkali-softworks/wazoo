@@ -156,9 +156,9 @@ scoop install ffmpeg
 | <kbd>-</kbd> | Remove Bookmark (or decrease Scroll Speed in Scroll Mode) |
 | <kbd>R</kbd> | **Random Seek** on focused player |
 | <kbd>T</kbd> | Show video titles (all players) |
-| <kbd>H</kbd> | Toggle **File Browser** drawer |
+| <kbd>H</kbd> / <kbd>F</kbd> | Toggle **File Browser** drawer |
 | <kbd>C</kbd> | Toggle Subtitles on/off |
-| <kbd>J</kbd> / <kbd>F</kbd> / <kbd>/</kbd> | Open **Find / Search** modal |
+| <kbd>J</kbd> / <kbd>/</kbd> | Open **Find / Search** modal |
 | <kbd>S</kbd> | Toggle **Shuffle** vs. Sequential playback (resets navigation stack) |
 | <kbd>M</kbd> | Toggle **Mute** (unmutes automatically when volume changes) |
 | <kbd>[</kbd> / <kbd>]</kbd> | Adjust Volume down / up |
@@ -173,7 +173,7 @@ scoop install ffmpeg
 | <kbd>N</kbd> | Add player (up to 12) |
 | <kbd>X</kbd> | Remove focused player |
 | <kbd>Tab</kbd> | Focus next player |
-| <kbd>?</kbd> | Open **Keyboard Shortcuts** reference modal |
+| <kbd>?</kbd> / <kbd>F1</kbd> | Open **Keyboard Shortcuts** reference modal |
 | <kbd>Esc</kbd> | Dismiss active drawer / modal, or open Quick Menu |
 | <kbd>Alt + Drag</kbd> | Move borderless window |
 | <kbd>Alt + X</kbd> | Quit application |

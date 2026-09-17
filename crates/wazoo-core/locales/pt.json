@@ -10,7 +10,8 @@
     "loading": "Carregando...",
     "all": "Tudo",
     "files": "Arquivos",
-    "menu": "Menu"
+    "menu": "Menu",
+    "or": "ou"
   },
   "app": {
     "drag_to_move": "Arraste para mover",

@@ -10,7 +10,8 @@
     "loading": "Caricamento...",
     "all": "Tutti",
     "files": "File",
-    "menu": "Menu"
+    "menu": "Menu",
+    "or": "o"
   },
   "app": {
     "drag_to_move": "Trascina per spostare",
