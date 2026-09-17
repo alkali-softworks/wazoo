@@ -180,7 +180,8 @@ impl WazooApp {
             })
             .width(Length::Fill);
 
-        let is_confined = !self.is_all_folder(&self.active_search_folder);
+        let is_confined = !self.active_search_folders.is_empty()
+            || !self.is_all_folder(&self.active_search_folder);
         let mut header_row = row![
             text(self.t_with(
                 "settings.total_videos",
@@ -193,29 +194,42 @@ impl WazooApp {
         .align_y(Alignment::Center);
 
         if is_confined {
-            let folder_label = format::folder_basename(&self.active_search_folder);
-
-            let display_name = if folder_label.chars().count() > 18 {
-                format!("{}...", folder_label.chars().take(16).collect::<String>())
+            let folders_to_display: Vec<&String> = if !self.active_search_folders.is_empty() {
+                self.active_search_folders
+                    .iter()
+                    .filter(|f| !self.is_all_folder(f))
+                    .collect()
+            } else if !self.is_all_folder(&self.active_search_folder) {
+                vec![&self.active_search_folder]
             } else {
-                folder_label.to_string()
+                Vec::new()
             };
 
-            let badge = button(
-                row![
-                    text(display_name).size(13).color(iced::Color::WHITE),
-                    text("✕")
-                        .size(12)
-                        .color(iced::Color::from_rgba(1.0, 1.0, 1.0, 0.8)),
-                ]
-                .spacing(5)
-                .align_y(Alignment::Center),
-            )
-            .style(theme::folder_chip_style(true))
-            .on_press(Message::ResetSearchFolder)
-            .padding([3, 8]);
+            for folder in folders_to_display {
+                let folder_label = format::folder_basename(folder);
 
-            header_row = header_row.push(badge);
+                let display_name = if folder_label.chars().count() > 18 {
+                    format!("{}...", folder_label.chars().take(16).collect::<String>())
+                } else {
+                    folder_label.to_string()
+                };
+
+                let badge = button(
+                    row![
+                        text(display_name).size(13).color(iced::Color::WHITE),
+                        text("✕")
+                            .size(12)
+                            .color(iced::Color::from_rgba(1.0, 1.0, 1.0, 0.8)),
+                    ]
+                    .spacing(5)
+                    .align_y(Alignment::Center),
+                )
+                .style(theme::folder_chip_style(true))
+                .on_press(Message::RemoveActiveSearchFolder(folder.clone()))
+                .padding([3, 8]);
+
+                header_row = header_row.push(badge);
+            }
         }
 
         header_row = header_row.push(Space::new().width(Length::Fill));

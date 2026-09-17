@@ -25,7 +25,7 @@ use wazoo_scanner::ScanStage;
 impl WazooApp {
     pub(crate) fn view_search_modal(&self) -> Element<'_, Message> {
         let all_label = self.t("common.all");
-        let is_all_selected = self.is_all_folder(&self.selected_search_folder);
+        let is_all_selected = self.is_all_search_selected();
         let mut folder_chips = row![
             button(text(all_label.clone()).size(13))
                 .style(theme::folder_chip_style(is_all_selected))
@@ -37,12 +37,11 @@ impl WazooApp {
 
         for folder in &self.settings.media_folders {
             let label = format::folder_basename(folder);
+            let is_selected = self.selected_search_folders.contains(folder);
             folder_chips = folder_chips.push(
                 button(text(label).size(13))
-                    .style(theme::folder_chip_style(
-                        self.selected_search_folder == *folder,
-                    ))
-                    .on_press(Message::SelectSearchFolder(folder.clone()))
+                    .style(theme::folder_chip_style(is_selected))
+                    .on_press(Message::ToggleSearchFolder(folder.clone()))
                     .padding([4, 12]),
             );
         }

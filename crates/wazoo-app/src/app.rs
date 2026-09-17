@@ -63,6 +63,8 @@ pub struct WazooApp {
     pub(crate) search_input: String,
     pub(crate) search_tags: Vec<String>,
     pub(crate) folder_input: String,
+    pub(crate) active_search_folders: Vec<String>,
+    pub(crate) selected_search_folders: Vec<String>,
     pub(crate) active_search_folder: String,
     pub(crate) selected_search_folder: String,
     pub(crate) show_search_modal: bool,
@@ -156,20 +158,22 @@ impl WazooApp {
         let all_label = wazoo_core::i18n::t(&settings.language, "common.all");
         let (folders, active_query, selected_folder) = if let Some(ref q) = cli_query_clean {
             settings.last_query = q.clone();
-            settings.last_folder = all_label.clone();
+            settings.last_folders.clear();
             let _ = config_mgr.save_settings(&settings);
             (Vec::new(), q.clone(), all_label)
         } else {
-            let is_all = wazoo_core::i18n::is_all_folder(&settings.last_folder);
-            let f = if is_all {
-                Vec::new()
-            } else {
-                vec![settings.last_folder.clone()]
-            };
-            let sel = if is_all {
+            let f: Vec<String> = settings
+                .last_folders
+                .iter()
+                .filter(|folder| !wazoo_core::i18n::is_all_folder(folder))
+                .cloned()
+                .collect();
+            let sel = if f.is_empty() {
                 all_label
+            } else if f.len() == 1 {
+                f[0].clone()
             } else {
-                settings.last_folder.clone()
+                f.join(", ")
             };
             (f, settings.last_query.clone(), sel)
         };
@@ -232,6 +236,8 @@ impl WazooApp {
                 .collect(),
             search_input: String::new(),
             folder_input: String::new(),
+            active_search_folders: folders.clone(),
+            selected_search_folders: folders,
             active_search_folder: selected_folder.clone(),
             selected_search_folder: selected_folder,
             show_search_modal: false,
@@ -784,7 +790,7 @@ impl WazooApp {
             self.settings.session_videos = sessions;
         }
         self.settings.last_query = self.active_search_query.clone();
-        self.settings.last_folder = self.active_search_folder.clone();
+        self.settings.last_folders = self.active_search_folders.clone();
         let _ = self.config_mgr.save_settings(&self.settings);
         self.window_bounds_dirty = false;
     }
@@ -1038,6 +1044,38 @@ impl WazooApp {
 
     pub(crate) fn is_all_folder(&self, folder: &str) -> bool {
         wazoo_core::i18n::is_all_folder(folder)
+    }
+
+    pub(crate) fn is_all_search_selected(&self) -> bool {
+        self.selected_search_folders.is_empty()
+            || (self.selected_search_folders.len() == 1
+                && self.is_all_folder(&self.selected_search_folders[0]))
+    }
+
+    pub(crate) fn reset_search_folder_selection(&mut self) {
+        self.selected_search_folders.clear();
+        self.selected_search_folder = self.t("common.all");
+    }
+
+    pub(crate) fn toggle_search_folder(&mut self, folder: &str) {
+        if self.is_all_folder(folder) {
+            self.reset_search_folder_selection();
+            return;
+        }
+
+        if let Some(pos) = self.selected_search_folders.iter().position(|f| f == folder) {
+            self.selected_search_folders.remove(pos);
+        } else {
+            self.selected_search_folders.push(folder.to_string());
+        }
+
+        if self.selected_search_folders.is_empty() {
+            self.selected_search_folder = self.t("common.all");
+        } else if self.selected_search_folders.len() == 1 {
+            self.selected_search_folder = self.selected_search_folders[0].clone();
+        } else {
+            self.selected_search_folder = self.selected_search_folders.join(", ");
+        }
     }
 
     pub(crate) fn show_video_totals_notice(&mut self, total: usize, folder_label: &str) {
@@ -1409,7 +1447,7 @@ mod tests {
         assert_eq!(all_es, "Todo");
         assert_eq!(app.active_search_folder, "Todo");
         assert_eq!(app.selected_search_folder, "Todo");
-        assert_eq!(app.settings.last_folder, "Todo");
+        assert!(app.settings.last_folders.is_empty());
         assert!(app.is_all_folder(&app.active_search_folder));
 
         // 2. File picker in Spanish does not show badge for Todo
@@ -1422,14 +1460,115 @@ mod tests {
         assert_eq!(app.active_search_folder, "Todo"); // Still Todo before search
         let _ = app.update(Message::PerformSearch);
         assert_eq!(app.active_search_folder, "/media/anime");
+        assert_eq!(app.settings.last_folders, vec!["/media/anime".to_string()]);
         assert!(!app.is_all_folder(&app.active_search_folder));
 
         // 4. Reset search folder returns to Spanish All ("Todo")
         let _ = app.update(Message::ResetSearchFolder);
         assert_eq!(app.active_search_folder, "Todo");
         assert_eq!(app.selected_search_folder, "Todo");
-        assert_eq!(app.settings.last_folder, "Todo");
+        assert!(app.settings.last_folders.is_empty());
         assert!(app.is_all_folder(&app.active_search_folder));
+    }
+
+    #[test]
+    fn test_search_modal_folder_toggles_and_reset_to_all() {
+        let (mut app, _) = new_test_app();
+        app.settings.media_folders = vec![
+            "/media/anime".to_string(),
+            "/media/movies".to_string(),
+            "/media/music".to_string(),
+        ];
+
+        // Populate database
+        app.db
+            .batch_insert_videos(&[
+                VideoRecord {
+                    id: 1,
+                    name: "Anime Ep 1".to_string(),
+                    path: "/media/anime/ep1.mp4".to_string(),
+                },
+                VideoRecord {
+                    id: 2,
+                    name: "Blockbuster Movie".to_string(),
+                    path: "/media/movies/movie.mp4".to_string(),
+                },
+                VideoRecord {
+                    id: 3,
+                    name: "Music Video".to_string(),
+                    path: "/media/music/clip.mp4".to_string(),
+                },
+            ])
+            .unwrap();
+
+        // 1. Initially "All" is active and selected
+        assert!(app.is_all_search_selected());
+        assert!(app.selected_search_folders.is_empty());
+
+        // 2. Toggle folder 1: /media/anime
+        let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
+        assert!(!app.is_all_search_selected());
+        assert_eq!(app.selected_search_folders, vec!["/media/anime".to_string()]);
+
+        // 3. Toggle folder 2: /media/movies (mix and match!)
+        let _ = app.update(Message::ToggleSearchFolder("/media/movies".to_string()));
+        assert!(!app.is_all_search_selected());
+        assert_eq!(
+            app.selected_search_folders,
+            vec!["/media/anime".to_string(), "/media/movies".to_string()]
+        );
+
+        // 4. Toggle folder 1 off
+        let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
+        assert!(!app.is_all_search_selected());
+        assert_eq!(app.selected_search_folders, vec!["/media/movies".to_string()]);
+
+        // 5. Toggle folder 2 off -> auto-reverts to All
+        let _ = app.update(Message::ToggleSearchFolder("/media/movies".to_string()));
+        assert!(app.is_all_search_selected());
+        assert!(app.selected_search_folders.is_empty());
+        assert!(app.is_all_folder(&app.selected_search_folder));
+
+        // 6. Select multiple folders again, then click "All" button
+        let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
+        let _ = app.update(Message::ToggleSearchFolder("/media/music".to_string()));
+        assert_eq!(app.selected_search_folders.len(), 2);
+
+        let all_label = app.t("common.all");
+        let _ = app.update(Message::SelectSearchFolder(all_label));
+        assert!(app.is_all_search_selected());
+        assert!(app.selected_search_folders.is_empty());
+
+        // 7. Mix and match /media/anime and /media/movies, then PerformSearch
+        let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
+        let _ = app.update(Message::ToggleSearchFolder("/media/movies".to_string()));
+        let _ = app.update(Message::PerformSearch);
+
+        assert_eq!(
+            app.active_search_folders,
+            vec!["/media/anime".to_string(), "/media/movies".to_string()]
+        );
+        assert_eq!(
+            app.settings.last_folders,
+            vec!["/media/anime".to_string(), "/media/movies".to_string()]
+        );
+        // Only anime and movies should be in available_videos (2 out of 3)
+        assert_eq!(app.available_videos.len(), 2);
+        assert!(app.available_videos.iter().any(|v| v.path.starts_with("/media/anime")));
+        assert!(app.available_videos.iter().any(|v| v.path.starts_with("/media/movies")));
+        assert!(!app.available_videos.iter().any(|v| v.path.starts_with("/media/music")));
+
+        // 8. Remove one active folder from filter badge
+        let _ = app.update(Message::RemoveActiveSearchFolder("/media/anime".to_string()));
+        assert_eq!(app.active_search_folders, vec!["/media/movies".to_string()]);
+        assert_eq!(app.available_videos.len(), 1);
+        assert_eq!(app.available_videos[0].path, "/media/movies/movie.mp4");
+
+        // 9. Remove remaining folder -> returns to All
+        let _ = app.update(Message::RemoveActiveSearchFolder("/media/movies".to_string()));
+        assert!(app.active_search_folders.is_empty());
+        assert!(app.is_all_folder(&app.active_search_folder));
+        assert_eq!(app.available_videos.len(), 3);
     }
 
     #[test]

@@ -116,7 +116,8 @@ pub struct WazooSettings {
     pub scroll_speed: f32,
     pub is_global_muted: bool,
     pub last_query: String,
-    pub last_folder: String,
+    #[serde(default)]
+    pub last_folders: Vec<String>,
     #[serde(default = "default_buffer_duration_secs")]
     pub buffer_duration_secs: u32,
     #[serde(default = "default_buffer_size_mb")]
@@ -147,7 +148,7 @@ impl Default for WazooSettings {
             scroll_speed: 1.0,
             is_global_muted: true,
             last_query: String::new(),
-            last_folder: "All".to_string(),
+            last_folders: Vec::new(),
             buffer_duration_secs: 10,
             buffer_size_mb: 64,
             language: "en".to_string(),
