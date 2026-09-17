@@ -61,10 +61,18 @@
   },
   "help": {
     "title": "キーボードショートカット",
+    "subtitle": "システム制御とクイックナビゲーション",
+    "categories": {
+      "playback": "再生とシーク",
+      "drawers": "パネルとドロワー",
+      "layout": "グリッドとマルチプレイヤー",
+      "audio": "オーディオと表示",
+      "system": "システムとウィンドウ"
+    },
     "shortcuts": {
       "toggle_scroll": "無限スクロールモードの切り替え",
       "toggle_flip": "フリップモードの切り替え",
-      "toggle_file_picker": "ファイルピッカーの切り替え",
+      "toggle_file_picker": "ファイルドロワーの切り替え",
       "add_player": "プレイヤーを追加",
       "remove_player": "プレイヤーを削除",
       "focus_next": "次のプレイヤーにフォーカス",
@@ -82,7 +90,9 @@
       "move_window": "ウィンドウを移動",
       "toggle_bookmarks": "ブックマークの切り替え",
       "toggle_transcript": "字幕トランスクリプトの切り替え",
-      "toggle_history": "再生履歴を切り替え"
+      "toggle_history": "再生履歴を切り替え",
+      "random_seek": "ランダムシーク",
+      "show_title_overlay": "タイトルHUDを表示"
     }
   },
   "file_picker": {

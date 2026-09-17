@@ -61,10 +61,18 @@
   },
   "help": {
     "title": "Raccourcis clavier",
+    "subtitle": "Contrôles Système et Navigation Rapide",
+    "categories": {
+      "playback": "Lecture et Recherche",
+      "drawers": "Panneaux et Tiroirs",
+      "layout": "Grille et Multi-Lecteur",
+      "audio": "Audio et Affichage",
+      "system": "Système et Fenêtre"
+    },
     "shortcuts": {
       "toggle_scroll": "Basculer le mode défilement infini",
       "toggle_flip": "Basculer le mode retournement",
-      "toggle_file_picker": "Afficher/Masquer le sélecteur de fichiers",
+      "toggle_file_picker": "Afficher/Masquer le tiroir de fichiers",
       "add_player": "Ajouter un lecteur",
       "remove_player": "Supprimer un lecteur",
       "focus_next": "Passer au lecteur suivant",
@@ -82,7 +90,9 @@
       "move_window": "Déplacer la fenêtre",
       "toggle_bookmarks": "Basculer les favoris",
       "toggle_transcript": "Basculer la transcription des sous-titres",
-      "toggle_history": "Basculer l'historique de lecture"
+      "toggle_history": "Basculer l'historique de lecture",
+      "random_seek": "Recherche aléatoire",
+      "show_title_overlay": "Afficher l'ATH du titre"
     }
   },
   "file_picker": {

@@ -61,10 +61,18 @@
   },
   "help": {
     "title": "ปุ่มลัดคีย์บอร์ด",
+    "subtitle": "การควบคุมระบบและการนำทางด่วน",
+    "categories": {
+      "playback": "การเล่นและการค้นหา",
+      "drawers": "แผงควบคุมและลิ้นชัก",
+      "layout": "ตารางและผู้เล่นหลายคน",
+      "audio": "เสียงและการแสดงผล",
+      "system": "ระบบและหน้าต่าง"
+    },
     "shortcuts": {
       "toggle_scroll": "สลับโหมดเลื่อนไม่สิ้นสุด",
       "toggle_flip": "สลับโหมดพลิก",
-      "toggle_file_picker": "สลับการเลือกไฟล์",
+      "toggle_file_picker": "สลับลิ้นชักไฟล์",
       "add_player": "เพิ่มผู้เล่น",
       "remove_player": "ลบผู้เล่น",
       "focus_next": "โฟกัสผู้เล่นถัดไป",
@@ -82,7 +90,9 @@
       "move_window": "ย้ายหน้าต่าง",
       "toggle_bookmarks": "สลับที่คั่นหน้า",
       "toggle_transcript": "สลับคำบรรยายบทสนทนา",
-      "toggle_history": "สลับประวัติการเล่น"
+      "toggle_history": "สลับประวัติการเล่น",
+      "random_seek": "ข้ามแบบสุ่ม",
+      "show_title_overlay": "แสดง HUD ชื่อเรื่อง"
     }
   },
   "file_picker": {

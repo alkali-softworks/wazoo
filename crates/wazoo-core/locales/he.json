@@ -61,10 +61,18 @@
   },
   "help": {
     "title": "קיצורי מקלדת",
+    "subtitle": "בקרות מערכת וניווט מהיר",
+    "categories": {
+      "playback": "הפעלה וחיפוש",
+      "drawers": "פאנלים ומגירות",
+      "layout": "רשת ונגנים מרובים",
+      "audio": "שמע ותצוגה",
+      "system": "מערכת וחלון"
+    },
     "shortcuts": {
       "toggle_scroll": "החלף מצב גלילה אינסופית",
       "toggle_flip": "החלף מצב היפוך",
-      "toggle_file_picker": "הצג/הסתר בחירת קבצים",
+      "toggle_file_picker": "הצג/הסתר מגירת קבצים",
       "add_player": "הוסף נגן",
       "remove_player": "הסר נגן",
       "focus_next": "התמקד בנגן הבא",
@@ -82,7 +90,9 @@
       "move_window": "הזז חלון",
       "toggle_bookmarks": "החלף סימניות",
       "toggle_transcript": "החלף תמליל כתוביות",
-      "toggle_history": "החלף היסטוריית השמעה"
+      "toggle_history": "החלף היסטוריית השמעה",
+      "random_seek": "דילוג אקראי",
+      "show_title_overlay": "הצג שכבת כותרת"
     }
   },
   "file_picker": {

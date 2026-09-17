@@ -65,3 +65,28 @@ fn test_rtl_detection() {
     assert!(!Language::is_rtl_code("es"));
     assert!(!Language::is_rtl_code("ja"));
 }
+
+#[test]
+fn test_all_locales_have_full_key_parity() {
+    let dict = get_dictionary();
+    let en_keys: std::collections::HashSet<_> = dict.get("en").expect("en locale exists").keys().collect();
+
+    for lang in Language::ALL {
+        let lang_keys: std::collections::HashSet<_> = dict.get(lang.code).expect("locale exists").keys().collect();
+        let missing: Vec<_> = en_keys.difference(&lang_keys).collect();
+        let extra: Vec<_> = lang_keys.difference(&en_keys).collect();
+        assert!(
+            missing.is_empty(),
+            "Locale '{}' is missing keys: {:?}",
+            lang.code,
+            missing
+        );
+        assert!(
+            extra.is_empty(),
+            "Locale '{}' has extra keys: {:?}",
+            lang.code,
+            extra
+        );
+    }
+}
+
