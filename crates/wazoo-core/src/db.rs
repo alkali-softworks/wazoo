@@ -439,6 +439,44 @@ mod tests {
     }
 
     #[test]
+    fn test_search_videos_multiple_folders_mix_and_match() {
+        let mut db = Database::open_in_memory().unwrap();
+        db.batch_insert_videos(&[
+            VideoRecord {
+                id: 0,
+                name: "Breaking Bad S01E01".to_string(),
+                path: "/media/BreakingBad/S01E01.mp4".to_string(),
+            },
+            VideoRecord {
+                id: 0,
+                name: "Game of Thrones S01E01".to_string(),
+                path: "/media/GameOfThrones/S01E01.mp4".to_string(),
+            },
+            VideoRecord {
+                id: 0,
+                name: "The Wire S01E01".to_string(),
+                path: "/media/TheWire/S01E01.mp4".to_string(),
+            },
+        ])
+        .unwrap();
+
+        // 1. Search with multiple folders: BreakingBad and TheWire (omit GameOfThrones)
+        let folders = vec![
+            "/media/BreakingBad".to_string(),
+            "/media/TheWire".to_string(),
+        ];
+        let results = db.search_videos("S01E01", &folders).unwrap();
+        assert_eq!(results.len(), 2);
+        assert!(results.iter().any(|v| v.path == "/media/BreakingBad/S01E01.mp4"));
+        assert!(results.iter().any(|v| v.path == "/media/TheWire/S01E01.mp4"));
+        assert!(!results.iter().any(|v| v.path == "/media/GameOfThrones/S01E01.mp4"));
+
+        // 2. Search with empty folders list (All)
+        let all_results = db.search_videos("S01E01", &[]).unwrap();
+        assert_eq!(all_results.len(), 3);
+    }
+
+    #[test]
     fn test_search_videos_negative_query_grouping() {
         let mut db = Database::open_in_memory().unwrap();
         db.batch_insert_videos(&[

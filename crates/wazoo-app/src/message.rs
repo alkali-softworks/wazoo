@@ -52,7 +52,9 @@ pub enum Message {
     ClearPlayHistory,
     PlayFileInFocused(String),
     SelectSearchFolder(String),
+    ToggleSearchFolder(String),
     ResetSearchFolder,
+    RemoveActiveSearchFolder(String),
     SetWindowOpacity(f32),
 
     // Playback controls
