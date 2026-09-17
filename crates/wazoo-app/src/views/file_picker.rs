@@ -18,19 +18,19 @@ use iced::{
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FilePickerItem {
+pub(crate) struct FilePickerItem {
     pub path: String,
     pub title: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FilePickerGroup {
+pub(crate) struct FilePickerGroup {
     pub folder: String,
     pub files: Vec<FilePickerItem>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PrecomputedVideoMeta {
+pub(crate) struct PrecomputedVideoMeta {
     pub path: String,
     pub title: String,
     pub title_lower: String,
