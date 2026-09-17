@@ -88,7 +88,7 @@ impl Default for KeybindSettings {
             add_player: "n".to_string(),
             remove_player: "x".to_string(),
             toggle_layout: "l".to_string(),
-            toggle_file_picker: "h".to_string(),
+            toggle_file_picker: "h, f".to_string(),
             toggle_transcript: "v".to_string(),
             toggle_bookmarks: "b".to_string(),
             toggle_history: "y".to_string(),
@@ -339,6 +339,12 @@ impl KeybindSettings {
             self.speed_or_bookmark_up.replace(',', " /")
         };
 
+        let file_picker_display = if self.toggle_file_picker == "h, f" || self.toggle_file_picker == "h" {
+            "h, f".to_string()
+        } else {
+            self.toggle_file_picker.clone()
+        };
+
         vec![
             (search_display, t("help.shortcuts.search_videos")),
             (prev_next_display, t("help.shortcuts.prev_next_video")),
@@ -350,7 +356,7 @@ impl KeybindSettings {
             (self.toggle_mute.clone(), t("help.shortcuts.toggle_mute")),
             (play_pause_display, t("help.shortcuts.play_pause")),
             (
-                self.toggle_file_picker.clone(),
+                file_picker_display,
                 t("help.shortcuts.toggle_file_picker"),
             ),
             (self.add_player.clone(), t("help.shortcuts.add_player")),
@@ -391,5 +397,211 @@ impl KeybindSettings {
             ("Alt + Drag".to_string(), t("help.shortcuts.move_window")),
         ]
     }
+
+    /// Returns the systemic, categorized list of keyboard shortcuts for the help reference screen.
+    pub fn help_categories(&self, t: impl Fn(&str) -> String) -> Vec<HelpCategory> {
+        let play_pause_key = if self.play_pause.eq_ignore_ascii_case("space") {
+            "Space".to_string()
+        } else {
+            self.play_pause.to_uppercase()
+        };
+
+        let file_picker_keys = if self.toggle_file_picker == "h, f" || self.toggle_file_picker == "h" {
+            vec!["H".to_string(), "F".to_string()]
+        } else {
+            self.toggle_file_picker
+                .split(',')
+                .map(|s| s.trim().to_uppercase())
+                .filter(|s| !s.is_empty())
+                .collect()
+        };
+
+        let search_keys = if self.search_videos == "j, /" || self.search_videos == "j, /, f" {
+            vec!["J".to_string(), "/".to_string()]
+        } else {
+            self.search_videos
+                .split(',')
+                .map(|s| s.trim().to_uppercase())
+                .filter(|s| !s.is_empty())
+                .collect()
+        };
+
+        let bookmarks_save_keys = if self.speed_or_bookmark_up == "+, =" {
+            vec!["+".to_string(), "=".to_string()]
+        } else {
+            self.speed_or_bookmark_up
+                .split(',')
+                .map(|s| s.trim().to_uppercase())
+                .filter(|s| !s.is_empty())
+                .collect()
+        };
+
+        let close_keys = if self.close_app.eq_ignore_ascii_case("alt+x") {
+            vec!["Alt".to_string(), "X".to_string()]
+        } else {
+            self.close_app
+                .split('+')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect()
+        };
+
+        vec![
+            HelpCategory {
+                title: t("help.categories.playback"),
+                icon: "🎬",
+                shortcuts: vec![
+                    HelpShortcut {
+                        key: KeyDisplay::Single(play_pause_key),
+                        description: t("help.shortcuts.play_pause"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Pair("←".to_string(), "→".to_string()),
+                        description: t("help.shortcuts.seek_back_forward"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Pair("↓".to_string(), "↑".to_string()),
+                        description: t("help.shortcuts.prev_next_video"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Pair("<".to_string(), ">".to_string()),
+                        description: t("help.shortcuts.prev_next_frame"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.toggle_play_mode.to_uppercase()),
+                        description: t("help.shortcuts.toggle_play_mode"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.random_seek.to_uppercase()),
+                        description: t("help.shortcuts.random_seek"),
+                    },
+                ],
+            },
+            HelpCategory {
+                title: t("help.categories.drawers"),
+                icon: "📁",
+                shortcuts: vec![
+                    HelpShortcut {
+                        key: KeyDisplay::Alternatives(file_picker_keys),
+                        description: t("help.shortcuts.toggle_file_picker"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.toggle_transcript.to_uppercase()),
+                        description: t("help.shortcuts.toggle_transcript"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.toggle_bookmarks.to_uppercase()),
+                        description: t("help.shortcuts.toggle_bookmarks"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.toggle_history.to_uppercase()),
+                        description: t("help.shortcuts.toggle_history"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Alternatives(search_keys),
+                        description: t("help.shortcuts.search_videos"),
+                    },
+                ],
+            },
+            HelpCategory {
+                title: t("help.categories.layout"),
+                icon: "⊞",
+                shortcuts: vec![
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.toggle_layout.to_uppercase()),
+                        description: t("help.shortcuts.toggle_layout"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.add_player.to_uppercase()),
+                        description: t("help.shortcuts.add_player"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.remove_player.to_uppercase()),
+                        description: t("help.shortcuts.remove_player"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single("Tab".to_string()),
+                        description: t("help.shortcuts.focus_next"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.toggle_scroll.to_uppercase()),
+                        description: t("help.shortcuts.toggle_scroll"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.toggle_flip.to_uppercase()),
+                        description: t("help.shortcuts.toggle_flip"),
+                    },
+                ],
+            },
+            HelpCategory {
+                title: t("help.categories.audio"),
+                icon: "🔊",
+                shortcuts: vec![
+                    HelpShortcut {
+                        key: KeyDisplay::Pair("[".to_string(), "]".to_string()),
+                        description: t("help.shortcuts.adjust_volume"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.toggle_mute.to_uppercase()),
+                        description: t("help.shortcuts.toggle_mute"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.toggle_subtitles.to_uppercase()),
+                        description: t("help.shortcuts.toggle_subtitles"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.show_title_overlay.to_uppercase()),
+                        description: t("help.shortcuts.show_title_overlay"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Alternatives(bookmarks_save_keys),
+                        description: t("bookmarks.bookmark_current"),
+                    },
+                ],
+            },
+            HelpCategory {
+                title: t("help.categories.system"),
+                icon: "⚙️",
+                shortcuts: vec![
+                    HelpShortcut {
+                        key: KeyDisplay::Combo(vec!["Alt".to_string(), "Drag".to_string()]),
+                        description: t("help.shortcuts.move_window"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Combo(close_keys),
+                        description: t("help.shortcuts.close_app"),
+                    },
+                ],
+            },
+        ]
+    }
+}
+
+/// Visual representation of keyboard shortcuts for UI display.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum KeyDisplay {
+    /// Single keycap, e.g. "Space", "Tab", "M"
+    Single(String),
+    /// Alternative keys (press either), e.g. ["H", "F"], ["J", "/"]
+    Alternatives(Vec<String>),
+    /// Paired directional/step keys, e.g. ("←", "→"), ("[", "]")
+    Pair(String, String),
+    /// Key combination with modifier, e.g. ["Alt", "X"]
+    Combo(Vec<String>),
+}
+
+/// A localized keyboard shortcut entry.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HelpShortcut {
+    pub key: KeyDisplay,
+    pub description: String,
+}
+
+/// A functional grouping of related keyboard shortcuts.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HelpCategory {
+    pub title: String,
+    pub icon: &'static str,
+    pub shortcuts: Vec<HelpShortcut>,
 }
 

@@ -51,6 +51,28 @@ fn test_help_shortcuts_generation() {
 }
 
 #[test]
+fn test_help_categories_generation() {
+    let kb = KeybindSettings::default();
+    let categories = kb.help_categories(|key| key.to_string());
+    assert_eq!(categories.len(), 5);
+    assert_eq!(categories[0].title, "help.categories.playback");
+    assert_eq!(categories[1].title, "help.categories.drawers");
+    assert_eq!(categories[2].title, "help.categories.layout");
+    assert_eq!(categories[3].title, "help.categories.audio");
+    assert_eq!(categories[4].title, "help.categories.system");
+
+    // Drawer category contains both H and F for file drawer
+    let file_drawer_item = &categories[1].shortcuts[0];
+    assert_eq!(file_drawer_item.description, "help.shortcuts.toggle_file_picker");
+    match &file_drawer_item.key {
+        wazoo_core::KeyDisplay::Alternatives(keys) => {
+            assert_eq!(keys, &vec!["H".to_string(), "F".to_string()]);
+        }
+        other => panic!("Expected Alternatives, got {:?}", other),
+    }
+}
+
+#[test]
 fn test_is_complete_json_and_reconcile_with_defaults() {
     // Incomplete json missing most keys
     let incomplete_json: serde_json::Value = serde_json::json!({

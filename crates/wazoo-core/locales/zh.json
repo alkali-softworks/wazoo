@@ -10,7 +10,8 @@
     "loading": "加载中...",
     "all": "全部",
     "files": "文件",
-    "menu": "菜单"
+    "menu": "菜单",
+    "or": "或"
   },
   "app": {
     "drag_to_move": "拖动以移动",

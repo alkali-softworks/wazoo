@@ -244,6 +244,10 @@ impl WazooApp {
             return Task::none();
         }
 
+        if key == Key::Character("?".into()) || key == Key::Named(Named::F1) {
+            return self.update(Message::OpenHelpModal);
+        }
+
         if let Some(action) = find_key_action(&self.settings.keybinds, &key, self.is_alt_pressed) {
             match action {
                 KeyAction::CloseApp => return self.update(Message::CloseApp),

@@ -10,7 +10,8 @@
     "loading": "Loading...",
     "all": "All",
     "files": "Files",
-    "menu": "Menu"
+    "menu": "Menu",
+    "or": "or"
   },
   "app": {
     "drag_to_move": "Drag to Move",
@@ -60,10 +61,18 @@
   },
   "help": {
     "title": "Keyboard Shortcuts",
+    "subtitle": "System Controls & Quick Navigation",
+    "categories": {
+      "playback": "Playback & Seeking",
+      "drawers": "Panels & Drawers",
+      "layout": "Grid & Multi-Player",
+      "audio": "Audio & Display",
+      "system": "System & Window"
+    },
     "shortcuts": {
       "toggle_scroll": "Toggle Infinite Scroll Mode",
       "toggle_flip": "Toggle Flip Mode",
-      "toggle_file_picker": "Toggle File Picker",
+      "toggle_file_picker": "Toggle File Drawer",
       "add_player": "Add Player",
       "remove_player": "Remove Player",
       "focus_next": "Focus Next Player",
@@ -81,7 +90,9 @@
       "move_window": "Move Window",
       "toggle_bookmarks": "Toggle Bookmarks",
       "toggle_history": "Toggle Play History",
-      "toggle_transcript": "Toggle Subtitle Transcript"
+      "toggle_transcript": "Toggle Subtitle Transcript",
+      "random_seek": "Random Seek",
+      "show_title_overlay": "Show Title HUD"
     }
   },
   "file_picker": {

@@ -10,7 +10,8 @@
     "loading": "Chargement...",
     "all": "Tout",
     "files": "Fichiers",
-    "menu": "Menu"
+    "menu": "Menu",
+    "or": "ou"
   },
   "app": {
     "drag_to_move": "Faites glisser pour déplacer",
