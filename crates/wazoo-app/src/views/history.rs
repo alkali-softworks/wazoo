@@ -18,7 +18,7 @@ use iced::{
 };
 
 impl WazooApp {
-    pub(crate) fn view_history_drawer(&self) -> Element<'_, Message> {
+    pub fn view_history_drawer(&self) -> Element<'_, Message> {
         let filter = self.history_search.trim().to_lowercase();
 
         // 1. Header row

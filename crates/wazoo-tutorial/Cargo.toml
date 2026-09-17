@@ -6,6 +6,10 @@ authors.workspace = true
 license.workspace = true
 description = "Interactive tutorial application for learning Rust and Iced with wazoo-rs tech"
 
+[lib]
+name = "wazoo_tutorial"
+path = "src/lib.rs"
+
 [[bin]]
 name = "wazoo-tutorial"
 path = "src/main.rs"

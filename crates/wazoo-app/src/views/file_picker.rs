@@ -18,19 +18,19 @@ use iced::{
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct FilePickerItem {
+pub struct FilePickerItem {
     pub path: String,
     pub title: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct FilePickerGroup {
+pub struct FilePickerGroup {
     pub folder: String,
     pub files: Vec<FilePickerItem>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct PrecomputedVideoMeta {
+pub struct PrecomputedVideoMeta {
     pub path: String,
     pub title: String,
     pub title_lower: String,
@@ -118,7 +118,7 @@ impl WazooApp {
             .collect();
     }
 
-    pub(crate) fn view_file_picker(&self) -> Element<'_, Message> {
+    pub fn view_file_picker(&self) -> Element<'_, Message> {
         let groups = &self.file_picker_groups;
 
         let mut folders_col = column![].spacing(6);

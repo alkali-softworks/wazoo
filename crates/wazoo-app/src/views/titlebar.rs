@@ -17,7 +17,7 @@ use iced::{
 };
 
 impl WazooApp {
-    pub(crate) fn view_titlebar(&self) -> Element<'_, Message> {
+    pub fn view_titlebar(&self) -> Element<'_, Message> {
         let alpha = self.titlebar_alpha();
 
         let badge_btn = button(
