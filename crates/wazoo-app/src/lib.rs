@@ -33,6 +33,11 @@ pub fn run() -> iced::Result {
     {
         crate::platform::init_linux_cursor_env(initial_settings.is_default_player);
 
+        // On Linux hybrid graphics laptops (e.g. Intel iGPU + NVIDIA dGPU), defaulting to
+        // the integrated GPU avoids cross-GPU DRI3 PRIME swapchain presentation failure /
+        // VK_ERROR_DEVICE_LOST when windows are occluded or behind other windows.
+        // On desktop PCs, monitors are plugged directly into the dGPU,
+        // so the dedicated GPU is preferred without PRIME offload sync issues.
         if std::env::var("WGPU_POWER_PREF").is_err() && crate::platform::is_hybrid_laptop() {
             // SAFETY: Setting environment variables at startup before background worker threads run.
             unsafe {
