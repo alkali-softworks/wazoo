@@ -126,7 +126,7 @@
     "extracting": "対話トラックを抽出中...",
     "loading_subtitles": "内嵌字幕を読み込み中",
     "no_subtitles_found": "字幕が見つかりません",
-    "no_subtitles_desc": "この動画には埋め込み字幕ストリームまたは字幕ファイル (.srt, .vtt, .ass) がありません。",
+    "no_subtitles_desc": "動画に埋め込み字幕または外部 .srt ファイルがありません",
     "no_match": "「{query}」に一致する対話はありません",
     "no_active_player": "アクティブなプレイヤーがありません"
   },
