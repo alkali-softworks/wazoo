@@ -59,7 +59,7 @@ impl WazooApp {
         ));
 
         for folder in &self.settings.media_folders {
-            let label = format::folder_basename(folder).to_string();
+            let label = format::ucwords(format::folder_basename(folder));
             let is_selected = self.selected_search_folders.contains(folder);
             chip_items.push((
                 label.clone(),

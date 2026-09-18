@@ -1,4 +1,4 @@
-use wazoo_app::format::{clean_name, folder_basename, format_video_title};
+use wazoo_app::format::{clean_name, folder_basename, format_video_title, ucwords};
 
 #[test]
 fn test_clean_name() {
@@ -27,3 +27,16 @@ fn test_folder_basename() {
     assert_eq!(folder_basename("C:\\Media\\Anime\\"), "Anime");
     assert_eq!(folder_basename("Anime"), "Anime");
 }
+
+#[test]
+fn test_ucwords() {
+    assert_eq!(ucwords("anime"), "Anime");
+    assert_eq!(ucwords("movies"), "Movies");
+    assert_eq!(ucwords("tv"), "Tv");
+    assert_eq!(ucwords("sat_morning_shows"), "Sat_Morning_Shows");
+    assert_eq!(ucwords("Sat_Morning_Shows"), "Sat_Morning_Shows");
+    assert_eq!(ucwords("my favorite videos"), "My Favorite Videos");
+    assert_eq!(ucwords("action-packed"), "Action-Packed");
+    assert_eq!(ucwords(""), "");
+}
+
