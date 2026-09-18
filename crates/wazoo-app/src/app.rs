@@ -152,8 +152,16 @@ impl WazooApp {
             let _ = config_mgr.save_settings(&settings);
         }
 
-        // 1. Direct file playback: check if a video file path was provided
-        let file_to_play: Option<String> = if let Some(ref file_path) = cli.file {
+        // 1. Direct file playback: check if video file path(s) were provided
+        let mut file_to_play: Option<String> = None;
+        let mut files_to_process = cli.files.clone();
+        if files_to_process.is_empty() {
+            if let Some(ref single) = cli.file {
+                files_to_process.push(single.clone());
+            }
+        }
+
+        for file_path in &files_to_process {
             let canon_path = std::fs::canonicalize(file_path).unwrap_or_else(|_| file_path.clone());
             let path_str = canon_path.to_string_lossy().to_string();
 
@@ -171,10 +179,10 @@ impl WazooApp {
                 let _ = db.insert_misc_video(&clean_name, &path_str);
             }
 
-            Some(path_str)
-        } else {
-            None
-        };
+            if file_to_play.is_none() {
+                file_to_play = Some(path_str);
+            }
+        }
 
         let cli_query_clean = cli
             .query

@@ -13,24 +13,43 @@ use std::path::{Path, PathBuf};
 pub struct CliArgs {
     pub query: Option<String>,
     pub file: Option<PathBuf>,
+    pub files: Vec<PathBuf>,
 }
 
 impl CliArgs {
     pub fn from_query(query: Option<String>) -> Self {
-        Self { query, file: None }
+        Self {
+            query,
+            file: None,
+            files: Vec::new(),
+        }
     }
 
     pub fn from_file(file: PathBuf) -> Self {
         Self {
             query: None,
-            file: Some(file),
+            file: Some(file.clone()),
+            files: vec![file],
+        }
+    }
+
+    pub fn from_files(files: Vec<PathBuf>) -> Self {
+        let file = files.first().cloned();
+        Self {
+            query: None,
+            file,
+            files,
         }
     }
 }
 
 impl From<Option<String>> for CliArgs {
     fn from(query: Option<String>) -> Self {
-        Self { query, file: None }
+        Self {
+            query,
+            file: None,
+            files: Vec::new(),
+        }
     }
 }
 
@@ -140,26 +159,26 @@ where
         }
     }
 
-    let mut file_arg = None;
+    let mut files = Vec::new();
     let mut query_positional = Vec::new();
 
-    // Check if the joined positional arguments point to a file (e.g. unquoted filename with spaces)
-    if !positional.is_empty() {
-        let joined = positional.join(" ");
-        if let Some(resolved) = resolve_file_arg(&joined) {
-            file_arg = Some(resolved);
-        } else {
-            for arg in positional {
-                if file_arg.is_none() {
-                    if let Some(resolved) = resolve_file_arg(&arg) {
-                        file_arg = Some(resolved);
-                        continue;
-                    }
-                }
+    // Check if the joined positional arguments point to an existing file on disk (e.g. unquoted filename with spaces)
+    let joined = positional.join(" ");
+    let decoded_joined = decode_file_url(&joined);
+    let p_joined = PathBuf::from(&decoded_joined);
+    if !positional.is_empty() && p_joined.is_file() {
+        files.push(std::fs::canonicalize(&p_joined).unwrap_or(p_joined));
+    } else {
+        for arg in positional {
+            if let Some(resolved) = resolve_file_arg(&arg) {
+                files.push(resolved);
+            } else {
                 query_positional.push(arg);
             }
         }
     }
+
+    let file = files.first().cloned();
 
     let query = query_flag
         .or_else(|| {
@@ -174,7 +193,8 @@ where
 
     CliArgs {
         query,
-        file: file_arg,
+        file,
+        files,
     }
 }
 
