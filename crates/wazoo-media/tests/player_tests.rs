@@ -1,7 +1,7 @@
 use std::ffi::CString;
 use wazoo_media::{
     build_alang_string, find_matching_audio_track, format_subtitle_track_label,
-    get_track_preference_string, mpv_ffi, AudioTrack, SubtitleTrack,
+    get_track_preference_string, mpv_ffi, track_matches_preference, AudioTrack, SubtitleTrack,
 };
 
 #[test]
@@ -151,3 +151,38 @@ fn test_mpv_start_option() {
         mpv_ffi::mpv_terminate_destroy(mpv);
     }
 }
+
+#[test]
+fn test_track_matches_preference_same_language_commentary() {
+    let main_track = AudioTrack {
+        id: 1,
+        title: Some("Surround".to_string()),
+        lang: Some("eng".to_string()),
+        codec: Some("aac".to_string()),
+        is_selected: true,
+    };
+    let commentary_1 = AudioTrack {
+        id: 2,
+        title: Some("Commentary by film historian David Kalat".to_string()),
+        lang: Some("eng".to_string()),
+        codec: Some("aac".to_string()),
+        is_selected: false,
+    };
+    let commentary_2 = AudioTrack {
+        id: 3,
+        title: Some("Commentary by film critic Brad Stevens".to_string()),
+        lang: Some("eng".to_string()),
+        codec: Some("aac".to_string()),
+        is_selected: false,
+    };
+
+    // Both main track and commentary tracks match English preference
+    assert!(track_matches_preference(&main_track, "English"));
+    assert!(track_matches_preference(&commentary_1, "English"));
+    assert!(track_matches_preference(&commentary_2, "English"));
+
+    // Does not match other languages
+    assert!(!track_matches_preference(&commentary_1, "Japanese"));
+    assert!(!track_matches_preference(&commentary_1, "Spanish"));
+}
+
