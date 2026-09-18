@@ -199,3 +199,28 @@ pub fn folder_basename(path: &str) -> &str {
         .unwrap_or(clean)
 }
 
+/// Capitalizes the first character of each word in a string (e.g. "anime" -> "Anime", "sat morning shows" -> "Sat Morning Shows").
+pub fn ucwords(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    let mut capitalize_next = true;
+
+    for c in s.chars() {
+        if c.is_alphabetic() {
+            if capitalize_next {
+                for upper in c.to_uppercase() {
+                    result.push(upper);
+                }
+                capitalize_next = false;
+            } else {
+                result.push(c);
+            }
+        } else {
+            capitalize_next = true;
+            result.push(c);
+        }
+    }
+
+    result
+}
+
+
