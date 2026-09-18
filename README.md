@@ -12,8 +12,7 @@ Wazoo is an idea in development since 2020 - originally as a JS app, then Electr
 ## Features
 
 ### 🧠 High-Performance Architecture
-- Built in native **Rust** and **Iced** with **`libmpv`**: Decodes a wide range of video formats just like VLC.
-- Fast **SQLite** indexing: Query tens of thousands of video files instantly.
+- Built in native **Rust** and **Iced** with **`libmpv`** (plays virtually any video format out of the box, just like VLC) and fast **SQLite** indexing to query tens of thousands of files instantly.
 
 ### 🖼️ Multi-Tile Layouts
 - **1 to 12 Video Players**: Scale from a single minimalist player to an ambient video wall.
