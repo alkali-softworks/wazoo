@@ -444,15 +444,26 @@ impl WazooApp {
             let mut bottom_col = column![];
 
             if is_audio_menu_open && p.state.audio_tracks.len() > 1 {
-                let menu_items: Vec<Element<'a, Message>> = p
+                let track_labels: Vec<(i64, String)> = p
                     .state
                     .audio_tracks
                     .iter()
                     .enumerate()
-                    .map(|(i, t)| {
-                        let is_selected = Some(t.id) == p.state.current_audio_track_id;
-                        let label = wazoo_media::format_audio_track_label(t, i);
-                        let track_id = t.id;
+                    .map(|(i, t)| (t.id, wazoo_media::format_audio_track_label(t, i)))
+                    .collect();
+
+                let max_chars = track_labels
+                    .iter()
+                    .map(|(_, label)| label.chars().count())
+                    .max()
+                    .unwrap_or(0);
+
+                let card_width = ((max_chars as f32) * 7.5 + 60.0).clamp(150.0, 500.0);
+
+                let menu_items: Vec<Element<'a, Message>> = track_labels
+                    .into_iter()
+                    .map(|(track_id, label)| {
+                        let is_selected = Some(track_id) == p.state.current_audio_track_id;
                         let item_row = row![
                             text(if is_selected { "✓" } else { "" })
                                 .size(13)
@@ -486,7 +497,7 @@ impl WazooApp {
                     .collect();
 
                 let audio_menu_card =
-                    container(column(menu_items).spacing(2).width(Length::Fixed(450.0)))
+                    container(column(menu_items).spacing(2).width(Length::Fixed(card_width)))
                         .padding(4)
                         .style(theme::audio_menu_card_style);
 
