@@ -104,7 +104,13 @@ pub fn init_linux_desktop_entry() {
         let _ = std::fs::create_dir_all(&apps_dir);
         let desktop_path = apps_dir.join("wazoo.desktop");
 
-        if let Ok(current_exe) = std::env::current_exe() {
+        let target_exe = std::env::var("APPIMAGE")
+            .ok()
+            .filter(|s| !s.trim().is_empty())
+            .map(std::path::PathBuf::from)
+            .or_else(|| std::env::current_exe().ok());
+
+        if let Some(current_exe) = target_exe {
             let exe_str = current_exe.to_string_lossy();
             let mimetypes = format!("{};", SUPPORTED_VIDEO_MIMETYPES.join(";"));
             let desktop_content = format!(
