@@ -40,8 +40,7 @@
     "flip_mode_enabled": "Mode balik aktif",
     "flip_mode_disabled": "Mode balik nonaktif",
     "no_players": "Tidak ada pemutar aktif",
-    "no_videos_found": "Tidak ada video yang ditemukan untuk kueri",
-    "query_no_match_desc": "Kueri sama sekali tidak cocok dengan apa pun."
+    "no_videos_found": "Tidak ada video yang ditemukan untuk kueri"
   },
   "settings": {
     "title": "Pengaturan",

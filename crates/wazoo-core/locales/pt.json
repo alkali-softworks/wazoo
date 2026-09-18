@@ -40,8 +40,7 @@
     "flip_mode_enabled": "Modo de inversão ativado",
     "flip_mode_disabled": "Modo de inversão desativado",
     "no_players": "Nenhum reprodutor ativo",
-    "no_videos_found": "Nenhum vídeo encontrado para a consulta",
-    "query_no_match_desc": "A consulta simplesmente não correspondeu a nada."
+    "no_videos_found": "Nenhum vídeo encontrado para a consulta"
   },
   "settings": {
     "title": "Configurações",

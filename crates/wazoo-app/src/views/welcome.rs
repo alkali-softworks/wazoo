@@ -52,9 +52,6 @@ impl WazooApp {
             text(self.t("wazoo.no_videos_found"))
                 .size(22)
                 .color(iced::Color::WHITE),
-            text(self.t("wazoo.query_no_match_desc"))
-                .size(14)
-                .color(theme::COLOR_TEXT_MUTED),
         ]
         .spacing(14)
         .align_x(Alignment::Center);

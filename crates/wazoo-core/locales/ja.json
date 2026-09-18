@@ -40,8 +40,7 @@
     "flip_mode_enabled": "フリップモード有効",
     "flip_mode_disabled": "フリップモード無効",
     "no_players": "アクティブなプレイヤーはありません",
-    "no_videos_found": "クエリに一致する動画が見つかりません",
-    "query_no_match_desc": "クエリに一致するものは見つかりませんでした。"
+    "no_videos_found": "クエリに一致する動画が見つかりません"
   },
   "settings": {
     "title": "設定",

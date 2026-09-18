@@ -40,8 +40,7 @@
     "flip_mode_enabled": "وضع التقليب مفعل",
     "flip_mode_disabled": "وضع التقليب معطل",
     "no_players": "لا يوجد مشغلون نشطون",
-    "no_videos_found": "لم يتم العثور على مقاطع فيديو للبحث",
-    "query_no_match_desc": "لم يتطابق البحث مع أي شيء."
+    "no_videos_found": "لم يتم العثور على مقاطع فيديو للبحث"
   },
   "settings": {
     "title": "الإعدادات",

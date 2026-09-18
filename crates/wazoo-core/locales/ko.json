@@ -40,8 +40,7 @@
     "flip_mode_enabled": "플립 모드 활성화됨",
     "flip_mode_disabled": "플립 모드 비활성화됨",
     "no_players": "활성 플레이어 없음",
-    "no_videos_found": "검색어와 일치하는 동영상을 찾을 수 없습니다",
-    "query_no_match_desc": "검색어와 일치하는 항목이 없습니다."
+    "no_videos_found": "검색어와 일치하는 동영상을 찾을 수 없습니다"
   },
   "settings": {
     "title": "설정",
