@@ -126,7 +126,7 @@
     "extracting": "Dialogspuren werden extrahiert...",
     "loading_subtitles": "Eingebettete Untertitel laden",
     "no_subtitles_found": "Keine Untertitel gefunden",
-    "no_subtitles_desc": "Dieses Video enthält keinen Untertitel-Stream oder Nebendatei (.srt, .vtt, .ass).",
+    "no_subtitles_desc": "Video hat keine integrierten Untertitel oder externe .srt-Datei",
     "no_match": "Kein Dialog passend zu \"{query}\"",
     "no_active_player": "Kein aktiver Player"
   },

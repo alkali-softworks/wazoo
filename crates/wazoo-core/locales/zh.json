@@ -126,7 +126,7 @@
     "extracting": "正在提取对白轨道...",
     "loading_subtitles": "正在加载内嵌字幕",
     "no_subtitles_found": "未找到字幕",
-    "no_subtitles_desc": "此视频没有内嵌字幕流或外挂字幕文件 (.srt, .vtt, .ass)。",
+    "no_subtitles_desc": "视频没有内嵌字幕或外部 .srt 文件",
     "no_match": "没有与 \"{query}\" 匹配的对白",
     "no_active_player": "无活动播放器"
   },

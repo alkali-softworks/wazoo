@@ -126,7 +126,7 @@
     "extracting": "Extraindo faixas de diálogo...",
     "loading_subtitles": "Carregando legendas embutidas",
     "no_subtitles_found": "Nenhuma legenda encontrada",
-    "no_subtitles_desc": "Este vídeo não possui legendas embutidas ou arquivo (.srt, .vtt, .ass).",
+    "no_subtitles_desc": "O vídeo não possui legendas integradas ou arquivo .srt externo",
     "no_match": "Nenhum diálogo correspondente a \"{query}\"",
     "no_active_player": "Nenhum reprodutor ativo"
   },

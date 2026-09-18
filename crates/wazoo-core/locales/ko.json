@@ -126,7 +126,7 @@
     "extracting": "대화 트랙 추출 중...",
     "loading_subtitles": "내장 자막 불러오는 중",
     "no_subtitles_found": "자막을 찾을 수 없음",
-    "no_subtitles_desc": "이 비디오에는 내장 자막이나 외부 자막 파일(.srt, .vtt, .ass)이 없습니다.",
+    "no_subtitles_desc": "비디오에 내장 자막이나 외부 .srt 파일이 없습니다",
     "no_match": "\"{query}\"와 일치하는 대화 없음",
     "no_active_player": "활성 플레이어 없음"
   },

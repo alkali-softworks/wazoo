@@ -126,7 +126,7 @@
     "extracting": "Extracting dialogue tracks...",
     "loading_subtitles": "Loading embedded subtitles",
     "no_subtitles_found": "No Subtitles Found",
-    "no_subtitles_desc": "This video has no embedded subtitle stream or sidecar (.srt, .vtt, .ass) file.",
+    "no_subtitles_desc": "Video has no embedded subtitle or external .srt file",
     "no_match": "No dialogue matching \"{query}\"",
     "no_active_player": "No Active Player"
   },

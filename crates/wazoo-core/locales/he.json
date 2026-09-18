@@ -126,7 +126,7 @@
     "extracting": "מחלץ רצועות דיאלוג...",
     "loading_subtitles": "טוען כתוביות מוטמעות",
     "no_subtitles_found": "לא נמצאו כתוביות",
-    "no_subtitles_desc": "לסרטון זה אין כתוביות מוטמעות או קובץ חיצוני (.srt, .vtt, .ass).",
+    "no_subtitles_desc": "לווידאו אין כתוביות מוטמעות או קובץ .srt חיצוני",
     "no_match": "אין דיאלוג התואם ל-\"{query}\"",
     "no_active_player": "אין נגן פעיל"
   },

@@ -126,7 +126,7 @@
     "extracting": "Extrayendo pistas de diálogo...",
     "loading_subtitles": "Cargando subtítulos integrados",
     "no_subtitles_found": "No se encontraron subtítulos",
-    "no_subtitles_desc": "Este video no tiene flujo de subtítulos integrado ni archivo adjunto (.srt, .vtt, .ass).",
+    "no_subtitles_desc": "El video no tiene subtítulos integrados ni archivo .srt externo",
     "no_match": "Ningún diálogo coincide con \"{query}\"",
     "no_active_player": "Sin reproductor activo"
   },

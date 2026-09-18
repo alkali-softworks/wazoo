@@ -126,7 +126,7 @@
     "extracting": "Mengekstrak trek dialog...",
     "loading_subtitles": "Memuat subtitle tertanam",
     "no_subtitles_found": "Subtitle Tidak Ditemukan",
-    "no_subtitles_desc": "Video ini tidak memiliki subtitle tertanam atau file (.srt, .vtt, .ass).",
+    "no_subtitles_desc": "Video tidak memiliki subtitle tertanam atau file .srt eksternal",
     "no_match": "Tidak ada dialog yang cocok dengan \"{query}\"",
     "no_active_player": "Tidak Ada Pemutar Aktif"
   },
