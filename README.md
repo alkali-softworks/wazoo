@@ -190,13 +190,13 @@ scoop install ffmpeg
 | `WAZOO_HWDEC` | Overrides the `libmpv` hardware video decoding profile (e.g. `auto-copy`, `vaapi`, `nvdec`, `no`). Software decoding is used by default (`no`) to prevent thread deadlocks and driver issues when windows are occluded or behind other applications. | `no` |
 | `WGPU_POWER_PREF` | Selects GPU power profile for the Iced/WGPU renderer (`low-power` or `high-performance`). Automatically defaults to `low-power` on Linux dual-GPU hybrid laptops when unset. | `low-power` / system default |
 
-### Configuration File (`settings.json`)
+### Configuration & Database Files (`settings.json`, `wazoo.db`)
 
-Wazoo automatically persists user preferences and window state in `settings.json`:
+Wazoo automatically persists user preferences, window state, and media library indexing together in the platform configuration directory:
 
-- **Linux:** `~/.config/wazoo-rs/settings.json`
-- **Windows:** `%APPDATA%\alkalisoftworks\wazoo-rs\config\settings.json`
-- **macOS:** `~/Library/Application Support/com.alkalisoftworks.wazoo-rs/settings.json`
+- **Linux:** `~/.config/wazoo-rs/` (`settings.json`, `wazoo.db`)
+- **Windows:** `%APPDATA%\alkalisoftworks\wazoo-rs\config\` (`settings.json`, `wazoo.db`)
+- **macOS:** `~/Library/Application Support/com.alkalisoftworks.wazoo-rs/` (`settings.json`, `wazoo.db`)
 
 Key properties configurable in `settings.json`:
 
