@@ -369,6 +369,34 @@ pub fn find_matching_audio_track(tracks: &[AudioTrack], preferred: &str) -> Opti
     None
 }
 
+pub fn track_matches_preference(track: &AudioTrack, preferred: &str) -> bool {
+    if preferred.trim().is_empty() {
+        return false;
+    }
+    let aliases = language_aliases(preferred);
+    if let Some(ref l) = track.lang {
+        let lower_lang = l.trim().to_ascii_lowercase();
+        if aliases.iter().any(|a| a == &lower_lang) {
+            return true;
+        }
+        let display = language_display_name(&lower_lang).to_ascii_lowercase();
+        if !display.is_empty() && aliases.iter().any(|a| a == &display) {
+            return true;
+        }
+    }
+    if let Some(ref title) = track.title {
+        let lower_title = title.to_ascii_lowercase();
+        if aliases.iter().any(|a| lower_title.contains(a)) {
+            return true;
+        }
+    }
+    let label = format_audio_track_label(track, 0).to_ascii_lowercase();
+    if aliases.iter().any(|a| label.contains(a)) {
+        return true;
+    }
+    false
+}
+
 #[derive(Debug, Clone)]
 pub struct PlayerState {
     pub id: PlayerId,
@@ -1165,6 +1193,9 @@ impl VideoHandle {
                 mpv_ffi::MPV_FORMAT_INT64,
                 &mut id as *mut _ as *mut _,
             );
+            if let Ok(c_val) = CString::new(track_id.to_string()) {
+                mpv_ffi::mpv_set_property_string(self.mpv, prop.as_ptr(), c_val.as_ptr());
+            }
             self.state.current_audio_track_id = Some(track_id);
             for t in &mut self.state.audio_tracks {
                 t.is_selected = t.id == track_id;
@@ -1258,12 +1289,24 @@ impl VideoHandle {
         self.state.audio_tracks = audio_tracks;
         self.state.current_audio_track_id = current_aid;
 
-        // Auto-select preferred audio track if configured
-        if let Some(ref pref) = self.preferred_audio_language {
-            if let Some(matching_id) = find_matching_audio_track(&self.state.audio_tracks, pref) {
-                if current_aid != Some(matching_id) {
-                    self.set_audio_track(matching_id);
-                    current_aid = Some(matching_id);
+        // Auto-select preferred audio track on initial load if configured and not already matching
+        let is_initial_load = !self.tracks_loaded || self.state.current_audio_track_id.is_none();
+        if is_initial_load {
+            if let Some(ref pref) = self.preferred_audio_language {
+                let current_already_matches = current_aid.map_or(false, |aid| {
+                    self.state
+                        .audio_tracks
+                        .iter()
+                        .any(|t| t.id == aid && track_matches_preference(t, pref))
+                });
+
+                if !current_already_matches {
+                    if let Some(matching_id) = find_matching_audio_track(&self.state.audio_tracks, pref) {
+                        if current_aid != Some(matching_id) {
+                            self.set_audio_track(matching_id);
+                            current_aid = Some(matching_id);
+                        }
+                    }
                 }
             }
         }
@@ -1370,9 +1413,17 @@ impl VideoHandle {
                     }
                 }
             }
-            if let Some(matching_id) = find_matching_audio_track(&self.state.audio_tracks, p) {
-                if self.state.current_audio_track_id != Some(matching_id) {
-                    self.set_audio_track(matching_id);
+            let current_already_matches = self.state.current_audio_track_id.map_or(false, |aid| {
+                self.state
+                    .audio_tracks
+                    .iter()
+                    .any(|t| t.id == aid && track_matches_preference(t, p))
+            });
+            if !current_already_matches {
+                if let Some(matching_id) = find_matching_audio_track(&self.state.audio_tracks, p) {
+                    if self.state.current_audio_track_id != Some(matching_id) {
+                        self.set_audio_track(matching_id);
+                    }
                 }
             }
         }

@@ -1109,7 +1109,9 @@ impl WazooApp {
                     self.settings.preferred_audio_language = Some(pref.clone());
                     let _ = self.config_mgr.save_settings(&self.settings);
                     for other in &mut self.players {
-                        other.set_preferred_audio_language(Some(pref.clone()));
+                        if other.id != id {
+                            other.set_preferred_audio_language(Some(pref.clone()));
+                        }
                     }
                 }
                 self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
