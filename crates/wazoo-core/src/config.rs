@@ -32,10 +32,12 @@ impl ConfigManager {
             let _ = fs::create_dir_all(&data_dir);
         }
 
-        Self {
+        let mgr = Self {
             config_dir,
             data_dir,
-        }
+        };
+        mgr.migrate_legacy_database_if_needed();
+        mgr
     }
 
     pub fn with_dirs(config_dir: PathBuf, data_dir: PathBuf) -> Self {
@@ -45,9 +47,40 @@ impl ConfigManager {
         if !data_dir.exists() {
             let _ = fs::create_dir_all(&data_dir);
         }
-        Self {
+        let mgr = Self {
             config_dir,
             data_dir,
+        };
+        mgr.migrate_legacy_database_if_needed();
+        mgr
+    }
+
+    pub fn migrate_legacy_database_if_needed(&self) {
+        if self.config_dir == self.data_dir {
+            return;
+        }
+        let target_db = self.config_dir.join("wazoo.db");
+        let legacy_db = self.data_dir.join("wazoo.db");
+
+        if legacy_db.exists() && fs::metadata(&legacy_db).map(|m| m.len() > 0).unwrap_or(false) {
+            let target_is_empty_or_missing = !target_db.exists()
+                || fs::metadata(&target_db).map(|m| m.len() == 0).unwrap_or(false);
+
+            if target_is_empty_or_missing {
+                if target_db.exists() {
+                    let _ = fs::remove_file(&target_db);
+                }
+                if fs::copy(&legacy_db, &target_db).is_ok() {
+                    let legacy_wal = self.data_dir.join("wazoo.db-wal");
+                    if legacy_wal.exists() {
+                        let _ = fs::copy(&legacy_wal, self.config_dir.join("wazoo.db-wal"));
+                    }
+                    let legacy_shm = self.data_dir.join("wazoo.db-shm");
+                    if legacy_shm.exists() {
+                        let _ = fs::copy(&legacy_shm, self.config_dir.join("wazoo.db-shm"));
+                    }
+                }
+            }
         }
     }
 
@@ -56,7 +89,8 @@ impl ConfigManager {
     }
 
     pub fn database_path(&self) -> PathBuf {
-        self.data_dir.join("wazoo.db")
+        self.migrate_legacy_database_if_needed();
+        self.config_dir.join("wazoo.db")
     }
 
     pub fn load_settings(&self) -> WazooSettings {
