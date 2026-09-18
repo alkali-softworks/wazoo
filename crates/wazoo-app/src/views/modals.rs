@@ -22,39 +22,101 @@ use iced::{
 use wazoo_core::{HelpCategory, KeyDisplay, Language};
 use wazoo_scanner::ScanStage;
 
+fn estimate_chip_width(label: &str) -> f32 {
+    let text_width: f32 = label
+        .chars()
+        .map(|c| {
+            if c.is_ascii() {
+                if c.is_ascii_uppercase() || matches!(c, 'm' | 'w' | 'M' | 'W' | '@' | '%') {
+                    9.5
+                } else if matches!(c, 'i' | 'l' | 'j' | 't' | 'f' | '!' | '.' | ':' | ';' | '\'' | ' ') {
+                    4.5
+                } else {
+                    7.5
+                }
+            } else {
+                13.0
+            }
+        })
+        .sum();
+    // 24px horizontal padding (12 left + 12 right) + 8px row spacing
+    text_width + 32.0
+}
+
 impl WazooApp {
     pub(crate) fn view_search_modal(&self) -> Element<'_, Message> {
+        let mut chip_items: Vec<(String, Element<'_, Message>)> = Vec::new();
+
         let all_label = self.t("common.all");
         let is_all_selected = self.is_all_search_selected();
-        let mut folder_chips = row![
+        chip_items.push((
+            all_label.clone(),
             button(text(all_label.clone()).size(13))
                 .style(theme::folder_chip_style(is_all_selected))
                 .on_press(Message::SelectSearchFolder(all_label))
-                .padding([4, 12]),
-        ]
-        .spacing(8)
-        .align_y(Alignment::Center);
+                .padding([4, 12])
+                .into(),
+        ));
 
         for folder in &self.settings.media_folders {
-            let label = format::folder_basename(folder);
+            let label = format::folder_basename(folder).to_string();
             let is_selected = self.selected_search_folders.contains(folder);
-            folder_chips = folder_chips.push(
+            chip_items.push((
+                label.clone(),
                 button(text(label).size(13))
                     .style(theme::folder_chip_style(is_selected))
                     .on_press(Message::ToggleSearchFolder(folder.clone()))
-                    .padding([4, 12]),
-            );
+                    .padding([4, 12])
+                    .into(),
+            ));
         }
 
         if self.db.has_misc_videos().unwrap_or(false) {
             let is_misc_selected = self.selected_search_folders.contains(&"Misc".to_string());
-            folder_chips = folder_chips.push(
-                button(text(self.t("common.miscellaneous")).size(13))
+            let misc_label = self.t("common.miscellaneous");
+            chip_items.push((
+                misc_label.clone(),
+                button(text(misc_label).size(13))
                     .style(theme::folder_chip_style(is_misc_selected))
                     .on_press(Message::ToggleSearchFolder("Misc".to_string()))
-                    .padding([4, 12]),
-            );
+                    .padding([4, 12])
+                    .into(),
+            ));
         }
+
+        let max_row_width = 440.0;
+        let mut folders_col = column![].spacing(8);
+        let mut current_row = row![].spacing(8).align_y(Alignment::Center);
+        let mut current_width = 0.0;
+        let mut row_count = 0;
+
+        for (label, chip_elem) in chip_items {
+            let chip_width = estimate_chip_width(&label);
+            if current_width + chip_width > max_row_width && current_width > 0.0 {
+                folders_col = folders_col.push(current_row);
+                current_row = row![].spacing(8).align_y(Alignment::Center);
+                current_width = 0.0;
+                row_count += 1;
+            }
+            current_row = current_row.push(chip_elem);
+            current_width += chip_width;
+        }
+
+        if current_width > 0.0 {
+            folders_col = folders_col.push(current_row);
+            row_count += 1;
+        }
+
+        let folders_widget: Element<'_, Message> = if row_count > 4 {
+            scrollable(folders_col)
+                .direction(scrollable::Direction::Vertical(
+                    scrollable::Scrollbar::default(),
+                ))
+                .height(Length::Fixed(135.0))
+                .into()
+        } else {
+            folders_col.into()
+        };
 
         let mut tags_row = row![].spacing(6).align_y(Alignment::Center);
 
@@ -119,9 +181,7 @@ impl WazooApp {
                         .on_press(Message::CloseSearchModal),
                 ]
                 .align_y(Alignment::Center),
-                scrollable(folder_chips).direction(scrollable::Direction::Horizontal(
-                    scrollable::Scrollbar::default()
-                )),
+                folders_widget,
                 search_bar_row,
                 text(self.t_with(
                     "settings.total_videos",
