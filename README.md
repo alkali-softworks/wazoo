@@ -12,16 +12,13 @@ Wazoo is an idea in development since 2020 - originally as a JS app, then Electr
 ## Features
 
 ### 🧠 High-Performance Architecture
-Built in native **Rust** and **Iced** with hardware-accelerated **`libmpv`** and **SQLite** indexing: Query tens of thousands of video files instantly.
+- Built in native **Rust** and **Iced** with hardware-accelerated **`libmpv`**
+- Fast **SQLite** indexing: Query tens of thousands of video files instantly.
 
 ### 🖼️ Multi-Tile Layouts
 - **1 to 12 Video Players**: Scale from a single minimalist player to an ambient video wall.
 - **Flexible Layouts**: Cycle between **Grid**, **Row**, and **Column** arrangements (<kbd>L</kbd>).
 - **Independent Audio & Controls**: Per-tile volume control, seek slider, language select, and play mode.
-
-### 🔍 Instant Library Search
-- **Directory Scanner**: Recursively indexes media folders while cleaning up messy filenames in the UI.
-- **Dial in your media pool**:  Type partial names, separate multiple terms with commas, and exclude terms with `not ` or `!` (e.g. `anime, not bebop`).
 
 ### 🌊 The Infinity Stream ("Scroll Mode")
 View your library as a continuous vertical feed (<kbd>5</kbd>):
@@ -41,6 +38,10 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - **Active Line Highlighting**: Follows spoken dialogue in real time.
 - **Searchable**: Filter lines to locate specific quotes or scenes.
 
+### 🔍 Instant Library Search
+- **Directory Scanner**: Recursively indexes media folders while cleaning up messy filenames in the UI.
+- **Dial in your media pool**:  Type partial names, separate multiple terms with commas, and exclude terms with `not ` or `!` (e.g. `anime, not bebop`).
+
 ### 🔖 Bookmarks & Scene Memory
 - **Save Scenes**: Press <kbd>+</kbd> or <kbd>=</kbd> to bookmark the current video, timestamp, search query, and playback mode.
 - **Quick Recall**: Open the bookmarks drawer (<kbd>B</kbd>) to return to any saved scene in one click.
@@ -51,7 +52,7 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - Configurable window opacity to keep visual reference floating subtly over other tools.
 
 ### 📁 File Browser Drawer
-- **Collapsible Directory Tree**: Press <kbd>H</kbd> to browse folders with file counts.
+- **Collapsible Directory Tree**: Press <kbd>F</kbd> to browse folders with file counts.
 - **Direct Tile Loading**: Click any file to load it into the active player.
 
 ### 🕒 Play History Drawer
