@@ -55,7 +55,8 @@
     "folder_removed": "Carpeta eliminada: {folder} ({count} archivos)",
     "scanning_progress": "Escaneando {name} ({percent}% - {found} encontrados)",
     "scan_error": "Error de escaneo: {error}",
-    "misc_cleared": "Se eliminaron {count} archivos misceláneos"
+    "misc_cleared": "Se eliminaron {count} archivos misceláneos",
+    "default_player": "Reproductor predeterminado"
   },
   "search": {
     "folder": "Carpeta:",

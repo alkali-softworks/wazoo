@@ -21,6 +21,22 @@ fn test_config_manager_paths() {
 }
 
 #[test]
+fn test_default_player_setting_serialization() {
+    let mut settings = WazooSettings::default();
+    assert!(!settings.is_default_player);
+
+    settings.is_default_player = true;
+    let json = serde_json::to_string(&settings).unwrap();
+    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
+    assert!(deserialized.is_default_player);
+
+    // Verify backwards compatibility when is_default_player is omitted
+    let json_legacy = r#"{"window_opacity":1.0}"#;
+    let legacy_settings: WazooSettings = serde_json::from_str(json_legacy).unwrap();
+    assert!(!legacy_settings.is_default_player);
+}
+
+#[test]
 fn test_session_videos_serialization() {
     let mut settings = WazooSettings::default();
     settings.session_videos.push(wazoo_core::models::VideoSession {

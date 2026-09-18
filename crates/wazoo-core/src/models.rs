@@ -151,6 +151,8 @@ pub struct WazooSettings {
     #[serde(default)]
     pub preferred_audio_language: Option<String>,
     #[serde(default)]
+    pub is_default_player: bool,
+    #[serde(default)]
     pub keybinds: KeybindSettings,
 }
 
@@ -174,6 +176,7 @@ impl Default for WazooSettings {
             session_videos: Vec::new(),
             bookmarks: Vec::new(),
             preferred_audio_language: None,
+            is_default_player: false,
             keybinds: KeybindSettings::default(),
         }
     }

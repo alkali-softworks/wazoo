@@ -55,7 +55,8 @@
     "folder_removed": "फ़ोल्डर हटाया गया: {folder} ({count} फ़ाइलें)",
     "scanning_progress": "स्कैनिंग {name} ({percent}% - {found} मिले)",
     "scan_error": "स्कैन त्रुटि: {error}",
-    "misc_cleared": "{count} विविध फ़ाइलें साफ़ की गईं"
+    "misc_cleared": "{count} विविध फ़ाइलें साफ़ की गईं",
+    "default_player": "डिफ़ॉल्ट प्लेयर"
   },
   "search": {
     "folder": "फ़ोल्डर:",

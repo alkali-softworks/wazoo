@@ -55,7 +55,8 @@
     "folder_removed": "הוסרה תיקייה: {folder} ({count} קבצים)",
     "scanning_progress": "סורק {name} ({percent}% - נמצאו {found})",
     "scan_error": "שגיאת סריקה: {error}",
-    "misc_cleared": "נוקו {count} קבצים שונים"
+    "misc_cleared": "נוקו {count} קבצים שונים",
+    "default_player": "נגן ברירת מחדל"
   },
   "search": {
     "folder": "תיקייה:",

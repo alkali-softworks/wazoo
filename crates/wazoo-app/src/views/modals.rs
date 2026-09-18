@@ -199,7 +199,7 @@ impl WazooApp {
         Self::wrap_modal_with_backdrop(card, Message::CloseSearchModal)
     }
 
-    pub(crate) fn view_settings_modal(&self) -> Element<'_, Message> {
+    pub fn view_settings_modal(&self) -> Element<'_, Message> {
         let mut folders_col = column![
             text(self.t("settings.media_folders"))
                 .size(14)
@@ -346,12 +346,32 @@ impl WazooApp {
         ]
         .spacing(8);
 
+        let default_player_toggle = {
+            let is_default = self.settings.is_default_player;
+            let icon = if is_default { "✓ " } else { "" };
+            let label = format!("{}{}", icon, self.t("settings.default_player"));
+            button(
+                text(label)
+                    .size(11)
+                    .font(if is_default {
+                        theme::FONT_BOLD
+                    } else {
+                        Default::default()
+                    }),
+            )
+            .style(theme::default_player_toggle_style(is_default))
+            .on_press(Message::ToggleDefaultPlayer)
+            .padding([4, 10])
+        };
+
         let content = column![
             row![
                 text(self.t("settings.title"))
                     .size(20)
                     .color(iced::Color::WHITE),
                 Space::new().width(Length::Fill),
+                default_player_toggle,
+                Space::new().width(Length::Fixed(8.0)),
                 button(text("✕").size(14))
                     .style(theme::window_control_button_style)
                     .on_press(Message::CloseSettingsModal),

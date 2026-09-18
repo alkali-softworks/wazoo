@@ -55,7 +55,8 @@
     "folder_removed": "Pasta removida: {folder} ({count} arquivos)",
     "scanning_progress": "Verificando {name} ({percent}% - {found} encontrados)",
     "scan_error": "Erro de verificação: {error}",
-    "misc_cleared": "{count} arquivos diversos apagados"
+    "misc_cleared": "{count} arquivos diversos apagados",
+    "default_player": "Reprodutor padrão"
   },
   "search": {
     "folder": "Pasta:",

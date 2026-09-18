@@ -55,7 +55,8 @@
     "folder_removed": "Removed {folder} ({count} files)",
     "scanning_progress": "Scanning {name} ({percent}% - {found} found)",
     "scan_error": "Scan error: {error}",
-    "misc_cleared": "Cleared {count} miscellaneous files"
+    "misc_cleared": "Cleared {count} miscellaneous files",
+    "default_player": "Default Player"
   },
   "search": {
     "folder": "Folder:",

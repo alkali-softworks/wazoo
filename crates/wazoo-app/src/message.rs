@@ -104,6 +104,7 @@ pub enum Message {
     ClearSearch,
     OpenSettingsModal,
     CloseSettingsModal,
+    ToggleDefaultPlayer,
     OpenAlkaliWebsite,
     SetLanguage(String),
     OpenHelpModal,

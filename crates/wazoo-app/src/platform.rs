@@ -8,8 +8,11 @@
  */
 
 #[cfg(target_os = "linux")]
-pub fn init_linux_cursor_env() {
-    init_linux_desktop_entry();
+pub fn init_linux_cursor_env(is_default_player: bool) {
+    init_linux_desktop_entry(is_default_player);
+    if is_default_player {
+        let _ = set_as_default_video_player();
+    }
 
     if std::env::var_os("XCURSOR_SIZE").is_none() {
         let size = std::process::Command::new("gsettings")
@@ -72,7 +75,7 @@ pub const SUPPORTED_VIDEO_MIMETYPES: &[&str] = &[
 ];
 
 #[cfg(target_os = "linux")]
-pub fn init_linux_desktop_entry() {
+pub fn init_linux_desktop_entry(is_default_player: bool) {
     // Install the .desktop file and icon into user's local XDG directories
     // so desktop environments (Cinnamon, GNOME, KDE) properly display the icon
     // in taskbar/panel, Alt+Tab, and application launchers.
@@ -112,7 +115,12 @@ pub fn init_linux_desktop_entry() {
 
         if let Some(current_exe) = target_exe {
             let exe_str = current_exe.to_string_lossy();
-            let mimetypes = format!("{};", SUPPORTED_VIDEO_MIMETYPES.join(";"));
+            let mime_line = if is_default_player {
+                let mimetypes = format!("{};", SUPPORTED_VIDEO_MIMETYPES.join(";"));
+                format!("MimeType={}\n", mimetypes)
+            } else {
+                String::new()
+            };
             let desktop_content = format!(
                 "[Desktop Entry]\n\
                 Type=Application\n\
@@ -124,8 +132,8 @@ pub fn init_linux_desktop_entry() {
                 Terminal=false\n\
                 Categories=AudioVideo;Video;Player;\n\
                 StartupWMClass=wazoo\n\
-                MimeType={}\n",
-                exe_str, mimetypes
+                {}",
+                exe_str, mime_line
             );
             let _ = std::fs::write(&desktop_path, desktop_content);
             let _ = std::process::Command::new("update-desktop-database")
@@ -137,7 +145,7 @@ pub fn init_linux_desktop_entry() {
 
 #[cfg(target_os = "linux")]
 pub fn set_as_default_video_player() -> Result<(), String> {
-    init_linux_desktop_entry();
+    init_linux_desktop_entry(true);
     let mut failed = Vec::new();
     for mime in SUPPORTED_VIDEO_MIMETYPES {
         let status = std::process::Command::new("xdg-mime")
@@ -158,6 +166,40 @@ pub fn set_as_default_video_player() -> Result<(), String> {
 #[cfg(not(target_os = "linux"))]
 pub fn set_as_default_video_player() -> Result<(), String> {
     Err("Setting default video player is only supported on Linux".to_string())
+}
+
+#[cfg(target_os = "linux")]
+pub fn unset_as_default_video_player() -> Result<(), String> {
+    init_linux_desktop_entry(false);
+
+    if let Some(home) = std::env::var_os("HOME") {
+        let home = std::path::PathBuf::from(home);
+        let mimeapps_path = home.join(".config/mimeapps.list");
+        if mimeapps_path.exists() {
+            if let Ok(content) = std::fs::read_to_string(&mimeapps_path) {
+                let mut new_lines = Vec::new();
+                let mut in_default_section = false;
+                for line in content.lines() {
+                    let trimmed = line.trim();
+                    if trimmed.starts_with('[') {
+                        in_default_section = trimmed.eq_ignore_ascii_case("[Default Applications]");
+                        new_lines.push(line.to_string());
+                    } else if in_default_section && trimmed.contains("wazoo.desktop") {
+                        continue;
+                    } else {
+                        new_lines.push(line.to_string());
+                    }
+                }
+                let _ = std::fs::write(&mimeapps_path, new_lines.join("\n") + "\n");
+            }
+        }
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "linux"))]
+pub fn unset_as_default_video_player() -> Result<(), String> {
+    Ok(())
 }
 
 #[cfg(target_os = "linux")]
