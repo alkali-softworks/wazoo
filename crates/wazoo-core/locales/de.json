@@ -40,8 +40,7 @@
     "flip_mode_enabled": "Flip-Modus aktiviert",
     "flip_mode_disabled": "Flip-Modus deaktiviert",
     "no_players": "Keine aktiven Player",
-    "no_videos_found": "Keine Videos für die Suchanfrage gefunden",
-    "query_no_match_desc": "Die Suchanfrage hat keine Ergebnisse geliefert."
+    "no_videos_found": "Keine Videos für die Suchanfrage gefunden"
   },
   "settings": {
     "title": "Einstellungen",

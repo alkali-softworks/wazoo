@@ -40,8 +40,7 @@
     "flip_mode_enabled": "翻转模式已启用",
     "flip_mode_disabled": "翻转模式已禁用",
     "no_players": "无活动播放器",
-    "no_videos_found": "未找到符合查询的视频",
-    "query_no_match_desc": "查询未匹配到任何内容。"
+    "no_videos_found": "未找到符合查询的视频"
   },
   "settings": {
     "title": "设置",

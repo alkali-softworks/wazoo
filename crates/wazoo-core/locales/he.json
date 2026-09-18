@@ -40,8 +40,7 @@
     "flip_mode_enabled": "מצב היפוך פעיל",
     "flip_mode_disabled": "מצב היפוך מבוטל",
     "no_players": "אין נגנים פעילים",
-    "no_videos_found": "לא נמצאו סרטונים עבור השאילתה",
-    "query_no_match_desc": "השאילתה פשוט לא תאמה לשום דבר."
+    "no_videos_found": "לא נמצאו סרטונים עבור השאילתה"
   },
   "settings": {
     "title": "הגדרות",

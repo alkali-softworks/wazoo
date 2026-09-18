@@ -40,8 +40,7 @@
     "flip_mode_enabled": "फ्लिप मोड सक्षम",
     "flip_mode_disabled": "फ्लिप मोड अक्षम",
     "no_players": "कोई सक्रिय प्लेयर नहीं",
-    "no_videos_found": "क्वेरी के लिए कोई वीडियो नहीं मिला",
-    "query_no_match_desc": "क्वेरी से कुछ भी मेल नहीं खाया।"
+    "no_videos_found": "क्वेरी के लिए कोई वीडियो नहीं मिला"
   },
   "settings": {
     "title": "सेटिंग्स",

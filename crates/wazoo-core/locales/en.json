@@ -40,8 +40,7 @@
     "flip_mode_enabled": "Flip mode enabled",
     "flip_mode_disabled": "Flip mode disabled",
     "no_players": "No active players",
-    "no_videos_found": "No videos found for query",
-    "query_no_match_desc": "The query simply didn't match anything."
+    "no_videos_found": "No videos found for query"
   },
   "settings": {
     "title": "Settings",

@@ -40,8 +40,7 @@
     "flip_mode_enabled": "Modalità ribaltamento abilitata",
     "flip_mode_disabled": "Modalità ribaltamento disabilitata",
     "no_players": "Nessun lettore attivo",
-    "no_videos_found": "Nessun video trovato per la query",
-    "query_no_match_desc": "La query non ha prodotto alcun risultato."
+    "no_videos_found": "Nessun video trovato per la query"
   },
   "settings": {
     "title": "Impostazioni",
