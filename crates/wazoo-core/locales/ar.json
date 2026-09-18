@@ -55,7 +55,8 @@
     "folder_removed": "تمت إزالة المجلد: {folder} ({count} ملف)",
     "scanning_progress": "جاري الفحص {name} ({percent}% - تم العثور على {found})",
     "scan_error": "خطأ في الفحص: {error}",
-    "misc_cleared": "تم مسح {count} من الملفات المتنوعة"
+    "misc_cleared": "تم مسح {count} من الملفات المتنوعة",
+    "default_player": "المشغل الافتراضي"
   },
   "search": {
     "folder": "مجلد:",

@@ -1663,6 +1663,18 @@ impl WazooApp {
                 self.show_settings_modal = false;
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
+            Message::ToggleDefaultPlayer => {
+                self.settings.is_default_player = !self.settings.is_default_player;
+                let _ = self.config_mgr.save_settings(&self.settings);
+                #[cfg(target_os = "linux")]
+                {
+                    if self.settings.is_default_player {
+                        let _ = crate::platform::set_as_default_video_player();
+                    } else {
+                        let _ = crate::platform::unset_as_default_video_player();
+                    }
+                }
+            }
             Message::OpenAlkaliWebsite => {
                 crate::platform::open_url("https://alkalisoftworks.com/");
             }

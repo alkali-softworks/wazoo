@@ -55,7 +55,8 @@
     "folder_removed": "ফোল্ডার সরানো হয়েছে: {folder} ({count} ফাইল)",
     "scanning_progress": "স্ক্যান করা হচ্ছে {name} ({percent}% - {found} পাওয়া গেছে)",
     "scan_error": "স্ক্যান ত্রুটি: {error}",
-    "misc_cleared": "{count}টি বিবিধ ফাইল মুছে ফেলা হয়েছে"
+    "misc_cleared": "{count}টি বিবিধ ফাইল মুছে ফেলা হয়েছে",
+    "default_player": "ডিফল্ট প্লেয়ার"
   },
   "search": {
     "folder": "ফোল্ডার:",

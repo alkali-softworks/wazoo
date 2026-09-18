@@ -55,7 +55,8 @@
     "folder_removed": "폴더 제거됨: {folder} ({count}개 파일)",
     "scanning_progress": "검사 중 {name} ({percent}% - {found}개 발견)",
     "scan_error": "검사 오류: {error}",
-    "misc_cleared": "{count}개의 기타 파일을 지웠습니다"
+    "misc_cleared": "{count}개의 기타 파일을 지웠습니다",
+    "default_player": "기본 플레이어"
   },
   "search": {
     "folder": "폴더:",

@@ -769,3 +769,30 @@ fn test_query_zero_matches_shows_no_matches_view_and_clear_search() {
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_settings_toggle_default_player() {
+    let (mut app, _) = new_test_app();
+    assert!(!app.settings.is_default_player);
+
+    let _ = app.update(Message::OpenSettingsModal);
+    assert!(app.show_settings_modal);
+
+    // Render settings modal with toggle button
+    {
+        let _view = app.view_settings_modal();
+    }
+
+    // Toggle default player ON
+    let _ = app.update(Message::ToggleDefaultPlayer);
+    assert!(app.settings.is_default_player);
+
+    // Render settings modal with active toggle button
+    {
+        let _view_active = app.view_settings_modal();
+    }
+
+    // Toggle default player OFF
+    let _ = app.update(Message::ToggleDefaultPlayer);
+    assert!(!app.settings.is_default_player);
+}
+

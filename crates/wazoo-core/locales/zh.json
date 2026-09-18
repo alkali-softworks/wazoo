@@ -55,7 +55,8 @@
     "folder_removed": "已移除文件夹：{folder}（{count} 个文件）",
     "scanning_progress": "正在扫描 {name}（{percent}% - 找到 {found} 个文件）",
     "scan_error": "扫描错误：{error}",
-    "misc_cleared": "已清除 {count} 个杂项文件"
+    "misc_cleared": "已清除 {count} 个杂项文件",
+    "default_player": "默认播放器"
   },
   "search": {
     "folder": "文件夹:",

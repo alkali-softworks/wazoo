@@ -55,7 +55,8 @@
     "folder_removed": "Папка удалена: {folder} ({count} файлов)",
     "scanning_progress": "Сканирование {name} ({percent}% - {found} найдено)",
     "scan_error": "Ошибка сканирования: {error}",
-    "misc_cleared": "Очищено {count} разных файлов"
+    "misc_cleared": "Очищено {count} разных файлов",
+    "default_player": "Плеер по умолчанию"
   },
   "search": {
     "folder": "Папка:",

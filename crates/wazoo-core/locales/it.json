@@ -55,7 +55,8 @@
     "folder_removed": "Cartella rimossa: {folder} ({count} file)",
     "scanning_progress": "Scansione {name} ({percent}% - {found} trovati)",
     "scan_error": "Errore di scansione: {error}",
-    "misc_cleared": "Eliminati {count} file vari"
+    "misc_cleared": "Eliminati {count} file vari",
+    "default_player": "Lettore predefinito"
   },
   "search": {
     "folder": "Cartella:",

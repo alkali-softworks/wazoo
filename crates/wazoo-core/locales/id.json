@@ -55,7 +55,8 @@
     "folder_removed": "Folder dihapus: {folder} ({count} file)",
     "scanning_progress": "Memindai {name} ({percent}% - {found} ditemukan)",
     "scan_error": "Kesalahan pemindaian: {error}",
-    "misc_cleared": "{count} berkas lain-lain dibersihkan"
+    "misc_cleared": "{count} berkas lain-lain dibersihkan",
+    "default_player": "Pemutar Default"
   },
   "search": {
     "folder": "Folder:",

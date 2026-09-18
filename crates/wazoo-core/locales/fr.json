@@ -55,7 +55,8 @@
     "folder_removed": "Dossier supprimé : {folder} ({count} fichiers)",
     "scanning_progress": "Analyse en cours {name} ({percent}% - {found} trouvés)",
     "scan_error": "Erreur d'analyse : {error}",
-    "misc_cleared": "{count} fichiers divers effacés"
+    "misc_cleared": "{count} fichiers divers effacés",
+    "default_player": "Lecteur par défaut"
   },
   "search": {
     "folder": "Dossier :",

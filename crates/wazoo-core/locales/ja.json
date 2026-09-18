@@ -55,7 +55,8 @@
     "folder_removed": "フォルダを削除しました: {folder} ({count} 件のファイル)",
     "scanning_progress": "スキャン中 {name} ({percent}% - {found} 件検出)",
     "scan_error": "スキャンエラー: {error}",
-    "misc_cleared": "{count} 件のその他ファイルを消去しました"
+    "misc_cleared": "{count} 件のその他ファイルを消去しました",
+    "default_player": "既定のプレーヤー"
   },
   "search": {
     "folder": "フォルダー:",

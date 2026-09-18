@@ -123,6 +123,10 @@ where
             println!("wazoo {}", env!("CARGO_PKG_VERSION"));
             std::process::exit(0);
         } else if arg == "--set-default-video" || arg == "--set-default-mkv" {
+            let config_mgr = wazoo_core::ConfigManager::new();
+            let mut settings = config_mgr.load_settings();
+            settings.is_default_player = true;
+            let _ = config_mgr.save_settings(&settings);
             match crate::platform::set_as_default_video_player() {
                 Ok(()) => {
                     println!("Successfully registered Wazoo as default player for video formats (MKV, MP4, WebM, AVI, MOV).");
@@ -130,6 +134,21 @@ where
                 }
                 Err(e) => {
                     eprintln!("Error registering default video player: {e}");
+                    std::process::exit(1);
+                }
+            }
+        } else if arg == "--unset-default-video" || arg == "--unset-default-mkv" {
+            let config_mgr = wazoo_core::ConfigManager::new();
+            let mut settings = config_mgr.load_settings();
+            settings.is_default_player = false;
+            let _ = config_mgr.save_settings(&settings);
+            match crate::platform::unset_as_default_video_player() {
+                Ok(()) => {
+                    println!("Successfully unregistered Wazoo as default video player.");
+                    std::process::exit(0);
+                }
+                Err(e) => {
+                    eprintln!("Error unregistering default video player: {e}");
                     std::process::exit(1);
                 }
             }
@@ -211,8 +230,10 @@ Arguments:
 
 Options:
   -q, --query <QUERY>  Search query to filter videos
-      --set-default-video Register Wazoo as default player for video formats
-      --set-default-mkv   Alias for --set-default-video
+      --set-default-video   Register Wazoo as default player for video formats
+      --set-default-mkv     Alias for --set-default-video
+      --unset-default-video Unregister Wazoo as default video player
+      --unset-default-mkv   Alias for --unset-default-video
   -h, --help           Print help
   -V, --version        Print version"
     );

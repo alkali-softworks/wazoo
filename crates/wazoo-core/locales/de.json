@@ -55,7 +55,8 @@
     "folder_removed": "Ordner entfernt: {folder} ({count} Dateien)",
     "scanning_progress": "Scannen {name} ({percent}% - {found} gefunden)",
     "scan_error": "Scanfehler: {error}",
-    "misc_cleared": "{count} verschiedene Dateien gelöscht"
+    "misc_cleared": "{count} verschiedene Dateien gelöscht",
+    "default_player": "Standard-Player"
   },
   "search": {
     "folder": "Ordner:",
