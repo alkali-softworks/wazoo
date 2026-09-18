@@ -32,15 +32,15 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - **Scrub Back & Forth**: Press **Next** (<kbd>↑</kbd>) to step forward through your recently viewed stack before generating new random picks.
 - **Toggle Modes**: Press <kbd>S</kbd> to switch between **Shuffle** and **Sequential** playback (clears navigation history so you can step sequentially through files).
 
+### 🔍 Instant Library Search
+- **Directory Scanner**: Recursively indexes media folders while cleaning up messy filenames in the UI.
+- **Dial in your media pool**:  Type partial names, separate multiple terms with commas, and exclude terms with `not ` or `!` (e.g. `anime, not bebop`).
+
 ### 📜 Interactive Subtitle Transcript Drawer
 - **Live Transcript**: View the active video's dialogue in a side drawer (<kbd>V</kbd> or <kbd>[TX]</kbd>).
 - **Click to Seek**: Click any subtitle line to jump directly to that timestamp - great for studying dialogue or language learning.
 - **Active Line Highlighting**: Follows spoken dialogue in real time.
 - **Searchable**: Filter lines to locate specific quotes or scenes.
-
-### 🔍 Instant Library Search
-- **Directory Scanner**: Recursively indexes media folders while cleaning up messy filenames in the UI.
-- **Dial in your media pool**:  Type partial names, separate multiple terms with commas, and exclude terms with `not ` or `!` (e.g. `anime, not bebop`).
 
 ### 🔖 Bookmarks & Scene Memory
 - **Save Scenes**: Press <kbd>+</kbd> or <kbd>=</kbd> to bookmark the current video, timestamp, search query, and playback mode.
