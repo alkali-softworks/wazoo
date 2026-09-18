@@ -363,69 +363,6 @@ pub fn folder_chip_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> 
         }
     }
 }
-
-/// Default Player Toggle Button in Settings Modal
-pub fn default_player_toggle_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
-    move |_theme: &Theme, status: button::Status| {
-        if is_active {
-            let (bg, border_color) = match status {
-                button::Status::Hovered => (
-                    Color::from_rgba(0.26, 0.72, 0.51, 0.28),
-                    COLOR_PRIMARY_BORDER,
-                ),
-                button::Status::Pressed => (
-                    Color::from_rgba(0.26, 0.72, 0.51, 0.35),
-                    COLOR_PRIMARY,
-                ),
-                _ => (
-                    Color::from_rgba(0.26, 0.72, 0.51, 0.18),
-                    COLOR_PRIMARY,
-                ),
-            };
-            button::Style {
-                background: Some(Background::Color(bg)),
-                text_color: Color::WHITE,
-                border: Border {
-                    radius: 14.0.into(),
-                    width: 1.0,
-                    color: border_color,
-                },
-                shadow: Shadow::default(),
-                ..Default::default()
-            }
-        } else {
-            let (bg, border_color, text_color) = match status {
-                button::Status::Hovered => (
-                    Color::from_rgba(1.0, 1.0, 1.0, 0.08),
-                    Color::from_rgb(0.4, 0.4, 0.4),
-                    Color::WHITE,
-                ),
-                button::Status::Pressed => (
-                    Color::from_rgba(1.0, 1.0, 1.0, 0.14),
-                    Color::from_rgb(0.3, 0.3, 0.3),
-                    Color::WHITE,
-                ),
-                _ => (
-                    Color::TRANSPARENT,
-                    COLOR_BORDER,
-                    COLOR_TEXT_MUTED,
-                ),
-            };
-            button::Style {
-                background: Some(Background::Color(bg)),
-                text_color,
-                border: Border {
-                    radius: 14.0.into(),
-                    width: 1.0,
-                    color: border_color,
-                },
-                shadow: Shadow::default(),
-                ..Default::default()
-            }
-        }
-    }
-}
-
 // Text Input Style
 pub fn dark_input_style(_theme: &Theme, status: text_input::Status) -> text_input::Style {
     let border_color = match status {

@@ -359,7 +359,7 @@ impl WazooApp {
                         Default::default()
                     }),
             )
-            .style(theme::default_player_toggle_style(is_default))
+            .style(theme::folder_chip_style(is_default))
             .on_press(Message::ToggleDefaultPlayer)
             .padding([4, 10])
         };
