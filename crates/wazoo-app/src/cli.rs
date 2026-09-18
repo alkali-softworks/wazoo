@@ -122,14 +122,14 @@ where
         } else if arg == "--version" || arg == "-V" {
             println!("wazoo {}", env!("CARGO_PKG_VERSION"));
             std::process::exit(0);
-        } else if arg == "--set-default-video" || arg == "--set-default-mkv" {
+        } else if arg == "--set-default" {
             let config_mgr = wazoo_core::ConfigManager::new();
             let mut settings = config_mgr.load_settings();
             settings.is_default_player = true;
             let _ = config_mgr.save_settings(&settings);
             match crate::platform::set_as_default_video_player() {
                 Ok(()) => {
-                    println!("Successfully registered Wazoo as default player for video formats (MKV, MP4, WebM, AVI, MOV).");
+                    println!("Successfully registered Wazoo as default video player.");
                     std::process::exit(0);
                 }
                 Err(e) => {
@@ -137,7 +137,7 @@ where
                     std::process::exit(1);
                 }
             }
-        } else if arg == "--unset-default-video" || arg == "--unset-default-mkv" {
+        } else if arg == "--unset-default" {
             let config_mgr = wazoo_core::ConfigManager::new();
             let mut settings = config_mgr.load_settings();
             settings.is_default_player = false;
@@ -230,10 +230,8 @@ Arguments:
 
 Options:
   -q, --query <QUERY>  Search query to filter videos
-      --set-default-video   Register Wazoo as default player for video formats
-      --set-default-mkv     Alias for --set-default-video
-      --unset-default-video Unregister Wazoo as default video player
-      --unset-default-mkv   Alias for --unset-default-video
+      --set-default    Register Wazoo as default video player
+      --unset-default  Unregister Wazoo as default video player
   -h, --help           Print help
   -V, --version        Print version"
     );
