@@ -38,7 +38,4 @@ rfd = "0.15"
 libloading = "0.8"
 miniz_oxide = "0.8"
 
-[patch.crates-io]
-iced_winit = { path = "patches/iced_winit" }
-
 
