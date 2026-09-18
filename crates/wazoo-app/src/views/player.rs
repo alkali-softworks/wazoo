@@ -486,7 +486,7 @@ impl WazooApp {
                     .collect();
 
                 let audio_menu_card =
-                    container(column(menu_items).spacing(2).width(Length::Fixed(200.0)))
+                    container(column(menu_items).spacing(2).width(Length::Fixed(340.0)))
                         .padding(4)
                         .style(theme::audio_menu_card_style);
 
