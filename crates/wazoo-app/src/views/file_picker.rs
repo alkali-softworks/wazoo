@@ -125,6 +125,13 @@ impl WazooApp {
     pub fn view_file_picker(&self) -> Element<'_, Message> {
         let groups = &self.file_picker_groups;
 
+        let playing_paths: std::collections::HashSet<&str> = self
+            .players
+            .iter()
+            .map(|p| p.state.path.as_str())
+            .filter(|s| !s.is_empty())
+            .collect();
+
         let mut folders_col = column![].spacing(6);
         for group in groups {
             let count = group.files.len();
@@ -160,19 +167,49 @@ impl WazooApp {
             if is_expanded {
                 let mut files_list = column![].spacing(2);
                 for f in &group.files {
+                    let is_playing = !f.path.is_empty()
+                        && (playing_paths.contains(f.path.as_str())
+                            || self.players.iter().any(|p| {
+                                !p.state.path.is_empty()
+                                    && (p.state.path == f.path
+                                        || std::path::Path::new(&p.state.path)
+                                            == std::path::Path::new(&f.path))
+                            }));
                     let p_clone = f.path.clone();
+
+                    let row_content = if is_playing {
+                        row![
+                            text("▶")
+                                .size(9)
+                                .color(theme::COLOR_PRIMARY)
+                                .width(Length::Fixed(12.0)),
+                            text(&f.title)
+                                .size(12)
+                                .color(iced::Color::WHITE)
+                                .font(iced::Font {
+                                    weight: iced::font::Weight::Bold,
+                                    ..Default::default()
+                                }),
+                        ]
+                        .spacing(4)
+                        .align_y(Alignment::Center)
+                    } else {
+                        row![
+                            Space::new().width(Length::Fixed(12.0)),
+                            text(&f.title)
+                                .size(12)
+                                .color(iced::Color::from_rgb(0.85, 0.85, 0.85)),
+                        ]
+                        .spacing(4)
+                        .align_y(Alignment::Center)
+                    };
+
                     files_list = files_list.push(
-                        button(
-                            row![
-                                Space::new().width(Length::Fixed(12.0)),
-                                text(&f.title).size(12).color(iced::Color::WHITE),
-                            ]
-                            .align_y(Alignment::Center),
-                        )
-                        .style(theme::menu_item_style)
-                        .on_press(Message::PlayFileInFocused(p_clone))
-                        .padding([4, 8])
-                        .width(Length::Fill),
+                        button(row_content)
+                            .style(theme::transcript_cue_button_style(is_playing))
+                            .on_press(Message::PlayFileInFocused(p_clone))
+                            .padding([4, 8])
+                            .width(Length::Fill),
                     );
                 }
                 folders_col = folders_col.push(column![header_btn, files_list].spacing(4));

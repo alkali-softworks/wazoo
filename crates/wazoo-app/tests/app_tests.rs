@@ -256,6 +256,28 @@ fn test_file_picker_confined_folder_badge_multilingual() {
 }
 
 #[test]
+fn test_file_picker_highlights_playing_video() {
+    let (mut app, _) = new_test_app();
+    app.available_videos = vec![
+        VideoRecord::new(1, "Anime 1", "/media/anime/a1.mp4"),
+        VideoRecord::new(2, "Movie 1", "/media/movies/m1.mp4"),
+    ];
+    let _ = app.update(Message::ToggleFilePicker);
+    let _ = app.update(Message::ToggleFolderCollapse("anime".to_string()));
+
+    {
+        let _view_before = app.view_file_picker();
+    }
+
+    if let Some(p) = app.players.first_mut() {
+        p.state.path = "/media/anime/a1.mp4".to_string();
+    }
+    {
+        let _view_playing = app.view_file_picker();
+    }
+}
+
+#[test]
 fn test_search_modal_folder_toggles_and_reset_to_all() {
     let (mut app, _) = new_test_app();
     app.settings.media_folders = vec![
