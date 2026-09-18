@@ -110,10 +110,10 @@ pub fn format_audio_track_label(track: &AudioTrack, index: usize) -> String {
         };
         if first_seg.is_empty() {
             Some(trimmed.to_string())
-        } else if first_seg.chars().count() > 50 {
+        } else if first_seg.chars().count() > 65 {
             Some(format!(
                 "{}...",
-                first_seg.chars().take(47).collect::<String>()
+                first_seg.chars().take(62).collect::<String>()
             ))
         } else {
             Some(first_seg.to_string())
@@ -209,10 +209,10 @@ pub fn format_subtitle_track_label(track: &SubtitleTrack, index: usize) -> Strin
             }
         } else if first_seg.is_empty() {
             Some(trimmed.to_string())
-        } else if first_seg.chars().count() > 50 {
+        } else if first_seg.chars().count() > 65 {
             Some(format!(
                 "{}...",
-                first_seg.chars().take(47).collect::<String>()
+                first_seg.chars().take(62).collect::<String>()
             ))
         } else {
             Some(first_seg.to_string())
