@@ -57,4 +57,12 @@ fn test_cli_parsing() {
     assert_eq!(combined.query, Some("ambient".to_string()));
     assert!(combined.file.is_some());
     assert!(combined.file.unwrap().to_str().unwrap().ends_with("film.mkv"));
+
+    // Multiple video files
+    let multi = parse_cli_args_from(vec![
+        "/media/part1.mkv".to_string(),
+        "/media/part2.mkv".to_string(),
+    ]);
+    assert_eq!(multi.files.len(), 2);
+    assert_eq!(multi.file.as_ref().unwrap().to_str().unwrap(), "/media/part1.mkv");
 }
