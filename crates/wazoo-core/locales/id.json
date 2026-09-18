@@ -11,7 +11,8 @@
     "all": "Semua",
     "files": "Berkas",
     "menu": "Menu",
-    "or": "atau"
+    "or": "atau",
+    "miscellaneous": "Lain-lain"
   },
   "app": {
     "drag_to_move": "Seret untuk memindahkan",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "Mode balik aktif",
     "flip_mode_disabled": "Mode balik nonaktif",
     "no_players": "Tidak ada pemutar aktif",
-    "no_videos_found": "Tidak ada video yang ditemukan untuk kueri"
+    "no_videos_found": "Tidak ada video yang ditemukan untuk kueri",
+    "query_no_match_desc": "Kueri sama sekali tidak cocok dengan apa pun."
   },
   "settings": {
     "title": "Pengaturan",
@@ -53,11 +55,13 @@
     "folder_added": "Folder ditambahkan: {folder}",
     "folder_removed": "Folder dihapus: {folder} ({count} file)",
     "scanning_progress": "Memindai {name} ({percent}% - {found} ditemukan)",
-    "scan_error": "Kesalahan pemindaian: {error}"
+    "scan_error": "Kesalahan pemindaian: {error}",
+    "misc_cleared": "{count} berkas lain-lain dibersihkan"
   },
   "search": {
     "folder": "Folder:",
-    "placeholder": "Cari..."
+    "placeholder": "Cari...",
+    "clear_search": "Hapus Pencarian"
   },
   "help": {
     "title": "Pintasan Keyboard",

@@ -46,6 +46,16 @@ impl WazooApp {
             );
         }
 
+        if self.db.has_misc_videos().unwrap_or(false) {
+            let is_misc_selected = self.selected_search_folders.contains(&"Misc".to_string());
+            folder_chips = folder_chips.push(
+                button(text(self.t("common.miscellaneous")).size(13))
+                    .style(theme::folder_chip_style(is_misc_selected))
+                    .on_press(Message::ToggleSearchFolder("Misc".to_string()))
+                    .padding([4, 12]),
+            );
+        }
+
         let mut tags_row = row![].spacing(6).align_y(Alignment::Center);
 
         for (idx, tag) in self.search_tags.iter().enumerate() {
@@ -146,6 +156,35 @@ impl WazooApp {
                         button(text("✕").size(12))
                             .style(theme::close_window_button_style)
                             .on_press(Message::RemoveMediaFolder(f)),
+                    ]
+                    .align_y(Alignment::Center),
+                )
+                .padding([6, 10])
+                .style(|_theme: &Theme| container::Style {
+                    background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
+                    border: iced::Border {
+                        radius: 4.0.into(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                }),
+            );
+        }
+
+        let misc_count = self.db.get_misc_video_count().unwrap_or(0);
+        if misc_count > 0 {
+            folders_col = folders_col.push(
+                container(
+                    row![
+                        text(self.t("common.miscellaneous")).size(13).color(iced::Color::WHITE),
+                        Space::new().width(Length::Fixed(8.0)),
+                        text(format!("({} {})", format::format_number(misc_count), self.t("common.files").to_lowercase()))
+                            .size(12)
+                            .color(theme::COLOR_TEXT_MUTED),
+                        Space::new().width(Length::Fill),
+                        button(text("✕").size(12))
+                            .style(theme::close_window_button_style)
+                            .on_press(Message::ClearMiscVideos),
                     ]
                     .align_y(Alignment::Center),
                 )

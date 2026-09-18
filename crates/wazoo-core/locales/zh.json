@@ -11,7 +11,8 @@
     "all": "全部",
     "files": "文件",
     "menu": "菜单",
-    "or": "或"
+    "or": "或",
+    "miscellaneous": "杂项"
   },
   "app": {
     "drag_to_move": "拖动以移动",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "翻转模式已启用",
     "flip_mode_disabled": "翻转模式已禁用",
     "no_players": "无活动播放器",
-    "no_videos_found": "未找到符合查询的视频"
+    "no_videos_found": "未找到符合查询的视频",
+    "query_no_match_desc": "查询未匹配到任何内容。"
   },
   "settings": {
     "title": "设置",
@@ -53,11 +55,13 @@
     "folder_added": "已添加文件夹：{folder}",
     "folder_removed": "已移除文件夹：{folder}（{count} 个文件）",
     "scanning_progress": "正在扫描 {name}（{percent}% - 找到 {found} 个文件）",
-    "scan_error": "扫描错误：{error}"
+    "scan_error": "扫描错误：{error}",
+    "misc_cleared": "已清除 {count} 个杂项文件"
   },
   "search": {
     "folder": "文件夹:",
-    "placeholder": "搜索..."
+    "placeholder": "搜索...",
+    "clear_search": "清除搜索"
   },
   "help": {
     "title": "键盘快捷键",

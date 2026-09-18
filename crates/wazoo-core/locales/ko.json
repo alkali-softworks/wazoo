@@ -11,7 +11,8 @@
     "all": "전체",
     "files": "파일",
     "menu": "메뉴",
-    "or": "또는"
+    "or": "또는",
+    "miscellaneous": "기타"
   },
   "app": {
     "drag_to_move": "드래그하여 이동",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "플립 모드 활성화됨",
     "flip_mode_disabled": "플립 모드 비활성화됨",
     "no_players": "활성 플레이어 없음",
-    "no_videos_found": "검색어와 일치하는 동영상을 찾을 수 없습니다"
+    "no_videos_found": "검색어와 일치하는 동영상을 찾을 수 없습니다",
+    "query_no_match_desc": "검색어와 일치하는 항목이 없습니다."
   },
   "settings": {
     "title": "설정",
@@ -53,11 +55,13 @@
     "folder_added": "폴더 추가됨: {folder}",
     "folder_removed": "폴더 제거됨: {folder} ({count}개 파일)",
     "scanning_progress": "검사 중 {name} ({percent}% - {found}개 발견)",
-    "scan_error": "검사 오류: {error}"
+    "scan_error": "검사 오류: {error}",
+    "misc_cleared": "{count}개의 기타 파일을 지웠습니다"
   },
   "search": {
     "folder": "폴더:",
-    "placeholder": "검색..."
+    "placeholder": "검색...",
+    "clear_search": "검색 지우기"
   },
   "help": {
     "title": "단축키",

@@ -11,7 +11,8 @@
     "all": "সব",
     "files": "ফাইল",
     "menu": "মেনু",
-    "or": "বা"
+    "or": "বা",
+    "miscellaneous": "বিবিধ"
   },
   "app": {
     "drag_to_move": "সরানোর জন্য টেনে আনুন",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "ফ্লিপ মোড সক্ষম",
     "flip_mode_disabled": "ফ্লিপ মোড নিষ্ক্রিয়",
     "no_players": "কোনো সক্রিয় প্লেয়ার নেই",
-    "no_videos_found": "অনুসন্ধানের জন্য কোনো ভিডিও পাওয়া যায়নি"
+    "no_videos_found": "অনুসন্ধানের জন্য কোনো ভিডিও পাওয়া যায়নি",
+    "query_no_match_desc": "অনুসন্ধানে কিছুই মেলেনি।"
   },
   "settings": {
     "title": "সেটিংস",
@@ -53,11 +55,13 @@
     "folder_added": "ফোল্ডার যোগ হয়েছে: {folder}",
     "folder_removed": "ফোল্ডার সরানো হয়েছে: {folder} ({count} ফাইল)",
     "scanning_progress": "স্ক্যান করা হচ্ছে {name} ({percent}% - {found} পাওয়া গেছে)",
-    "scan_error": "স্ক্যান ত্রুটি: {error}"
+    "scan_error": "স্ক্যান ত্রুটি: {error}",
+    "misc_cleared": "{count}টি বিবিধ ফাইল মুছে ফেলা হয়েছে"
   },
   "search": {
     "folder": "ফোল্ডার:",
-    "placeholder": "অনুসন্ধান..."
+    "placeholder": "অনুসন্ধান...",
+    "clear_search": "অনুসন্ধান মুছুন"
   },
   "help": {
     "title": "কীবোর্ড শর্টকাট",

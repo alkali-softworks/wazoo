@@ -11,7 +11,8 @@
     "all": "Tudo",
     "files": "Arquivos",
     "menu": "Menu",
-    "or": "ou"
+    "or": "ou",
+    "miscellaneous": "Diversos"
   },
   "app": {
     "drag_to_move": "Arraste para mover",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "Modo de inversão ativado",
     "flip_mode_disabled": "Modo de inversão desativado",
     "no_players": "Nenhum reprodutor ativo",
-    "no_videos_found": "Nenhum vídeo encontrado para a consulta"
+    "no_videos_found": "Nenhum vídeo encontrado para a consulta",
+    "query_no_match_desc": "A consulta simplesmente não correspondeu a nada."
   },
   "settings": {
     "title": "Configurações",
@@ -53,11 +55,13 @@
     "folder_added": "Pasta adicionada: {folder}",
     "folder_removed": "Pasta removida: {folder} ({count} arquivos)",
     "scanning_progress": "Verificando {name} ({percent}% - {found} encontrados)",
-    "scan_error": "Erro de verificação: {error}"
+    "scan_error": "Erro de verificação: {error}",
+    "misc_cleared": "{count} arquivos diversos apagados"
   },
   "search": {
     "folder": "Pasta:",
-    "placeholder": "Pesquisar..."
+    "placeholder": "Pesquisar...",
+    "clear_search": "Limpar pesquisa"
   },
   "help": {
     "title": "Atalhos de teclado",

@@ -41,21 +41,9 @@ fn test_is_point_in_titlebar() {
 fn test_get_next_video_rec_sequential_and_random() {
     let (mut app, _) = new_test_app();
     app.available_videos = vec![
-        VideoRecord {
-            id: 1,
-            name: "V1".to_string(),
-            path: "/media/v1.mp4".to_string(),
-        },
-        VideoRecord {
-            id: 2,
-            name: "V2".to_string(),
-            path: "/media/v2.mp4".to_string(),
-        },
-        VideoRecord {
-            id: 3,
-            name: "V3".to_string(),
-            path: "/media/v3.mp4".to_string(),
-        },
+        VideoRecord::new(1, "V1", "/media/v1.mp4"),
+        VideoRecord::new(2, "V2", "/media/v2.mp4"),
+        VideoRecord::new(3, "V3", "/media/v3.mp4"),
     ];
 
     // 1. Sequential mode
@@ -81,21 +69,9 @@ fn test_get_next_video_rec_sequential_and_random() {
 fn test_get_prev_video_rec_sequential_and_random() {
     let (mut app, _) = new_test_app();
     app.available_videos = vec![
-        VideoRecord {
-            id: 1,
-            name: "V1".to_string(),
-            path: "/media/v1.mp4".to_string(),
-        },
-        VideoRecord {
-            id: 2,
-            name: "V2".to_string(),
-            path: "/media/v2.mp4".to_string(),
-        },
-        VideoRecord {
-            id: 3,
-            name: "V3".to_string(),
-            path: "/media/v3.mp4".to_string(),
-        },
+        VideoRecord::new(1, "V1", "/media/v1.mp4"),
+        VideoRecord::new(2, "V2", "/media/v2.mp4"),
+        VideoRecord::new(3, "V3", "/media/v3.mp4"),
     ];
 
     // 1. Sequential mode
@@ -245,16 +221,8 @@ fn test_player_nav_history_scrub_back_and_forward() {
 fn test_file_picker_confined_folder_badge_multilingual() {
     let (mut app, _) = new_test_app();
     app.available_videos = vec![
-        VideoRecord {
-            id: 1,
-            name: "Anime 1".to_string(),
-            path: "/media/anime/a1.mp4".to_string(),
-        },
-        VideoRecord {
-            id: 2,
-            name: "Movie 1".to_string(),
-            path: "/media/movies/m1.mp4".to_string(),
-        },
+        VideoRecord::new(1, "Anime 1", "/media/anime/a1.mp4"),
+        VideoRecord::new(2, "Movie 1", "/media/movies/m1.mp4"),
     ];
 
     // 1. Switch language to Spanish
@@ -299,21 +267,9 @@ fn test_search_modal_folder_toggles_and_reset_to_all() {
     // Populate database
     app.db
         .batch_insert_videos(&[
-            VideoRecord {
-                id: 1,
-                name: "Anime Ep 1".to_string(),
-                path: "/media/anime/ep1.mp4".to_string(),
-            },
-            VideoRecord {
-                id: 2,
-                name: "Blockbuster Movie".to_string(),
-                path: "/media/movies/movie.mp4".to_string(),
-            },
-            VideoRecord {
-                id: 3,
-                name: "Music Video".to_string(),
-                path: "/media/music/clip.mp4".to_string(),
-            },
+            VideoRecord::new(1, "Anime Ep 1", "/media/anime/ep1.mp4"),
+            VideoRecord::new(2, "Blockbuster Movie", "/media/movies/movie.mp4"),
+            VideoRecord::new(3, "Music Video", "/media/music/clip.mp4"),
         ])
         .unwrap();
 
@@ -510,16 +466,8 @@ fn test_play_history_cap_deduplication_and_drawer() {
 fn test_session_videos_shuffle_persistence() {
     let (mut app, _) = new_test_app();
     app.available_videos = vec![
-        VideoRecord {
-            id: 1,
-            name: "V1".to_string(),
-            path: "/media/v1.mp4".to_string(),
-        },
-        VideoRecord {
-            id: 2,
-            name: "V2".to_string(),
-            path: "/media/v2.mp4".to_string(),
-        },
+        VideoRecord::new(1, "V1", "/media/v1.mp4"),
+        VideoRecord::new(2, "V2", "/media/v2.mp4"),
     ];
 
     // Default should be shuffle mode
@@ -730,21 +678,9 @@ fn test_add_new_player_focuses_new_player_and_can_be_removed() {
     let _ = std::fs::File::create(&f3);
 
     app.available_videos = vec![
-        VideoRecord {
-            id: 1,
-            name: "V1".to_string(),
-            path: f1.to_string_lossy().to_string(),
-        },
-        VideoRecord {
-            id: 2,
-            name: "V2".to_string(),
-            path: f2.to_string_lossy().to_string(),
-        },
-        VideoRecord {
-            id: 3,
-            name: "V3".to_string(),
-            path: f3.to_string_lossy().to_string(),
-        },
+        VideoRecord::new(1, "V1", f1.to_string_lossy()),
+        VideoRecord::new(2, "V2", f2.to_string_lossy()),
+        VideoRecord::new(3, "V3", f3.to_string_lossy()),
     ];
 
     // Start with 1 player
@@ -772,3 +708,42 @@ fn test_add_new_player_focuses_new_player_and_can_be_removed() {
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_query_zero_matches_shows_no_matches_view_and_clear_search() {
+    let (mut app, _) = new_test_app();
+    let temp_dir = std::env::temp_dir().join(format!(
+        "wazoo_test_no_match_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let f1 = temp_dir.join("existing_video.mp4");
+    let _ = std::fs::File::create(&f1);
+
+    // Add video to DB
+    let _ = app.db.insert_misc_video("existing_video", &f1.to_string_lossy());
+    assert_eq!(app.db.get_video_count().unwrap(), 1);
+
+    // Perform a search for a term that does not match
+    app.search_input = "nonexistent_query_xyz".to_string();
+    let _ = app.update(Message::PerformSearch);
+
+    assert_eq!(app.active_search_query, "nonexistent_query_xyz");
+    assert!(app.available_videos.is_empty());
+
+    // Calling view() exercises the view_no_matches code path
+    {
+        let _main_view = app.view();
+    }
+
+    // Now clear search
+    let _ = app.update(Message::ClearSearch);
+    assert!(app.active_search_query.is_empty());
+    assert_eq!(app.available_videos.len(), 1);
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+

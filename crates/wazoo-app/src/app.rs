@@ -8,6 +8,7 @@
  */
 
 use crate::assets::APP_ICON_BYTES;
+use crate::cli::CliArgs;
 use crate::format;
 use crate::message::Message;
 use iced::{Point, Subscription, Task, Theme};
@@ -130,18 +131,19 @@ pub struct WazooApp {
 }
 
 impl WazooApp {
-    pub fn new(cli_query: Option<String>) -> (Self, Task<Message>) {
+    pub fn new(cli_args: impl Into<CliArgs>) -> (Self, Task<Message>) {
         let config_mgr = ConfigManager::new();
         let db = Database::open(config_mgr.database_path())
             .expect("Failed to initialize SQLite database");
-        Self::new_with_backend(cli_query, config_mgr, db)
+        Self::new_with_backend(cli_args, config_mgr, db)
     }
 
     pub fn new_with_backend(
-        cli_query: Option<String>,
+        cli_args: impl Into<CliArgs>,
         config_mgr: ConfigManager,
         db: Database,
     ) -> (Self, Task<Message>) {
+        let cli = cli_args.into();
         let has_complete_keybinds = config_mgr.has_complete_keybinds_in_settings();
         let mut settings = config_mgr.load_settings();
 
@@ -150,7 +152,32 @@ impl WazooApp {
             let _ = config_mgr.save_settings(&settings);
         }
 
-        let cli_query_clean = cli_query
+        // 1. Direct file playback: check if a video file path was provided
+        let file_to_play: Option<String> = if let Some(ref file_path) = cli.file {
+            let canon_path = std::fs::canonicalize(file_path).unwrap_or_else(|_| file_path.clone());
+            let path_str = canon_path.to_string_lossy().to_string();
+
+            // Check if file is inside any configured media folder or in DB under another folder
+            let in_other_folder = db
+                .is_video_in_other_folder(&path_str, &settings.media_folders)
+                .unwrap_or(false);
+
+            if !in_other_folder {
+                let file_stem = canon_path
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or_default();
+                let clean_name = wazoo_scanner::clean_video_name(file_stem);
+                let _ = db.insert_misc_video(&clean_name, &path_str);
+            }
+
+            Some(path_str)
+        } else {
+            None
+        };
+
+        let cli_query_clean = cli
+            .query
             .map(|q| q.trim().to_string())
             .filter(|q| !q.is_empty());
         let is_cli = cli_query_clean.is_some();
@@ -178,7 +205,7 @@ impl WazooApp {
             (f, settings.last_query.clone(), sel)
         };
 
-        let videos: Vec<VideoRecord> = if !active_query.is_empty() {
+        let mut videos: Vec<VideoRecord> = if !active_query.is_empty() {
             let filtered = db
                 .search_videos(&active_query, &folders)
                 .unwrap_or_default();
@@ -196,6 +223,11 @@ impl WazooApp {
         } else {
             db.get_all_videos().unwrap_or_default()
         };
+
+        // If available_videos is empty and we have a file_to_play, load all videos (which includes the new file)
+        if videos.is_empty() && file_to_play.is_some() {
+            videos = db.get_all_videos().unwrap_or_default();
+        }
         let mut scroll_engine = ScrollEngine::with_window_size(
             settings.window_bounds.width as f32,
             settings.window_bounds.height as f32,
@@ -304,34 +336,52 @@ impl WazooApp {
 
         // Initialize players based on settings or restore saved session
         let count = settings.player_count.clamp(1, 12);
-        let restored_sessions = if is_cli {
+        let restored_sessions = if is_cli || file_to_play.is_some() {
             Vec::new()
         } else {
             settings.session_videos
         };
 
-        for session in restored_sessions.into_iter().take(count) {
-            if std::path::Path::new(&session.path).exists() {
-                let id = app.next_player_id;
-                app.next_player_id += 1;
-                app.player_shuffle_modes.insert(id, session.is_shuffle);
-                if app.players.is_empty() {
-                    app.is_shuffle_mode = session.is_shuffle;
-                }
-                let name = format::format_video_title(&session.path);
-                let start_secs = if session.position_secs > 0.05 {
-                    Some(session.position_secs)
-                } else {
-                    None
-                };
-                if let Ok(mut handle) =
-                    app.create_video_handle_with_start(id, &session.path, &name, start_secs)
-                {
-                    handle.set_muted(session.is_muted);
-                    handle.set_volume(session.volume);
-                    handle.set_subtitles_visible(app.subtitles_enabled);
-                    app.players.push(handle);
-                    app.push_player_nav_entry(id, session.path.clone(), start_secs);
+        let mut direct_file_player_id: Option<PlayerId> = None;
+
+        if let Some(ref path) = file_to_play {
+            let id = app.next_player_id;
+            app.next_player_id += 1;
+            direct_file_player_id = Some(id);
+            app.player_shuffle_modes.insert(id, app.is_shuffle_mode);
+            let name = format::format_video_title(path);
+            if let Ok(mut handle) = app.create_video_handle_with_start(id, path, &name, Some(0.0)) {
+                handle.set_muted(false);
+                handle.set_volume(1.0);
+                handle.set_subtitles_visible(app.subtitles_enabled);
+                app.players.push(handle);
+                app.push_player_nav_entry(id, path.clone(), Some(0.0));
+            }
+            app.title_pill_ticks = 240;
+        } else {
+            for session in restored_sessions.into_iter().take(count) {
+                if std::path::Path::new(&session.path).exists() {
+                    let id = app.next_player_id;
+                    app.next_player_id += 1;
+                    app.player_shuffle_modes.insert(id, session.is_shuffle);
+                    if app.players.is_empty() {
+                        app.is_shuffle_mode = session.is_shuffle;
+                    }
+                    let name = format::format_video_title(&session.path);
+                    let start_secs = if session.position_secs > 0.05 {
+                        Some(session.position_secs)
+                    } else {
+                        None
+                    };
+                    if let Ok(mut handle) =
+                        app.create_video_handle_with_start(id, &session.path, &name, start_secs)
+                    {
+                        handle.set_muted(session.is_muted);
+                        handle.set_volume(session.volume);
+                        handle.set_subtitles_visible(app.subtitles_enabled);
+                        app.players.push(handle);
+                        app.push_player_nav_entry(id, session.path.clone(), start_secs);
+                    }
                 }
             }
         }
@@ -344,13 +394,14 @@ impl WazooApp {
         }
 
         // If a last_query was active, reconcile active players so any player playing a video
-        // not in the queried files list switches to a matching video from available_videos
+        // not in the queried files list switches to a matching video from available_videos.
+        // If playing a direct file, do not reconcile that player!
         if !app.settings.last_query.is_empty() {
-            app.reconcile_players_with_available_videos(None);
+            app.reconcile_players_with_available_videos(direct_file_player_id);
         }
 
-        // Save session state if CLI query successfully populated players
-        if is_cli && !app.players.is_empty() {
+        // Save session state if CLI query or direct file successfully populated players
+        if (is_cli || file_to_play.is_some()) && !app.players.is_empty() {
             app.save_session_state();
         }
 

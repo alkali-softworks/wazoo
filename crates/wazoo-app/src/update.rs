@@ -1617,6 +1617,34 @@ impl WazooApp {
                 }
                 self.show_search_modal = false;
             }
+            Message::ClearSearch => {
+                let all_label = self.t("common.all");
+                self.search_input.clear();
+                self.search_tags.clear();
+                self.active_search_query.clear();
+                self.active_search_folders.clear();
+                self.selected_search_folders.clear();
+                self.active_search_folder = all_label.clone();
+                self.selected_search_folder = all_label.clone();
+                self.settings.last_query.clear();
+                self.settings.last_folders.clear();
+                let _ = self.config_mgr.save_settings(&self.settings);
+
+                let folders: Vec<String> = Vec::new();
+                if let Ok(results) = self.db.search_videos("", &folders) {
+                    let total = results.len();
+                    self.available_videos = results;
+                    self.file_picker_entries.clear();
+                    self.apply_file_picker_search();
+                    self.show_video_totals_notice(total, &all_label);
+                    self.reconcile_players_with_available_videos(None);
+                    self.save_session_state();
+                    if self.show_transcript {
+                        return self.load_transcript_for_focused_player();
+                    }
+                }
+                self.show_search_modal = false;
+            }
             Message::OpenSettingsModal => {
                 self.show_settings_modal = true;
                 self.show_dropdown_menu = false;
@@ -2000,6 +2028,46 @@ impl WazooApp {
                 if was_scanning {
                     return self.update(Message::StartScan);
                 }
+            }
+            Message::ClearMiscVideos => {
+                let removed_count = self.db.clear_misc_videos().unwrap_or(0);
+                log::info!("Cleared {} Misc videos from database", removed_count);
+
+                // Refresh available_videos
+                if !self.active_search_query.is_empty() || !self.active_search_folders.is_empty() {
+                    let folders = self.active_search_folders.clone();
+                    self.available_videos = self
+                        .db
+                        .search_videos(&self.active_search_query, &folders)
+                        .unwrap_or_default();
+                } else {
+                    self.available_videos = self.db.get_all_videos().unwrap_or_default();
+                }
+
+                self.file_picker_entries.clear();
+                self.apply_file_picker_search();
+
+                // Reconcile players if any were playing a Misc video
+                if self.available_videos.is_empty() {
+                    self.players.clear();
+                    self.loading_player_ids.clear();
+                    self.loading_player_ticks.clear();
+                    self.focused_player_idx = 0;
+                } else {
+                    self.reconcile_players_with_available_videos(None);
+                    self.save_session_state();
+                }
+
+                self.active_search_folders.retain(|f| f != "Misc");
+                self.selected_search_folders.retain(|f| f != "Misc");
+                self.settings.last_folders.retain(|f| f != "Misc");
+                let _ = self.config_mgr.save_settings(&self.settings);
+
+                let count_str = format::format_number(removed_count);
+                self.toast_message =
+                    Some(self.t_with("settings.misc_cleared", &[("count", &count_str)]));
+                self.toast_time_remaining = 2;
+                self.last_total_videos = self.available_videos.len();
             }
             Message::StartScan => {
                 // Cancel any currently running scan task

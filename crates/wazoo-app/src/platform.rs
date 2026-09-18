@@ -63,6 +63,14 @@ pub fn init_linux_cursor_env() {
     }
 }
 
+pub const SUPPORTED_VIDEO_MIMETYPES: &[&str] = &[
+    "video/x-matroska",
+    "video/mp4",
+    "video/webm",
+    "video/x-msvideo",
+    "video/quicktime",
+];
+
 #[cfg(target_os = "linux")]
 pub fn init_linux_desktop_entry() {
     // Install the .desktop file and icon into user's local XDG directories
@@ -98,22 +106,52 @@ pub fn init_linux_desktop_entry() {
 
         if let Ok(current_exe) = std::env::current_exe() {
             let exe_str = current_exe.to_string_lossy();
+            let mimetypes = format!("{};", SUPPORTED_VIDEO_MIMETYPES.join(";"));
             let desktop_content = format!(
                 "[Desktop Entry]\n\
                 Type=Application\n\
                 Name=Wazoo\n\
                 GenericName=Ambient Media Engine\n\
                 Comment=Native Rust ambient media engine for non-stop viewing\n\
-                Exec=\"{}\"\n\
+                Exec=\"{}\" %U\n\
                 Icon=wazoo\n\
                 Terminal=false\n\
                 Categories=AudioVideo;Video;Player;\n\
-                StartupWMClass=wazoo\n",
-                exe_str
+                StartupWMClass=wazoo\n\
+                MimeType={}\n",
+                exe_str, mimetypes
             );
             let _ = std::fs::write(&desktop_path, desktop_content);
+            let _ = std::process::Command::new("update-desktop-database")
+                .arg(&apps_dir)
+                .output();
         }
     }
+}
+
+#[cfg(target_os = "linux")]
+pub fn set_as_default_video_player() -> Result<(), String> {
+    init_linux_desktop_entry();
+    let mut failed = Vec::new();
+    for mime in SUPPORTED_VIDEO_MIMETYPES {
+        let status = std::process::Command::new("xdg-mime")
+            .args(["default", "wazoo.desktop", mime])
+            .status();
+        match status {
+            Ok(s) if s.success() => {}
+            _ => failed.push(*mime),
+        }
+    }
+    if failed.is_empty() {
+        Ok(())
+    } else {
+        Err(format!("Failed to set default for: {}", failed.join(", ")))
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+pub fn set_as_default_video_player() -> Result<(), String> {
+    Err("Setting default video player is only supported on Linux".to_string())
 }
 
 #[cfg(target_os = "linux")]

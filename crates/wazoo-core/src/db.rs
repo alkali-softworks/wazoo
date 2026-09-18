@@ -36,10 +36,14 @@ impl Database {
             "CREATE TABLE IF NOT EXISTS Video (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                path TEXT NOT NULL UNIQUE
+                path TEXT NOT NULL UNIQUE,
+                folder TEXT
             )",
             [],
         )?;
+
+        // Non-destructive migration if column didn't exist previously
+        let _ = self.conn.execute("ALTER TABLE Video ADD COLUMN folder TEXT", []);
 
         self.conn
             .execute("CREATE INDEX IF NOT EXISTS path_idx ON Video(path)", [])?;
@@ -47,19 +51,83 @@ impl Database {
         self.conn
             .execute("CREATE INDEX IF NOT EXISTS name_idx ON Video(name)", [])?;
 
+        self.conn
+            .execute("CREATE INDEX IF NOT EXISTS folder_idx ON Video(folder)", [])?;
+
         Ok(())
     }
 
     pub fn insert_or_update_video(&self, video: &VideoRecord) -> Result<i64> {
         self.conn.execute(
-            "INSERT INTO Video (name, path)
-             VALUES (?1, ?2)
+            "INSERT INTO Video (name, path, folder)
+             VALUES (?1, ?2, ?3)
              ON CONFLICT(path) DO UPDATE SET
-                name = excluded.name",
-            params![video.name, video.path,],
+                name = excluded.name,
+                folder = COALESCE(excluded.folder, Video.folder)",
+            params![video.name, video.path, video.folder],
         )?;
 
         Ok(self.conn.last_insert_rowid())
+    }
+
+    pub fn insert_misc_video(&self, name: &str, path: &str) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO Video (name, path, folder)
+             VALUES (?1, ?2, 'Misc')
+             ON CONFLICT(path) DO UPDATE SET
+                name = excluded.name,
+                folder = 'Misc'",
+            params![name, path],
+        )?;
+
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    pub fn clear_misc_videos(&self) -> Result<usize> {
+        let count = self.conn.execute("DELETE FROM Video WHERE folder = 'Misc'", [])?;
+        Ok(count)
+    }
+
+    pub fn get_misc_video_count(&self) -> Result<usize> {
+        let count: usize = self.conn.query_row(
+            "SELECT COUNT(*) FROM Video WHERE folder = 'Misc'",
+            [],
+            |row| row.get(0),
+        )?;
+        Ok(count)
+    }
+
+    pub fn has_misc_videos(&self) -> Result<bool> {
+        Ok(self.get_misc_video_count()? > 0)
+    }
+
+    pub fn is_video_in_other_folder(&self, path: &str, media_folders: &[String]) -> Result<bool> {
+        let p = Path::new(path);
+        let canon_p = std::fs::canonicalize(p).ok();
+        for folder in media_folders {
+            let f = Path::new(folder);
+            if p.starts_with(f) {
+                return Ok(true);
+            }
+            if let Some(ref cp) = canon_p {
+                if let Ok(cf) = std::fs::canonicalize(f) {
+                    if cp.starts_with(&cf) {
+                        return Ok(true);
+                    }
+                }
+            }
+        }
+
+        let mut stmt = self.conn.prepare("SELECT folder FROM Video WHERE path = ?1")?;
+        let mut rows = stmt.query(params![path])?;
+        if let Some(row) = rows.next()? {
+            let folder: Option<String> = row.get(0)?;
+            if folder.as_deref() != Some("Misc") {
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
     }
 
     pub fn batch_insert_videos(&mut self, videos: &[VideoRecord]) -> Result<usize> {
@@ -67,14 +135,15 @@ impl Database {
         let mut count = 0;
         {
             let mut stmt = tx.prepare(
-                "INSERT INTO Video (name, path)
-                 VALUES (?1, ?2)
+                "INSERT INTO Video (name, path, folder)
+                 VALUES (?1, ?2, ?3)
                  ON CONFLICT(path) DO UPDATE SET
-                    name = excluded.name",
+                    name = excluded.name,
+                    folder = COALESCE(excluded.folder, Video.folder)",
             )?;
 
             for video in videos {
-                stmt.execute(params![video.name, video.path,])?;
+                stmt.execute(params![video.name, video.path, video.folder])?;
                 count += 1;
             }
         }
@@ -87,7 +156,13 @@ impl Database {
         let path_set: HashSet<&str> = existing_paths.iter().map(|s| s.as_str()).collect();
         let stale: Vec<i64> = all_db
             .into_iter()
-            .filter(|v| !path_set.contains(v.path.as_str()))
+            .filter(|v| {
+                if v.folder.as_deref() == Some("Misc") {
+                    !Path::new(&v.path).exists()
+                } else {
+                    !path_set.contains(v.path.as_str())
+                }
+            })
             .map(|v| v.id)
             .collect();
         if stale.is_empty() {
@@ -106,6 +181,10 @@ impl Database {
     }
 
     pub fn remove_videos_in_folder(&mut self, folder: &str) -> Result<usize> {
+        if folder == "Misc" {
+            return self.clear_misc_videos();
+        }
+
         let folder_clean = folder.trim_end_matches(['/', '\\']);
         let folder_prefix_slash = format!("{folder_clean}/");
         let folder_prefix_backslash = format!("{folder_clean}\\");
@@ -166,7 +245,7 @@ impl Database {
 
     pub fn get_all_videos(&self) -> Result<Vec<VideoRecord>> {
         let mut stmt = self.conn.prepare(
-            "SELECT id, name, path
+            "SELECT id, name, path, folder
              FROM Video ORDER BY name ASC",
         )?;
 
@@ -175,6 +254,7 @@ impl Database {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 path: row.get(2)?,
+                folder: row.get(3)?,
             })
         })?;
 
@@ -261,22 +341,26 @@ impl Database {
         if !active_folders.is_empty() {
             let mut folder_conditions: Vec<String> = Vec::new();
             for folder in active_folders {
-                let escaped_folder = folder
-                    .replace('\\', "\\\\")
-                    .replace('%', "\\%")
-                    .replace('_', "\\_");
-                let folder_prefix = format!("{escaped_folder}%");
-                param_values.push(folder_prefix);
-                folder_conditions.push(format!("path LIKE ?{} ESCAPE '\\'", param_values.len()));
+                if folder == "Misc" {
+                    folder_conditions.push("folder = 'Misc'".to_string());
+                } else {
+                    let escaped_folder = folder
+                        .replace('\\', "\\\\")
+                        .replace('%', "\\%")
+                        .replace('_', "\\_");
+                    let folder_prefix = format!("{escaped_folder}%");
+                    param_values.push(folder_prefix);
+                    folder_conditions.push(format!("path LIKE ?{} ESCAPE '\\'", param_values.len()));
+                }
             }
             where_conditions.push(format!("({})", folder_conditions.join(" OR ")));
         }
 
         let query = if where_conditions.is_empty() {
-            "SELECT id, name, path FROM Video ORDER BY path ASC".to_string()
+            "SELECT id, name, path, folder FROM Video ORDER BY path ASC".to_string()
         } else {
             format!(
-                "SELECT id, name, path FROM Video WHERE {} ORDER BY path ASC",
+                "SELECT id, name, path, folder FROM Video WHERE {} ORDER BY path ASC",
                 where_conditions.join(" AND ")
             )
         };
@@ -292,6 +376,7 @@ impl Database {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 path: row.get(2)?,
+                folder: row.get(3)?,
             })
         })?;
 
@@ -312,7 +397,12 @@ impl Database {
         {
             let mut stmt = tx.prepare("DELETE FROM Video WHERE id = ?1")?;
             for video in all_videos {
-                if !existing_set.contains(video.path.as_str()) {
+                let is_missing = if video.folder.as_deref() == Some("Misc") {
+                    !Path::new(&video.path).exists()
+                } else {
+                    !existing_set.contains(video.path.as_str())
+                };
+                if is_missing {
                     stmt.execute(params![video.id])?;
                     deleted += 1;
                 }

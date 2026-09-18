@@ -5,11 +5,7 @@ fn test_db_operations() {
     let db = Database::open_in_memory().unwrap();
     assert_eq!(db.get_video_count().unwrap(), 0);
 
-    let video = VideoRecord {
-        id: 0,
-        name: "Ambient Video 1".to_string(),
-        path: "/media/ambient1.mp4".to_string(),
-    };
+    let video = VideoRecord::new(0, "Ambient Video 1", "/media/ambient1.mp4");
 
     db.insert_or_update_video(&video).unwrap();
     assert_eq!(db.get_video_count().unwrap(), 1);
@@ -28,26 +24,10 @@ fn test_db_operations() {
 fn test_remove_videos_in_folder() {
     let mut db = Database::open_in_memory().unwrap();
     db.batch_insert_videos(&[
-        VideoRecord {
-            id: 0,
-            name: "Vid 1".to_string(),
-            path: "/home/user/media/folder_a/1.mp4".to_string(),
-        },
-        VideoRecord {
-            id: 0,
-            name: "Vid 2".to_string(),
-            path: "/home/user/media/folder_a/sub/2.mp4".to_string(),
-        },
-        VideoRecord {
-            id: 0,
-            name: "Vid 3".to_string(),
-            path: "/home/user/media/folder_b/3.mp4".to_string(),
-        },
-        VideoRecord {
-            id: 0,
-            name: "Vid 4".to_string(),
-            path: "/home/user/media/folder_a_other/4.mp4".to_string(),
-        },
+        VideoRecord::new(0, "Vid 1", "/home/user/media/folder_a/1.mp4"),
+        VideoRecord::new(0, "Vid 2", "/home/user/media/folder_a/sub/2.mp4"),
+        VideoRecord::new(0, "Vid 3", "/home/user/media/folder_b/3.mp4"),
+        VideoRecord::new(0, "Vid 4", "/home/user/media/folder_a_other/4.mp4"),
     ])
     .unwrap();
     assert_eq!(db.get_video_count().unwrap(), 4);
@@ -69,21 +49,9 @@ fn test_remove_videos_in_folder() {
 fn test_search_videos_filtering_for_reconciliation() {
     let mut db = Database::open_in_memory().unwrap();
     db.batch_insert_videos(&[
-        VideoRecord {
-            id: 0,
-            name: "Breaking Bad S01E01".to_string(),
-            path: "/media/BreakingBad/S01E01.mp4".to_string(),
-        },
-        VideoRecord {
-            id: 0,
-            name: "Breaking Bad S01E02".to_string(),
-            path: "/media/BreakingBad/S01E02.mp4".to_string(),
-        },
-        VideoRecord {
-            id: 0,
-            name: "Game of Thrones S01E01".to_string(),
-            path: "/media/GameOfThrones/S01E01.mp4".to_string(),
-        },
+        VideoRecord::new(0, "Breaking Bad S01E01", "/media/BreakingBad/S01E01.mp4"),
+        VideoRecord::new(0, "Breaking Bad S01E02", "/media/BreakingBad/S01E02.mp4"),
+        VideoRecord::new(0, "Game of Thrones S01E01", "/media/GameOfThrones/S01E01.mp4"),
     ])
     .unwrap();
 
@@ -110,21 +78,9 @@ fn test_search_videos_filtering_for_reconciliation() {
 fn test_search_videos_multiple_folders_mix_and_match() {
     let mut db = Database::open_in_memory().unwrap();
     db.batch_insert_videos(&[
-        VideoRecord {
-            id: 0,
-            name: "Breaking Bad S01E01".to_string(),
-            path: "/media/BreakingBad/S01E01.mp4".to_string(),
-        },
-        VideoRecord {
-            id: 0,
-            name: "Game of Thrones S01E01".to_string(),
-            path: "/media/GameOfThrones/S01E01.mp4".to_string(),
-        },
-        VideoRecord {
-            id: 0,
-            name: "The Wire S01E01".to_string(),
-            path: "/media/TheWire/S01E01.mp4".to_string(),
-        },
+        VideoRecord::new(0, "Breaking Bad S01E01", "/media/BreakingBad/S01E01.mp4"),
+        VideoRecord::new(0, "Game of Thrones S01E01", "/media/GameOfThrones/S01E01.mp4"),
+        VideoRecord::new(0, "The Wire S01E01", "/media/TheWire/S01E01.mp4"),
     ])
     .unwrap();
 
@@ -148,26 +104,26 @@ fn test_search_videos_multiple_folders_mix_and_match() {
 fn test_search_videos_negative_query_grouping() {
     let mut db = Database::open_in_memory().unwrap();
     db.batch_insert_videos(&[
-        VideoRecord {
-            id: 0,
-            name: "Cowboy Bebop - 01 - Asteroid Blues".to_string(),
-            path: "/media/CowboyBebop/01-AsteroidBlues.mkv".to_string(),
-        },
-        VideoRecord {
-            id: 0,
-            name: "Cowboy Bebop - 05 - Ballad of Fallen Angels".to_string(),
-            path: "/media/CowboyBebop/05-BalladOfFallenAngels.mkv".to_string(),
-        },
-        VideoRecord {
-            id: 0,
-            name: "Eek The Cat - 01 - Misereek".to_string(),
-            path: "/media/EekTheCat/01-Misereek.mkv".to_string(),
-        },
-        VideoRecord {
-            id: 0,
-            name: "Trigun - 01 - The $$60 Billion Man".to_string(),
-            path: "/media/Trigun/01.mkv".to_string(),
-        },
+        VideoRecord::new(
+            0,
+            "Cowboy Bebop - 01 - Asteroid Blues",
+            "/media/CowboyBebop/01-AsteroidBlues.mkv",
+        ),
+        VideoRecord::new(
+            0,
+            "Cowboy Bebop - 05 - Ballad of Fallen Angels",
+            "/media/CowboyBebop/05-BalladOfFallenAngels.mkv",
+        ),
+        VideoRecord::new(
+            0,
+            "Eek The Cat - 01 - Misereek",
+            "/media/EekTheCat/01-Misereek.mkv",
+        ),
+        VideoRecord::new(
+            0,
+            "Trigun - 01 - The $$60 Billion Man",
+            "/media/Trigun/01.mkv",
+        ),
     ])
     .unwrap();
 
@@ -205,23 +161,23 @@ fn test_search_videos_negative_query_grouping() {
 #[test]
 fn test_search_videos_like_wildcard_escaping() {
     let db = Database::open_in_memory().unwrap();
-    db.insert_or_update_video(&VideoRecord {
-        id: 0,
-        name: "Video 100% Real".to_string(),
-        path: "/media/100%_Real.mkv".to_string(),
-    })
+    db.insert_or_update_video(&VideoRecord::new(
+        0,
+        "Video 100% Real",
+        "/media/100%_Real.mkv",
+    ))
     .unwrap();
-    db.insert_or_update_video(&VideoRecord {
-        id: 0,
-        name: "Video 1000 Real".to_string(),
-        path: "/media/1000_Real.mkv".to_string(),
-    })
+    db.insert_or_update_video(&VideoRecord::new(
+        0,
+        "Video 1000 Real",
+        "/media/1000_Real.mkv",
+    ))
     .unwrap();
-    db.insert_or_update_video(&VideoRecord {
-        id: 0,
-        name: "Video 100aReal".to_string(),
-        path: "/media/100aReal.mkv".to_string(),
-    })
+    db.insert_or_update_video(&VideoRecord::new(
+        0,
+        "Video 100aReal",
+        "/media/100aReal.mkv",
+    ))
     .unwrap();
 
     // Querying "100%" should only match the literal "100%", not "1000" or "100a"
@@ -230,13 +186,81 @@ fn test_search_videos_like_wildcard_escaping() {
     assert_eq!(res_percent[0].path, "/media/100%_Real.mkv");
 
     // Querying "100_" should only match literal "100_", not "100a" or "100%"
-    db.insert_or_update_video(&VideoRecord {
-        id: 0,
-        name: "Video 100_literal".to_string(),
-        path: "/media/100_literal.mkv".to_string(),
-    })
+    db.insert_or_update_video(&VideoRecord::new(
+        0,
+        "Video 100_literal",
+        "/media/100_literal.mkv",
+    ))
     .unwrap();
     let res_underscore = db.search_videos("100_", &[]).unwrap();
     assert_eq!(res_underscore.len(), 1);
     assert_eq!(res_underscore[0].path, "/media/100_literal.mkv");
+}
+
+#[test]
+fn test_misc_virtual_folder_crud_and_search() {
+    let mut db = Database::open_in_memory().unwrap();
+    assert_eq!(db.get_misc_video_count().unwrap(), 0);
+    assert!(!db.has_misc_videos().unwrap());
+
+    // 1. Insert normal library video
+    db.insert_or_update_video(&VideoRecord::new(0, "Regular Movie", "/media/movies/regular.mkv"))
+        .unwrap();
+
+    // 2. Check if file is in other folder
+    let media_folders = vec!["/media/movies".to_string()];
+    assert!(
+        db.is_video_in_other_folder("/media/movies/regular.mkv", &media_folders)
+            .unwrap()
+    );
+    assert!(
+        db.is_video_in_other_folder("/media/movies/new_unindexed.mkv", &media_folders)
+            .unwrap()
+    );
+    assert!(
+        !db.is_video_in_other_folder("/home/user/Downloads/random.mkv", &media_folders)
+            .unwrap()
+    );
+
+    // 3. Insert Misc video
+    db.insert_misc_video("Random Clip", "/home/user/Downloads/random.mkv")
+        .unwrap();
+    assert_eq!(db.get_misc_video_count().unwrap(), 1);
+    assert!(db.has_misc_videos().unwrap());
+    assert_eq!(db.get_video_count().unwrap(), 2);
+
+    // Once in Misc, is_video_in_other_folder returns false (it is in Misc, not an *other* folder)
+    assert!(
+        !db.is_video_in_other_folder("/home/user/Downloads/random.mkv", &media_folders)
+            .unwrap()
+    );
+
+    // 4. Search filtering with folder = "Misc"
+    let misc_results = db.search_videos("", &["Misc".to_string()]).unwrap();
+    assert_eq!(misc_results.len(), 1);
+    assert_eq!(misc_results[0].path, "/home/user/Downloads/random.mkv");
+    assert_eq!(misc_results[0].folder.as_deref(), Some("Misc"));
+
+    // 5. Search with empty folder (All) returns both regular and Misc videos
+    let all_results = db.search_videos("", &[]).unwrap();
+    assert_eq!(all_results.len(), 2);
+
+    // 6. Prune simulation: regular video is not in existing_paths, should be pruned.
+    // Misc video file doesn't exist on disk, so test prune when file is missing:
+    let pruned = db.prune_missing_videos(&[]).unwrap();
+    // Both pruned since neither exists on disk
+    assert_eq!(pruned, 2);
+    assert_eq!(db.get_video_count().unwrap(), 0);
+
+    // 7. Clear misc videos specifically
+    db.insert_misc_video("Clip 1", "/path/1.mkv").unwrap();
+    db.insert_misc_video("Clip 2", "/path/2.mkv").unwrap();
+    db.insert_or_update_video(&VideoRecord::new(0, "Regular", "/media/regular.mkv"))
+        .unwrap();
+    assert_eq!(db.get_misc_video_count().unwrap(), 2);
+
+    let cleared = db.clear_misc_videos().unwrap();
+    assert_eq!(cleared, 2);
+    assert_eq!(db.get_misc_video_count().unwrap(), 0);
+    assert_eq!(db.get_video_count().unwrap(), 1);
 }

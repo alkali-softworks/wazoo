@@ -28,7 +28,17 @@ use wazoo_scanner::ScanStage;
 impl WazooApp {
     pub fn view(&self) -> Element<'_, Message> {
         let main_content: Element<'_, Message> = if self.available_videos.is_empty() {
-            self.view_welcome()
+            let total_library_videos = self.db.get_video_count().unwrap_or(0);
+            let is_query_active = !self.active_search_query.trim().is_empty()
+                || !self.active_search_folders.is_empty()
+                || (!self.active_search_folder.is_empty()
+                    && !self.is_all_folder(&self.active_search_folder));
+
+            if total_library_videos > 0 || is_query_active {
+                self.view_no_matches()
+            } else {
+                self.view_welcome()
+            }
         } else if self.show_file_picker {
             row![
                 container(self.view_players())

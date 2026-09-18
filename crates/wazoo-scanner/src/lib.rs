@@ -433,11 +433,7 @@ impl Scanner {
 
             existing_paths.push(path_str.clone());
 
-            let record = VideoRecord {
-                id: 0,
-                name: cleaned_name.clone(),
-                path: path_str,
-            };
+            let record = VideoRecord::new(0, cleaned_name.clone(), path_str);
 
             records.push(record);
 
