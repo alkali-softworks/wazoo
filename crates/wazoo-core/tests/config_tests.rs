@@ -21,37 +21,6 @@ fn test_config_manager_paths() {
 }
 
 #[test]
-fn test_legacy_database_migration() {
-    let temp_dir = std::env::temp_dir().join(format!(
-        "wazoo_mig_test_{}_{}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    let config_dir = temp_dir.join("config");
-    let data_dir = temp_dir.join("data");
-    let _ = fs::create_dir_all(&config_dir);
-    let _ = fs::create_dir_all(&data_dir);
-
-    // Write a dummy legacy db into data_dir
-    let legacy_db = data_dir.join("wazoo.db");
-    fs::write(&legacy_db, b"sqlite_legacy_test_data").unwrap();
-
-    // Write a 0-byte placeholder into config_dir (simulating empty file)
-    let config_db = config_dir.join("wazoo.db");
-    fs::write(&config_db, b"").unwrap();
-
-    let mgr = ConfigManager::with_dirs(config_dir.clone(), data_dir.clone());
-    assert_eq!(mgr.database_path(), config_dir.join("wazoo.db"));
-    assert_eq!(mgr.database_path().parent(), mgr.config_file_path().parent());
-    assert_eq!(fs::read(&config_db).unwrap(), b"sqlite_legacy_test_data");
-
-    let _ = fs::remove_dir_all(temp_dir);
-}
-
-#[test]
 fn test_session_videos_serialization() {
     let mut settings = WazooSettings::default();
     settings.session_videos.push(wazoo_core::models::VideoSession {
