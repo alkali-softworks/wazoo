@@ -53,12 +53,11 @@ pub fn run() -> iced::Result {
         initial_settings.window_bounds.y as f32,
     ));
 
-    let initial_query = cli.query;
     let app_icon =
         iced::window::icon::from_file_data(include_bytes!("../resources/icon.png"), None).ok();
 
     iced::application(
-        move || WazooApp::new(initial_query.clone()),
+        move || WazooApp::new(cli.clone()),
         WazooApp::update,
         WazooApp::view,
     )

@@ -11,7 +11,8 @@
     "all": "सभी",
     "files": "फ़ाइलें",
     "menu": "मेनू",
-    "or": "या"
+    "or": "या",
+    "miscellaneous": "विविध"
   },
   "app": {
     "drag_to_move": "स्थानांतरित करने के लिए खींचें",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "फ्लिप मोड सक्षम",
     "flip_mode_disabled": "फ्लिप मोड अक्षम",
     "no_players": "कोई सक्रिय प्लेयर नहीं",
-    "no_videos_found": "क्वेरी के लिए कोई वीडियो नहीं मिला"
+    "no_videos_found": "क्वेरी के लिए कोई वीडियो नहीं मिला",
+    "query_no_match_desc": "क्वेरी से कुछ भी मेल नहीं खाया।"
   },
   "settings": {
     "title": "सेटिंग्स",
@@ -53,11 +55,13 @@
     "folder_added": "फ़ोल्डर जोड़ा गया: {folder}",
     "folder_removed": "फ़ोल्डर हटाया गया: {folder} ({count} फ़ाइलें)",
     "scanning_progress": "स्कैनिंग {name} ({percent}% - {found} मिले)",
-    "scan_error": "स्कैन त्रुटि: {error}"
+    "scan_error": "स्कैन त्रुटि: {error}",
+    "misc_cleared": "{count} विविध फ़ाइलें साफ़ की गईं"
   },
   "search": {
     "folder": "फ़ोल्डर:",
-    "placeholder": "खोजें..."
+    "placeholder": "खोजें...",
+    "clear_search": "खोज साफ़ करें"
   },
   "help": {
     "title": "कीबोर्ड शॉर्टकट",

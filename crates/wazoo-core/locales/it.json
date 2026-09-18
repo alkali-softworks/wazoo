@@ -11,7 +11,8 @@
     "all": "Tutti",
     "files": "File",
     "menu": "Menu",
-    "or": "o"
+    "or": "o",
+    "miscellaneous": "Varie"
   },
   "app": {
     "drag_to_move": "Trascina per spostare",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "Modalità ribaltamento abilitata",
     "flip_mode_disabled": "Modalità ribaltamento disabilitata",
     "no_players": "Nessun lettore attivo",
-    "no_videos_found": "Nessun video trovato per la query"
+    "no_videos_found": "Nessun video trovato per la query",
+    "query_no_match_desc": "La query non ha prodotto alcun risultato."
   },
   "settings": {
     "title": "Impostazioni",
@@ -53,11 +55,13 @@
     "folder_added": "Cartella aggiunta: {folder}",
     "folder_removed": "Cartella rimossa: {folder} ({count} file)",
     "scanning_progress": "Scansione {name} ({percent}% - {found} trovati)",
-    "scan_error": "Errore di scansione: {error}"
+    "scan_error": "Errore di scansione: {error}",
+    "misc_cleared": "Eliminati {count} file vari"
   },
   "search": {
     "folder": "Cartella:",
-    "placeholder": "Cerca..."
+    "placeholder": "Cerca...",
+    "clear_search": "Cancella ricerca"
   },
   "help": {
     "title": "Scorciatoie da tastiera",

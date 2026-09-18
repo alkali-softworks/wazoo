@@ -11,7 +11,8 @@
     "all": "All",
     "files": "Files",
     "menu": "Menu",
-    "or": "or"
+    "or": "or",
+    "miscellaneous": "Miscellaneous"
   },
   "app": {
     "drag_to_move": "Drag to Move",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "Flip mode enabled",
     "flip_mode_disabled": "Flip mode disabled",
     "no_players": "No active players",
-    "no_videos_found": "No videos found for query"
+    "no_videos_found": "No videos found for query",
+    "query_no_match_desc": "The query simply didn't match anything."
   },
   "settings": {
     "title": "Settings",
@@ -53,11 +55,13 @@
     "folder_added": "Added folder: {folder}",
     "folder_removed": "Removed {folder} ({count} files)",
     "scanning_progress": "Scanning {name} ({percent}% - {found} found)",
-    "scan_error": "Scan error: {error}"
+    "scan_error": "Scan error: {error}",
+    "misc_cleared": "Cleared {count} miscellaneous files"
   },
   "search": {
     "folder": "Folder:",
-    "placeholder": "Search..."
+    "placeholder": "Search...",
+    "clear_search": "Clear Search"
   },
   "help": {
     "title": "Keyboard Shortcuts",

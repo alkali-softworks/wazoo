@@ -11,7 +11,8 @@
     "all": "הכל",
     "files": "קבצים",
     "menu": "תפריט",
-    "or": "או"
+    "or": "או",
+    "miscellaneous": "שונות"
   },
   "app": {
     "drag_to_move": "גרור להזזה",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "מצב היפוך פעיל",
     "flip_mode_disabled": "מצב היפוך מבוטל",
     "no_players": "אין נגנים פעילים",
-    "no_videos_found": "לא נמצאו סרטונים עבור השאילתה"
+    "no_videos_found": "לא נמצאו סרטונים עבור השאילתה",
+    "query_no_match_desc": "השאילתה פשוט לא תאמה לשום דבר."
   },
   "settings": {
     "title": "הגדרות",
@@ -53,11 +55,13 @@
     "folder_added": "נוספה תיקייה: {folder}",
     "folder_removed": "הוסרה תיקייה: {folder} ({count} קבצים)",
     "scanning_progress": "סורק {name} ({percent}% - נמצאו {found})",
-    "scan_error": "שגיאת סריקה: {error}"
+    "scan_error": "שגיאת סריקה: {error}",
+    "misc_cleared": "נוקו {count} קבצים שונים"
   },
   "search": {
     "folder": "תיקייה:",
-    "placeholder": "חיפוש..."
+    "placeholder": "חיפוש...",
+    "clear_search": "נקה חיפוש"
   },
   "help": {
     "title": "קיצורי מקלדת",

@@ -11,7 +11,8 @@
     "all": "すべて",
     "files": "ファイル",
     "menu": "メニュー",
-    "or": "または"
+    "or": "または",
+    "miscellaneous": "その他"
   },
   "app": {
     "drag_to_move": "ドラッグして移動",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "フリップモード有効",
     "flip_mode_disabled": "フリップモード無効",
     "no_players": "アクティブなプレイヤーはありません",
-    "no_videos_found": "クエリに一致する動画が見つかりません"
+    "no_videos_found": "クエリに一致する動画が見つかりません",
+    "query_no_match_desc": "クエリに一致するものは見つかりませんでした。"
   },
   "settings": {
     "title": "設定",
@@ -53,11 +55,13 @@
     "folder_added": "フォルダを追加しました: {folder}",
     "folder_removed": "フォルダを削除しました: {folder} ({count} 件のファイル)",
     "scanning_progress": "スキャン中 {name} ({percent}% - {found} 件検出)",
-    "scan_error": "スキャンエラー: {error}"
+    "scan_error": "スキャンエラー: {error}",
+    "misc_cleared": "{count} 件のその他ファイルを消去しました"
   },
   "search": {
     "folder": "フォルダー:",
-    "placeholder": "検索..."
+    "placeholder": "検索...",
+    "clear_search": "検索をクリア"
   },
   "help": {
     "title": "キーボードショートカット",

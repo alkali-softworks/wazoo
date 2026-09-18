@@ -40,6 +40,7 @@ Terminal=false
 Type=Application
 Categories=AudioVideo;Player;Video;
 StartupWMClass=wazoo
+MimeType=video/x-matroska;video/mp4;video/webm;video/x-msvideo;video/quicktime;
 EOF
 
 # 4. Create AppRun launcher

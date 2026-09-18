@@ -49,11 +49,15 @@ impl WazooApp {
                 .available_videos
                 .iter()
                 .map(|v| {
-                    let folder = format::format_video_folder(&v.path);
-                    let folder_key = if folder.is_empty() {
-                        "Other".to_string()
+                    let folder_key = if v.folder.as_deref() == Some("Misc") {
+                        "Misc".to_string()
                     } else {
-                        folder
+                        let folder = format::format_video_folder(&v.path);
+                        if folder.is_empty() {
+                            "Other".to_string()
+                        } else {
+                            folder
+                        }
                     };
                     let title = format::format_video_title(&v.path);
                     let folder_lower = folder_key.to_lowercase();
@@ -127,10 +131,16 @@ impl WazooApp {
             let is_expanded = self.expanded_folders.contains(&group.folder);
             let chevron = if is_expanded { "▼" } else { "▶" };
 
+            let display_name = if group.folder == "Misc" {
+                self.t("common.miscellaneous")
+            } else {
+                group.folder.clone()
+            };
+
             let header_btn = button(
                 row![
                     text(chevron).size(10).color(theme::COLOR_PRIMARY),
-                    text(group.folder.clone())
+                    text(display_name)
                         .size(13)
                         .color(iced::Color::WHITE),
                     Space::new().width(Length::Fill),
@@ -206,7 +216,11 @@ impl WazooApp {
             };
 
             for folder in folders_to_display {
-                let folder_label = format::folder_basename(folder);
+                let folder_label = if folder == "Misc" {
+                    self.t("common.miscellaneous")
+                } else {
+                    format::folder_basename(folder).to_string()
+                };
 
                 let display_name = if folder_label.chars().count() > 18 {
                     format!("{}...", folder_label.chars().take(16).collect::<String>())

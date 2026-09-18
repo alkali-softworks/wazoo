@@ -11,7 +11,8 @@
     "all": "Alle",
     "files": "Dateien",
     "menu": "Menü",
-    "or": "oder"
+    "or": "oder",
+    "miscellaneous": "Verschiedenes"
   },
   "app": {
     "drag_to_move": "Zum Verschieben ziehen",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "Flip-Modus aktiviert",
     "flip_mode_disabled": "Flip-Modus deaktiviert",
     "no_players": "Keine aktiven Player",
-    "no_videos_found": "Keine Videos für die Suchanfrage gefunden"
+    "no_videos_found": "Keine Videos für die Suchanfrage gefunden",
+    "query_no_match_desc": "Die Suchanfrage hat keine Ergebnisse geliefert."
   },
   "settings": {
     "title": "Einstellungen",
@@ -53,11 +55,13 @@
     "folder_added": "Ordner hinzugefügt: {folder}",
     "folder_removed": "Ordner entfernt: {folder} ({count} Dateien)",
     "scanning_progress": "Scannen {name} ({percent}% - {found} gefunden)",
-    "scan_error": "Scanfehler: {error}"
+    "scan_error": "Scanfehler: {error}",
+    "misc_cleared": "{count} verschiedene Dateien gelöscht"
   },
   "search": {
     "folder": "Ordner:",
-    "placeholder": "Suchen..."
+    "placeholder": "Suchen...",
+    "clear_search": "Suche löschen"
   },
   "help": {
     "title": "Tastenkombinationen",

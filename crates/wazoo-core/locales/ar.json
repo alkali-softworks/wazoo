@@ -11,7 +11,8 @@
     "all": "الكل",
     "files": "الملفات",
     "menu": "القائمة",
-    "or": "أو"
+    "or": "أو",
+    "miscellaneous": "متنوعات"
   },
   "app": {
     "drag_to_move": "اسحب للتحريك",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "وضع التقليب مفعل",
     "flip_mode_disabled": "وضع التقليب معطل",
     "no_players": "لا يوجد مشغلون نشطون",
-    "no_videos_found": "لم يتم العثور على مقاطع فيديو للبحث"
+    "no_videos_found": "لم يتم العثور على مقاطع فيديو للبحث",
+    "query_no_match_desc": "لم يتطابق البحث مع أي شيء."
   },
   "settings": {
     "title": "الإعدادات",
@@ -53,11 +55,13 @@
     "folder_added": "تمت إضافة مجلد: {folder}",
     "folder_removed": "تمت إزالة المجلد: {folder} ({count} ملف)",
     "scanning_progress": "جاري الفحص {name} ({percent}% - تم العثور على {found})",
-    "scan_error": "خطأ في الفحص: {error}"
+    "scan_error": "خطأ في الفحص: {error}",
+    "misc_cleared": "تم مسح {count} من الملفات المتنوعة"
   },
   "search": {
     "folder": "مجلد:",
-    "placeholder": "بحث..."
+    "placeholder": "بحث...",
+    "clear_search": "مسح البحث"
   },
   "help": {
     "title": "اختصارات لوحة المفاتيح",

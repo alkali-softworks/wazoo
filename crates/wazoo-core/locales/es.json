@@ -11,7 +11,8 @@
     "all": "Todo",
     "files": "Archivos",
     "menu": "Menú",
-    "or": "o"
+    "or": "o",
+    "miscellaneous": "Miscelánea"
   },
   "app": {
     "drag_to_move": "Arrastrar para Mover",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "Modo de volteo activado",
     "flip_mode_disabled": "Modo de volteo desactivado",
     "no_players": "Sin reproductores activos",
-    "no_videos_found": "No se encontraron videos para la consulta"
+    "no_videos_found": "No se encontraron videos para la consulta",
+    "query_no_match_desc": "La consulta simplemente no coincidió con nada."
   },
   "settings": {
     "title": "Configuración",
@@ -53,11 +55,13 @@
     "folder_added": "Carpeta añadida: {folder}",
     "folder_removed": "Carpeta eliminada: {folder} ({count} archivos)",
     "scanning_progress": "Escaneando {name} ({percent}% - {found} encontrados)",
-    "scan_error": "Error de escaneo: {error}"
+    "scan_error": "Error de escaneo: {error}",
+    "misc_cleared": "Se eliminaron {count} archivos misceláneos"
   },
   "search": {
     "folder": "Carpeta:",
-    "placeholder": "Buscar..."
+    "placeholder": "Buscar...",
+    "clear_search": "Limpiar búsqueda"
   },
   "help": {
     "title": "Atajos de Teclado",

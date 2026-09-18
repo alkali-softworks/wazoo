@@ -14,6 +14,24 @@ pub struct VideoRecord {
     pub id: i64,
     pub name: String,
     pub path: String,
+    #[serde(default)]
+    pub folder: Option<String>,
+}
+
+impl VideoRecord {
+    pub fn new(id: i64, name: impl Into<String>, path: impl Into<String>) -> Self {
+        Self {
+            id,
+            name: name.into(),
+            path: path.into(),
+            folder: None,
+        }
+    }
+
+    pub fn with_folder(mut self, folder: impl Into<String>) -> Self {
+        self.folder = Some(folder.into());
+        self
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]

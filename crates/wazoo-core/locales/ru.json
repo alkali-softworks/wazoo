@@ -11,7 +11,8 @@
     "all": "Все",
     "files": "Файлы",
     "menu": "Меню",
-    "or": "или"
+    "or": "или",
+    "miscellaneous": "Разное"
   },
   "app": {
     "drag_to_move": "Перетащите для перемещения",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "Режим перелистывания включен",
     "flip_mode_disabled": "Режим перелистывания выключен",
     "no_players": "Нет активных плееров",
-    "no_videos_found": "Видео по запросу не найдены"
+    "no_videos_found": "Видео по запросу не найдены",
+    "query_no_match_desc": "По этому запросу ничего не найдено."
   },
   "settings": {
     "title": "Настройки",
@@ -53,11 +55,13 @@
     "folder_added": "Папка добавлена: {folder}",
     "folder_removed": "Папка удалена: {folder} ({count} файлов)",
     "scanning_progress": "Сканирование {name} ({percent}% - {found} найдено)",
-    "scan_error": "Ошибка сканирования: {error}"
+    "scan_error": "Ошибка сканирования: {error}",
+    "misc_cleared": "Очищено {count} разных файлов"
   },
   "search": {
     "folder": "Папка:",
-    "placeholder": "Поиск..."
+    "placeholder": "Поиск...",
+    "clear_search": "Очистить поиск"
   },
   "help": {
     "title": "Горячие клавиши",

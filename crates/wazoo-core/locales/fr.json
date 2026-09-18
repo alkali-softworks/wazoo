@@ -11,7 +11,8 @@
     "all": "Tout",
     "files": "Fichiers",
     "menu": "Menu",
-    "or": "ou"
+    "or": "ou",
+    "miscellaneous": "Divers"
   },
   "app": {
     "drag_to_move": "Faites glisser pour déplacer",
@@ -39,7 +40,8 @@
     "flip_mode_enabled": "Mode retournement activé",
     "flip_mode_disabled": "Mode retournement désactivé",
     "no_players": "Aucun lecteur actif",
-    "no_videos_found": "Aucune vidéo trouvée pour la requête"
+    "no_videos_found": "Aucune vidéo trouvée pour la requête",
+    "query_no_match_desc": "La requête n'a renvoyé aucun résultat."
   },
   "settings": {
     "title": "Paramètres",
@@ -53,11 +55,13 @@
     "folder_added": "Dossier ajouté : {folder}",
     "folder_removed": "Dossier supprimé : {folder} ({count} fichiers)",
     "scanning_progress": "Analyse en cours {name} ({percent}% - {found} trouvés)",
-    "scan_error": "Erreur d'analyse : {error}"
+    "scan_error": "Erreur d'analyse : {error}",
+    "misc_cleared": "{count} fichiers divers effacés"
   },
   "search": {
     "folder": "Dossier :",
-    "placeholder": "Rechercher..."
+    "placeholder": "Rechercher...",
+    "clear_search": "Effacer la recherche"
   },
   "help": {
     "title": "Raccourcis clavier",
