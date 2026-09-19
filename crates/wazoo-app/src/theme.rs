@@ -896,11 +896,21 @@ pub fn controls_overlay_style(theme: &Theme) -> container::Style {
 pub fn controls_overlay_style_with_alpha(alpha: f32) -> impl Fn(&Theme) -> container::Style {
     move |_theme| container::Style {
         background: Some(Background::Color(Color::from_rgba(
-            0.0,
-            0.0,
-            0.0,
-            0.75 * alpha,
+            0.08,
+            0.08,
+            0.10,
+            0.88 * alpha,
         ))),
+        border: Border {
+            radius: 14.0.into(),
+            width: 1.0,
+            color: Color::from_rgba(1.0, 1.0, 1.0, 0.12 * alpha),
+        },
+        shadow: Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.55 * alpha),
+            offset: Vector::new(0.0, 4.0),
+            blur_radius: 18.0,
+        },
         ..Default::default()
     }
 }

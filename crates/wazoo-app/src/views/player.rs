@@ -7,7 +7,10 @@
  * title overlays, loading spinners, and interactive playback control bars.
  */
 
-use crate::app::WazooApp;
+use crate::app::{
+    PLAYER_CONTROLS_BOTTOM_PORTION, PLAYER_CONTROLS_MAX_WIDTH, PLAYER_CONTROLS_TOP_PORTION,
+    WazooApp,
+};
 use crate::assets::{
     SVG_PLAYER_FLIP, SVG_PLAYER_MUTE, SVG_PLAYER_NEXT, SVG_PLAYER_PAUSE, SVG_PLAYER_PLAY,
     SVG_PLAYER_PREV, SVG_PLAYER_REPEAT, SVG_PLAYER_SHUFFLE, SVG_PLAYER_VOLUME,
@@ -514,15 +517,20 @@ impl WazooApp {
                 .push(progress_bar_with_timestamp)
                 .spacing(8);
 
-            let bottom_overlay = container(bottom_col)
+            let controls_overlay = container(bottom_col)
                 .padding(iced::Padding {
-                    top: 8.0,
-                    right: 14.0,
+                    top: 10.0,
+                    right: 18.0,
                     bottom: 12.0,
-                    left: 14.0,
+                    left: 18.0,
                 })
+                .max_width(PLAYER_CONTROLS_MAX_WIDTH)
                 .width(Length::Fill)
                 .style(theme::controls_overlay_style_with_alpha(overlay_alpha));
+
+            let centered_overlay = container(controls_overlay)
+                .width(Length::Fill)
+                .center_x(Length::Fill);
 
             let overlays_column = if is_loading {
                 column![
@@ -534,8 +542,9 @@ impl WazooApp {
                 column![
                     Space::new().height(Length::Fixed(80.0)),
                     top_row,
-                    Space::new().height(Length::Fill),
-                    bottom_overlay,
+                    Space::new().height(Length::FillPortion(PLAYER_CONTROLS_TOP_PORTION)),
+                    centered_overlay,
+                    Space::new().height(Length::FillPortion(PLAYER_CONTROLS_BOTTOM_PORTION)),
                 ]
             }
             .width(Length::Fill)
