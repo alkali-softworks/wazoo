@@ -15,6 +15,7 @@ pub mod keybinds;
 pub mod message;
 pub mod platform;
 pub mod scroll_view;
+pub mod slide;
 pub mod theme;
 pub mod update;
 pub mod views;

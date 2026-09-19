@@ -29,6 +29,10 @@ pub const TITLEBAR_HIDE_TICKS: usize = 50;
 pub const TITLEBAR_FADE_TICKS: usize = 12;
 /// Window titlebar show pre-delay: ~130ms at 60 FPS (8 ticks) to prevent accidental popups on quick swipes
 pub const TITLEBAR_SHOW_DELAY_TICKS: usize = 8;
+/// Window titlebar slide animation duration: ~180ms at 60 FPS (11 ticks)
+pub const TITLEBAR_SLIDE_TICKS: usize = 11;
+/// Dropdown menu slide animation duration: ~150ms at 60 FPS (9 ticks)
+pub const DROPDOWN_MENU_SLIDE_TICKS: usize = 9;
 /// File picker search input debounce delay: ~200ms at 60 FPS (12 ticks)
 pub const FILE_PICKER_DEBOUNCE_TICKS: usize = 12;
 /// Maximum number of videos retained in the session play history drawer
@@ -96,7 +100,9 @@ pub struct WazooApp {
     pub show_titlebar: bool,
     pub titlebar_hide_ticks: usize,
     pub titlebar_hover_ticks: usize,
+    pub titlebar_slide_ticks: usize,
     pub show_dropdown_menu: bool,
+    pub dropdown_menu_slide_ticks: usize,
     pub is_alt_pressed: bool,
     pub player_overlay_ticks: usize,
     pub title_pill_ticks: usize,
@@ -305,7 +311,9 @@ impl WazooApp {
             show_titlebar: false,
             titlebar_hide_ticks: 0,
             titlebar_hover_ticks: 0,
+            titlebar_slide_ticks: 0,
             show_dropdown_menu: false,
+            dropdown_menu_slide_ticks: 0,
             is_alt_pressed: false,
             player_overlay_ticks: 0,
             title_pill_ticks: 0,
@@ -505,6 +513,33 @@ impl WazooApp {
             1.0
         } else {
             (self.titlebar_hide_ticks as f32 / TITLEBAR_FADE_TICKS as f32).clamp(0.0, 1.0)
+        }
+    }
+
+    pub fn titlebar_slide_progress(&self) -> f32 {
+        if !self.show_titlebar {
+            0.0
+        } else if self.is_window_dragging
+            || self.titlebar_drag_pending
+            || self.show_dropdown_menu
+        {
+            1.0
+        } else if self.titlebar_hide_ticks < TITLEBAR_FADE_TICKS {
+            (self.titlebar_hide_ticks as f32 / TITLEBAR_FADE_TICKS as f32).clamp(0.0, 1.0)
+        } else if self.titlebar_slide_ticks >= TITLEBAR_SLIDE_TICKS {
+            1.0
+        } else {
+            (self.titlebar_slide_ticks as f32 / TITLEBAR_SLIDE_TICKS as f32).clamp(0.0, 1.0)
+        }
+    }
+
+    pub fn dropdown_menu_slide_progress(&self) -> f32 {
+        if !self.show_dropdown_menu {
+            0.0
+        } else if self.dropdown_menu_slide_ticks >= DROPDOWN_MENU_SLIDE_TICKS {
+            1.0
+        } else {
+            (self.dropdown_menu_slide_ticks as f32 / DROPDOWN_MENU_SLIDE_TICKS as f32).clamp(0.0, 1.0)
         }
     }
 

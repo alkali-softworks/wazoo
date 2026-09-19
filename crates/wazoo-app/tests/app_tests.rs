@@ -813,3 +813,117 @@ fn test_settings_toggle_default_player() {
     assert!(!app.settings.is_default_player);
 }
 
+#[test]
+fn test_top_menu_slide_down_animation() {
+    use wazoo_app::app::{TITLEBAR_FADE_TICKS, TITLEBAR_SHOW_DELAY_TICKS, TITLEBAR_SLIDE_TICKS};
+
+    let (mut app, _) = new_test_app();
+    let win_id = iced::window::Id::unique();
+    app.window_id = Some(win_id);
+
+    // Initial state: top menu is hidden
+    assert!(!app.show_titlebar);
+    assert_eq!(app.titlebar_slide_progress(), 0.0);
+
+    // Move cursor into top menu trigger zone (y < 35.0)
+    let _ = app.update(Message::CursorMoved(win_id, iced::Point::new(300.0, 10.0)));
+
+    // Tick through hover delay (8 ticks)
+    for _ in 0..TITLEBAR_SHOW_DELAY_TICKS {
+        let _ = app.update(Message::VideoFrameTick);
+    }
+
+    // After hover delay passes, titlebar begins showing and starts sliding down from 0.0
+    assert!(app.show_titlebar);
+    assert_eq!(app.titlebar_slide_ticks, 0);
+    assert_eq!(app.titlebar_slide_progress(), 0.0);
+
+    // Initial view rendering at start of slide down
+    {
+        let _view_start = app.view_titlebar();
+    }
+
+    // Animate ticks and verify slide down progress increases monotonically to 1.0
+    let mut prev_progress = app.titlebar_slide_progress();
+    for _ in 1..=TITLEBAR_SLIDE_TICKS {
+        let _ = app.update(Message::VideoFrameTick);
+        let cur_progress = app.titlebar_slide_progress();
+        assert!(
+            cur_progress >= prev_progress,
+            "Slide progress must increase monotonically: prev={}, cur={}",
+            prev_progress,
+            cur_progress
+        );
+        prev_progress = cur_progress;
+    }
+
+    // Titlebar has fully slid down into view
+    assert_eq!(app.titlebar_slide_progress(), 1.0);
+    {
+        let _view_full = app.view_titlebar();
+    }
+
+    // Now move cursor away to trigger dismissal
+    let _ = app.update(Message::CursorMoved(win_id, iced::Point::new(300.0, 200.0)));
+
+    // While fading out and sliding back up, progress smoothly decreases to 0.0
+    for _ in 0..TITLEBAR_FADE_TICKS {
+        let _ = app.update(Message::VideoFrameTick);
+    }
+
+    // Dismissal complete
+    assert!(!app.show_titlebar);
+    assert_eq!(app.titlebar_slide_progress(), 0.0);
+}
+
+#[test]
+fn test_dropdown_menu_slide_down_animation() {
+    use wazoo_app::app::DROPDOWN_MENU_SLIDE_TICKS;
+
+    let (mut app, _) = new_test_app();
+    let win_id = iced::window::Id::unique();
+    app.window_id = Some(win_id);
+
+    // Initial state: dropdown menu is closed
+    assert!(!app.show_dropdown_menu);
+    assert_eq!(app.dropdown_menu_slide_progress(), 0.0);
+
+    // Toggle dropdown menu open
+    let _ = app.update(Message::ToggleDropdownMenu);
+    assert!(app.show_dropdown_menu);
+    assert!(app.show_titlebar);
+    assert_eq!(app.dropdown_menu_slide_ticks, 0);
+    assert_eq!(app.dropdown_menu_slide_progress(), 0.0);
+
+    // View rendered at initial opening state
+    {
+        let _view_open_start = app.view_titlebar();
+    }
+
+    // Animate frames through DROPDOWN_MENU_SLIDE_TICKS
+    let mut prev_progress = app.dropdown_menu_slide_progress();
+    for _ in 1..=DROPDOWN_MENU_SLIDE_TICKS {
+        let _ = app.update(Message::VideoFrameTick);
+        let cur_progress = app.dropdown_menu_slide_progress();
+        assert!(
+            cur_progress >= prev_progress,
+            "Dropdown slide progress must increase monotonically: prev={}, cur={}",
+            prev_progress,
+            cur_progress
+        );
+        prev_progress = cur_progress;
+    }
+
+    // Dropdown has fully slid down
+    assert_eq!(app.dropdown_menu_slide_progress(), 1.0);
+    {
+        let _view_open_full = app.view_titlebar();
+    }
+
+    // Close dropdown menu
+    let _ = app.update(Message::CloseDropdownMenu);
+    assert!(!app.show_dropdown_menu);
+    assert_eq!(app.dropdown_menu_slide_progress(), 0.0);
+}
+
+

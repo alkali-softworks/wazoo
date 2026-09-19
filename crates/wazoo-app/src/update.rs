@@ -340,6 +340,7 @@ impl WazooApp {
             self.show_titlebar = true;
             self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
             self.titlebar_hover_ticks = 0;
+            self.titlebar_slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
             if self.hovered_player_id.is_some() {
                 self.player_overlay_ticks =
                     self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
@@ -356,7 +357,12 @@ impl WazooApp {
             self.titlebar_hover_ticks = 0;
             // When cursor leaves the titlebar area, start fading out smoothly without sticky delay
             if self.show_titlebar && !self.show_dropdown_menu && !self.titlebar_drag_pending {
-                self.titlebar_hide_ticks = self.titlebar_hide_ticks.min(TITLEBAR_FADE_TICKS);
+                let target_hide = if self.titlebar_slide_ticks < crate::app::TITLEBAR_SLIDE_TICKS {
+                    (self.titlebar_slide_ticks * TITLEBAR_FADE_TICKS) / crate::app::TITLEBAR_SLIDE_TICKS
+                } else {
+                    TITLEBAR_FADE_TICKS
+                };
+                self.titlebar_hide_ticks = self.titlebar_hide_ticks.min(target_hide.max(1));
             }
         }
 
@@ -590,14 +596,20 @@ impl WazooApp {
                 if self.show_dropdown_menu {
                     self.show_titlebar = true;
                     self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                    self.titlebar_slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
+                    self.dropdown_menu_slide_ticks = 0;
                     self.hovered_player_id = None;
                     self.player_overlay_ticks = 0;
-                } else if !self.is_point_in_titlebar(self.cursor_position) {
-                    self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                } else {
+                    self.dropdown_menu_slide_ticks = 0;
+                    if !self.is_point_in_titlebar(self.cursor_position) {
+                        self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                    }
                 }
             }
             Message::CloseDropdownMenu => {
                 self.show_dropdown_menu = false;
+                self.dropdown_menu_slide_ticks = 0;
                 if !self.is_point_in_titlebar(self.cursor_position) {
                     self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
                 }
@@ -2351,14 +2363,22 @@ impl WazooApp {
                         self.show_titlebar = true;
                         self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
                         self.titlebar_hover_ticks = 0;
+                        self.titlebar_slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
+                        if self.dropdown_menu_slide_ticks < crate::app::DROPDOWN_MENU_SLIDE_TICKS {
+                            self.dropdown_menu_slide_ticks += 1;
+                        }
                     } else if self.show_titlebar {
                         self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                        if self.titlebar_slide_ticks < crate::app::TITLEBAR_SLIDE_TICKS {
+                            self.titlebar_slide_ticks += 1;
+                        }
                     } else {
                         self.titlebar_hover_ticks += 1;
                         if self.titlebar_hover_ticks >= TITLEBAR_SHOW_DELAY_TICKS {
                             self.show_titlebar = true;
                             self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
                             self.titlebar_hover_ticks = 0;
+                            self.titlebar_slide_ticks = 0;
                             if self.hovered_player_id.is_some() {
                                 self.player_overlay_ticks =
                                     self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
@@ -2367,10 +2387,12 @@ impl WazooApp {
                     }
                 } else {
                     self.titlebar_hover_ticks = 0;
+                    self.dropdown_menu_slide_ticks = 0;
                     if self.titlebar_hide_ticks > 0 {
                         self.titlebar_hide_ticks -= 1;
                         if self.titlebar_hide_ticks == 0 {
                             self.show_titlebar = false;
+                            self.titlebar_slide_ticks = 0;
                         }
                     }
                 }
