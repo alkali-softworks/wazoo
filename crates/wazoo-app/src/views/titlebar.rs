@@ -10,6 +10,7 @@
 use crate::app::WazooApp;
 use crate::assets::{SVG_WINDOW_CLOSE, SVG_WINDOW_MAXIMIZE, SVG_WINDOW_MINIMIZE};
 use crate::message::Message;
+use crate::slide::SlideDown;
 use crate::theme;
 use iced::{
     Alignment, Element, Length, Theme,
@@ -137,7 +138,10 @@ impl WazooApp {
             ..Default::default()
         });
 
+        let slide_progress = self.titlebar_slide_progress();
+
         if self.show_dropdown_menu {
+            let dp = self.dropdown_menu_slide_progress();
             let menu_dropdown = container(
                 self.view_app_menu_list([8, 14])
                     .spacing(2)
@@ -146,9 +150,11 @@ impl WazooApp {
             .padding(4)
             .style(theme::menu_dropdown_style);
 
-            column![titlebar_row, menu_dropdown].into()
+            let animated_dropdown = SlideDown::new(menu_dropdown, dp, true);
+            let titlebar_content = column![titlebar_row, animated_dropdown];
+            SlideDown::new(titlebar_content, slide_progress, false).into()
         } else {
-            titlebar_row.into()
+            SlideDown::new(titlebar_row, slide_progress, false).into()
         }
     }
 
