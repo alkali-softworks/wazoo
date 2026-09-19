@@ -35,7 +35,7 @@ impl WazooApp {
                     self.focus_border_ticks = FOCUS_BORDER_TICKS;
                 }
             }
-            self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+            self.trigger_player_overlay();
         }
         self.loading_player_ids.insert(id);
         self.loading_player_ticks.insert(id, 0);
@@ -342,15 +342,17 @@ impl WazooApp {
             self.titlebar_hover_ticks = 0;
             self.titlebar_slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
             if self.hovered_player_id.is_some() {
+                let current_fade = self.player_overlay_fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                 self.player_overlay_ticks =
-                    self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                    self.player_overlay_ticks.min(current_fade);
             }
         } else if self.is_point_in_titlebar(pos) {
             if self.show_titlebar {
                 self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
                 if self.hovered_player_id.is_some() {
+                    let current_fade = self.player_overlay_fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                     self.player_overlay_ticks =
-                        self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                        self.player_overlay_ticks.min(current_fade);
                 }
             }
         } else {
@@ -421,8 +423,9 @@ impl WazooApp {
                     self.titlebar_press_origin = None;
                     self.titlebar_hover_ticks = 0;
                     if self.hovered_player_id.is_some() {
+                        let current_fade = self.player_overlay_fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                         self.player_overlay_ticks =
-                            self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                            self.player_overlay_ticks.min(current_fade);
                     }
                 }
                 if self.window_bounds_dirty {
@@ -540,8 +543,9 @@ impl WazooApp {
                     self.cursor_position = Point::new(-1000.0, -1000.0);
                     self.titlebar_hover_ticks = 0;
                     if self.hovered_player_id.is_some() {
+                        let current_fade = self.player_overlay_fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                         self.player_overlay_ticks =
-                            self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                            self.player_overlay_ticks.min(current_fade);
                     }
                 }
             }
@@ -590,6 +594,7 @@ impl WazooApp {
                 self.show_dropdown_menu = false;
                 self.hovered_player_id = None;
                 self.player_overlay_ticks = 0;
+                self.player_overlay_fade_in_ticks = 0;
             }
             Message::ToggleDropdownMenu => {
                 self.show_dropdown_menu = !self.show_dropdown_menu;
@@ -600,6 +605,7 @@ impl WazooApp {
                     self.dropdown_menu_slide_ticks = 0;
                     self.hovered_player_id = None;
                     self.player_overlay_ticks = 0;
+                    self.player_overlay_fade_in_ticks = 0;
                 } else {
                     self.dropdown_menu_slide_ticks = 0;
                     if !self.is_point_in_titlebar(self.cursor_position) {
@@ -619,6 +625,7 @@ impl WazooApp {
                 self.show_dropdown_menu = false;
                 self.hovered_player_id = None;
                 self.player_overlay_ticks = 0;
+                self.player_overlay_fade_in_ticks = 0;
             }
             Message::CloseMenuModal => {
                 self.show_menu_modal = false;
@@ -922,7 +929,7 @@ impl WazooApp {
                             return self.load_transcript_for_focused_player();
                         }
                     }
-                    self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                    self.trigger_player_overlay();
                 }
             }
             Message::TogglePlay(id) => {
@@ -936,7 +943,7 @@ impl WazooApp {
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.toggle_play();
                 }
-                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                self.trigger_player_overlay();
             }
             Message::TogglePlayFocused => {
                 if let Some(id) = self.focused_player_id() {
@@ -973,7 +980,7 @@ impl WazooApp {
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                     p.seek(pos);
                 }
-                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                self.trigger_player_overlay();
             }
             Message::SeekRatio(id, ratio) => {
                 if let Some(pos) = self.players.iter().position(|p| p.id == id) {
@@ -1001,20 +1008,21 @@ impl WazooApp {
                         self.toast_time_remaining = DEFAULT_TOAST_SECS;
                     }
                 }
-                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                self.trigger_player_overlay();
             }
             Message::PlayerHovered(id) => {
                 if self.is_modal_or_menu_open()
                     || (self.show_titlebar && self.is_point_in_titlebar(self.cursor_position))
                 {
                     if self.hovered_player_id == Some(id) {
+                        let current_fade = self.player_overlay_fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                         self.player_overlay_ticks =
-                            self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                            self.player_overlay_ticks.min(current_fade);
                     }
                     return Task::none();
                 }
                 self.hovered_player_id = Some(id);
-                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                self.trigger_player_overlay();
             }
             Message::PlayerUnhovered(id) => {
                 // If audio menu is open for this player, do not fade out
@@ -1023,12 +1031,13 @@ impl WazooApp {
                 }
                 // When moving mouse outside of player / hover ends, immediately trigger fade out
                 if self.hovered_player_id == Some(id) {
+                    let current_fade = self.player_overlay_fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                     self.player_overlay_ticks =
-                        self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                        self.player_overlay_ticks.min(current_fade);
                 }
             }
             Message::SeekRelativeFocused(secs) => {
-                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                self.trigger_player_overlay();
                 if let Some(id) = self.focused_player_id() {
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                         p.seek_relative(secs);
@@ -1070,7 +1079,7 @@ impl WazooApp {
                     }
                 }
                 self.save_session_state();
-                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                self.trigger_player_overlay();
             }
             Message::AdjustVolumeFocused(delta) => {
                 if self.settings.playback_mode == PlaybackMode::Scroll && delta > 0.0 {
@@ -1130,7 +1139,7 @@ impl WazooApp {
                         }
                     }
                 }
-                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                self.trigger_player_overlay();
             }
             Message::ToggleAudioMenu(id) => {
                 if self.open_audio_menu_player_id == Some(id) {
@@ -1138,7 +1147,7 @@ impl WazooApp {
                 } else {
                     self.open_audio_menu_player_id = Some(id);
                     self.hovered_player_id = Some(id);
-                    self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                    self.trigger_player_overlay();
                 }
             }
             Message::CloseAudioMenu => {
@@ -1163,7 +1172,7 @@ impl WazooApp {
                     self.toast_time_remaining = DEFAULT_TOAST_SECS;
                 }
                 self.save_session_state();
-                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                self.trigger_player_overlay();
             }
             Message::ToggleMuteFocused => {
                 if self.settings.playback_mode == PlaybackMode::Scroll {
@@ -1544,6 +1553,7 @@ impl WazooApp {
                 self.toast_message = None;
                 self.hovered_player_id = None;
                 self.player_overlay_ticks = 0;
+                self.player_overlay_fade_in_ticks = 0;
                 self.search_tags = self
                     .active_search_query
                     .split(',')
@@ -1674,6 +1684,7 @@ impl WazooApp {
                 self.toast_message = None;
                 self.hovered_player_id = None;
                 self.player_overlay_ticks = 0;
+                self.player_overlay_fade_in_ticks = 0;
             }
             Message::CloseSettingsModal => {
                 self.show_settings_modal = false;
@@ -1705,6 +1716,7 @@ impl WazooApp {
                 self.toast_message = None;
                 self.hovered_player_id = None;
                 self.player_overlay_ticks = 0;
+                self.player_overlay_fade_in_ticks = 0;
             }
             Message::CloseHelpModal => {
                 self.show_help_modal = false;
@@ -1721,6 +1733,7 @@ impl WazooApp {
                     self.toast_message = None;
                     self.hovered_player_id = None;
                     self.player_overlay_ticks = 0;
+                    self.player_overlay_fade_in_ticks = 0;
                 }
             }
             Message::CloseBookmarksModal => {
@@ -1892,7 +1905,7 @@ impl WazooApp {
                 }
             }
             Message::RandomSeekFocused => {
-                self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                self.trigger_player_overlay();
                 if let Some(id) = self.focused_player_id() {
                     if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                         p.seek_random();
@@ -2317,11 +2330,18 @@ impl WazooApp {
                 self.spinner_ticks = self.spinner_ticks.wrapping_add(1);
                 if self.open_audio_menu_player_id.is_some() {
                     self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                    self.player_overlay_fade_in_ticks = PLAYER_OVERLAY_FADE_TICKS;
                 } else if self.player_overlay_ticks > 0 {
+                    if self.player_overlay_fade_in_ticks < PLAYER_OVERLAY_FADE_TICKS {
+                        self.player_overlay_fade_in_ticks += 1;
+                    }
                     self.player_overlay_ticks -= 1;
                     if self.player_overlay_ticks == 0 {
                         self.hovered_player_id = None;
+                        self.player_overlay_fade_in_ticks = 0;
                     }
+                } else {
+                    self.player_overlay_fade_in_ticks = 0;
                 }
                 if self.title_pill_ticks > 0 {
                     self.title_pill_ticks -= 1;
@@ -2358,6 +2378,7 @@ impl WazooApp {
                             self.show_titlebar = true;
                             self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
                             self.titlebar_hover_ticks = 0;
+                            self.titlebar_slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
                         }
                     } else if self.show_dropdown_menu {
                         self.show_titlebar = true;
@@ -2380,8 +2401,9 @@ impl WazooApp {
                             self.titlebar_hover_ticks = 0;
                             self.titlebar_slide_ticks = 0;
                             if self.hovered_player_id.is_some() {
+                                let current_fade = self.player_overlay_fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                                 self.player_overlay_ticks =
-                                    self.player_overlay_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                                    self.player_overlay_ticks.min(current_fade);
                             }
                         }
                     }
