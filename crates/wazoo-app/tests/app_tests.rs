@@ -1,7 +1,8 @@
 use iced::Point;
 use std::time::Duration;
 use wazoo_app::app::{
-    new_test_app, PlaybackHistoryEntry, WazooApp, TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS,
+    new_test_app, PlaybackHistoryEntry, WazooApp, MAX_PLAYER_NAV_HISTORY_ENTRIES,
+    TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS,
 };
 use wazoo_app::message::Message;
 use wazoo_core::{ConfigManager, Database, VideoRecord};
@@ -215,6 +216,22 @@ fn test_player_nav_history_scrub_back_and_forward() {
             .back_stack
             .is_empty()
     );
+}
+
+#[test]
+fn test_player_nav_history_cap_at_1000() {
+    let (mut app, _) = new_test_app();
+    let player_id = 1;
+
+    for i in 0..1050 {
+        app.push_player_nav_entry(player_id, format!("/media/video{}.mp4", i), None);
+    }
+
+    let hist = app.player_nav_history.get(&player_id).unwrap();
+    assert_eq!(hist.back_stack.len(), MAX_PLAYER_NAV_HISTORY_ENTRIES);
+    assert_eq!(hist.back_stack.len(), 1000);
+    assert_eq!(hist.back_stack.first().unwrap().path, "/media/video50.mp4");
+    assert_eq!(hist.back_stack.last().unwrap().path, "/media/video1049.mp4");
 }
 
 #[test]

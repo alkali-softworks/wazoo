@@ -8,8 +8,8 @@
  */
 
 use crate::app::{
-    PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS,
-    TITLEBAR_SHOW_DELAY_TICKS, WazooApp,
+    MAX_PLAYER_NAV_HISTORY_ENTRIES, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS,
+    TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS, TITLEBAR_SHOW_DELAY_TICKS, WazooApp,
 };
 use crate::format;
 use crate::keybinds::find_key_action;
@@ -151,6 +151,9 @@ impl WazooApp {
                 if hist.back_stack.last().map(|e| e.path.as_str()) == Some(curr) {
                     let current_entry = hist.back_stack.pop().unwrap();
                     hist.forward_stack.push(current_entry);
+                    if hist.forward_stack.len() > MAX_PLAYER_NAV_HISTORY_ENTRIES {
+                        hist.forward_stack.remove(0);
+                    }
                 }
             }
             if let Some(prev_entry) = hist.back_stack.last() {
