@@ -76,7 +76,7 @@ fn default_buffer_duration_secs() -> u32 {
 }
 
 fn default_buffer_size_mb() -> u32 {
-    64
+    32
 }
 
 fn default_session_volume() -> f64 {
@@ -170,7 +170,7 @@ impl Default for WazooSettings {
             last_query: String::new(),
             last_folders: Vec::new(),
             buffer_duration_secs: 10,
-            buffer_size_mb: 64,
+            buffer_size_mb: 32,
             language: "en".to_string(),
             flip_interval_secs: DEFAULT_FLIP_INTERVAL_SECS,
             session_videos: Vec::new(),

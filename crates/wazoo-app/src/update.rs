@@ -631,8 +631,10 @@ impl WazooApp {
                 self.show_menu_modal = false;
             }
             Message::ToggleFilePicker => {
-                self.show_file_picker = !self.show_file_picker;
                 if self.show_file_picker {
+                    self.close_file_picker();
+                } else {
+                    self.show_file_picker = true;
                     self.show_transcript = false;
                     self.show_history_drawer = false;
                     if self.file_picker_groups.is_empty() && !self.available_videos.is_empty() {
@@ -650,7 +652,7 @@ impl WazooApp {
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
                 if self.show_transcript {
-                    self.show_file_picker = false;
+                    self.close_file_picker();
                     self.show_history_drawer = false;
                     return self.load_transcript_for_focused_player();
                 }
@@ -667,7 +669,7 @@ impl WazooApp {
                 }
                 self.show_transcript = true;
                 self.show_transcript_menu = false;
-                self.show_file_picker = false;
+                self.close_file_picker();
                 self.show_history_drawer = false;
                 self.show_dropdown_menu = false;
                 self.show_menu_modal = false;
@@ -676,7 +678,7 @@ impl WazooApp {
             Message::ToggleHistoryDrawer => {
                 self.show_history_drawer = !self.show_history_drawer;
                 if self.show_history_drawer {
-                    self.show_file_picker = false;
+                    self.close_file_picker();
                     self.show_transcript = false;
                     self.show_transcript_menu = false;
                 }
@@ -2250,7 +2252,7 @@ impl WazooApp {
                     self.show_menu_modal = false;
                     self.show_bookmarks_modal = false;
                     self.show_dropdown_menu = false;
-                    self.show_file_picker = false;
+                    self.close_file_picker();
                     self.show_transcript = false;
                     self.show_transcript_menu = false;
                     self.show_history_drawer = false;

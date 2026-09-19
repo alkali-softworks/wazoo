@@ -64,7 +64,7 @@ impl ConfigManager {
         let mut settings = if path.exists() {
             if let Ok(content) = fs::read_to_string(&path) {
                 if let Ok(mut settings) = serde_json::from_str::<WazooSettings>(&content) {
-                    settings.buffer_size_mb = settings.buffer_size_mb.clamp(16, 4096);
+                    settings.buffer_size_mb = settings.buffer_size_mb.clamp(8, 4096);
                     settings.buffer_duration_secs = settings.buffer_duration_secs.clamp(2, 300);
                     settings.window_bounds.width = settings.window_bounds.width.clamp(200, 7680);
                     settings.window_bounds.height = settings.window_bounds.height.clamp(150, 4320);

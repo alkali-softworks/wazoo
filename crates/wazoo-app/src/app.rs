@@ -803,10 +803,20 @@ impl WazooApp {
         }
     }
 
+    pub(crate) fn close_file_picker(&mut self) {
+        self.show_file_picker = false;
+        self.file_picker_entries.clear();
+        self.file_picker_entries.shrink_to_fit();
+        self.file_picker_groups.clear();
+        self.file_picker_groups.shrink_to_fit();
+    }
+
     pub(crate) fn buffer_config(&self) -> BufferConfig {
+        let player_count = self.players.len().max(1) as u32;
+        let per_player_mb = (self.settings.buffer_size_mb / player_count).clamp(8, 24);
         BufferConfig {
-            duration_secs: self.settings.buffer_duration_secs,
-            size_mb: self.settings.buffer_size_mb,
+            duration_secs: self.settings.buffer_duration_secs.clamp(2, 5),
+            size_mb: per_player_mb,
             read_chunk_kb: 512,
             preferred_audio_language: self.settings.preferred_audio_language.clone(),
         }
