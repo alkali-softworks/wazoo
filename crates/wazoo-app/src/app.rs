@@ -105,6 +105,7 @@ pub struct WazooApp {
     pub dropdown_menu_slide_ticks: usize,
     pub is_alt_pressed: bool,
     pub player_overlay_ticks: usize,
+    pub player_overlay_fade_in_ticks: usize,
     pub title_pill_ticks: usize,
     pub window_id: Option<iced::window::Id>,
     pub app_icon_handle: iced::widget::image::Handle,
@@ -316,6 +317,7 @@ impl WazooApp {
             dropdown_menu_slide_ticks: 0,
             is_alt_pressed: false,
             player_overlay_ticks: 0,
+            player_overlay_fade_in_ticks: 0,
             title_pill_ticks: 0,
             window_id: None,
             app_icon_handle: icon_handle,
@@ -543,11 +545,26 @@ impl WazooApp {
         }
     }
 
-    pub(crate) fn player_overlay_alpha(&self) -> f32 {
-        if self.player_overlay_ticks >= PLAYER_OVERLAY_FADE_TICKS {
-            1.0
+    pub fn trigger_player_overlay(&mut self) {
+        if self.player_overlay_ticks == 0 {
+            self.player_overlay_fade_in_ticks = 0;
+        } else if self.player_overlay_ticks < PLAYER_OVERLAY_FADE_TICKS {
+            self.player_overlay_fade_in_ticks = self.player_overlay_ticks;
+        }
+        self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+    }
+
+    pub fn player_overlay_alpha(&self) -> f32 {
+        if self.player_overlay_ticks == 0 {
+            0.0
         } else {
-            (self.player_overlay_ticks as f32 / PLAYER_OVERLAY_FADE_TICKS as f32).clamp(0.0, 1.0)
+            let in_alpha = (self.player_overlay_fade_in_ticks as f32 / PLAYER_OVERLAY_FADE_TICKS as f32).clamp(0.0, 1.0);
+            let out_alpha = if self.player_overlay_ticks >= PLAYER_OVERLAY_FADE_TICKS {
+                1.0
+            } else {
+                (self.player_overlay_ticks as f32 / PLAYER_OVERLAY_FADE_TICKS as f32).clamp(0.0, 1.0)
+            };
+            in_alpha.min(out_alpha)
         }
     }
 

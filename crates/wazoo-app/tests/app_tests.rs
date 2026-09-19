@@ -926,4 +926,83 @@ fn test_dropdown_menu_slide_down_animation() {
     assert_eq!(app.dropdown_menu_slide_progress(), 0.0);
 }
 
+#[test]
+fn test_player_osd_fade_in_and_fade_out_animation() {
+    use wazoo_app::app::PLAYER_OVERLAY_FADE_TICKS;
+
+    let (mut app, _) = new_test_app();
+    let win_id = iced::window::Id::unique();
+    app.window_id = Some(win_id);
+
+    // Initial state: player OSD is completely hidden
+    assert_eq!(app.player_overlay_ticks, 0);
+    assert_eq!(app.player_overlay_alpha(), 0.0);
+
+    // Hover over a player to trigger OSD entrance
+    let _ = app.update(Message::PlayerHovered(1));
+    assert_eq!(app.hovered_player_id, Some(1));
+
+    // On initial trigger, fade-in starts at alpha 0.0 (smooth entrance instead of popping to 1.0)
+    assert_eq!(app.player_overlay_fade_in_ticks, 0);
+    assert_eq!(app.player_overlay_alpha(), 0.0);
+
+    // Over PLAYER_OVERLAY_FADE_TICKS (12 ticks), alpha monotonically fades in to 1.0
+    let mut prev_alpha = app.player_overlay_alpha();
+    for _ in 1..=PLAYER_OVERLAY_FADE_TICKS {
+        let _ = app.update(Message::VideoFrameTick);
+        let cur_alpha = app.player_overlay_alpha();
+        assert!(
+            cur_alpha >= prev_alpha,
+            "Fade-in alpha must increase monotonically: prev={}, cur={}",
+            prev_alpha,
+            cur_alpha
+        );
+        prev_alpha = cur_alpha;
+    }
+
+    // Fully faded in
+    assert_eq!(app.player_overlay_alpha(), 1.0);
+
+    // Now unhover the player to trigger fade out
+    let _ = app.update(Message::PlayerUnhovered(1));
+
+    // Over PLAYER_OVERLAY_FADE_TICKS frames, alpha monotonically fades out from 1.0 to 0.0
+    let mut prev_alpha = app.player_overlay_alpha();
+    for _ in 1..=PLAYER_OVERLAY_FADE_TICKS {
+        let _ = app.update(Message::VideoFrameTick);
+        let cur_alpha = app.player_overlay_alpha();
+        assert!(
+            cur_alpha <= prev_alpha,
+            "Fade-out alpha must decrease monotonically: prev={}, cur={}",
+            prev_alpha,
+            cur_alpha
+        );
+        prev_alpha = cur_alpha;
+    }
+
+    // Overlay completely dismissed
+    assert_eq!(app.player_overlay_ticks, 0);
+    assert_eq!(app.player_overlay_alpha(), 0.0);
+    assert_eq!(app.hovered_player_id, None);
+
+    // Test interrupted entrance: unhovering while still fading in does not jump
+    let _ = app.update(Message::PlayerHovered(1));
+    for _ in 0..4 {
+        let _ = app.update(Message::VideoFrameTick);
+    }
+    let mid_alpha = app.player_overlay_alpha();
+    assert!((mid_alpha - (4.0 / PLAYER_OVERLAY_FADE_TICKS as f32)).abs() < 1e-4);
+
+    // Unhover while mid-entrance: fade-out smoothly reverses from current alpha (4/12)
+    let _ = app.update(Message::PlayerUnhovered(1));
+    assert!(app.player_overlay_ticks <= 4);
+
+    for _ in 0..4 {
+        let _ = app.update(Message::VideoFrameTick);
+    }
+    assert_eq!(app.player_overlay_ticks, 0);
+    assert_eq!(app.player_overlay_alpha(), 0.0);
+}
+
+
 
