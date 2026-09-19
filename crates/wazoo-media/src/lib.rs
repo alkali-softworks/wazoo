@@ -22,5 +22,6 @@ pub use player::{
 pub use scroll::{ScrollEngine, ScrollItem};
 pub use subtitles::{
     SubtitleCue, load_subtitles, load_subtitles_for_stream, load_subtitles_for_stream_sync,
-    load_subtitles_for_track, load_subtitles_for_track_sync, load_subtitles_sync, parse_subtitles,
+    load_subtitles_for_track, load_subtitles_for_track_details, load_subtitles_for_track_sync,
+    load_subtitles_sync, parse_subtitles, run_ffmpeg_subtitle_extract_async,
 };

@@ -123,7 +123,7 @@ pub enum Message {
     ToggleTranscriptForPlayer(PlayerId),
     CloseTranscript,
     TranscriptSearchChanged(String),
-    TranscriptLoaded(String, Vec<wazoo_media::SubtitleCue>),
+    TranscriptLoaded(String, usize, Vec<wazoo_media::SubtitleCue>),
     SeekToSubtitle(f64),
     ToggleTranscriptSubtitleMenu,
     CloseTranscriptSubtitleMenu,

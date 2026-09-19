@@ -270,17 +270,146 @@ pub fn load_subtitles_for_stream_sync(
     Vec::new()
 }
 
-/// Asynchronously loads and parses subtitles for a container stream or subtitle stream index on a background thread.
+/// Asynchronously extracts subtitle cues via ffmpeg using Tokio async process management.
+/// Uses kill_on_drop to immediately terminate stalled or superseded ffmpeg extractions,
+/// executes with a timeout to avoid hanging, and offloads string parsing onto the blocking pool.
+pub async fn run_ffmpeg_subtitle_extract_async(
+    video_path: &str,
+    map_arg: &str,
+) -> Option<Vec<SubtitleCue>> {
+    let mut cmd = tokio::process::Command::new("ffmpeg");
+    cmd.args([
+        "-nostdin",
+        "-protocol_whitelist",
+        "file,crypto",
+        "-v",
+        "error",
+        "-i",
+        video_path,
+        "-map",
+        map_arg,
+        "-f",
+        "srt",
+        "-",
+    ]);
+    cmd.kill_on_drop(true);
+
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+
+    let output = tokio::time::timeout(
+        std::time::Duration::from_secs(15),
+        cmd.output(),
+    )
+    .await
+    .ok()?
+    .ok()?;
+
+    if output.status.success() && !output.stdout.is_empty() {
+        let content = String::from_utf8_lossy(&output.stdout).to_string();
+        let cues = tokio::task::spawn_blocking(move || parse_srt_or_vtt(&content))
+            .await
+            .unwrap_or_default();
+        if !cues.is_empty() {
+            return Some(cues);
+        }
+    }
+    None
+}
+
+/// Asynchronously loads subtitles for a given track, prioritizing external sidecar files if specified,
+/// followed by container stream extraction (`ff_index`), then stream index fallback (`sub_index`).
+pub async fn load_subtitles_for_track_details(
+    video_path: String,
+    external_filename: Option<String>,
+    ff_index: Option<i64>,
+    sub_index: usize,
+) -> Vec<SubtitleCue> {
+    // 1. If an external subtitle file is explicitly specified, load and parse it asynchronously off-thread
+    if let Some(ext_file) = external_filename {
+        if tokio::fs::try_exists(&ext_file).await.unwrap_or(false) {
+            if let Ok(content) = tokio::fs::read_to_string(&ext_file).await {
+                let cues = tokio::task::spawn_blocking(move || parse_subtitles(&content))
+                    .await
+                    .unwrap_or_default();
+                if !cues.is_empty() {
+                    return cues;
+                }
+            }
+        }
+    }
+
+    // 2. Otherwise load via stream index / embedded ffmpeg extraction
+    load_subtitles_for_stream(video_path, ff_index, sub_index).await
+}
+
+/// Asynchronously loads and parses subtitles for a container stream or subtitle stream index.
+/// Employs non-blocking Tokio child process execution, async filesystem I/O, and offloads
+/// CPU-bound subtitle parsing to Tokio's blocking thread pool.
 pub async fn load_subtitles_for_stream(
     video_path: String,
     ff_index: Option<i64>,
     sub_index: usize,
 ) -> Vec<SubtitleCue> {
-    tokio::task::spawn_blocking(move || {
-        load_subtitles_for_stream_sync(&video_path, ff_index, sub_index)
-    })
-    .await
-    .unwrap_or_default()
+    // 1. If ff_index is provided from container metadata, map the exact container stream: -map 0:{ff_index}
+    if let Some(idx) = ff_index {
+        let map_arg = format!("0:{idx}");
+        if let Some(cues) = run_ffmpeg_subtitle_extract_async(&video_path, &map_arg).await {
+            log::info!(
+                "Extracted {} subtitle cues via ffmpeg (-map {}) from {}",
+                cues.len(),
+                map_arg,
+                video_path
+            );
+            return cues;
+        }
+    }
+
+    // 2. Otherwise/fallback: map by subtitle stream index: -map 0:s:{sub_index}
+    let map_arg = format!("0:s:{sub_index}");
+    if let Some(cues) = run_ffmpeg_subtitle_extract_async(&video_path, &map_arg).await {
+        log::info!(
+            "Extracted {} subtitle cues via ffmpeg (-map {}) from {}",
+            cues.len(),
+            map_arg,
+            video_path
+        );
+        return cues;
+    }
+
+    // 3. Fallback for primary track (sub_index == 0): check sidecar files (.srt, .vtt, .ass, etc.)
+    if sub_index == 0 {
+        let path = Path::new(&video_path);
+        if let (Some(parent), Some(stem)) = (path.parent(), path.file_stem()) {
+            let stem_str = stem.to_string_lossy();
+            let candidates = [
+                parent.join(format!("{stem_str}.srt")),
+                parent.join(format!("{stem_str}.vtt")),
+                parent.join(format!("{stem_str}.ass")),
+                parent.join(format!("{stem_str}.ssa")),
+            ];
+
+            for cand in candidates {
+                if tokio::fs::try_exists(&cand).await.unwrap_or(false) {
+                    if let Ok(content) = tokio::fs::read_to_string(&cand).await {
+                        let cues = tokio::task::spawn_blocking(move || parse_subtitles(&content))
+                            .await
+                            .unwrap_or_default();
+                        if !cues.is_empty() {
+                            log::info!(
+                                "Loaded {} subtitle cues from sidecar {:?}",
+                                cues.len(),
+                                cand
+                            );
+                            return cues;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Vec::new()
 }
 
 /// Synchronously loads subtitles for a given video path and subtitle stream index.

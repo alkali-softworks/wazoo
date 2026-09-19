@@ -645,23 +645,20 @@ impl WazooApp {
         let path_clone = path.clone();
         let track_idx = self.transcript_track_index;
         let sub_track = sub_tracks.get(track_idx).cloned();
+        let ext_file = sub_track.as_ref().and_then(|t| t.external_filename.clone());
+        let ff_index = sub_track.as_ref().and_then(|t| t.ff_index);
+
         Task::perform(
             async move {
-                if let Some(track) = sub_track {
-                    if let Some(ext_file) = track.external_filename {
-                        if let Ok(content) = tokio::fs::read_to_string(&ext_file).await {
-                            let cues = wazoo_media::parse_subtitles(&content);
-                            if !cues.is_empty() {
-                                return cues;
-                            }
-                        }
-                    }
-                    wazoo_media::load_subtitles_for_stream(path, track.ff_index, track_idx).await
-                } else {
-                    wazoo_media::load_subtitles_for_stream(path, None, track_idx).await
-                }
+                wazoo_media::load_subtitles_for_track_details(
+                    path,
+                    ext_file,
+                    ff_index,
+                    track_idx,
+                )
+                .await
             },
-            move |cues| Message::TranscriptLoaded(path_clone, cues),
+            move |cues| Message::TranscriptLoaded(path_clone, track_idx, cues),
         )
     }
 
