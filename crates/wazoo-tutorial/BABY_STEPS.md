@@ -794,7 +794,7 @@ return Task::perform(
         wazoo_media::load_subtitles_for_stream(path, ...).await
     },
     // Move #2: The Completion Callback
-    move |cues| Message::TranscriptLoaded(path_clone, cues),
+    move |cues| Message::TranscriptLoaded(path_clone, track_idx, cues),
 );
 ```
 

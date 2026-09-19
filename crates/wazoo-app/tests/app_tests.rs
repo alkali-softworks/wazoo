@@ -1031,3 +1031,51 @@ fn test_player_controls_lower_third_positioning() {
     // Verify view generation succeeds without panic with controls active
     let _view = app.view();
 }
+
+#[test]
+fn test_transcript_loaded_track_and_path_discrimination() {
+    let (mut app, _) = new_test_app();
+    app.show_transcript = true;
+    app.transcript_video_path = Some("/media/sample.mp4".to_string());
+    app.transcript_track_index = 1;
+    app.transcript_loading = true;
+
+    let cue1 = wazoo_media::SubtitleCue {
+        start_secs: 0.0,
+        end_secs: 2.0,
+        text: "Track 0 old subtitle".to_string(),
+    };
+    let cue2 = wazoo_media::SubtitleCue {
+        start_secs: 0.0,
+        end_secs: 2.0,
+        text: "Track 1 active subtitle".to_string(),
+    };
+
+    // 1. Stale response from a different video path is rejected
+    let _ = app.update(Message::TranscriptLoaded(
+        "/media/other.mp4".to_string(),
+        1,
+        vec![cue1.clone()],
+    ));
+    assert!(app.transcript_loading);
+    assert!(app.transcript_cues.is_empty());
+
+    // 2. Stale response from a previous track index (e.g. track 0 while on track 1) is rejected
+    let _ = app.update(Message::TranscriptLoaded(
+        "/media/sample.mp4".to_string(),
+        0,
+        vec![cue1],
+    ));
+    assert!(app.transcript_loading);
+    assert!(app.transcript_cues.is_empty());
+
+    // 3. Matching path and track index commits cues and ends loading
+    let _ = app.update(Message::TranscriptLoaded(
+        "/media/sample.mp4".to_string(),
+        1,
+        vec![cue2.clone()],
+    ));
+    assert!(!app.transcript_loading);
+    assert_eq!(app.transcript_cues.len(), 1);
+    assert_eq!(app.transcript_cues[0].text, "Track 1 active subtitle");
+}

@@ -55,3 +55,42 @@ Dialogue: 0,0:00:20.00,0:00:22.50,Default,,0,0,0,,Second line.
     assert_eq!(cues[1].end_secs, 22.5);
     assert_eq!(cues[1].text, "Second line.");
 }
+
+#[tokio::test]
+async fn test_load_subtitles_for_track_details_external_file() {
+    let dir = std::env::temp_dir().join(format!("wazoo_sub_test_{}", rand::random::<u32>()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let srt_path = dir.join("test_track.srt");
+    std::fs::write(
+        &srt_path,
+        "1\n00:00:01,000 --> 00:00:04,000\nAsync subtitle loaded.\n",
+    )
+    .unwrap();
+
+    let cues = wazoo_media::load_subtitles_for_track_details(
+        "dummy_video.mp4".to_string(),
+        Some(srt_path.to_string_lossy().to_string()),
+        None,
+        0,
+    )
+    .await;
+
+    assert_eq!(cues.len(), 1);
+    assert_eq!(cues[0].start_secs, 1.0);
+    assert_eq!(cues[0].end_secs, 4.0);
+    assert_eq!(cues[0].text, "Async subtitle loaded.");
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn test_run_ffmpeg_subtitle_extract_async_nonexistent_file() {
+    let cues = wazoo_media::run_ffmpeg_subtitle_extract_async(
+        "/nonexistent/path/to/video_file_12345.mkv",
+        "0:s:0",
+    )
+    .await;
+
+    // Gracefully returns None without panicking or blocking
+    assert!(cues.is_none());
+}
