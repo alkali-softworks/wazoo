@@ -24,13 +24,13 @@ pub const PLAYER_OVERLAY_HIDE_TICKS: usize = 150;
 /// Player controls overlay fade out duration: ~200ms at 60 FPS (12 ticks)
 pub const PLAYER_OVERLAY_FADE_TICKS: usize = 12;
 /// Player controls overlay vertical position ratio (lower-third layout).
-/// Portion of flexible space allocated above the controls overlay (65 for 65%).
+/// Portion of flexible space allocated above the controls overlay.
 pub const PLAYER_CONTROLS_TOP_PORTION: u16 = 80;
-/// Portion of flexible space allocated below the controls overlay (35 for 35%).
+/// Portion of flexible space allocated below the controls overlay.
 pub const PLAYER_CONTROLS_BOTTOM_PORTION: u16 = 30;
 /// Maximum width in pixels of the compact floating player controls HUD card
 pub const PLAYER_CONTROLS_MAX_WIDTH: f32 = 800.0;
-/// Window titlebar hide delay: ~400ms at 60 FPS (25 ticks)
+/// Window titlebar hide delay: ~800ms at 60 FPS (50 ticks)
 pub const TITLEBAR_HIDE_TICKS: usize = 50;
 /// Window titlebar fade out duration: ~200ms at 60 FPS (12 ticks)
 pub const TITLEBAR_FADE_TICKS: usize = 12;
@@ -650,13 +650,8 @@ impl WazooApp {
 
         Task::perform(
             async move {
-                wazoo_media::load_subtitles_for_track_details(
-                    path,
-                    ext_file,
-                    ff_index,
-                    track_idx,
-                )
-                .await
+                wazoo_media::load_subtitles_for_track_details(path, ext_file, ff_index, track_idx)
+                    .await
             },
             move |cues| Message::TranscriptLoaded(path_clone, track_idx, cues),
         )
