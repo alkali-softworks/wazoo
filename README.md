@@ -22,7 +22,7 @@ Wazoo is an idea in development since 2020 - originally as a JS app, then Electr
 
 ### 🌊 The Infinity Stream ("Scroll Mode")
 View your library as a continuous vertical feed (<kbd>5</kbd>):
-- **Vertical scroll speed** at configurable `scroll_speed` (<kbd>+</kbd> / <kbd>-</kbd>).
+- **Vertical scroll speed** is configurable via <kbd>+</kbd> / <kbd>-</kbd>.
 - **Audio Cross-Fading**: Volume adjusts with scroll position, proportional to video visibility.
 
 ### ⚡ Flip Mode & Shuffle History
