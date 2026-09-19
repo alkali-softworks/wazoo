@@ -186,3 +186,34 @@ fn test_track_matches_preference_same_language_commentary() {
     assert!(!track_matches_preference(&commentary_1, "Spanish"));
 }
 
+#[test]
+fn test_dungeon_meshi_subtitles() {
+    let path = "/mnt/bob/anime/Dungeon Meshi/Dungeon Meshi - 08.mkv";
+    if !std::path::Path::new(path).exists() {
+        return;
+    }
+    let config = wazoo_media::BufferConfig::default();
+    let mut handle = wazoo_media::VideoHandle::with_buffering_and_start(
+        1,
+        path,
+        "Dungeon Meshi - 08",
+        config,
+        wazoo_media::StartTime::Beginning,
+    )
+    .unwrap();
+
+    let start = std::time::Instant::now();
+    while start.elapsed() < std::time::Duration::from_millis(2000) {
+        handle.update_frame();
+        if !handle.subtitle_tracks().is_empty() {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+
+    assert_eq!(handle.get_property_string("sid").as_deref(), Some("1"));
+    assert_eq!(handle.get_property_i64("sid"), Some(1));
+    assert_eq!(handle.current_subtitle_track_id(), Some(1));
+    assert!(handle.subtitle_tracks().iter().any(|t| t.id == 1 && t.is_selected));
+}
+
