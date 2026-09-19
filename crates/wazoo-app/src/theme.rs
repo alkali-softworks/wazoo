@@ -14,7 +14,6 @@ use iced::{
 };
 
 pub const COLOR_PRIMARY: Color = Color::from_rgb(0.259, 0.722, 0.514); // #42b883 Emerald
-//pub const COLOR_TITLEBAR_BG: Color = Color::from_rgb(0.035, 0.137, 0.094); // #092318 Deep forest green
 pub const COLOR_TITLEBAR_BG: Color = Color::from_rgb(0.122, 0.035, 0.184); // #1f092f Deep plum
 pub const COLOR_BADGE_BG: Color = Color::BLACK;
 pub const COLOR_MODAL_BG: Color = Color::from_rgb(0.122, 0.122, 0.122); // #1f1f1f

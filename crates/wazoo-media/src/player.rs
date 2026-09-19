@@ -1321,15 +1321,17 @@ impl VideoHandle {
         let is_initial_load = !self.tracks_loaded || self.state.current_subtitle_track_id.is_none();
         let sid_i64 = self.get_property_i64("sid");
         let sid_str = self.get_property_string("sid");
-        let mut current_sid = sid_i64
-            .or_else(|| sid_str.as_deref().and_then(|s| s.parse::<i64>().ok()))
+        let mpv_selected_sid = sid_i64
+            .or_else(|| sid_str.as_deref().and_then(|s| s.parse::<i64>().ok()));
+        let mut current_sid = mpv_selected_sid
+            .or_else(|| self.state.current_subtitle_track_id)
             .or_else(|| sub_tracks.iter().find(|t| t.is_selected).map(|t| t.id))
             .or_else(|| sub_tracks.first().map(|t| t.id));
 
-        // Auto-promote: If mpv defaulted to a Signs/Songs track (which only contains signs/lyrics, no dialogue),
-        // and a full dialogue subtitle track exists (or external subtitle sidecar), automatically promote to the full track on initial load.
-        if is_initial_load {
-            if let Some(sid) = current_sid {
+        if is_initial_load && !sub_tracks.is_empty() {
+            if let Some(sid) = mpv_selected_sid {
+                // If mpv defaulted to a Signs/Songs track (which only contains signs/lyrics, no dialogue),
+                // and a full dialogue subtitle track exists (or external subtitle sidecar), automatically promote to the full track on initial load.
                 if let Some(active_track) = sub_tracks.iter().find(|t| t.id == sid) {
                     let is_signs = active_track
                         .title
@@ -1384,6 +1386,40 @@ impl VideoHandle {
                         }
                     }
                 }
+            } else if let Some(target_id) = current_sid {
+                // mpv did not automatically select a subtitle track (e.g. MKV container tracks with disposition 'default: 0').
+                // Select the preferred full dialogue track (or first available track) and explicitly configure mpv.
+                let best_track = sub_tracks
+                    .iter()
+                    .find(|t| {
+                        if let Some(ref title) = t.title {
+                            let l = title.to_ascii_lowercase();
+                            if l.contains("full") {
+                                return true;
+                            }
+                        }
+                        t.external_filename.is_some()
+                    })
+                    .or_else(|| {
+                        sub_tracks.iter().find(|t| {
+                            if let Some(ref title) = t.title {
+                                let l = title.to_ascii_lowercase();
+                                if l.contains("sign") || l.contains("song") {
+                                    return false;
+                                }
+                            }
+                            true
+                        })
+                    })
+                    .map(|t| t.id)
+                    .unwrap_or(target_id);
+
+                log::info!(
+                    "Auto-selecting subtitle track (id {}) on initial load (mpv defaulted to no track)",
+                    best_track
+                );
+                self.set_subtitle_track(best_track);
+                current_sid = Some(best_track);
             }
         }
 
