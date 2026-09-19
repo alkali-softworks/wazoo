@@ -37,5 +37,6 @@ bytemuck = { version = "1.25", features = ["derive"] }
 rfd = "0.15"
 libloading = "0.8"
 miniz_oxide = "0.8"
+mimalloc = { version = "0.1", default-features = false }
 
 

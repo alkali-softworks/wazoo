@@ -447,8 +447,8 @@ pub struct BufferConfig {
 impl Default for BufferConfig {
     fn default() -> Self {
         Self {
-            duration_secs: 10,
-            size_mb: 32,
+            duration_secs: 5,
+            size_mb: 16,
             read_chunk_kb: 512,
             preferred_audio_language: None,
         }
@@ -548,12 +548,12 @@ impl VideoHandle {
             let hwdec = std::env::var("WAZOO_HWDEC").unwrap_or_else(|_| "no".to_string());
             set_opt("hwdec", &hwdec);
             set_opt("cache", "yes");
-            set_opt("demuxer-max-bytes", &format!("{}M", config.size_mb.max(32)));
-            set_opt(
-                "demuxer-readahead-secs",
-                &format!("{}", config.duration_secs.max(10)),
-            );
-            set_opt("demuxer-max-back-bytes", "32M");
+            let demuxer_mb = config.size_mb.clamp(8, 256);
+            set_opt("demuxer-max-bytes", &format!("{}M", demuxer_mb));
+            let readahead_secs = config.duration_secs.clamp(2, 5);
+            set_opt("demuxer-readahead-secs", &format!("{}", readahead_secs));
+            let back_mb = (demuxer_mb / 4).clamp(2, 8);
+            set_opt("demuxer-max-back-bytes", &format!("{}M", back_mb));
             set_opt("cache-pause", "no");
             set_opt("hr-seek-framedrop", "yes");
             set_opt("force-seekable", "yes");
