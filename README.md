@@ -18,13 +18,12 @@ Wazoo is an idea in development since 2020 - originally as a JS app, then Electr
 ### 🖼️ Multi-Tile Layouts
 - **1 to 12 Video Players**: Scale from a single minimalist player to an ambient video wall.
 - **Flexible Layouts**: Cycle between **Grid**, **Row**, and **Column** arrangements (<kbd>L</kbd>).
-- **Independent Audio & Controls**: Per-tile volume control, seek slider, language select, and play mode.
+- **Independent Audio & Controls**: Per-tile volume control, play mode, and language select.
 
 ### 🌊 The Infinity Stream ("Scroll Mode")
 View your library as a continuous vertical feed (<kbd>5</kbd>):
-- Smooth vertical scroll at configurable `scroll_speed` (<kbd>+</kbd> / <kbd>-</kbd>).
-- **Virtual Viewport**: Automatically unloads players that scroll out of view and loads new candidate videos at the bottom.
-- **Proportional Audio Fading**: Audio fades in and out based on how much of the video is visible on screen.
+- **Vertical scroll speed** at configurable `scroll_speed` (<kbd>+</kbd> / <kbd>-</kbd>).
+- **Audio Cross-Fading**: Volume adjusts with scroll position, proportional to video visibility.
 
 ### ⚡ Flip Mode & Shuffle History
 Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</kbd>):
