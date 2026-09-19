@@ -35,6 +35,16 @@ pub const FILE_PICKER_DEBOUNCE_TICKS: usize = 12;
 pub const MAX_PLAY_HISTORY_ENTRIES: usize = 1000;
 /// Maximum number of navigation entries retained per player
 pub const MAX_PLAYER_NAV_HISTORY_ENTRIES: usize = 1000;
+/// Focused player border highlight duration: ~333ms at 60 FPS (20 ticks)
+pub const FOCUS_BORDER_TICKS: usize = 20;
+/// Maximum number of attempts to pick and load an alternative video if the chosen file fails
+pub const MAX_VIDEO_LOAD_RETRIES: usize = 3;
+/// Default toast notification display duration in seconds
+pub const DEFAULT_TOAST_SECS: usize = 2;
+/// Extended toast notification display duration in seconds (e.g. for long filenames or status reports)
+pub const LONG_TOAST_SECS: usize = 3;
+/// Brief toast notification display duration in seconds (e.g. for rapid toggle actions)
+pub const SHORT_TOAST_SECS: usize = 1;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct PlaybackHistoryEntry {
@@ -261,7 +271,7 @@ impl WazooApp {
         } else {
             None
         };
-        let toast_time_remaining = if toast_msg.is_some() { 3 } else { 0 };
+        let toast_time_remaining = if toast_msg.is_some() { LONG_TOAST_SECS } else { 0 };
 
         let mut app = Self {
             settings: settings.clone(),
@@ -803,7 +813,7 @@ impl WazooApp {
             StartTime::Beginning
         };
 
-        for _ in 0..3 {
+        for _ in 0..MAX_VIDEO_LOAD_RETRIES {
             if let Some(video_rec) = self.get_next_video_rec(None) {
                 match self.create_video_handle_with_start_time(
                     id,
@@ -1148,7 +1158,7 @@ impl WazooApp {
                 self.t_with("wazoo.no_files_found_in", &[("folder", folder_clean)])
             };
             self.toast_message = Some(msg);
-            self.toast_time_remaining = 3;
+            self.toast_time_remaining = LONG_TOAST_SECS;
             return;
         }
 
@@ -1171,7 +1181,7 @@ impl WazooApp {
 
         self.last_total_videos = total;
         self.toast_message = Some(msg);
-        self.toast_time_remaining = 3;
+        self.toast_time_remaining = LONG_TOAST_SECS;
     }
 
     pub fn subscription(&self) -> Subscription<Message> {
