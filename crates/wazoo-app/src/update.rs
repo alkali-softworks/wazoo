@@ -8,7 +8,8 @@
  */
 
 use crate::app::{
-    MAX_PLAYER_NAV_HISTORY_ENTRIES, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS,
+    DEFAULT_TOAST_SECS, FOCUS_BORDER_TICKS, LONG_TOAST_SECS, MAX_PLAYER_NAV_HISTORY_ENTRIES,
+    MAX_VIDEO_LOAD_RETRIES, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, SHORT_TOAST_SECS,
     TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS, TITLEBAR_SHOW_DELAY_TICKS, WazooApp,
 };
 use crate::format;
@@ -31,7 +32,7 @@ impl WazooApp {
                 let was_already_active = self.focused_player_idx == pos;
                 self.focused_player_idx = pos;
                 if !was_already_active {
-                    self.focus_border_ticks = 20;
+                    self.focus_border_ticks = FOCUS_BORDER_TICKS;
                 }
             }
             self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
@@ -103,7 +104,7 @@ impl WazooApp {
             } else {
                 StartTime::Beginning
             };
-            for _ in 0..3 {
+            for _ in 0..MAX_VIDEO_LOAD_RETRIES {
                 if let Some(video_rec) = self
                     .get_next_video_rec_with_mode(curr_path.as_deref(), self.is_player_shuffle(id))
                 {
@@ -182,7 +183,7 @@ impl WazooApp {
 
         // 3. Fallback if back_stack had no earlier entries (or loading failed)
         if !loaded {
-            for _ in 0..3 {
+            for _ in 0..MAX_VIDEO_LOAD_RETRIES {
                 if let Some(video_rec) = self
                     .get_prev_video_rec_with_mode(curr_path.as_deref(), self.is_player_shuffle(id))
                 {
@@ -790,7 +791,7 @@ impl WazooApp {
                         }
                         self.toast_message =
                             Some(self.t_with("player.playing", &[("title", &title)]));
-                        self.toast_time_remaining = 3;
+                        self.toast_time_remaining = LONG_TOAST_SECS;
                         if self.show_transcript {
                             return self.load_transcript_for_focused_player();
                         }
@@ -904,7 +905,7 @@ impl WazooApp {
                     let was_already_active = self.focused_player_idx == pos;
                     self.focused_player_idx = pos;
                     if !was_already_active {
-                        self.focus_border_ticks = 20;
+                        self.focus_border_ticks = FOCUS_BORDER_TICKS;
                         if self.show_transcript {
                             return self.load_transcript_for_focused_player();
                         }
@@ -917,7 +918,7 @@ impl WazooApp {
                     let was_already_active = self.focused_player_idx == pos;
                     self.focused_player_idx = pos;
                     if !was_already_active {
-                        self.focus_border_ticks = 20;
+                        self.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                 }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
@@ -954,7 +955,7 @@ impl WazooApp {
                     let was_already_active = self.focused_player_idx == pos_idx;
                     self.focused_player_idx = pos_idx;
                     if !was_already_active {
-                        self.focus_border_ticks = 20;
+                        self.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                 }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
@@ -967,7 +968,7 @@ impl WazooApp {
                     let was_already_active = self.focused_player_idx == pos;
                     self.focused_player_idx = pos;
                     if !was_already_active {
-                        self.focus_border_ticks = 20;
+                        self.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                 }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
@@ -985,7 +986,7 @@ impl WazooApp {
                             "player.seek_position",
                             &[("pos", &pos_str), ("dur", &dur_str)],
                         ));
-                        self.toast_time_remaining = 2;
+                        self.toast_time_remaining = DEFAULT_TOAST_SECS;
                     }
                 }
                 self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
@@ -1034,7 +1035,7 @@ impl WazooApp {
                                 ("dur", &dur_str),
                             ],
                         ));
-                        self.toast_time_remaining = 2;
+                        self.toast_time_remaining = DEFAULT_TOAST_SECS;
                     }
                 }
             }
@@ -1043,7 +1044,7 @@ impl WazooApp {
                     let was_already_active = self.focused_player_idx == pos;
                     self.focused_player_idx = pos;
                     if !was_already_active {
-                        self.focus_border_ticks = 20;
+                        self.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                 }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
@@ -1080,7 +1081,7 @@ impl WazooApp {
                         let pct_str = format!("{:.0}", v * 100.0);
                         self.toast_message =
                             Some(self.t_with("player.volume", &[("percent", &pct_str)]));
-                        self.toast_time_remaining = 1;
+                        self.toast_time_remaining = SHORT_TOAST_SECS;
                         self.save_session_state();
                     }
                 }
@@ -1091,7 +1092,7 @@ impl WazooApp {
                     let was_already_active = self.focused_player_idx == pos;
                     self.focused_player_idx = pos;
                     if !was_already_active {
-                        self.focus_border_ticks = 20;
+                        self.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                 }
                 let mut selected_pref = None;
@@ -1106,7 +1107,7 @@ impl WazooApp {
                 if let Some(label) = track_label {
                     self.toast_message =
                         Some(self.t_with("player.audio_track", &[("label", &label)]));
-                    self.toast_time_remaining = 2;
+                    self.toast_time_remaining = DEFAULT_TOAST_SECS;
                 }
                 if let Some(pref) = selected_pref {
                     self.settings.preferred_audio_language = Some(pref.clone());
@@ -1136,7 +1137,7 @@ impl WazooApp {
                     let was_already_active = self.focused_player_idx == pos;
                     self.focused_player_idx = pos;
                     if !was_already_active {
-                        self.focus_border_ticks = 20;
+                        self.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                 }
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
@@ -1147,7 +1148,7 @@ impl WazooApp {
                     } else {
                         self.t("player.unmuted")
                     });
-                    self.toast_time_remaining = 2;
+                    self.toast_time_remaining = DEFAULT_TOAST_SECS;
                 }
                 self.save_session_state();
                 self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
@@ -1176,7 +1177,7 @@ impl WazooApp {
                 } else {
                     self.t("wazoo.global_mode_unmuted")
                 });
-                self.toast_time_remaining = 2;
+                self.toast_time_remaining = DEFAULT_TOAST_SECS;
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::GlobalUnmute => {
@@ -1191,7 +1192,7 @@ impl WazooApp {
                     }
                 }
                 self.toast_message = Some(self.t("wazoo.global_mode_unmuted"));
-                self.toast_time_remaining = 2;
+                self.toast_time_remaining = DEFAULT_TOAST_SECS;
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::TogglePlayerShuffle(id) => {
@@ -1209,7 +1210,7 @@ impl WazooApp {
                 } else {
                     self.t("player.switched_sequential")
                 });
-                self.toast_time_remaining = 2;
+                self.toast_time_remaining = DEFAULT_TOAST_SECS;
                 self.save_session_state();
             }
             Message::ToggleShuffleMode => {
@@ -1226,7 +1227,7 @@ impl WazooApp {
                     } else {
                         self.t("player.switched_sequential")
                     });
-                    self.toast_time_remaining = 2;
+                    self.toast_time_remaining = DEFAULT_TOAST_SECS;
                     self.save_session_state();
                 }
             }
@@ -1253,7 +1254,7 @@ impl WazooApp {
                     LayoutMode::Row => self.t("wazoo.layout_row"),
                     LayoutMode::Column => self.t("wazoo.layout_column"),
                 });
-                self.toast_time_remaining = 2;
+                self.toast_time_remaining = DEFAULT_TOAST_SECS;
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::SetPlayerCount(count) => {
@@ -1295,7 +1296,7 @@ impl WazooApp {
                         ("suffix", if target == 1 { "" } else { "s" }),
                     ],
                 ));
-                self.toast_time_remaining = 2;
+                self.toast_time_remaining = DEFAULT_TOAST_SECS;
                 let _ = self.config_mgr.save_settings(&self.settings);
                 self.save_session_state();
             }
@@ -1358,7 +1359,7 @@ impl WazooApp {
                     }
 
                     self.toast_message = Some(self.t("wazoo.scroll_mode_enabled"));
-                    self.toast_time_remaining = 2;
+                    self.toast_time_remaining = DEFAULT_TOAST_SECS;
                     let _ = self.config_mgr.save_settings(&self.settings);
 
                     return self.trigger_preload_task();
@@ -1373,7 +1374,7 @@ impl WazooApp {
                     }
                     self.toast_message = Some(self.t("wazoo.scroll_mode_disabled"));
                 }
-                self.toast_time_remaining = 2;
+                self.toast_time_remaining = DEFAULT_TOAST_SECS;
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
             Message::ToggleFlipMode => {
@@ -1395,7 +1396,7 @@ impl WazooApp {
                     PlaybackMode::Flip => self.t("wazoo.flip_mode_enabled"),
                     _ => self.t("wazoo.flip_mode_disabled"),
                 });
-                self.toast_time_remaining = 2;
+                self.toast_time_remaining = DEFAULT_TOAST_SECS;
             }
             Message::SetScrollSpeed(speed) => {
                 self.settings.scroll_speed = speed.clamp(0.1, 10.0);
@@ -1403,7 +1404,7 @@ impl WazooApp {
                 let speed_str = format!("{:.1}", self.settings.scroll_speed);
                 self.toast_message =
                     Some(self.t_with("player.scroll_speed", &[("speed", &speed_str)]));
-                self.toast_time_remaining = 1;
+                self.toast_time_remaining = SHORT_TOAST_SECS;
             }
             Message::AdjustScrollSpeed(delta) => {
                 let new_speed = (self.settings.scroll_speed + delta).clamp(0.1, 10.0);
@@ -1485,7 +1486,7 @@ impl WazooApp {
                     let count_str = self.players.len().to_string();
                     self.toast_message =
                         Some(self.t_with("player.players_count", &[("count", &count_str)]));
-                    self.toast_time_remaining = 2;
+                    self.toast_time_remaining = DEFAULT_TOAST_SECS;
                     let _ = self.config_mgr.save_settings(&self.settings);
                     if self.show_transcript {
                         return self.load_transcript_for_focused_player();
@@ -1496,13 +1497,13 @@ impl WazooApp {
                 if !self.players.is_empty() {
                     let next_idx = (self.focused_player_idx + 1) % self.players.len();
                     if next_idx != self.focused_player_idx {
-                        self.focus_border_ticks = 20;
+                        self.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                     self.focused_player_idx = next_idx;
                     let idx_str = (self.focused_player_idx + 1).to_string();
                     self.toast_message =
                         Some(self.t_with("player.focused_player", &[("index", &idx_str)]));
-                    self.toast_time_remaining = 1;
+                    self.toast_time_remaining = SHORT_TOAST_SECS;
                     if self.show_transcript {
                         return self.load_transcript_for_focused_player();
                     }
@@ -1513,7 +1514,7 @@ impl WazooApp {
                     let was_already_active = self.focused_player_idx == idx;
                     self.focused_player_idx = idx;
                     if !was_already_active {
-                        self.focus_border_ticks = 20;
+                        self.focus_border_ticks = FOCUS_BORDER_TICKS;
                         if self.show_transcript {
                             return self.load_transcript_for_focused_player();
                         }
@@ -1744,7 +1745,7 @@ impl WazooApp {
                                     Some(self.t_with("bookmarks.added", &[("name", &name)]));
                             }
                             let _ = self.config_mgr.save_settings(&self.settings);
-                            self.toast_time_remaining = 3;
+                            self.toast_time_remaining = LONG_TOAST_SECS;
                         }
                     }
                 }
@@ -1760,10 +1761,10 @@ impl WazooApp {
                             let _ = self.config_mgr.save_settings(&self.settings);
                             self.toast_message =
                                 Some(self.t_with("bookmarks.removed", &[("name", &removed.name)]));
-                            self.toast_time_remaining = 3;
+                            self.toast_time_remaining = LONG_TOAST_SECS;
                         } else {
                             self.toast_message = Some(self.t("bookmarks.not_found"));
-                            self.toast_time_remaining = 2;
+                            self.toast_time_remaining = DEFAULT_TOAST_SECS;
                         }
                     }
                 }
@@ -1774,7 +1775,7 @@ impl WazooApp {
                     let _ = self.config_mgr.save_settings(&self.settings);
                     self.toast_message =
                         Some(self.t_with("bookmarks.removed", &[("name", &removed.name)]));
-                    self.toast_time_remaining = 2;
+                    self.toast_time_remaining = DEFAULT_TOAST_SECS;
                 }
             }
             Message::JumpToBookmark(b) => {
@@ -1872,7 +1873,7 @@ impl WazooApp {
                     "bookmarks.jumped",
                     &[("name", &b.name), ("time", &time_str), ("mode", &mode_str)],
                 ));
-                self.toast_time_remaining = 3;
+                self.toast_time_remaining = LONG_TOAST_SECS;
                 self.show_bookmarks_modal = false;
                 if self.show_transcript {
                     return self.load_transcript_for_focused_player();
@@ -1891,7 +1892,7 @@ impl WazooApp {
                             "player.random_seek",
                             &[("pos", &pos_str), ("dur", &dur_str)],
                         ));
-                        self.toast_time_remaining = 2;
+                        self.toast_time_remaining = DEFAULT_TOAST_SECS;
                     }
                 }
             }
@@ -1938,7 +1939,7 @@ impl WazooApp {
                 if added_any {
                     let _ = self.config_mgr.save_settings(&self.settings);
                     self.toast_message = Some(self.t("settings.folders_added_scanning"));
-                    self.toast_time_remaining = 3;
+                    self.toast_time_remaining = LONG_TOAST_SECS;
                     return self.update(Message::StartScan);
                 }
             }
@@ -1954,7 +1955,7 @@ impl WazooApp {
                         let _ = self.config_mgr.save_settings(&self.settings);
                         self.toast_message =
                             Some(self.t_with("settings.folder_added", &[("folder", &trimmed)]));
-                        self.toast_time_remaining = 3;
+                        self.toast_time_remaining = LONG_TOAST_SECS;
                         return self.update(Message::StartScan);
                     } else {
                         self.folder_input.clear();
@@ -2039,7 +2040,7 @@ impl WazooApp {
                     "settings.folder_removed",
                     &[("folder", &display_name), ("count", &count_str)],
                 ));
-                self.toast_time_remaining = 2;
+                self.toast_time_remaining = DEFAULT_TOAST_SECS;
                 self.last_total_videos = self.available_videos.len();
 
                 if was_scanning {
@@ -2083,7 +2084,7 @@ impl WazooApp {
                 let count_str = format::format_number(removed_count);
                 self.toast_message =
                     Some(self.t_with("settings.misc_cleared", &[("count", &count_str)]));
-                self.toast_time_remaining = 2;
+                self.toast_time_remaining = DEFAULT_TOAST_SECS;
                 self.last_total_videos = self.available_videos.len();
             }
             Message::StartScan => {
@@ -2195,7 +2196,7 @@ impl WazooApp {
                         if err != "Scan cancelled" {
                             self.toast_message =
                                 Some(self.t_with("settings.scan_error", &[("error", &err)]));
-                            self.toast_time_remaining = 3;
+                            self.toast_time_remaining = LONG_TOAST_SECS;
                         }
                     }
                 }
@@ -2210,7 +2211,7 @@ impl WazooApp {
                 } else {
                     self.t("player.subtitles_disabled")
                 });
-                self.toast_time_remaining = 2;
+                self.toast_time_remaining = DEFAULT_TOAST_SECS;
             }
             Message::EscapePressed => {
                 if self.show_transcript_menu {
