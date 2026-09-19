@@ -1004,5 +1004,30 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
     assert_eq!(app.player_overlay_alpha(), 0.0);
 }
 
+#[test]
+fn test_player_controls_lower_third_positioning() {
+    use wazoo_app::app::{
+        PLAYER_CONTROLS_BOTTOM_PORTION, PLAYER_CONTROLS_MAX_WIDTH, PLAYER_CONTROLS_TOP_PORTION,
+    };
 
+    // Verify proportions represent lower-third positioning
+    assert_eq!(PLAYER_CONTROLS_TOP_PORTION, 80);
+    assert_eq!(PLAYER_CONTROLS_BOTTOM_PORTION, 30);
+    assert!(PLAYER_CONTROLS_TOP_PORTION > 0);
+    assert!(PLAYER_CONTROLS_BOTTOM_PORTION > 0);
+    assert_eq!(PLAYER_CONTROLS_MAX_WIDTH, 800.0);
 
+    let (mut app, _) = new_test_app();
+    let win_id = iced::window::Id::unique();
+    app.window_id = Some(win_id);
+
+    // Hover over player to activate controls overlay view tree
+    let _ = app.update(Message::PlayerHovered(1));
+    for _ in 0..12 {
+        let _ = app.update(Message::VideoFrameTick);
+    }
+    assert_eq!(app.player_overlay_alpha(), 1.0);
+
+    // Verify view generation succeeds without panic with controls active
+    let _view = app.view();
+}

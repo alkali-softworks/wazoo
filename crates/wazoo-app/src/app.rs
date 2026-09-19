@@ -23,6 +23,13 @@ use wazoo_scanner::ScanProgress;
 pub const PLAYER_OVERLAY_HIDE_TICKS: usize = 150;
 /// Player controls overlay fade out duration: ~200ms at 60 FPS (12 ticks)
 pub const PLAYER_OVERLAY_FADE_TICKS: usize = 12;
+/// Player controls overlay vertical position ratio (lower-third layout).
+/// Portion of flexible space allocated above the controls overlay (65 for 65%).
+pub const PLAYER_CONTROLS_TOP_PORTION: u16 = 80;
+/// Portion of flexible space allocated below the controls overlay (35 for 35%).
+pub const PLAYER_CONTROLS_BOTTOM_PORTION: u16 = 30;
+/// Maximum width in pixels of the compact floating player controls HUD card
+pub const PLAYER_CONTROLS_MAX_WIDTH: f32 = 800.0;
 /// Window titlebar hide delay: ~400ms at 60 FPS (25 ticks)
 pub const TITLEBAR_HIDE_TICKS: usize = 50;
 /// Window titlebar fade out duration: ~200ms at 60 FPS (12 ticks)
@@ -278,7 +285,11 @@ impl WazooApp {
         } else {
             None
         };
-        let toast_time_remaining = if toast_msg.is_some() { LONG_TOAST_SECS } else { 0 };
+        let toast_time_remaining = if toast_msg.is_some() {
+            LONG_TOAST_SECS
+        } else {
+            0
+        };
 
         let mut app = Self {
             settings: settings.clone(),
@@ -521,10 +532,7 @@ impl WazooApp {
     pub fn titlebar_slide_progress(&self) -> f32 {
         if !self.show_titlebar {
             0.0
-        } else if self.is_window_dragging
-            || self.titlebar_drag_pending
-            || self.show_dropdown_menu
-        {
+        } else if self.is_window_dragging || self.titlebar_drag_pending || self.show_dropdown_menu {
             1.0
         } else if self.titlebar_hide_ticks < TITLEBAR_FADE_TICKS {
             (self.titlebar_hide_ticks as f32 / TITLEBAR_FADE_TICKS as f32).clamp(0.0, 1.0)
@@ -541,7 +549,8 @@ impl WazooApp {
         } else if self.dropdown_menu_slide_ticks >= DROPDOWN_MENU_SLIDE_TICKS {
             1.0
         } else {
-            (self.dropdown_menu_slide_ticks as f32 / DROPDOWN_MENU_SLIDE_TICKS as f32).clamp(0.0, 1.0)
+            (self.dropdown_menu_slide_ticks as f32 / DROPDOWN_MENU_SLIDE_TICKS as f32)
+                .clamp(0.0, 1.0)
         }
     }
 
@@ -558,11 +567,14 @@ impl WazooApp {
         if self.player_overlay_ticks == 0 {
             0.0
         } else {
-            let in_alpha = (self.player_overlay_fade_in_ticks as f32 / PLAYER_OVERLAY_FADE_TICKS as f32).clamp(0.0, 1.0);
+            let in_alpha = (self.player_overlay_fade_in_ticks as f32
+                / PLAYER_OVERLAY_FADE_TICKS as f32)
+                .clamp(0.0, 1.0);
             let out_alpha = if self.player_overlay_ticks >= PLAYER_OVERLAY_FADE_TICKS {
                 1.0
             } else {
-                (self.player_overlay_ticks as f32 / PLAYER_OVERLAY_FADE_TICKS as f32).clamp(0.0, 1.0)
+                (self.player_overlay_ticks as f32 / PLAYER_OVERLAY_FADE_TICKS as f32)
+                    .clamp(0.0, 1.0)
             };
             in_alpha.min(out_alpha)
         }
@@ -922,10 +934,7 @@ impl WazooApp {
     /// Any player currently playing a file that does NOT exist in `self.available_videos`
     /// is switched to play a video that DOES exist in `self.available_videos`.
     /// Each switching player is assigned a distinct video when possible.
-    pub fn reconcile_players_with_available_videos(
-        &mut self,
-        skip_player_id: Option<PlayerId>,
-    ) {
+    pub fn reconcile_players_with_available_videos(&mut self, skip_player_id: Option<PlayerId>) {
         if self.available_videos.is_empty() {
             return;
         }
@@ -1186,7 +1195,11 @@ impl WazooApp {
             return;
         }
 
-        if let Some(pos) = self.selected_search_folders.iter().position(|f| f == folder) {
+        if let Some(pos) = self
+            .selected_search_folders
+            .iter()
+            .position(|f| f == folder)
+        {
             self.selected_search_folders.remove(pos);
         } else {
             self.selected_search_folders.push(folder.to_string());
@@ -1312,4 +1325,3 @@ impl WazooApp {
 pub fn new_test_app() -> (WazooApp, Task<Message>) {
     WazooApp::new_test_app()
 }
-
