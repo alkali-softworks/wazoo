@@ -1,4 +1,4 @@
-# 🦀 Rust for PHP & JS Survivors: Baby Steps Guide 👶
+# 🦀 Rust for TypeScript Survivors: Baby Steps Guide 👶
 
 *A no-nonsense handbook for understanding Rust & Iced.*
 
@@ -14,16 +14,10 @@ Here is the mental model in 3 simple rules:
 
 ### Rule 1: `mod` is NOT `import`. `mod` means "Compile this file!"
 
-In JavaScript:
-```js
-// foo.js exists, and you just import it:
-import { doSomething } from './foo.js';
-```
-
-In PHP:
-```php
-// With Composer PSR-4, you just:
-use App\Models\User; // Autoloader finds User.php automatically
+In TypeScript:
+```ts
+// foo.ts exists, and you just import it:
+import { doSomething } from './foo';
 ```
 
 **In Rust, there is NO automatic file scanner/autoloader.**
@@ -44,7 +38,7 @@ You only declare `mod message;` **ONCE** in the root of your crate (usually `mai
 
 ---
 
-### Rule 2: `use` is just a shortcut (like `import` or PHP's `use`)
+### Rule 2: `use` is just a shortcut (like TS `import`)
 
 Once a module is registered into the tree with `mod`, you use `use` to bring items into scope so you don't have to type full paths.
 
@@ -92,7 +86,7 @@ Inside any file, you have three ways to reference things:
    // Inside src/tabs/counter_tab.rs, super:: refers to src/tabs/mod.rs
    use super::Message; 
    ```
-   *(Think of this like `../` in bash or relative JS imports)*
+   *(Think of this like `../` in bash or relative TS imports)*
 
 3. **External Crates** (dependencies in `Cargo.toml`):
    ```rust
@@ -106,7 +100,7 @@ Inside any file, you have three ways to reference things:
 
 ### Bonus Rule: Everything is `private` by default!
 
-In PHP or JS classes/modules, things are often public or exported.
+In TypeScript modules, items are scoped to the file unless explicitly exported with `export`.
 In Rust, **everything is private by default**:
 - `struct Foo` can only be seen inside its own file.
 - `pub struct Foo` can be seen by parent modules.
@@ -120,22 +114,21 @@ pub enum Message { ... }
 
 ### Summary Cheat Sheet
 
-| You want to... | In JS/PHP | In Rust |
+| You want to... | In TypeScript | In Rust |
 | :--- | :--- | :--- |
 | Tell compiler a file exists | (Automatic) | `mod my_file;` (in `main.rs`) |
-| Import a struct or function | `import { X }` / `use App\X` | `use crate::my_file::X;` |
+| Import a struct or function | `import { X } from './my_file'` | `use crate::my_file::X;` |
 | Import from a dependency | `import { X } from 'lib'` | `use lib::X;` |
-| Make something visible | `export` / `public` | `pub` |
+| Make something visible | `export` | `pub` |
 
 ---
 
 ## 🔄 Chapter 2: What Happens at `.run()`? The Desktop Event Loop
 
-In PHP, code runs from top to bottom and terminates:
-```php
-<?php
-echo "Hello";
-// Script dies here
+In a standard Node.js / TypeScript script, code runs top to bottom and terminates once the call stack and event loop are drained:
+```ts
+console.log("Hello");
+// Script finishes and exits
 ```
 
 In a desktop GUI application, calling `.run()` **hands the keys over to Iced and BLOCKS the main thread in an infinite loop**.
@@ -196,8 +189,8 @@ iced::application(
 - **With parentheses `foo()`**: *"Execute this function RIGHT NOW on this line, and give me the result."*
 - **Without parentheses `foo`**: *"Do NOT execute this function now. Here is a pointer/address to this function. Iced, YOU call it whenever you need to!"*
 
-In JS, you do the exact same thing with event listeners:
-```js
+In TS, you do the exact same thing with event listeners:
+```ts
 // CORRECT: Passing function reference:
 button.addEventListener('click', handleClick);
 
@@ -209,23 +202,28 @@ button.addEventListener('click', handleClick());
 
 ## 🧱 Chapter 4: There Are No Classes in Rust! (`struct`, `impl`, and `let mut`)
 
-In PHP and JS, Object-Oriented Programming glues your **data** and your **methods** together inside a `class`:
+In TypeScript, Object-Oriented Programming glues your **data** and your **methods** together inside a `class`:
 
-```php
-// PHP: Data and methods glued together in one class
+```ts
+// TypeScript: Data and methods glued together in one class
 class User {
-    public $name;
-    public $age;
+    name: string;
+    age: number;
 
-    public function celebrateBirthday() {
-        $this->age++;
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+
+    celebrateBirthday(): void {
+        this.age++;
     }
 }
 ```
 
 **Rust has NO `class` keyword.**
 Instead, Rust separates the **DATA** from the **BEHAVIOR**:
-1. **`struct`** defines the shape of the data (like a database schema or TypeScript interface).
+1. **`struct`** defines the shape of the data (like a TypeScript `type` or `interface`).
 2. **`impl`** defines the functions and methods that operate on that data.
 
 ```rust
@@ -257,14 +255,10 @@ impl User {
 
 **NO! There is NO `new` keyword in Rust!**
 
-In JS and PHP, `new` is a built-in language operator that allocates an object on the heap and triggers `__construct()`:
-```js
-// JavaScript:
+In TypeScript, `new` is a built-in language operator that allocates an object on the heap and invokes `constructor()`:
+```ts
+// TypeScript:
 const user = new User("Alice", 42);
-```
-```php
-// PHP:
-$user = new User("Alice", 42);
 ```
 
 **In Rust, `new` is NOT a language keyword.**
@@ -283,7 +277,7 @@ println!("Age is now: {}", user.age); // 43
 *(Notice `String::from("Alice")` because `"Alice"` in quotes is a borrowed `&str`, but our struct owns a heap `String`. And `42` is an integer number, not a string `'42'`!)*
 
 #### Method B: Direct Struct Literal (No function needed at all!)
-If a struct's fields are public, you don't even need a `new()` function! You can instantiate it directly in place (like a JS object literal):
+If a struct's fields are public, you don't even need a `new()` function! You can instantiate it directly in place (like a TypeScript object literal):
 ```rust
 let user = User {
     name: String::from("Alice"),
@@ -299,8 +293,7 @@ So why do Rust developers write `pub fn new(...)`?
 
 ### 🔒 `let` vs `let mut` (Immutability by Default)
 
-In PHP, all variables are mutable `$x = 1; $x = 2;`.
-In JS, you have `const` and `let`.
+In TypeScript, you have `const` (immutable variable binding) and `let` (mutable variable).
 
 **In Rust, EVERYTHING is `const` by default!**
 
@@ -333,8 +326,7 @@ Inside an `impl` block, you will see both:
 
 2. **`self`** (Lowercase `s`):
    - The actual **INSTANCE** of the object!
-   - In PHP, this is `$this`.
-   - In JS, this is `this`.
+   - In TypeScript, this is `this`.
 
 ---
 
@@ -346,21 +338,21 @@ Look at the **first argument**:
 ```rust
 impl TutorialApp {
     // STATIC FUNCTION (No `self` in arguments):
-    // Like `public static function new()` in PHP.
+    // Like `static new()` on a TS class.
     // Called with double-colons: TutorialApp::new()
     pub fn new() -> (Self, Task<Message>) {
         ...
     }
 
     // READ-ONLY METHOD (Takes `&self`):
-    // Borrows read access to `$this`.
+    // Borrows read access to `this`.
     // Called with dot: app.view()
     pub fn view(&self) -> Element<'_, Message> {
         ...
     }
 
     // MUTABLE METHOD (Takes `&mut self`):
-    // Borrows write access to `$this`.
+    // Borrows write access to `this`.
     // Called with dot: app.update(msg)
     pub fn update(&mut self, message: Message) -> Task<Message> {
         self.counter_value += 1; // Can mutate fields!
@@ -373,7 +365,7 @@ impl TutorialApp {
 
 **NO! You do NOT pass `self`!**
 
-You just call it with the dot operator like in JS:
+You just call it with the dot operator like in TS:
 ```rust
 app.view();                // <-- NO arguments passed for self!
 app.update(my_message);    // <-- Only pass the other arguments!
@@ -388,37 +380,38 @@ The dot operator `.` is syntactic sugar. Behind the scenes, the compiler automat
 | **Mutable Method** | `fn update(&mut self, msg)` | `app.update(msg)` | `TutorialApp::update(&mut app, msg)` |
 | **Consuming Method** (takes ownership) | `fn close(self)` | `app.close()` | `TutorialApp::close(app)` |
 
-#### 🎯 The PHP Mental Model: `::` vs `.`
+#### 🎯 The TypeScript Mental Model: `::` vs `.`
 
-Think of it exactly like PHP:
-```
-In PHP:
-  App::new()      <-- Double colons `::` for STATIC call on the class
-  $app->view()    <-- Arrow `->` for INSTANCE call on the object
+In TypeScript, static methods and instance methods both use a dot (`TutorialApp.new()` vs `app.view()`).
+Rust uses two different operators to keep static calls and instance calls 100% distinct:
+
+```text
+In TypeScript:
+  TutorialApp.new()   <-- Dot `.` used for static method on the class
+  app.view()          <-- Dot `.` also used for instance method on the object
 
 In Rust:
   TutorialApp::new()  <-- Double colons `::` for STATIC call on the type
   app.view()          <-- Dot `.` for INSTANCE call on the object
 ```
-*(The only visual difference is Rust uses a dot `.` where PHP uses `->`, because in PHP the dot was already reserved for string concatenation `$a . $b`!)*
 
 Whenever you see:
 - **`::`** (double colon) $\rightarrow$ You are calling the **type/namespace** (static).
 - **`.`** (dot) $\rightarrow$ You are calling the **instance** of an object.
 
 
-### Cheat Sheet: PHP/JS vs Rust
+### Cheat Sheet: TS vs Rust
 
-| Concept | PHP / JS | Rust |
+| Concept | TypeScript | Rust |
 | :--- | :--- | :--- |
-| Object shape | `class User { public $name; }` | `struct User { name: String }` |
+| Object shape | `interface User { name: string; }` | `struct User { name: String }` |
 | Attach methods | Inside the `class` block | Inside `impl User { ... }` |
 | Immutable variable | `const x = 5;` | `let x = 5;` |
-| Mutable variable | `$x = 5;` / `let x = 5;` | `let mut x = 5;` |
-| `$this` / `this` | `$this` / `this` | `self` |
-| Class Name Alias | `self::` (PHP) | `Self` |
-| Static call | `User::create()` | `User::create()` |
-| Method call | `$user->save()` / `user.save()` | `user.save()` |
+| Mutable variable | `let x = 5;` | `let mut x = 5;` |
+| Current instance | `this` | `self` |
+| Type name alias | `User` / `this` type | `Self` |
+| Static call | `User.create()` | `User::create()` |
+| Method call | `user.save()` | `user.save()` |
 
 ---
 
@@ -445,8 +438,7 @@ It looks like the function is referencing itself in a circle, but here is what i
 1. **`Self` is an alias for `TutorialApp`**:
    Because we are inside `impl TutorialApp`, writing `Self { ... }` is 100% identical to writing `TutorialApp { ... }`.
 2. **It constructs a new instance**:
-   In PHP: `$app = new self();`
-   In JS: `const app = new TutorialApp();`
+   In TS: `const app = new TutorialApp();`
 3. **Implicit Return (No `return` keyword, no semicolon!)**:
    Notice line `(app, Task::none())` at the bottom of `new()`.
    In Rust, **the last expression in a function without a semicolon `;` is automatically returned**!
@@ -478,14 +470,18 @@ Don't confuse them:
 
 ---
 
-### 2. How `match` Replaces Ugly `switch` Statements
+### 2. How `match` Replaces Discriminated Union `switch` Statements
 
-In JS or old PHP, handling events looked like:
-```js
-// JavaScript switch:
+In TypeScript, handling events with discriminated unions often looks like:
+```ts
+// TypeScript discriminated union switch:
+type Message = 
+  | { type: 'TabSelected'; payload: Tab }
+  | { type: 'Tick' };
+
 switch (message.type) {
     case 'TabSelected':
-        const tab = message.payload; // Manual unpacking
+        const tab = message.payload; // Manual narrowing / unpacking
         this.activeTab = tab;
         break; // Forgot break? Bug!
 }
@@ -505,9 +501,9 @@ Message::TabSelected(tab) => {
 
 ### 3. Exhaustiveness: Why You Can't Forget Cases
 
-In JS and PHP, if you add a new event to your app and forget to update your `switch`, the code runs and silently fails.
+In TypeScript, ensuring exhaustiveness for discriminated unions requires extra boilerplate (like an exhaustive `never` check in the `default` case). If you forget that, unhandled cases silently fall through!
 
-**In Rust, `match` is 100% EXHAUSTIVE.**
+**In Rust, `match` is 100% EXHAUSTIVE at compile time.**
 If your `enum Message` has 15 variants, your `match` MUST handle all 15. If you miss even one, the compiler stops you:
 ```
 error[E0004]: non-exhaustive patterns: `Message::ResetCounter` not covered
@@ -533,7 +529,7 @@ Notice two big differences from `TabSelected(tab)`:
    - `Message::Tick` carries **no data**. In Rust, an enum variant with no data is called a **Unit Variant**. It acts like a pure event trigger or signal (no payload to unpack).
 
 2. **Subscriptions vs `setInterval()`**:
-   - In JS, you'd do: `setInterval(() => { this.seconds++ }, 1000)`. It directly mutates state whenever the timer fires.
+   - In TS, you'd do: `setInterval(() => { this.seconds++ }, 1000)`. It directly mutates state whenever the timer fires.
    - In Iced, all state changes must pass through `update()`. You declare a `Subscription` on line 185: `time::every(1s).map(|_| Message::Tick)`. Every second, Iced sends a `Message::Tick` into the main event loop!
 
 3. **What is `Task::none()`?**:
@@ -553,14 +549,10 @@ pub fn subscription(&self) -> Subscription<Message> {
 
 ### 1. Pipes `| |` are Arrow Functions!
 
-In JavaScript and PHP, you write arrow functions like:
-```js
-// JavaScript:
-(x) => x * 2
-```
-```php
-// PHP:
-fn($x) => $x * 2
+In TypeScript, you write arrow functions like:
+```ts
+// TypeScript:
+(x: number) => x * 2
 ```
 
 In Rust, closures use **pipes `| |`** around the parameters:
@@ -592,7 +584,7 @@ We don't need the timestamp—we just want to know that 1 second passed!
 
 ### 3. What is `.map(...)` Doing?
 
-Just like `array.map()` in JavaScript or `array_map()` in PHP:
+Just like `Array.prototype.map()` in TypeScript:
 - `time::every(...)` produces a stream of timestamps: `Subscription<Instant>`.
 - But Iced requires our function to return a stream of messages: `Subscription<Message>`.
 - `.map(|_| Message::Tick)` intercepts each tick and converts it into `Message::Tick`!
@@ -610,7 +602,7 @@ pub struct WazooApp {
 }
 ```
 
-In PHP, you only have three blunt options: `public`, `protected`, and `private`.
+In TypeScript, you have access modifiers (`private`, `protected`, `public`) or private identifiers (`#field`), alongside module exports (`export`).
 
 Rust gives you fine-grained **scoped visibility** to build clean, leak-proof architectures:
 
@@ -630,12 +622,9 @@ pub(crate) db: Database
 Tells the compiler:
 > *"Make this field accessible to **any file inside `crates/wazoo-app`**, but keep it **strictly hidden (private)** to any outside code or crates!"*
 
-In **JavaScript / npm** terms:
-Think of an npm library. You might have 20 internal helper files that import each other, but your `package.json` only exports 1 clean class in `index.js`.
+In **TypeScript / npm** terms:
+Think of an npm library. You might have 20 internal helper files that import each other, but your `package.json` only exports 1 clean class or interface in `index.ts`.
 `pub(crate)` is for all those internal files to talk to each other without exposing those guts to people who `npm install` your package!
-
-In **PHP** terms:
-PHP has always lacked this! In PHP, if you make a method `public` so another file in your Composer library can call it, you've accidentally made it public to your library's consumers too. Rust's `pub(crate)` solves this: public inside the package, private outside.
 
 ### 3. Visibility Cheat Sheet
 
@@ -661,23 +650,16 @@ This is the solution to what Tony Hoare (the inventor of `null`) famously called
 
 ---
 
-### 1. Why `null` Sucks in PHP and JS
+### 1. Why `null` and `undefined` Sucks in TypeScript
 
-In PHP and JavaScript, when something might not exist, functions return `null` or `undefined`:
-```php
-// PHP:
-$player = $this->getFocusedPlayer(); 
-// If no player is focused, $player is null!
-// If you forget to check, your whole app CRASHES in production:
-// "Fatal Error: Call to a member function set_subtitles_visible() on null"
-$player->set_subtitles_visible(true); 
-```
-
-```js
-// JavaScript:
-const player = this.getFocusedPlayer();
+In TypeScript, when something might not exist, functions return `null` or `undefined` (like `VideoHandle | undefined`):
+```ts
+// TypeScript:
+const player = this.getFocusedPlayer(); 
+// player is VideoHandle | undefined
+// Even with strictNullChecks, non-null assertions (!) or unsafe casts can cause:
 // "TypeError: Cannot read properties of undefined (reading 'set_subtitles_visible')"
-player.set_subtitles_visible(true);
+player.setSubtitlesVisible(true);
 ```
 
 ---
@@ -720,12 +702,12 @@ In plain English, this means:
 
 ### 4. Comparison Table
 
-| Scenario | In PHP / JS | In Rust |
+| Scenario | In TypeScript | In Rust |
 | :--- | :--- | :--- |
-| Value exists | `$val = "hello"` | `Some("hello")` |
-| Value missing | `$val = null` / `undefined` | `None` |
-| Checking for value | `if ($val !== null)` | `if let Some(val) = ...` |
-| If you forget to check | 💥 App crashes at runtime | 🛡️ **Compile error!** Impossible to forget. |
+| Value exists | `val: string = "hello"` | `Some("hello")` |
+| Value missing | `val: string \| undefined = undefined` | `None` |
+| Checking for value | `if (val !== undefined)` or `val?.(...)` | `if let Some(val) = ...` |
+| If you forget to check | ⚠️ Runtime error (if bypassed with `!`) | 🛡️ **Compile error!** Impossible to forget. |
 
 ---
 
@@ -802,8 +784,7 @@ Notice the **two `move` keywords**! What are they doing?
 
 ### 1. By Default, Closures Try to Borrow (`&`)
 
-In PHP, you explicitly bring variables into a closure with `function() use ($var)`.
-In JavaScript, closures silently hold a reference to whatever is in the outer scope.
+In TypeScript, closures silently capture and hold a reference to whatever is in the outer lexical scope.
 
 In Rust, closures try to **borrow** variables by reference (`&path`).
 
@@ -891,16 +872,15 @@ impl WazooApp {
 
 ## ⚡ Chapter 12: Zero-Cost Abstractions vs The "Split Borrow" Tax
 
-When refactoring code into helper methods, developers coming from PHP or JavaScript often wonder:
+When refactoring code into helper methods, developers coming from TypeScript often wonder:
 *"Am I paying a performance penalty by creating extra function calls?"*
 
 The answer highlights one of the most fundamental concepts in Rust:
 
 ### 1. The Runtime Tax: ZERO (0.00 nanoseconds)
 
-In PHP and JavaScript, every function call incurs runtime bookkeeping:
-- **PHP**: Resolves `$this->method()`, allocates a Zend VM execution frame, and pushes arguments onto the stack.
-- **JS / V8**: Checks object shapes / hidden classes, checks inline caches (IC), and manages stack frames.
+In TypeScript (running on Node.js / V8), function calls incur runtime bookkeeping:
+- **TS / V8 Engine**: Checks object shapes / hidden classes, checks inline caches (IC), allocates execution contexts, and manages stack frames.
 
 In **Rust**, structs use **static dispatch** by default:
 - Rust resolves the method address at compile time (no dynamic lookup table, no `vtable`).
@@ -938,7 +918,7 @@ pub fn my_helper(&mut self)
 The compiler treats `&mut self` as an **exclusive lock on the ENTIRE struct**. Nobody else can borrow ANY field on `self` while that helper is running!
 
 ```rust
-// In PHP/JS, this is completely normal:
+// In TypeScript, this is completely normal:
 // this.players.forEach(p => this.updatePlayer(p));
 
 // In Rust, this triggers a compiler error!
@@ -963,16 +943,16 @@ If you ever hit this compile-time tax:
 
 ## 📂 Chapter 13: Splitting `impl Struct` Across Multiple Files
 
-In languages like PHP, a class definition must live in a single file:
-```php
-// PHP: All 3,000 lines of methods for WazooApp must live inside this single class!
+In TypeScript, a standard class definition must live in a single file declaration:
+```ts
+// TypeScript: All methods for WazooApp must live inside this single class declaration!
 class WazooApp {
-    public function update() { ... }
-    public function save_session_state() { ... }
-    public function view() { ... }
+    update(message: Message): Task<Message> { ... }
+    saveSessionState(): void { ... }
+    view(): Element<Message> { ... }
 }
 ```
-If a PHP class grows to 3,000 lines, you either live with a "god class" or break it up using PHP Traits or dependency-injected service objects.
+If a TypeScript class grows to 3,000 lines, you either live with a giant "god class" or break it up using inheritance, mixins, or separate helper services.
 
 In Rust, **data (`struct`) and behavior (`impl`) are completely decoupled**, and you can write as many `impl` blocks as you want across different files in the same crate!
 
@@ -1027,16 +1007,21 @@ Inside `update.rs`, `self` is an instance of `WazooApp`. It has direct access to
 
 ---
 
-### The JavaScript Prototype Analogy
-If you've written JavaScript before ES6 classes:
-```javascript
-// In app.js:
-function WazooApp() {}
-WazooApp.prototype.saveSessionState = function() { ... };
+### The TypeScript Declaration Merging / Prototype Analogy
+In TypeScript, if you ever wanted to split methods for a class across multiple files, you would have to resort to interface declaration merging or prototype extensions:
+```ts
+// In app.ts:
+export class WazooApp {
+    saveSessionState(): void { ... }
+}
 
-// In update.js:
-WazooApp.prototype.update = function() {
-    // `this` has saveSessionState(), even though it was written in app.js!
+// In update.ts (interface merging & prototype patching):
+declare module './app' {
+    interface WazooApp {
+        update(message: Message): Task<Message>;
+    }
+}
+WazooApp.prototype.update = function(message: Message) {
     this.saveSessionState();
 };
 ```
