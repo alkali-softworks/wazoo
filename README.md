@@ -8,7 +8,7 @@ Wazoo is an idea in development since 2020 - originally as a JS app, then Electr
 
 ---
 
-## 📦 Pre-Built Desktop Executables
+## 📦 Desktop Builds
 
 For a quick and effortless setup without compiling from source, you can download the latest pre-compiled desktop versions directly from the [Nightly Releases Page](https://github.com/alkali-softworks/wazoo/releases/tag/nightly/):
 
