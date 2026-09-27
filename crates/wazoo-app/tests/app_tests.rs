@@ -1080,3 +1080,52 @@ fn test_transcript_loaded_track_and_path_discrimination() {
     assert_eq!(app.transcript_cues.len(), 1);
     assert_eq!(app.transcript_cues[0].text, "Track 1 active subtitle");
 }
+
+#[test]
+fn test_flip_mode_countdown_and_osd() {
+    let (mut app, _) = new_test_app();
+    app.settings.flip_interval_secs = 5;
+    app.flip_countdown = 5;
+
+    // Initially in Normal mode
+    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Normal);
+    let _ = app.update(Message::WatchdogTick);
+    assert_eq!(app.flip_countdown, 5);
+
+    // Toggle Flip mode ON
+    let _ = app.update(Message::ToggleFlipMode);
+    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Flip);
+    assert_eq!(app.flip_countdown, 5);
+
+    // WatchdogTick decrements countdown
+    let _ = app.update(Message::WatchdogTick);
+    assert_eq!(app.flip_countdown, 4);
+
+    let _ = app.update(Message::WatchdogTick);
+    assert_eq!(app.flip_countdown, 3);
+
+    let _ = app.update(Message::WatchdogTick);
+    assert_eq!(app.flip_countdown, 2);
+
+    let _ = app.update(Message::WatchdogTick);
+    assert_eq!(app.flip_countdown, 1);
+
+    // Next WatchdogTick resets back to interval (5)
+    let _ = app.update(Message::WatchdogTick);
+    assert_eq!(app.flip_countdown, 5);
+
+    // Check OSD view generation while in flip mode
+    let win_id = iced::window::Id::unique();
+    app.window_id = Some(win_id);
+    let _ = app.update(Message::PlayerHovered(1));
+    for _ in 0..12 {
+        let _ = app.update(Message::VideoFrameTick);
+    }
+    {
+        let _view = app.view();
+    }
+
+    // Toggle Flip mode OFF
+    let _ = app.update(Message::ToggleFlipMode);
+    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Normal);
+}

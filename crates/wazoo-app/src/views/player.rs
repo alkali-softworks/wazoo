@@ -405,16 +405,28 @@ impl WazooApp {
 
             if self.settings.playback_mode == PlaybackMode::Flip {
                 let flip_icon = svg(svg::Handle::from_memory(SVG_PLAYER_FLIP))
-                    .width(Length::Fixed(20.0))
-                    .height(Length::Fixed(20.0))
+                    .width(Length::Fixed(18.0))
+                    .height(Length::Fixed(18.0))
                     .opacity(overlay_alpha);
 
-                controls_row = controls_row.push(
-                    button(flip_icon)
+                let flip_content = row![
+                    flip_icon,
+                    text(format!("{}s", self.flip_countdown))
+                        .size(12)
+                        .font(iced::Font {
+                            weight: iced::font::Weight::Bold,
+                            ..Default::default()
+                        }),
+                ]
+                .spacing(4)
+                .align_y(Alignment::Center);
+
+                controls_row = controls_row.push(cursor::PointerCursor::new(
+                    button(flip_content)
                         .style(theme::player_control_button_style_with_alpha(overlay_alpha))
                         .on_press(Message::ToggleFlipMode)
                         .padding([4, 8]),
-                );
+                ));
             }
 
             let controls_row = controls_row
