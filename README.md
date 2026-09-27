@@ -207,7 +207,7 @@ Key properties configurable in `settings.json`:
 {
   "flip_interval_secs": 45,
   "buffer_duration_secs": 10,
-  "buffer_size_mb": 64,
+  "buffer_size_mb": 32,
   "window_opacity": 1.0,
   "language": "en",
   "preferred_audio_language": "Japanese",
@@ -216,7 +216,7 @@ Key properties configurable in `settings.json`:
 ```
 
 - **`buffer_duration_secs`**: Demuxer readahead buffer duration in seconds (range: 2–300s, default: `10`).
-- **`buffer_size_mb`**: Maximum demuxer cache size in megabytes (range: 16–4096 MB, default: `64`).
+- **`buffer_size_mb`**: Maximum demuxer cache size in megabytes (range: 16–4096 MB, default: `32`).
 
 ---
 
