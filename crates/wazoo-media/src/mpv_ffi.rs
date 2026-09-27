@@ -171,10 +171,12 @@ unsafe fn set_dll_directory(dir: &std::path::Path) {
     use std::os::windows::ffi::OsStrExt;
     let mut wide: Vec<u16> = dir.as_os_str().encode_wide().collect();
     wide.push(0);
-    extern "system" {
+    unsafe extern "system" {
         fn SetDllDirectoryW(lpPathName: *const u16) -> i32;
     }
-    let _ = SetDllDirectoryW(wide.as_ptr());
+    unsafe {
+        let _ = SetDllDirectoryW(wide.as_ptr());
+    }
 }
 
 #[cfg(target_os = "windows")]
