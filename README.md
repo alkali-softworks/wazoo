@@ -8,6 +8,18 @@ Wazoo is an idea in development since 2020 - originally as a JS app, then Electr
 
 ---
 
+## 📦 Pre-Built Desktop Executables
+
+For a quick and effortless setup without compiling from source, you can download the latest pre-compiled desktop versions directly from the [Nightly Releases Page](https://github.com/alkali-softworks/wazoo/releases/tag/nightly/):
+
+*   **Windows (`.exe` Standalone)**: [wazoo-windows-x86_64.exe](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-windows-x86_64.exe) (Self-contained, portable single file with embedded libmpv)
+*   **Windows (`.zip` Archive)**: [wazoo-windows-x86_64.zip](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-windows-x86_64.zip)
+*   **macOS (`.zip` - Apple Silicon)**: [wazoo-macos-arm64.zip](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-macos-arm64.zip) (Apple Silicon M1/M2/M3/M4)
+*   **macOS (`.zip` - Intel)**: [wazoo-macos-x86_64.zip](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-macos-x86_64.zip) (Intel x86_64)
+*   **Linux (`.AppImage` Standalone)**: [wazoo-linux-x86_64.AppImage](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-linux-x86_64.AppImage) (Portable single executable)
+*   **Linux (`.tar.gz` Archive)**: [wazoo-linux-x86_64.tar.gz](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-linux-x86_64.tar.gz)
+
+---
 
 ## Features
 

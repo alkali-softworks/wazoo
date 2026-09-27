@@ -187,8 +187,11 @@ mod windows {
         // Copy runtime DLL to target profile directory for convenience
         if let Some(ref src) = found_dll {
             if let Some(target_profile_dir) = out_dir.ancestors().nth(3) {
+                let deps_dir = target_profile_dir.join("deps");
+                let _ = std::fs::create_dir_all(&deps_dir);
                 for dll_name in &["libmpv-2.dll", "mpv-2.dll"] {
                     let _ = std::fs::copy(src, target_profile_dir.join(dll_name));
+                    let _ = std::fs::copy(src, deps_dir.join(dll_name));
                     let _ = std::fs::copy(src, root.join(dll_name));
                 }
             }
