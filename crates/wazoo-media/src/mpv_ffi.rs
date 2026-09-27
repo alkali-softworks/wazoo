@@ -167,33 +167,59 @@ unsafe fn load_symbols(lib: Library) -> Option<MpvApi> {
 }
 
 #[cfg(target_os = "windows")]
+unsafe fn set_dll_directory(dir: &std::path::Path) {
+    use std::os::windows::ffi::OsStrExt;
+    let mut wide: Vec<u16> = dir.as_os_str().encode_wide().collect();
+    wide.push(0);
+    extern "system" {
+        fn SetDllDirectoryW(lpPathName: *const u16) -> i32;
+    }
+    let _ = SetDllDirectoryW(wide.as_ptr());
+}
+
+#[cfg(target_os = "windows")]
 fn load_windows_mpv() -> Option<MpvApi> {
     let dll_names = ["libmpv-2.dll", "mpv-2.dll", "mpv.dll"];
+
+    let try_load = |path: &std::path::Path| -> Option<MpvApi> {
+        if !path.exists() {
+            return None;
+        }
+        if let Some(parent) = path.parent() {
+            unsafe {
+                set_dll_directory(parent);
+            }
+        }
+        match unsafe { Library::new(path) } {
+            Ok(lib) => {
+                if let Some(api) = unsafe { load_symbols(lib) } {
+                    log::info!("Loaded libmpv from: {}", path.display());
+                    return Some(api);
+                }
+            }
+            Err(err) => {
+                log::warn!(
+                    "Found libmpv candidate at {} but failed to load (check missing dependencies like vulkan-1.dll): {}",
+                    path.display(),
+                    err
+                );
+            }
+        }
+        None
+    };
 
     // 1. Check beside executable and in parent directory (for cargo test binaries in target/debug/deps)
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
             for name in &dll_names {
-                let path = dir.join(name);
-                if path.exists() {
-                    if let Ok(lib) = unsafe { Library::new(&path) } {
-                        if let Some(api) = unsafe { load_symbols(lib) } {
-                            log::info!("Loaded libmpv from executable directory: {}", path.display());
-                            return Some(api);
-                        }
-                    }
+                if let Some(api) = try_load(&dir.join(name)) {
+                    return Some(api);
                 }
             }
             if let Some(parent_dir) = dir.parent() {
                 for name in &dll_names {
-                    let path = parent_dir.join(name);
-                    if path.exists() {
-                        if let Ok(lib) = unsafe { Library::new(&path) } {
-                            if let Some(api) = unsafe { load_symbols(lib) } {
-                                log::info!("Loaded libmpv from parent directory: {}", path.display());
-                                return Some(api);
-                            }
-                        }
+                    if let Some(api) = try_load(&parent_dir.join(name)) {
+                        return Some(api);
                     }
                 }
             }
@@ -212,14 +238,8 @@ fn load_windows_mpv() -> Option<MpvApi> {
         ];
         for search_dir in search_dirs {
             for name in &dll_names {
-                let path = search_dir.join(name);
-                if path.exists() {
-                    if let Ok(lib) = unsafe { Library::new(&path) } {
-                        if let Some(api) = unsafe { load_symbols(lib) } {
-                            log::info!("Loaded libmpv from workspace directory: {}", path.display());
-                            return Some(api);
-                        }
-                    }
+                if let Some(api) = try_load(&search_dir.join(name)) {
+                    return Some(api);
                 }
             }
         }
@@ -236,13 +256,8 @@ fn load_windows_mpv() -> Option<MpvApi> {
         if let Some(data_dir) = data_dir_opt {
             let bin_dir = data_dir.join("bin");
             let cached_dll = bin_dir.join("libmpv-2.dll");
-            if cached_dll.exists() {
-                if let Ok(lib) = unsafe { Library::new(&cached_dll) } {
-                    if let Some(api) = unsafe { load_symbols(lib) } {
-                        log::info!("Loaded cached libmpv: {}", cached_dll.display());
-                        return Some(api);
-                    }
-                }
+            if let Some(api) = try_load(&cached_dll) {
+                return Some(api);
             }
 
             // Extract embedded compressed DLL if present

@@ -77,6 +77,36 @@ jobs:
           cp target/mpv-win64/libmpv-2.dll target/debug/
           cp target/mpv-win64/libmpv-2.dll target/debug/deps/
 
+      - name: Install Vulkan Runtime (Windows)
+        if: runner.os == 'Windows'
+        uses: jakoch/install-vulkan-sdk-action@v1
+        continue-on-error: true
+        with:
+          install_runtime: true
+          cache: true
+
+      - name: Setup Vulkan Runtime Fallback (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          if [ ! -f "C:/Windows/System32/vulkan-1.dll" ]; then
+            echo "Installing Vulkan Runtime from LunarG..."
+            curl -fSL --retry 3 -o vulkan-runtime.exe "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-runtime.exe"
+            ./vulkan-runtime.exe /S || true
+          fi
+          for vpath in "C:/Windows/System32/vulkan-1.dll" "$VULKAN_SDK/bin/vulkan-1.dll" "$VULKAN_SDK/runtime/x64/vulkan-1.dll"; do
+            if [ -f "$vpath" ]; then
+              echo "Propagating $vpath"
+              mkdir -p target/debug/deps target/release/deps
+              cp "$vpath" . || true
+              cp "$vpath" target/debug/ || true
+              cp "$vpath" target/debug/deps/ || true
+              cp "$vpath" target/release/ || true
+              cp "$vpath" target/release/deps/ || true
+              break
+            fi
+          done
+
       - name: Run Tests
         run: cargo test --workspace -- --test-threads=1
 
@@ -101,6 +131,13 @@ jobs:
               cp target/release/libmpv-2.dll "dist/tmp_${PKG_NAME}/"
             elif [ -f libmpv-2.dll ]; then
               cp libmpv-2.dll "dist/tmp_${PKG_NAME}/"
+            fi
+            if [ -f target/release/vulkan-1.dll ]; then
+              cp target/release/vulkan-1.dll "dist/tmp_${PKG_NAME}/"
+            elif [ -f vulkan-1.dll ]; then
+              cp vulkan-1.dll "dist/tmp_${PKG_NAME}/"
+            elif [ -f "C:/Windows/System32/vulkan-1.dll" ]; then
+              cp "C:/Windows/System32/vulkan-1.dll" "dist/tmp_${PKG_NAME}/"
             fi
             cp README.md LICENSE "dist/tmp_${PKG_NAME}/" 2>/dev/null || true
 
