@@ -20,4 +20,5 @@ directories.workspace = true
 
 [build-dependencies]
 miniz_oxide = { workspace = true }
+sha2 = "0.10"
 
