@@ -699,6 +699,7 @@ fn test_unfocused_window_fps_throttling_30fps() {
 
 #[test]
 fn test_add_new_player_focuses_new_player_and_can_be_removed() {
+    let _ = env_logger::builder().is_test(true).try_init();
     let (mut app, _) = new_test_app();
     let temp_dir = std::env::temp_dir().join(format!(
         "wazoo_test_players_{}_{}",

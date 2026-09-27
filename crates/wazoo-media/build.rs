@@ -194,6 +194,25 @@ mod windows {
                     let _ = std::fs::copy(src, deps_dir.join(dll_name));
                     let _ = std::fs::copy(src, root.join(dll_name));
                 }
+
+                // If vulkan-1.dll exists on the system or in SDK, copy it alongside libmpv for tests
+                let vulkan_candidates = [
+                    std::path::PathBuf::from("C:\\Windows\\System32\\vulkan-1.dll"),
+                    std::env::var("VULKAN_SDK")
+                        .map(|p| std::path::PathBuf::from(p).join("bin\\vulkan-1.dll"))
+                        .unwrap_or_default(),
+                    std::env::var("VULKAN_SDK")
+                        .map(|p| std::path::PathBuf::from(p).join("runtime\\x64\\vulkan-1.dll"))
+                        .unwrap_or_default(),
+                ];
+                for vpath in &vulkan_candidates {
+                    if vpath.exists() {
+                        let _ = std::fs::copy(vpath, target_profile_dir.join("vulkan-1.dll"));
+                        let _ = std::fs::copy(vpath, deps_dir.join("vulkan-1.dll"));
+                        let _ = std::fs::copy(vpath, root.join("vulkan-1.dll"));
+                        break;
+                    }
+                }
             }
 
             // Pre-compress libmpv-2.dll for embedding into single-file executable
