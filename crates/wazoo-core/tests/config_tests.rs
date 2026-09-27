@@ -8,9 +8,9 @@ fn test_config_manager_paths() {
     assert!(
         mgr.config_file_path()
             .to_string_lossy()
-            .contains("wazoo-rs")
+            .contains("wazoo")
     );
-    assert!(mgr.database_path().to_string_lossy().contains("wazoo-rs"));
+    assert!(mgr.database_path().to_string_lossy().contains("wazoo"));
     assert_eq!(mgr.database_path().parent(), mgr.config_file_path().parent());
     assert_eq!(
         mgr.database_path(),

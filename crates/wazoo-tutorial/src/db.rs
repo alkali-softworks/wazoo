@@ -54,9 +54,9 @@ impl TutorialDatabase {
     }
 
     /// Opens or creates a file-backed SQLite database at the given path.
-    /// In `wazoo-rs`, this is placed in the OS configuration directory alongside `settings.json`
-    /// (e.g. `~/.config/wazoo-rs/` on Linux, `%APPDATA%\alkalisoftworks\wazoo-rs\config\` on Windows,
-    /// or `~/Library/Application Support/com.alkalisoftworks.wazoo-rs/` on macOS).
+    /// In `wazoo`, this is placed in the OS configuration directory alongside `settings.json`
+    /// (e.g. `~/.config/wazoo/` on Linux, `%APPDATA%\alkalisoftworks\wazoo\config\` on Windows,
+    /// or `~/Library/Application Support/com.alkalisoftworks.wazoo/` on macOS).
     #[allow(dead_code)]
     pub fn open_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let conn = Connection::open(path)?;
