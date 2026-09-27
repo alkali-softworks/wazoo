@@ -1,4 +1,4 @@
-# <img src="crates/wazoo-app/resources/icon.png" width="48" align="center" /> Wazoo
+# <img src="crates/wazoo-app/resources/icon.png" width="48" align="center" /> Wazoo Video Player
 
 > **Ambient multi-player for non-stop viewing.**
 
@@ -10,7 +10,7 @@ Wazoo is an idea in development since 2020 - originally as a JS app, then Electr
 
 ## 📦 Desktop Builds
 
-For a quick and effortless setup without compiling from source, you can download the latest pre-compiled desktop versions directly from the [Nightly Releases Page](https://github.com/alkali-softworks/wazoo/releases/tag/nightly/):
+For a quick setup without compiling from source, you can download the latest pre-compiled build
 
 *   **Windows (`.exe` Standalone)**: [wazoo-windows-x86_64.exe](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-windows-x86_64.exe) (Self-contained, portable single file with embedded libmpv)
 *   **Windows (`.zip` Archive)**: [wazoo-windows-x86_64.zip](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-windows-x86_64.zip)
