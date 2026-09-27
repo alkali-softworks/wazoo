@@ -127,11 +127,10 @@ wazoo "cyberpunk"
 Press <kbd>F1</kbd> inside the app at any time to open the complete interactive keyboard shortcuts guide. Common shortcuts:
 
 - <kbd>Space</kbd> — Play / Pause
-- <kbd>1</kbd> – <kbd>4</kbd> — Switch between 1, 2, 3, or 4 active player tiles
+- <kbd>F</kbd> – Toggle **File Drawer**
 - <kbd>J</kbd> or <kbd>/</kbd> — Open the **Search** modal
 - <kbd>S</kbd> — Toggle **Shuffle vs Sequential** playback
 - <kbd>L</kbd> — Cycle tile layouts (**Grid** ➔ **Row** ➔ **Column**)
-- <kbd>Alt + Drag</kbd> — Move the borderless window
 
 ---
 
