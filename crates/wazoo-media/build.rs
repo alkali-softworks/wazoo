@@ -33,31 +33,52 @@ mod windows {
     use std::path::{Path, PathBuf};
     use std::process::Command;
 
+    use sha2::{Digest, Sha256};
+    use std::io::Read;
+
     const MPV_WIN_DOWNLOAD_URL: &str = "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260903/mpv-dev-x86_64-20260903-git-69e63f425a.7z";
     const MPV_WIN_DOWNLOAD_SHA256: &str =
         "fac135c68a35b7639e39d72c0c365104edbaebdea39a0dfdd8c36e8c8e80faef";
 
-    fn verify_sha256(path: &Path, expected_hex: &str) -> bool {
-        let output = Command::new("powershell")
-            .args([
-                "-NoProfile",
-                "-Command",
-                &format!("(Get-FileHash -Algorithm SHA256 '{}').Hash", path.display()),
-            ])
-            .output()
-            .or_else(|_| {
-                Command::new("certutil")
-                    .args(["-hashfile", path.to_str().unwrap_or_default(), "SHA256"])
-                    .output()
-            });
+    fn verify_sha256(path: &Path, expected_hex: &str) -> Result<(), String> {
+        let mut file = std::fs::File::open(path)
+            .map_err(|e| format!("Failed to open {}: {}", path.display(), e))?;
+        let metadata = file
+            .metadata()
+            .map_err(|e| format!("Failed to read metadata for {}: {}", path.display(), e))?;
+        let len = metadata.len();
 
-        if let Ok(out) = output {
-            if out.status.success() {
-                let stdout = String::from_utf8_lossy(&out.stdout).to_lowercase();
-                return stdout.contains(&expected_hex.to_lowercase());
+        let mut hasher = Sha256::new();
+        let mut buffer = [0u8; 65536];
+        loop {
+            let count = file
+                .read(&mut buffer)
+                .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
+            if count == 0 {
+                break;
             }
+            hasher.update(&buffer[..count]);
         }
-        false
+        let hash = hasher.finalize();
+        let actual_hex = format!("{:x}", hash);
+
+        if actual_hex.eq_ignore_ascii_case(expected_hex) {
+            Ok(())
+        } else {
+            let snippet = if len < 4096 {
+                std::fs::read_to_string(path).unwrap_or_default()
+            } else {
+                String::new()
+            };
+            Err(format!(
+                "Checksum mismatch for {}\nSize: {} bytes\nExpected: {}\nActual:   {}\nContent snippet: {}",
+                path.display(),
+                len,
+                expected_hex,
+                actual_hex,
+                snippet
+            ))
+        }
     }
 
     pub fn setup_windows_mpv() {
@@ -96,7 +117,18 @@ mod windows {
                 );
 
                 let downloaded = Command::new("curl.exe")
-                    .args(["-sL", MPV_WIN_DOWNLOAD_URL, "-o", archive_path.to_str().unwrap()])
+                    .args([
+                        "-fSL",
+                        "--retry",
+                        "3",
+                        "--retry-delay",
+                        "2",
+                        "-H",
+                        "User-Agent: WazooBuild/1.0",
+                        MPV_WIN_DOWNLOAD_URL,
+                        "-o",
+                        archive_path.to_str().unwrap(),
+                    ])
                     .status()
                     .map(|s| s.success())
                     .unwrap_or(false)
@@ -105,7 +137,7 @@ mod windows {
                             "-NoProfile",
                             "-Command",
                             &format!(
-                                "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('{}', '{}')",
+                                "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $wc = New-Object Net.WebClient; $wc.Headers.Add('User-Agent', 'WazooBuild/1.0'); $wc.DownloadFile('{}', '{}')",
                                 MPV_WIN_DOWNLOAD_URL,
                                 archive_path.display()
                             ),
@@ -120,30 +152,27 @@ mod windows {
             }
 
             if archive_path.exists() {
-                if !verify_sha256(&archive_path, MPV_WIN_DOWNLOAD_SHA256) {
+                if let Err(err) = verify_sha256(&archive_path, MPV_WIN_DOWNLOAD_SHA256) {
                     let _ = std::fs::remove_file(&archive_path);
-                    panic!(
-                        "SECURITY ERROR: SHA-256 checksum mismatch for downloaded mpv archive: {}",
-                        archive_path.display()
-                    );
+                    panic!("SECURITY ERROR: {}", err);
                 }
 
-                let extracted = Command::new("tar.exe")
+                let extracted = Command::new("7z.exe")
                     .args([
-                        "-xf",
+                        "x",
                         archive_path.to_str().unwrap(),
-                        "-C",
-                        mpv_dir.to_str().unwrap(),
+                        &format!("-o{}", mpv_dir.display()),
+                        "-y",
                     ])
                     .status()
                     .map(|s| s.success())
                     .unwrap_or(false)
-                    || Command::new("7z.exe")
+                    || Command::new("tar.exe")
                         .args([
-                            "x",
+                            "-xf",
                             archive_path.to_str().unwrap(),
-                            &format!("-o{}", mpv_dir.display()),
-                            "-y",
+                            "-C",
+                            mpv_dir.to_str().unwrap(),
                         ])
                         .status()
                         .map(|s| s.success())

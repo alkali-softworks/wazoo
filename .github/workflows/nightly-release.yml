@@ -43,6 +43,29 @@ jobs:
         if: runner.os == 'macOS'
         run: sudo mdutil -a -i off || true
 
+      - name: Cache libmpv (Windows)
+        if: runner.os == 'Windows'
+        id: cache-mpv-windows
+        uses: actions/cache@v4
+        with:
+          path: target/mpv-win64
+          key: mpv-win64-20260903
+
+      - name: Install System Dependencies (Windows)
+        if: runner.os == 'Windows' && steps.cache-mpv-windows.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          mkdir -p target/mpv-win64
+          curl -fSL --retry 3 -H "User-Agent: WazooBuild/1.0" -o target/mpv-win64/mpv-dev.7z "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260903/mpv-dev-x86_64-20260903-git-69e63f425a.7z"
+          7z x target/mpv-win64/mpv-dev.7z -otarget/mpv-win64 -y
+          cp target/mpv-win64/libmpv-2.dll .
+
+      - name: Link Cached libmpv (Windows)
+        if: runner.os == 'Windows' && steps.cache-mpv-windows.outputs.cache-hit == 'true'
+        shell: bash
+        run: |
+          cp target/mpv-win64/libmpv-2.dll .
+
       - name: Run Tests
         run: cargo test --workspace -- --test-threads=1
 

@@ -13,6 +13,8 @@ fn setup_isolated_env() -> (PathBuf, PathBuf) {
             .unwrap()
             .as_nanos()
     ));
+    let _ = std::fs::create_dir_all(&base);
+    let base = std::fs::canonicalize(&base).unwrap_or(base);
     let config_dir = base.join("config");
     let media_dir = base.join("media");
     let _ = std::fs::create_dir_all(&config_dir);
@@ -81,7 +83,9 @@ fn test_mkv_default_player_adds_to_misc_folder_and_plays() {
     assert_eq!(app.players.len(), 1);
     let player = &app.players[0];
     let canon_ext = std::fs::canonicalize(&ext_mkv).unwrap();
-    assert_eq!(player.state.path, canon_ext.to_string_lossy());
+    let canon_player = std::fs::canonicalize(&player.state.path)
+        .unwrap_or_else(|_| PathBuf::from(&player.state.path));
+    assert_eq!(canon_player, canon_ext);
     assert!(!player.state.is_muted);
     assert_eq!(player.state.volume, 1.0);
 
@@ -90,7 +94,9 @@ fn test_mkv_default_player_adds_to_misc_folder_and_plays() {
     assert_eq!(app.players.len(), 1);
     let updated_player = &app.players[0];
     let canon_lib = std::fs::canonicalize(&lib_vid).unwrap();
-    assert_eq!(updated_player.state.path, canon_lib.to_string_lossy());
+    let canon_updated = std::fs::canonicalize(&updated_player.state.path)
+        .unwrap_or_else(|_| PathBuf::from(&updated_player.state.path));
+    assert_eq!(canon_updated, canon_lib);
 }
 
 #[test]
@@ -127,7 +133,9 @@ fn test_mkv_already_in_media_folder_not_added_to_misc() {
     // Still played directly
     assert_eq!(app.players.len(), 1);
     let canon = std::fs::canonicalize(&anime_file).unwrap();
-    assert_eq!(app.players[0].state.path, canon.to_string_lossy());
+    let canon_player = std::fs::canonicalize(&app.players[0].state.path)
+        .unwrap_or_else(|_| PathBuf::from(&app.players[0].state.path));
+    assert_eq!(canon_player, canon);
 }
 
 #[test]
