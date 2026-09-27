@@ -13,7 +13,7 @@ use crate::message::Message;
 use crate::slide::SlideDown;
 use crate::theme;
 use iced::{
-    Alignment, Element, Length, Theme,
+    Alignment, Element, Length, Theme, mouse,
     widget::{Space, button, column, container, mouse_area, row, svg, text},
 };
 
@@ -58,6 +58,7 @@ impl WazooApp {
                 .width(Length::Fill)
                 .height(Length::Fixed(30.0)),
         )
+        .interaction(mouse::Interaction::Idle)
         .on_press(Message::TitleBarPressed)
         .on_double_click(Message::MaximizeWindow);
 
