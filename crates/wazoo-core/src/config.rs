@@ -19,11 +19,21 @@ pub struct ConfigManager {
 
 impl ConfigManager {
     pub fn new() -> Self {
-        let proj_dirs = ProjectDirs::from("com", "alkalisoftworks", "wazoo-rs")
+        let proj_dirs = ProjectDirs::from("com", "alkalisoftworks", "wazoo")
             .expect("Unable to determine project directories");
 
-        let config_dir = proj_dirs.config_dir().to_path_buf();
-        let data_dir = proj_dirs.data_dir().to_path_buf();
+        let mut config_dir = proj_dirs.config_dir().to_path_buf();
+        let mut data_dir = proj_dirs.data_dir().to_path_buf();
+
+        // If legacy wazoo-rs directory exists and new wazoo dir does not, reuse legacy dir
+        if !config_dir.exists() {
+            if let Some(legacy) = ProjectDirs::from("com", "alkalisoftworks", "wazoo-rs") {
+                if legacy.config_dir().exists() {
+                    config_dir = legacy.config_dir().to_path_buf();
+                    data_dir = legacy.data_dir().to_path_buf();
+                }
+            }
+        }
 
         if !config_dir.exists() {
             let _ = fs::create_dir_all(&config_dir);

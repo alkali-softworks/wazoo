@@ -87,18 +87,56 @@ Monitors playback progress and automatically advances to the next video if a fil
 Wazoo is structured as a modular Cargo workspace:
 
 ```
-wazoo-rs/
+wazoo/
 ├── crates/
 │   ├── wazoo-core/       # SQLite database, schema, models, & settings persistence
 │   ├── wazoo-scanner/    # Multithreaded media discovery, name cleaning, & metadata probing
 │   ├── wazoo-media/      # libmpv rendering pipeline, subtitle parser, VideoHandle, & ScrollEngine
-│   └── wazoo-app/        # Iced native GUI (layouts, HUD overlays, modals, drawers)
+│   ├── wazoo-app/        # Iced native GUI (layouts, HUD overlays, modals, drawers)
+│   └── wazoo-tutorial/   # Interactive tutorial application for learning Rust & Iced
 └── Cargo.toml
 ```
 
 ---
 
 ## 🚀 Getting Started
+
+### 1. Launching Wazoo
+
+Download a pre-compiled standalone binary or archive from [Desktop Builds](#-desktop-builds), or launch `wazoo` from your application launcher or terminal.
+
+On first launch, Wazoo displays the welcome screen where you can click **Add Folder** to select your video directories. Media files are automatically scanned and indexed in the background into an ultra-fast local SQLite database.
+
+### 2. Command-Line Launch & Direct Playback
+
+You can also launch Wazoo directly from your terminal with folders, video files, or search queries:
+
+```bash
+# Open Wazoo pointing to a specific media folder
+wazoo /path/to/videos
+
+# Play an individual video directly
+wazoo movie.mkv
+
+# Launch pre-filtered to a specific search query
+wazoo "cyberpunk"
+```
+
+### 3. Essential Shortcuts
+
+Press <kbd>?</kbd> or <kbd>F1</kbd> inside the app at any time to open the complete interactive keyboard shortcuts guide. Common shortcuts:
+
+- <kbd>Space</kbd> — Play / Pause
+- <kbd>1</kbd> – <kbd>4</kbd> — Switch between 1, 2, 3, or 4 active player tiles
+- <kbd>5</kbd> — Toggle **The Infinity Stream** (vertical scroll mode)
+- <kbd>6</kbd> — Toggle **Flip Mode** (staggered auto-rotation with live countdown)
+- <kbd>J</kbd> or <kbd>/</kbd> — Open the **Search** modal
+- <kbd>L</kbd> — Cycle tile layouts (**Grid** ➔ **Row** ➔ **Column**)
+- <kbd>Alt + Drag</kbd> — Move the borderless window
+
+---
+
+## 🛠️ Building from Source
 
 ### Prerequisites
 
@@ -123,22 +161,20 @@ winget install Gyan.FFmpeg
 scoop install ffmpeg
 ```
 
----
-
-### Building & Packaging
+### Compilation & Packaging
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/alkali-softworks/wazoo-rs.git
-   cd wazoo-rs
+   git clone https://github.com/alkali-softworks/wazoo.git
+   cd wazoo
    ```
 
-2. **Build a self-contained single executable:**
+2. **Build a self-contained release executable:**
    ```bash
    cargo build --release
    ```
    - **Windows:** Outputs `target/release/wazoo.exe` with all runtime dependencies packed into the single `.exe` file.
-   - **Linux:** Outputs `target/release/wazoo` with portable dynamic linking.
+   - **Linux / macOS:** Outputs `target/release/wazoo` with portable dynamic linking.
 
 3. **Package a Linux Single-Executable AppImage (Optional):**
    ```bash
@@ -197,9 +233,9 @@ scoop install ffmpeg
 
 Wazoo automatically persists user preferences, window state, and media library indexing together in the platform configuration directory:
 
-- **Linux:** `~/.config/wazoo-rs/` (`settings.json`, `wazoo.db`)
-- **Windows:** `%APPDATA%\alkalisoftworks\wazoo-rs\config\` (`settings.json`, `wazoo.db`)
-- **macOS:** `~/Library/Application Support/com.alkalisoftworks.wazoo-rs/` (`settings.json`, `wazoo.db`)
+- **Linux:** `~/.config/wazoo/` (`settings.json`, `wazoo.db`)
+- **Windows:** `%APPDATA%\alkalisoftworks\wazoo\config\` (`settings.json`, `wazoo.db`)
+- **macOS:** `~/Library/Application Support/com.alkalisoftworks.wazoo/` (`settings.json`, `wazoo.db`)
 
 Key properties configurable in `settings.json`:
 

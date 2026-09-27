@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Interactive tutorial application for learning Rust and Iced with wazoo-rs tech"
+description = "Interactive tutorial application for learning Rust and Iced with Wazoo tech"
 
 [lib]
 name = "wazoo_tutorial"
