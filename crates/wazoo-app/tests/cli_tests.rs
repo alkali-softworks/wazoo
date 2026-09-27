@@ -64,5 +64,6 @@ fn test_cli_parsing() {
         "/media/part2.mkv".to_string(),
     ]);
     assert_eq!(multi.files.len(), 2);
-    assert_eq!(multi.file.as_ref().unwrap().to_str().unwrap(), "/media/part1.mkv");
+    assert!(multi.file.as_ref().unwrap().to_string_lossy().replace('\\', "/").ends_with("/media/part1.mkv"));
+    assert!(multi.files[1].to_string_lossy().replace('\\', "/").ends_with("/media/part2.mkv"));
 }
