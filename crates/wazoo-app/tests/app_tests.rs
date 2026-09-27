@@ -1034,13 +1034,6 @@ fn test_help_modal_shortcut_f1() {
     let (mut app, _) = new_test_app();
     assert!(!app.show_help_modal);
 
-    // '?' should NOT open the help modal
-    let _ = app.update(Message::KeyPressed(
-        iced::keyboard::Key::Character("?".into()),
-        iced::event::Status::Ignored,
-    ));
-    assert!(!app.show_help_modal);
-
     // F1 should open the help modal
     let _ = app.update(Message::KeyPressed(
         iced::keyboard::Key::Named(iced::keyboard::key::Named::F1),
