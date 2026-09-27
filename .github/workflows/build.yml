@@ -85,27 +85,22 @@ jobs:
           install_runtime: true
           cache: true
 
-      - name: Setup Vulkan Runtime Fallback (Windows)
+      - name: Propagate Vulkan DLL (Windows)
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          if [ ! -f "C:/Windows/System32/vulkan-1.dll" ]; then
-            echo "Installing Vulkan Runtime from LunarG..."
-            curl -fSL --retry 3 -o vulkan-runtime.exe "https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-runtime.exe"
-            ./vulkan-runtime.exe /S || true
+          mkdir -p target/debug/deps target/release/deps
+          VULKAN_DLL=$(find "C:/VulkanSDK" "$VULKAN_SDK" "C:/Windows/System32" -maxdepth 4 -name "vulkan-1.dll" 2>/dev/null | head -n 1)
+          if [ -n "$VULKAN_DLL" ] && [ -f "$VULKAN_DLL" ]; then
+            echo "Found Vulkan DLL at: $VULKAN_DLL"
+            cp "$VULKAN_DLL" .
+            cp "$VULKAN_DLL" target/debug/
+            cp "$VULKAN_DLL" target/debug/deps/
+            cp "$VULKAN_DLL" target/release/
+            cp "$VULKAN_DLL" target/release/deps/
+          else
+            echo "::warning::vulkan-1.dll not found in VulkanSDK search paths"
           fi
-          for vpath in "C:/Windows/System32/vulkan-1.dll" "$VULKAN_SDK/bin/vulkan-1.dll" "$VULKAN_SDK/runtime/x64/vulkan-1.dll"; do
-            if [ -f "$vpath" ]; then
-              echo "Propagating $vpath"
-              mkdir -p target/debug/deps target/release/deps
-              cp "$vpath" . || true
-              cp "$vpath" target/debug/ || true
-              cp "$vpath" target/debug/deps/ || true
-              cp "$vpath" target/release/ || true
-              cp "$vpath" target/release/deps/ || true
-              break
-            fi
-          done
 
       - name: Run Tests
         run: cargo test --workspace -- --test-threads=1
