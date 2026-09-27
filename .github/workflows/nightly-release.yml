@@ -55,16 +55,21 @@ jobs:
         if: runner.os == 'Windows' && steps.cache-mpv-windows.outputs.cache-hit != 'true'
         shell: bash
         run: |
-          mkdir -p target/mpv-win64
+          mkdir -p target/mpv-win64 target/debug/deps target/release/deps
           curl -fSL --retry 3 -H "User-Agent: WazooBuild/1.0" -o target/mpv-win64/mpv-dev.7z "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260903/mpv-dev-x86_64-20260903-git-69e63f425a.7z"
           7z x target/mpv-win64/mpv-dev.7z -otarget/mpv-win64 -y
           cp target/mpv-win64/libmpv-2.dll .
+          cp target/mpv-win64/libmpv-2.dll target/debug/
+          cp target/mpv-win64/libmpv-2.dll target/debug/deps/
 
       - name: Link Cached libmpv (Windows)
         if: runner.os == 'Windows' && steps.cache-mpv-windows.outputs.cache-hit == 'true'
         shell: bash
         run: |
+          mkdir -p target/debug/deps target/release/deps
           cp target/mpv-win64/libmpv-2.dll .
+          cp target/mpv-win64/libmpv-2.dll target/debug/
+          cp target/mpv-win64/libmpv-2.dll target/debug/deps/
 
       - name: Run Tests
         run: cargo test --workspace -- --test-threads=1
@@ -109,6 +114,7 @@ jobs:
             chmod +x "dist/tmp_${PKG_NAME}/wazoo"
             cp README.md LICENSE "dist/tmp_${PKG_NAME}/" 2>/dev/null || true
             tar -czf "dist/${PKG_NAME}.tar.gz" -C "dist/tmp_${PKG_NAME}" .
+            (cd "dist/tmp_${PKG_NAME}" && zip -r "../../dist/${PKG_NAME}.zip" .)
             rm -rf "dist/tmp_${PKG_NAME}"
           else
             # Linux
