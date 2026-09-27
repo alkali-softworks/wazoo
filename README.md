@@ -12,7 +12,7 @@ Wazoo is an idea in development since 2020 - originally as a JS app, then Electr
 
 For a quick setup without compiling from source, you can download the latest pre-compiled build
 
-*   **Windows (`.exe` Standalone)**: [wazoo-windows-x86_64.exe](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-windows-x86_64.exe) (Self-contained, portable single file with embedded libmpv)
+*   **Windows (`.exe` Standalone)**: [wazoo-windows-x86_64.exe](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-windows-x86_64.exe) (portable single file with embedded libmpv)
 *   **Windows (`.zip` Archive)**: [wazoo-windows-x86_64.zip](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-windows-x86_64.zip)
 *   **macOS (`.zip` - Apple Silicon)**: [wazoo-macos-arm64.zip](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-macos-arm64.zip) (Apple Silicon M1/M2/M3/M4)
 *   **macOS (`.zip` - Intel)**: [wazoo-macos-x86_64.zip](https://github.com/alkali-softworks/wazoo/releases/download/nightly/wazoo-macos-x86_64.zip) (Intel x86_64)
@@ -124,13 +124,12 @@ wazoo "cyberpunk"
 
 ### 3. Essential Shortcuts
 
-Press <kbd>?</kbd> or <kbd>F1</kbd> inside the app at any time to open the complete interactive keyboard shortcuts guide. Common shortcuts:
+Press <kbd>F1</kbd> inside the app at any time to open the complete interactive keyboard shortcuts guide. Common shortcuts:
 
 - <kbd>Space</kbd> — Play / Pause
 - <kbd>1</kbd> – <kbd>4</kbd> — Switch between 1, 2, 3, or 4 active player tiles
-- <kbd>5</kbd> — Toggle **The Infinity Stream** (vertical scroll mode)
-- <kbd>6</kbd> — Toggle **Flip Mode** (staggered auto-rotation with live countdown)
 - <kbd>J</kbd> or <kbd>/</kbd> — Open the **Search** modal
+- <kbd>S</kbd> — Toggle **Shuffle vs Sequential** playback
 - <kbd>L</kbd> — Cycle tile layouts (**Grid** ➔ **Row** ➔ **Column**)
 - <kbd>Alt + Drag</kbd> — Move the borderless window
 
@@ -212,7 +211,7 @@ scoop install ffmpeg
 | <kbd>N</kbd> | Add player (up to 12) |
 | <kbd>X</kbd> | Remove focused player |
 | <kbd>Tab</kbd> | Focus next player |
-| <kbd>?</kbd> / <kbd>F1</kbd> | Open **Keyboard Shortcuts** reference modal |
+| <kbd>F1</kbd> | Open **Keyboard Shortcuts** reference modal |
 | <kbd>Esc</kbd> | Dismiss active drawer / modal, or open Quick Menu |
 | <kbd>Alt + Drag</kbd> | Move borderless window |
 | <kbd>Alt + X</kbd> | Quit application |

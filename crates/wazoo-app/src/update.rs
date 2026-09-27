@@ -248,7 +248,7 @@ impl WazooApp {
             return Task::none();
         }
 
-        if key == Key::Character("?".into()) || key == Key::Named(Named::F1) {
+        if key == Key::Named(Named::F1) {
             return self.update(Message::OpenHelpModal);
         }
 
