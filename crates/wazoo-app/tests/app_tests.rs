@@ -13,6 +13,7 @@ fn test_test_app_isolation() {
     // Ensure test config path does not point to live user directory
     let path = app.config_mgr.config_file_path();
     assert!(!path.to_string_lossy().contains(".config/wazoo-rs"));
+    assert!(!path.to_string_lossy().contains(".config/wazoo"));
     app.settings.media_folders = vec!["/test/isolated/folder".to_string()];
     let save_res = app.config_mgr.save_settings(&app.settings);
     assert!(save_res.is_ok());
