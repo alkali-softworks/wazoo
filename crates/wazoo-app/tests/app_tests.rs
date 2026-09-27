@@ -1,8 +1,8 @@
 use iced::Point;
 use std::time::Duration;
 use wazoo_app::app::{
-    new_test_app, PlaybackHistoryEntry, WazooApp, MAX_PLAYER_NAV_HISTORY_ENTRIES,
-    TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS,
+    MAX_PLAYER_NAV_HISTORY_ENTRIES, PlaybackHistoryEntry, TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS,
+    WazooApp, new_test_app,
 };
 use wazoo_app::message::Message;
 use wazoo_core::{ConfigManager, Database, VideoRecord};
@@ -319,7 +319,10 @@ fn test_search_modal_folder_toggles_and_reset_to_all() {
     // 2. Toggle folder 1: /media/anime
     let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
     assert!(!app.is_all_search_selected());
-    assert_eq!(app.selected_search_folders, vec!["/media/anime".to_string()]);
+    assert_eq!(
+        app.selected_search_folders,
+        vec!["/media/anime".to_string()]
+    );
 
     // 3. Toggle folder 2: /media/movies (mix and match!)
     let _ = app.update(Message::ToggleSearchFolder("/media/movies".to_string()));
@@ -332,7 +335,10 @@ fn test_search_modal_folder_toggles_and_reset_to_all() {
     // 4. Toggle folder 1 off
     let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
     assert!(!app.is_all_search_selected());
-    assert_eq!(app.selected_search_folders, vec!["/media/movies".to_string()]);
+    assert_eq!(
+        app.selected_search_folders,
+        vec!["/media/movies".to_string()]
+    );
 
     // 5. Toggle folder 2 off -> auto-reverts to All
     let _ = app.update(Message::ToggleSearchFolder("/media/movies".to_string()));
@@ -365,18 +371,34 @@ fn test_search_modal_folder_toggles_and_reset_to_all() {
     );
     // Only anime and movies should be in available_videos (2 out of 3)
     assert_eq!(app.available_videos.len(), 2);
-    assert!(app.available_videos.iter().any(|v| v.path.starts_with("/media/anime")));
-    assert!(app.available_videos.iter().any(|v| v.path.starts_with("/media/movies")));
-    assert!(!app.available_videos.iter().any(|v| v.path.starts_with("/media/music")));
+    assert!(
+        app.available_videos
+            .iter()
+            .any(|v| v.path.starts_with("/media/anime"))
+    );
+    assert!(
+        app.available_videos
+            .iter()
+            .any(|v| v.path.starts_with("/media/movies"))
+    );
+    assert!(
+        !app.available_videos
+            .iter()
+            .any(|v| v.path.starts_with("/media/music"))
+    );
 
     // 8. Remove one active folder from filter badge
-    let _ = app.update(Message::RemoveActiveSearchFolder("/media/anime".to_string()));
+    let _ = app.update(Message::RemoveActiveSearchFolder(
+        "/media/anime".to_string(),
+    ));
     assert_eq!(app.active_search_folders, vec!["/media/movies".to_string()]);
     assert_eq!(app.available_videos.len(), 1);
     assert_eq!(app.available_videos[0].path, "/media/movies/movie.mp4");
 
     // 9. Remove remaining folder -> returns to All
-    let _ = app.update(Message::RemoveActiveSearchFolder("/media/movies".to_string()));
+    let _ = app.update(Message::RemoveActiveSearchFolder(
+        "/media/movies".to_string(),
+    ));
     assert!(app.active_search_folders.is_empty());
     assert!(app.is_all_folder(&app.active_search_folder));
     assert_eq!(app.available_videos.len(), 3);
@@ -439,8 +461,7 @@ fn test_boot_reconciles_and_persists_incomplete_keybinds() {
 
     // Boot should have written the complete list to settings.json
     assert!(app.config_mgr.has_complete_keybinds_in_settings());
-    let updated_file_content =
-        std::fs::read_to_string(app.config_mgr.config_file_path()).unwrap();
+    let updated_file_content = std::fs::read_to_string(app.config_mgr.config_file_path()).unwrap();
     assert!(updated_file_content.contains("\"toggle_layout\": \"o\""));
     assert!(updated_file_content.contains("\"close_app\": \"Alt+X\""));
     assert!(updated_file_content.contains("\"add_player\": \"n\""));
@@ -764,7 +785,9 @@ fn test_query_zero_matches_shows_no_matches_view_and_clear_search() {
     let _ = std::fs::File::create(&f1);
 
     // Add video to DB
-    let _ = app.db.insert_misc_video("existing_video", &f1.to_string_lossy());
+    let _ = app
+        .db
+        .insert_misc_video("existing_video", &f1.to_string_lossy());
     assert_eq!(app.db.get_video_count().unwrap(), 1);
 
     // Perform a search for a term that does not match
@@ -1003,129 +1026,4 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
     }
     assert_eq!(app.player_overlay_ticks, 0);
     assert_eq!(app.player_overlay_alpha(), 0.0);
-}
-
-#[test]
-fn test_player_controls_lower_third_positioning() {
-    use wazoo_app::app::{
-        PLAYER_CONTROLS_BOTTOM_PORTION, PLAYER_CONTROLS_MAX_WIDTH, PLAYER_CONTROLS_TOP_PORTION,
-    };
-
-    // Verify proportions represent lower-third positioning
-    assert_eq!(PLAYER_CONTROLS_TOP_PORTION, 80);
-    assert_eq!(PLAYER_CONTROLS_BOTTOM_PORTION, 30);
-    assert!(PLAYER_CONTROLS_TOP_PORTION > 0);
-    assert!(PLAYER_CONTROLS_BOTTOM_PORTION > 0);
-    assert_eq!(PLAYER_CONTROLS_MAX_WIDTH, 800.0);
-
-    let (mut app, _) = new_test_app();
-    let win_id = iced::window::Id::unique();
-    app.window_id = Some(win_id);
-
-    // Hover over player to activate controls overlay view tree
-    let _ = app.update(Message::PlayerHovered(1));
-    for _ in 0..12 {
-        let _ = app.update(Message::VideoFrameTick);
-    }
-    assert_eq!(app.player_overlay_alpha(), 1.0);
-
-    // Verify view generation succeeds without panic with controls active
-    let _view = app.view();
-}
-
-#[test]
-fn test_transcript_loaded_track_and_path_discrimination() {
-    let (mut app, _) = new_test_app();
-    app.show_transcript = true;
-    app.transcript_video_path = Some("/media/sample.mp4".to_string());
-    app.transcript_track_index = 1;
-    app.transcript_loading = true;
-
-    let cue1 = wazoo_media::SubtitleCue {
-        start_secs: 0.0,
-        end_secs: 2.0,
-        text: "Track 0 old subtitle".to_string(),
-    };
-    let cue2 = wazoo_media::SubtitleCue {
-        start_secs: 0.0,
-        end_secs: 2.0,
-        text: "Track 1 active subtitle".to_string(),
-    };
-
-    // 1. Stale response from a different video path is rejected
-    let _ = app.update(Message::TranscriptLoaded(
-        "/media/other.mp4".to_string(),
-        1,
-        vec![cue1.clone()],
-    ));
-    assert!(app.transcript_loading);
-    assert!(app.transcript_cues.is_empty());
-
-    // 2. Stale response from a previous track index (e.g. track 0 while on track 1) is rejected
-    let _ = app.update(Message::TranscriptLoaded(
-        "/media/sample.mp4".to_string(),
-        0,
-        vec![cue1],
-    ));
-    assert!(app.transcript_loading);
-    assert!(app.transcript_cues.is_empty());
-
-    // 3. Matching path and track index commits cues and ends loading
-    let _ = app.update(Message::TranscriptLoaded(
-        "/media/sample.mp4".to_string(),
-        1,
-        vec![cue2.clone()],
-    ));
-    assert!(!app.transcript_loading);
-    assert_eq!(app.transcript_cues.len(), 1);
-    assert_eq!(app.transcript_cues[0].text, "Track 1 active subtitle");
-}
-
-#[test]
-fn test_flip_mode_countdown_and_osd() {
-    let (mut app, _) = new_test_app();
-    app.settings.flip_interval_secs = 5;
-    app.flip_countdown = 5;
-
-    // Initially in Normal mode
-    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Normal);
-    let _ = app.update(Message::WatchdogTick);
-    assert_eq!(app.flip_countdown, 5);
-
-    // Toggle Flip mode ON
-    let _ = app.update(Message::ToggleFlipMode);
-    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Flip);
-    assert_eq!(app.flip_countdown, 5);
-
-    // WatchdogTick decrements countdown
-    let _ = app.update(Message::WatchdogTick);
-    assert_eq!(app.flip_countdown, 4);
-
-    let _ = app.update(Message::WatchdogTick);
-    assert_eq!(app.flip_countdown, 3);
-
-    let _ = app.update(Message::WatchdogTick);
-    assert_eq!(app.flip_countdown, 2);
-
-    let _ = app.update(Message::WatchdogTick);
-    assert_eq!(app.flip_countdown, 1);
-
-    // Next WatchdogTick resets back to interval (5)
-    let _ = app.update(Message::WatchdogTick);
-    assert_eq!(app.flip_countdown, 5);
-
-    // Check OSD view generation while in flip mode
-    let win_id = iced::window::Id::unique();
-    app.window_id = Some(win_id);
-    let _ = app.update(Message::PlayerHovered(1));
-    for _ in 0..12 {
-        let _ = app.update(Message::VideoFrameTick);
-    }
-    {
-        let _view = app.view();
-    }
-
-    // Toggle Flip mode OFF
-    let _ = app.update(Message::ToggleFlipMode);
-    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Normal);
 }

@@ -21,7 +21,7 @@ use crate::message::Message;
 use crate::scroll_view;
 use crate::theme;
 use iced::{
-    Alignment, Element, Length, Theme,
+    Alignment, Element, Length, Theme, mouse,
     widget::{Space, Stack, button, column, container, mouse_area, row, slider, svg, text},
 };
 use wazoo_core::{LayoutMode, PlaybackMode};
@@ -606,11 +606,16 @@ impl WazooApp {
             .height(Length::Fill)
             .style(theme::player_container_style(opacity));
 
-        mouse_area(player_box)
+        let mut area = mouse_area(player_box)
             .on_press(Message::PlayerClicked(player_id))
             .on_enter(Message::PlayerHovered(player_id))
             .on_move(move |_| Message::PlayerHovered(player_id))
-            .on_exit(Message::PlayerUnhovered(player_id))
-            .into()
+            .on_exit(Message::PlayerUnhovered(player_id));
+
+        if self.should_hide_cursor() {
+            area = area.interaction(mouse::Interaction::Hidden);
+        }
+
+        area.into()
     }
 }

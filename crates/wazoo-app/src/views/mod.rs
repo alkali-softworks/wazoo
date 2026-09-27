@@ -20,7 +20,7 @@ use crate::format;
 use crate::message::Message;
 use crate::theme;
 use iced::{
-    Alignment, Element, Length, Theme,
+    Alignment, Element, Length, Theme, mouse,
     widget::{Space, Stack, button, column, container, mouse_area, row, text},
 };
 use wazoo_scanner::ScanStage;
@@ -114,6 +114,7 @@ impl WazooApp {
                             .width(Length::Fill)
                             .height(Length::Fill),
                     )
+                    .interaction(mouse::Interaction::Idle)
                     .on_press(Message::CloseDropdownMenu),
                 ));
             }

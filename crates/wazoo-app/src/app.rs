@@ -582,6 +582,15 @@ impl WazooApp {
         }
     }
 
+    pub fn should_hide_cursor(&self) -> bool {
+        !self.players.is_empty()
+            && self.player_overlay_ticks == 0
+            && self.open_audio_menu_player_id.is_none()
+            && self.loading_player_ids.is_empty()
+            && !self.show_titlebar
+            && !self.is_modal_or_menu_open()
+    }
+
     pub fn focused_player_id(&self) -> Option<PlayerId> {
         if self.players.is_empty() {
             None
