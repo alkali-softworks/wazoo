@@ -154,6 +154,7 @@ pub struct WazooApp {
     pub window_bounds_dirty: bool,
     pub player_nav_history: HashMap<PlayerId, PlayerNavHistory>,
     pub player_shuffle_modes: HashMap<PlayerId, bool>,
+    pub flip_countdown: u64,
 }
 
 impl WazooApp {
@@ -373,6 +374,7 @@ impl WazooApp {
             window_bounds_dirty: false,
             player_nav_history: HashMap::new(),
             player_shuffle_modes: HashMap::new(),
+            flip_countdown: settings.flip_interval_secs.max(1),
         };
 
         // Initialize players based on settings or restore saved session
@@ -1295,14 +1297,6 @@ impl WazooApp {
 
         if self.settings.playback_mode == PlaybackMode::Scroll {
             subs.push(iced::time::every(Duration::from_millis(16)).map(|_| Message::AnimationTick));
-        }
-
-        if self.settings.playback_mode == PlaybackMode::Flip {
-            let interval_secs = self.settings.flip_interval_secs.max(1);
-            subs.push(
-                iced::time::every(Duration::from_secs(interval_secs))
-                    .map(|_| Message::FlipModeTick),
-            );
         }
 
         Subscription::batch(subs)

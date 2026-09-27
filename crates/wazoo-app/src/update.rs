@@ -1406,6 +1406,7 @@ impl WazooApp {
                     PlaybackMode::Flip => PlaybackMode::Normal,
                     _ => PlaybackMode::Flip,
                 };
+                self.flip_countdown = self.settings.flip_interval_secs.max(1);
                 self.toast_message = Some(match self.settings.playback_mode {
                     PlaybackMode::Flip => self.t("wazoo.flip_mode_enabled"),
                     _ => self.t("wazoo.flip_mode_disabled"),
@@ -2487,9 +2488,22 @@ impl WazooApp {
                         self.toast_message = None;
                     }
                 }
+                if self.settings.playback_mode == PlaybackMode::Flip {
+                    let interval = self.settings.flip_interval_secs.max(1);
+                    if self.flip_countdown > interval || self.flip_countdown == 0 {
+                        self.flip_countdown = interval;
+                    }
+                    if self.flip_countdown > 1 {
+                        self.flip_countdown -= 1;
+                    } else {
+                        self.flip_countdown = interval;
+                        let _ = self.update(Message::FlipModeTick);
+                    }
+                }
                 self.save_session_state();
             }
             Message::FlipModeTick => {
+                self.flip_countdown = self.settings.flip_interval_secs.max(1);
                 if self.settings.playback_mode == PlaybackMode::Flip && !self.players.is_empty() {
                     let rand_id = self.players[rand::random::<usize>() % self.players.len()].id;
                     self.loading_player_ids.insert(rand_id);
