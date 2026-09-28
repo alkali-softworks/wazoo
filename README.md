@@ -120,7 +120,6 @@ wazoo "cyberpunk"
 Press <kbd>F1</kbd> inside the app at any time to open the complete interactive keyboard shortcuts guide. Common shortcuts:
 
 - <kbd>Space</kbd> — Play / Pause
-- <kbd>,</kbd> / <kbd>.</kbd> — Step one frame backward / forward
 - <kbd>F</kbd> – Toggle **File Drawer**
 - <kbd>J</kbd> or <kbd>/</kbd> — Open the **Search** modal
 - <kbd>S</kbd> — Toggle **Shuffle vs Sequential** playback
