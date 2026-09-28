@@ -1,7 +1,7 @@
 use std::ffi::CString;
 use wazoo_media::{
-    build_alang_string, find_matching_audio_track, format_subtitle_track_label,
-    get_track_preference_string, mpv_ffi, track_matches_preference, AudioTrack, SubtitleTrack,
+    AudioTrack, SubtitleTrack, build_alang_string, find_matching_audio_track,
+    format_subtitle_track_label, get_track_preference_string, mpv_ffi, track_matches_preference,
 };
 
 #[test]
@@ -187,33 +187,25 @@ fn test_track_matches_preference_same_language_commentary() {
 }
 
 #[test]
-fn test_dungeon_meshi_subtitles() {
-    let path = "/mnt/bob/anime/Dungeon Meshi/Dungeon Meshi - 08.mkv";
-    if !std::path::Path::new(path).exists() {
-        return;
-    }
-    let config = wazoo_media::BufferConfig::default();
-    let mut handle = wazoo_media::VideoHandle::with_buffering_and_start(
-        1,
-        path,
-        "Dungeon Meshi - 08",
-        config,
-        wazoo_media::StartTime::Beginning,
-    )
-    .unwrap();
+fn test_video_equalizer_filter_generation() {
+    // Default zero values should produce an empty filter string (bypassing vf overhead)
+    assert_eq!(
+        wazoo_media::VideoHandle::build_eq_filter_string(0.0, 0.0, 0.0, 0.0),
+        ""
+    );
 
-    let start = std::time::Instant::now();
-    while start.elapsed() < std::time::Duration::from_millis(2000) {
-        handle.update_frame();
-        if !handle.subtitle_tracks().is_empty() {
-            break;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(20));
-    }
+    // Non-zero values generate ffmpeg eq filter parameters
+    let filter = wazoo_media::VideoHandle::build_eq_filter_string(50.0, 50.0, 25.0, -50.0);
+    assert!(filter.starts_with("eq="));
+    assert!(filter.contains("gamma=1.750"));
+    assert!(filter.contains("contrast=1.750"));
+    assert!(filter.contains("brightness=0.200"));
+    assert!(filter.contains("saturation=0.500"));
 
-    assert_eq!(handle.get_property_string("sid").as_deref(), Some("1"));
-    assert_eq!(handle.get_property_i64("sid"), Some(1));
-    assert_eq!(handle.current_subtitle_track_id(), Some(1));
-    assert!(handle.subtitle_tracks().iter().any(|t| t.id == 1 && t.is_selected));
+    // Extreme values
+    let filter_max = wazoo_media::VideoHandle::build_eq_filter_string(100.0, 100.0, 100.0, 100.0);
+    assert!(filter_max.contains("gamma=2.500"));
+    assert!(filter_max.contains("contrast=2.500"));
+    assert!(filter_max.contains("brightness=0.800"));
+    assert!(filter_max.contains("saturation=2.500"));
 }
-

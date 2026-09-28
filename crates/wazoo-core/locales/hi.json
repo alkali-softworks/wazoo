@@ -56,7 +56,18 @@
     "scanning_progress": "स्कैनिंग {name} ({percent}% - {found} मिले)",
     "scan_error": "स्कैन त्रुटि: {error}",
     "misc_cleared": "{count} विविध फ़ाइलें साफ़ की गईं",
-    "default_player": "डिफ़ॉल्ट प्लेयर"
+    "default_player": "डिफ़ॉल्ट प्लेयर",
+    "tab_general": "सामान्य",
+    "tab_playback": "प्लेबैक",
+    "gamma": "गामा",
+    "contrast": "कंट्रास्ट",
+    "brightness": "चमक",
+    "saturation": "संतृप्ति",
+    "playback_speed": "प्लेबैक गति",
+    "reset_playback": "डिफ़ॉल्ट पर रीसेट करें",
+    "buffer_duration": "बफर अवधि",
+    "buffer_size": "बफर आकार",
+    "tab_system": "सिस्टम"
   },
   "search": {
     "folder": "फ़ोल्डर:",

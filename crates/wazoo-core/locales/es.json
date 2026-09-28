@@ -56,7 +56,18 @@
     "scanning_progress": "Escaneando {name} ({percent}% - {found} encontrados)",
     "scan_error": "Error de escaneo: {error}",
     "misc_cleared": "Se eliminaron {count} archivos misceláneos",
-    "default_player": "Reproductor predeterminado"
+    "default_player": "Reproductor predeterminado",
+    "tab_general": "General",
+    "tab_playback": "Reproducción",
+    "gamma": "Gamma",
+    "contrast": "Contraste",
+    "brightness": "Brillo",
+    "saturation": "Saturación",
+    "playback_speed": "Velocidad de reproducción",
+    "reset_playback": "Restablecer valores",
+    "buffer_duration": "Duración del búfer",
+    "buffer_size": "Tamaño del búfer",
+    "tab_system": "Sistema"
   },
   "search": {
     "folder": "Carpeta:",

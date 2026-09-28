@@ -56,7 +56,18 @@
     "scanning_progress": "กำลังสแกน {name} ({percent}% - พบ {found} ไฟล์)",
     "scan_error": "ข้อผิดพลาดในการสแกน: {error}",
     "misc_cleared": "ล้างไฟล์เบ็ดเตล็ด {count} ไฟล์แล้ว",
-    "default_player": "เครื่องเล่นเริ่มต้น"
+    "default_player": "เครื่องเล่นเริ่มต้น",
+    "tab_general": "ทั่วไป",
+    "tab_playback": "การเล่น",
+    "gamma": "แกมมา",
+    "contrast": "ความคมชัด",
+    "brightness": "ความสว่าง",
+    "saturation": "ความอิ่มตัวของสี",
+    "playback_speed": "ความเร็วในการเล่น",
+    "reset_playback": "รีเซ็ตเป็นค่าเริ่มต้น",
+    "buffer_duration": "ระยะเวลาบัฟเฟอร์",
+    "buffer_size": "ขนาดบัฟเฟอร์",
+    "tab_system": "ระบบ"
   },
   "search": {
     "folder": "โฟลเดอร์:",

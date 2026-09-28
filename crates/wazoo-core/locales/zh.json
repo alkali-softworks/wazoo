@@ -56,7 +56,18 @@
     "scanning_progress": "正在扫描 {name}（{percent}% - 找到 {found} 个文件）",
     "scan_error": "扫描错误：{error}",
     "misc_cleared": "已清除 {count} 个杂项文件",
-    "default_player": "默认播放器"
+    "default_player": "默认播放器",
+    "tab_general": "通用",
+    "tab_playback": "播放",
+    "gamma": "伽马",
+    "contrast": "对比度",
+    "brightness": "亮度",
+    "saturation": "饱和度",
+    "playback_speed": "播放速度",
+    "reset_playback": "重置默认",
+    "buffer_duration": "缓冲时长",
+    "buffer_size": "缓冲大小",
+    "tab_system": "系统"
   },
   "search": {
     "folder": "文件夹:",

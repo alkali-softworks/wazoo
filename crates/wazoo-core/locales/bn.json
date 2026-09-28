@@ -56,7 +56,18 @@
     "scanning_progress": "স্ক্যান করা হচ্ছে {name} ({percent}% - {found} পাওয়া গেছে)",
     "scan_error": "স্ক্যান ত্রুটি: {error}",
     "misc_cleared": "{count}টি বিবিধ ফাইল মুছে ফেলা হয়েছে",
-    "default_player": "ডিফল্ট প্লেয়ার"
+    "default_player": "ডিফল্ট প্লেয়ার",
+    "tab_general": "সাধারণ",
+    "tab_playback": "প্লেব্যাক",
+    "gamma": "গামা",
+    "contrast": "কনট্রাস্ট",
+    "brightness": "উজ্জ্বলতা",
+    "saturation": "স্যাচুরেশন",
+    "playback_speed": "প্লেব্যাকের গতি",
+    "reset_playback": "ডিফল্টে রিসেট করুন",
+    "buffer_duration": "বাফার সময়কাল",
+    "buffer_size": "বাফার সাইজ",
+    "tab_system": "সিস্টেম"
   },
   "search": {
     "folder": "ফোল্ডার:",

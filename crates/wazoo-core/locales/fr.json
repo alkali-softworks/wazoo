@@ -56,7 +56,18 @@
     "scanning_progress": "Analyse en cours {name} ({percent}% - {found} trouvés)",
     "scan_error": "Erreur d'analyse : {error}",
     "misc_cleared": "{count} fichiers divers effacés",
-    "default_player": "Lecteur par défaut"
+    "default_player": "Lecteur par défaut",
+    "tab_general": "Général",
+    "tab_playback": "Lecture",
+    "gamma": "Gamma",
+    "contrast": "Contraste",
+    "brightness": "Luminosité",
+    "saturation": "Saturation",
+    "playback_speed": "Vitesse de lecture",
+    "reset_playback": "Réinitialiser",
+    "buffer_duration": "Durée du tampon",
+    "buffer_size": "Taille du tampon",
+    "tab_system": "Système"
   },
   "search": {
     "folder": "Dossier :",

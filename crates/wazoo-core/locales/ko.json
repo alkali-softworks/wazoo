@@ -56,7 +56,18 @@
     "scanning_progress": "검사 중 {name} ({percent}% - {found}개 발견)",
     "scan_error": "검사 오류: {error}",
     "misc_cleared": "{count}개의 기타 파일을 지웠습니다",
-    "default_player": "기본 플레이어"
+    "default_player": "기본 플레이어",
+    "tab_general": "일반",
+    "tab_playback": "재생",
+    "gamma": "감마",
+    "contrast": "대비",
+    "brightness": "밝기",
+    "saturation": "채도",
+    "playback_speed": "재생 속도",
+    "reset_playback": "기본값으로 재설정",
+    "buffer_duration": "버퍼 시간",
+    "buffer_size": "버퍼 크기",
+    "tab_system": "시스템"
   },
   "search": {
     "folder": "폴더:",

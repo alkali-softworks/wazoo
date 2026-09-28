@@ -442,6 +442,11 @@ pub struct BufferConfig {
     pub size_mb: u32,
     pub read_chunk_kb: u32,
     pub preferred_audio_language: Option<String>,
+    pub gamma: f64,
+    pub contrast: f64,
+    pub brightness: f64,
+    pub saturation: f64,
+    pub playback_speed: f64,
 }
 
 impl Default for BufferConfig {
@@ -451,6 +456,11 @@ impl Default for BufferConfig {
             size_mb: 16,
             read_chunk_kb: 512,
             preferred_audio_language: None,
+            gamma: 0.0,
+            contrast: 0.0,
+            brightness: 0.0,
+            saturation: 0.0,
+            playback_speed: 1.0,
         }
     }
 }
@@ -471,6 +481,10 @@ pub struct VideoHandle {
     pending_seek_random: bool,
     tracks_loaded: bool,
     preferred_audio_language: Option<String>,
+    gamma: f64,
+    contrast: f64,
+    brightness: f64,
+    saturation: f64,
 }
 
 unsafe impl Send for VideoHandle {}
@@ -503,6 +517,53 @@ impl Drop for VideoHandle {
 impl VideoHandle {
     pub const STUCK_THRESHOLD_SECONDS: usize = 30;
     pub const SEEK_GRACE_PERIOD: Duration = Duration::from_secs(10);
+
+    /// Construct FFmpeg `eq` video filter string for software rendering equalizer adjustments.
+    /// Returns an empty string if all equalizer parameters are at their defaults (0.0).
+    pub fn build_eq_filter_string(
+        gamma: f64,
+        contrast: f64,
+        brightness: f64,
+        saturation: f64,
+    ) -> String {
+        if gamma.abs() < 0.001
+            && contrast.abs() < 0.001
+            && brightness.abs() < 0.001
+            && saturation.abs() < 0.001
+        {
+            return String::new();
+        }
+
+        // Map UI slider values (-100.0..=100.0) to FFmpeg eq filter parameters:
+        // gamma: default 1.0, range 0.1..10.0 (reciprocal symmetry around 1.0)
+        let eq_gamma = if gamma >= 0.0 {
+            1.0 + (gamma / 100.0) * 1.5
+        } else {
+            1.0 / (1.0 + (-gamma / 100.0) * 1.5)
+        };
+
+        // contrast: default 1.0, range 0.0..2.5
+        let eq_contrast = if contrast >= 0.0 {
+            1.0 + (contrast / 100.0) * 1.5
+        } else {
+            (1.0 + (contrast / 100.0)).max(0.0)
+        };
+
+        // brightness: default 0.0, range -0.8..0.8
+        let eq_brightness = (brightness / 100.0) * 0.8;
+
+        // saturation: default 1.0, range 0.0..2.5
+        let eq_saturation = if saturation >= 0.0 {
+            1.0 + (saturation / 100.0) * 1.5
+        } else {
+            (1.0 + (saturation / 100.0)).max(0.0)
+        };
+
+        format!(
+            "eq=gamma={:.3}:contrast={:.3}:brightness={:.3}:saturation={:.3}",
+            eq_gamma, eq_contrast, eq_brightness, eq_saturation
+        )
+    }
 
     pub fn new(id: PlayerId, file_path: &str, name: &str) -> Result<Self, String> {
         Self::with_buffering(id, file_path, name, BufferConfig::default())
@@ -567,6 +628,31 @@ impl VideoHandle {
             set_opt("keep-open", "yes");
             set_opt("idle", "yes");
             set_opt("terminal", "no");
+
+            let eq_filter = Self::build_eq_filter_string(
+                config.gamma,
+                config.contrast,
+                config.brightness,
+                config.saturation,
+            );
+            if !eq_filter.is_empty() {
+                set_opt("vf", &eq_filter);
+            }
+            if config.gamma != 0.0 {
+                set_opt("gamma", &format!("{}", config.gamma));
+            }
+            if config.contrast != 0.0 {
+                set_opt("contrast", &format!("{}", config.contrast));
+            }
+            if config.brightness != 0.0 {
+                set_opt("brightness", &format!("{}", config.brightness));
+            }
+            if config.saturation != 0.0 {
+                set_opt("saturation", &format!("{}", config.saturation));
+            }
+            if (config.playback_speed - 1.0).abs() > 0.001 {
+                set_opt("speed", &format!("{:.2}", config.playback_speed));
+            }
 
             if let Some(ref pref) = config.preferred_audio_language {
                 let alang = build_alang_string(pref);
@@ -730,6 +816,10 @@ impl VideoHandle {
                 pending_seek_random: false,
                 tracks_loaded: false,
                 preferred_audio_language: config.preferred_audio_language,
+                gamma: config.gamma,
+                contrast: config.contrast,
+                brightness: config.brightness,
+                saturation: config.saturation,
             };
 
             handle.set_volume(1.0);
@@ -973,12 +1063,127 @@ impl VideoHandle {
         }
     }
 
+    pub fn update_equalizer(&mut self) {
+        let filter = Self::build_eq_filter_string(
+            self.gamma,
+            self.contrast,
+            self.brightness,
+            self.saturation,
+        );
+        self.set_property_string("vf", &filter);
+
+        // Also update standard VO properties for compatibility if hardware VO is used
+        let clamped_g = self.gamma.clamp(-100.0, 100.0);
+        let clamped_c = self.contrast.clamp(-100.0, 100.0);
+        let clamped_b = self.brightness.clamp(-100.0, 100.0);
+        let clamped_s = self.saturation.clamp(-100.0, 100.0);
+        unsafe {
+            if !self.mpv.is_null() {
+                if let Ok(p) = CString::new("gamma") {
+                    mpv_ffi::mpv_set_property(
+                        self.mpv,
+                        p.as_ptr(),
+                        mpv_ffi::MPV_FORMAT_DOUBLE,
+                        &clamped_g as *const _ as *mut _,
+                    );
+                }
+                if let Ok(p) = CString::new("contrast") {
+                    mpv_ffi::mpv_set_property(
+                        self.mpv,
+                        p.as_ptr(),
+                        mpv_ffi::MPV_FORMAT_DOUBLE,
+                        &clamped_c as *const _ as *mut _,
+                    );
+                }
+                if let Ok(p) = CString::new("brightness") {
+                    mpv_ffi::mpv_set_property(
+                        self.mpv,
+                        p.as_ptr(),
+                        mpv_ffi::MPV_FORMAT_DOUBLE,
+                        &clamped_b as *const _ as *mut _,
+                    );
+                }
+                if let Ok(p) = CString::new("saturation") {
+                    mpv_ffi::mpv_set_property(
+                        self.mpv,
+                        p.as_ptr(),
+                        mpv_ffi::MPV_FORMAT_DOUBLE,
+                        &clamped_s as *const _ as *mut _,
+                    );
+                }
+            }
+        }
+
+        // If the video is paused, trigger a zero-seek so mpv immediately re-decodes the current paused frame with new filter settings
+        if !self.state.is_playing {
+            unsafe {
+                if !self.mpv.is_null() {
+                    let cmd = c"no-osd seek 0 relative exact";
+                    mpv_ffi::mpv_command_string(self.mpv, cmd.as_ptr());
+                }
+            }
+        }
+    }
+
+    pub fn set_gamma(&mut self, gamma: f64) {
+        self.gamma = gamma.clamp(-100.0, 100.0);
+        self.update_equalizer();
+    }
+
+    pub fn set_contrast(&mut self, contrast: f64) {
+        self.contrast = contrast.clamp(-100.0, 100.0);
+        self.update_equalizer();
+    }
+
+    pub fn set_brightness(&mut self, brightness: f64) {
+        self.brightness = brightness.clamp(-100.0, 100.0);
+        self.update_equalizer();
+    }
+
+    pub fn set_saturation(&mut self, saturation: f64) {
+        self.saturation = saturation.clamp(-100.0, 100.0);
+        self.update_equalizer();
+    }
+
+    pub fn gamma(&self) -> f64 {
+        self.gamma
+    }
+
+    pub fn contrast(&self) -> f64 {
+        self.contrast
+    }
+
+    pub fn brightness(&self) -> f64 {
+        self.brightness
+    }
+
+    pub fn saturation(&self) -> f64 {
+        self.saturation
+    }
+
+    pub fn set_speed(&mut self, speed: f64) {
+        let clamped = speed.clamp(0.25, 4.0);
+        unsafe {
+            let prop = CString::new("speed").unwrap();
+            mpv_ffi::mpv_set_property(
+                self.mpv,
+                prop.as_ptr(),
+                mpv_ffi::MPV_FORMAT_DOUBLE,
+                &clamped as *const _ as *mut _,
+            );
+        }
+    }
+
     pub fn has_decoded_frame(&self) -> bool {
         if let Ok(guard) = self.frame.lock() {
             !guard.pixels.is_empty() && guard.width > 0 && guard.height > 0
         } else {
             false
         }
+    }
+
+    pub fn frame_snapshot(&self) -> Option<Vec<u8>> {
+        self.frame.lock().ok().map(|g| g.pixels.clone())
     }
 
     pub fn is_pending_seek_random(&self) -> bool {
@@ -1482,6 +1687,19 @@ impl VideoHandle {
                 let s = std::ffi::CStr::from_ptr(ptr).to_string_lossy().into_owned();
                 mpv_ffi::mpv_free(ptr as *mut _);
                 Some(s)
+            }
+        }
+    }
+
+    pub fn set_property_string(&mut self, name: &str, value: &str) -> i32 {
+        unsafe {
+            if self.mpv.is_null() {
+                return -1;
+            }
+            if let (Ok(c_name), Ok(c_val)) = (CString::new(name), CString::new(value)) {
+                mpv_ffi::mpv_set_property_string(self.mpv, c_name.as_ptr(), c_val.as_ptr())
+            } else {
+                -1
             }
         }
     }

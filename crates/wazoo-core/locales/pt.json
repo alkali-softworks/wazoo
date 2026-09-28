@@ -56,7 +56,18 @@
     "scanning_progress": "Verificando {name} ({percent}% - {found} encontrados)",
     "scan_error": "Erro de verificação: {error}",
     "misc_cleared": "{count} arquivos diversos apagados",
-    "default_player": "Reprodutor padrão"
+    "default_player": "Reprodutor padrão",
+    "tab_general": "Geral",
+    "tab_playback": "Reprodução",
+    "gamma": "Gama",
+    "contrast": "Contraste",
+    "brightness": "Brilho",
+    "saturation": "Saturação",
+    "playback_speed": "Velocidade de reprodução",
+    "reset_playback": "Restaurar padrões",
+    "buffer_duration": "Duração do buffer",
+    "buffer_size": "Tamanho do buffer",
+    "tab_system": "Sistema"
   },
   "search": {
     "folder": "Pasta:",

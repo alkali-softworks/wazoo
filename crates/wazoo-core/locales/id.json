@@ -56,7 +56,18 @@
     "scanning_progress": "Memindai {name} ({percent}% - {found} ditemukan)",
     "scan_error": "Kesalahan pemindaian: {error}",
     "misc_cleared": "{count} berkas lain-lain dibersihkan",
-    "default_player": "Pemutar Default"
+    "default_player": "Pemutar Default",
+    "tab_general": "Umum",
+    "tab_playback": "Pemutaran",
+    "gamma": "Gamma",
+    "contrast": "Kontras",
+    "brightness": "Kecerahan",
+    "saturation": "Saturasi",
+    "playback_speed": "Kecepatan Pemutaran",
+    "reset_playback": "Atur Ulang ke Default",
+    "buffer_duration": "Durasi Buffer",
+    "buffer_size": "Ukuran Buffer",
+    "tab_system": "Sistem"
   },
   "search": {
     "folder": "Folder:",
