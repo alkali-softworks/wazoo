@@ -14,7 +14,11 @@
     "or": "o",
     "miscellaneous": "Varie",
     "pin_window": "Blocca finestra in primo piano",
-    "unpin_window": "Sblocca finestra"
+    "unpin_window": "Sblocca finestra",
+    "clear_loop": "Cancella loop",
+    "loop": "Loop",
+    "start": "Inizio",
+    "end": "Fine"
   },
   "app": {
     "drag_to_move": "Trascina per spostare",
@@ -114,7 +118,10 @@
       "toggle_history": "Attiva/disattiva cronologia di riproduzione",
       "random_seek": "Ricerca casuale",
       "show_title_overlay": "Mostra HUD titolo",
-      "toggle_pin": "Attiva/disattiva sempre in primo piano"
+      "toggle_pin": "Attiva/disattiva sempre in primo piano",
+      "mark_in": "Imposta punto iniziale",
+      "mark_out": "Imposta punto finale",
+      "clear_marks": "Cancella loop inizio / fine"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "Passato a modalità sequenziale",
     "scroll_speed": "Velocità di scorrimento: {speed}",
     "players_count": "Riproduttori: {count}",
-    "focused_player": "Riproduttore selezionato: {index}"
+    "focused_player": "Riproduttore selezionato: {index}",
+    "mark_in_set": "Player {player} Punto iniziale: {time}",
+    "mark_out_set": "Player {player} Punto finale: {time}",
+    "loop_range": "Player {player} Loop: {start} → {end}",
+    "loop_cleared": "Player {player} Loop cancellato"
   },
   "transcript": {
     "title": "Trascrizione",

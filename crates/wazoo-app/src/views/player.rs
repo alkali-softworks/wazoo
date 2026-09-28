@@ -159,10 +159,37 @@ impl WazooApp {
 
         let pos = p.position();
         let dur = p.duration();
+        let loop_str = self.t("common.loop");
+        let start_str = self.t("common.start");
+        let end_str = self.t("common.end");
+        let loop_indicator = match (p.mark_in(), p.mark_out()) {
+            (Some(i), Some(o)) => format!(
+                " - {} {} ➔ {}",
+                loop_str,
+                format::format_time_str(i.as_secs_f64()),
+                format::format_time_str(o.as_secs_f64())
+            ),
+            (Some(i), None) => {
+                format!(
+                    " - {} {} ➔ {}",
+                    loop_str,
+                    format::format_time_str(i.as_secs_f64()),
+                    end_str
+                )
+            }
+            (None, Some(o)) => format!(
+                " - {} {} ➔ {}",
+                loop_str,
+                start_str,
+                format::format_time_str(o.as_secs_f64())
+            ),
+            (None, None) => String::new(),
+        };
         let time_str = format!(
-            "{} / {}",
+            "{} / {}{}",
             format::format_time_str(pos.as_secs_f64()),
-            format::format_time_str(dur.as_secs_f64())
+            format::format_time_str(dur.as_secs_f64()),
+            loop_indicator
         );
 
         let progress_ratio = if dur.as_secs_f64() > 0.0 {
@@ -429,6 +456,48 @@ impl WazooApp {
                 ));
             }
 
+            let mut controls_row = controls_row;
+            if p.has_loop() {
+                let loop_badge_text = match (p.mark_in(), p.mark_out()) {
+                    (Some(i), Some(o)) => format!(
+                        "🔁 {} - {}",
+                        format::format_time_str(i.as_secs_f64()),
+                        format::format_time_str(o.as_secs_f64())
+                    ),
+                    (Some(i), None) => {
+                        format!("🔁 In: {}", format::format_time_str(i.as_secs_f64()))
+                    }
+                    (None, Some(o)) => {
+                        format!("🔁 Out: {}", format::format_time_str(o.as_secs_f64()))
+                    }
+                    (None, None) => "🔁".to_string(),
+                };
+                controls_row = controls_row.push(cursor::PointerCursor::new(
+                    button(
+                        container(
+                            row![
+                                text(loop_badge_text).size(12).font(iced::Font {
+                                    weight: iced::font::Weight::Bold,
+                                    ..Default::default()
+                                }),
+                                text(" ✕")
+                                    .size(11)
+                                    .color(iced::Color::from_rgb(0.95, 0.4, 0.4)),
+                            ]
+                            .align_y(Alignment::Center),
+                        )
+                        .center_x(Length::Shrink)
+                        .center_y(Length::Shrink),
+                    )
+                    .style(theme::audio_track_button_style_with_alpha(
+                        true,
+                        overlay_alpha,
+                    ))
+                    .on_press(Message::ClearLoop(player_id))
+                    .padding([4, 8]),
+                ));
+            }
+
             let controls_row = controls_row
                 // Right: Play Mode (Shuffle/Sequential) + Prev + Play/Pause + Skip Next
                 .push(
@@ -511,10 +580,13 @@ impl WazooApp {
                     })
                     .collect();
 
-                let audio_menu_card =
-                    container(column(menu_items).spacing(2).width(Length::Fixed(card_width)))
-                        .padding(4)
-                        .style(theme::audio_menu_card_style);
+                let audio_menu_card = container(
+                    column(menu_items)
+                        .spacing(2)
+                        .width(Length::Fixed(card_width)),
+                )
+                .padding(4)
+                .style(theme::audio_menu_card_style);
 
                 let menu_row = row![
                     Space::new().width(Length::Fixed(230.0)),

@@ -65,6 +65,9 @@ impl WazooApp {
         request_focus: bool,
     ) -> Task<Message> {
         self.focus_player_for_navigation(id, request_focus);
+        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+            p.clear_marks();
+        }
 
         let curr_player = self.players.iter().find(|p| p.id == id);
         let curr_path = curr_player.map(|p| p.state.path.clone());
@@ -138,6 +141,9 @@ impl WazooApp {
         request_focus: bool,
     ) -> Task<Message> {
         self.focus_player_for_navigation(id, request_focus);
+        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+            p.clear_marks();
+        }
 
         let curr_player = self.players.iter().find(|p| p.id == id);
         let curr_path = curr_player.map(|p| p.state.path.clone());
@@ -299,6 +305,10 @@ impl WazooApp {
                     }
                 }
                 KeyAction::ToggleAlwaysOnTop => return self.update(Message::ToggleAlwaysOnTop),
+                KeyAction::MarkIn => return self.update(Message::MarkInFocused),
+                KeyAction::MarkOut => return self.update(Message::MarkOutFocused),
+                KeyAction::ClearMarkIn => return self.update(Message::ClearMarkInFocused),
+                KeyAction::ClearMarkOut => return self.update(Message::ClearMarkOutFocused),
             }
         }
         Task::none()
@@ -981,6 +991,113 @@ impl WazooApp {
             Message::PrevVideoFocused => {
                 if let Some(id) = self.focused_player_id() {
                     return self.update(Message::PrevVideo(id));
+                }
+            }
+            Message::MarkInFocused => {
+                if let Some(p) = self.focused_player_mut() {
+                    let pos = p.position();
+                    let id = p.id;
+                    p.set_mark_in(Some(pos));
+                    let time_str = format::format_time_str(pos.as_secs_f64());
+                    let id_str = id.to_string();
+                    if let (Some(i), Some(o)) = (p.mark_in(), p.mark_out()) {
+                        let start_str = format::format_time_str(i.as_secs_f64());
+                        let end_str = format::format_time_str(o.as_secs_f64());
+                        self.toast_message = Some(self.t_with(
+                            "player.loop_range",
+                            &[("player", &id_str), ("start", &start_str), ("end", &end_str)],
+                        ));
+                    } else {
+                        self.toast_message = Some(self.t_with(
+                            "player.mark_in_set",
+                            &[("player", &id_str), ("time", &time_str)],
+                        ));
+                    }
+                    self.toast_time_remaining = DEFAULT_TOAST_SECS;
+                }
+                self.trigger_player_overlay();
+            }
+            Message::MarkOutFocused => {
+                if let Some(p) = self.focused_player_mut() {
+                    let pos = p.position();
+                    let id = p.id;
+                    p.set_mark_out(Some(pos));
+                    let time_str = format::format_time_str(pos.as_secs_f64());
+                    let id_str = id.to_string();
+                    if let (Some(i), Some(o)) = (p.mark_in(), p.mark_out()) {
+                        let start_str = format::format_time_str(i.as_secs_f64());
+                        let end_str = format::format_time_str(o.as_secs_f64());
+                        self.toast_message = Some(self.t_with(
+                            "player.loop_range",
+                            &[("player", &id_str), ("start", &start_str), ("end", &end_str)],
+                        ));
+                    } else {
+                        self.toast_message = Some(self.t_with(
+                            "player.mark_out_set",
+                            &[("player", &id_str), ("time", &time_str)],
+                        ));
+                    }
+                    self.toast_time_remaining = DEFAULT_TOAST_SECS;
+                }
+                self.trigger_player_overlay();
+            }
+            Message::ClearMarkInFocused => {
+                if let Some(p) = self.focused_player_mut() {
+                    let id = p.id;
+                    let id_str = id.to_string();
+                    p.clear_mark_in();
+                    if let Some(o) = p.mark_out() {
+                        let time_str = format::format_time_str(o.as_secs_f64());
+                        self.toast_message = Some(self.t_with(
+                            "player.mark_out_set",
+                            &[("player", &id_str), ("time", &time_str)],
+                        ));
+                    } else {
+                        self.toast_message = Some(self.t_with(
+                            "player.loop_cleared",
+                            &[("player", &id_str)],
+                        ));
+                    }
+                    self.toast_time_remaining = DEFAULT_TOAST_SECS;
+                }
+                self.trigger_player_overlay();
+            }
+            Message::ClearMarkOutFocused => {
+                if let Some(p) = self.focused_player_mut() {
+                    let id = p.id;
+                    let id_str = id.to_string();
+                    p.clear_mark_out();
+                    if let Some(i) = p.mark_in() {
+                        let time_str = format::format_time_str(i.as_secs_f64());
+                        self.toast_message = Some(self.t_with(
+                            "player.mark_in_set",
+                            &[("player", &id_str), ("time", &time_str)],
+                        ));
+                    } else {
+                        self.toast_message = Some(self.t_with(
+                            "player.loop_cleared",
+                            &[("player", &id_str)],
+                        ));
+                    }
+                    self.toast_time_remaining = DEFAULT_TOAST_SECS;
+                }
+                self.trigger_player_overlay();
+            }
+            Message::ClearLoop(id) => {
+                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                    p.clear_marks();
+                    let id_str = id.to_string();
+                    self.toast_message = Some(self.t_with(
+                        "player.loop_cleared",
+                        &[("player", &id_str)],
+                    ));
+                    self.toast_time_remaining = DEFAULT_TOAST_SECS;
+                }
+                self.trigger_player_overlay();
+            }
+            Message::ClearLoopFocused => {
+                if let Some(id) = self.focused_player_id() {
+                    return self.update(Message::ClearLoop(id));
                 }
             }
             Message::Seek(id, pos) => {

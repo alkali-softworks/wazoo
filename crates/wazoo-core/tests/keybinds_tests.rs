@@ -19,7 +19,7 @@ fn test_menu_hint() {
 fn test_help_shortcuts_generation() {
     let kb = KeybindSettings::default();
     let shortcuts = kb.help_shortcuts_with_descriptions(|key| key.to_string());
-    assert_eq!(shortcuts.len(), 23);
+    assert_eq!(shortcuts.len(), 26);
     assert_eq!(
         shortcuts[0],
         (
@@ -43,14 +43,22 @@ fn test_help_shortcuts_generation() {
         )
     );
     assert_eq!(
+        shortcuts[19],
+        ("i".to_string(), "help.shortcuts.mark_in".to_string())
+    );
+    assert_eq!(
         shortcuts[20],
+        ("o".to_string(), "help.shortcuts.mark_out".to_string())
+    );
+    assert_eq!(
+        shortcuts[23],
         (
             "P / Alt+P".to_string(),
             "help.shortcuts.toggle_pin".to_string()
         )
     );
     assert_eq!(
-        shortcuts[21],
+        shortcuts[24],
         (
             "Alt + X".to_string(),
             "help.shortcuts.close_app".to_string()

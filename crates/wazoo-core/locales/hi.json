@@ -14,7 +14,11 @@
     "or": "या",
     "miscellaneous": "विविध",
     "pin_window": "विंडो पिन करें",
-    "unpin_window": "विंडो अनपिन करें"
+    "unpin_window": "विंडो अनपिन करें",
+    "clear_loop": "लूप साफ़ करें",
+    "loop": "लूप",
+    "start": "शुरू",
+    "end": "अंत"
   },
   "app": {
     "drag_to_move": "स्थानांतरित करने के लिए खींचें",
@@ -114,7 +118,10 @@
       "toggle_history": "प्लेबैक इतिहास टॉगल करें",
       "random_seek": "रैंडम सीक",
       "show_title_overlay": "शीर्षक HUD दिखाएं",
-      "toggle_pin": "हमेशा शीर्ष पर टॉगल करें"
+      "toggle_pin": "हमेशा शीर्ष पर टॉगल करें",
+      "mark_in": "मार्क इन सेट करें",
+      "mark_out": "मार्क आउट सेट करें",
+      "clear_marks": "मार्क इन/आउट लूप साफ़ करें"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "क्रमबद्ध मोड में बदला गया",
     "scroll_speed": "स्क्रॉल गति: {speed}",
     "players_count": "प्लेयर: {count}",
-    "focused_player": "चयनित प्लेयर: {index}"
+    "focused_player": "चयनित प्लेयर: {index}",
+    "mark_in_set": "प्लेयर {player} मार्क इन: {time}",
+    "mark_out_set": "प्लेयर {player} मार्क आउट: {time}",
+    "loop_range": "प्लेयर {player} लूप: {start} → {end}",
+    "loop_cleared": "प्लेयर {player} लूप साफ़ किया गया"
   },
   "transcript": {
     "title": "प्रतिलेख",

@@ -209,3 +209,33 @@ fn test_video_equalizer_filter_generation() {
     assert!(filter_max.contains("brightness=0.800"));
     assert!(filter_max.contains("saturation=2.500"));
 }
+
+#[test]
+fn test_player_mark_in_out() {
+    use std::time::Duration;
+    use wazoo_media::PlayerState;
+
+    let mut state = PlayerState::new(1, "test.mp4".to_string(), "test".to_string());
+    assert_eq!(state.mark_in, None);
+    assert_eq!(state.mark_out, None);
+
+    // Set mark in
+    state.mark_in = Some(Duration::from_secs(5));
+    assert_eq!(state.mark_in, Some(Duration::from_secs(5)));
+    assert_eq!(state.mark_out, None);
+
+    // Set mark out
+    state.mark_out = Some(Duration::from_secs(10));
+    assert_eq!(state.mark_in, Some(Duration::from_secs(5)));
+    assert_eq!(state.mark_out, Some(Duration::from_secs(10)));
+
+    // Clear mark in
+    state.mark_in = None;
+    assert_eq!(state.mark_in, None);
+    assert_eq!(state.mark_out, Some(Duration::from_secs(10)));
+
+    // Clear all
+    state.mark_out = None;
+    assert_eq!(state.mark_in, None);
+    assert_eq!(state.mark_out, None);
+}

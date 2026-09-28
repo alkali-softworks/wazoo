@@ -14,7 +14,11 @@
     "or": "または",
     "miscellaneous": "その他",
     "pin_window": "ウィンドウを最前面に固定",
-    "unpin_window": "最前面固定を解除"
+    "unpin_window": "最前面固定を解除",
+    "clear_loop": "ループを解除",
+    "loop": "ループ",
+    "start": "開始",
+    "end": "終了"
   },
   "app": {
     "drag_to_move": "ドラッグして移動",
@@ -114,7 +118,10 @@
       "toggle_history": "再生履歴を切り替え",
       "random_seek": "ランダムシーク",
       "show_title_overlay": "タイトルHUDを表示",
-      "toggle_pin": "最前面表示の切り替え"
+      "toggle_pin": "最前面表示の切り替え",
+      "mark_in": "イン点を設定",
+      "mark_out": "アウト点を設定",
+      "clear_marks": "イン/アウト点のループを解除"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "連続再生モードに切り替えました",
     "scroll_speed": "スクロール速度: {speed}",
     "players_count": "プレイヤー数: {count}",
-    "focused_player": "フォーカスプレイヤー: {index}"
+    "focused_player": "フォーカスプレイヤー: {index}",
+    "mark_in_set": "プレイヤー {player} イン点: {time}",
+    "mark_out_set": "プレイヤー {player} アウト点: {time}",
+    "loop_range": "プレイヤー {player} ループ: {start} → {end}",
+    "loop_cleared": "プレイヤー {player} ループを解除しました"
   },
   "transcript": {
     "title": "トランスクリプト",

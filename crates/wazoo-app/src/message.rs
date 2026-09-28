@@ -84,6 +84,12 @@ pub enum Message {
     GlobalUnmute,
     ToggleShuffleMode,
     TogglePlayerShuffle(PlayerId),
+    MarkInFocused,
+    MarkOutFocused,
+    ClearMarkInFocused,
+    ClearMarkOutFocused,
+    ClearLoop(PlayerId),
+    ClearLoopFocused,
 
     // Layout & Modes
     CycleLayout,

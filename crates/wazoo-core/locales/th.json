@@ -14,7 +14,11 @@
     "or": "หรือ",
     "miscellaneous": "เบ็ดเตล็ด",
     "pin_window": "ปักหมุดหน้าต่าง",
-    "unpin_window": "ถอนหมุดหน้าต่าง"
+    "unpin_window": "ถอนหมุดหน้าต่าง",
+    "clear_loop": "ล้างการวนซ้ำ",
+    "loop": "วนซ้ำ",
+    "start": "เริ่มต้น",
+    "end": "สิ้นสุด"
   },
   "app": {
     "drag_to_move": "ลากเพื่อย้าย",
@@ -114,7 +118,10 @@
       "toggle_history": "สลับประวัติการเล่น",
       "random_seek": "ข้ามแบบสุ่ม",
       "show_title_overlay": "แสดง HUD ชื่อเรื่อง",
-      "toggle_pin": "สลับแสดงด้านบนเสมอ"
+      "toggle_pin": "สลับแสดงด้านบนเสมอ",
+      "mark_in": "กำหนดจุดเริ่มต้น (In)",
+      "mark_out": "กำหนดจุดสิ้นสุด (Out)",
+      "clear_marks": "ล้างการวนซ้ำจุดเข้า/ออก"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "เปลี่ยนเป็นโหมดตามลำดับ",
     "scroll_speed": "ความเร็วในการเลื่อน: {speed}",
     "players_count": "จำนวนผู้เล่น: {count}",
-    "focused_player": "ผู้เล่นที่เลือก: {index}"
+    "focused_player": "ผู้เล่นที่เลือก: {index}",
+    "mark_in_set": "โปรแกรมเล่น {player} จุดเริ่มต้น: {time}",
+    "mark_out_set": "โปรแกรมเล่น {player} จุดสิ้นสุด: {time}",
+    "loop_range": "โปรแกรมเล่น {player} วนซ้ำ: {start} → {end}",
+    "loop_cleared": "โปรแกรมเล่น {player} ล้างการวนซ้ำแล้ว"
   },
   "transcript": {
     "title": "บทสนทนา",

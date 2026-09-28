@@ -413,6 +413,8 @@ pub struct PlayerState {
     pub current_audio_track_id: Option<i64>,
     pub subtitle_tracks: Vec<SubtitleTrack>,
     pub current_subtitle_track_id: Option<i64>,
+    pub mark_in: Option<Duration>,
+    pub mark_out: Option<Duration>,
 }
 
 impl PlayerState {
@@ -432,6 +434,8 @@ impl PlayerState {
             current_audio_track_id: None,
             subtitle_tracks: Vec::new(),
             current_subtitle_track_id: None,
+            mark_in: None,
+            mark_out: None,
         }
     }
 }
@@ -899,6 +903,8 @@ impl VideoHandle {
                 }
             }
 
+            self.check_and_apply_loop();
+
             if self.render_ctx.is_null() {
                 return false;
             }
@@ -1342,7 +1348,93 @@ impl VideoHandle {
         }
     }
 
+    pub fn mark_in(&self) -> Option<Duration> {
+        self.state.mark_in
+    }
+
+    pub fn mark_out(&self) -> Option<Duration> {
+        self.state.mark_out
+    }
+
+    pub fn has_loop(&self) -> bool {
+        self.state.mark_in.is_some() || self.state.mark_out.is_some()
+    }
+
+    pub fn set_mark_in(&mut self, pos: Option<Duration>) {
+        self.state.mark_in = pos;
+        if let (Some(in_pos), Some(out_pos)) = (self.state.mark_in, self.state.mark_out) {
+            if in_pos >= out_pos {
+                self.state.mark_out = None;
+            }
+        }
+    }
+
+    pub fn set_mark_out(&mut self, pos: Option<Duration>) {
+        self.state.mark_out = pos;
+        if let (Some(in_pos), Some(out_pos)) = (self.state.mark_in, self.state.mark_out) {
+            if out_pos <= in_pos {
+                self.state.mark_in = None;
+            }
+        }
+    }
+
+    pub fn clear_mark_in(&mut self) {
+        self.state.mark_in = None;
+    }
+
+    pub fn clear_mark_out(&mut self) {
+        self.state.mark_out = None;
+    }
+
+    pub fn clear_marks(&mut self) {
+        self.state.mark_in = None;
+        self.state.mark_out = None;
+    }
+
+    /// Check if the player has an active Mark-In / Mark-Out loop, and when the current playback
+    /// position reaches or passes the loop boundary or end-of-stream, seek back to loop start.
+    pub fn check_and_apply_loop(&mut self) -> bool {
+        if !self.has_loop() {
+            return false;
+        }
+
+        if let Some(seek_time) = self.last_seek_time {
+            if seek_time.elapsed() < Duration::from_millis(300) {
+                return false;
+            }
+        }
+
+        let start = self.state.mark_in.unwrap_or(Duration::ZERO);
+
+        let should_loop = if let Some(out_pos) = self.state.mark_out {
+            self.is_eos || self.position() >= out_pos
+        } else if self.state.mark_in.is_some() {
+            let dur = self.duration();
+            let pos = self.position();
+            let near_end = dur > Duration::from_millis(500)
+                && (pos >= dur || dur.saturating_sub(pos) <= Duration::from_millis(200));
+            self.is_eos || near_end
+        } else {
+            false
+        };
+
+        if should_loop {
+            self.is_eos = false;
+            let was_playing = self.state.is_playing;
+            self.seek(start);
+            if was_playing {
+                self.play();
+            }
+            return true;
+        }
+
+        false
+    }
+
     pub fn is_finished(&self) -> bool {
+        if self.has_loop() {
+            return false;
+        }
         if self.is_eos {
             return true;
         }
@@ -1381,6 +1473,11 @@ impl VideoHandle {
     pub fn check_stuck(&mut self) -> bool {
         if !self.state.is_playing {
             self.state.stuck_count = 0;
+            return false;
+        }
+
+        if self.has_loop() {
+            self.check_and_apply_loop();
             return false;
         }
 

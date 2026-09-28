@@ -14,7 +14,11 @@
     "or": "o",
     "miscellaneous": "Miscelánea",
     "pin_window": "Fijar ventana",
-    "unpin_window": "Desfijar ventana"
+    "unpin_window": "Desfijar ventana",
+    "clear_loop": "Borrar bucle",
+    "loop": "Bucle",
+    "start": "Inicio",
+    "end": "Fin"
   },
   "app": {
     "drag_to_move": "Arrastrar para Mover",
@@ -114,7 +118,10 @@
       "toggle_transcript": "Alternar transcripción de subtítulos",
       "random_seek": "Búsqueda Aleatoria",
       "show_title_overlay": "Mostrar HUD de Título",
-      "toggle_pin": "Alternar siempre visible"
+      "toggle_pin": "Alternar siempre visible",
+      "mark_in": "Definir punto de entrada",
+      "mark_out": "Definir punto de salida",
+      "clear_marks": "Borrar bucle de entrada / salida"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "Cambiado a modo secuencial",
     "scroll_speed": "Velocidad de desplazamiento: {speed}",
     "players_count": "Reproductores: {count}",
-    "focused_player": "Reproductor enfocado: {index}"
+    "focused_player": "Reproductor enfocado: {index}",
+    "mark_in_set": "Reproductor {player} Punto de entrada: {time}",
+    "mark_out_set": "Reproductor {player} Punto de salida: {time}",
+    "loop_range": "Reproductor {player} Bucle: {start} → {end}",
+    "loop_cleared": "Reproductor {player} Bucle borrado"
   },
   "transcript": {
     "title": "Transcripción",

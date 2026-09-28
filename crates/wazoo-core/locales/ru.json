@@ -14,7 +14,11 @@
     "or": "или",
     "miscellaneous": "Разное",
     "pin_window": "Закрепить окно",
-    "unpin_window": "Открепить окно"
+    "unpin_window": "Открепить окно",
+    "clear_loop": "Сбросить цикл",
+    "loop": "Цикл",
+    "start": "Начало",
+    "end": "Конец"
   },
   "app": {
     "drag_to_move": "Перетащите для перемещения",
@@ -114,7 +118,10 @@
       "toggle_history": "Переключить историю воспроизведения",
       "random_seek": "Случайный переход",
       "show_title_overlay": "Показать название (HUD)",
-      "toggle_pin": "Закрепить поверх всех окон"
+      "toggle_pin": "Закрепить поверх всех окон",
+      "mark_in": "Установить точку входа",
+      "mark_out": "Установить точку выхода",
+      "clear_marks": "Очистить петлю входа / выхода"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "Включен последовательный режим",
     "scroll_speed": "Скорость прокрутки: {speed}",
     "players_count": "Плееры: {count}",
-    "focused_player": "Активный плеер: {index}"
+    "focused_player": "Активный плеер: {index}",
+    "mark_in_set": "Плеер {player} Начальная метка: {time}",
+    "mark_out_set": "Плеер {player} Конечная метка: {time}",
+    "loop_range": "Плеер {player} Зацикливание: {start} → {end}",
+    "loop_cleared": "Плеер {player} Зацикливание сброшено"
   },
   "transcript": {
     "title": "Транскрипт",

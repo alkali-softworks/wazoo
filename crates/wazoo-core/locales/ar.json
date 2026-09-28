@@ -14,7 +14,11 @@
     "or": "أو",
     "miscellaneous": "متنوعات",
     "pin_window": "تثبيت النافذة",
-    "unpin_window": "إلغاء تثبيت النافذة"
+    "unpin_window": "إلغاء تثبيت النافذة",
+    "clear_loop": "مسح التكرار",
+    "loop": "تكرار",
+    "start": "البداية",
+    "end": "النهاية"
   },
   "app": {
     "drag_to_move": "اسحب للتحريك",
@@ -114,7 +118,10 @@
       "toggle_history": "تبديل سجل التشغيل",
       "random_seek": "بحث عشوائي",
       "show_title_overlay": "إظهار شاشة العنوان (HUD)",
-      "toggle_pin": "تبديل الوضع دائمًا في المقدمة"
+      "toggle_pin": "تبديل الوضع دائمًا في المقدمة",
+      "mark_in": "تعيين نقطة البداية",
+      "mark_out": "تعيين نقطة النهاية",
+      "clear_marks": "مسح تكرار البداية / النهاية"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "تم التبديل إلى الوضع المتسلسل",
     "scroll_speed": "سرعة التمرير: {speed}",
     "players_count": "المشغلات: {count}",
-    "focused_player": "المشغل المحدد: {index}"
+    "focused_player": "المشغل المحدد: {index}",
+    "mark_in_set": "المشغل {player} نقطة البداية: {time}",
+    "mark_out_set": "المشغل {player} نقطة النهاية: {time}",
+    "loop_range": "المشغل {player} تكرار: {start} ← {end}",
+    "loop_cleared": "المشغل {player} تم مسح التكرار"
   },
   "transcript": {
     "title": "النص المكتوب",

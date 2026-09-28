@@ -14,7 +14,11 @@
     "or": "或",
     "miscellaneous": "杂项",
     "pin_window": "置顶窗口",
-    "unpin_window": "取消置顶"
+    "unpin_window": "取消置顶",
+    "clear_loop": "清除循环",
+    "loop": "循环",
+    "start": "起始",
+    "end": "结束"
   },
   "app": {
     "drag_to_move": "拖动以移动",
@@ -114,7 +118,10 @@
       "toggle_history": "切换播放历史",
       "random_seek": "随机定位",
       "show_title_overlay": "显示标题HUD",
-      "toggle_pin": "切换窗口置顶"
+      "toggle_pin": "切换窗口置顶",
+      "mark_in": "设置入点",
+      "mark_out": "设置出点",
+      "clear_marks": "清除出入点循环"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "已切换到顺序模式",
     "scroll_speed": "滚动速度：{speed}",
     "players_count": "播放器数量：{count}",
-    "focused_player": "焦点播放器：{index}"
+    "focused_player": "焦点播放器：{index}",
+    "mark_in_set": "播放器 {player} 入点: {time}",
+    "mark_out_set": "播放器 {player} 出点: {time}",
+    "loop_range": "播放器 {player} 循环: {start} → {end}",
+    "loop_cleared": "播放器 {player} 已清除循环"
   },
   "transcript": {
     "title": "字幕记录",
