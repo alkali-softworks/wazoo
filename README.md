@@ -32,7 +32,7 @@ For a quick setup without compiling from source, you can download the latest pre
 - **Flexible Layouts**: Cycle between **Grid**, **Row**, and **Column** arrangements (<kbd>L</kbd>).
 - **Independent Audio & Controls**: Per-tile volume control, play mode, and language select.
 
-### 🌊 The Infinity Stream ("Scroll Mode")
+### 🌊 Vertical Feed / Scroll Mode
 View your library as a continuous vertical feed (<kbd>5</kbd>):
 - **Vertical scroll speed** is configurable via <kbd>+</kbd> / <kbd>-</kbd>.
 - **Audio Cross-Fading**: Volume adjusts with scroll position, proportional to video visibility.
@@ -60,12 +60,12 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 ### 🪟 Frameless Window & HUD
 - Borderless window with a sliding titlebar, quick drop-down menu, and HUD controls.
 - **Alt + Drag** to reposition the window anywhere on screen.
-- Configurable window opacity to keep visual reference floating subtly over other tools.
+- Configurable **Window Opacity** (in System Settings).
 
 ### 📌 Always on Top (Click-Through Overlay)
-- **Pin Window & Mouse Passthrough**: Pin Wazoo above other windows with <kbd>P</kbd>, <kbd>Alt+P</kbd>, menus, or System Settings. Pinning automatically engages click-through mouse passthrough when Wazoo is unfocused, allowing you to seamlessly interact with applications underneath.
-- **Ambient Reference HUD**: Pair Pin Mode with **Window Opacity** (in System Settings) to turn Wazoo into a semi-transparent, floating reference board. You can paint in Photoshop, model in Blender, or code in your IDE right through the streaming video without stealing mouse clicks or interrupting your workflow.
-- **Taskbar Escape Hatch**: Clicking Wazoo on your OS taskbar or switching via <kbd>Alt</kbd>+<kbd>Tab</kbd> instantly focuses Wazoo, disengages mouse passthrough, and enables controls.
+- Pinning engages click-through mouse passthrough when Wazoo is unfocused, allowing you to seamlessly interact with applications underneath.
+- Pair Pin Mode with **Window Opacity** (in System Settings) to turn Wazoo into a semi-transparent, floating reference board. 
+- **Escape Hatch**: Focusing Wazoo on your OS taskbar instantly disengages mouse passthrough and enables controls.
 
 ### 📁 File Browser Drawer
 - **Collapsible Directory Tree**: Press <kbd>F</kbd> to browse folders with file counts.
@@ -81,26 +81,6 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
   ```bash
   wazoo "bebop"
   ```
-
-### 🐕 Playback Watchdog
-Monitors playback progress and automatically advances to the next video if a file stalls or encounters an issue.
-
----
-
-## 🏗️ Architecture
-
-Wazoo is structured as a modular Cargo workspace:
-
-```
-wazoo/
-├── crates/
-│   ├── wazoo-core/       # SQLite database, schema, models, & settings persistence
-│   ├── wazoo-scanner/    # Multithreaded media discovery, name cleaning, & metadata probing
-│   ├── wazoo-media/      # libmpv rendering pipeline, subtitle parser, VideoHandle, & ScrollEngine
-│   ├── wazoo-app/        # Iced native GUI (layouts, HUD overlays, modals, drawers)
-│   └── wazoo-tutorial/   # Interactive tutorial application for learning Rust & Iced
-└── Cargo.toml
-```
 
 ---
 
@@ -210,7 +190,7 @@ scoop install ffmpeg
 | <kbd>←</kbd> / <kbd>→</kbd> | Seek backward / forward 5 seconds |
 | <kbd>,</kbd> / <kbd>.</kbd> | Step backward / forward one frame |
 | <kbd>1</kbd> – <kbd>4</kbd> | Set active player count (1 to 4) |
-| <kbd>5</kbd> | Toggle **The Infinity Stream** (Scroll Mode) |
+| <kbd>5</kbd> | Toggle **Scroll Mode** (vertical feed) |
 | <kbd>6</kbd> | Toggle **Flip Mode** (staggered auto-shuffle) |
 | <kbd>L</kbd> | Cycle Layout (**Grid** ➔ **Row** ➔ **Column**) |
 | <kbd>N</kbd> | Add player (up to 12) |
