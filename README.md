@@ -62,9 +62,8 @@ Inspect choreography, animation, or key moments with frame-accurate stepping and
 - **Frame-by-Frame Stepping**: Press <kbd>,</kbd> (`<`) or <kbd>.</kbd> (`>`) to step backward or forward by exactly one video frame.
 - **Set Mark In**: Press <kbd>I</kbd> to set a loop start point (loops to the end of the video if no Out point is set).
 - **Set Mark Out**: Press <kbd>O</kbd> to set a loop end point (loops from the beginning if no In point is set).
-- **Seamless Infinite Loop**: When both In and Out points are defined, the player loops continuously between the two markers.
+- **Infinite Loop**: When both In and Out points are defined, the player loops continuously between the two markers.
 - **Visual Feedback**: The active loop range displays as an interactive badge in the player control bar.
-- **Clear & Auto-Reset**: Clear marks anytime with <kbd>Alt+I</kbd>, <kbd>Alt+O</kbd>, or by clicking the <kbd>✕</kbd> on the control bar loop badge. Manually proceeding to the next or previous video (<kbd>↑</kbd> / <kbd>↓</kbd>) automatically resets loop mode and clears in/out marks.
 
 ### 🪟 Frameless Window & HUD
 - Borderless window with a sliding titlebar, quick drop-down menu, and HUD controls.
