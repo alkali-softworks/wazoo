@@ -14,7 +14,11 @@
     "or": "또는",
     "miscellaneous": "기타",
     "pin_window": "창 고정",
-    "unpin_window": "창 고정 해제"
+    "unpin_window": "창 고정 해제",
+    "clear_loop": "반복 구간 해제",
+    "loop": "반복",
+    "start": "시작",
+    "end": "끝"
   },
   "app": {
     "drag_to_move": "드래그하여 이동",
@@ -114,7 +118,10 @@
       "toggle_history": "재생 기록 전환",
       "random_seek": "랜덤 탐색",
       "show_title_overlay": "제목 HUD 표시",
-      "toggle_pin": "항상 위에 고정 전환"
+      "toggle_pin": "항상 위에 고정 전환",
+      "mark_in": "시작점(In) 설정",
+      "mark_out": "종료점(Out) 설정",
+      "clear_marks": "구간 반복 해제"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "순차 재생 모드로 전환됨",
     "scroll_speed": "스크롤 속도: {speed}",
     "players_count": "플레이어 수: {count}",
-    "focused_player": "선택된 플레이어: {index}"
+    "focused_player": "선택된 플레이어: {index}",
+    "mark_in_set": "플레이어 {player} 시작점: {time}",
+    "mark_out_set": "플레이어 {player} 종료점: {time}",
+    "loop_range": "플레이어 {player} 구간 반복: {start} → {end}",
+    "loop_cleared": "플레이어 {player} 구간 반복 해제됨"
   },
   "transcript": {
     "title": "스크립트",

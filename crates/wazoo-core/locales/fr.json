@@ -14,7 +14,11 @@
     "or": "ou",
     "miscellaneous": "Divers",
     "pin_window": "Épingler la fenêtre",
-    "unpin_window": "Désépingler la fenêtre"
+    "unpin_window": "Désépingler la fenêtre",
+    "clear_loop": "Effacer la boucle",
+    "loop": "Boucle",
+    "start": "Début",
+    "end": "Fin"
   },
   "app": {
     "drag_to_move": "Faites glisser pour déplacer",
@@ -114,7 +118,10 @@
       "toggle_history": "Basculer l'historique de lecture",
       "random_seek": "Recherche aléatoire",
       "show_title_overlay": "Afficher l'ATH du titre",
-      "toggle_pin": "Basculer toujours au premier plan"
+      "toggle_pin": "Basculer toujours au premier plan",
+      "mark_in": "Définir le point d'entrée",
+      "mark_out": "Définir le point de sortie",
+      "clear_marks": "Effacer la boucle d'entrée / sortie"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "Passé en mode séquentiel",
     "scroll_speed": "Vitesse de défilement : {speed}",
     "players_count": "Lecteurs : {count}",
-    "focused_player": "Lecteur actif : {index}"
+    "focused_player": "Lecteur actif : {index}",
+    "mark_in_set": "Lecteur {player} Point d'entrée : {time}",
+    "mark_out_set": "Lecteur {player} Point de sortie : {time}",
+    "loop_range": "Lecteur {player} Boucle : {start} → {end}",
+    "loop_cleared": "Lecteur {player} Boucle effacée"
   },
   "transcript": {
     "title": "Transcription",

@@ -14,7 +14,11 @@
     "or": "or",
     "miscellaneous": "Miscellaneous",
     "pin_window": "Pin Window",
-    "unpin_window": "Unpin Window"
+    "unpin_window": "Unpin Window",
+    "clear_loop": "Clear Loop",
+    "loop": "Loop",
+    "start": "Start",
+    "end": "End"
   },
   "app": {
     "drag_to_move": "Drag to Move",
@@ -114,7 +118,10 @@
       "toggle_transcript": "Toggle Subtitle Transcript",
       "random_seek": "Random Seek",
       "show_title_overlay": "Show Title HUD",
-      "toggle_pin": "Toggle Always on Top"
+      "toggle_pin": "Toggle Always on Top",
+      "mark_in": "Set Mark In Point",
+      "mark_out": "Set Mark Out Point",
+      "clear_marks": "Clear Mark In / Out Loop"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "Switched to sequential mode",
     "scroll_speed": "Scroll Speed: {speed}",
     "players_count": "Players: {count}",
-    "focused_player": "Focused Player: {index}"
+    "focused_player": "Focused Player: {index}",
+    "mark_in_set": "Player {player} Mark In: {time}",
+    "mark_out_set": "Player {player} Mark Out: {time}",
+    "loop_range": "Player {player} Loop: {start} → {end}",
+    "loop_cleared": "Player {player} Loop Cleared"
   },
   "transcript": {
     "title": "Transcript",

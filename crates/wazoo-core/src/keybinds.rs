@@ -43,6 +43,10 @@ pub enum KeyAction {
     SpeedOrBookmarkUp,
     ToggleHistory,
     ToggleAlwaysOnTop,
+    MarkIn,
+    MarkOut,
+    ClearMarkIn,
+    ClearMarkOut,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -81,6 +85,10 @@ pub struct KeybindSettings {
     pub speed_or_bookmark_down: String,
     pub speed_or_bookmark_up: String,
     pub toggle_pin: String,
+    pub mark_in: String,
+    pub mark_out: String,
+    pub clear_mark_in: String,
+    pub clear_mark_out: String,
 }
 
 impl Default for KeybindSettings {
@@ -119,6 +127,10 @@ impl Default for KeybindSettings {
             speed_or_bookmark_down: "-".to_string(),
             speed_or_bookmark_up: "+, =".to_string(),
             toggle_pin: "p, Alt+P".to_string(),
+            mark_in: "i".to_string(),
+            mark_out: "o".to_string(),
+            clear_mark_in: "Alt+I".to_string(),
+            clear_mark_out: "Alt+O".to_string(),
         }
     }
 }
@@ -158,6 +170,10 @@ impl KeybindSettings {
         "speed_or_bookmark_down",
         "speed_or_bookmark_up",
         "toggle_pin",
+        "mark_in",
+        "mark_out",
+        "clear_mark_in",
+        "clear_mark_out",
     ];
 
     /// Validates if a JSON value contains the complete dictionary of non-empty key bindings.
@@ -275,6 +291,18 @@ impl KeybindSettings {
         }
         if self.toggle_pin.trim().is_empty() {
             self.toggle_pin = def.toggle_pin;
+        }
+        if self.mark_in.trim().is_empty() {
+            self.mark_in = def.mark_in;
+        }
+        if self.mark_out.trim().is_empty() {
+            self.mark_out = def.mark_out;
+        }
+        if self.clear_mark_in.trim().is_empty() {
+            self.clear_mark_in = def.clear_mark_in;
+        }
+        if self.clear_mark_out.trim().is_empty() {
+            self.clear_mark_out = def.clear_mark_out;
         }
     }
 
@@ -399,6 +427,9 @@ impl KeybindSettings {
                 self.toggle_transcript.clone(),
                 t("help.shortcuts.toggle_transcript"),
             ),
+            (self.mark_in.clone(), t("help.shortcuts.mark_in")),
+            (self.mark_out.clone(), t("help.shortcuts.mark_out")),
+            ("Alt+I / Alt+O".to_string(), t("help.shortcuts.clear_marks")),
             (frame_display, t("help.shortcuts.prev_next_frame")),
             ("P / Alt+P".to_string(), t("help.shortcuts.toggle_pin")),
             (close_display, t("help.shortcuts.close_app")),
@@ -470,6 +501,18 @@ impl KeybindSettings {
                     HelpShortcut {
                         key: KeyDisplay::Pair("↓".to_string(), "↑".to_string()),
                         description: t("help.shortcuts.prev_next_video"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.mark_in.to_uppercase()),
+                        description: t("help.shortcuts.mark_in"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.mark_out.to_uppercase()),
+                        description: t("help.shortcuts.mark_out"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Combo(vec!["Alt".to_string(), "I / O".to_string()]),
+                        description: t("help.shortcuts.clear_marks"),
                     },
                     HelpShortcut {
                         key: KeyDisplay::Pair("<".to_string(), ">".to_string()),

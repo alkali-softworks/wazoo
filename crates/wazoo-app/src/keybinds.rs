@@ -127,6 +127,12 @@ pub fn find_key_action(
         if key_matches_binding(&keybinds.toggle_pin, key, true) {
             return Some(KeyAction::ToggleAlwaysOnTop);
         }
+        if key_matches_binding(&keybinds.clear_mark_in, key, true) {
+            return Some(KeyAction::ClearMarkIn);
+        }
+        if key_matches_binding(&keybinds.clear_mark_out, key, true) {
+            return Some(KeyAction::ClearMarkOut);
+        }
         return None;
     }
 
@@ -226,6 +232,12 @@ pub fn find_key_action(
     }
     if key_matches_binding(&keybinds.toggle_pin, key, false) {
         return Some(KeyAction::ToggleAlwaysOnTop);
+    }
+    if key_matches_binding(&keybinds.mark_in, key, false) {
+        return Some(KeyAction::MarkIn);
+    }
+    if key_matches_binding(&keybinds.mark_out, key, false) {
+        return Some(KeyAction::MarkOut);
     }
 
     None

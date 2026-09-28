@@ -14,7 +14,11 @@
     "or": "oder",
     "miscellaneous": "Verschiedenes",
     "pin_window": "Fenster anheften",
-    "unpin_window": "Fenster lösen"
+    "unpin_window": "Fenster lösen",
+    "clear_loop": "Schleife löschen",
+    "loop": "Schleife",
+    "start": "Start",
+    "end": "Ende"
   },
   "app": {
     "drag_to_move": "Zum Verschieben ziehen",
@@ -114,7 +118,10 @@
       "toggle_history": "Wiedergabeverlauf umschalten",
       "random_seek": "Zufällige Suche",
       "show_title_overlay": "Titel-HUD anzeigen",
-      "toggle_pin": "Immer im Vordergrund umschalten"
+      "toggle_pin": "Immer im Vordergrund umschalten",
+      "mark_in": "Startmarke setzen",
+      "mark_out": "Endmarke setzen",
+      "clear_marks": "Start-/Endmarken-Schleife löschen"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "Zu sequentieller Wiedergabe gewechselt",
     "scroll_speed": "Scroll-Geschwindigkeit: {speed}",
     "players_count": "Player: {count}",
-    "focused_player": "Fokussierter Player: {index}"
+    "focused_player": "Fokussierter Player: {index}",
+    "mark_in_set": "Player {player} Startmarke: {time}",
+    "mark_out_set": "Player {player} Endmarke: {time}",
+    "loop_range": "Player {player} Schleife: {start} → {end}",
+    "loop_cleared": "Player {player} Schleife gelöscht"
   },
   "transcript": {
     "title": "Transkript",

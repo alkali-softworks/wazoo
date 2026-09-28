@@ -14,7 +14,11 @@
     "or": "বা",
     "miscellaneous": "বিবিধ",
     "pin_window": "উইন্ডো পিন করুন",
-    "unpin_window": "উইন্ডো আনপিন করুন"
+    "unpin_window": "উইন্ডো আনপিন করুন",
+    "clear_loop": "লুপ সাফ করুন",
+    "loop": "লুপ",
+    "start": "শুরু",
+    "end": "শেষ"
   },
   "app": {
     "drag_to_move": "সরানোর জন্য টেনে আনুন",
@@ -114,7 +118,10 @@
       "toggle_history": "প্লেব্যাক ইতিহাস টগল করুন",
       "random_seek": "র‍্যান্ডম সিক",
       "show_title_overlay": "শিরোনাম HUD দেখান",
-      "toggle_pin": "সর্বদা শীর্ষে টগল করুন"
+      "toggle_pin": "সর্বদা শীর্ষে টগল করুন",
+      "mark_in": "মার্ক ইন সেট করুন",
+      "mark_out": "মার্ক আউট সেট করুন",
+      "clear_marks": "মার্ক ইন/আউট লুপ সাফ করুন"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "ধারাবাহিক মোডে পরিবর্তিত",
     "scroll_speed": "স্ক্রোল গতি: {speed}",
     "players_count": "প্লেয়ার: {count}",
-    "focused_player": "নির্বাচিত প্লেয়ার: {index}"
+    "focused_player": "নির্বাচিত প্লেয়ার: {index}",
+    "mark_in_set": "প্লেয়ার {player} মার্ক ইন: {time}",
+    "mark_out_set": "প্লেয়ার {player} মার্ক আউট: {time}",
+    "loop_range": "প্লেয়ার {player} লুপ: {start} → {end}",
+    "loop_cleared": "প্লেয়ার {player} লুপ মুছে ফেলা হয়েছে"
   },
   "transcript": {
     "title": "অনুলিপি",

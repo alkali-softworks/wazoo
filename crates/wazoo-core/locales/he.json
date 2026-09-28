@@ -14,7 +14,11 @@
     "or": "או",
     "miscellaneous": "שונות",
     "pin_window": "הצמד חלון",
-    "unpin_window": "בטל הצמדת חלון"
+    "unpin_window": "בטל הצמדת חלון",
+    "clear_loop": "נקה לולאה",
+    "loop": "לולאה",
+    "start": "התחלה",
+    "end": "סיום"
   },
   "app": {
     "drag_to_move": "גרור להזזה",
@@ -114,7 +118,10 @@
       "toggle_history": "החלף היסטוריית השמעה",
       "random_seek": "דילוג אקראי",
       "show_title_overlay": "הצג שכבת כותרת",
-      "toggle_pin": "החלף מצב תמיד עליון"
+      "toggle_pin": "החלף מצב תמיד עליון",
+      "mark_in": "הגדר נקודת התחלה (In)",
+      "mark_out": "הגדר נקודת סיום (Out)",
+      "clear_marks": "נקה לולאת התחלה / סיום"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "הועבר למצב סדרתי",
     "scroll_speed": "מהירות גלילה: {speed}",
     "players_count": "נגנים: {count}",
-    "focused_player": "נגן ממוקד: {index}"
+    "focused_player": "נגן ממוקד: {index}",
+    "mark_in_set": "נגן {player} נקודת התחלה: {time}",
+    "mark_out_set": "נגן {player} נקודת סיום: {time}",
+    "loop_range": "נגן {player} לולאה: {start} ← {end}",
+    "loop_cleared": "נגן {player} הלולאה נוקתה"
   },
   "transcript": {
     "title": "תמליל",

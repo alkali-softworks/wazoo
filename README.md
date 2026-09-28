@@ -57,6 +57,15 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - **Save Scenes**: Press <kbd>+</kbd> or <kbd>=</kbd> to bookmark the current video, timestamp, search query, and playback mode.
 - **Quick Recall**: Open the bookmarks drawer (<kbd>B</kbd>) to return to any saved scene in one click.
 
+### 🎞️ Frame-Stepping & Mark-In / Mark-Out Looping
+Inspect choreography, animation, or key moments with frame-accurate stepping and per-player A-B looping:
+- **Frame-by-Frame Stepping**: Press <kbd>,</kbd> (`<`) or <kbd>.</kbd> (`>`) to step backward or forward by exactly one video frame.
+- **Set Mark In**: Press <kbd>I</kbd> to set a loop start point (loops to the end of the video if no Out point is set).
+- **Set Mark Out**: Press <kbd>O</kbd> to set a loop end point (loops from the beginning if no In point is set).
+- **Seamless Infinite Loop**: When both In and Out points are defined, the player loops continuously between the two markers.
+- **Visual Feedback**: The active loop range displays as an interactive badge in the player control bar.
+- **Clear & Auto-Reset**: Clear marks anytime with <kbd>Alt+I</kbd>, <kbd>Alt+O</kbd>, or by clicking the <kbd>✕</kbd> on the control bar loop badge. Manually proceeding to the next or previous video (<kbd>↑</kbd> / <kbd>↓</kbd>) automatically resets loop mode and clears in/out marks.
+
 ### 🪟 Frameless Window & HUD
 - Borderless window with a sliding titlebar, quick drop-down menu, and HUD controls.
 - **Alt + Drag** to reposition the window anywhere on screen.
@@ -112,8 +121,11 @@ wazoo "cyberpunk"
 Press <kbd>F1</kbd> inside the app at any time to open the complete interactive keyboard shortcuts guide. Common shortcuts:
 
 - <kbd>Space</kbd> — Play / Pause
+- <kbd>,</kbd> / <kbd>.</kbd> — Step one frame backward / forward
 - <kbd>F</kbd> – Toggle **File Drawer**
 - <kbd>J</kbd> or <kbd>/</kbd> — Open the **Search** modal
+- <kbd>I</kbd> / <kbd>O</kbd> — Set **Mark In** / **Mark Out** (A-B loop)
+- <kbd>Alt+I</kbd> / <kbd>Alt+O</kbd> — Clear **Mark In** / **Mark Out**
 - <kbd>S</kbd> — Toggle **Shuffle vs Sequential** playback
 - <kbd>L</kbd> — Cycle tile layouts (**Grid** ➔ **Row** ➔ **Column**)
 

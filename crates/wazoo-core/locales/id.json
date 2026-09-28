@@ -14,7 +14,11 @@
     "or": "atau",
     "miscellaneous": "Lain-lain",
     "pin_window": "Sematkan Jendela",
-    "unpin_window": "Lepas Sematan Jendela"
+    "unpin_window": "Lepas Sematan Jendela",
+    "clear_loop": "Hapus Loop",
+    "loop": "Loop",
+    "start": "Mulai",
+    "end": "Selesai"
   },
   "app": {
     "drag_to_move": "Seret untuk memindahkan",
@@ -114,7 +118,10 @@
       "toggle_history": "Alihkan riwayat putar",
       "random_seek": "Pencarian Acak",
       "show_title_overlay": "Tampilkan HUD Judul",
-      "toggle_pin": "Alihkan Selalu di Atas"
+      "toggle_pin": "Alihkan Selalu di Atas",
+      "mark_in": "Tetapkan Titik Masuk",
+      "mark_out": "Tetapkan Titik Keluar",
+      "clear_marks": "Hapus Loop Masuk / Keluar"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "Beralih ke mode berurutan",
     "scroll_speed": "Kecepatan Gulir: {speed}",
     "players_count": "Pemutar: {count}",
-    "focused_player": "Pemutar Fokus: {index}"
+    "focused_player": "Pemutar Fokus: {index}",
+    "mark_in_set": "Pemutar {player} Titik Masuk: {time}",
+    "mark_out_set": "Pemutar {player} Titik Keluar: {time}",
+    "loop_range": "Pemutar {player} Loop: {start} → {end}",
+    "loop_cleared": "Pemutar {player} Loop Dihapus"
   },
   "transcript": {
     "title": "Transkrip",

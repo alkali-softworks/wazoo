@@ -14,7 +14,11 @@
     "or": "ou",
     "miscellaneous": "Diversos",
     "pin_window": "Fixar janela",
-    "unpin_window": "Desafixar janela"
+    "unpin_window": "Desafixar janela",
+    "clear_loop": "Limpar repetição",
+    "loop": "Repetição",
+    "start": "Início",
+    "end": "Fim"
   },
   "app": {
     "drag_to_move": "Arraste para mover",
@@ -114,7 +118,10 @@
       "toggle_history": "Alternar histórico de reprodução",
       "random_seek": "Busca aleatória",
       "show_title_overlay": "Mostrar HUD do título",
-      "toggle_pin": "Alternar sempre no topo"
+      "toggle_pin": "Alternar sempre no topo",
+      "mark_in": "Definir ponto de entrada",
+      "mark_out": "Definir ponto de saída",
+      "clear_marks": "Limpar repetição de entrada / saída"
     }
   },
   "file_picker": {
@@ -135,7 +142,11 @@
     "switched_sequential": "Alternado para modo sequencial",
     "scroll_speed": "Velocidade de rolagem: {speed}",
     "players_count": "Reprodutores: {count}",
-    "focused_player": "Reprodutor em foco: {index}"
+    "focused_player": "Reprodutor em foco: {index}",
+    "mark_in_set": "Reprodutor {player} Ponto inicial: {time}",
+    "mark_out_set": "Reprodutor {player} Ponto final: {time}",
+    "loop_range": "Reprodutor {player} Repetição: {start} → {end}",
+    "loop_cleared": "Reprodutor {player} Repetição limpa"
   },
   "transcript": {
     "title": "Transcrição",
