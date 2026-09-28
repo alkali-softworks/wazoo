@@ -9,6 +9,7 @@
 
 use crate::app::WazooApp;
 use crate::assets::{SVG_WINDOW_CLOSE, SVG_WINDOW_MAXIMIZE, SVG_WINDOW_MINIMIZE};
+use crate::cursor;
 use crate::message::Message;
 use crate::slide::SlideDown;
 use crate::theme;
@@ -146,7 +147,7 @@ impl WazooApp {
             let menu_dropdown = container(
                 self.view_app_menu_list([8, 14])
                     .spacing(2)
-                    .width(Length::Fixed(230.0)),
+                    .width(Length::Fixed(240.0)),
             )
             .padding(4)
             .style(theme::menu_dropdown_style);
@@ -159,94 +160,104 @@ impl WazooApp {
         }
     }
 
+    fn menu_item(
+        label: String,
+        hint: Option<String>,
+        msg: Message,
+        padding: [u16; 2],
+    ) -> Element<'static, Message> {
+        let mut row_children: Vec<Element<'static, Message>> = vec![
+            text(label).size(13).color(iced::Color::WHITE).into(),
+            Space::new().width(Length::Fill).into(),
+        ];
+        if let Some(h) = hint {
+            row_children.push(
+                text(h)
+                    .size(11)
+                    .color(theme::COLOR_TEXT_MUTED)
+                    .into(),
+            );
+        }
+        cursor::PointerCursor::new(
+            button(
+                iced::widget::Row::with_children(row_children)
+                    .align_y(Alignment::Center)
+                    .width(Length::Fill),
+            )
+            .style(theme::menu_item_style)
+            .on_press(msg)
+            .padding(padding)
+            .width(Length::Fill),
+        )
+        .into()
+    }
+
     pub(crate) fn view_app_menu_list(
         &self,
         padding: [u16; 2],
     ) -> iced::widget::Column<'_, Message> {
         let kb = &self.settings.keybinds;
         column![
-            button(text(format!(
-                "{} ({})",
+            Self::menu_item(
                 self.t("common.search"),
-                kb.menu_hint(&kb.search_videos)
-            )))
-            .style(theme::menu_item_style)
-            .on_press(Message::OpenSearchModal)
-            .padding(padding)
-            .width(Length::Fill),
-            button(text(format!(
-                "{} ({})",
+                Some(kb.menu_hint(&kb.search_videos)),
+                Message::OpenSearchModal,
+                padding,
+            ),
+            Self::menu_item(
                 self.t("common.add_player"),
-                kb.menu_hint(&kb.add_player)
-            )))
-            .style(theme::menu_item_style)
-            .on_press(Message::AddNewPlayer)
-            .padding(padding)
-            .width(Length::Fill),
-            button(text(format!(
-                "{} ({})",
+                Some(kb.menu_hint(&kb.add_player)),
+                Message::AddNewPlayer,
+                padding,
+            ),
+            Self::menu_item(
                 self.t("common.toggle_layout"),
-                kb.menu_hint(&kb.toggle_layout)
-            )))
-            .style(theme::menu_item_style)
-            .on_press(Message::CycleLayout)
-            .padding(padding)
-            .width(Length::Fill),
-            button(text(format!(
-                "{} ({})",
+                Some(kb.menu_hint(&kb.toggle_layout)),
+                Message::CycleLayout,
+                padding,
+            ),
+            Self::menu_item(
                 self.t("common.toggle_files"),
-                kb.menu_hint(&kb.toggle_file_picker)
-            )))
-            .style(theme::menu_item_style)
-            .on_press(Message::ToggleFilePicker)
-            .padding(padding)
-            .width(Length::Fill),
-            button(text(format!(
-                "{} ({})",
+                Some(kb.menu_hint(&kb.toggle_file_picker)),
+                Message::ToggleFilePicker,
+                padding,
+            ),
+            Self::menu_item(
                 self.t("transcript.title"),
-                kb.menu_hint(&kb.toggle_transcript)
-            )))
-            .style(theme::menu_item_style)
-            .on_press(Message::ToggleTranscript)
-            .padding(padding)
-            .width(Length::Fill),
-            button(text(format!(
-                "{} ({})",
+                Some(kb.menu_hint(&kb.toggle_transcript)),
+                Message::ToggleTranscript,
+                padding,
+            ),
+            Self::menu_item(
                 self.t("bookmarks.title"),
-                kb.menu_hint(&kb.toggle_bookmarks)
-            )))
-            .style(theme::menu_item_style)
-            .on_press(Message::ToggleBookmarksModal)
-            .padding(padding)
-            .width(Length::Fill),
-            button(text(format!(
-                "{} ({})",
+                Some(kb.menu_hint(&kb.toggle_bookmarks)),
+                Message::ToggleBookmarksModal,
+                padding,
+            ),
+            Self::menu_item(
                 self.t("history.title"),
-                kb.menu_hint(&kb.toggle_history)
-            )))
-            .style(theme::menu_item_style)
-            .on_press(Message::ToggleHistoryDrawer)
-            .padding(padding)
-            .width(Length::Fill),
-            button(text(self.t("common.settings")))
-                .style(theme::menu_item_style)
-                .on_press(Message::OpenSettingsModal)
-                .padding(padding)
-                .width(Length::Fill),
-            button(text(self.t("common.help")))
-                .style(theme::menu_item_style)
-                .on_press(Message::OpenHelpModal)
-                .padding(padding)
-                .width(Length::Fill),
-            button(text(format!(
-                "{} ({})",
+                Some(kb.menu_hint(&kb.toggle_history)),
+                Message::ToggleHistoryDrawer,
+                padding,
+            ),
+            Self::menu_item(
+                self.t("common.settings"),
+                None,
+                Message::OpenSettingsModal,
+                padding,
+            ),
+            Self::menu_item(
+                self.t("common.help"),
+                Some("F1".to_string()),
+                Message::OpenHelpModal,
+                padding,
+            ),
+            Self::menu_item(
                 self.t("common.quit"),
-                kb.menu_hint(&kb.close_app)
-            )))
-            .style(theme::menu_item_style)
-            .on_press(Message::CloseApp)
-            .padding(padding)
-            .width(Length::Fill),
+                Some(kb.menu_hint(&kb.close_app)),
+                Message::CloseApp,
+                padding,
+            ),
         ]
     }
 }
