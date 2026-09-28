@@ -9,19 +9,19 @@
 use iced::keyboard::{Key, key::Named};
 use wazoo_core::{KeyAction, KeybindSettings};
 
-/// Check whether an iced keyboard key matches a key binding string (e.g. "n", "j, /", "Space", "Alt+X").
+/// Check whether an iced keyboard key matches a key binding string (e.g. "n", "j, /", ",", "Space", "Alt+X").
 pub fn key_matches_binding(binding: &str, key: &Key, is_alt_pressed: bool) -> bool {
     let binding_trimmed = binding.trim();
     if binding_trimmed.is_empty() {
         return false;
     }
 
-    for token in binding_trimmed.split(',') {
-        let token = token.trim();
-        if token.is_empty() {
-            continue;
-        }
+    // Special case: single comma as binding
+    if binding_trimmed == "," {
+        return !is_alt_pressed && match_single_key(",", key);
+    }
 
+    for token in parse_keybind_tokens(binding_trimmed) {
         let is_alt_binding = token.to_lowercase().starts_with("alt+");
         if is_alt_binding {
             if !is_alt_pressed {
@@ -35,13 +35,41 @@ pub fn key_matches_binding(binding: &str, key: &Key, is_alt_pressed: bool) -> bo
             if is_alt_pressed {
                 continue;
             }
-            if match_single_key(token, key) {
+            if match_single_key(&token, key) {
                 return true;
             }
         }
     }
 
     false
+}
+
+fn parse_keybind_tokens(binding: &str) -> Vec<String> {
+    let trimmed = binding.trim();
+    if trimmed.is_empty() {
+        return Vec::new();
+    }
+    if trimmed == "," {
+        return vec![",".to_string()];
+    }
+
+    let mut tokens = Vec::new();
+    let parts: Vec<&str> = trimmed.split(',').collect();
+    let mut i = 0;
+    while i < parts.len() {
+        let part = parts[i].trim();
+        if part.is_empty() {
+            // An empty segment between commas or at start/end represents an escaped / literal comma key
+            tokens.push(",".to_string());
+            if i + 1 < parts.len() && parts[i + 1].trim().is_empty() {
+                i += 1;
+            }
+        } else {
+            tokens.push(part.to_string());
+        }
+        i += 1;
+    }
+    tokens
 }
 
 fn match_single_key(token: &str, key: &Key) -> bool {

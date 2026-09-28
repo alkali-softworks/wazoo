@@ -276,8 +276,8 @@ impl WazooApp {
                 KeyAction::ToggleScroll => return self.update(Message::ToggleScrollMode),
                 KeyAction::ToggleFlip => return self.update(Message::ToggleFlipMode),
                 KeyAction::ToggleSubtitles => return self.update(Message::ToggleSubtitles),
-                KeyAction::PrevFrame => return self.update(Message::SeekRelativeFocused(-0.04)),
-                KeyAction::NextFrame => return self.update(Message::SeekRelativeFocused(0.04)),
+                KeyAction::PrevFrame => return self.update(Message::StepFrameBackwardFocused),
+                KeyAction::NextFrame => return self.update(Message::StepFrameForwardFocused),
                 KeyAction::RandomSeek => return self.update(Message::RandomSeekFocused),
                 KeyAction::ShowTitleOverlay => return self.update(Message::ShowTitleOverlay),
                 KeyAction::Player1 => return self.update(Message::SetPlayerCount(1)),
@@ -1051,6 +1051,18 @@ impl WazooApp {
                         ));
                         self.toast_time_remaining = DEFAULT_TOAST_SECS;
                     }
+                }
+            }
+            Message::StepFrameForwardFocused => {
+                self.trigger_player_overlay();
+                if let Some(p) = self.focused_player_mut() {
+                    p.step_frame_forward();
+                }
+            }
+            Message::StepFrameBackwardFocused => {
+                self.trigger_player_overlay();
+                if let Some(p) = self.focused_player_mut() {
+                    p.step_frame_backward();
                 }
             }
             Message::SetVolume(id, vol) => {
