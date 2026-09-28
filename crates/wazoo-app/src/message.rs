@@ -69,6 +69,8 @@ pub enum Message {
     Seek(PlayerId, Duration),
     SeekRatio(PlayerId, f32),
     SeekRelativeFocused(f64),
+    StepFrameForwardFocused,
+    StepFrameBackwardFocused,
     PlayerHovered(PlayerId),
     PlayerUnhovered(PlayerId),
     SetVolume(PlayerId, f64),

@@ -1153,3 +1153,25 @@ fn test_help_modal_shortcut_f1() {
     ));
     assert!(!app.show_help_modal);
 }
+
+#[test]
+fn test_prev_next_frame_keybind_dispatch() {
+    let (mut app, _) = new_test_app();
+
+    // Next frame ('.')
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character(".".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.player_overlay_ticks > 0);
+
+    // Reset ticks to verify comma independently
+    app.player_overlay_ticks = 0;
+
+    // Prev frame (',')
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character(",".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.player_overlay_ticks > 0);
+}

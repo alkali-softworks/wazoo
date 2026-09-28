@@ -613,7 +613,7 @@ impl VideoHandle {
             set_opt("demuxer-max-bytes", &format!("{}M", demuxer_mb));
             let readahead_secs = config.duration_secs.clamp(2, 5);
             set_opt("demuxer-readahead-secs", &format!("{}", readahead_secs));
-            let back_mb = (demuxer_mb / 4).clamp(2, 8);
+            let back_mb = (demuxer_mb / 2).clamp(16, 64);
             set_opt("demuxer-max-back-bytes", &format!("{}M", back_mb));
             set_opt("cache-pause", "no");
             set_opt("hr-seek-framedrop", "yes");
@@ -1036,6 +1036,10 @@ impl VideoHandle {
         self.set_pause_internal(true);
     }
 
+    pub fn is_playing(&self) -> bool {
+        self.state.is_playing
+    }
+
     fn set_pause_internal(&mut self, paused: bool) {
         self.state.is_playing = !paused;
         let flag: c_int = if paused { 1 } else { 0 };
@@ -1212,6 +1216,38 @@ impl VideoHandle {
 
     pub fn seek_relative(&mut self, seconds: f64) {
         self.seek_internal(seconds, true, false);
+    }
+
+    /// Pause playback and step forward by exactly one video frame
+    pub fn step_frame_forward(&mut self) {
+        if self.mpv.is_null() {
+            return;
+        }
+        self.pause();
+        self.pending_seek = None;
+        self.last_seek_time = None;
+        if let Ok(cmd) = CString::new("frame-step") {
+            unsafe {
+                mpv_ffi::mpv_command_string(self.mpv, cmd.as_ptr());
+            }
+        }
+        self.update_frame();
+    }
+
+    /// Pause playback and step backward by exactly one video frame
+    pub fn step_frame_backward(&mut self) {
+        if self.mpv.is_null() {
+            return;
+        }
+        self.pause();
+        self.pending_seek = None;
+        self.last_seek_time = None;
+        if let Ok(cmd) = CString::new("frame-back-step") {
+            unsafe {
+                mpv_ffi::mpv_command_string(self.mpv, cmd.as_ptr());
+            }
+        }
+        self.update_frame();
     }
 
     fn seek_internal(&mut self, val: f64, relative: bool, accurate: bool) {

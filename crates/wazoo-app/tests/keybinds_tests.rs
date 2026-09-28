@@ -58,6 +58,22 @@ fn test_find_key_action_defaults() {
         find_key_action(&kb, &Key::Character("F".into()), false),
         Some(KeyAction::ToggleFilePicker)
     );
+    assert_eq!(
+        find_key_action(&kb, &Key::Character(",".into()), false),
+        Some(KeyAction::PrevFrame)
+    );
+    assert_eq!(
+        find_key_action(&kb, &Key::Character("<".into()), false),
+        Some(KeyAction::PrevFrame)
+    );
+    assert_eq!(
+        find_key_action(&kb, &Key::Character(".".into()), false),
+        Some(KeyAction::NextFrame)
+    );
+    assert_eq!(
+        find_key_action(&kb, &Key::Character(">".into()), false),
+        Some(KeyAction::NextFrame)
+    );
     // Ordinary keys when Alt is pressed should NOT match
     assert_eq!(
         find_key_action(&kb, &Key::Character("n".into()), true),
