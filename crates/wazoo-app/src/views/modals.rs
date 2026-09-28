@@ -1053,7 +1053,7 @@ impl WazooApp {
                 self.view_app_menu_list([8, 12]).spacing(4),
             ]
             .spacing(12)
-            .width(Length::Fixed(240.0)),
+            .width(Length::Fixed(260.0)),
         )
         .padding(16)
         .style(theme::modal_card_style);
