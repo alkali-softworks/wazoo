@@ -766,7 +766,49 @@ impl WazooApp {
                     ..Default::default()
                 });
 
+                let always_on_top_toggle = {
+                    let is_pinned = self.settings.is_always_on_top;
+                    let icon = if is_pinned { "✓ " } else { "" };
+                    let label = format!("{}{}", icon, self.t("settings.always_on_top"));
+                    button(text(label).size(12).font(if is_pinned {
+                        theme::FONT_BOLD
+                    } else {
+                        Default::default()
+                    }))
+                    .style(theme::folder_chip_style(is_pinned))
+                    .on_press(Message::ToggleAlwaysOnTop)
+                    .padding([6, 14])
+                };
+
+                let always_on_top_group = container(
+                    row![
+                        column![
+                            text(self.t("settings.always_on_top"))
+                                .size(14)
+                                .color(iced::Color::WHITE),
+                            text(self.t("settings.always_on_top_desc"))
+                                .size(12)
+                                .color(theme::COLOR_TEXT_MUTED),
+                        ]
+                        .spacing(2),
+                        Space::new().width(Length::Fill),
+                        always_on_top_toggle,
+                    ]
+                    .align_y(Alignment::Center),
+                )
+                .padding([12, 14])
+                .style(|_theme: &Theme| container::Style {
+                    background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
+                    border: iced::Border {
+                        radius: 6.0.into(),
+                        width: 1.0,
+                        color: theme::COLOR_BORDER,
+                    },
+                    ..Default::default()
+                });
+
                 column![
+                    always_on_top_group,
                     opacity_group,
                     default_player_group,
                     buffer_dur_group,

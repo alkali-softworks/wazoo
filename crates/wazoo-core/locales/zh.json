@@ -12,7 +12,9 @@
     "files": "文件",
     "menu": "菜单",
     "or": "或",
-    "miscellaneous": "杂项"
+    "miscellaneous": "杂项",
+    "pin_window": "置顶窗口",
+    "unpin_window": "取消置顶"
   },
   "app": {
     "drag_to_move": "拖动以移动",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "翻转模式已启用",
     "flip_mode_disabled": "翻转模式已禁用",
     "no_players": "无活动播放器",
-    "no_videos_found": "未找到符合查询的视频"
+    "no_videos_found": "未找到符合查询的视频",
+    "always_on_top_enabled": "已开启窗口置顶",
+    "always_on_top_disabled": "已关闭窗口置顶"
   },
   "settings": {
     "title": "设置",
@@ -67,7 +71,9 @@
     "reset_playback": "重置默认",
     "buffer_duration": "缓冲时长",
     "buffer_size": "缓冲大小",
-    "tab_system": "系统"
+    "tab_system": "系统",
+    "always_on_top": "窗口置顶",
+    "always_on_top_desc": "保持 Wazoo 始终置顶于其他窗口之上"
   },
   "search": {
     "folder": "文件夹:",
@@ -107,7 +113,8 @@
       "toggle_transcript": "切换字幕转录",
       "toggle_history": "切换播放历史",
       "random_seek": "随机定位",
-      "show_title_overlay": "显示标题HUD"
+      "show_title_overlay": "显示标题HUD",
+      "toggle_pin": "切换窗口置顶"
     }
   },
   "file_picker": {

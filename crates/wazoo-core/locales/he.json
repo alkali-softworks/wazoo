@@ -12,7 +12,9 @@
     "files": "קבצים",
     "menu": "תפריט",
     "or": "או",
-    "miscellaneous": "שונות"
+    "miscellaneous": "שונות",
+    "pin_window": "הצמד חלון",
+    "unpin_window": "בטל הצמדת חלון"
   },
   "app": {
     "drag_to_move": "גרור להזזה",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "מצב היפוך פעיל",
     "flip_mode_disabled": "מצב היפוך מבוטל",
     "no_players": "אין נגנים פעילים",
-    "no_videos_found": "לא נמצאו סרטונים עבור השאילתה"
+    "no_videos_found": "לא נמצאו סרטונים עבור השאילתה",
+    "always_on_top_enabled": "תמיד עליון מופעל",
+    "always_on_top_disabled": "תמיד עליון מושבת"
   },
   "settings": {
     "title": "הגדרות",
@@ -67,7 +71,9 @@
     "reset_playback": "איפוס לברירת מחדל",
     "buffer_duration": "משך מאגר",
     "buffer_size": "גודל מאגר",
-    "tab_system": "מערכת"
+    "tab_system": "מערכת",
+    "always_on_top": "תמיד עליון",
+    "always_on_top_desc": "השאר את Wazoo מוצמד מעל כל שאר החלונות"
   },
   "search": {
     "folder": "תיקייה:",
@@ -107,7 +113,8 @@
       "toggle_transcript": "החלף תמליל כתוביות",
       "toggle_history": "החלף היסטוריית השמעה",
       "random_seek": "דילוג אקראי",
-      "show_title_overlay": "הצג שכבת כותרת"
+      "show_title_overlay": "הצג שכבת כותרת",
+      "toggle_pin": "החלף מצב תמיד עליון"
     }
   },
   "file_picker": {

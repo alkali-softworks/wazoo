@@ -12,7 +12,9 @@
     "files": "Dateien",
     "menu": "Menü",
     "or": "oder",
-    "miscellaneous": "Verschiedenes"
+    "miscellaneous": "Verschiedenes",
+    "pin_window": "Fenster anheften",
+    "unpin_window": "Fenster lösen"
   },
   "app": {
     "drag_to_move": "Zum Verschieben ziehen",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "Flip-Modus aktiviert",
     "flip_mode_disabled": "Flip-Modus deaktiviert",
     "no_players": "Keine aktiven Player",
-    "no_videos_found": "Keine Videos für die Suchanfrage gefunden"
+    "no_videos_found": "Keine Videos für die Suchanfrage gefunden",
+    "always_on_top_enabled": "Immer im Vordergrund aktiviert",
+    "always_on_top_disabled": "Immer im Vordergrund deaktiviert"
   },
   "settings": {
     "title": "Einstellungen",
@@ -67,7 +71,9 @@
     "reset_playback": "Zurücksetzen",
     "buffer_duration": "Pufferdauer",
     "buffer_size": "Puffergröße",
-    "tab_system": "System"
+    "tab_system": "System",
+    "always_on_top": "Immer im Vordergrund",
+    "always_on_top_desc": "Wazoo über allen anderen Fenstern halten"
   },
   "search": {
     "folder": "Ordner:",
@@ -107,7 +113,8 @@
       "toggle_transcript": "Untertitel-Transkript umschalten",
       "toggle_history": "Wiedergabeverlauf umschalten",
       "random_seek": "Zufällige Suche",
-      "show_title_overlay": "Titel-HUD anzeigen"
+      "show_title_overlay": "Titel-HUD anzeigen",
+      "toggle_pin": "Immer im Vordergrund umschalten"
     }
   },
   "file_picker": {

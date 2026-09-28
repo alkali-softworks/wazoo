@@ -12,7 +12,9 @@
     "files": "Archivos",
     "menu": "Menú",
     "or": "o",
-    "miscellaneous": "Miscelánea"
+    "miscellaneous": "Miscelánea",
+    "pin_window": "Fijar ventana",
+    "unpin_window": "Desfijar ventana"
   },
   "app": {
     "drag_to_move": "Arrastrar para Mover",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "Modo de volteo activado",
     "flip_mode_disabled": "Modo de volteo desactivado",
     "no_players": "Sin reproductores activos",
-    "no_videos_found": "No se encontraron videos para la consulta"
+    "no_videos_found": "No se encontraron videos para la consulta",
+    "always_on_top_enabled": "Siempre visible activado",
+    "always_on_top_disabled": "Siempre visible desactivado"
   },
   "settings": {
     "title": "Configuración",
@@ -67,7 +71,9 @@
     "reset_playback": "Restablecer valores",
     "buffer_duration": "Duración del búfer",
     "buffer_size": "Tamaño del búfer",
-    "tab_system": "Sistema"
+    "tab_system": "Sistema",
+    "always_on_top": "Siempre al frente",
+    "always_on_top_desc": "Mantener Wazoo fijado sobre otras ventanas"
   },
   "search": {
     "folder": "Carpeta:",
@@ -107,7 +113,8 @@
       "toggle_history": "Alternar historial de reproducción",
       "toggle_transcript": "Alternar transcripción de subtítulos",
       "random_seek": "Búsqueda Aleatoria",
-      "show_title_overlay": "Mostrar HUD de Título"
+      "show_title_overlay": "Mostrar HUD de Título",
+      "toggle_pin": "Alternar siempre visible"
     }
   },
   "file_picker": {

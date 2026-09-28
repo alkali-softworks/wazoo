@@ -1175,3 +1175,50 @@ fn test_prev_next_frame_keybind_dispatch() {
     ));
     assert!(app.player_overlay_ticks > 0);
 }
+
+#[test]
+fn test_toggle_always_on_top_and_ghost_mode() {
+    let (mut app, _) = new_test_app();
+    assert!(!app.settings.is_always_on_top);
+    assert!(!app.ghost_passthrough_active);
+
+    // Toggle always on top on - Pin mode automatically engages ghost mode
+    let _ = app.update(Message::ToggleAlwaysOnTop);
+    assert!(app.settings.is_always_on_top);
+    assert!(app.toast_message.is_some());
+
+    // When window loses focus, ghost passthrough becomes active
+    let _ = app.update(Message::WindowUnfocused);
+    assert!(app.ghost_passthrough_active);
+
+    // When window gains focus (e.g. taskbar click), ghost passthrough is disengaged and titlebar slides down
+    let _ = app.update(Message::WindowFocused);
+    assert!(!app.ghost_passthrough_active);
+    assert!(app.show_titlebar);
+
+    // Unpinning disengages both always on top and ghost mode
+    let _ = app.update(Message::ToggleAlwaysOnTop);
+    assert!(!app.settings.is_always_on_top);
+    assert!(!app.ghost_passthrough_active);
+}
+
+#[test]
+fn test_pin_keybind_dispatch() {
+    let (mut app, _) = new_test_app();
+    assert!(!app.settings.is_always_on_top);
+
+    // Press 'p'
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.settings.is_always_on_top);
+
+    // Press 'p' again to toggle off
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(!app.settings.is_always_on_top);
+}
+

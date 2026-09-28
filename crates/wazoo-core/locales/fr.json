@@ -12,7 +12,9 @@
     "files": "Fichiers",
     "menu": "Menu",
     "or": "ou",
-    "miscellaneous": "Divers"
+    "miscellaneous": "Divers",
+    "pin_window": "Épingler la fenêtre",
+    "unpin_window": "Désépingler la fenêtre"
   },
   "app": {
     "drag_to_move": "Faites glisser pour déplacer",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "Mode retournement activé",
     "flip_mode_disabled": "Mode retournement désactivé",
     "no_players": "Aucun lecteur actif",
-    "no_videos_found": "Aucune vidéo trouvée pour la requête"
+    "no_videos_found": "Aucune vidéo trouvée pour la requête",
+    "always_on_top_enabled": "Toujours au premier plan activé",
+    "always_on_top_disabled": "Toujours au premier plan désactivé"
   },
   "settings": {
     "title": "Paramètres",
@@ -67,7 +71,9 @@
     "reset_playback": "Réinitialiser",
     "buffer_duration": "Durée du tampon",
     "buffer_size": "Taille du tampon",
-    "tab_system": "Système"
+    "tab_system": "Système",
+    "always_on_top": "Toujours au premier plan",
+    "always_on_top_desc": "Garder Wazoo épinglé au-dessus des autres fenêtres"
   },
   "search": {
     "folder": "Dossier :",
@@ -107,7 +113,8 @@
       "toggle_transcript": "Basculer la transcription des sous-titres",
       "toggle_history": "Basculer l'historique de lecture",
       "random_seek": "Recherche aléatoire",
-      "show_title_overlay": "Afficher l'ATH du titre"
+      "show_title_overlay": "Afficher l'ATH du titre",
+      "toggle_pin": "Basculer toujours au premier plan"
     }
   },
   "file_picker": {

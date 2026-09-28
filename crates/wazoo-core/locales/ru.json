@@ -12,7 +12,9 @@
     "files": "Файлы",
     "menu": "Меню",
     "or": "или",
-    "miscellaneous": "Разное"
+    "miscellaneous": "Разное",
+    "pin_window": "Закрепить окно",
+    "unpin_window": "Открепить окно"
   },
   "app": {
     "drag_to_move": "Перетащите для перемещения",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "Режим перелистывания включен",
     "flip_mode_disabled": "Режим перелистывания выключен",
     "no_players": "Нет активных плееров",
-    "no_videos_found": "Видео по запросу не найдены"
+    "no_videos_found": "Видео по запросу не найдены",
+    "always_on_top_enabled": "Поверх всех окон включено",
+    "always_on_top_disabled": "Поверх всех окон отключено"
   },
   "settings": {
     "title": "Настройки",
@@ -67,7 +71,9 @@
     "reset_playback": "Сбросить настройки",
     "buffer_duration": "Длительность буфера",
     "buffer_size": "Размер буфера",
-    "tab_system": "Система"
+    "tab_system": "Система",
+    "always_on_top": "Поверх всех окон",
+    "always_on_top_desc": "Закрепить Wazoo поверх остальных окон"
   },
   "search": {
     "folder": "Папка:",
@@ -107,7 +113,8 @@
       "toggle_transcript": "Переключить транскрипт субтитров",
       "toggle_history": "Переключить историю воспроизведения",
       "random_seek": "Случайный переход",
-      "show_title_overlay": "Показать название (HUD)"
+      "show_title_overlay": "Показать название (HUD)",
+      "toggle_pin": "Закрепить поверх всех окон"
     }
   },
   "file_picker": {

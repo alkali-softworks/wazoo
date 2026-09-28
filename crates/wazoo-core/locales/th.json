@@ -12,7 +12,9 @@
     "files": "ไฟล์",
     "menu": "เมนู",
     "or": "หรือ",
-    "miscellaneous": "เบ็ดเตล็ด"
+    "miscellaneous": "เบ็ดเตล็ด",
+    "pin_window": "ปักหมุดหน้าต่าง",
+    "unpin_window": "ถอนหมุดหน้าต่าง"
   },
   "app": {
     "drag_to_move": "ลากเพื่อย้าย",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "เปิดใช้งานโหมดพลิก",
     "flip_mode_disabled": "ปิดใช้งานโหมดพลิก",
     "no_players": "ไม่มีเครื่องเล่นที่ใช้งานอยู่",
-    "no_videos_found": "ไม่พบวิดีโอสำหรับคำค้นหา"
+    "no_videos_found": "ไม่พบวิดีโอสำหรับคำค้นหา",
+    "always_on_top_enabled": "เปิดใช้งานแสดงด้านบนเสมอแล้ว",
+    "always_on_top_disabled": "ปิดใช้งานแสดงด้านบนเสมอแล้ว"
   },
   "settings": {
     "title": "การตั้งค่า",
@@ -67,7 +71,9 @@
     "reset_playback": "รีเซ็ตเป็นค่าเริ่มต้น",
     "buffer_duration": "ระยะเวลาบัฟเฟอร์",
     "buffer_size": "ขนาดบัฟเฟอร์",
-    "tab_system": "ระบบ"
+    "tab_system": "ระบบ",
+    "always_on_top": "แสดงอยู่ด้านบนเสมอ",
+    "always_on_top_desc": "ตรึง Wazoo ไว้ด้านบนสุดของหน้าต่างอื่นเสมอ"
   },
   "search": {
     "folder": "โฟลเดอร์:",
@@ -107,7 +113,8 @@
       "toggle_transcript": "สลับคำบรรยายบทสนทนา",
       "toggle_history": "สลับประวัติการเล่น",
       "random_seek": "ข้ามแบบสุ่ม",
-      "show_title_overlay": "แสดง HUD ชื่อเรื่อง"
+      "show_title_overlay": "แสดง HUD ชื่อเรื่อง",
+      "toggle_pin": "สลับแสดงด้านบนเสมอ"
     }
   },
   "file_picker": {

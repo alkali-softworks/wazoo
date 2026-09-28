@@ -12,7 +12,9 @@
     "files": "Files",
     "menu": "Menu",
     "or": "or",
-    "miscellaneous": "Miscellaneous"
+    "miscellaneous": "Miscellaneous",
+    "pin_window": "Pin Window",
+    "unpin_window": "Unpin Window"
   },
   "app": {
     "drag_to_move": "Drag to Move",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "Flip mode enabled",
     "flip_mode_disabled": "Flip mode disabled",
     "no_players": "No active players",
-    "no_videos_found": "No videos found for query"
+    "no_videos_found": "No videos found for query",
+    "always_on_top_enabled": "Always on top enabled",
+    "always_on_top_disabled": "Always on top disabled"
   },
   "settings": {
     "title": "Settings",
@@ -67,7 +71,9 @@
     "reset_playback": "Reset to Defaults",
     "buffer_duration": "Buffer Duration",
     "buffer_size": "Buffer Size",
-    "tab_system": "System"
+    "tab_system": "System",
+    "always_on_top": "Always on Top",
+    "always_on_top_desc": "Keep Wazoo pinned above all other windows"
   },
   "search": {
     "folder": "Folder:",
@@ -107,7 +113,8 @@
       "toggle_history": "Toggle Play History",
       "toggle_transcript": "Toggle Subtitle Transcript",
       "random_seek": "Random Seek",
-      "show_title_overlay": "Show Title HUD"
+      "show_title_overlay": "Show Title HUD",
+      "toggle_pin": "Toggle Always on Top"
     }
   },
   "file_picker": {

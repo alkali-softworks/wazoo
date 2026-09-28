@@ -12,7 +12,9 @@
     "files": "फ़ाइलें",
     "menu": "मेनू",
     "or": "या",
-    "miscellaneous": "विविध"
+    "miscellaneous": "विविध",
+    "pin_window": "विंडो पिन करें",
+    "unpin_window": "विंडो अनपिन करें"
   },
   "app": {
     "drag_to_move": "स्थानांतरित करने के लिए खींचें",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "फ्लिप मोड सक्षम",
     "flip_mode_disabled": "फ्लिप मोड अक्षम",
     "no_players": "कोई सक्रिय प्लेयर नहीं",
-    "no_videos_found": "क्वेरी के लिए कोई वीडियो नहीं मिला"
+    "no_videos_found": "क्वेरी के लिए कोई वीडियो नहीं मिला",
+    "always_on_top_enabled": "हमेशा शीर्ष पर सक्षम किया गया",
+    "always_on_top_disabled": "हमेशा शीर्ष पर अक्षम किया गया"
   },
   "settings": {
     "title": "सेटिंग्स",
@@ -67,7 +71,9 @@
     "reset_playback": "डिफ़ॉल्ट पर रीसेट करें",
     "buffer_duration": "बफर अवधि",
     "buffer_size": "बफर आकार",
-    "tab_system": "सिस्टम"
+    "tab_system": "सिस्टम",
+    "always_on_top": "हमेशा शीर्ष पर",
+    "always_on_top_desc": "Wazoo को अन्य सभी विंडो के ऊपर पिन रखें"
   },
   "search": {
     "folder": "फ़ोल्डर:",
@@ -107,7 +113,8 @@
       "toggle_transcript": "उपशीर्षक प्रतिलेख टॉगल करें",
       "toggle_history": "प्लेबैक इतिहास टॉगल करें",
       "random_seek": "रैंडम सीक",
-      "show_title_overlay": "शीर्षक HUD दिखाएं"
+      "show_title_overlay": "शीर्षक HUD दिखाएं",
+      "toggle_pin": "हमेशा शीर्ष पर टॉगल करें"
     }
   },
   "file_picker": {

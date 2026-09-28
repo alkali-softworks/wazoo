@@ -12,13 +12,14 @@ fn test_menu_hint() {
     assert_eq!(kb.menu_hint(&kb.toggle_bookmarks), "B");
     assert_eq!(kb.menu_hint(&kb.toggle_history), "Y");
     assert_eq!(kb.menu_hint(&kb.close_app), "Alt+X");
+    assert_eq!(kb.menu_hint(&kb.toggle_pin), "P");
 }
 
 #[test]
 fn test_help_shortcuts_generation() {
     let kb = KeybindSettings::default();
     let shortcuts = kb.help_shortcuts_with_descriptions(|key| key.to_string());
-    assert_eq!(shortcuts.len(), 22);
+    assert_eq!(shortcuts.len(), 23);
     assert_eq!(
         shortcuts[0],
         (
@@ -43,6 +44,13 @@ fn test_help_shortcuts_generation() {
     );
     assert_eq!(
         shortcuts[20],
+        (
+            "P / Alt+P".to_string(),
+            "help.shortcuts.toggle_pin".to_string()
+        )
+    );
+    assert_eq!(
+        shortcuts[21],
         (
             "Alt + X".to_string(),
             "help.shortcuts.close_app".to_string()
