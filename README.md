@@ -62,10 +62,10 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - **Alt + Drag** to reposition the window anywhere on screen.
 - Configurable window opacity to keep visual reference floating subtly over other tools.
 
-### 📌 Always on Top (Click-Through Ghost Overlay)
+### 📌 Always on Top (Click-Through Overlay)
 - **Pin Window & Mouse Passthrough**: Pin Wazoo above other windows with <kbd>P</kbd>, <kbd>Alt+P</kbd>, menus, or System Settings. Pinning automatically engages click-through mouse passthrough when Wazoo is unfocused, allowing you to seamlessly interact with applications underneath.
 - **Ambient Reference HUD**: Pair Pin Mode with **Window Opacity** (in System Settings) to turn Wazoo into a semi-transparent, floating reference board. You can paint in Photoshop, model in Blender, or code in your IDE right through the streaming video without stealing mouse clicks or interrupting your workflow.
-- **Taskbar Escape Hatch**: Clicking Wazoo on your OS taskbar or switching via <kbd>Alt</kbd>+<kbd>Tab</kbd> instantly focuses Wazoo, disengages mouse passthrough, and drops down the titlebar controls.
+- **Taskbar Escape Hatch**: Clicking Wazoo on your OS taskbar or switching via <kbd>Alt</kbd>+<kbd>Tab</kbd> instantly focuses Wazoo, disengages mouse passthrough, and enables controls.
 
 ### 📁 File Browser Drawer
 - **Collapsible Directory Tree**: Press <kbd>F</kbd> to browse folders with file counts.
