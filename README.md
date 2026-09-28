@@ -47,6 +47,10 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - **Directory Scanner**: Recursively indexes media folders while cleaning up messy filenames in the UI.
 - **Dial in your media pool**:  Type partial names, separate multiple terms with commas, and exclude terms with `not ` or `!` (e.g. `anime, not bebop`).
 
+### 📁 File Browser Drawer
+- **Collapsible Directory Tree**: Press <kbd>F</kbd> to browse folders with file counts.
+- **Direct Tile Loading**: Click any file to load it into the active player.
+
 ### 📜 Interactive Subtitle Transcript Drawer
 - **Live Transcript**: View the active video's dialogue in a side drawer (<kbd>V</kbd> or <kbd>[TX]</kbd>).
 - **Click to Seek**: Click any subtitle line to jump directly to that timestamp - great for studying dialogue or language learning.
@@ -59,7 +63,6 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - **Auto Save**: Wazoo automatically restores last open search + videos on launch.
 
 ### 🎞️ Frame-Stepping & Mark-In / Mark-Out Looping
-Inspect choreography, animation, or key moments with frame-accurate stepping and per-player A-B looping:
 - **Frame-by-Frame Stepping**: Press <kbd>,</kbd> (`<`) or <kbd>.</kbd> (`>`) to step backward or forward by exactly one video frame.
 - **Set Mark In**: Press <kbd>I</kbd> to set a loop start point (loops to the end of the video if no Out point is set).
 - **Set Mark Out**: Press <kbd>O</kbd> to set a loop end point (loops from the beginning if no In point is set).
@@ -71,24 +74,12 @@ Inspect choreography, animation, or key moments with frame-accurate stepping and
 - Configurable **Window Opacity** (in System Settings).
 
 ### 📌 Always on Top (Click-Through Overlay)
-- Pinning engages click-through mouse passthrough when Wazoo is unfocused, allowing you to seamlessly interact with applications underneath.
+- Pinning engages click-through mouse passthrough when Wazoo is unfocused, allowing you to interact with applications underneath.
 - Pair Pin Mode with **Window Opacity** (in System Settings) to turn Wazoo into a semi-transparent, floating reference board. 
 - **Escape Hatch**: Focusing Wazoo on your OS taskbar instantly disengages mouse passthrough and enables controls.
 
-### 📁 File Browser Drawer
-- **Collapsible Directory Tree**: Press <kbd>F</kbd> to browse folders with file counts.
-- **Direct Tile Loading**: Click any file to load it into the active player.
-
-### 🕒 Play History Drawer
-- **Session History**: Logs every video played during your session (<kbd>Y</kbd> or right-click menu).
-- **Click to Replay**: Click any entry in history to reload it in the active player.
-- **Search & Filter**: Filter played history by title, directory, or filename.
-
-### 💻 Command-Line Launch & Search
-- Launch Wazoo with a search query directly from your terminal:
-  ```bash
-  wazoo "bebop"
-  ```
+### 🌐 Internationalization & Localization
+- **16 Supported Languages**: Complete UI translations for English (`en`), Spanish (`es`), French (`fr`), German (`de`), Italian (`it`), Portuguese (`pt`), Russian (`ru`), Simplified Chinese (`zh`), Japanese (`ja`), Korean (`ko`), Thai (`th`), Hebrew (`he`), Arabic (`ar`), Hindi (`hi`), Bengali (`bn`), and Indonesian (`id`).
 
 ---
 
@@ -112,7 +103,7 @@ wazoo /path/to/videos
 wazoo movie.mkv
 
 # Launch pre-filtered to a specific search query
-wazoo "cyberpunk"
+wazoo "bebop"
 ```
 
 ### 3. Essential Shortcuts
@@ -239,6 +230,7 @@ Key properties configurable in `settings.json`:
 }
 ```
 
+- **`language`**: UI localization language code (e.g. `en`, `ja`, `es`, `de`, `fr`, etc.; default: `en`).
 - **`buffer_duration_secs`**: Demuxer readahead buffer duration in seconds (range: 2–300s, default: `10`).
 - **`buffer_size_mb`**: Maximum demuxer cache size in megabytes (range: 16–4096 MB, default: `32`).
 
