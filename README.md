@@ -56,13 +56,13 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 ### 🔖 Bookmarks & Scene Memory
 - **Save Scenes**: Press <kbd>+</kbd> or <kbd>=</kbd> to bookmark the current video, timestamp, search query, and playback mode.
 - **Quick Recall**: Open the bookmarks drawer (<kbd>B</kbd>) to return to any saved scene in one click.
+- **Auto Save**: Wazoo automatically restores last open search + videos on launch.
 
 ### 🎞️ Frame-Stepping & Mark-In / Mark-Out Looping
 Inspect choreography, animation, or key moments with frame-accurate stepping and per-player A-B looping:
 - **Frame-by-Frame Stepping**: Press <kbd>,</kbd> (`<`) or <kbd>.</kbd> (`>`) to step backward or forward by exactly one video frame.
 - **Set Mark In**: Press <kbd>I</kbd> to set a loop start point (loops to the end of the video if no Out point is set).
 - **Set Mark Out**: Press <kbd>O</kbd> to set a loop end point (loops from the beginning if no In point is set).
-- **Infinite Loop**: When both In and Out points are defined, the player loops continuously between the two markers.
 - **Visual Feedback**: The active loop range displays as an interactive badge in the player control bar.
 
 ### 🪟 Frameless Window & HUD
@@ -123,10 +123,7 @@ Press <kbd>F1</kbd> inside the app at any time to open the complete interactive 
 - <kbd>,</kbd> / <kbd>.</kbd> — Step one frame backward / forward
 - <kbd>F</kbd> – Toggle **File Drawer**
 - <kbd>J</kbd> or <kbd>/</kbd> — Open the **Search** modal
-- <kbd>I</kbd> / <kbd>O</kbd> — Set **Mark In** / **Mark Out** (A-B loop)
-- <kbd>Alt+I</kbd> / <kbd>Alt+O</kbd> — Clear **Mark In** / **Mark Out**
 - <kbd>S</kbd> — Toggle **Shuffle vs Sequential** playback
-- <kbd>L</kbd> — Cycle tile layouts (**Grid** ➔ **Row** ➔ **Column**)
 
 ---
 
@@ -203,6 +200,8 @@ scoop install ffmpeg
 | <kbd>6</kbd> | Toggle **Flip Mode** (staggered auto-shuffle) |
 | <kbd>+</kbd> / <kbd>=</kbd> | Add Bookmark (or increase Scroll Speed in Scroll Mode) |
 | <kbd>-</kbd> | Remove Bookmark (or decrease Scroll Speed in Scroll Mode) |
+| <kbd>I</kbd> / <kbd>O</kbd> — Set **Mark In** / **Mark Out** (A-B loop) |
+| <kbd>Alt+I</kbd> / <kbd>Alt+O</kbd> — Clear **Mark In** / **Mark Out** |
 | <kbd>R</kbd> | **Random Seek** on focused player |
 | <kbd>T</kbd> | Show video titles (all players) |
 | <kbd>,</kbd> / <kbd>.</kbd> | Step backward / forward one frame |
