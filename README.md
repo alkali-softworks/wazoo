@@ -112,7 +112,6 @@ wazoo "cyberpunk"
 Press <kbd>F1</kbd> inside the app at any time to open the complete interactive keyboard shortcuts guide. Common shortcuts:
 
 - <kbd>Space</kbd> — Play / Pause
-- <kbd>P</kbd> or <kbd>Alt+P</kbd> — Toggle **Pin Mode** (Always on Top with click-through overlay)
 - <kbd>F</kbd> – Toggle **File Drawer**
 - <kbd>J</kbd> or <kbd>/</kbd> — Open the **Search** modal
 - <kbd>S</kbd> — Toggle **Shuffle vs Sequential** playback
@@ -172,34 +171,30 @@ scoop install ffmpeg
 
 | Shortcut / Key | Action |
 | :--- | :--- |
+| <kbd>N</kbd> | Add player (up to 12) |
+| <kbd>X</kbd> | Remove focused player |
+| <kbd>L</kbd> | Cycle Layout (**Grid** ➔ **Row** ➔ **Column**) |
+| <kbd>Tab</kbd> | Focus next player |
+| <kbd>J</kbd> / <kbd>/</kbd> | Open **Find / Search** modal |
+| <kbd>H</kbd> / <kbd>F</kbd> | Toggle **File Browser** drawer |
+| <kbd>S</kbd> | Toggle **Shuffle** vs. **Sequential** playback |
+| <kbd>P</kbd> | Toggle **Pin Mode** (Always on Top) |
 | <kbd>V</kbd> | Toggle **Interactive Subtitle Transcript** drawer |
 | <kbd>B</kbd> | Toggle **Bookmarks** modal |
-| <kbd>Y</kbd> | Toggle **Play History** drawer (capped to 1,000 session videos) |
+| <kbd>Y</kbd> | Toggle **Play History** drawer |
+| <kbd>C</kbd> | Toggle Subtitles on/off |
+| <kbd>M</kbd> | Toggle **Mute** (unmutes when volume changes) |
+| <kbd>[</kbd> / <kbd>]</kbd> | Adjust Volume down / up |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Next / Previous video in focused player |
+| <kbd>←</kbd> / <kbd>→</kbd> | Seek backward / forward 5 seconds |
+| <kbd>1</kbd> – <kbd>4</kbd> | Set active player count (1 to 4) |
+| <kbd>5</kbd> | Toggle **Scroll Mode** (vertical feed) |
+| <kbd>6</kbd> | Toggle **Flip Mode** (staggered auto-shuffle) |
 | <kbd>+</kbd> / <kbd>=</kbd> | Add Bookmark (or increase Scroll Speed in Scroll Mode) |
 | <kbd>-</kbd> | Remove Bookmark (or decrease Scroll Speed in Scroll Mode) |
 | <kbd>R</kbd> | **Random Seek** on focused player |
 | <kbd>T</kbd> | Show video titles (all players) |
-| <kbd>H</kbd> / <kbd>F</kbd> | Toggle **File Browser** drawer |
-| <kbd>C</kbd> | Toggle Subtitles on/off |
-| <kbd>J</kbd> / <kbd>/</kbd> | Open **Find / Search** modal |
-| <kbd>S</kbd> | Toggle **Shuffle** vs. Sequential playback (resets navigation stack) |
-| <kbd>M</kbd> | Toggle **Mute** (unmutes automatically when volume changes) |
-| <kbd>[</kbd> / <kbd>]</kbd> | Adjust Volume down / up |
-| <kbd>Space</kbd> | Play / Pause focused player |
-| <kbd>↑</kbd> / <kbd>↓</kbd> | Next / Previous video in focused player (navigates random history in shuffle mode) |
-| <kbd>←</kbd> / <kbd>→</kbd> | Seek backward / forward 5 seconds |
 | <kbd>,</kbd> / <kbd>.</kbd> | Step backward / forward one frame |
-| <kbd>1</kbd> – <kbd>4</kbd> | Set active player count (1 to 4) |
-| <kbd>5</kbd> | Toggle **Scroll Mode** (vertical feed) |
-| <kbd>6</kbd> | Toggle **Flip Mode** (staggered auto-shuffle) |
-| <kbd>L</kbd> | Cycle Layout (**Grid** ➔ **Row** ➔ **Column**) |
-| <kbd>N</kbd> | Add player (up to 12) |
-| <kbd>X</kbd> | Remove focused player |
-| <kbd>Tab</kbd> | Focus next player |
-| <kbd>F1</kbd> | Open **Keyboard Shortcuts** reference modal |
-| <kbd>Esc</kbd> | Dismiss active drawer / modal, or open Quick Menu |
-| <kbd>Alt + Drag</kbd> | Move borderless window |
-| <kbd>Alt + X</kbd> | Quit application |
 
 ---
 
