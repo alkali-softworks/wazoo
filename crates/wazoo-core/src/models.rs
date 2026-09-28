@@ -154,6 +154,20 @@ pub struct WazooSettings {
     pub is_default_player: bool,
     #[serde(default)]
     pub keybinds: KeybindSettings,
+    #[serde(default)]
+    pub gamma: f32,
+    #[serde(default)]
+    pub contrast: f32,
+    #[serde(default)]
+    pub brightness: f32,
+    #[serde(default)]
+    pub saturation: f32,
+    #[serde(default = "default_playback_speed")]
+    pub playback_speed: f32,
+}
+
+fn default_playback_speed() -> f32 {
+    1.0
 }
 
 impl Default for WazooSettings {
@@ -178,6 +192,11 @@ impl Default for WazooSettings {
             preferred_audio_language: None,
             is_default_player: false,
             keybinds: KeybindSettings::default(),
+            gamma: 0.0,
+            contrast: 0.0,
+            brightness: 0.0,
+            saturation: 0.0,
+            playback_speed: 1.0,
         }
     }
 }

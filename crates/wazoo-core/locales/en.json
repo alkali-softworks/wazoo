@@ -56,7 +56,18 @@
     "scanning_progress": "Scanning {name} ({percent}% - {found} found)",
     "scan_error": "Scan error: {error}",
     "misc_cleared": "Cleared {count} miscellaneous files",
-    "default_player": "Default Player"
+    "default_player": "Default Player",
+    "tab_general": "General",
+    "tab_playback": "Playback",
+    "gamma": "Gamma",
+    "contrast": "Contrast",
+    "brightness": "Brightness",
+    "saturation": "Saturation",
+    "playback_speed": "Playback Speed",
+    "reset_playback": "Reset to Defaults",
+    "buffer_duration": "Buffer Duration",
+    "buffer_size": "Buffer Size",
+    "tab_system": "System"
   },
   "search": {
     "folder": "Folder:",

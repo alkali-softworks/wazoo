@@ -1684,6 +1684,72 @@ impl WazooApp {
                 self.show_settings_modal = false;
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
+            Message::SetSettingsTab(tab) => {
+                self.settings_tab = tab;
+            }
+            Message::SetGamma(val) => {
+                let clamped = val.clamp(-100.0, 100.0);
+                self.settings.gamma = clamped;
+                for player in &mut self.players {
+                    player.set_gamma(clamped as f64);
+                }
+                let _ = self.config_mgr.save_settings(&self.settings);
+            }
+            Message::SetContrast(val) => {
+                let clamped = val.clamp(-100.0, 100.0);
+                self.settings.contrast = clamped;
+                for player in &mut self.players {
+                    player.set_contrast(clamped as f64);
+                }
+                let _ = self.config_mgr.save_settings(&self.settings);
+            }
+            Message::SetBrightness(val) => {
+                let clamped = val.clamp(-100.0, 100.0);
+                self.settings.brightness = clamped;
+                for player in &mut self.players {
+                    player.set_brightness(clamped as f64);
+                }
+                let _ = self.config_mgr.save_settings(&self.settings);
+            }
+            Message::SetSaturation(val) => {
+                let clamped = val.clamp(-100.0, 100.0);
+                self.settings.saturation = clamped;
+                for player in &mut self.players {
+                    player.set_saturation(clamped as f64);
+                }
+                let _ = self.config_mgr.save_settings(&self.settings);
+            }
+            Message::SetPlaybackSpeed(val) => {
+                let clamped = val.clamp(0.25, 3.0);
+                self.settings.playback_speed = clamped;
+                for player in &mut self.players {
+                    player.set_speed(clamped as f64);
+                }
+                let _ = self.config_mgr.save_settings(&self.settings);
+            }
+            Message::SetBufferDuration(secs) => {
+                self.settings.buffer_duration_secs = secs.clamp(2, 60);
+                let _ = self.config_mgr.save_settings(&self.settings);
+            }
+            Message::SetBufferSize(mb) => {
+                self.settings.buffer_size_mb = mb.clamp(8, 1024);
+                let _ = self.config_mgr.save_settings(&self.settings);
+            }
+            Message::ResetPlaybackOptions => {
+                self.settings.gamma = 0.0;
+                self.settings.contrast = 0.0;
+                self.settings.brightness = 0.0;
+                self.settings.saturation = 0.0;
+                self.settings.playback_speed = 1.0;
+                for player in &mut self.players {
+                    player.set_gamma(0.0);
+                    player.set_contrast(0.0);
+                    player.set_brightness(0.0);
+                    player.set_saturation(0.0);
+                    player.set_speed(1.0);
+                }
+                let _ = self.config_mgr.save_settings(&self.settings);
+            }
             Message::ToggleDefaultPlayer => {
                 self.settings.is_default_player = !self.settings.is_default_player;
                 let _ = self.config_mgr.save_settings(&self.settings);

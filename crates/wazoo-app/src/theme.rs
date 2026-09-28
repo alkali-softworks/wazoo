@@ -362,6 +362,81 @@ pub fn folder_chip_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> 
         }
     }
 }
+
+/// Tab Button in Settings Modal
+pub fn settings_tab_button_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
+    move |_theme: &Theme, status: button::Status| {
+        let (bg, text_color, border_color) = if is_active {
+            (
+                Color::from_rgba(0.259, 0.722, 0.514, 0.16),
+                COLOR_PRIMARY,
+                COLOR_PRIMARY,
+            )
+        } else {
+            match status {
+                button::Status::Hovered => (
+                    COLOR_BTN_HOVER,
+                    Color::WHITE,
+                    COLOR_BORDER,
+                ),
+                button::Status::Pressed => (
+                    Color::from_rgb(0.14, 0.14, 0.14),
+                    Color::WHITE,
+                    COLOR_BORDER,
+                ),
+                _ => (
+                    Color::TRANSPARENT,
+                    COLOR_TEXT_MUTED,
+                    Color::TRANSPARENT,
+                ),
+            }
+        };
+        button::Style {
+            background: Some(Background::Color(bg)),
+            text_color,
+            border: Border {
+                radius: 6.0.into(),
+                width: 1.0,
+                color: border_color,
+            },
+            shadow: Shadow::default(),
+            ..Default::default()
+        }
+    }
+}
+
+/// Small Reset Button in Settings Modal (↺)
+pub fn settings_reset_button_style(_theme: &Theme, status: button::Status) -> button::Style {
+    let (bg, text_color, border_color) = match status {
+        button::Status::Hovered => (
+            COLOR_BTN_HOVER,
+            COLOR_PRIMARY,
+            COLOR_PRIMARY_BORDER,
+        ),
+        button::Status::Pressed => (
+            COLOR_BTN_BG,
+            COLOR_PRIMARY,
+            COLOR_PRIMARY,
+        ),
+        _ => (
+            COLOR_CARD_BG,
+            COLOR_TEXT_DIM,
+            COLOR_BORDER,
+        ),
+    };
+    button::Style {
+        background: Some(Background::Color(bg)),
+        text_color,
+        border: Border {
+            radius: 4.0.into(),
+            width: 1.0,
+            color: border_color,
+        },
+        shadow: Shadow::default(),
+        ..Default::default()
+    }
+}
+
 // Text Input Style
 pub fn dark_input_style(_theme: &Theme, status: text_input::Status) -> text_input::Style {
     let border_color = match status {
@@ -767,6 +842,33 @@ pub fn diffuse_shadowed_text<'a, Message: 'a>(
     stack = stack.push(foreground);
 
     stack.into()
+}
+
+// Settings Modal Slider Style (with visible handle thumb and emerald rail)
+pub fn settings_slider_style(_theme: &Theme, status: slider::Status) -> slider::Style {
+    let handle_color = match status {
+        slider::Status::Hovered | slider::Status::Dragged => Color::WHITE,
+        _ => Color::from_rgb(0.9, 0.9, 0.9),
+    };
+    slider::Style {
+        rail: slider::Rail {
+            backgrounds: (
+                Background::Color(COLOR_PRIMARY),
+                Background::Color(Color::from_rgb(0.24, 0.24, 0.24)),
+            ),
+            width: 6.0,
+            border: Border {
+                radius: 3.0.into(),
+                ..Default::default()
+            },
+        },
+        handle: slider::Handle {
+            shape: slider::HandleShape::Circle { radius: 6.0 },
+            background: Background::Color(handle_color),
+            border_width: 2.0,
+            border_color: COLOR_PRIMARY,
+        },
+    }
 }
 
 // Volume Bar Slider Style (Vue emerald green #42b883)

@@ -1,8 +1,8 @@
 use iced::Point;
 use std::time::Duration;
 use wazoo_app::app::{
-    MAX_PLAYER_NAV_HISTORY_ENTRIES, PlaybackHistoryEntry, TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS,
-    WazooApp, new_test_app,
+    MAX_PLAYER_NAV_HISTORY_ENTRIES, PlaybackHistoryEntry, SettingsTab, TITLEBAR_FADE_TICKS,
+    TITLEBAR_HIDE_TICKS, WazooApp, new_test_app,
 };
 use wazoo_app::message::Message;
 use wazoo_core::{ConfigManager, Database, VideoRecord};
@@ -836,6 +836,111 @@ fn test_settings_toggle_default_player() {
     // Toggle default player OFF
     let _ = app.update(Message::ToggleDefaultPlayer);
     assert!(!app.settings.is_default_player);
+}
+
+#[test]
+fn test_settings_modal_tabs_and_playback_options() {
+    let (mut app, _) = new_test_app();
+    assert_eq!(app.settings_tab, SettingsTab::General);
+
+    // Open settings modal
+    let _ = app.update(Message::OpenSettingsModal);
+    assert!(app.show_settings_modal);
+    assert_eq!(app.settings_tab, SettingsTab::General);
+
+    // Render General tab
+    {
+        let _view_general = app.view_settings_modal();
+    }
+
+    // Switch to Playback tab
+    let _ = app.update(Message::SetSettingsTab(SettingsTab::Playback));
+    assert_eq!(app.settings_tab, SettingsTab::Playback);
+
+    // Render Playback tab
+    {
+        let _view_playback = app.view_settings_modal();
+    }
+
+    // Adjust playback options
+    let _ = app.update(Message::SetGamma(25.0));
+    assert_eq!(app.settings.gamma, 25.0);
+
+    let _ = app.update(Message::SetContrast(-15.0));
+    assert_eq!(app.settings.contrast, -15.0);
+
+    let _ = app.update(Message::SetBrightness(10.0));
+    assert_eq!(app.settings.brightness, 10.0);
+
+    let _ = app.update(Message::SetSaturation(40.0));
+    assert_eq!(app.settings.saturation, 40.0);
+
+    let _ = app.update(Message::SetPlaybackSpeed(1.5));
+    assert_eq!(app.settings.playback_speed, 1.5);
+
+    let _ = app.update(Message::SetBufferDuration(15));
+    assert_eq!(app.settings.buffer_duration_secs, 15);
+
+    let _ = app.update(Message::SetBufferSize(64));
+    assert_eq!(app.settings.buffer_size_mb, 64);
+
+    // Re-render Playback tab with adjusted values
+    {
+        let _view_playback_adjusted = app.view_settings_modal();
+    }
+
+    // Test ResetPlaybackOptions
+    let _ = app.update(Message::ResetPlaybackOptions);
+    assert_eq!(app.settings.gamma, 0.0);
+    assert_eq!(app.settings.contrast, 0.0);
+    assert_eq!(app.settings.brightness, 0.0);
+    assert_eq!(app.settings.saturation, 0.0);
+    // Test individual slider reset (the reset button next to each value badge)
+    let _ = app.update(Message::SetGamma(40.0));
+    let _ = app.update(Message::SetContrast(100.0));
+    assert_eq!(app.settings.gamma, 40.0);
+    assert_eq!(app.settings.contrast, 100.0);
+    {
+        let _view_with_reset_buttons = app.view_settings_modal();
+    }
+    // Reset only gamma via individual reset button
+    let _ = app.update(Message::SetGamma(0.0));
+    assert_eq!(app.settings.gamma, 0.0);
+    assert_eq!(app.settings.contrast, 100.0);
+    // Reset only contrast via individual reset button
+    let _ = app.update(Message::SetContrast(0.0));
+    assert_eq!(app.settings.contrast, 0.0);
+
+    // Switch to System tab (Window Opacity & Default Player)
+    let _ = app.update(Message::SetSettingsTab(SettingsTab::System));
+    assert_eq!(app.settings_tab, SettingsTab::System);
+    {
+        let _view_system = app.view_settings_modal();
+    }
+
+    // Adjust window opacity on System tab
+    let _ = app.update(Message::SetWindowOpacity(0.75));
+    assert_eq!(app.settings.window_opacity, 0.75);
+
+    // Toggle default player on System tab
+    let _ = app.update(Message::ToggleDefaultPlayer);
+    assert!(app.settings.is_default_player);
+    {
+        let _view_system_active = app.view_settings_modal();
+    }
+    let _ = app.update(Message::ToggleDefaultPlayer);
+    assert!(!app.settings.is_default_player);
+
+    // Switch back to General tab
+    let _ = app.update(Message::SetSettingsTab(SettingsTab::General));
+    assert_eq!(app.settings_tab, SettingsTab::General);
+    {
+        let _view_general_back = app.view_settings_modal();
+    }
+
+    // Close settings modal
+    let _ = app.update(Message::CloseSettingsModal);
+    assert!(!app.show_settings_modal);
 }
 
 #[test]

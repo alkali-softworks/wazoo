@@ -56,7 +56,18 @@
     "scanning_progress": "Scannen {name} ({percent}% - {found} gefunden)",
     "scan_error": "Scanfehler: {error}",
     "misc_cleared": "{count} verschiedene Dateien gelöscht",
-    "default_player": "Standard-Player"
+    "default_player": "Standard-Player",
+    "tab_general": "Allgemein",
+    "tab_playback": "Wiedergabe",
+    "gamma": "Gamma",
+    "contrast": "Kontrast",
+    "brightness": "Helligkeit",
+    "saturation": "Sättigung",
+    "playback_speed": "Wiedergabegeschwindigkeit",
+    "reset_playback": "Zurücksetzen",
+    "buffer_duration": "Pufferdauer",
+    "buffer_size": "Puffergröße",
+    "tab_system": "System"
   },
   "search": {
     "folder": "Ordner:",

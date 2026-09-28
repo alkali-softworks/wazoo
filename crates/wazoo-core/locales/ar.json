@@ -56,7 +56,18 @@
     "scanning_progress": "جاري الفحص {name} ({percent}% - تم العثور على {found})",
     "scan_error": "خطأ في الفحص: {error}",
     "misc_cleared": "تم مسح {count} من الملفات المتنوعة",
-    "default_player": "المشغل الافتراضي"
+    "default_player": "المشغل الافتراضي",
+    "tab_general": "عام",
+    "tab_playback": "التشغيل",
+    "gamma": "جاما",
+    "contrast": "التباين",
+    "brightness": "السطوع",
+    "saturation": "التشبع",
+    "playback_speed": "سرعة التشغيل",
+    "reset_playback": "إعادة التعيين للإعدادات الافتراضية",
+    "buffer_duration": "مدة التخزين المؤقت",
+    "buffer_size": "حجم التخزين المؤقت",
+    "tab_system": "النظام"
   },
   "search": {
     "folder": "مجلد:",

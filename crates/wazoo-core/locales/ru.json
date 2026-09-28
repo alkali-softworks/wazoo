@@ -56,7 +56,18 @@
     "scanning_progress": "Сканирование {name} ({percent}% - {found} найдено)",
     "scan_error": "Ошибка сканирования: {error}",
     "misc_cleared": "Очищено {count} разных файлов",
-    "default_player": "Плеер по умолчанию"
+    "default_player": "Плеер по умолчанию",
+    "tab_general": "Общие",
+    "tab_playback": "Воспроизведение",
+    "gamma": "Гамма",
+    "contrast": "Контраст",
+    "brightness": "Яркость",
+    "saturation": "Насыщенность",
+    "playback_speed": "Скорость воспроизведения",
+    "reset_playback": "Сбросить настройки",
+    "buffer_duration": "Длительность буфера",
+    "buffer_size": "Размер буфера",
+    "tab_system": "Система"
   },
   "search": {
     "folder": "Папка:",

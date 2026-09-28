@@ -56,7 +56,18 @@
     "scanning_progress": "スキャン中 {name} ({percent}% - {found} 件検出)",
     "scan_error": "スキャンエラー: {error}",
     "misc_cleared": "{count} 件のその他ファイルを消去しました",
-    "default_player": "既定のプレーヤー"
+    "default_player": "既定のプレーヤー",
+    "tab_general": "一般",
+    "tab_playback": "再生",
+    "gamma": "ガンマ",
+    "contrast": "コントラスト",
+    "brightness": "明るさ",
+    "saturation": "彩度",
+    "playback_speed": "再生速度",
+    "reset_playback": "初期値に戻す",
+    "buffer_duration": "バッファ時間",
+    "buffer_size": "バッファサイズ",
+    "tab_system": "システム"
   },
   "search": {
     "folder": "フォルダー:",

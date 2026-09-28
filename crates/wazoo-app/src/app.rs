@@ -76,6 +76,14 @@ pub struct PlayerNavHistory {
     pub forward_stack: Vec<PlaybackHistoryEntry>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum SettingsTab {
+    #[default]
+    General,
+    Playback,
+    System,
+}
+
 pub struct WazooApp {
     pub settings: WazooSettings,
     pub config_mgr: ConfigManager,
@@ -93,6 +101,7 @@ pub struct WazooApp {
     pub selected_search_folder: String,
     pub show_search_modal: bool,
     pub show_settings_modal: bool,
+    pub settings_tab: SettingsTab,
     pub show_help_modal: bool,
     pub show_menu_modal: bool,
     pub show_bookmarks_modal: bool,
@@ -313,6 +322,7 @@ impl WazooApp {
             selected_search_folder: selected_folder,
             show_search_modal: false,
             show_settings_modal: false,
+            settings_tab: SettingsTab::General,
             show_help_modal: false,
             show_menu_modal: false,
             show_bookmarks_modal: false,
@@ -830,6 +840,11 @@ impl WazooApp {
             size_mb: per_player_mb,
             read_chunk_kb: 512,
             preferred_audio_language: self.settings.preferred_audio_language.clone(),
+            gamma: self.settings.gamma as f64,
+            contrast: self.settings.contrast as f64,
+            brightness: self.settings.brightness as f64,
+            saturation: self.settings.saturation as f64,
+            playback_speed: self.settings.playback_speed as f64,
         }
     }
 

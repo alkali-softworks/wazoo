@@ -78,6 +78,11 @@ impl ConfigManager {
                     settings.buffer_duration_secs = settings.buffer_duration_secs.clamp(2, 300);
                     settings.window_bounds.width = settings.window_bounds.width.clamp(200, 7680);
                     settings.window_bounds.height = settings.window_bounds.height.clamp(150, 4320);
+                    settings.gamma = settings.gamma.clamp(-100.0, 100.0);
+                    settings.contrast = settings.contrast.clamp(-100.0, 100.0);
+                    settings.brightness = settings.brightness.clamp(-100.0, 100.0);
+                    settings.saturation = settings.saturation.clamp(-100.0, 100.0);
+                    settings.playback_speed = settings.playback_speed.clamp(0.25, 4.0);
                     settings.keybinds.reconcile_with_defaults();
                     settings
                 } else {

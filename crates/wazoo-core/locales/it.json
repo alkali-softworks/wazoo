@@ -56,7 +56,18 @@
     "scanning_progress": "Scansione {name} ({percent}% - {found} trovati)",
     "scan_error": "Errore di scansione: {error}",
     "misc_cleared": "Eliminati {count} file vari",
-    "default_player": "Lettore predefinito"
+    "default_player": "Lettore predefinito",
+    "tab_general": "Generale",
+    "tab_playback": "Riproduzione",
+    "gamma": "Gamma",
+    "contrast": "Contrasto",
+    "brightness": "Luminosità",
+    "saturation": "Saturazione",
+    "playback_speed": "Velocità di riproduzione",
+    "reset_playback": "Ripristina predefiniti",
+    "buffer_duration": "Durata buffer",
+    "buffer_size": "Dimensione buffer",
+    "tab_system": "Sistema"
   },
   "search": {
     "folder": "Cartella:",

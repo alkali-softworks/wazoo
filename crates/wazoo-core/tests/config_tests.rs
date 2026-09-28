@@ -365,3 +365,60 @@ fn test_flip_mode_does_not_persist() {
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_playback_settings_serialization_and_clamping() {
+    let mut settings = WazooSettings::default();
+    assert_eq!(settings.gamma, 0.0);
+    assert_eq!(settings.contrast, 0.0);
+    assert_eq!(settings.brightness, 0.0);
+    assert_eq!(settings.saturation, 0.0);
+    assert_eq!(settings.playback_speed, 1.0);
+
+    settings.gamma = 15.0;
+    settings.contrast = -20.0;
+    settings.brightness = 5.0;
+    settings.saturation = 30.0;
+    settings.playback_speed = 1.25;
+
+    let json = serde_json::to_string(&settings).unwrap();
+    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
+    assert_eq!(deserialized.gamma, 15.0);
+    assert_eq!(deserialized.contrast, -20.0);
+    assert_eq!(deserialized.brightness, 5.0);
+    assert_eq!(deserialized.saturation, 30.0);
+    assert_eq!(deserialized.playback_speed, 1.25);
+
+    // Verify clamping via ConfigManager
+    let temp_dir = std::env::temp_dir().join(format!(
+        "wazoo_playback_clamp_test_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = fs::create_dir_all(&temp_dir);
+    let mgr = ConfigManager {
+        config_dir: temp_dir.clone(),
+        data_dir: temp_dir.clone(),
+    };
+
+    let extreme_settings = WazooSettings {
+        gamma: 250.0,
+        contrast: -150.0,
+        brightness: 999.0,
+        saturation: -500.0,
+        playback_speed: 10.0,
+        ..Default::default()
+    };
+    mgr.save_settings(&extreme_settings).unwrap();
+
+    let loaded = mgr.load_settings();
+    assert_eq!(loaded.gamma, 100.0);
+    assert_eq!(loaded.contrast, -100.0);
+    assert_eq!(loaded.brightness, 100.0);
+    assert_eq!(loaded.saturation, -100.0);
+    assert_eq!(loaded.playback_speed, 4.0);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}

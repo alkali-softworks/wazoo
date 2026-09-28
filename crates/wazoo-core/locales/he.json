@@ -56,7 +56,18 @@
     "scanning_progress": "סורק {name} ({percent}% - נמצאו {found})",
     "scan_error": "שגיאת סריקה: {error}",
     "misc_cleared": "נוקו {count} קבצים שונים",
-    "default_player": "נגן ברירת מחדל"
+    "default_player": "נגן ברירת מחדל",
+    "tab_general": "כללי",
+    "tab_playback": "הפעלה",
+    "gamma": "גאמה",
+    "contrast": "ניגודיות",
+    "brightness": "בהירות",
+    "saturation": "רוויה",
+    "playback_speed": "מהירות הפעלה",
+    "reset_playback": "איפוס לברירת מחדל",
+    "buffer_duration": "משך מאגר",
+    "buffer_size": "גודל מאגר",
+    "tab_system": "מערכת"
   },
   "search": {
     "folder": "תיקייה:",
