@@ -29,7 +29,10 @@ fn estimate_chip_width(label: &str) -> f32 {
             if c.is_ascii() {
                 if c.is_ascii_uppercase() || matches!(c, 'm' | 'w' | 'M' | 'W' | '@' | '%') {
                     9.5
-                } else if matches!(c, 'i' | 'l' | 'j' | 't' | 'f' | '!' | '.' | ':' | ';' | '\'' | ' ') {
+                } else if matches!(
+                    c,
+                    'i' | 'l' | 'j' | 't' | 'f' | '!' | '.' | ':' | ';' | '\'' | ' '
+                ) {
                     4.5
                 } else {
                     7.5
@@ -204,54 +207,55 @@ impl WazooApp {
         let is_playback = self.settings_tab == SettingsTab::Playback;
         let is_system = self.settings_tab == SettingsTab::System;
 
-        let badge_with_reset = |val_text: String, is_active: bool, reset_msg: Message| -> Element<'static, Message> {
-            let badge_box = container(
-                text(val_text)
-                    .size(12)
-                    .font(if is_active {
-                        theme::FONT_BOLD
-                    } else {
-                        Default::default()
-                    })
-                    .color(if is_active {
-                        theme::COLOR_PRIMARY
-                    } else {
-                        theme::COLOR_TEXT_DIM
-                    }),
-            )
-            .padding([2, 8])
-            .style(move |_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
-                border: iced::Border {
-                    radius: 4.0.into(),
-                    width: 1.0,
-                    color: if is_active {
-                        theme::COLOR_PRIMARY_BORDER
-                    } else {
-                        theme::COLOR_BORDER
+        let badge_with_reset =
+            |val_text: String, is_active: bool, reset_msg: Message| -> Element<'static, Message> {
+                let badge_box = container(
+                    text(val_text)
+                        .size(12)
+                        .font(if is_active {
+                            theme::FONT_BOLD
+                        } else {
+                            Default::default()
+                        })
+                        .color(if is_active {
+                            theme::COLOR_PRIMARY
+                        } else {
+                            theme::COLOR_TEXT_DIM
+                        }),
+                )
+                .padding([2, 8])
+                .style(move |_theme: &Theme| container::Style {
+                    background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
+                    border: iced::Border {
+                        radius: 4.0.into(),
+                        width: 1.0,
+                        color: if is_active {
+                            theme::COLOR_PRIMARY_BORDER
+                        } else {
+                            theme::COLOR_BORDER
+                        },
                     },
-                },
-                ..Default::default()
-            });
+                    ..Default::default()
+                });
 
-            if is_active {
-                let reset_btn = cursor::PointerCursor::new(
-                    button(text("↺").size(11))
-                        .style(theme::settings_reset_button_style)
-                        .on_press(reset_msg)
-                        .padding([2, 5]),
-                );
-                row![badge_box, reset_btn]
-                    .spacing(5)
-                    .align_y(Alignment::Center)
-                    .into()
-            } else {
-                row![badge_box, Space::new().width(Length::Fixed(20.0))]
-                    .spacing(5)
-                    .align_y(Alignment::Center)
-                    .into()
-            }
-        };
+                if is_active {
+                    let reset_btn = cursor::PointerCursor::new(
+                        button(text("↺").size(11))
+                            .style(theme::settings_reset_button_style)
+                            .on_press(reset_msg)
+                            .padding([2, 5]),
+                    );
+                    row![badge_box, reset_btn]
+                        .spacing(5)
+                        .align_y(Alignment::Center)
+                        .into()
+                } else {
+                    row![badge_box, Space::new().width(Length::Fixed(20.0))]
+                        .spacing(5)
+                        .align_y(Alignment::Center)
+                        .into()
+                }
+            };
 
         let tabs_bar = row![
             button(
@@ -340,11 +344,17 @@ impl WazooApp {
                     folders_col = folders_col.push(
                         container(
                             row![
-                                text(self.t("common.miscellaneous")).size(13).color(iced::Color::WHITE),
+                                text(self.t("common.miscellaneous"))
+                                    .size(13)
+                                    .color(iced::Color::WHITE),
                                 Space::new().width(Length::Fixed(8.0)),
-                                text(format!("({} {})", format::format_number(misc_count), self.t("common.files").to_lowercase()))
-                                    .size(12)
-                                    .color(theme::COLOR_TEXT_MUTED),
+                                text(format!(
+                                    "({} {})",
+                                    format::format_number(misc_count),
+                                    self.t("common.files").to_lowercase()
+                                ))
+                                .size(12)
+                                .color(theme::COLOR_TEXT_MUTED),
                                 Space::new().width(Length::Fill),
                                 button(text("✕").size(12))
                                     .style(theme::close_window_button_style)
@@ -479,14 +489,10 @@ impl WazooApp {
                     ]
                     .align_y(Alignment::Center),
                     cursor::PointerCursor::new(
-                        slider(
-                            -100.0..=100.0,
-                            self.settings.gamma,
-                            Message::SetGamma
-                        )
-                        .step(1.0_f32)
-                        .style(theme::settings_slider_style)
-                        .width(Length::Fill),
+                        slider(-100.0..=100.0, self.settings.gamma, Message::SetGamma)
+                            .step(1.0_f32)
+                            .style(theme::settings_slider_style)
+                            .width(Length::Fill),
                     ),
                 ]
                 .spacing(6);
@@ -503,18 +509,18 @@ impl WazooApp {
                             .size(14)
                             .color(theme::COLOR_TEXT_MUTED),
                         Space::new().width(Length::Fill),
-                        badge_with_reset(contrast_str, contrast_val != 0, Message::SetContrast(0.0)),
+                        badge_with_reset(
+                            contrast_str,
+                            contrast_val != 0,
+                            Message::SetContrast(0.0)
+                        ),
                     ]
                     .align_y(Alignment::Center),
                     cursor::PointerCursor::new(
-                        slider(
-                            -100.0..=100.0,
-                            self.settings.contrast,
-                            Message::SetContrast
-                        )
-                        .step(1.0_f32)
-                        .style(theme::settings_slider_style)
-                        .width(Length::Fill),
+                        slider(-100.0..=100.0, self.settings.contrast, Message::SetContrast)
+                            .step(1.0_f32)
+                            .style(theme::settings_slider_style)
+                            .width(Length::Fill),
                     ),
                 ]
                 .spacing(6);
@@ -531,7 +537,11 @@ impl WazooApp {
                             .size(14)
                             .color(theme::COLOR_TEXT_MUTED),
                         Space::new().width(Length::Fill),
-                        badge_with_reset(brightness_str, brightness_val != 0, Message::SetBrightness(0.0)),
+                        badge_with_reset(
+                            brightness_str,
+                            brightness_val != 0,
+                            Message::SetBrightness(0.0)
+                        ),
                     ]
                     .align_y(Alignment::Center),
                     cursor::PointerCursor::new(
@@ -559,7 +569,11 @@ impl WazooApp {
                             .size(14)
                             .color(theme::COLOR_TEXT_MUTED),
                         Space::new().width(Length::Fill),
-                        badge_with_reset(saturation_str, saturation_val != 0, Message::SetSaturation(0.0)),
+                        badge_with_reset(
+                            saturation_str,
+                            saturation_val != 0,
+                            Message::SetSaturation(0.0)
+                        ),
                     ]
                     .align_y(Alignment::Center),
                     cursor::PointerCursor::new(
@@ -599,6 +613,58 @@ impl WazooApp {
                 ]
                 .spacing(6);
 
+                let reset_btn = button(
+                    row![
+                        text("↺").size(14),
+                        text(self.t("settings.reset_playback")).size(13),
+                    ]
+                    .spacing(6)
+                    .align_y(Alignment::Center),
+                )
+                .style(theme::action_button_style)
+                .on_press(Message::ResetPlaybackOptions)
+                .padding([8, 16]);
+
+                column![
+                    gamma_group,
+                    contrast_group,
+                    brightness_group,
+                    saturation_group,
+                    speed_group,
+                    reset_btn,
+                ]
+                .spacing(16)
+                .into()
+            }
+            SettingsTab::System => {
+                let opacity_val = (self.settings.window_opacity * 100.0).round() as u32;
+                let opacity_active = (self.settings.window_opacity - 1.0).abs() > 0.01;
+                let opacity_group = column![
+                    row![
+                        text(self.t("settings.window_opacity"))
+                            .size(14)
+                            .color(theme::COLOR_TEXT_MUTED),
+                        Space::new().width(Length::Fill),
+                        badge_with_reset(
+                            format!("{opacity_val}%"),
+                            opacity_active,
+                            Message::SetWindowOpacity(1.0)
+                        ),
+                    ]
+                    .align_y(Alignment::Center),
+                    cursor::PointerCursor::new(
+                        slider(
+                            0.05..=1.0,
+                            self.settings.window_opacity,
+                            Message::SetWindowOpacity
+                        )
+                        .step(0.01_f32)
+                        .style(theme::settings_slider_style)
+                        .width(Length::Fill),
+                    ),
+                ]
+                .spacing(6);
+
                 let buffer_dur_str = format!("{}s", self.settings.buffer_duration_secs);
                 let buffer_dur_active = self.settings.buffer_duration_secs != 10;
                 let buffer_dur_group = column![
@@ -607,7 +673,11 @@ impl WazooApp {
                             .size(14)
                             .color(theme::COLOR_TEXT_MUTED),
                         Space::new().width(Length::Fill),
-                        badge_with_reset(buffer_dur_str, buffer_dur_active, Message::SetBufferDuration(10)),
+                        badge_with_reset(
+                            buffer_dur_str,
+                            buffer_dur_active,
+                            Message::SetBufferDuration(10)
+                        ),
                     ]
                     .align_y(Alignment::Center),
                     cursor::PointerCursor::new(
@@ -631,7 +701,11 @@ impl WazooApp {
                             .size(14)
                             .color(theme::COLOR_TEXT_MUTED),
                         Space::new().width(Length::Fill),
-                        badge_with_reset(buffer_size_str, buffer_size_active, Message::SetBufferSize(32)),
+                        badge_with_reset(
+                            buffer_size_str,
+                            buffer_size_active,
+                            Message::SetBufferSize(32)
+                        ),
                     ]
                     .align_y(Alignment::Center),
                     cursor::PointerCursor::new(
@@ -647,69 +721,15 @@ impl WazooApp {
                 ]
                 .spacing(6);
 
-                let reset_btn = button(
-                    row![
-                        text("↺").size(14),
-                        text(self.t("settings.reset_playback")).size(13),
-                    ]
-                    .spacing(6)
-                    .align_y(Alignment::Center),
-                )
-                .style(theme::action_button_style)
-                .on_press(Message::ResetPlaybackOptions)
-                .padding([8, 16]);
-
-                column![
-                    gamma_group,
-                    contrast_group,
-                    brightness_group,
-                    saturation_group,
-                    speed_group,
-                    buffer_dur_group,
-                    buffer_size_group,
-                    reset_btn,
-                ]
-                .spacing(16)
-                .into()
-            }
-            SettingsTab::System => {
-                let opacity_val = (self.settings.window_opacity * 100.0).round() as u32;
-                let opacity_active = (self.settings.window_opacity - 1.0).abs() > 0.01;
-                let opacity_group = column![
-                    row![
-                        text(self.t("settings.window_opacity"))
-                            .size(14)
-                            .color(theme::COLOR_TEXT_MUTED),
-                        Space::new().width(Length::Fill),
-                        badge_with_reset(format!("{opacity_val}%"), opacity_active, Message::SetWindowOpacity(1.0)),
-                    ]
-                    .align_y(Alignment::Center),
-                    cursor::PointerCursor::new(
-                        slider(
-                            0.05..=1.0,
-                            self.settings.window_opacity,
-                            Message::SetWindowOpacity
-                        )
-                        .step(0.01_f32)
-                        .style(theme::settings_slider_style)
-                        .width(Length::Fill),
-                    ),
-                ]
-                .spacing(8);
-
                 let default_player_toggle = {
                     let is_default = self.settings.is_default_player;
                     let icon = if is_default { "✓ " } else { "" };
                     let label = format!("{}{}", icon, self.t("settings.default_player"));
-                    button(
-                        text(label)
-                            .size(12)
-                            .font(if is_default {
-                                theme::FONT_BOLD
-                            } else {
-                                Default::default()
-                            }),
-                    )
+                    button(text(label).size(12).font(if is_default {
+                        theme::FONT_BOLD
+                    } else {
+                        Default::default()
+                    }))
                     .style(theme::folder_chip_style(is_default))
                     .on_press(Message::ToggleDefaultPlayer)
                     .padding([6, 14])
@@ -749,8 +769,10 @@ impl WazooApp {
                 column![
                     opacity_group,
                     default_player_group,
+                    buffer_dur_group,
+                    buffer_size_group,
                 ]
-                .spacing(20)
+                .spacing(16)
                 .into()
             }
         };
