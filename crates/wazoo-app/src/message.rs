@@ -90,6 +90,7 @@ pub enum Message {
     SetPlayerCount(usize),
     ToggleScrollMode,
     ToggleFlipMode,
+    ToggleAlwaysOnTop,
     SetScrollSpeed(f32),
     AdjustScrollSpeed(f32),
     AddNewPlayer,

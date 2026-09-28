@@ -241,6 +241,16 @@ impl WazooApp {
                 padding,
             ),
             Self::menu_item(
+                if self.settings.is_always_on_top {
+                    self.t("common.unpin_window")
+                } else {
+                    self.t("common.pin_window")
+                },
+                Some(kb.menu_hint(&kb.toggle_pin)),
+                Message::ToggleAlwaysOnTop,
+                padding,
+            ),
+            Self::menu_item(
                 self.t("common.settings"),
                 None,
                 Message::OpenSettingsModal,

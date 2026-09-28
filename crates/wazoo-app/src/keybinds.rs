@@ -124,6 +124,9 @@ pub fn find_key_action(
         if key_matches_binding(&keybinds.close_app, key, true) {
             return Some(KeyAction::CloseApp);
         }
+        if key_matches_binding(&keybinds.toggle_pin, key, true) {
+            return Some(KeyAction::ToggleAlwaysOnTop);
+        }
         return None;
     }
 
@@ -220,6 +223,9 @@ pub fn find_key_action(
     }
     if key_matches_binding(&keybinds.player_4, key, false) {
         return Some(KeyAction::Player4);
+    }
+    if key_matches_binding(&keybinds.toggle_pin, key, false) {
+        return Some(KeyAction::ToggleAlwaysOnTop);
     }
 
     None

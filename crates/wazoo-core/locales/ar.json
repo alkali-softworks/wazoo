@@ -12,7 +12,9 @@
     "files": "الملفات",
     "menu": "القائمة",
     "or": "أو",
-    "miscellaneous": "متنوعات"
+    "miscellaneous": "متنوعات",
+    "pin_window": "تثبيت النافذة",
+    "unpin_window": "إلغاء تثبيت النافذة"
   },
   "app": {
     "drag_to_move": "اسحب للتحريك",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "وضع التقليب مفعل",
     "flip_mode_disabled": "وضع التقليب معطل",
     "no_players": "لا يوجد مشغلون نشطون",
-    "no_videos_found": "لم يتم العثور على مقاطع فيديو للبحث"
+    "no_videos_found": "لم يتم العثور على مقاطع فيديو للبحث",
+    "always_on_top_enabled": "تم تفعيل الوضع دائمًا في المقدمة",
+    "always_on_top_disabled": "تم تعطيل الوضع دائمًا في المقدمة"
   },
   "settings": {
     "title": "الإعدادات",
@@ -67,7 +71,9 @@
     "reset_playback": "إعادة التعيين للإعدادات الافتراضية",
     "buffer_duration": "مدة التخزين المؤقت",
     "buffer_size": "حجم التخزين المؤقت",
-    "tab_system": "النظام"
+    "tab_system": "النظام",
+    "always_on_top": "دائمًا في المقدمة",
+    "always_on_top_desc": "إبقاء Wazoo مثبتًا فوق جميع النوافذ الأخرى"
   },
   "search": {
     "folder": "مجلد:",
@@ -107,7 +113,8 @@
       "toggle_transcript": "تبديل نصوص الترجمة",
       "toggle_history": "تبديل سجل التشغيل",
       "random_seek": "بحث عشوائي",
-      "show_title_overlay": "إظهار شاشة العنوان (HUD)"
+      "show_title_overlay": "إظهار شاشة العنوان (HUD)",
+      "toggle_pin": "تبديل الوضع دائمًا في المقدمة"
     }
   },
   "file_picker": {

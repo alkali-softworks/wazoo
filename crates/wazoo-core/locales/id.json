@@ -12,7 +12,9 @@
     "files": "Berkas",
     "menu": "Menu",
     "or": "atau",
-    "miscellaneous": "Lain-lain"
+    "miscellaneous": "Lain-lain",
+    "pin_window": "Sematkan Jendela",
+    "unpin_window": "Lepas Sematan Jendela"
   },
   "app": {
     "drag_to_move": "Seret untuk memindahkan",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "Mode balik aktif",
     "flip_mode_disabled": "Mode balik nonaktif",
     "no_players": "Tidak ada pemutar aktif",
-    "no_videos_found": "Tidak ada video yang ditemukan untuk kueri"
+    "no_videos_found": "Tidak ada video yang ditemukan untuk kueri",
+    "always_on_top_enabled": "Selalu di atas diaktifkan",
+    "always_on_top_disabled": "Selalu di atas dinonaktifkan"
   },
   "settings": {
     "title": "Pengaturan",
@@ -67,7 +71,9 @@
     "reset_playback": "Atur Ulang ke Default",
     "buffer_duration": "Durasi Buffer",
     "buffer_size": "Ukuran Buffer",
-    "tab_system": "Sistem"
+    "tab_system": "Sistem",
+    "always_on_top": "Selalu di Atas",
+    "always_on_top_desc": "Pertahankan Wazoo disematkan di atas jendela lainnya"
   },
   "search": {
     "folder": "Folder:",
@@ -107,7 +113,8 @@
       "toggle_transcript": "Beralih Transkrip Subtitle",
       "toggle_history": "Alihkan riwayat putar",
       "random_seek": "Pencarian Acak",
-      "show_title_overlay": "Tampilkan HUD Judul"
+      "show_title_overlay": "Tampilkan HUD Judul",
+      "toggle_pin": "Alihkan Selalu di Atas"
     }
   },
   "file_picker": {

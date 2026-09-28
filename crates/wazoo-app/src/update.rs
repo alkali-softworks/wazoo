@@ -298,6 +298,7 @@ impl WazooApp {
                         return self.update(Message::AddBookmarkFocused);
                     }
                 }
+                KeyAction::ToggleAlwaysOnTop => return self.update(Message::ToggleAlwaysOnTop),
             }
         }
         Task::none()
@@ -394,7 +395,13 @@ impl WazooApp {
             // =========================================================================
             Message::WindowIdReceived(id) => {
                 self.window_id = Some(id);
-                return iced::window::gain_focus(id);
+                let focus_task = iced::window::gain_focus(id);
+                let level_task = if self.settings.is_always_on_top {
+                    iced::window::set_level(id, iced::window::Level::AlwaysOnTop)
+                } else {
+                    Task::none()
+                };
+                return Task::batch([focus_task, level_task]);
             }
             Message::GainWindowFocus => {
                 if let Some(id) = self.window_id {
@@ -413,6 +420,14 @@ impl WazooApp {
                 self.is_window_focused = true;
                 self.unfocused_frame_ticks = 0;
                 self.is_alt_pressed = false;
+                if self.settings.is_always_on_top && self.ghost_passthrough_active {
+                    self.ghost_passthrough_active = false;
+                    self.show_titlebar = true;
+                    self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+                    if let Some(id) = self.window_id {
+                        return iced::window::disable_mouse_passthrough(id);
+                    }
+                }
             }
             Message::WindowUnfocused => {
                 self.is_window_focused = false;
@@ -431,6 +446,12 @@ impl WazooApp {
                 if self.window_bounds_dirty {
                     self.window_bounds_dirty = false;
                     let _ = self.config_mgr.save_settings(&self.settings);
+                }
+                if self.settings.is_always_on_top && !self.ghost_passthrough_active && !self.is_modal_or_menu_open() {
+                    self.ghost_passthrough_active = true;
+                    if let Some(id) = self.window_id {
+                        return iced::window::enable_mouse_passthrough(id);
+                    }
                 }
             }
             Message::WindowMoved(id, point) => {
@@ -1424,6 +1445,40 @@ impl WazooApp {
                     _ => self.t("wazoo.flip_mode_disabled"),
                 });
                 self.toast_time_remaining = DEFAULT_TOAST_SECS;
+            }
+            Message::ToggleAlwaysOnTop => {
+                self.settings.is_always_on_top = !self.settings.is_always_on_top;
+                if !self.settings.is_always_on_top {
+                    self.ghost_passthrough_active = false;
+                }
+                let _ = self.config_mgr.save_settings(&self.settings);
+
+                self.toast_message = Some(if self.settings.is_always_on_top {
+                    self.t("wazoo.always_on_top_enabled")
+                } else {
+                    self.t("wazoo.always_on_top_disabled")
+                });
+                self.toast_time_remaining = DEFAULT_TOAST_SECS;
+
+                if let Some(id) = self.window_id {
+                    let level = if self.settings.is_always_on_top {
+                        iced::window::Level::AlwaysOnTop
+                    } else {
+                        iced::window::Level::Normal
+                    };
+                    let level_task = iced::window::set_level(id, level);
+                    let passthrough_task = if self.settings.is_always_on_top {
+                        if !self.is_window_focused && !self.is_modal_or_menu_open() {
+                            self.ghost_passthrough_active = true;
+                            iced::window::enable_mouse_passthrough(id)
+                        } else {
+                            Task::none()
+                        }
+                    } else {
+                        iced::window::disable_mouse_passthrough(id)
+                    };
+                    return Task::batch([level_task, passthrough_task]);
+                }
             }
             Message::SetScrollSpeed(speed) => {
                 self.settings.scroll_speed = speed.clamp(0.1, 10.0);

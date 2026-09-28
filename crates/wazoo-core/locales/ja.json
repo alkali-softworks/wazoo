@@ -12,7 +12,9 @@
     "files": "ファイル",
     "menu": "メニュー",
     "or": "または",
-    "miscellaneous": "その他"
+    "miscellaneous": "その他",
+    "pin_window": "ウィンドウを最前面に固定",
+    "unpin_window": "最前面固定を解除"
   },
   "app": {
     "drag_to_move": "ドラッグして移動",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "フリップモード有効",
     "flip_mode_disabled": "フリップモード無効",
     "no_players": "アクティブなプレイヤーはありません",
-    "no_videos_found": "クエリに一致する動画が見つかりません"
+    "no_videos_found": "クエリに一致する動画が見つかりません",
+    "always_on_top_enabled": "最前面表示を有効化",
+    "always_on_top_disabled": "最前面表示を解除"
   },
   "settings": {
     "title": "設定",
@@ -67,7 +71,9 @@
     "reset_playback": "初期値に戻す",
     "buffer_duration": "バッファ時間",
     "buffer_size": "バッファサイズ",
-    "tab_system": "システム"
+    "tab_system": "システム",
+    "always_on_top": "常に最前面に表示",
+    "always_on_top_desc": "他のウィンドウの手前に常に固定します"
   },
   "search": {
     "folder": "フォルダー:",
@@ -107,7 +113,8 @@
       "toggle_transcript": "字幕トランスクリプトの切り替え",
       "toggle_history": "再生履歴を切り替え",
       "random_seek": "ランダムシーク",
-      "show_title_overlay": "タイトルHUDを表示"
+      "show_title_overlay": "タイトルHUDを表示",
+      "toggle_pin": "最前面表示の切り替え"
     }
   },
   "file_picker": {

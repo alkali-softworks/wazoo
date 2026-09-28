@@ -153,6 +153,8 @@ pub struct WazooSettings {
     #[serde(default)]
     pub is_default_player: bool,
     #[serde(default)]
+    pub is_always_on_top: bool,
+    #[serde(default)]
     pub keybinds: KeybindSettings,
     #[serde(default)]
     pub gamma: f32,
@@ -191,6 +193,7 @@ impl Default for WazooSettings {
             bookmarks: Vec::new(),
             preferred_audio_language: None,
             is_default_player: false,
+            is_always_on_top: false,
             keybinds: KeybindSettings::default(),
             gamma: 0.0,
             contrast: 0.0,

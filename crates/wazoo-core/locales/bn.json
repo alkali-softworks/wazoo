@@ -12,7 +12,9 @@
     "files": "ফাইল",
     "menu": "মেনু",
     "or": "বা",
-    "miscellaneous": "বিবিধ"
+    "miscellaneous": "বিবিধ",
+    "pin_window": "উইন্ডো পিন করুন",
+    "unpin_window": "উইন্ডো আনপিন করুন"
   },
   "app": {
     "drag_to_move": "সরানোর জন্য টেনে আনুন",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "ফ্লিপ মোড সক্ষম",
     "flip_mode_disabled": "ফ্লিপ মোড নিষ্ক্রিয়",
     "no_players": "কোনো সক্রিয় প্লেয়ার নেই",
-    "no_videos_found": "অনুসন্ধানের জন্য কোনো ভিডিও পাওয়া যায়নি"
+    "no_videos_found": "অনুসন্ধানের জন্য কোনো ভিডিও পাওয়া যায়নি",
+    "always_on_top_enabled": "সর্বদা শীর্ষে সক্রিয় করা হয়েছে",
+    "always_on_top_disabled": "সর্বদা শীর্ষে নিষ্ক্রিয় করা হয়েছে"
   },
   "settings": {
     "title": "সেটিংস",
@@ -67,7 +71,9 @@
     "reset_playback": "ডিফল্টে রিসেট করুন",
     "buffer_duration": "বাফার সময়কাল",
     "buffer_size": "বাফার সাইজ",
-    "tab_system": "সিস্টেম"
+    "tab_system": "সিস্টেম",
+    "always_on_top": "সর্বদা শীর্ষে",
+    "always_on_top_desc": "Wazoo-কে অন্যান্য সমস্ত উইন্ডোর উপরে পিন করে রাখুন"
   },
   "search": {
     "folder": "ফোল্ডার:",
@@ -107,7 +113,8 @@
       "toggle_transcript": "সাবটাইটেল প্রতিলিপি টগল করুন",
       "toggle_history": "প্লেব্যাক ইতিহাস টগল করুন",
       "random_seek": "র‍্যান্ডম সিক",
-      "show_title_overlay": "শিরোনাম HUD দেখান"
+      "show_title_overlay": "শিরোনাম HUD দেখান",
+      "toggle_pin": "সর্বদা শীর্ষে টগল করুন"
     }
   },
   "file_picker": {

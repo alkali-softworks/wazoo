@@ -42,6 +42,7 @@ pub enum KeyAction {
     SpeedOrBookmarkDown,
     SpeedOrBookmarkUp,
     ToggleHistory,
+    ToggleAlwaysOnTop,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -79,6 +80,7 @@ pub struct KeybindSettings {
     pub player_4: String,
     pub speed_or_bookmark_down: String,
     pub speed_or_bookmark_up: String,
+    pub toggle_pin: String,
 }
 
 impl Default for KeybindSettings {
@@ -116,6 +118,7 @@ impl Default for KeybindSettings {
             player_4: "4".to_string(),
             speed_or_bookmark_down: "-".to_string(),
             speed_or_bookmark_up: "+, =".to_string(),
+            toggle_pin: "p, Alt+P".to_string(),
         }
     }
 }
@@ -154,6 +157,7 @@ impl KeybindSettings {
         "player_4",
         "speed_or_bookmark_down",
         "speed_or_bookmark_up",
+        "toggle_pin",
     ];
 
     /// Validates if a JSON value contains the complete dictionary of non-empty key bindings.
@@ -268,6 +272,9 @@ impl KeybindSettings {
         }
         if self.speed_or_bookmark_up.trim().is_empty() {
             self.speed_or_bookmark_up = def.speed_or_bookmark_up;
+        }
+        if self.toggle_pin.trim().is_empty() {
+            self.toggle_pin = def.toggle_pin;
         }
     }
 
@@ -393,6 +400,7 @@ impl KeybindSettings {
                 t("help.shortcuts.toggle_transcript"),
             ),
             (frame_display, t("help.shortcuts.prev_next_frame")),
+            ("P / Alt+P".to_string(), t("help.shortcuts.toggle_pin")),
             (close_display, t("help.shortcuts.close_app")),
             ("Alt + Drag".to_string(), t("help.shortcuts.move_window")),
         ]
@@ -563,6 +571,10 @@ impl KeybindSettings {
                 title: t("help.categories.system"),
                 icon: "⚙️",
                 shortcuts: vec![
+                    HelpShortcut {
+                        key: KeyDisplay::Single("P".to_string()),
+                        description: t("help.shortcuts.toggle_pin"),
+                    },
                     HelpShortcut {
                         key: KeyDisplay::Combo(vec!["Alt".to_string(), "Drag".to_string()]),
                         description: t("help.shortcuts.move_window"),

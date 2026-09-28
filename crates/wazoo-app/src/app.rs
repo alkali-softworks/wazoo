@@ -164,6 +164,7 @@ pub struct WazooApp {
     pub player_nav_history: HashMap<PlayerId, PlayerNavHistory>,
     pub player_shuffle_modes: HashMap<PlayerId, bool>,
     pub flip_countdown: u64,
+    pub ghost_passthrough_active: bool,
 }
 
 impl WazooApp {
@@ -385,6 +386,7 @@ impl WazooApp {
             player_nav_history: HashMap::new(),
             player_shuffle_modes: HashMap::new(),
             flip_countdown: settings.flip_interval_secs.max(1),
+            ghost_passthrough_active: false,
         };
 
         // Initialize players based on settings or restore saved session

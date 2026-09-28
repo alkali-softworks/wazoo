@@ -12,7 +12,9 @@
     "files": "File",
     "menu": "Menu",
     "or": "o",
-    "miscellaneous": "Varie"
+    "miscellaneous": "Varie",
+    "pin_window": "Blocca finestra in primo piano",
+    "unpin_window": "Sblocca finestra"
   },
   "app": {
     "drag_to_move": "Trascina per spostare",
@@ -40,7 +42,9 @@
     "flip_mode_enabled": "Modalità ribaltamento abilitata",
     "flip_mode_disabled": "Modalità ribaltamento disabilitata",
     "no_players": "Nessun lettore attivo",
-    "no_videos_found": "Nessun video trovato per la query"
+    "no_videos_found": "Nessun video trovato per la query",
+    "always_on_top_enabled": "Sempre in primo piano attivato",
+    "always_on_top_disabled": "Sempre in primo piano disattivato"
   },
   "settings": {
     "title": "Impostazioni",
@@ -67,7 +71,9 @@
     "reset_playback": "Ripristina predefiniti",
     "buffer_duration": "Durata buffer",
     "buffer_size": "Dimensione buffer",
-    "tab_system": "Sistema"
+    "tab_system": "Sistema",
+    "always_on_top": "Sempre in primo piano",
+    "always_on_top_desc": "Mantieni Wazoo in primo piano rispetto alle altre finestre"
   },
   "search": {
     "folder": "Cartella:",
@@ -107,7 +113,8 @@
       "toggle_transcript": "Attiva/disattiva trascrizione sottotitoli",
       "toggle_history": "Attiva/disattiva cronologia di riproduzione",
       "random_seek": "Ricerca casuale",
-      "show_title_overlay": "Mostra HUD titolo"
+      "show_title_overlay": "Mostra HUD titolo",
+      "toggle_pin": "Attiva/disattiva sempre in primo piano"
     }
   },
   "file_picker": {
