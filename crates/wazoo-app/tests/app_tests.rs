@@ -979,6 +979,26 @@ fn test_menu_modal_open_close_and_render() {
 }
 
 #[test]
+fn test_search_and_bookmarks_modal_render() {
+    let (mut app, _) = new_test_app();
+    let _ = app.update(Message::OpenSearchModal);
+    assert!(app.show_search_modal);
+    {
+        let _search_view = app.view_search_modal();
+    }
+    let _ = app.update(Message::CloseSearchModal);
+    assert!(!app.show_search_modal);
+
+    let _ = app.update(Message::ToggleBookmarksModal);
+    assert!(app.show_bookmarks_modal);
+    {
+        let _bookmarks_view = app.view_bookmarks_modal();
+    }
+    let _ = app.update(Message::CloseBookmarksModal);
+    assert!(!app.show_bookmarks_modal);
+}
+
+#[test]
 fn test_top_menu_slide_down_animation() {
     use wazoo_app::app::{TITLEBAR_FADE_TICKS, TITLEBAR_SHOW_DELAY_TICKS, TITLEBAR_SLIDE_TICKS};
 
