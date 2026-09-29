@@ -6,9 +6,7 @@
  * Implements keyboard shortcut routing, modal key management, and mouse/drag tracking.
  */
 
-use crate::app::{
-    PLAYER_OVERLAY_FADE_TICKS, TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS, WazooApp,
-};
+use crate::app::{PLAYER_OVERLAY_FADE_TICKS, TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS, WazooApp};
 use crate::keybinds::find_key_action;
 use crate::message::Message;
 use iced::{
@@ -62,7 +60,9 @@ impl WazooApp {
             return self.update(Message::OpenHelpModal);
         }
 
-        if let Some(action) = find_key_action(&self.settings.keybinds, &key, self.window.is_alt_pressed) {
+        if let Some(action) =
+            find_key_action(&self.settings.keybinds, &key, self.window.is_alt_pressed)
+        {
             match action {
                 KeyAction::CloseApp => return self.update(Message::CloseApp),
                 KeyAction::TogglePlayPause => return self.update(Message::TogglePlayFocused),
@@ -165,15 +165,17 @@ impl WazooApp {
             if self.titlebar.show {
                 self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
                 if self.hovered_player_id.is_some() {
-                    let current_fade =
-                        self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                    let current_fade = self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                     self.overlay.ticks = self.overlay.ticks.min(current_fade);
                 }
             }
         } else {
             self.titlebar.hover_ticks = 0;
             // When cursor leaves the titlebar area, start fading out smoothly without sticky delay
-            if self.titlebar.show && !self.titlebar.show_dropdown_menu && !self.titlebar.drag_pending {
+            if self.titlebar.show
+                && !self.titlebar.show_dropdown_menu
+                && !self.titlebar.drag_pending
+            {
                 let target_hide = if self.titlebar.slide_ticks < crate::app::TITLEBAR_SLIDE_TICKS {
                     (self.titlebar.slide_ticks * TITLEBAR_FADE_TICKS)
                         / crate::app::TITLEBAR_SLIDE_TICKS

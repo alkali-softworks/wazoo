@@ -51,11 +51,7 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 .size(14)
                 .color(theme::COLOR_TEXT_MUTED),
             Space::new().width(Length::Fill),
-            badge_with_reset(
-                contrast_str,
-                contrast_val != 0,
-                Message::SetContrast(0.0)
-            ),
+            badge_with_reset(contrast_str, contrast_val != 0, Message::SetContrast(0.0)),
         ]
         .align_y(Alignment::Center),
         cursor::PointerCursor::new(

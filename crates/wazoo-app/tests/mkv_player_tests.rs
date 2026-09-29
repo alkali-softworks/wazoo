@@ -169,5 +169,10 @@ fn test_clear_misc_videos_wipe_button() {
     assert_eq!(app.db.get_misc_video_count().unwrap(), 0);
     assert!(!app.db.has_misc_videos().unwrap());
     assert_eq!(app.db.get_video_count().unwrap(), 1);
-    assert!(app.overlay.toast_message.unwrap().contains("Cleared 2 miscellaneous files"));
+    assert!(
+        app.overlay
+            .toast_message
+            .unwrap()
+            .contains("Cleared 2 miscellaneous files")
+    );
 }

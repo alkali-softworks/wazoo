@@ -467,4 +467,3 @@ impl Scanner {
         Ok(inserted)
     }
 }
-

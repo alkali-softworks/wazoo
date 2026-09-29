@@ -38,7 +38,10 @@ impl WazooApp {
             let badge = container(
                 text(self.t_with(
                     "history.count",
-                    &[("count", &format::format_number(self.drawers.play_history.len()))],
+                    &[(
+                        "count",
+                        &format::format_number(self.drawers.play_history.len()),
+                    )],
                 ))
                 .size(11),
             )
@@ -67,10 +70,13 @@ impl WazooApp {
         );
 
         // 2. Search filter input
-        let search_input = text_input(&self.t("history.search_placeholder"), &self.drawers.history_search)
-            .on_input(Message::HistorySearchChanged)
-            .style(theme::dark_input_style)
-            .padding(8);
+        let search_input = text_input(
+            &self.t("history.search_placeholder"),
+            &self.drawers.history_search,
+        )
+        .on_input(Message::HistorySearchChanged)
+        .style(theme::dark_input_style)
+        .padding(8);
 
         // 3. History list (reverse-chronological: most recent at top)
         let mut list_col = column![].spacing(3);
@@ -104,9 +110,12 @@ impl WazooApp {
         } else if filtered_items.is_empty() {
             list_col = list_col.push(
                 container(
-                    text(self.t_with("transcript.no_match", &[("query", &self.drawers.history_search)]))
-                        .size(13)
-                        .color(theme::COLOR_TEXT_MUTED),
+                    text(self.t_with(
+                        "transcript.no_match",
+                        &[("query", &self.drawers.history_search)],
+                    ))
+                    .size(13)
+                    .color(theme::COLOR_TEXT_MUTED),
                 )
                 .padding([20, 0])
                 .center_x(Length::Fill),
@@ -158,7 +167,7 @@ impl WazooApp {
             .width(Length::Fill);
 
         let content = column![
-            Space::new().height(Length::Fixed(24.0)),
+            Space::new().height(Length::Fixed(14.0)),
             header_row,
             search_input,
             scrollable(scrollable_list)

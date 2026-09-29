@@ -15,13 +15,13 @@ use crate::assets::{
 use crate::cursor;
 use crate::format;
 use crate::message::Message;
+use crate::state::AppPlayer;
 use crate::theme;
 use iced::{
     Alignment, Element, Length, Theme,
     widget::{Space, Stack, button, column, container, row, slider, svg, text},
 };
 use wazoo_core::PlaybackMode;
-use crate::state::AppPlayer;
 
 impl WazooApp {
     pub(crate) fn view_title_pill<'a>(&self, path: &str, alpha: f32) -> Element<'a, Message> {

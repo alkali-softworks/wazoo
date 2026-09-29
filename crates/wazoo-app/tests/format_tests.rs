@@ -39,4 +39,3 @@ fn test_ucwords() {
     assert_eq!(ucwords("action-packed"), "Action-Packed");
     assert_eq!(ucwords(""), "");
 }
-

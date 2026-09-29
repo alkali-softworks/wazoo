@@ -5,11 +5,7 @@
  */
 
 use super::colors::*;
-use iced::{
-    Background, Border, Color, Shadow, Theme, Vector,
-    overlay::menu,
-    widget::text_input,
-};
+use iced::{Background, Border, Color, Shadow, Theme, Vector, overlay::menu, widget::text_input};
 
 // Text Input Style
 pub fn dark_input_style(_theme: &Theme, status: text_input::Status) -> text_input::Style {

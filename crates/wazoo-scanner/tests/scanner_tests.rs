@@ -1,6 +1,6 @@
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
-use wazoo_scanner::{clean_video_name, is_video_file, probe_video_metadata, ScanStage, Scanner};
+use std::sync::atomic::AtomicBool;
+use wazoo_scanner::{ScanStage, Scanner, clean_video_name, is_video_file, probe_video_metadata};
 
 #[test]
 fn test_clean_video_name() {

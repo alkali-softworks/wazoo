@@ -7,13 +7,13 @@
 use crate::app::WazooApp;
 use crate::message::Message;
 use crate::scroll_view;
+use crate::state::AppPlayer;
 use crate::theme;
 use iced::{
     Element, Length,
     widget::{column, container, row, text},
 };
 use wazoo_core::{LayoutMode, PlaybackMode};
-use crate::state::AppPlayer;
 
 impl WazooApp {
     pub(crate) fn view_players(&self) -> Element<'_, Message> {

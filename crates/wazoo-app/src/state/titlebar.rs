@@ -4,9 +4,7 @@
  * Titlebar & Dropdown Menu State
  */
 
-use crate::app::{
-    DROPDOWN_MENU_SLIDE_TICKS, TITLEBAR_FADE_TICKS, TITLEBAR_SLIDE_TICKS,
-};
+use crate::app::{DROPDOWN_MENU_SLIDE_TICKS, TITLEBAR_FADE_TICKS, TITLEBAR_SLIDE_TICKS};
 use iced::Point;
 use std::time::Instant;
 

@@ -14,9 +14,9 @@ use crate::app::{
 };
 use crate::format;
 use crate::message::Message;
+use crate::state::AppPlayer;
 use iced::Task;
 use std::time::Duration;
-use crate::state::AppPlayer;
 use wazoo_core::{Bookmark, LayoutMode, PlaybackMode};
 use wazoo_media::PlayerId;
 
@@ -90,7 +90,11 @@ impl WazooApp {
                         let end_str = format::format_time_str(o.as_secs_f64());
                         self.overlay.toast_message = Some(self.t_with(
                             "player.loop_range",
-                            &[("player", &id_str), ("start", &start_str), ("end", &end_str)],
+                            &[
+                                ("player", &id_str),
+                                ("start", &start_str),
+                                ("end", &end_str),
+                            ],
                         ));
                     } else {
                         self.overlay.toast_message = Some(self.t_with(
@@ -115,7 +119,11 @@ impl WazooApp {
                         let end_str = format::format_time_str(o.as_secs_f64());
                         self.overlay.toast_message = Some(self.t_with(
                             "player.loop_range",
-                            &[("player", &id_str), ("start", &start_str), ("end", &end_str)],
+                            &[
+                                ("player", &id_str),
+                                ("start", &start_str),
+                                ("end", &end_str),
+                            ],
                         ));
                     } else {
                         self.overlay.toast_message = Some(self.t_with(
@@ -230,7 +238,8 @@ impl WazooApp {
             }
             Message::PlayerHovered(id) => {
                 if self.is_modal_or_menu_open()
-                    || (self.titlebar.show && self.is_point_in_titlebar(self.window.cursor_position))
+                    || (self.titlebar.show
+                        && self.is_point_in_titlebar(self.window.cursor_position))
                 {
                     if self.hovered_player_id == Some(id) {
                         let current_fade =
@@ -248,8 +257,7 @@ impl WazooApp {
                     return Task::none();
                 }
                 if self.hovered_player_id == Some(id) {
-                    let current_fade =
-                        self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                    let current_fade = self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                     self.overlay.ticks = self.overlay.ticks.min(current_fade);
                 }
                 Task::none()
@@ -535,9 +543,7 @@ impl WazooApp {
 
                 // If shrinking player count, preserve the focused player
                 if target < self.players.len() {
-                    if self.focused_idx < self.players.len()
-                        && self.focused_idx >= target
-                    {
+                    if self.focused_idx < self.players.len() && self.focused_idx >= target {
                         let focused = self.players.remove(self.focused_idx);
                         self.players.insert(0, focused);
                         self.focused_idx = 0;
@@ -702,7 +708,8 @@ impl WazooApp {
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
                             self.record_play_history(&handle.state.path);
-                            self.players.push(AppPlayer::new(handle, self.default_shuffle_mode));
+                            self.players
+                                .push(AppPlayer::new(handle, self.default_shuffle_mode));
                             return self.trigger_preload_task();
                         } else {
                             self.preloaded_player = Some(handle);
@@ -1000,7 +1007,8 @@ impl WazooApp {
                 } else {
                     self.t("player.subtitles_off")
                 };
-                self.overlay.toast_message = Some(self.t_with("player.subtitles", &[("status", &status)]));
+                self.overlay.toast_message =
+                    Some(self.t_with("player.subtitles", &[("status", &status)]));
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                 Task::none()
             }

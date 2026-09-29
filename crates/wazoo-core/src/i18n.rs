@@ -223,4 +223,3 @@ pub fn is_all_folder(folder: &str) -> bool {
     }
     false
 }
-

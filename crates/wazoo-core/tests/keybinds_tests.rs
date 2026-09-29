@@ -79,7 +79,10 @@ fn test_help_categories_generation() {
 
     // Drawer category contains both H and F for file drawer
     let file_drawer_item = &categories[1].shortcuts[0];
-    assert_eq!(file_drawer_item.description, "help.shortcuts.toggle_file_picker");
+    assert_eq!(
+        file_drawer_item.description,
+        "help.shortcuts.toggle_file_picker"
+    );
     match &file_drawer_item.key {
         wazoo_core::KeyDisplay::Alternatives(keys) => {
             assert_eq!(keys, &vec!["H".to_string(), "F".to_string()]);

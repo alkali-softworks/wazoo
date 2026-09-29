@@ -108,7 +108,7 @@ impl WazooApp {
                         .padding([2, 6])
                         .style(|_theme: &Theme| container::Style {
                             background: Some(iced::Background::Color(iced::Color::from_rgba(
-                                1.0, 1.0, 1.0, 0.06
+                                1.0, 1.0, 1.0, 0.06,
                             ))),
                             border: iced::Border {
                                 radius: 4.0.into(),

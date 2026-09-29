@@ -5,10 +5,7 @@
  */
 
 use super::colors::*;
-use iced::{
-    Background, Border, Color, Theme,
-    widget::slider,
-};
+use iced::{Background, Border, Color, Theme, widget::slider};
 
 // Progress Bar Slider Style (Vue emerald green #42b883)
 #[allow(dead_code)]

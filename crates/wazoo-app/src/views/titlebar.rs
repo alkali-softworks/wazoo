@@ -171,12 +171,7 @@ impl WazooApp {
             Space::new().width(Length::Fill).into(),
         ];
         if let Some(h) = hint {
-            row_children.push(
-                text(h)
-                    .size(11)
-                    .color(theme::COLOR_TEXT_MUTED)
-                    .into(),
-            );
+            row_children.push(text(h).size(11).color(theme::COLOR_TEXT_MUTED).into());
         }
         cursor::PointerCursor::new(
             button(

@@ -147,9 +147,7 @@ impl WazooApp {
             let header_btn = button(
                 row![
                     text(chevron).size(10).color(theme::COLOR_PRIMARY),
-                    text(display_name)
-                        .size(13)
-                        .color(iced::Color::WHITE),
+                    text(display_name).size(13).color(iced::Color::WHITE),
                     Space::new().width(Length::Fill),
                     text(format!("({})", format::format_number(count)))
                         .size(12)
@@ -292,7 +290,7 @@ impl WazooApp {
         );
 
         let content = column![
-            Space::new().height(Length::Fixed(24.0)),
+            Space::new().height(Length::Fixed(14.0)),
             header_row,
             text_input(
                 &self.t("file_picker.search_placeholder"),
