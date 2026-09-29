@@ -14,7 +14,6 @@ use wazoo_core::Bookmark;
 use wazoo_media::{PlayerId, VideoHandle};
 use wazoo_scanner::ScanProgress;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub enum Message {
     // Window management & Events
@@ -163,7 +162,6 @@ pub enum Message {
     AnimationTick,
     VideoFrameTick,
     WatchdogTick,
-    FlipModeTick,
     DismissToast,
     ModalCardClicked,
 }

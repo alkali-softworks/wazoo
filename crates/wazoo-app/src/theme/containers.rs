@@ -128,12 +128,6 @@ pub fn focus_ring_style(_theme: &Theme) -> container::Style {
     }
 }
 
-// Title Pill Style (top-left attached)
-#[allow(dead_code)]
-pub fn title_pill_style(theme: &Theme) -> container::Style {
-    title_pill_style_with_alpha(1.0)(theme)
-}
-
 pub fn title_pill_style_with_alpha(alpha: f32) -> impl Fn(&Theme) -> container::Style {
     move |_theme| container::Style {
         background: Some(Background::Color(with_alpha(COLOR_OVERLAY_DARK, alpha))),
@@ -149,12 +143,6 @@ pub fn title_pill_style_with_alpha(alpha: f32) -> impl Fn(&Theme) -> container::
         },
         ..Default::default()
     }
-}
-
-// Controls Bottom Overlay Style
-#[allow(dead_code)]
-pub fn controls_overlay_style(theme: &Theme) -> container::Style {
-    controls_overlay_style_with_alpha(1.0)(theme)
 }
 
 pub fn controls_overlay_style_with_alpha(alpha: f32) -> impl Fn(&Theme) -> container::Style {

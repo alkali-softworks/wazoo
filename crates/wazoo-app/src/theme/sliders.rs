@@ -7,12 +7,6 @@
 use super::colors::*;
 use iced::{Background, Border, Color, Theme, widget::slider};
 
-// Progress Bar Slider Style (Vue emerald green #42b883)
-#[allow(dead_code)]
-pub fn progress_slider_style(theme: &Theme, status: slider::Status) -> slider::Style {
-    progress_slider_style_with_alpha(1.0)(theme, status)
-}
-
 pub fn progress_slider_style_with_alpha(
     alpha: f32,
 ) -> impl Fn(&Theme, slider::Status) -> slider::Style {
