@@ -16,14 +16,10 @@ pub mod scanner;
 pub mod search;
 pub mod window;
 
-use crate::app::{
-    PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS,
-    TITLEBAR_SHOW_DELAY_TICKS, WazooApp,
-};
+use crate::app::{PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, WazooApp};
 use crate::message::Message;
 use crate::state::{AppPlayer, PlayerList};
 use iced::Task;
-use std::time::Duration;
 use wazoo_core::PlaybackMode;
 use wazoo_media::VideoHandle;
 
@@ -82,130 +78,15 @@ impl WazooApp {
             }
 
             Message::VideoFrameTick => {
-                if !self.window.is_focused {
-                    self.window.unfocused_frame_ticks =
-                        self.window.unfocused_frame_ticks.wrapping_add(1);
-                    // When the window is behind another window or unfocused, throttle frame updates
-                    // to ~30 FPS (every 2nd tick) so background playback remains smooth (movie standard)
-                    // without hammering GPU presentation swapchains.
-                    if !self.window.unfocused_frame_ticks.is_multiple_of(2) {
-                        return Task::none();
-                    }
+                if self.should_throttle_unfocused_frame() {
+                    return Task::none();
                 }
-                self.overlay.spinner_ticks = self.overlay.spinner_ticks.wrapping_add(1);
-                if self.open_audio_menu_id.is_some() {
-                    self.overlay.ticks = PLAYER_OVERLAY_HIDE_TICKS;
-                    self.overlay.fade_in_ticks = PLAYER_OVERLAY_FADE_TICKS;
-                } else if self.overlay.ticks > 0 {
-                    if self.overlay.fade_in_ticks < PLAYER_OVERLAY_FADE_TICKS {
-                        self.overlay.fade_in_ticks += 1;
-                    }
-                    self.overlay.ticks -= 1;
-                    if self.overlay.ticks == 0 {
-                        self.hovered_player_id = None;
-                        self.overlay.fade_in_ticks = 0;
-                    }
-                } else {
-                    self.overlay.fade_in_ticks = 0;
-                }
-                if self.overlay.title_pill_ticks > 0 {
-                    self.overlay.title_pill_ticks -= 1;
-                }
-                if self.overlay.focus_border_ticks > 0 {
-                    self.overlay.focus_border_ticks -= 1;
-                }
-                if self.drawers.file_picker_debounce_ticks > 0 {
-                    self.drawers.file_picker_debounce_ticks -= 1;
-                    if self.drawers.file_picker_debounce_ticks == 0 {
-                        self.apply_file_picker_search();
-                    }
-                }
-                if self.window.is_dragging
-                    || self.titlebar.drag_pending
-                    || self.is_point_in_titlebar(self.window.cursor_position)
-                    || self.titlebar.show_dropdown_menu
-                {
-                    if self.window.is_dragging || self.titlebar.drag_pending {
-                        let is_still_moving = self
-                            .window
-                            .last_drag_move
-                            .map(|t| t.elapsed() < Duration::from_millis(300))
-                            .unwrap_or(false);
-                        if !is_still_moving
-                            && !self.titlebar.drag_pending
-                            && !self.is_point_in_titlebar(self.window.cursor_position)
-                        {
-                            self.window.is_dragging = false;
-                            self.window.last_drag_move = None;
-                            if self.titlebar.hide_ticks > TITLEBAR_FADE_TICKS {
-                                self.titlebar.hide_ticks = TITLEBAR_FADE_TICKS;
-                            }
-                        } else {
-                            self.titlebar.show = true;
-                            self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
-                            self.titlebar.hover_ticks = 0;
-                            self.titlebar.slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
-                        }
-                    } else if self.titlebar.show_dropdown_menu {
-                        self.titlebar.show = true;
-                        self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
-                        self.titlebar.hover_ticks = 0;
-                        self.titlebar.slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
-                        if self.titlebar.dropdown_menu_slide_ticks
-                            < crate::app::DROPDOWN_MENU_SLIDE_TICKS
-                        {
-                            self.titlebar.dropdown_menu_slide_ticks += 1;
-                        }
-                    } else if self.titlebar.show {
-                        self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
-                        if self.titlebar.slide_ticks < crate::app::TITLEBAR_SLIDE_TICKS {
-                            self.titlebar.slide_ticks += 1;
-                        }
-                    } else {
-                        self.titlebar.hover_ticks += 1;
-                        if self.titlebar.hover_ticks >= TITLEBAR_SHOW_DELAY_TICKS {
-                            self.titlebar.show = true;
-                            self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
-                            self.titlebar.hover_ticks = 0;
-                            self.titlebar.slide_ticks = 0;
-                            if self.hovered_player_id.is_some() {
-                                let current_fade =
-                                    self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
-                                self.overlay.ticks = self.overlay.ticks.min(current_fade);
-                            }
-                        }
-                    }
-                } else {
-                    self.titlebar.hover_ticks = 0;
-                    self.titlebar.dropdown_menu_slide_ticks = 0;
-                    if self.titlebar.hide_ticks > 0 {
-                        self.titlebar.hide_ticks -= 1;
-                        if self.titlebar.hide_ticks == 0 {
-                            self.titlebar.show = false;
-                            self.titlebar.slide_ticks = 0;
-                        }
-                    }
-                }
-                for p in &mut self.players {
-                    if p.update_frame() {
-                        p.stop_loading();
-                    }
-                }
-                if self.settings.playback_mode == PlaybackMode::Scroll {
-                    let mut heights_changed = false;
-                    for p in &self.players {
-                        let h = match p.aspect_ratio() {
-                            Some(ar) => self.scroll_engine.item_height_for_aspect_ratio(ar),
-                            None => self.scroll_engine.default_item_height(),
-                        };
-                        if self.scroll_engine.update_height(p.id, h) {
-                            heights_changed = true;
-                        }
-                    }
-                    if heights_changed {
-                        self.scroll_engine.recalculate_positions();
-                    }
-                }
+
+                self.tick_overlay_animations();
+                self.tick_titlebar_animation();
+                self.update_player_frames();
+                self.sync_scroll_item_heights();
+
                 Task::none()
             }
 
@@ -388,6 +269,64 @@ impl WazooApp {
             // Playback, Layout & Multi-Player Navigation
             // =========================================================================
             _ => self.update_playback(message),
+        }
+    }
+}
+
+impl WazooApp {
+    /// Advances HUD overlays, spinner rotations, and file picker search debouncing.
+    fn tick_overlay_animations(&mut self) {
+        self.overlay.spinner_ticks = self.overlay.spinner_ticks.wrapping_add(1);
+
+        if self.open_audio_menu_id.is_some() {
+            self.overlay.ticks = PLAYER_OVERLAY_HIDE_TICKS;
+            self.overlay.fade_in_ticks = PLAYER_OVERLAY_FADE_TICKS;
+        } else if self.overlay.ticks > 0 {
+            if self.overlay.fade_in_ticks < PLAYER_OVERLAY_FADE_TICKS {
+                self.overlay.fade_in_ticks += 1;
+            }
+            self.overlay.ticks -= 1;
+            if self.overlay.ticks == 0 {
+                self.hovered_player_id = None;
+                self.overlay.fade_in_ticks = 0;
+            }
+        } else {
+            self.overlay.fade_in_ticks = 0;
+        }
+
+        self.overlay.title_pill_ticks = self.overlay.title_pill_ticks.saturating_sub(1);
+        self.overlay.focus_border_ticks = self.overlay.focus_border_ticks.saturating_sub(1);
+
+        if self.drawers.file_picker_debounce_ticks > 0 {
+            self.drawers.file_picker_debounce_ticks -= 1;
+            if self.drawers.file_picker_debounce_ticks == 0 {
+                self.apply_file_picker_search();
+            }
+        }
+    }
+
+    /// Renders new video frames on all active player handles, clearing loading state upon completion.
+    fn update_player_frames(&mut self) {
+        for p in &mut self.players {
+            if p.update_frame() {
+                p.stop_loading();
+            }
+        }
+    }
+
+    /// Synchronizes scroll stream layout heights with players' native aspect ratios.
+    fn sync_scroll_item_heights(&mut self) {
+        if self.settings.playback_mode == PlaybackMode::Scroll {
+            let mut heights_changed = false;
+            for p in &self.players {
+                let h = self.calculate_player_scroll_height(p);
+                if self.scroll_engine.update_height(p.id, h) {
+                    heights_changed = true;
+                }
+            }
+            if heights_changed {
+                self.scroll_engine.recalculate_positions();
+            }
         }
     }
 }
