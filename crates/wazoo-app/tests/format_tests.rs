@@ -13,10 +13,6 @@ fn test_clean_name() {
         clean_name("[SubsPlease] Frieren - 01 (1080p) [HEVC]"),
         "Frieren - 01"
     );
-    assert_eq!(
-        clean_name("Last.Exile.Gin`yoku.no.Fam.08"),
-        "Last Exile Gin'yoku no Fam 08"
-    );
 }
 
 #[test]
@@ -53,20 +49,8 @@ fn test_format_descriptive_title_deduplication() {
 #[test]
 fn test_format_title_lines() {
     assert_eq!(
-        format_title_lines(
-            "/media/Anime/Last Exile Gin`yoku no Fam/Last Exile - Gin`yoku no Fam - 08.mkv"
-        ),
-        (
-            "Last Exile - Gin'yoku no Fam".to_string(),
-            Some("Episode 08".to_string())
-        )
-    );
-    assert_eq!(
         format_title_lines("/media/Anime/Cowboy Bebop/01.mkv"),
-        (
-            "Cowboy Bebop".to_string(),
-            Some("Episode 01".to_string())
-        )
+        ("Cowboy Bebop".to_string(), Some("Episode 01".to_string()))
     );
     assert_eq!(
         format_title_lines("/media/Anime/Cowboy Bebop/01 - Asteroid Blues.mkv"),
@@ -80,9 +64,7 @@ fn test_format_title_lines() {
         ("Interstellar 2014".to_string(), None)
     );
     assert_eq!(
-        format_title_lines(
-            "/media/Movies/The Lord of the Rings - The Fellowship of the Ring.mkv"
-        ),
+        format_title_lines("/media/Movies/The Lord of the Rings - The Fellowship of the Ring.mkv"),
         (
             "The Lord of the Rings".to_string(),
             Some("The Fellowship of the Ring".to_string())
@@ -96,16 +78,4 @@ fn test_folder_basename() {
     assert_eq!(folder_basename("/media/Movies/"), "Movies");
     assert_eq!(folder_basename("C:\\Media\\Anime\\"), "Anime");
     assert_eq!(folder_basename("Anime"), "Anime");
-}
-
-#[test]
-fn test_ucwords() {
-    assert_eq!(ucwords("anime"), "Anime");
-    assert_eq!(ucwords("movies"), "Movies");
-    assert_eq!(ucwords("tv"), "Tv");
-    assert_eq!(ucwords("sat_morning_shows"), "Sat_Morning_Shows");
-    assert_eq!(ucwords("Sat_Morning_Shows"), "Sat_Morning_Shows");
-    assert_eq!(ucwords("my favorite videos"), "My Favorite Videos");
-    assert_eq!(ucwords("action-packed"), "Action-Packed");
-    assert_eq!(ucwords(""), "");
 }

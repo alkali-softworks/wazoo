@@ -79,8 +79,15 @@ static ROOT_CATEGORY_REGEXES: LazyLock<Vec<Regex>> = LazyLock::new(|| {
 static RE_EPISODE_NUM: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)^(?:EP?|Episode)\s*(\d+)$").unwrap());
 
-static RE_SEASON_EPISODE_START: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?i)^S\d+\s*E\d+").unwrap());
+static RE_SEASON_EPISODE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"(?i)\b(?:S|Season\s*)(\d{1,2})\s*(?:E|EP|Episode\s*)(\d{1,4}(?:(?:-[eE]?|[eE])\d{1,4})?)\b",
+    )
+    .unwrap()
+});
+
+static RE_X_EPISODE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)\b(\d{1,2})x(\d{1,4})\b").unwrap());
 
 static RE_SPECIAL_START: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)^(?:OVA|Special|SP)\b").unwrap());
@@ -91,6 +98,80 @@ static RE_LEADING_EPISODE: LazyLock<Regex> =
 static RE_TRAILING_EPISODE_MARKER: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?i)\s+((?:S\d+\s*)?(?:E|EP|Episode)\s*\d{1,3}|S\d+\s*E\d+|OVA\s*\d*)$").unwrap()
 });
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct SeasonEpisodeMatch<'a> {
+    pub prefix: &'a str,
+    pub marker: String,
+    pub suffix: &'a str,
+}
+
+pub fn find_season_episode_match(s: &str) -> Option<SeasonEpisodeMatch<'_>> {
+    if let Some(caps) = RE_SEASON_EPISODE.captures(s) {
+        let mat = caps.get(0).unwrap();
+        let s_num: u32 = caps[1].parse().unwrap_or(1);
+        let ep_part = &caps[2];
+        let marker = if ep_part.chars().all(|c| c.is_ascii_digit()) {
+            let e_num: u32 = ep_part.parse().unwrap_or(1);
+            if ep_part.len() >= 3 {
+                format!("S{s_num:02}E{ep_part}")
+            } else {
+                format!("S{s_num:02}E{e_num:02}")
+            }
+        } else {
+            let upper = ep_part.to_ascii_uppercase();
+            format!("S{:02}E{}", s_num, upper.trim_start_matches('E'))
+        };
+
+        let raw_prefix = &s[..mat.start()];
+        let raw_suffix = &s[mat.end()..];
+
+        let prefix = raw_prefix
+            .trim()
+            .trim_matches(|c: char| c == '-' || c == '—' || c == '–' || c == ':' || c == '.' || c == ' ')
+            .trim();
+        let suffix = raw_suffix
+            .trim()
+            .trim_matches(|c: char| c == '-' || c == '—' || c == '–' || c == ':' || c == '.' || c == ' ')
+            .trim();
+
+        return Some(SeasonEpisodeMatch {
+            prefix,
+            marker,
+            suffix,
+        });
+    }
+
+    if let Some(caps) = RE_X_EPISODE.captures(s) {
+        let mat = caps.get(0).unwrap();
+        let s_num: u32 = caps[1].parse().unwrap_or(1);
+        let e_num: u32 = caps[2].parse().unwrap_or(1);
+        let marker = format!("S{s_num:02}E{e_num:02}");
+
+        let raw_prefix = &s[..mat.start()];
+        let raw_suffix = &s[mat.end()..];
+
+        let prefix = raw_prefix
+            .trim()
+            .trim_matches(|c: char| c == '-' || c == '—' || c == '–' || c == ':' || c == '.' || c == ' ')
+            .trim();
+        let suffix = raw_suffix
+            .trim()
+            .trim_matches(|c: char| c == '-' || c == '—' || c == '–' || c == ':' || c == '.' || c == ' ')
+            .trim();
+
+        // Avoid false positive on titles starting with NxN (e.g. "3x3 Eyes") when no preceding show name
+        if !prefix.is_empty() {
+            return Some(SeasonEpisodeMatch {
+                prefix,
+                marker,
+                suffix,
+            });
+        }
+    }
+
+    None
+}
 
 /// Cleans media filenames by removing tags, codecs, resolution, brackets, etc.
 pub fn clean_name(name: &str) -> String {
@@ -107,12 +188,14 @@ pub fn clean_name(name: &str) -> String {
     // Remove square brackets content
     cleaned = RE_SQUARE_BRACKETS.replace_all(&cleaned, "").to_string();
 
-    // Keep parentheses ONLY if they contain a 4-digit year (e.g., (1994))
+    // Keep parentheses ONLY if they contain a 4-digit year (e.g., (1994)) or season/episode marker
     cleaned = RE_PARENS
         .replace_all(&cleaned, |caps: &regex::Captures| {
             let inner = &caps[1];
             if inner.len() == 4 && inner.chars().all(|c| c.is_ascii_digit()) {
                 format!("({inner})")
+            } else if RE_SEASON_EPISODE.is_match(inner) || RE_X_EPISODE.is_match(inner) {
+                format!(" {inner} ")
             } else {
                 String::new()
             }
@@ -234,7 +317,7 @@ fn is_episode_part(s: &str) -> bool {
     if RE_EPISODE_NUM.is_match(trimmed) {
         return true;
     }
-    if RE_SEASON_EPISODE_START.is_match(trimmed) {
+    if RE_SEASON_EPISODE.is_match(trimmed) || RE_X_EPISODE.is_match(trimmed) {
         return true;
     }
     if RE_SPECIAL_START.is_match(trimmed) {
@@ -251,6 +334,21 @@ fn format_episode_str(s: &str) -> String {
         format!("Episode {}", &caps[1])
     } else if let Some(caps) = RE_LEADING_EPISODE.captures(trimmed) {
         format!("Episode {} - {}", &caps[1], &caps[2])
+    } else if let Some(se_match) = find_season_episode_match(trimmed) {
+        if se_match.prefix.is_empty() {
+            if se_match.suffix.is_empty() {
+                se_match.marker
+            } else {
+                format!("{} - {}", se_match.marker, se_match.suffix)
+            }
+        } else if se_match.suffix.is_empty() {
+            format!("{} - {}", se_match.prefix, se_match.marker)
+        } else {
+            format!(
+                "{} - {} - {}",
+                se_match.prefix, se_match.marker, se_match.suffix
+            )
+        }
     } else {
         trimmed.to_string()
     }
@@ -262,6 +360,34 @@ pub fn format_title_lines(path: &str) -> (String, Option<String>) {
     let title = format_video_title(path);
     let folder = format_video_folder(path);
 
+    // 1. Check if the title contains a season/episode marker (e.g. "Kare Kano s01e18 Progress")
+    if let Some(se_match) = find_season_episode_match(&title) {
+        let ep_str = if se_match.suffix.is_empty() {
+            se_match.marker
+        } else {
+            format!("{} - {}", se_match.marker, se_match.suffix)
+        };
+
+        if !se_match.prefix.is_empty() {
+            let show_name = if !folder.is_empty()
+                && is_title_redundant_with_folder(&folder, se_match.prefix)
+            {
+                folder
+            } else {
+                se_match.prefix.to_string()
+            };
+            return (show_name, Some(ep_str));
+        } else if !folder.is_empty()
+            && !is_generic_folder(&folder)
+            && !is_category_or_root_folder(&folder)
+        {
+            return (folder, Some(ep_str));
+        } else {
+            return (ep_str, None);
+        }
+    }
+
+    // 2. Folder check when folder is distinct from title
     let has_distinct_folder = !folder.is_empty()
         && !folder.eq_ignore_ascii_case(&title)
         && !is_title_redundant_with_folder(&folder, &title);
@@ -270,7 +396,7 @@ pub fn format_title_lines(path: &str) -> (String, Option<String>) {
         return (folder, Some(format_episode_str(&title)));
     }
 
-    // When folder is absent or redundant with title, inspect the title structure
+    // 3. When folder is absent or redundant with title, inspect the title structure
     let parts: Vec<&str> = title
         .split(|c| c == '—' || c == '–')
         .flat_map(|s| s.split(" - "))
@@ -296,7 +422,7 @@ pub fn format_title_lines(path: &str) -> (String, Option<String>) {
         }
     }
 
-    // Check for space-separated trailing episode markers (e.g. "Series S01E08" or "Series 08")
+    // 4. Check for space-separated trailing episode markers (e.g. "Series S01E08" or "Series 08")
     if let Some(mat) = RE_TRAILING_EPISODE_MARKER.find(&title) {
         let prefix = title[..mat.start()].trim();
         let marker = title[mat.start()..].trim();
