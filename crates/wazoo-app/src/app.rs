@@ -110,6 +110,157 @@ pub struct WazooApp {
     pub is_preloading: bool,
 }
 
+struct InitialSearch {
+    folders: Vec<String>,
+    active_query: String,
+    selected_folder: String,
+    is_cli: bool,
+}
+
+fn process_direct_cli_files(
+    cli: &CliArgs,
+    db: &Database,
+    media_folders: &[String],
+) -> Option<String> {
+    let mut file_to_play: Option<String> = None;
+    let mut files_to_process = cli.files.clone();
+    if files_to_process.is_empty() {
+        if let Some(ref single) = cli.file {
+            files_to_process.push(single.clone());
+        }
+    }
+
+    for file_path in &files_to_process {
+        let canon_path = std::fs::canonicalize(file_path).unwrap_or_else(|_| file_path.clone());
+        let path_str = canon_path.to_string_lossy().to_string();
+
+        // Check if file is inside any configured media folder or in DB under another folder
+        let in_other_folder = db
+            .is_video_in_other_folder(&path_str, media_folders)
+            .unwrap_or(false);
+
+        if !in_other_folder {
+            let file_stem = canon_path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or_default();
+            let clean_name = wazoo_scanner::clean_video_name(file_stem);
+            let _ = db.insert_misc_video(&clean_name, &path_str);
+        }
+
+        if file_to_play.is_none() {
+            file_to_play = Some(path_str);
+        }
+    }
+
+    file_to_play
+}
+
+fn resolve_initial_search(
+    cli: &CliArgs,
+    settings: &mut WazooSettings,
+    config_mgr: &ConfigManager,
+) -> InitialSearch {
+    let cli_query_clean = cli
+        .query
+        .as_deref()
+        .map(|q| q.trim().to_string())
+        .filter(|q| !q.is_empty());
+    let is_cli = cli_query_clean.is_some();
+
+    let all_label = wazoo_core::i18n::t(&settings.language, "common.all");
+    let (folders, active_query, selected_folder) = if let Some(ref q) = cli_query_clean {
+        settings.last_query = q.clone();
+        settings.last_folders.clear();
+        let _ = config_mgr.save_settings(settings);
+        (Vec::new(), q.clone(), all_label)
+    } else {
+        let f: Vec<String> = settings
+            .last_folders
+            .iter()
+            .filter(|folder| !wazoo_core::i18n::is_all_folder(folder))
+            .cloned()
+            .collect();
+        let sel = if f.is_empty() {
+            all_label
+        } else if f.len() == 1 {
+            f[0].clone()
+        } else {
+            f.join(", ")
+        };
+        (f, settings.last_query.clone(), sel)
+    };
+
+    InitialSearch {
+        folders,
+        active_query,
+        selected_folder,
+        is_cli,
+    }
+}
+
+fn load_initial_videos(
+    db: &Database,
+    active_query: &str,
+    folders: &[String],
+    is_cli: bool,
+    has_file_to_play: bool,
+) -> Vec<VideoRecord> {
+    let mut videos = if !active_query.is_empty() {
+        let filtered = db.search_videos(active_query, folders).unwrap_or_default();
+        if filtered.is_empty() {
+            if is_cli {
+                Vec::new()
+            } else {
+                db.get_all_videos().unwrap_or_default()
+            }
+        } else {
+            filtered
+        }
+    } else if !folders.is_empty() {
+        db.search_videos("", folders).unwrap_or_default()
+    } else {
+        db.get_all_videos().unwrap_or_default()
+    };
+
+    if videos.is_empty() && has_file_to_play {
+        videos = db.get_all_videos().unwrap_or_default();
+    }
+
+    videos
+}
+
+fn build_initial_toast(is_cli: bool, language: &str, total_videos: usize) -> (Option<String>, usize) {
+    if !is_cli {
+        return (None, 0);
+    }
+
+    let msg = if total_videos == 0 {
+        wazoo_core::t(language, "wazoo.no_videos_found")
+    } else {
+        wazoo_core::t_with(
+            language,
+            "wazoo.total_files",
+            &[("total", &format::format_number(total_videos))],
+        )
+    };
+
+    (Some(msg), LONG_TOAST_SECS)
+}
+
+fn boot_focus_task() -> Task<Message> {
+    Task::perform(
+        async {
+            #[cfg(target_os = "linux")]
+            {
+                crate::platform::ensure_window_focused_linux().await;
+            }
+            tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+        },
+        |_| Message::GainWindowFocus,
+    )
+}
+
 impl WazooApp {
     pub fn new(cli_args: impl Into<CliArgs>) -> (Self, Task<Message>) {
         let config_mgr = ConfigManager::new();
@@ -124,98 +275,49 @@ impl WazooApp {
         db: Database,
     ) -> (Self, Task<Message>) {
         let cli = cli_args.into();
-        let has_complete_keybinds = config_mgr.has_complete_keybinds_in_settings();
         let mut settings = config_mgr.load_settings();
 
         // On boot, write the complete keybind settings to the settings file if missing or incomplete
-        if !has_complete_keybinds {
+        if !config_mgr.has_complete_keybinds_in_settings() {
             let _ = config_mgr.save_settings(&settings);
         }
 
-        // 1. Direct file playback: check if video file path(s) were provided
-        let mut file_to_play: Option<String> = None;
-        let mut files_to_process = cli.files.clone();
-        if files_to_process.is_empty() {
-            if let Some(ref single) = cli.file {
-                files_to_process.push(single.clone());
-            }
+        let file_to_play = process_direct_cli_files(&cli, &db, &settings.media_folders);
+        let search = resolve_initial_search(&cli, &mut settings, &config_mgr);
+        let videos = load_initial_videos(
+            &db,
+            &search.active_query,
+            &search.folders,
+            search.is_cli,
+            file_to_play.is_some(),
+        );
+
+        let is_cli = search.is_cli;
+        let mut app = Self::build_initial_app(config_mgr, db, settings, search, videos);
+
+        app.init_initial_players(file_to_play.as_deref(), is_cli);
+        app.apply_file_picker_search();
+
+        if app.settings.playback_mode == PlaybackMode::Flip {
+            app.stagger_flip_countdowns();
         }
 
-        for file_path in &files_to_process {
-            let canon_path = std::fs::canonicalize(file_path).unwrap_or_else(|_| file_path.clone());
-            let path_str = canon_path.to_string_lossy().to_string();
-
-            // Check if file is inside any configured media folder or in DB under another folder
-            let in_other_folder = db
-                .is_video_in_other_folder(&path_str, &settings.media_folders)
-                .unwrap_or(false);
-
-            if !in_other_folder {
-                let file_stem = canon_path
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or_default();
-                let clean_name = wazoo_scanner::clean_video_name(file_stem);
-                let _ = db.insert_misc_video(&clean_name, &path_str);
-            }
-
-            if file_to_play.is_none() {
-                file_to_play = Some(path_str);
-            }
-        }
-
-        let cli_query_clean = cli
-            .query
-            .map(|q| q.trim().to_string())
-            .filter(|q| !q.is_empty());
-        let is_cli = cli_query_clean.is_some();
-
-        let all_label = wazoo_core::i18n::t(&settings.language, "common.all");
-        let (folders, active_query, selected_folder) = if let Some(ref q) = cli_query_clean {
-            settings.last_query = q.clone();
-            settings.last_folders.clear();
-            let _ = config_mgr.save_settings(&settings);
-            (Vec::new(), q.clone(), all_label)
+        let preload_task = if app.settings.playback_mode == PlaybackMode::Scroll {
+            app.init_scroll_mode()
         } else {
-            let f: Vec<String> = settings
-                .last_folders
-                .iter()
-                .filter(|folder| !wazoo_core::i18n::is_all_folder(folder))
-                .cloned()
-                .collect();
-            let sel = if f.is_empty() {
-                all_label
-            } else if f.len() == 1 {
-                f[0].clone()
-            } else {
-                f.join(", ")
-            };
-            (f, settings.last_query.clone(), sel)
+            Task::none()
         };
 
-        let mut videos: Vec<VideoRecord> = if !active_query.is_empty() {
-            let filtered = db
-                .search_videos(&active_query, &folders)
-                .unwrap_or_default();
-            if filtered.is_empty() {
-                if is_cli {
-                    Vec::new()
-                } else {
-                    db.get_all_videos().unwrap_or_default()
-                }
-            } else {
-                filtered
-            }
-        } else if !folders.is_empty() {
-            db.search_videos("", &folders).unwrap_or_default()
-        } else {
-            db.get_all_videos().unwrap_or_default()
-        };
+        (app, Task::batch([preload_task, boot_focus_task()]))
+    }
 
-        // If available_videos is empty and we have a file_to_play, load all videos (which includes the new file)
-        if videos.is_empty() && file_to_play.is_some() {
-            videos = db.get_all_videos().unwrap_or_default();
-        }
+    fn build_initial_app(
+        config_mgr: ConfigManager,
+        db: Database,
+        settings: WazooSettings,
+        search: InitialSearch,
+        videos: Vec<VideoRecord>,
+    ) -> Self {
         let mut scroll_engine = ScrollEngine::with_window_size(
             settings.window_bounds.width as f32,
             settings.window_bounds.height as f32,
@@ -224,28 +326,11 @@ impl WazooApp {
         scroll_engine.is_global_muted = settings.is_global_muted;
 
         let icon_handle = iced::widget::image::Handle::from_bytes(APP_ICON_BYTES);
-
         let total_videos = videos.len();
-        let toast_msg = if is_cli {
-            if videos.is_empty() {
-                Some(wazoo_core::t(&settings.language, "wazoo.no_videos_found"))
-            } else {
-                Some(wazoo_core::t_with(
-                    &settings.language,
-                    "wazoo.total_files",
-                    &[("total", &format::format_number(total_videos))],
-                ))
-            }
-        } else {
-            None
-        };
-        let toast_time_remaining = if toast_msg.is_some() {
-            LONG_TOAST_SECS
-        } else {
-            0
-        };
+        let (toast_message, toast_time_remaining) =
+            build_initial_toast(search.is_cli, &settings.language, total_videos);
 
-        let mut app = Self {
+        Self {
             settings: settings.clone(),
             config_mgr,
             db,
@@ -253,24 +338,25 @@ impl WazooApp {
             scroll_engine,
             available_videos: videos,
             search: crate::state::SearchState {
-                active_query: active_query.clone(),
-                tags: active_query
+                active_query: search.active_query.clone(),
+                tags: search
+                    .active_query
                     .split(',')
                     .map(|s| s.trim().to_string())
                     .filter(|s| !s.is_empty())
                     .collect(),
                 input: String::new(),
                 folder_input: String::new(),
-                active_folders: folders.clone(),
-                selected_folders: folders,
-                active_folder: selected_folder.clone(),
-                selected_folder,
+                active_folders: search.folders.clone(),
+                selected_folders: search.folders,
+                active_folder: search.selected_folder.clone(),
+                selected_folder: search.selected_folder,
             },
             modals: crate::state::ModalState::default(),
             drawers: crate::state::DrawerState::default(),
             titlebar: crate::state::TitlebarState::default(),
             overlay: crate::state::OverlayState {
-                toast_message: toast_msg,
+                toast_message,
                 toast_time_remaining,
                 ..Default::default()
             },
@@ -286,39 +372,40 @@ impl WazooApp {
             default_shuffle_mode: true,
             preloaded_player: None,
             is_preloading: false,
-        };
+        }
+    }
 
-        // Initialize players based on settings or restore saved session
-        let count = settings.player_count.clamp(1, 12);
+    fn init_initial_players(&mut self, file_to_play: Option<&str>, is_cli: bool) {
+        let count = self.settings.player_count.clamp(1, 12);
         let restored_sessions = if is_cli || file_to_play.is_some() {
             Vec::new()
         } else {
-            settings.session_videos
+            self.settings.session_videos.clone()
         };
 
         let mut direct_file_player_id: Option<PlayerId> = None;
 
-        if let Some(ref path) = file_to_play {
-            let id = app.next_player_id;
-            app.next_player_id += 1;
+        if let Some(path) = file_to_play {
+            let id = self.next_player_id;
+            self.next_player_id += 1;
             direct_file_player_id = Some(id);
             let name = format::format_video_title(path);
-            if let Ok(mut handle) = app.create_video_handle_with_start(id, path, &name, Some(0.0)) {
+            if let Ok(mut handle) = self.create_video_handle_with_start(id, path, &name, Some(0.0)) {
                 handle.set_muted(false);
                 handle.set_volume(1.0);
-                handle.set_subtitles_visible(app.subtitles_enabled);
-                app.players
-                    .push(AppPlayer::new(handle, app.default_shuffle_mode));
-                app.push_player_nav_entry(id, path.clone(), Some(0.0));
+                handle.set_subtitles_visible(self.subtitles_enabled);
+                self.players
+                    .push(AppPlayer::new(handle, self.default_shuffle_mode));
+                self.push_player_nav_entry(id, path.to_string(), Some(0.0));
             }
-            app.overlay.title_pill_ticks = 240;
+            self.overlay.title_pill_ticks = 240;
         } else {
             for session in restored_sessions.into_iter().take(count) {
                 if std::path::Path::new(&session.path).exists() {
-                    let id = app.next_player_id;
-                    app.next_player_id += 1;
-                    if app.players.is_empty() {
-                        app.default_shuffle_mode = session.is_shuffle;
+                    let id = self.next_player_id;
+                    self.next_player_id += 1;
+                    if self.players.is_empty() {
+                        self.default_shuffle_mode = session.is_shuffle;
                     }
                     let name = format::format_video_title(&session.path);
                     let start_secs = if session.position_secs > 0.05 {
@@ -327,21 +414,21 @@ impl WazooApp {
                         None
                     };
                     if let Ok(mut handle) =
-                        app.create_video_handle_with_start(id, &session.path, &name, start_secs)
+                        self.create_video_handle_with_start(id, &session.path, &name, start_secs)
                     {
                         handle.set_muted(session.is_muted);
                         handle.set_volume(session.volume);
-                        handle.set_subtitles_visible(app.subtitles_enabled);
-                        app.players.push(AppPlayer::new(handle, session.is_shuffle));
-                        app.push_player_nav_entry(id, session.path.clone(), start_secs);
+                        handle.set_subtitles_visible(self.subtitles_enabled);
+                        self.players.push(AppPlayer::new(handle, session.is_shuffle));
+                        self.push_player_nav_entry(id, session.path.clone(), start_secs);
                     }
                 }
             }
         }
 
         // Fill remaining players if any
-        while app.players.len() < count {
-            if app.add_player_internal().is_none() {
+        while self.players.len() < count {
+            if self.add_player_internal().is_none() {
                 break;
             }
         }
@@ -349,63 +436,41 @@ impl WazooApp {
         // If a last_query was active, reconcile active players so any player playing a video
         // not in the queried files list switches to a matching video from available_videos.
         // If playing a direct file, do not reconcile that player!
-        if !app.settings.last_query.is_empty() {
-            app.reconcile_players_with_available_videos(direct_file_player_id);
+        if !self.settings.last_query.is_empty() {
+            self.reconcile_players_with_available_videos(direct_file_player_id);
         }
 
         // Save session state if CLI query or direct file successfully populated players
-        if (is_cli || file_to_play.is_some()) && !app.players.is_empty() {
-            app.save_session_state();
+        if (is_cli || file_to_play.is_some()) && !self.players.is_empty() {
+            self.save_session_state();
         }
+    }
 
-        app.apply_file_picker_search();
-
-        let preload_task = if app.settings.playback_mode == PlaybackMode::Scroll {
-            let items_with_heights: Vec<(PlayerId, f32)> = app
-                .players
-                .iter()
-                .map(|p| (p.id, app.calculate_player_scroll_height(p)))
-                .collect();
-            app.scroll_engine
-                .init_stack_with_heights(&items_with_heights);
-            while let Some(spawn_y) = app.scroll_engine.needs_new_player() {
-                if let Some(id) = app.add_player_internal() {
-                    let item_h = app
-                        .players
-                        .player(id)
-                        .map(|p| app.calculate_player_scroll_height(p))
-                        .unwrap_or_else(|| app.scroll_engine.default_item_height());
-                    app.scroll_engine.add_item(id, spawn_y, item_h);
-                } else {
-                    break;
-                }
+    fn init_scroll_mode(&mut self) -> Task<Message> {
+        let items_with_heights: Vec<(PlayerId, f32)> = self
+            .players
+            .iter()
+            .map(|p| (p.id, self.calculate_player_scroll_height(p)))
+            .collect();
+        self.scroll_engine
+            .init_stack_with_heights(&items_with_heights);
+        while let Some(spawn_y) = self.scroll_engine.needs_new_player() {
+            if let Some(id) = self.add_player_internal() {
+                let item_h = self
+                    .players
+                    .player(id)
+                    .map(|p| self.calculate_player_scroll_height(p))
+                    .unwrap_or_else(|| self.scroll_engine.default_item_height());
+                self.scroll_engine.add_item(id, spawn_y, item_h);
+            } else {
+                break;
             }
-            for p in &mut app.players {
-                let vol = app.scroll_engine.calculate_player_volume(p.id);
-                p.set_volume(vol);
-            }
-            app.trigger_preload_task()
-        } else {
-            Task::none()
-        };
-
-        // Boot focus task: ensure window receives keyboard focus and activation on boot
-        let focus_task = Task::perform(
-            async {
-                #[cfg(target_os = "linux")]
-                {
-                    crate::platform::ensure_window_focused_linux().await;
-                }
-                tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-            },
-            |_| Message::GainWindowFocus,
-        );
-
-        if app.settings.playback_mode == PlaybackMode::Flip {
-            app.stagger_flip_countdowns();
         }
-
-        (app, Task::batch([preload_task, focus_task]))
+        for p in &mut self.players {
+            let vol = self.scroll_engine.calculate_player_volume(p.id);
+            p.set_volume(vol);
+        }
+        self.trigger_preload_task()
     }
 
     pub(crate) fn is_any_modal_open(&self) -> bool {
