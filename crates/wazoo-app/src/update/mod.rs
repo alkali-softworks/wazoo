@@ -280,19 +280,6 @@ impl WazooApp {
                 Task::none()
             }
 
-            Message::FlipModeTick => {
-                let interval = self.settings.flip_interval_secs.max(1);
-                if self.settings.playback_mode == PlaybackMode::Flip && !self.players.is_empty() {
-                    let rand_id = self.players[rand::random::<usize>() % self.players.len()].id;
-                    if let Some(p) = self.players.player_mut(rand_id) {
-                        p.flip.reset(interval);
-                        p.start_loading();
-                    }
-                    let _ = self.advance_player_to_next_video(rand_id, false);
-                }
-                Task::none()
-            }
-
             // =========================================================================
             // Window Lifecycle, Geometry & Input
             // =========================================================================

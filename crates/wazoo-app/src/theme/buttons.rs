@@ -575,12 +575,6 @@ pub fn primary_button_style(_theme: &Theme, status: button::Status) -> button::S
     }
 }
 
-// Transcript Button Style (Controls bar TX, matches CC button style)
-#[allow(dead_code)]
-pub fn transcript_button_style(is_open: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
-    cc_button_style(is_open)
-}
-
 pub fn transcript_button_style_with_alpha(
     is_open: bool,
     alpha: f32,
