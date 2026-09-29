@@ -52,7 +52,7 @@ impl WazooApp {
                     return Task::none();
                 }
                 if let Some(idx) = self.players.iter().position(|p| p.id == id) {
-                    self.focused_player_idx = idx;
+                    self.playback.focused_idx = idx;
                 }
                 self.drawers.show_transcript = true;
                 self.drawers.show_transcript_menu = false;
@@ -125,7 +125,7 @@ impl WazooApp {
             Message::SelectTranscriptSubtitleTrack(track_idx, track_id) => {
                 self.drawers.show_transcript_menu = false;
                 self.drawers.transcript_track_index = track_idx;
-                self.subtitles_enabled = true;
+                self.playback.subtitles_enabled = true;
                 if let Some(player) = self.focused_player_mut() {
                     player.set_subtitles_visible(true);
                     player.set_subtitle_track(track_id);
@@ -181,10 +181,9 @@ impl WazooApp {
             }
             Message::PlayFileInFocused(path) => {
                 if let Some(id) = self.focused_player_id() {
-                    self.loading_player_ids.insert(id);
-                    self.loading_player_ticks.insert(id, 0);
+                    self.loading.start(id);
                     self.record_current_player_nav_position(id);
-                    if let Some(hist) = self.player_nav_history.get_mut(&id) {
+                    if let Some(hist) = self.playback.nav_history.get_mut(&id) {
                         hist.forward_stack.clear();
                     }
                     let title = format::format_video_title(&path);
@@ -197,7 +196,7 @@ impl WazooApp {
                         if let Some(vol) = prev_volume {
                             handle.set_volume(vol);
                         }
-                        handle.set_subtitles_visible(self.subtitles_enabled);
+                        handle.set_subtitles_visible(self.playback.subtitles_enabled);
                         self.push_player_nav_entry(id, path.clone(), None);
                         if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                             *p = handle;
