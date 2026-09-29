@@ -1352,3 +1352,127 @@ fn test_player_by_id_helpers() {
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_flip_countdown_resets_on_interval_change_and_manual_navigation() {
+    let (mut app, _) = new_test_app();
+    let temp_dir = std::env::temp_dir().join(format!("test_flip_reset_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let f1 = temp_dir.join("v1.mp4");
+    let f2 = temp_dir.join("v2.mp4");
+    let f3 = temp_dir.join("v3.mp4");
+    let _ = std::fs::File::create(&f1);
+    let _ = std::fs::File::create(&f2);
+    let _ = std::fs::File::create(&f3);
+
+    app.available_videos = vec![
+        VideoRecord::new(1, "V1", f1.to_string_lossy()),
+        VideoRecord::new(2, "V2", f2.to_string_lossy()),
+        VideoRecord::new(3, "V3", f3.to_string_lossy()),
+    ];
+    let _ = app.update(Message::SetPlayerCount(1));
+    let p_id = app.players[0].id;
+
+    // 1. Changing flip_interval in settings resets countdown for player
+    app.settings.flip_interval_secs = 45;
+    app.players[0].flip.countdown = 15; // simulated elapsed countdown
+    let _ = app.update(Message::SetFlipInterval(90));
+    assert_eq!(app.settings.flip_interval_secs, 90);
+    assert_eq!(app.players[0].flip.countdown, 90);
+
+    // Changing to a smaller interval also resets countdown
+    app.players[0].flip.countdown = 80;
+    let _ = app.update(Message::SetFlipInterval(30));
+    assert_eq!(app.settings.flip_interval_secs, 30);
+    assert_eq!(app.players[0].flip.countdown, 30);
+
+    // 2. Manual video change (NextVideo) resets countdown for player
+    app.players[0].flip.countdown = 10;
+    let _ = app.update(Message::NextVideo(p_id));
+    assert_eq!(app.players[0].flip.countdown, 30);
+
+    // 3. Manual video change (PrevVideo) resets countdown for player
+    app.players[0].flip.countdown = 8;
+    let _ = app.update(Message::PrevVideo(p_id));
+    assert_eq!(app.players[0].flip.countdown, 30);
+
+    // 4. NextVideoFocused and PrevVideoFocused reset countdown
+    app.players[0].flip.countdown = 5;
+    let _ = app.update(Message::NextVideoFocused);
+    assert_eq!(app.players[0].flip.countdown, 30);
+
+    app.players[0].flip.countdown = 7;
+    let _ = app.update(Message::PrevVideoFocused);
+    assert_eq!(app.players[0].flip.countdown, 30);
+
+    // 5. AutoAdvanceVideo does NOT reset countdown
+    app.players[0].flip.countdown = 12;
+    let _ = app.update(Message::AutoAdvanceVideo(p_id));
+    assert_eq!(app.players[0].flip.countdown, 12);
+
+    // 6. PlayFileInFocused resets countdown for focused player
+    app.players[0].flip.countdown = 14;
+    let _ = app.update(Message::PlayFileInFocused(f2.to_string_lossy().to_string()));
+    assert_eq!(app.players[0].flip.countdown, 30);
+
+    // 7. JumpToBookmark resets countdown for focused player
+    app.players[0].flip.countdown = 11;
+    let bookmark = wazoo_core::Bookmark {
+        name: "Test".to_string(),
+        path: f1.to_string_lossy().to_string(),
+        position_secs: 5.0,
+        query: "".to_string(),
+        is_shuffle: false,
+    };
+    let _ = app.update(Message::JumpToBookmark(bookmark));
+    assert_eq!(app.players[0].flip.countdown, 30);
+
+    // 8. Staggered countdowns across multiple players
+    app.available_videos = vec![
+        VideoRecord::new(1, "V1", f1.to_string_lossy()),
+        VideoRecord::new(2, "V2", f2.to_string_lossy()),
+        VideoRecord::new(3, "V3", f3.to_string_lossy()),
+    ];
+    let _ = app.update(Message::SetPlayerCount(3));
+    assert_eq!(app.players.len(), 3);
+    let _ = app.update(Message::SetFlipInterval(45));
+    // 3 players with interval 45 -> staggered: 15, 30, 45
+    assert_eq!(app.players[0].flip.countdown, 15);
+    assert_eq!(app.players[1].flip.countdown, 30);
+    assert_eq!(app.players[2].flip.countdown, 45);
+
+    // Manually advancing player 1 resets only player 1's countdown
+    let p1_id = app.players[1].id;
+    app.players[0].flip.countdown = 10;
+    app.players[1].flip.countdown = 20;
+    app.players[2].flip.countdown = 35;
+    let _ = app.update(Message::NextVideo(p1_id));
+    assert_eq!(app.players[0].flip.countdown, 10);
+    assert_eq!(app.players[1].flip.countdown, 45); // reset to full interval
+    assert_eq!(app.players[2].flip.countdown, 35);
+
+    // Enabling flip mode also staggers all players
+    app.settings.playback_mode = wazoo_core::PlaybackMode::Normal;
+    let _ = app.update(Message::ToggleFlipMode);
+    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Flip);
+    assert_eq!(app.players[0].flip.countdown, 15);
+    assert_eq!(app.players[1].flip.countdown, 30);
+    assert_eq!(app.players[2].flip.countdown, 45);
+
+    // Test ticking in Flip mode
+    // Tick 14 times
+    for _ in 0..14 {
+        let _ = app.update(Message::WatchdogTick);
+    }
+    assert_eq!(app.players[0].flip.countdown, 1);
+    assert_eq!(app.players[1].flip.countdown, 16);
+    assert_eq!(app.players[2].flip.countdown, 31);
+
+    // 15th tick: player 0 expires and flips, resetting to 45
+    let _ = app.update(Message::WatchdogTick);
+    assert_eq!(app.players[0].flip.countdown, 45);
+    assert_eq!(app.players[1].flip.countdown, 15);
+    assert_eq!(app.players[2].flip.countdown, 30);
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}

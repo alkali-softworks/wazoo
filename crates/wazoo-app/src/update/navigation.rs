@@ -56,6 +56,11 @@ impl WazooApp {
         id: PlayerId,
         request_focus: bool,
     ) -> Task<Message> {
+        if request_focus {
+            if let Some(p) = self.players.player_mut(id) {
+                p.flip.reset(self.settings.flip_interval_secs);
+            }
+        }
         self.focus_player_for_navigation(id, request_focus);
         if let Some(p) = self.players.player_mut(id) {
             p.clear_marks();
@@ -132,6 +137,11 @@ impl WazooApp {
         id: PlayerId,
         request_focus: bool,
     ) -> Task<Message> {
+        if request_focus {
+            if let Some(p) = self.players.player_mut(id) {
+                p.flip.reset(self.settings.flip_interval_secs);
+            }
+        }
         self.focus_player_for_navigation(id, request_focus);
         if let Some(p) = self.players.player_mut(id) {
             p.clear_marks();

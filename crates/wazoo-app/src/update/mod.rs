@@ -257,14 +257,23 @@ impl WazooApp {
                 }
                 if self.settings.playback_mode == PlaybackMode::Flip {
                     let interval = self.settings.flip_interval_secs.max(1);
-                    if self.flip.countdown > interval || self.flip.countdown == 0 {
-                        self.flip.countdown = interval;
+                    let mut to_flip = Vec::new();
+                    for player in self.players.iter_mut() {
+                        if player.flip.countdown > interval || player.flip.countdown == 0 {
+                            player.flip.countdown = interval;
+                        }
+                        if player.flip.countdown > 1 {
+                            player.flip.countdown -= 1;
+                        } else {
+                            player.flip.reset(interval);
+                            to_flip.push(player.id);
+                        }
                     }
-                    if self.flip.countdown > 1 {
-                        self.flip.countdown -= 1;
-                    } else {
-                        self.flip.countdown = interval;
-                        let _ = self.update(Message::FlipModeTick);
+                    for id in to_flip {
+                        if let Some(p) = self.players.player_mut(id) {
+                            p.start_loading();
+                        }
+                        let _ = self.advance_player_to_next_video(id, false);
                     }
                 }
                 self.save_session_state();
@@ -272,13 +281,14 @@ impl WazooApp {
             }
 
             Message::FlipModeTick => {
-                self.flip.reset(self.settings.flip_interval_secs);
+                let interval = self.settings.flip_interval_secs.max(1);
                 if self.settings.playback_mode == PlaybackMode::Flip && !self.players.is_empty() {
                     let rand_id = self.players[rand::random::<usize>() % self.players.len()].id;
                     if let Some(p) = self.players.player_mut(rand_id) {
+                        p.flip.reset(interval);
                         p.start_loading();
                     }
-                    let _ = self.update(Message::NextVideo(rand_id));
+                    let _ = self.advance_player_to_next_video(rand_id, false);
                 }
                 Task::none()
             }

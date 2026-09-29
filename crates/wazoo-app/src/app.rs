@@ -108,7 +108,6 @@ pub struct WazooApp {
     pub default_shuffle_mode: bool,
     pub preloaded_player: Option<VideoHandle>,
     pub is_preloading: bool,
-    pub flip: crate::state::FlipState,
 }
 
 impl WazooApp {
@@ -287,7 +286,6 @@ impl WazooApp {
             default_shuffle_mode: true,
             preloaded_player: None,
             is_preloading: false,
-            flip: crate::state::FlipState::new(settings.flip_interval_secs),
         };
 
         // Initialize players based on settings or restore saved session
@@ -402,6 +400,10 @@ impl WazooApp {
             },
             |_| Message::GainWindowFocus,
         );
+
+        if app.settings.playback_mode == PlaybackMode::Flip {
+            app.stagger_flip_countdowns();
+        }
 
         (app, Task::batch([preload_task, focus_task]))
     }
@@ -800,6 +802,7 @@ impl WazooApp {
                         handle.set_muted(initial_muted);
                         handle.set_subtitles_visible(self.subtitles_enabled);
                         let mut player = AppPlayer::new(handle, self.default_shuffle_mode);
+                        player.flip.reset(self.settings.flip_interval_secs);
                         player.start_loading();
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
                         self.players.push(player);
@@ -816,6 +819,24 @@ impl WazooApp {
             }
         }
         None
+    }
+
+    /// Resets and staggers the flip countdowns across all active players so they do not all cycle at the same time.
+    pub fn stagger_flip_countdowns(&mut self) {
+        let n = self.players.len();
+        if n == 0 {
+            return;
+        }
+        let interval = self.settings.flip_interval_secs.max(1);
+        for (i, p) in self.players.iter_mut().enumerate() {
+            let staggered = if n > 1 {
+                let frac = (i + 1) as f64 / n as f64;
+                ((frac * interval as f64).round() as u64).clamp(1, interval)
+            } else {
+                interval
+            };
+            p.flip.reset(staggered);
+        }
     }
 
     /// Persists the exact current playback session (file, timestamp, mute, volume, shuffle) to settings

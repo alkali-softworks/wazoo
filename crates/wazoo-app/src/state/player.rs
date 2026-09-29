@@ -24,6 +24,8 @@ pub struct AppPlayer {
     pub is_loading: bool,
     /// Ticks elapsed while loading (used to auto-dismiss stuck loading states)
     pub loading_ticks: usize,
+    /// Per-player flip mode runtime countdown state
+    pub flip: crate::state::FlipState,
 }
 
 pub type Player = AppPlayer;
@@ -37,6 +39,7 @@ impl AppPlayer {
             nav_history: PlayerNavHistory::default(),
             is_loading: false,
             loading_ticks: 0,
+            flip: crate::state::FlipState::new(wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS),
         }
     }
 

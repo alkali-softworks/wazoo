@@ -295,7 +295,7 @@ impl WazooApp {
 
             let flip_content = row![
                 flip_icon,
-                text(format!("{}s", self.flip.countdown))
+                text(format!("{}s", p.flip.countdown))
                     .size(12)
                     .font(iced::Font {
                         weight: iced::font::Weight::Bold,
