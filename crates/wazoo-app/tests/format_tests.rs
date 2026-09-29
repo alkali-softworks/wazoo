@@ -1,4 +1,7 @@
-use wazoo_app::format::{clean_name, folder_basename, format_video_title, ucwords};
+use wazoo_app::format::{
+    clean_name, folder_basename, format_descriptive_title, format_title_lines, format_video_title,
+    ucwords,
+};
 
 #[test]
 fn test_clean_name() {
@@ -10,6 +13,10 @@ fn test_clean_name() {
         clean_name("[SubsPlease] Frieren - 01 (1080p) [HEVC]"),
         "Frieren - 01"
     );
+    assert_eq!(
+        clean_name("Last.Exile.Gin`yoku.no.Fam.08"),
+        "Last Exile Gin'yoku no Fam 08"
+    );
 }
 
 #[test]
@@ -17,6 +24,69 @@ fn test_format_video_title() {
     assert_eq!(
         format_video_title("/media/Movies/Interstellar.2014.1080p.mkv"),
         "Interstellar 2014"
+    );
+}
+
+#[test]
+fn test_format_descriptive_title_deduplication() {
+    // When the title already incorporates the series/folder name, don't duplicate it
+    assert_eq!(
+        format_descriptive_title(
+            "/media/Anime/Last Exile Gin`yoku no Fam/Last Exile - Gin`yoku no Fam - 08.mkv"
+        ),
+        "Last Exile - Gin'yoku no Fam — Episode 08"
+    );
+
+    // When the file name is just an episode number, prepend the folder name
+    assert_eq!(
+        format_descriptive_title("/media/Anime/Cowboy Bebop/01.mkv"),
+        "Cowboy Bebop — Episode 01"
+    );
+
+    // Generic folders like Movies should not be prepended
+    assert_eq!(
+        format_descriptive_title("/media/Movies/Interstellar.2014.1080p.mkv"),
+        "Interstellar 2014"
+    );
+}
+
+#[test]
+fn test_format_title_lines() {
+    assert_eq!(
+        format_title_lines(
+            "/media/Anime/Last Exile Gin`yoku no Fam/Last Exile - Gin`yoku no Fam - 08.mkv"
+        ),
+        (
+            "Last Exile - Gin'yoku no Fam".to_string(),
+            Some("Episode 08".to_string())
+        )
+    );
+    assert_eq!(
+        format_title_lines("/media/Anime/Cowboy Bebop/01.mkv"),
+        (
+            "Cowboy Bebop".to_string(),
+            Some("Episode 01".to_string())
+        )
+    );
+    assert_eq!(
+        format_title_lines("/media/Anime/Cowboy Bebop/01 - Asteroid Blues.mkv"),
+        (
+            "Cowboy Bebop".to_string(),
+            Some("Episode 01 - Asteroid Blues".to_string())
+        )
+    );
+    assert_eq!(
+        format_title_lines("/media/Movies/Interstellar.2014.1080p.mkv"),
+        ("Interstellar 2014".to_string(), None)
+    );
+    assert_eq!(
+        format_title_lines(
+            "/media/Movies/The Lord of the Rings - The Fellowship of the Ring.mkv"
+        ),
+        (
+            "The Lord of the Rings".to_string(),
+            Some("The Fellowship of the Ring".to_string())
+        )
     );
 }
 

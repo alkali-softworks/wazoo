@@ -25,19 +25,50 @@ use wazoo_core::PlaybackMode;
 
 impl WazooApp {
     pub(crate) fn view_title_pill<'a>(&self, path: &str, alpha: f32) -> Element<'a, Message> {
-        let formatted_title = format::format_descriptive_title(path);
-        container(
-            text(formatted_title)
-                .size(22)
+        let (primary, secondary) = format::format_title_lines(path);
+        let content: Element<'a, Message> = if let Some(sub) = secondary {
+            column![
+                text(primary)
+                    .size(18)
+                    .font(iced::Font {
+                        weight: iced::font::Weight::Bold,
+                        ..Default::default()
+                    })
+                    .color(theme::with_alpha(iced::Color::WHITE, alpha)),
+                text(sub)
+                    .size(15)
+                    .font(iced::Font {
+                        weight: iced::font::Weight::Semibold,
+                        ..Default::default()
+                    })
+                    .color(theme::with_alpha(
+                        iced::Color::from_rgb(0.90, 0.90, 0.94),
+                        alpha
+                    )),
+            ]
+            .spacing(4)
+            .into()
+        } else {
+            text(primary)
+                .size(18)
                 .font(iced::Font {
                     weight: iced::font::Weight::Bold,
                     ..Default::default()
                 })
-                .color(theme::with_alpha(iced::Color::WHITE, alpha)),
-        )
-        .padding([10, 18])
-        .style(theme::title_pill_style_with_alpha(alpha))
-        .into()
+                .color(theme::with_alpha(iced::Color::WHITE, alpha))
+                .into()
+        };
+
+        container(content)
+            .padding(iced::Padding {
+                top: 10.0,
+                right: 20.0,
+                bottom: 10.0,
+                left: 16.0,
+            })
+            .max_width(700.0)
+            .style(theme::title_pill_style_with_alpha(alpha))
+            .into()
     }
 
     pub(crate) fn view_loading_spinner<'a>(&self) -> Element<'a, Message> {

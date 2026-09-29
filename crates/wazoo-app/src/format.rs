@@ -50,11 +50,46 @@ static GENERIC_FOLDER_REGEXES: LazyLock<Vec<Regex>> = LazyLock::new(|| {
         Regex::new(r"(?i)^OVA\s+\d+").unwrap(),
         Regex::new(r"(?i)^Specials?$").unwrap(),
         Regex::new(r"(?i)^Extras?$").unwrap(),
-        Regex::new(r"(?i)^Movies?$").unwrap(),
         Regex::new(r"(?i)^Disc\s+\d+").unwrap(),
         Regex::new(r"(?i)^Vol(ume)?\s+\d+").unwrap(),
         Regex::new(r"^\d+$").unwrap(),
     ]
+});
+
+static ROOT_CATEGORY_REGEXES: LazyLock<Vec<Regex>> = LazyLock::new(|| {
+    vec![
+        Regex::new(r"(?i)^Movies?$").unwrap(),
+        Regex::new(r"(?i)^Films?$").unwrap(),
+        Regex::new(r"(?i)^Videos?$").unwrap(),
+        Regex::new(r"(?i)^Media$").unwrap(),
+        Regex::new(r"(?i)^Downloads?$").unwrap(),
+        Regex::new(r"(?i)^Desktop$").unwrap(),
+        Regex::new(r"(?i)^Documents?$").unwrap(),
+        Regex::new(r"(?i)^Home$").unwrap(),
+        Regex::new(r"(?i)^Mnt$").unwrap(),
+        Regex::new(r"(?i)^Users?$").unwrap(),
+        Regex::new(r"(?i)^[a-z]$").unwrap(),
+        Regex::new(r"(?i)^Anime$").unwrap(),
+        Regex::new(r"(?i)^TV(\s*Shows?)?$").unwrap(),
+        Regex::new(r"(?i)^Series$").unwrap(),
+        Regex::new(r"(?i)^Cartoons?$").unwrap(),
+    ]
+});
+
+static RE_EPISODE_NUM: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)^(?:EP?|Episode)\s*(\d+)$").unwrap());
+
+static RE_SEASON_EPISODE_START: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)^S\d+\s*E\d+").unwrap());
+
+static RE_SPECIAL_START: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)^(?:OVA|Special|SP)\b").unwrap());
+
+static RE_LEADING_EPISODE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)^(\d{1,3})\s*[-—:]\s*(.+)$").unwrap());
+
+static RE_TRAILING_EPISODE_MARKER: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)\s+((?:S\d+\s*)?(?:E|EP|Episode)\s*\d{1,3}|S\d+\s*E\d+|OVA\s*\d*)$").unwrap()
 });
 
 /// Cleans media filenames by removing tags, codecs, resolution, brackets, etc.
@@ -63,8 +98,11 @@ pub fn clean_name(name: &str) -> String {
         return String::new();
     }
 
+    // Normalize backticks and acute accents into standard apostrophes (e.g. Gin`yoku -> Gin'yoku)
+    let with_apostrophes = name.replace(['`', '´'], "'");
+
     // Replace dots and underscores with spaces
-    let mut cleaned = name.replace(['.', '_'], " ");
+    let mut cleaned = with_apostrophes.replace(['.', '_'], " ");
 
     // Remove square brackets content
     cleaned = RE_SQUARE_BRACKETS.replace_all(&cleaned, "").to_string();
@@ -104,6 +142,11 @@ pub fn is_generic_folder(name: &str) -> bool {
     GENERIC_FOLDER_REGEXES.iter().any(|r| r.is_match(n))
 }
 
+pub fn is_category_or_root_folder(name: &str) -> bool {
+    let n = name.trim();
+    ROOT_CATEGORY_REGEXES.iter().any(|r| r.is_match(n))
+}
+
 pub fn format_video_folder(path: &str) -> String {
     let clean_path = path.strip_prefix("file://").unwrap_or(path);
     let segments: Vec<&str> = clean_path
@@ -118,12 +161,18 @@ pub fn format_video_folder(path: &str) -> String {
     let mut folder_idx = segments.len() - 2;
     let mut folder_name = segments[folder_idx];
 
-    if is_generic_folder(folder_name) && folder_idx > 0 {
+    // If folder is a season/specials subfolder (e.g. "Season 1"), step back to parent series folder
+    while is_generic_folder(folder_name) && folder_idx > 0 {
         folder_idx -= 1;
         folder_name = segments[folder_idx];
     }
 
-    if folder_name.contains(':') || folder_name == "/" || folder_name.is_empty() {
+    if is_generic_folder(folder_name)
+        || is_category_or_root_folder(folder_name)
+        || folder_name.contains(':')
+        || folder_name == "/"
+        || folder_name.is_empty()
+    {
         return String::new();
     }
 
@@ -151,17 +200,123 @@ pub fn format_video_title(path: &str) -> String {
     }
 }
 
-pub fn format_descriptive_title(path: &str) -> String {
+fn normalize_for_comparison(s: &str) -> String {
+    s.chars()
+        .filter(|c| c.is_alphanumeric())
+        .flat_map(|c| c.to_lowercase())
+        .collect()
+}
+
+/// Checks whether a video title already incorporates the series/folder name,
+/// preventing redundant "Series — Series - 01" duplications.
+pub fn is_title_redundant_with_folder(folder: &str, title: &str) -> bool {
+    let norm_folder = normalize_for_comparison(folder);
+    let norm_title = normalize_for_comparison(title);
+
+    if norm_folder.is_empty() || norm_title.is_empty() {
+        return false;
+    }
+
+    norm_title.starts_with(&norm_folder)
+        || norm_folder.starts_with(&norm_title)
+        || (norm_folder.len() >= 6 && norm_title.contains(&norm_folder))
+}
+
+fn is_episode_part(s: &str) -> bool {
+    let trimmed = s.trim();
+    if trimmed.is_empty() {
+        return false;
+    }
+    // 1-3 digits: e.g. "01", "08", "1", "124" (excluding 4-digit years like 2014)
+    if trimmed.chars().all(|c| c.is_ascii_digit()) && trimmed.len() <= 3 {
+        return true;
+    }
+    if RE_EPISODE_NUM.is_match(trimmed) {
+        return true;
+    }
+    if RE_SEASON_EPISODE_START.is_match(trimmed) {
+        return true;
+    }
+    if RE_SPECIAL_START.is_match(trimmed) {
+        return true;
+    }
+    false
+}
+
+fn format_episode_str(s: &str) -> String {
+    let trimmed = s.trim();
+    if trimmed.chars().all(|c| c.is_ascii_digit()) && trimmed.len() <= 3 {
+        format!("Episode {trimmed}")
+    } else if let Some(caps) = RE_EPISODE_NUM.captures(trimmed) {
+        format!("Episode {}", &caps[1])
+    } else if let Some(caps) = RE_LEADING_EPISODE.captures(trimmed) {
+        format!("Episode {} - {}", &caps[1], &caps[2])
+    } else {
+        trimmed.to_string()
+    }
+}
+
+/// Splits a video path into a primary title (Line 1) and optional subtitle/episode (Line 2).
+/// Suitable for clean multi-line display in player overlays and headers.
+pub fn format_title_lines(path: &str) -> (String, Option<String>) {
     let title = format_video_title(path);
     let folder = format_video_folder(path);
 
-    if !folder.is_empty() && !folder.eq_ignore_ascii_case(&title) {
-        if title.to_lowercase().starts_with(&folder.to_lowercase()) {
-            return title;
+    let has_distinct_folder = !folder.is_empty()
+        && !folder.eq_ignore_ascii_case(&title)
+        && !is_title_redundant_with_folder(&folder, &title);
+
+    if has_distinct_folder {
+        return (folder, Some(format_episode_str(&title)));
+    }
+
+    // When folder is absent or redundant with title, inspect the title structure
+    let parts: Vec<&str> = title
+        .split(|c| c == '—' || c == '–')
+        .flat_map(|s| s.split(" - "))
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    if parts.len() >= 2 {
+        if let Some(ep_idx) = (1..parts.len()).find(|&i| is_episode_part(parts[i])) {
+            let primary = parts[..ep_idx].join(" - ");
+            let mut ep_tokens = Vec::new();
+            ep_tokens.push(format_episode_str(parts[ep_idx]));
+            for &rem in &parts[ep_idx + 1..] {
+                ep_tokens.push(rem.to_string());
+            }
+            let secondary = ep_tokens.join(" - ");
+            return (primary, Some(secondary));
         }
-        format!("{folder} — {title}")
+
+        // Subtitle split (e.g. "Main Title - Subtitle")
+        if parts.len() == 2 {
+            return (parts[0].to_string(), Some(parts[1].to_string()));
+        }
+    }
+
+    // Check for space-separated trailing episode markers (e.g. "Series S01E08" or "Series 08")
+    if let Some(mat) = RE_TRAILING_EPISODE_MARKER.find(&title) {
+        let prefix = title[..mat.start()].trim();
+        let marker = title[mat.start()..].trim();
+        if !prefix.is_empty()
+            && (is_episode_part(marker)
+                || (!folder.is_empty() && is_title_redundant_with_folder(&folder, prefix)))
+        {
+            return (prefix.to_string(), Some(format_episode_str(marker)));
+        }
+    }
+
+    (title, None)
+}
+
+pub fn format_descriptive_title(path: &str) -> String {
+    let (primary, secondary) = format_title_lines(path);
+    if let Some(sec) = secondary {
+        format!("{primary} — {sec}")
     } else {
-        title
+        primary
     }
 }
 
