@@ -130,16 +130,26 @@ pub fn focus_ring_style(_theme: &Theme) -> container::Style {
 
 pub fn title_pill_style_with_alpha(alpha: f32) -> impl Fn(&Theme) -> container::Style {
     move |_theme| container::Style {
-        background: Some(Background::Color(with_alpha(COLOR_OVERLAY_DARK, alpha))),
+        background: Some(Background::Color(Color::from_rgba(
+            0.08,
+            0.08,
+            0.10,
+            0.88 * alpha,
+        ))),
         border: Border {
             radius: iced::border::Radius {
                 top_left: 0.0,
-                top_right: 10.0,
-                bottom_right: 10.0,
+                top_right: 14.0,
+                bottom_right: 14.0,
                 bottom_left: 0.0,
             },
             width: 0.0,
             color: Color::TRANSPARENT,
+        },
+        shadow: Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.55 * alpha),
+            offset: Vector::new(0.0, 4.0),
+            blur_radius: 18.0,
         },
         ..Default::default()
     }

@@ -30,7 +30,6 @@ graph TD
 | [**`wazoo-media`**] | High-level media playback (`VideoHandle`), low-level C FFI bindings to `libmpv`, custom WGPU shader rendering pipeline, continuous scroll physics engine, and subtitle transcript parsing. | `iced_wgpu`, `wgpu`, `bytemuck`, `tokio`, `rand` | [Media Architecture] |
 | [**`wazoo-scanner`**] | Asynchronous directory scanner, media file validation, filename sanitization, `ffprobe` metadata extraction, and streaming database batching. | `walkdir`, `tokio`, `serde_json`, `regex`, `wazoo-core` | [Scanner Architecture] |
 | [**`wazoo-app`**] | Main desktop application entry point, TEA state machine, modular update reducers, UI components, multi-tile layout engines, drawers, and modal dialogs. | `iced`, `wazoo-core`, `wazoo-media`, `wazoo-scanner` | [App Architecture] |
-| [**`wazoo-tutorial`**] | Standalone interactive learning sandbox and walkthrough for developers learning Rust, Iced 0.14, and async desktop GUI architecture. | `iced`, `rusqlite`, `tokio`, `rfd` | [Tutorial Architecture] |
 
 ---
 

@@ -36,7 +36,8 @@ pub fn is_video_file<P: AsRef<Path>>(path: P) -> bool {
 }
 
 pub fn clean_video_name(filename: &str) -> String {
-    let without_brackets = RE_BRACKETS.replace_all(filename, " ");
+    let with_apostrophes = filename.replace(['`', '´'], "'");
+    let without_brackets = RE_BRACKETS.replace_all(&with_apostrophes, " ");
     let cleaned = without_brackets.replace(['.', '_'], " ");
     let single_spaced = RE_SPACES.replace_all(&cleaned, " ");
     let trimmed = single_spaced.trim().trim_matches('-');
