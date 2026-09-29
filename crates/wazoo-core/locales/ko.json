@@ -75,6 +75,7 @@
     "reset_playback": "기본값으로 재설정",
     "buffer_duration": "버퍼 시간",
     "buffer_size": "버퍼 크기",
+    "flip_interval": "플립 간격",
     "tab_system": "시스템",
     "always_on_top": "항상 위에 고정",
     "always_on_top_desc": "Wazoo를 다른 모든 창 위에 고정합니다"

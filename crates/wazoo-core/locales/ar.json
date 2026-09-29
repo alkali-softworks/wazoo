@@ -75,6 +75,7 @@
     "reset_playback": "إعادة التعيين للإعدادات الافتراضية",
     "buffer_duration": "مدة التخزين المؤقت",
     "buffer_size": "حجم التخزين المؤقت",
+    "flip_interval": "فاصل التقليب",
     "tab_system": "النظام",
     "always_on_top": "دائمًا في المقدمة",
     "always_on_top_desc": "إبقاء Wazoo مثبتًا فوق جميع النوافذ الأخرى"

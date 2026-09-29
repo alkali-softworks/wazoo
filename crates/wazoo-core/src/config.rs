@@ -95,11 +95,6 @@ impl ConfigManager {
             WazooSettings::default()
         };
 
-        if let Ok(val) = std::env::var("WAZOO_FLIP_INTERVAL") {
-            if let Ok(secs) = val.trim().parse::<u64>() {
-                settings.flip_interval_secs = secs;
-            }
-        }
         settings.flip_interval_secs = settings.flip_interval_secs.clamp(1, 3600);
 
         if settings.playback_mode == crate::models::PlaybackMode::Flip {

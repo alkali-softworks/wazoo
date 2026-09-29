@@ -75,6 +75,7 @@
     "reset_playback": "Zurücksetzen",
     "buffer_duration": "Pufferdauer",
     "buffer_size": "Puffergröße",
+    "flip_interval": "Flip-Intervall",
     "tab_system": "System",
     "always_on_top": "Immer im Vordergrund",
     "always_on_top_desc": "Wazoo über allen anderen Fenstern halten"

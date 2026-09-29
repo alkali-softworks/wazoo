@@ -75,6 +75,7 @@
     "reset_playback": "Atur Ulang ke Default",
     "buffer_duration": "Durasi Buffer",
     "buffer_size": "Ukuran Buffer",
+    "flip_interval": "Interval Balik",
     "tab_system": "Sistem",
     "always_on_top": "Selalu di Atas",
     "always_on_top_desc": "Pertahankan Wazoo disematkan di atas jendela lainnya"

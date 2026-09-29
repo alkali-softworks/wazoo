@@ -75,6 +75,7 @@
     "reset_playback": "Réinitialiser",
     "buffer_duration": "Durée du tampon",
     "buffer_size": "Taille du tampon",
+    "flip_interval": "Intervalle de retournement",
     "tab_system": "Système",
     "always_on_top": "Toujours au premier plan",
     "always_on_top_desc": "Garder Wazoo épinglé au-dessus des autres fenêtres"

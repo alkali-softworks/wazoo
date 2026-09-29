@@ -75,6 +75,7 @@
     "reset_playback": "Сбросить настройки",
     "buffer_duration": "Длительность буфера",
     "buffer_size": "Размер буфера",
+    "flip_interval": "Интервал перелистывания",
     "tab_system": "Система",
     "always_on_top": "Поверх всех окон",
     "always_on_top_desc": "Закрепить Wazoo поверх остальных окон"

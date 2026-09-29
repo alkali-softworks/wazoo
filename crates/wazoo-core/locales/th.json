@@ -75,6 +75,7 @@
     "reset_playback": "รีเซ็ตเป็นค่าเริ่มต้น",
     "buffer_duration": "ระยะเวลาบัฟเฟอร์",
     "buffer_size": "ขนาดบัฟเฟอร์",
+    "flip_interval": "ช่วงเวลาพลิก",
     "tab_system": "ระบบ",
     "always_on_top": "แสดงอยู่ด้านบนเสมอ",
     "always_on_top_desc": "ตรึง Wazoo ไว้ด้านบนสุดของหน้าต่างอื่นเสมอ"

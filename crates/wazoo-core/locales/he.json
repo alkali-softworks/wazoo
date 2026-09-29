@@ -75,6 +75,7 @@
     "reset_playback": "איפוס לברירת מחדל",
     "buffer_duration": "משך מאגר",
     "buffer_size": "גודל מאגר",
+    "flip_interval": "מרווח היפוך",
     "tab_system": "מערכת",
     "always_on_top": "תמיד עליון",
     "always_on_top_desc": "השאר את Wazoo מוצמד מעל כל שאר החלונות"

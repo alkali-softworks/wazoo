@@ -1919,6 +1919,14 @@ impl WazooApp {
                 self.settings.buffer_size_mb = mb.clamp(8, 1024);
                 let _ = self.config_mgr.save_settings(&self.settings);
             }
+            Message::SetFlipInterval(secs) => {
+                let clamped = secs.clamp(1, 3600);
+                self.settings.flip_interval_secs = clamped;
+                if self.flip_countdown > clamped {
+                    self.flip_countdown = clamped;
+                }
+                let _ = self.config_mgr.save_settings(&self.settings);
+            }
             Message::ResetPlaybackOptions => {
                 self.settings.gamma = 0.0;
                 self.settings.contrast = 0.0;

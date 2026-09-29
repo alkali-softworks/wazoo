@@ -75,6 +75,7 @@
     "reset_playback": "डिफ़ॉल्ट पर रीसेट करें",
     "buffer_duration": "बफर अवधि",
     "buffer_size": "बफर आकार",
+    "flip_interval": "फ्लिप अंतराल",
     "tab_system": "सिस्टम",
     "always_on_top": "हमेशा शीर्ष पर",
     "always_on_top_desc": "Wazoo को अन्य सभी विंडो के ऊपर पिन रखें"
