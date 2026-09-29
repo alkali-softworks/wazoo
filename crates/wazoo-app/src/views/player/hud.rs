@@ -21,7 +21,7 @@ use iced::{
     widget::{Space, Stack, button, column, container, row, slider, svg, text},
 };
 use wazoo_core::PlaybackMode;
-use wazoo_media::VideoHandle;
+use crate::state::AppPlayer;
 
 impl WazooApp {
     pub(crate) fn view_title_pill<'a>(&self, path: &str, alpha: f32) -> Element<'a, Message> {
@@ -41,7 +41,7 @@ impl WazooApp {
     }
 
     pub(crate) fn view_loading_spinner<'a>(&self) -> Element<'a, Message> {
-        let angle = self.loading.spinner_angle() as u32;
+        let angle = self.overlay.spinner_angle() as u32;
         let spinner_svg = format!(
             r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none">
 <circle cx="18" cy="18" r="14" stroke="rgba(255,255,255,0.15)" stroke-width="3"/>
@@ -90,7 +90,7 @@ impl WazooApp {
 
     pub(crate) fn view_player_hud<'a>(
         &self,
-        p: &'a VideoHandle,
+        p: &'a AppPlayer,
         is_focused: bool,
         is_loading: bool,
         overlay_alpha: f32,
@@ -137,7 +137,7 @@ impl WazooApp {
             0.0f32
         };
 
-        let is_audio_menu_open = self.playback.open_audio_menu_id == Some(player_id);
+        let is_audio_menu_open = self.open_audio_menu_id == Some(player_id);
 
         let title_pill = self.view_title_pill(&p.state.path, overlay_alpha);
         let top_row = row![title_pill, Space::new().width(Length::Fill)].width(Length::Fill);
@@ -186,7 +186,7 @@ impl WazooApp {
                 .opacity(overlay_alpha)
         };
 
-        let is_shuffle = self.is_player_shuffle(player_id);
+        let is_shuffle = p.shuffle;
         let play_mode_icon = if is_shuffle {
             svg(svg::Handle::from_memory(SVG_PLAYER_SHUFFLE))
                 .width(Length::Fixed(20.0))
@@ -219,7 +219,7 @@ impl WazooApp {
                 .center_y(Length::Shrink),
             )
             .style(theme::cc_button_style_with_alpha(
-                self.playback.subtitles_enabled,
+                self.subtitles_enabled,
                 overlay_alpha
             ))
             .on_press(Message::ToggleSubtitles)

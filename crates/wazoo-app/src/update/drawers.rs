@@ -11,7 +11,6 @@ use crate::format;
 use crate::message::Message;
 use iced::Task;
 use std::time::Duration;
-use wazoo_media::PlayerSliceExt;
 
 impl WazooApp {
     pub(crate) fn update_drawers(&mut self, message: Message) -> Task<Message> {
@@ -52,8 +51,8 @@ impl WazooApp {
                     self.drawers.show_transcript_menu = false;
                     return Task::none();
                 }
-                if let Some(idx) = self.player_index(id) {
-                    self.playback.focused_idx = idx;
+                if let Some(idx) = self.players.player_index(id) {
+                    self.focused_idx = idx;
                 }
                 self.drawers.show_transcript = true;
                 self.drawers.show_transcript_menu = false;
@@ -126,7 +125,7 @@ impl WazooApp {
             Message::SelectTranscriptSubtitleTrack(track_idx, track_id) => {
                 self.drawers.show_transcript_menu = false;
                 self.drawers.transcript_track_index = track_idx;
-                self.playback.subtitles_enabled = true;
+                self.subtitles_enabled = true;
                 if let Some(player) = self.focused_player_mut() {
                     player.set_subtitles_visible(true);
                     player.set_subtitle_track(track_id);
@@ -182,13 +181,13 @@ impl WazooApp {
             }
             Message::PlayFileInFocused(path) => {
                 if let Some(id) = self.focused_player_id() {
-                    self.loading.start(id);
-                    self.record_current_player_nav_position(id);
-                    if let Some(hist) = self.playback.nav_history.get_mut(&id) {
-                        hist.forward_stack.clear();
+                    if let Some(p) = self.players.player_mut(id) {
+                        p.start_loading();
+                        p.nav_history.forward_stack.clear();
                     }
+                    self.record_current_player_nav_position(id);
                     let title = format::format_video_title(&path);
-                    let curr_player = self.player(id);
+                    let curr_player = self.players.player(id);
                     let prev_muted = curr_player.map(|p| p.state.is_muted);
                     let prev_volume = curr_player.map(|p| p.state.volume);
 
@@ -197,10 +196,10 @@ impl WazooApp {
                         if let Some(vol) = prev_volume {
                             handle.set_volume(vol);
                         }
-                        handle.set_subtitles_visible(self.playback.subtitles_enabled);
+                        handle.set_subtitles_visible(self.subtitles_enabled);
                         self.push_player_nav_entry(id, path.clone(), None);
                         if let Some(p) = self.players.player_mut(id) {
-                            *p = handle;
+                            p.handle = handle;
                         }
                         self.overlay.toast_message =
                             Some(self.t_with("player.playing", &[("title", &title)]));

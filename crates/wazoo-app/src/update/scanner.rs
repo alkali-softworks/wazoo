@@ -108,8 +108,7 @@ impl WazooApp {
                 // 3. Immediately update active players
                 if self.available_videos.is_empty() {
                     self.players.clear();
-                    self.loading.clear();
-                    self.playback.focused_idx = 0;
+                    self.focused_idx = 0;
                 } else {
                     self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
@@ -178,8 +177,7 @@ impl WazooApp {
                 // Reconcile players if any were playing a Misc video
                 if self.available_videos.is_empty() {
                     self.players.clear();
-                    self.loading.clear();
-                    self.playback.focused_idx = 0;
+                    self.focused_idx = 0;
                 } else {
                     self.reconcile_players_with_available_videos(None);
                     self.save_session_state();

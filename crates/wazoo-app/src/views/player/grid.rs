@@ -13,7 +13,7 @@ use iced::{
     widget::{column, container, row, text},
 };
 use wazoo_core::{LayoutMode, PlaybackMode};
-use wazoo_media::VideoHandle;
+use crate::state::AppPlayer;
 
 impl WazooApp {
     pub(crate) fn view_players(&self) -> Element<'_, Message> {
@@ -110,7 +110,7 @@ impl WazooApp {
 
     pub(crate) fn view_scroll_stream(&self) -> Element<'_, Message> {
         let mut stream = scroll_view::ScrollStream::new();
-        let mut scroll_items: Vec<(&VideoHandle, &wazoo_media::ScrollItem)> = self
+        let mut scroll_items: Vec<(&AppPlayer, &wazoo_media::ScrollItem)> = self
             .players
             .iter()
             .filter_map(|p| self.scroll_engine.items.get(&p.id).map(|item| (p, item)))
