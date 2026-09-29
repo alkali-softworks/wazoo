@@ -16,7 +16,7 @@ use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use wazoo_core::{ConfigManager, Database, PlaybackMode, VideoRecord, VideoSession, WazooSettings};
-use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, StartTime, VideoHandle};
+use wazoo_media::{BufferConfig, PlayerId, PlayerSliceExt, ScrollEngine, StartTime, VideoHandle};
 
 /// Player controls overlay visibility duration: 2.5 seconds at 60 FPS (150 ticks)
 pub const PLAYER_OVERLAY_HIDE_TICKS: usize = 150;
@@ -363,9 +363,7 @@ impl WazooApp {
             while let Some(spawn_y) = app.scroll_engine.needs_new_player() {
                 if let Some(id) = app.add_player_internal() {
                     let item_h = app
-                        .players
-                        .iter()
-                        .find(|p| p.id == id)
+                        .player(id)
                         .map(|p| app.calculate_player_scroll_height(p))
                         .unwrap_or_else(|| app.scroll_engine.default_item_height());
                     app.scroll_engine.add_item(id, spawn_y, item_h);
@@ -496,6 +494,30 @@ impl WazooApp {
             let idx = self.playback.focused_idx % self.players.len();
             Some(&mut self.players[idx])
         }
+    }
+
+    /// Returns a reference to the player with the specified ID, if it exists.
+    #[inline]
+    pub fn player(&self, id: PlayerId) -> Option<&VideoHandle> {
+        self.players.player(id)
+    }
+
+    /// Returns a mutable reference to the player with the specified ID, if it exists.
+    #[inline]
+    pub fn player_mut(&mut self, id: PlayerId) -> Option<&mut VideoHandle> {
+        self.players.player_mut(id)
+    }
+
+    /// Returns the index of the player with the specified ID in the players list, if it exists.
+    #[inline]
+    pub fn player_index(&self, id: PlayerId) -> Option<usize> {
+        self.players.player_index(id)
+    }
+
+    /// Returns whether a player with the specified ID exists in the players list.
+    #[inline]
+    pub fn has_player(&self, id: PlayerId) -> bool {
+        self.players.has_player(id)
     }
 
     pub(crate) fn load_transcript_for_focused_player(&mut self) -> Task<Message> {
@@ -637,7 +659,7 @@ impl WazooApp {
     }
 
     pub(crate) fn record_current_player_nav_position(&mut self, id: PlayerId) {
-        if let Some(p) = self.players.iter().find(|pl| pl.id == id) {
+        if let Some(p) = self.players.player(id) {
             let pos_secs = p.position().as_secs_f64();
             let dur_secs = p.duration().as_secs_f64();
             let saved_pos = if dur_secs > 10.0 && (dur_secs - pos_secs) < 3.0 {
@@ -857,7 +879,7 @@ impl WazooApp {
         let mut used_paths: HashSet<String> =
             self.players.iter().map(|p| p.state.path.clone()).collect();
         for &(id, _, _) in &needs_switch {
-            if let Some(p) = self.players.iter().find(|pl| pl.id == id) {
+            if let Some(p) = self.players.player(id) {
                 used_paths.remove(&p.state.path);
             }
         }
@@ -898,7 +920,7 @@ impl WazooApp {
                     new_handle.set_volume(prev_volume);
                     new_handle.set_subtitles_visible(self.playback.subtitles_enabled);
                     self.push_player_nav_entry(id, rec_path.clone(), None);
-                    if let Some(p) = self.players.iter_mut().find(|pl| pl.id == id) {
+                    if let Some(p) = self.players.player_mut(id) {
                         *p = new_handle;
                     }
                 }

@@ -14,12 +14,12 @@ use crate::format;
 use crate::message::Message;
 use iced::Task;
 use wazoo_core::PlaybackMode;
-use wazoo_media::{PlayerId, StartTime, VideoHandle};
+use wazoo_media::{PlayerId, PlayerSliceExt, StartTime, VideoHandle};
 
 impl WazooApp {
     pub(crate) fn focus_player_for_navigation(&mut self, id: PlayerId, request_focus: bool) {
         if request_focus {
-            if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+            if let Some(pos) = self.player_index(id) {
                 let was_already_active = self.playback.focused_idx == pos;
                 self.playback.focused_idx = pos;
                 if !was_already_active {
@@ -44,7 +44,7 @@ impl WazooApp {
             new_handle.set_volume(vol);
         }
         new_handle.set_subtitles_visible(self.playback.subtitles_enabled);
-        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+        if let Some(p) = self.players.player_mut(id) {
             *p = new_handle;
         }
     }
@@ -55,11 +55,11 @@ impl WazooApp {
         request_focus: bool,
     ) -> Task<Message> {
         self.focus_player_for_navigation(id, request_focus);
-        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+        if let Some(p) = self.players.player_mut(id) {
             p.clear_marks();
         }
 
-        let curr_player = self.players.iter().find(|p| p.id == id);
+        let curr_player = self.player(id);
         let curr_path = curr_player.map(|p| p.state.path.clone());
         let prev_muted = curr_player.map(|p| p.state.is_muted);
         let prev_volume = curr_player.map(|p| p.state.volume);
@@ -132,11 +132,11 @@ impl WazooApp {
         request_focus: bool,
     ) -> Task<Message> {
         self.focus_player_for_navigation(id, request_focus);
-        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+        if let Some(p) = self.players.player_mut(id) {
             p.clear_marks();
         }
 
-        let curr_player = self.players.iter().find(|p| p.id == id);
+        let curr_player = self.player(id);
         let curr_path = curr_player.map(|p| p.state.path.clone());
         let prev_muted = curr_player.map(|p| p.state.is_muted);
         let prev_volume = curr_player.map(|p| p.state.volume);

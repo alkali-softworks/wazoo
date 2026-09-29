@@ -17,7 +17,7 @@ use crate::message::Message;
 use iced::Task;
 use std::time::Duration;
 use wazoo_core::{Bookmark, LayoutMode, PlaybackMode};
-use wazoo_media::PlayerId;
+use wazoo_media::{PlayerId, PlayerSliceExt};
 
 impl WazooApp {
     pub(crate) fn update_playback(&mut self, message: Message) -> Task<Message> {
@@ -29,7 +29,7 @@ impl WazooApp {
                 if self.is_modal_or_menu_open() {
                     return Task::none();
                 }
-                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                if let Some(pos) = self.player_index(id) {
                     let was_already_active = self.playback.focused_idx == pos;
                     self.playback.focused_idx = pos;
                     if !was_already_active {
@@ -43,14 +43,14 @@ impl WazooApp {
                 Task::none()
             }
             Message::TogglePlay(id) => {
-                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                if let Some(pos) = self.player_index(id) {
                     let was_already_active = self.playback.focused_idx == pos;
                     self.playback.focused_idx = pos;
                     if !was_already_active {
                         self.overlay.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                 }
-                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                if let Some(p) = self.players.player_mut(id) {
                     p.toggle_play();
                 }
                 self.trigger_player_overlay();
@@ -168,7 +168,7 @@ impl WazooApp {
                 Task::none()
             }
             Message::ClearLoop(id) => {
-                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                if let Some(p) = self.players.player_mut(id) {
                     p.clear_marks();
                     let id_str = id.to_string();
                     self.overlay.toast_message =
@@ -185,28 +185,28 @@ impl WazooApp {
                 Task::none()
             }
             Message::Seek(id, pos) => {
-                if let Some(pos_idx) = self.players.iter().position(|p| p.id == id) {
+                if let Some(pos_idx) = self.player_index(id) {
                     let was_already_active = self.playback.focused_idx == pos_idx;
                     self.playback.focused_idx = pos_idx;
                     if !was_already_active {
                         self.overlay.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                 }
-                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                if let Some(p) = self.players.player_mut(id) {
                     p.seek(pos);
                 }
                 self.trigger_player_overlay();
                 Task::none()
             }
             Message::SeekRatio(id, ratio) => {
-                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                if let Some(pos) = self.player_index(id) {
                     let was_already_active = self.playback.focused_idx == pos;
                     self.playback.focused_idx = pos;
                     if !was_already_active {
                         self.overlay.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                 }
-                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                if let Some(p) = self.players.player_mut(id) {
                     let dur = p.duration();
                     if dur > Duration::ZERO {
                         let target_secs = dur.as_secs_f64() * (ratio.clamp(0.0, 1.0) as f64);
@@ -256,7 +256,7 @@ impl WazooApp {
             Message::SeekRelativeFocused(secs) => {
                 self.trigger_player_overlay();
                 if let Some(id) = self.focused_player_id() {
-                    if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                    if let Some(p) = self.players.player_mut(id) {
                         p.seek_relative(secs);
                         let pos = p.position();
                         let dur = p.duration();
@@ -293,14 +293,14 @@ impl WazooApp {
                 Task::none()
             }
             Message::SetVolume(id, vol) => {
-                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                if let Some(pos) = self.player_index(id) {
                     let was_already_active = self.playback.focused_idx == pos;
                     self.playback.focused_idx = pos;
                     if !was_already_active {
                         self.overlay.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                 }
-                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                if let Some(p) = self.players.player_mut(id) {
                     p.set_volume(vol);
                     if vol > 0.0 {
                         if p.state.is_muted {
@@ -320,7 +320,7 @@ impl WazooApp {
                 }
                 if let Some(id) = self.focused_player_id() {
                     let mut vol_display = None;
-                    if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                    if let Some(p) = self.players.player_mut(id) {
                         p.adjust_volume(delta);
                         if p.state.volume > 0.0 {
                             if p.state.is_muted {
@@ -343,7 +343,7 @@ impl WazooApp {
             }
             Message::SelectAudioTrack(id, track_id) => {
                 self.playback.open_audio_menu_id = None;
-                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                if let Some(pos) = self.player_index(id) {
                     let was_already_active = self.playback.focused_idx == pos;
                     self.playback.focused_idx = pos;
                     if !was_already_active {
@@ -352,7 +352,7 @@ impl WazooApp {
                 }
                 let mut selected_pref = None;
                 let mut track_label = None;
-                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                if let Some(p) = self.players.player_mut(id) {
                     p.set_audio_track(track_id);
                     if let Some(track) = p.state.audio_tracks.iter().find(|t| t.id == track_id) {
                         track_label = Some(wazoo_media::format_audio_track_label(track, 0));
@@ -391,14 +391,14 @@ impl WazooApp {
                 Task::none()
             }
             Message::TogglePlayerMute(id) => {
-                if let Some(pos) = self.players.iter().position(|p| p.id == id) {
+                if let Some(pos) = self.player_index(id) {
                     let was_already_active = self.playback.focused_idx == pos;
                     self.playback.focused_idx = pos;
                     if !was_already_active {
                         self.overlay.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                 }
-                if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                if let Some(p) = self.players.player_mut(id) {
                     let muted = !p.state.is_muted;
                     p.set_muted(muted);
                     self.overlay.toast_message = Some(if muted {
@@ -605,9 +605,7 @@ impl WazooApp {
                     while let Some(spawn_y) = self.scroll_engine.needs_new_player() {
                         if let Some(id) = self.add_player_internal() {
                             let item_h = self
-                                .players
-                                .iter()
-                                .find(|p| p.id == id)
+                                .player(id)
                                 .map(|p| self.calculate_player_scroll_height(p))
                                 .unwrap_or_else(|| self.scroll_engine.default_item_height());
                             self.scroll_engine.add_item(id, spawn_y, item_h);
@@ -792,7 +790,7 @@ impl WazooApp {
             }
             Message::AddBookmarkFocused => {
                 if let Some(id) = self.focused_player_id() {
-                    if let Some(p) = self.players.iter().find(|p| p.id == id) {
+                    if let Some(p) = self.players.player(id) {
                         let path = p.path().to_string();
                         if !path.is_empty() {
                             let name = format::format_descriptive_title(&path);
@@ -829,7 +827,7 @@ impl WazooApp {
             }
             Message::RemoveBookmarkFocused => {
                 if let Some(id) = self.focused_player_id() {
-                    if let Some(p) = self.players.iter().find(|p| p.id == id) {
+                    if let Some(p) = self.players.player(id) {
                         let path = p.path();
                         if let Some(pos) =
                             self.settings.bookmarks.iter().position(|b| b.path == path)
@@ -895,7 +893,7 @@ impl WazooApp {
                         hist.forward_stack.clear();
                     }
                     let title = format::format_video_title(&b.path);
-                    let curr_player = self.players.iter().find(|p| p.id == id);
+                    let curr_player = self.players.player(id);
                     let prev_muted = curr_player.map(|p| p.state.is_muted);
                     let prev_volume = curr_player.map(|p| p.state.volume);
 
@@ -911,7 +909,7 @@ impl WazooApp {
                         }
                         handle.set_subtitles_visible(self.playback.subtitles_enabled);
                         self.push_player_nav_entry(id, b.path.clone(), Some(b.position_secs));
-                        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                        if let Some(p) = self.players.player_mut(id) {
                             *p = handle;
                         }
                     }
@@ -961,7 +959,7 @@ impl WazooApp {
             Message::RandomSeekFocused => {
                 self.trigger_player_overlay();
                 if let Some(id) = self.focused_player_id() {
-                    if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                    if let Some(p) = self.players.player_mut(id) {
                         p.seek_random();
                         let pos = p.position();
                         let dur = p.duration();

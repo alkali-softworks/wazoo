@@ -23,6 +23,7 @@ use crate::app::{
 use crate::message::Message;
 use iced::Task;
 use std::time::Duration;
+use wazoo_media::PlayerSliceExt;
 use wazoo_core::PlaybackMode;
 use wazoo_media::{PlayerId, VideoHandle};
 
@@ -225,12 +226,13 @@ impl WazooApp {
                 for id in stale_loading {
                     self.loading.stop(&id);
                 }
+                let players = &self.players;
                 self.loading
                     .player_ids
-                    .retain(|id| self.players.iter().any(|p| p.id == *id));
+                    .retain(|id| players.has_player(*id));
                 self.loading
                     .player_ticks
-                    .retain(|id, _| self.players.iter().any(|p| p.id == *id));
+                    .retain(|id, _| players.has_player(*id));
 
                 let mut finished_ids = Vec::new();
                 let mut stuck_ids = Vec::new();
