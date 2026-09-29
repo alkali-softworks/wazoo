@@ -14,7 +14,7 @@ use iced::advanced::{Clipboard, Shell, overlay};
 use iced::mouse;
 use iced::{Element, Event, Length, Point, Rectangle, Size};
 
-/// A custom vertical streaming widget for Scroll Mode ("The Infinity Stream").
+/// A custom vertical streaming widget for Scroll Mode.
 /// Lays out children at arbitrary Y positions and clips rendered output to the container viewport.
 pub struct ScrollStream<'a, Message, Theme = iced::Theme, Renderer = iced::Renderer> {
     width: Length,

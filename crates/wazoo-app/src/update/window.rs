@@ -5,8 +5,8 @@
  */
 
 use crate::app::{
-    DEFAULT_TOAST_SECS, PLAYER_OVERLAY_FADE_TICKS, TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS,
-    WazooApp,
+    DEFAULT_TOAST_SECS, DROPDOWN_MENU_SLIDE_TICKS, PLAYER_OVERLAY_FADE_TICKS, TITLEBAR_FADE_TICKS,
+    TITLEBAR_HIDE_TICKS, TITLEBAR_SHOW_DELAY_TICKS, TITLEBAR_SLIDE_TICKS, WazooApp,
 };
 use crate::message::Message;
 use crate::state::AppPlayer;
@@ -321,6 +321,85 @@ impl WazooApp {
                 Task::none()
             }
             _ => Task::none(),
+        }
+    }
+
+    /// Throttles frame rendering to ~30 FPS (every 2nd tick) when the window is unfocused or obscured.
+    pub(crate) fn should_throttle_unfocused_frame(&mut self) -> bool {
+        if !self.window.is_focused {
+            self.window.unfocused_frame_ticks =
+                self.window.unfocused_frame_ticks.wrapping_add(1);
+            !self.window.unfocused_frame_ticks.is_multiple_of(2)
+        } else {
+            false
+        }
+    }
+
+    /// Ticks titlebar visibility, slide transitions, hover delays, and window dragging state.
+    pub(crate) fn tick_titlebar_animation(&mut self) {
+        if self.window.is_dragging
+            || self.titlebar.drag_pending
+            || self.is_point_in_titlebar(self.window.cursor_position)
+            || self.titlebar.show_dropdown_menu
+        {
+            if self.window.is_dragging || self.titlebar.drag_pending {
+                let is_still_moving = self
+                    .window
+                    .last_drag_move
+                    .map(|t| t.elapsed() < Duration::from_millis(300))
+                    .unwrap_or(false);
+                if !is_still_moving
+                    && !self.titlebar.drag_pending
+                    && !self.is_point_in_titlebar(self.window.cursor_position)
+                {
+                    self.window.is_dragging = false;
+                    self.window.last_drag_move = None;
+                    if self.titlebar.hide_ticks > TITLEBAR_FADE_TICKS {
+                        self.titlebar.hide_ticks = TITLEBAR_FADE_TICKS;
+                    }
+                } else {
+                    self.titlebar.show = true;
+                    self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
+                    self.titlebar.hover_ticks = 0;
+                    self.titlebar.slide_ticks = TITLEBAR_SLIDE_TICKS;
+                }
+            } else if self.titlebar.show_dropdown_menu {
+                self.titlebar.show = true;
+                self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
+                self.titlebar.hover_ticks = 0;
+                self.titlebar.slide_ticks = TITLEBAR_SLIDE_TICKS;
+                if self.titlebar.dropdown_menu_slide_ticks < DROPDOWN_MENU_SLIDE_TICKS {
+                    self.titlebar.dropdown_menu_slide_ticks += 1;
+                }
+            } else if self.titlebar.show {
+                self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
+                if self.titlebar.slide_ticks < TITLEBAR_SLIDE_TICKS {
+                    self.titlebar.slide_ticks += 1;
+                }
+            } else {
+                self.titlebar.hover_ticks += 1;
+                if self.titlebar.hover_ticks >= TITLEBAR_SHOW_DELAY_TICKS {
+                    self.titlebar.show = true;
+                    self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
+                    self.titlebar.hover_ticks = 0;
+                    self.titlebar.slide_ticks = 0;
+                    if self.hovered_player_id.is_some() {
+                        let current_fade =
+                            self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                        self.overlay.ticks = self.overlay.ticks.min(current_fade);
+                    }
+                }
+            }
+        } else {
+            self.titlebar.hover_ticks = 0;
+            self.titlebar.dropdown_menu_slide_ticks = 0;
+            if self.titlebar.hide_ticks > 0 {
+                self.titlebar.hide_ticks -= 1;
+                if self.titlebar.hide_ticks == 0 {
+                    self.titlebar.show = false;
+                    self.titlebar.slide_ticks = 0;
+                }
+            }
         }
     }
 }
