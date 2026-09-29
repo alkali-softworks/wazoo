@@ -42,8 +42,7 @@ impl WazooApp {
                             .partition(|p| !offscreen.contains(&p.id));
                         self.players = keep;
                         for &id in &offscreen {
-                            self.loading_player_ids.remove(&id);
-                            self.loading_player_ticks.remove(&id);
+                            self.loading.stop(&id);
                         }
                         if !despawned.is_empty() {
                             std::thread::spawn(move || drop(despawned));
@@ -57,7 +56,7 @@ impl WazooApp {
                     while let Some(spawn_y) =
                         self.scroll_engine.needs_new_player_with_margin(margin)
                     {
-                        if let Some(mut handle) = self.preloaded_player.take() {
+                        if let Some(mut handle) = self.loading.preloaded_player.take() {
                             let item_h = self.calculate_player_scroll_height(&handle);
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
@@ -76,7 +75,7 @@ impl WazooApp {
                         p.set_volume(vol);
                     }
 
-                    if needs_preload || (self.preloaded_player.is_none() && !self.is_preloading) {
+                    if needs_preload || (self.loading.preloaded_player.is_none() && !self.loading.is_preloading) {
                         return self.trigger_preload_task();
                     }
                 }
@@ -93,8 +92,8 @@ impl WazooApp {
                         return Task::none();
                     }
                 }
-                self.spinner_ticks = self.spinner_ticks.wrapping_add(1);
-                if self.open_audio_menu_player_id.is_some() {
+                self.loading.spinner_ticks = self.loading.spinner_ticks.wrapping_add(1);
+                if self.playback.open_audio_menu_id.is_some() {
                     self.overlay.ticks = PLAYER_OVERLAY_HIDE_TICKS;
                     self.overlay.fade_in_ticks = PLAYER_OVERLAY_FADE_TICKS;
                 } else if self.overlay.ticks > 0 {
@@ -103,7 +102,7 @@ impl WazooApp {
                     }
                     self.overlay.ticks -= 1;
                     if self.overlay.ticks == 0 {
-                        self.hovered_player_id = None;
+                        self.playback.hovered_id = None;
                         self.overlay.fade_in_ticks = 0;
                     }
                 } else {
@@ -167,7 +166,7 @@ impl WazooApp {
                             self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
                             self.titlebar.hover_ticks = 0;
                             self.titlebar.slide_ticks = 0;
-                            if self.hovered_player_id.is_some() {
+                            if self.playback.hovered_id.is_some() {
                                 let current_fade = self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                                 self.overlay.ticks =
                                     self.overlay.ticks.min(current_fade);
@@ -187,8 +186,7 @@ impl WazooApp {
                 }
                 for p in &mut self.players {
                     if p.update_frame() {
-                        self.loading_player_ids.remove(&p.id);
-                        self.loading_player_ticks.remove(&p.id);
+                        self.loading.stop(&p.id);
                     }
                 }
                 if self.settings.playback_mode == PlaybackMode::Scroll {
@@ -216,7 +214,8 @@ impl WazooApp {
                 }
                 // Auto-clear loading state if it exceeds 10 seconds to avoid indefinite spinner
                 let stale_loading: Vec<PlayerId> = self
-                    .loading_player_ticks
+                    .loading
+                    .player_ticks
                     .iter_mut()
                     .filter_map(|(&id, ticks)| {
                         *ticks += 1;
@@ -224,12 +223,13 @@ impl WazooApp {
                     })
                     .collect();
                 for id in stale_loading {
-                    self.loading_player_ids.remove(&id);
-                    self.loading_player_ticks.remove(&id);
+                    self.loading.stop(&id);
                 }
-                self.loading_player_ids
+                self.loading
+                    .player_ids
                     .retain(|id| self.players.iter().any(|p| p.id == *id));
-                self.loading_player_ticks
+                self.loading
+                    .player_ticks
                     .retain(|id, _| self.players.iter().any(|p| p.id == *id));
 
                 let mut finished_ids = Vec::new();
@@ -265,13 +265,13 @@ impl WazooApp {
                 }
                 if self.settings.playback_mode == PlaybackMode::Flip {
                     let interval = self.settings.flip_interval_secs.max(1);
-                    if self.flip_countdown > interval || self.flip_countdown == 0 {
-                        self.flip_countdown = interval;
+                    if self.flip.countdown > interval || self.flip.countdown == 0 {
+                        self.flip.countdown = interval;
                     }
-                    if self.flip_countdown > 1 {
-                        self.flip_countdown -= 1;
+                    if self.flip.countdown > 1 {
+                        self.flip.countdown -= 1;
                     } else {
-                        self.flip_countdown = interval;
+                        self.flip.countdown = interval;
                         let _ = self.update(Message::FlipModeTick);
                     }
                 }
@@ -280,11 +280,10 @@ impl WazooApp {
             }
 
             Message::FlipModeTick => {
-                self.flip_countdown = self.settings.flip_interval_secs.max(1);
+                self.flip.reset(self.settings.flip_interval_secs);
                 if self.settings.playback_mode == PlaybackMode::Flip && !self.players.is_empty() {
                     let rand_id = self.players[rand::random::<usize>() % self.players.len()].id;
-                    self.loading_player_ids.insert(rand_id);
-                    self.loading_player_ticks.insert(rand_id, 0);
+                    self.loading.start(rand_id);
                     let _ = self.update(Message::NextVideo(rand_id));
                 }
                 Task::none()

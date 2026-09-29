@@ -157,14 +157,14 @@ impl WazooApp {
             self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
             self.titlebar.hover_ticks = 0;
             self.titlebar.slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
-            if self.hovered_player_id.is_some() {
+            if self.playback.hovered_id.is_some() {
                 let current_fade = self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                 self.overlay.ticks = self.overlay.ticks.min(current_fade);
             }
         } else if self.is_point_in_titlebar(pos) {
             if self.titlebar.show {
                 self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
-                if self.hovered_player_id.is_some() {
+                if self.playback.hovered_id.is_some() {
                     let current_fade =
                         self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                     self.overlay.ticks = self.overlay.ticks.min(current_fade);

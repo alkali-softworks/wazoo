@@ -20,16 +20,15 @@ impl WazooApp {
     pub(crate) fn focus_player_for_navigation(&mut self, id: PlayerId, request_focus: bool) {
         if request_focus {
             if let Some(pos) = self.players.iter().position(|p| p.id == id) {
-                let was_already_active = self.focused_player_idx == pos;
-                self.focused_player_idx = pos;
+                let was_already_active = self.playback.focused_idx == pos;
+                self.playback.focused_idx = pos;
                 if !was_already_active {
                     self.overlay.focus_border_ticks = FOCUS_BORDER_TICKS;
                 }
             }
             self.trigger_player_overlay();
         }
-        self.loading_player_ids.insert(id);
-        self.loading_player_ticks.insert(id, 0);
+        self.loading.start(id);
         self.record_current_player_nav_position(id);
     }
 
@@ -44,7 +43,7 @@ impl WazooApp {
         if let Some(vol) = prev_volume {
             new_handle.set_volume(vol);
         }
-        new_handle.set_subtitles_visible(self.subtitles_enabled);
+        new_handle.set_subtitles_visible(self.playback.subtitles_enabled);
         if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
             *p = new_handle;
         }
@@ -67,7 +66,8 @@ impl WazooApp {
 
         // 1. Check forward_stack for undone videos from previous navigation
         let forward_candidate = self
-            .player_nav_history
+            .playback
+            .nav_history
             .get_mut(&id)
             .and_then(|hist| hist.forward_stack.pop());
 
@@ -144,7 +144,7 @@ impl WazooApp {
         // 1. Adjust navigation history:
         // Pop the current video from back_stack and push onto forward_stack
         let mut target_candidate = None;
-        if let Some(hist) = self.player_nav_history.get_mut(&id) {
+        if let Some(hist) = self.playback.nav_history.get_mut(&id) {
             if let Some(curr) = curr_path.as_deref() {
                 if hist.back_stack.last().map(|e| e.path.as_str()) == Some(curr) {
                     let current_entry = hist.back_stack.pop().unwrap();

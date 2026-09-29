@@ -49,7 +49,7 @@ fn test_get_next_video_rec_sequential_and_random() {
     ];
 
     // 1. Sequential mode
-    app.is_shuffle_mode = false;
+    app.playback.default_shuffle_mode = false;
     let next1 = app.get_next_video_rec(Some("/media/v1.mp4")).unwrap();
     assert_eq!(next1.path, "/media/v2.mp4");
     let next2 = app.get_next_video_rec(Some("/media/v2.mp4")).unwrap();
@@ -58,7 +58,7 @@ fn test_get_next_video_rec_sequential_and_random() {
     assert_eq!(next3.path, "/media/v1.mp4"); // Wraps around
 
     // 2. Random/shuffle mode
-    app.is_shuffle_mode = true;
+    app.playback.default_shuffle_mode = true;
     for _ in 0..10 {
         let rand_rec = app.get_next_video_rec(Some("/media/v1.mp4")).unwrap();
         assert!(app.available_videos.iter().any(|v| v.path == rand_rec.path));
@@ -109,25 +109,28 @@ fn test_player_nav_history_scrub_back_and_forward() {
     // User plays random C
     app.push_player_nav_entry(player_id, "/media/C.mp4".to_string(), Some(30.0));
 
-    let hist = app.player_nav_history.get(&player_id).unwrap();
+    let hist = app.playback.nav_history.get(&player_id).unwrap();
     assert_eq!(hist.back_stack.len(), 3);
     assert_eq!(hist.forward_stack.len(), 0);
 
     // Previous action simulation: pop C from back_stack, push to forward_stack
     let current_c = app
-        .player_nav_history
+        .playback
+        .nav_history
         .get_mut(&player_id)
         .unwrap()
         .back_stack
         .pop()
         .unwrap();
-    app.player_nav_history
+    app.playback
+        .nav_history
         .get_mut(&player_id)
         .unwrap()
         .forward_stack
         .push(current_c);
     let target_b = app
-        .player_nav_history
+        .playback
+        .nav_history
         .get(&player_id)
         .unwrap()
         .back_stack
@@ -139,19 +142,22 @@ fn test_player_nav_history_scrub_back_and_forward() {
 
     // Previous again: pop B from back_stack, push to forward_stack
     let current_b = app
-        .player_nav_history
+        .playback
+        .nav_history
         .get_mut(&player_id)
         .unwrap()
         .back_stack
         .pop()
         .unwrap();
-    app.player_nav_history
+    app.playback
+        .nav_history
         .get_mut(&player_id)
         .unwrap()
         .forward_stack
         .push(current_b);
     let target_a = app
-        .player_nav_history
+        .playback
+        .nav_history
         .get(&player_id)
         .unwrap()
         .back_stack
@@ -162,7 +168,8 @@ fn test_player_nav_history_scrub_back_and_forward() {
 
     // Now next action: forward_stack pop gives B!
     let forward_b = app
-        .player_nav_history
+        .playback
+        .nav_history
         .get_mut(&player_id)
         .unwrap()
         .forward_stack
@@ -174,7 +181,8 @@ fn test_player_nav_history_scrub_back_and_forward() {
 
     // Next action again: forward_stack pop gives C!
     let forward_c = app
-        .player_nav_history
+        .playback
+        .nav_history
         .get_mut(&player_id)
         .unwrap()
         .forward_stack
@@ -186,7 +194,8 @@ fn test_player_nav_history_scrub_back_and_forward() {
 
     // Forward stack is now empty
     assert!(
-        app.player_nav_history
+        app.playback
+            .nav_history
             .get(&player_id)
             .unwrap()
             .forward_stack
@@ -194,7 +203,8 @@ fn test_player_nav_history_scrub_back_and_forward() {
     );
 
     // Toggling shuffle mode clears both back_stack and forward_stack
-    app.player_nav_history
+    app.playback
+        .nav_history
         .get_mut(&player_id)
         .unwrap()
         .forward_stack
@@ -204,14 +214,16 @@ fn test_player_nav_history_scrub_back_and_forward() {
         });
     let _ = app.update(Message::ToggleShuffleMode);
     assert!(
-        app.player_nav_history
+        app.playback
+            .nav_history
             .get(&player_id)
             .unwrap()
             .forward_stack
             .is_empty()
     );
     assert!(
-        app.player_nav_history
+        app.playback
+            .nav_history
             .get(&player_id)
             .unwrap()
             .back_stack
@@ -228,7 +240,7 @@ fn test_player_nav_history_cap_at_1000() {
         app.push_player_nav_entry(player_id, format!("/media/video{}.mp4", i), None);
     }
 
-    let hist = app.player_nav_history.get(&player_id).unwrap();
+    let hist = app.playback.nav_history.get(&player_id).unwrap();
     assert_eq!(hist.back_stack.len(), MAX_PLAYER_NAV_HISTORY_ENTRIES);
     assert_eq!(hist.back_stack.len(), 1000);
     assert_eq!(hist.back_stack.first().unwrap().path, "/media/video50.mp4");
@@ -532,11 +544,11 @@ fn test_session_videos_shuffle_persistence() {
     ];
 
     // Default should be shuffle mode
-    assert!(app.is_shuffle_mode);
+    assert!(app.playback.default_shuffle_mode);
 
     // Toggle shuffle mode -> sequential
     let _ = app.update(Message::ToggleShuffleMode);
-    assert!(!app.is_shuffle_mode);
+    assert!(!app.playback.default_shuffle_mode);
 
     // Save session state
     app.save_session_state();
@@ -748,13 +760,13 @@ fn test_add_new_player_focuses_new_player_and_can_be_removed() {
     // Start with 1 player
     let _ = app.update(Message::SetPlayerCount(1));
     assert_eq!(app.players.len(), 1);
-    assert_eq!(app.focused_player_idx, 0);
+    assert_eq!(app.playback.focused_idx, 0);
     let first_player_id = app.players[0].id;
 
     // Manually add a new player (such as pressing N)
     let _ = app.update(Message::AddNewPlayer);
     assert_eq!(app.players.len(), 2);
-    assert_eq!(app.focused_player_idx, 1);
+    assert_eq!(app.playback.focused_idx, 1);
     let second_player_id = app.players[1].id;
     assert_ne!(first_player_id, second_player_id);
     assert_eq!(app.focused_player_id(), Some(second_player_id));
@@ -764,7 +776,7 @@ fn test_add_new_player_focuses_new_player_and_can_be_removed() {
     let _ = app.update(Message::RemoveFocusedPlayer);
     assert_eq!(app.players.len(), 1);
     assert_eq!(app.players[0].id, first_player_id);
-    assert_eq!(app.focused_player_idx, 0);
+    assert_eq!(app.playback.focused_idx, 0);
     assert_eq!(app.focused_player_id(), Some(first_player_id));
     assert_eq!(app.overlay.focus_border_ticks, 0);
 
@@ -1125,7 +1137,7 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
 
     // Hover over a player to trigger OSD entrance
     let _ = app.update(Message::PlayerHovered(1));
-    assert_eq!(app.hovered_player_id, Some(1));
+    assert_eq!(app.playback.hovered_id, Some(1));
 
     // On initial trigger, fade-in starts at alpha 0.0 (smooth entrance instead of popping to 1.0)
     assert_eq!(app.overlay.fade_in_ticks, 0);
@@ -1168,7 +1180,7 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
     // Overlay completely dismissed
     assert_eq!(app.overlay.ticks, 0);
     assert_eq!(app.player_overlay_alpha(), 0.0);
-    assert_eq!(app.hovered_player_id, None);
+    assert_eq!(app.playback.hovered_id, None);
 
     // Test interrupted entrance: unhovering while still fading in does not jump
     let _ = app.update(Message::PlayerHovered(1));

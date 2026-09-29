@@ -41,7 +41,7 @@ impl WazooApp {
     }
 
     pub(crate) fn view_loading_spinner<'a>(&self) -> Element<'a, Message> {
-        let angle = (self.spinner_ticks * 12) % 360;
+        let angle = self.loading.spinner_angle() as u32;
         let spinner_svg = format!(
             r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none">
 <circle cx="18" cy="18" r="14" stroke="rgba(255,255,255,0.15)" stroke-width="3"/>
@@ -137,7 +137,7 @@ impl WazooApp {
             0.0f32
         };
 
-        let is_audio_menu_open = self.open_audio_menu_player_id == Some(player_id);
+        let is_audio_menu_open = self.playback.open_audio_menu_id == Some(player_id);
 
         let title_pill = self.view_title_pill(&p.state.path, overlay_alpha);
         let top_row = row![title_pill, Space::new().width(Length::Fill)].width(Length::Fill);
@@ -219,7 +219,7 @@ impl WazooApp {
                 .center_y(Length::Shrink),
             )
             .style(theme::cc_button_style_with_alpha(
-                self.subtitles_enabled,
+                self.playback.subtitles_enabled,
                 overlay_alpha
             ))
             .on_press(Message::ToggleSubtitles)
@@ -295,7 +295,7 @@ impl WazooApp {
 
             let flip_content = row![
                 flip_icon,
-                text(format!("{}s", self.flip_countdown))
+                text(format!("{}s", self.flip.countdown))
                     .size(12)
                     .font(iced::Font {
                         weight: iced::font::Weight::Bold,

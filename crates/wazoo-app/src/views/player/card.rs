@@ -29,9 +29,9 @@ impl WazooApp {
     ) -> Element<'a, Message> {
         let player_id = p.id;
         let is_focused = self.focused_player_id() == Some(player_id);
-        let is_hovered = !self.is_modal_or_menu_open() && self.hovered_player_id == Some(player_id);
-        let is_loading = self.loading_player_ids.contains(&player_id);
-        let is_audio_menu_open = self.open_audio_menu_player_id == Some(player_id);
+        let is_hovered = !self.is_modal_or_menu_open() && self.playback.hovered_id == Some(player_id);
+        let is_loading = self.loading.is_player_loading(&player_id);
+        let is_audio_menu_open = self.playback.open_audio_menu_id == Some(player_id);
 
         let opacity = self.current_opacity();
         let video_widget = p.view_with_fit(opacity, is_scroll_mode);

@@ -18,7 +18,7 @@ impl WazooApp {
                 self.modals.close_all();
                 self.modals.menu = true;
                 self.titlebar.show_dropdown_menu = false;
-                self.hovered_player_id = None;
+                self.playback.hovered_id = None;
                 self.overlay.ticks = 0;
                 self.overlay.fade_in_ticks = 0;
                 Task::none()
@@ -33,7 +33,7 @@ impl WazooApp {
                 self.titlebar.show_dropdown_menu = false;
                 self.titlebar.show = false;
                 self.overlay.clear_toast();
-                self.hovered_player_id = None;
+                self.playback.hovered_id = None;
                 self.overlay.ticks = 0;
                 self.overlay.fade_in_ticks = 0;
                 self.search.tags = self
@@ -58,7 +58,7 @@ impl WazooApp {
                 self.titlebar.show_dropdown_menu = false;
                 self.titlebar.show = false;
                 self.overlay.clear_toast();
-                self.hovered_player_id = None;
+                self.playback.hovered_id = None;
                 self.overlay.ticks = 0;
                 self.overlay.fade_in_ticks = 0;
                 Task::none()
@@ -145,8 +145,8 @@ impl WazooApp {
             Message::SetFlipInterval(secs) => {
                 let clamped = secs.clamp(1, 3600);
                 self.settings.flip_interval_secs = clamped;
-                if self.flip_countdown > clamped {
-                    self.flip_countdown = clamped;
+                if self.flip.countdown > clamped {
+                    self.flip.countdown = clamped;
                 }
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
@@ -190,7 +190,7 @@ impl WazooApp {
                 self.titlebar.show_dropdown_menu = false;
                 self.titlebar.show = false;
                 self.overlay.clear_toast();
-                self.hovered_player_id = None;
+                self.playback.hovered_id = None;
                 self.overlay.ticks = 0;
                 self.overlay.fade_in_ticks = 0;
                 Task::none()
@@ -209,7 +209,7 @@ impl WazooApp {
                     self.modals.help = false;
                     self.titlebar.show = false;
                     self.overlay.clear_toast();
-                    self.hovered_player_id = None;
+                    self.playback.hovered_id = None;
                     self.overlay.ticks = 0;
                     self.overlay.fade_in_ticks = 0;
                 }
@@ -224,8 +224,8 @@ impl WazooApp {
                     self.drawers.show_transcript_menu = false;
                     return Task::none();
                 }
-                if self.open_audio_menu_player_id.is_some() {
-                    self.open_audio_menu_player_id = None;
+                if self.playback.open_audio_menu_id.is_some() {
+                    self.playback.open_audio_menu_id = None;
                     return Task::none();
                 }
                 if self.is_any_modal_open()
