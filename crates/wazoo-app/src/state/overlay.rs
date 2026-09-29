@@ -14,9 +14,13 @@ pub struct OverlayState {
     pub focus_border_ticks: usize,
     pub toast_message: Option<String>,
     pub toast_time_remaining: usize,
+    pub spinner_ticks: u32,
 }
 
 impl OverlayState {
+    pub fn spinner_angle(&self) -> f32 {
+        ((self.spinner_ticks * 12) % 360) as f32
+    }
     pub fn trigger(&mut self) {
         if self.ticks == 0 {
             self.fade_in_ticks = 0;

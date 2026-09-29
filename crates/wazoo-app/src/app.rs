@@ -16,7 +16,8 @@ use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use wazoo_core::{ConfigManager, Database, PlaybackMode, VideoRecord, VideoSession, WazooSettings};
-use wazoo_media::{BufferConfig, PlayerId, PlayerSliceExt, ScrollEngine, StartTime, VideoHandle};
+use crate::state::{AppPlayer, PlayerList};
+use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, StartTime, VideoHandle};
 
 /// Player controls overlay visibility duration: 2.5 seconds at 60 FPS (150 ticks)
 pub const PLAYER_OVERLAY_HIDE_TICKS: usize = 150;
@@ -87,7 +88,7 @@ pub struct WazooApp {
     pub settings: WazooSettings,
     pub config_mgr: ConfigManager,
     pub db: Database,
-    pub players: Vec<VideoHandle>,
+    pub players: PlayerList,
     pub scroll_engine: ScrollEngine,
     pub available_videos: Vec<VideoRecord>,
     pub search: crate::state::SearchState,
@@ -100,8 +101,13 @@ pub struct WazooApp {
     pub last_total_videos: usize,
     pub next_player_id: PlayerId,
     pub scanner: crate::state::ScannerState,
-    pub playback: crate::state::PlaybackState,
-    pub loading: crate::state::LoadingState,
+    pub focused_idx: usize,
+    pub hovered_player_id: Option<PlayerId>,
+    pub open_audio_menu_id: Option<PlayerId>,
+    pub subtitles_enabled: bool,
+    pub default_shuffle_mode: bool,
+    pub preloaded_player: Option<VideoHandle>,
+    pub is_preloading: bool,
     pub flip: crate::state::FlipState,
 }
 
@@ -244,7 +250,7 @@ impl WazooApp {
             settings: settings.clone(),
             config_mgr,
             db,
-            players: Vec::new(),
+            players: PlayerList::new(),
             scroll_engine,
             available_videos: videos,
             search: crate::state::SearchState {
@@ -274,8 +280,13 @@ impl WazooApp {
             last_total_videos: total_videos,
             next_player_id: 1,
             scanner: crate::state::ScannerState::default(),
-            playback: crate::state::PlaybackState::default(),
-            loading: crate::state::LoadingState::default(),
+            focused_idx: 0,
+            hovered_player_id: None,
+            open_audio_menu_id: None,
+            subtitles_enabled: true,
+            default_shuffle_mode: true,
+            preloaded_player: None,
+            is_preloading: false,
             flip: crate::state::FlipState::new(settings.flip_interval_secs),
         };
 
@@ -293,13 +304,12 @@ impl WazooApp {
             let id = app.next_player_id;
             app.next_player_id += 1;
             direct_file_player_id = Some(id);
-            app.playback.set_player_shuffle(id, app.playback.default_shuffle_mode);
             let name = format::format_video_title(path);
             if let Ok(mut handle) = app.create_video_handle_with_start(id, path, &name, Some(0.0)) {
                 handle.set_muted(false);
                 handle.set_volume(1.0);
-                handle.set_subtitles_visible(app.playback.subtitles_enabled);
-                app.players.push(handle);
+                handle.set_subtitles_visible(app.subtitles_enabled);
+                app.players.push(AppPlayer::new(handle, app.default_shuffle_mode));
                 app.push_player_nav_entry(id, path.clone(), Some(0.0));
             }
             app.overlay.title_pill_ticks = 240;
@@ -308,9 +318,8 @@ impl WazooApp {
                 if std::path::Path::new(&session.path).exists() {
                     let id = app.next_player_id;
                     app.next_player_id += 1;
-                    app.playback.set_player_shuffle(id, session.is_shuffle);
                     if app.players.is_empty() {
-                        app.playback.default_shuffle_mode = session.is_shuffle;
+                        app.default_shuffle_mode = session.is_shuffle;
                     }
                     let name = format::format_video_title(&session.path);
                     let start_secs = if session.position_secs > 0.05 {
@@ -323,8 +332,8 @@ impl WazooApp {
                     {
                         handle.set_muted(session.is_muted);
                         handle.set_volume(session.volume);
-                        handle.set_subtitles_visible(app.playback.subtitles_enabled);
-                        app.players.push(handle);
+                        handle.set_subtitles_visible(app.subtitles_enabled);
+                        app.players.push(AppPlayer::new(handle, session.is_shuffle));
                         app.push_player_nav_entry(id, session.path.clone(), start_secs);
                     }
                 }
@@ -363,6 +372,7 @@ impl WazooApp {
             while let Some(spawn_y) = app.scroll_engine.needs_new_player() {
                 if let Some(id) = app.add_player_internal() {
                     let item_h = app
+                        .players
                         .player(id)
                         .map(|p| app.calculate_player_scroll_height(p))
                         .unwrap_or_else(|| app.scroll_engine.default_item_height());
@@ -463,8 +473,8 @@ impl WazooApp {
     pub fn should_hide_cursor(&self) -> bool {
         !self.players.is_empty()
             && self.overlay.ticks == 0
-            && self.playback.open_audio_menu_id.is_none()
-            && self.loading.player_ids.is_empty()
+            && self.open_audio_menu_id.is_none()
+            && self.players.iter().all(|p| !p.is_loading)
             && !self.titlebar.show
             && !self.is_modal_or_menu_open()
     }
@@ -473,51 +483,27 @@ impl WazooApp {
         if self.players.is_empty() {
             None
         } else {
-            let idx = self.playback.focused_idx % self.players.len();
+            let idx = self.focused_idx % self.players.len();
             Some(self.players[idx].id)
         }
     }
 
-    pub(crate) fn focused_player(&self) -> Option<&VideoHandle> {
+    pub(crate) fn focused_player(&self) -> Option<&AppPlayer> {
         if self.players.is_empty() {
             None
         } else {
-            let idx = self.playback.focused_idx % self.players.len();
+            let idx = self.focused_idx % self.players.len();
             Some(&self.players[idx])
         }
     }
 
-    pub(crate) fn focused_player_mut(&mut self) -> Option<&mut VideoHandle> {
+    pub(crate) fn focused_player_mut(&mut self) -> Option<&mut AppPlayer> {
         if self.players.is_empty() {
             None
         } else {
-            let idx = self.playback.focused_idx % self.players.len();
+            let idx = self.focused_idx % self.players.len();
             Some(&mut self.players[idx])
         }
-    }
-
-    /// Returns a reference to the player with the specified ID, if it exists.
-    #[inline]
-    pub fn player(&self, id: PlayerId) -> Option<&VideoHandle> {
-        self.players.player(id)
-    }
-
-    /// Returns a mutable reference to the player with the specified ID, if it exists.
-    #[inline]
-    pub fn player_mut(&mut self, id: PlayerId) -> Option<&mut VideoHandle> {
-        self.players.player_mut(id)
-    }
-
-    /// Returns the index of the player with the specified ID in the players list, if it exists.
-    #[inline]
-    pub fn player_index(&self, id: PlayerId) -> Option<usize> {
-        self.players.player_index(id)
-    }
-
-    /// Returns whether a player with the specified ID exists in the players list.
-    #[inline]
-    pub fn has_player(&self, id: PlayerId) -> bool {
-        self.players.has_player(id)
     }
 
     pub(crate) fn load_transcript_for_focused_player(&mut self) -> Task<Message> {
@@ -571,7 +557,10 @@ impl WazooApp {
     }
 
     pub fn is_player_shuffle(&self, id: PlayerId) -> bool {
-        self.playback.is_player_shuffle(id)
+        self.players
+            .player(id)
+            .map(|p| p.shuffle)
+            .unwrap_or(self.default_shuffle_mode)
     }
 
     pub(crate) fn get_next_video_rec_with_mode(
@@ -616,7 +605,7 @@ impl WazooApp {
     }
 
     pub fn get_next_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
-        self.get_next_video_rec_with_mode(current_path, self.playback.default_shuffle_mode)
+        self.get_next_video_rec_with_mode(current_path, self.default_shuffle_mode)
     }
 
     pub fn get_prev_video_rec_with_mode(
@@ -659,7 +648,7 @@ impl WazooApp {
     }
 
     pub(crate) fn record_current_player_nav_position(&mut self, id: PlayerId) {
-        if let Some(p) = self.players.player(id) {
+        if let Some(p) = self.players.player_mut(id) {
             let pos_secs = p.position().as_secs_f64();
             let dur_secs = p.duration().as_secs_f64();
             let saved_pos = if dur_secs > 10.0 && (dur_secs - pos_secs) < 3.0 {
@@ -669,11 +658,10 @@ impl WazooApp {
             } else {
                 None
             };
-            if let Some(hist) = self.playback.nav_history.get_mut(&id) {
-                if let Some(top) = hist.back_stack.last_mut() {
-                    if top.path == p.state.path {
-                        top.position_secs = saved_pos;
-                    }
+            let curr_path = p.state.path.clone();
+            if let Some(top) = p.nav_history.back_stack.last_mut() {
+                if top.path == curr_path {
+                    top.position_secs = saved_pos;
                 }
             }
         }
@@ -701,14 +689,16 @@ impl WazooApp {
 
     pub fn push_player_nav_entry(&mut self, id: PlayerId, path: String, pos: Option<f64>) {
         self.record_play_history(&path);
-        let hist = self.playback.nav_history.entry(id).or_default();
-        if hist.back_stack.last().map(|e| &e.path) != Some(&path) {
-            hist.back_stack.push(PlaybackHistoryEntry {
-                path,
-                position_secs: pos,
-            });
-            if hist.back_stack.len() > MAX_PLAYER_NAV_HISTORY_ENTRIES {
-                hist.back_stack.remove(0);
+        if let Some(player) = self.players.player_mut(id) {
+            let hist = &mut player.nav_history;
+            if hist.back_stack.last().map(|e| &e.path) != Some(&path) {
+                hist.back_stack.push(PlaybackHistoryEntry {
+                    path,
+                    position_secs: pos,
+                });
+                if hist.back_stack.len() > MAX_PLAYER_NAV_HISTORY_ENTRIES {
+                    hist.back_stack.remove(0);
+                }
             }
         }
     }
@@ -804,11 +794,11 @@ impl WazooApp {
                 ) {
                     Ok(mut handle) => {
                         handle.set_muted(initial_muted);
-                        handle.set_subtitles_visible(self.playback.subtitles_enabled);
+                        handle.set_subtitles_visible(self.subtitles_enabled);
+                        let mut player = AppPlayer::new(handle, self.default_shuffle_mode);
+                        player.start_loading();
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
-                        self.playback.set_player_shuffle(id, self.playback.default_shuffle_mode);
-                        self.players.push(handle);
-                        self.loading.start(id);
+                        self.players.push(player);
                         return Some(id);
                     }
                     Err(err) => {
@@ -835,7 +825,7 @@ impl WazooApp {
                     position_secs: p.position().as_secs_f64(),
                     is_muted: p.state.is_muted,
                     volume: p.state.volume,
-                    is_shuffle: self.is_player_shuffle(p.id),
+                    is_shuffle: p.shuffle,
                 })
                 .collect();
             self.settings.session_videos = sessions;
@@ -913,29 +903,31 @@ impl WazooApp {
                 let rec_name = video_rec.name.clone();
                 used_paths.insert(rec_path.clone());
 
-                self.loading.start(id);
+                if let Some(p) = self.players.player_mut(id) {
+                    p.start_loading();
+                }
 
                 if let Ok(mut new_handle) = self.create_video_handle(id, &rec_path, &rec_name) {
                     new_handle.set_muted(prev_muted);
                     new_handle.set_volume(prev_volume);
-                    new_handle.set_subtitles_visible(self.playback.subtitles_enabled);
+                    new_handle.set_subtitles_visible(self.subtitles_enabled);
                     self.push_player_nav_entry(id, rec_path.clone(), None);
                     if let Some(p) = self.players.player_mut(id) {
-                        *p = new_handle;
+                        p.handle = new_handle;
                     }
                 }
             }
         }
 
         if self.settings.playback_mode == PlaybackMode::Scroll {
-            if let Some(ref preloaded) = self.loading.preloaded_player {
+            if let Some(ref preloaded) = self.preloaded_player {
                 if !self
                     .available_videos
                     .iter()
                     .any(|v| v.path == preloaded.state.path)
                 {
-                    self.loading.preloaded_player = None;
-                    self.loading.is_preloading = false;
+                    self.preloaded_player = None;
+                    self.is_preloading = false;
                 }
             }
         }
@@ -943,8 +935,8 @@ impl WazooApp {
 
     /// Triggers an asynchronous background preload task for the next video in scroll mode
     pub(crate) fn trigger_preload_task(&mut self) -> Task<Message> {
-        if self.loading.preloaded_player.is_some()
-            || self.loading.is_preloading
+        if self.preloaded_player.is_some()
+            || self.is_preloading
             || self.settings.playback_mode != PlaybackMode::Scroll
         {
             return Task::none();
@@ -958,7 +950,7 @@ impl WazooApp {
 
         let id = self.next_player_id;
         self.next_player_id += 1;
-        self.loading.is_preloading = true;
+        self.is_preloading = true;
 
         let buffer_config = self.buffer_config();
         let path = video_rec.path;
@@ -1070,15 +1062,15 @@ impl WazooApp {
         if self.settings.playback_mode == PlaybackMode::Scroll {
             self.settings.playback_mode = PlaybackMode::Normal;
             self.scroll_engine.clear();
-            self.loading.preloaded_player = None;
-            self.loading.is_preloading = false;
+            self.preloaded_player = None;
+            self.is_preloading = false;
             if self.settings.is_global_muted {
                 for p in &mut self.players {
                     p.set_muted(true);
                 }
             } else {
                 for (i, p) in self.players.iter_mut().enumerate() {
-                    if i == self.playback.focused_idx {
+                    if i == self.focused_idx {
                         p.set_muted(false);
                         p.set_volume(1.0);
                     } else {

@@ -14,7 +14,7 @@ pub mod scroll;
 pub mod subtitles;
 
 pub use player::{
-    AudioTrack, BufferConfig, PlayerId, PlayerSliceExt, PlayerState, StartTime, SubtitleTrack,
+    AudioTrack, BufferConfig, PlayerId, PlayerState, StartTime, SubtitleTrack,
     VideoHandle, build_alang_string, find_matching_audio_track, format_audio_track_label,
     format_subtitle_track_label, get_track_preference_string, language_aliases,
     language_display_name, track_matches_preference,

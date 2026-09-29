@@ -49,7 +49,7 @@ fn test_get_next_video_rec_sequential_and_random() {
     ];
 
     // 1. Sequential mode
-    app.playback.default_shuffle_mode = false;
+    app.default_shuffle_mode = false;
     let next1 = app.get_next_video_rec(Some("/media/v1.mp4")).unwrap();
     assert_eq!(next1.path, "/media/v2.mp4");
     let next2 = app.get_next_video_rec(Some("/media/v2.mp4")).unwrap();
@@ -58,7 +58,7 @@ fn test_get_next_video_rec_sequential_and_random() {
     assert_eq!(next3.path, "/media/v1.mp4"); // Wraps around
 
     // 2. Random/shuffle mode
-    app.playback.default_shuffle_mode = true;
+    app.default_shuffle_mode = true;
     for _ in 0..10 {
         let rand_rec = app.get_next_video_rec(Some("/media/v1.mp4")).unwrap();
         assert!(app.available_videos.iter().any(|v| v.path == rand_rec.path));
@@ -100,7 +100,15 @@ fn test_get_prev_video_rec_sequential_and_random() {
 #[test]
 fn test_player_nav_history_scrub_back_and_forward() {
     let (mut app, _) = new_test_app();
-    let player_id = 1;
+    let temp_dir = std::env::temp_dir().join(format!("test_nav_hist_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let f1 = temp_dir.join("A.mp4");
+    let _ = std::fs::File::create(&f1);
+    app.available_videos = vec![wazoo_core::VideoRecord::new(1, "A", f1.to_string_lossy())];
+    let _ = app.update(Message::SetPlayerCount(1));
+    assert_eq!(app.players.len(), 1);
+    let player_id = app.players[0].id;
+    app.players.player_mut(player_id).unwrap().nav_history.back_stack.clear();
 
     // Simulate initial video A
     app.push_player_nav_entry(player_id, "/media/A.mp4".to_string(), None);
@@ -109,30 +117,30 @@ fn test_player_nav_history_scrub_back_and_forward() {
     // User plays random C
     app.push_player_nav_entry(player_id, "/media/C.mp4".to_string(), Some(30.0));
 
-    let hist = app.playback.nav_history.get(&player_id).unwrap();
+    let hist = &app.players.player(player_id).unwrap().nav_history;
     assert_eq!(hist.back_stack.len(), 3);
     assert_eq!(hist.forward_stack.len(), 0);
 
     // Previous action simulation: pop C from back_stack, push to forward_stack
     let current_c = app
-        .playback
-        .nav_history
-        .get_mut(&player_id)
+        .players
+        .player_mut(player_id)
         .unwrap()
+        .nav_history
         .back_stack
         .pop()
         .unwrap();
-    app.playback
-        .nav_history
-        .get_mut(&player_id)
+    app.players
+        .player_mut(player_id)
         .unwrap()
+        .nav_history
         .forward_stack
         .push(current_c);
     let target_b = app
-        .playback
-        .nav_history
-        .get(&player_id)
+        .players
+        .player(player_id)
         .unwrap()
+        .nav_history
         .back_stack
         .last()
         .unwrap()
@@ -142,24 +150,24 @@ fn test_player_nav_history_scrub_back_and_forward() {
 
     // Previous again: pop B from back_stack, push to forward_stack
     let current_b = app
-        .playback
-        .nav_history
-        .get_mut(&player_id)
+        .players
+        .player_mut(player_id)
         .unwrap()
+        .nav_history
         .back_stack
         .pop()
         .unwrap();
-    app.playback
-        .nav_history
-        .get_mut(&player_id)
+    app.players
+        .player_mut(player_id)
         .unwrap()
+        .nav_history
         .forward_stack
         .push(current_b);
     let target_a = app
-        .playback
-        .nav_history
-        .get(&player_id)
+        .players
+        .player(player_id)
         .unwrap()
+        .nav_history
         .back_stack
         .last()
         .unwrap()
@@ -168,10 +176,10 @@ fn test_player_nav_history_scrub_back_and_forward() {
 
     // Now next action: forward_stack pop gives B!
     let forward_b = app
-        .playback
-        .nav_history
-        .get_mut(&player_id)
+        .players
+        .player_mut(player_id)
         .unwrap()
+        .nav_history
         .forward_stack
         .pop()
         .unwrap();
@@ -181,10 +189,10 @@ fn test_player_nav_history_scrub_back_and_forward() {
 
     // Next action again: forward_stack pop gives C!
     let forward_c = app
-        .playback
-        .nav_history
-        .get_mut(&player_id)
+        .players
+        .player_mut(player_id)
         .unwrap()
+        .nav_history
         .forward_stack
         .pop()
         .unwrap();
@@ -194,19 +202,19 @@ fn test_player_nav_history_scrub_back_and_forward() {
 
     // Forward stack is now empty
     assert!(
-        app.playback
-            .nav_history
-            .get(&player_id)
+        app.players
+            .player(player_id)
             .unwrap()
+            .nav_history
             .forward_stack
             .is_empty()
     );
 
     // Toggling shuffle mode clears both back_stack and forward_stack
-    app.playback
-        .nav_history
-        .get_mut(&player_id)
+    app.players
+        .player_mut(player_id)
         .unwrap()
+        .nav_history
         .forward_stack
         .push(PlaybackHistoryEntry {
             path: "/media/D.mp4".to_string(),
@@ -214,37 +222,48 @@ fn test_player_nav_history_scrub_back_and_forward() {
         });
     let _ = app.update(Message::ToggleShuffleMode);
     assert!(
-        app.playback
-            .nav_history
-            .get(&player_id)
+        app.players
+            .player(player_id)
             .unwrap()
+            .nav_history
             .forward_stack
             .is_empty()
     );
     assert!(
-        app.playback
-            .nav_history
-            .get(&player_id)
+        app.players
+            .player(player_id)
             .unwrap()
+            .nav_history
             .back_stack
             .is_empty()
     );
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
 }
 
 #[test]
 fn test_player_nav_history_cap_at_1000() {
     let (mut app, _) = new_test_app();
-    let player_id = 1;
+    let temp_dir = std::env::temp_dir().join(format!("test_nav_cap_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let f1 = temp_dir.join("A.mp4");
+    let _ = std::fs::File::create(&f1);
+    app.available_videos = vec![wazoo_core::VideoRecord::new(1, "A", f1.to_string_lossy())];
+    let _ = app.update(Message::SetPlayerCount(1));
+    let player_id = app.players[0].id;
+    app.players.player_mut(player_id).unwrap().nav_history.back_stack.clear();
 
     for i in 0..1050 {
         app.push_player_nav_entry(player_id, format!("/media/video{}.mp4", i), None);
     }
 
-    let hist = app.playback.nav_history.get(&player_id).unwrap();
+    let hist = &app.players.player(player_id).unwrap().nav_history;
     assert_eq!(hist.back_stack.len(), MAX_PLAYER_NAV_HISTORY_ENTRIES);
     assert_eq!(hist.back_stack.len(), 1000);
     assert_eq!(hist.back_stack.first().unwrap().path, "/media/video50.mp4");
     assert_eq!(hist.back_stack.last().unwrap().path, "/media/video1049.mp4");
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
 }
 
 #[test]
@@ -544,11 +563,11 @@ fn test_session_videos_shuffle_persistence() {
     ];
 
     // Default should be shuffle mode
-    assert!(app.playback.default_shuffle_mode);
+    assert!(app.default_shuffle_mode);
 
     // Toggle shuffle mode -> sequential
     let _ = app.update(Message::ToggleShuffleMode);
-    assert!(!app.playback.default_shuffle_mode);
+    assert!(!app.default_shuffle_mode);
 
     // Save session state
     app.save_session_state();
@@ -760,13 +779,13 @@ fn test_add_new_player_focuses_new_player_and_can_be_removed() {
     // Start with 1 player
     let _ = app.update(Message::SetPlayerCount(1));
     assert_eq!(app.players.len(), 1);
-    assert_eq!(app.playback.focused_idx, 0);
+    assert_eq!(app.focused_idx, 0);
     let first_player_id = app.players[0].id;
 
     // Manually add a new player (such as pressing N)
     let _ = app.update(Message::AddNewPlayer);
     assert_eq!(app.players.len(), 2);
-    assert_eq!(app.playback.focused_idx, 1);
+    assert_eq!(app.focused_idx, 1);
     let second_player_id = app.players[1].id;
     assert_ne!(first_player_id, second_player_id);
     assert_eq!(app.focused_player_id(), Some(second_player_id));
@@ -776,7 +795,7 @@ fn test_add_new_player_focuses_new_player_and_can_be_removed() {
     let _ = app.update(Message::RemoveFocusedPlayer);
     assert_eq!(app.players.len(), 1);
     assert_eq!(app.players[0].id, first_player_id);
-    assert_eq!(app.playback.focused_idx, 0);
+    assert_eq!(app.focused_idx, 0);
     assert_eq!(app.focused_player_id(), Some(first_player_id));
     assert_eq!(app.overlay.focus_border_ticks, 0);
 
@@ -1137,7 +1156,7 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
 
     // Hover over a player to trigger OSD entrance
     let _ = app.update(Message::PlayerHovered(1));
-    assert_eq!(app.playback.hovered_id, Some(1));
+    assert_eq!(app.hovered_player_id, Some(1));
 
     // On initial trigger, fade-in starts at alpha 0.0 (smooth entrance instead of popping to 1.0)
     assert_eq!(app.overlay.fade_in_ticks, 0);
@@ -1180,7 +1199,7 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
     // Overlay completely dismissed
     assert_eq!(app.overlay.ticks, 0);
     assert_eq!(app.player_overlay_alpha(), 0.0);
-    assert_eq!(app.playback.hovered_id, None);
+    assert_eq!(app.hovered_player_id, None);
 
     // Test interrupted entrance: unhovering while still fading in does not jump
     let _ = app.update(Message::PlayerHovered(1));
@@ -1305,25 +1324,18 @@ fn test_player_by_id_helpers() {
     assert_eq!(app.players.len(), 1);
     let p_id = app.players[0].id;
 
-    // Test WazooApp helpers
-    assert!(app.has_player(p_id));
-    assert!(!app.has_player(999_999));
-    assert_eq!(app.player_index(p_id), Some(0));
-    assert_eq!(app.player_index(999_999), None);
-    assert_eq!(app.player(p_id).map(|p| p.id), Some(p_id));
-    assert!(app.player(999_999).is_none());
+    // Test PlayerList helpers
+    assert!(app.players.has_player(p_id));
+    assert!(!app.players.has_player(999_999));
+    assert_eq!(app.players.player_index(p_id), Some(0));
+    assert_eq!(app.players.player_index(999_999), None);
+    assert_eq!(app.players.player(p_id).map(|p| p.id), Some(p_id));
+    assert!(app.players.player(999_999).is_none());
 
     // Test mutable player lookup
-    if let Some(p) = app.player_mut(p_id) {
+    if let Some(p) = app.players.player_mut(p_id) {
         assert_eq!(p.id, p_id);
     }
-
-    // Test slice extension trait helpers
-    use wazoo_media::PlayerSliceExt;
-    assert!(app.players.has_player(p_id));
-    assert_eq!(app.players.player_index(p_id), Some(0));
-    assert_eq!(app.players.player(p_id).map(|p| p.id), Some(p_id));
-    assert_eq!(app.players.player_mut(p_id).map(|p| p.id), Some(p_id));
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }

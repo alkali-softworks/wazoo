@@ -12,6 +12,7 @@ use crate::message::Message;
 use iced::{Point, Task, keyboard::Key};
 use std::time::{Duration, Instant};
 use wazoo_core::PlaybackMode;
+use crate::state::AppPlayer;
 
 impl WazooApp {
     pub(crate) fn update_window(&mut self, message: Message) -> Task<Message> {
@@ -61,7 +62,7 @@ impl WazooApp {
                     self.titlebar.drag_pending = false;
                     self.titlebar.press_origin = None;
                     self.titlebar.hover_ticks = 0;
-                    if self.playback.hovered_id.is_some() {
+                    if self.hovered_player_id.is_some() {
                         let current_fade =
                             self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                         self.overlay.ticks = self.overlay.ticks.min(current_fade);
@@ -118,13 +119,13 @@ impl WazooApp {
                     self.scroll_engine.recalculate_positions();
                     let margin = self.scroll_engine.default_item_height() * 1.5;
                     while let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(margin) {
-                        if let Some(mut handle) = self.loading.preloaded_player.take() {
+                        if let Some(mut handle) = self.preloaded_player.take() {
                             let item_h = self.calculate_player_scroll_height(&handle);
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
                             self.record_play_history(&handle.state.path);
-                            self.players.push(handle);
+                            self.players.push(AppPlayer::new(handle, self.default_shuffle_mode));
                         } else {
                             break;
                         }
@@ -194,7 +195,7 @@ impl WazooApp {
                 if !self.window.is_dragging && !self.titlebar.drag_pending {
                     self.window.cursor_position = Point::new(-1000.0, -1000.0);
                     self.titlebar.hover_ticks = 0;
-                    if self.playback.hovered_id.is_some() {
+                    if self.hovered_player_id.is_some() {
                         let current_fade =
                             self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
                         self.overlay.ticks = self.overlay.ticks.min(current_fade);
@@ -245,7 +246,7 @@ impl WazooApp {
                 self.window.id = Some(win_id);
                 self.modals.menu = true;
                 self.titlebar.show_dropdown_menu = false;
-                self.playback.hovered_id = None;
+                self.hovered_player_id = None;
                 self.overlay.ticks = 0;
                 self.overlay.fade_in_ticks = 0;
                 Task::none()
@@ -257,7 +258,7 @@ impl WazooApp {
                     self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
                     self.titlebar.slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
                     self.titlebar.dropdown_menu_slide_ticks = 0;
-                    self.playback.hovered_id = None;
+                    self.hovered_player_id = None;
                     self.overlay.ticks = 0;
                 } else {
                     self.titlebar.dropdown_menu_slide_ticks = 0;
