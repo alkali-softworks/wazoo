@@ -15,78 +15,74 @@ impl WazooApp {
     pub(crate) fn update_modals(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::OpenMenuModal => {
-                self.show_menu_modal = true;
-                self.show_dropdown_menu = false;
+                self.modals.close_all();
+                self.modals.menu = true;
+                self.titlebar.show_dropdown_menu = false;
                 self.hovered_player_id = None;
-                self.player_overlay_ticks = 0;
-                self.player_overlay_fade_in_ticks = 0;
+                self.overlay.ticks = 0;
+                self.overlay.fade_in_ticks = 0;
                 Task::none()
             }
             Message::CloseMenuModal => {
-                self.show_menu_modal = false;
+                self.modals.menu = false;
                 Task::none()
             }
             Message::OpenSearchModal => {
-                self.show_search_modal = true;
-                self.show_dropdown_menu = false;
-                self.show_menu_modal = false;
-                self.show_settings_modal = false;
-                self.show_help_modal = false;
-                self.show_bookmarks_modal = false;
-                self.show_titlebar = false;
-                self.toast_message = None;
+                self.modals.close_all();
+                self.modals.search = true;
+                self.titlebar.show_dropdown_menu = false;
+                self.titlebar.show = false;
+                self.overlay.clear_toast();
                 self.hovered_player_id = None;
-                self.player_overlay_ticks = 0;
-                self.player_overlay_fade_in_ticks = 0;
-                self.search_tags = self
-                    .active_search_query
+                self.overlay.ticks = 0;
+                self.overlay.fade_in_ticks = 0;
+                self.search.tags = self
+                    .search
+                    .active_query
                     .split(',')
                     .map(|s| s.trim().to_string())
                     .filter(|s| !s.is_empty())
                     .collect();
-                self.selected_search_folders = self.active_search_folders.clone();
-                self.selected_search_folder = self.active_search_folder.clone();
-                self.search_input.clear();
+                self.search.selected_folders = self.search.active_folders.clone();
+                self.search.selected_folder = self.search.active_folder.clone();
+                self.search.input.clear();
                 Task::batch([iced::widget::operation::focus("search_input")])
             }
             Message::CloseSearchModal => {
-                self.show_search_modal = false;
+                self.modals.search = false;
                 Task::none()
             }
             Message::OpenSettingsModal => {
-                self.show_settings_modal = true;
-                self.show_dropdown_menu = false;
-                self.show_menu_modal = false;
-                self.show_search_modal = false;
-                self.show_help_modal = false;
-                self.show_bookmarks_modal = false;
-                self.show_titlebar = false;
-                self.toast_message = None;
+                self.modals.close_all();
+                self.modals.settings = true;
+                self.titlebar.show_dropdown_menu = false;
+                self.titlebar.show = false;
+                self.overlay.clear_toast();
                 self.hovered_player_id = None;
-                self.player_overlay_ticks = 0;
-                self.player_overlay_fade_in_ticks = 0;
+                self.overlay.ticks = 0;
+                self.overlay.fade_in_ticks = 0;
                 Task::none()
             }
             Message::CloseSettingsModal => {
-                self.show_settings_modal = false;
+                self.modals.settings = false;
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
             }
             Message::SetSettingsTab(tab) => {
-                self.settings_tab = tab;
+                self.modals.settings_tab = tab;
                 Task::none()
             }
             Message::SetLanguage(lang) => {
-                let was_all_active = self.active_search_folders.is_empty()
-                    || self.is_all_folder(&self.active_search_folder);
-                let was_all_selected = self.selected_search_folders.is_empty()
-                    || self.is_all_folder(&self.selected_search_folder);
+                let was_all_active = self.search.active_folders.is_empty()
+                    || self.is_all_folder(&self.search.active_folder);
+                let was_all_selected = self.search.selected_folders.is_empty()
+                    || self.is_all_folder(&self.search.selected_folder);
                 self.settings.language = lang;
                 if was_all_active {
-                    self.active_search_folder = self.t("common.all");
+                    self.search.active_folder = self.t("common.all");
                 }
                 if was_all_selected {
-                    self.selected_search_folder = self.t("common.all");
+                    self.search.selected_folder = self.t("common.all");
                 }
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
@@ -189,46 +185,43 @@ impl WazooApp {
                 Task::none()
             }
             Message::OpenHelpModal => {
-                self.show_help_modal = true;
-                self.show_dropdown_menu = false;
-                self.show_menu_modal = false;
-                self.show_search_modal = false;
-                self.show_settings_modal = false;
-                self.show_bookmarks_modal = false;
-                self.show_titlebar = false;
-                self.toast_message = None;
+                self.modals.close_all();
+                self.modals.help = true;
+                self.titlebar.show_dropdown_menu = false;
+                self.titlebar.show = false;
+                self.overlay.clear_toast();
                 self.hovered_player_id = None;
-                self.player_overlay_ticks = 0;
-                self.player_overlay_fade_in_ticks = 0;
+                self.overlay.ticks = 0;
+                self.overlay.fade_in_ticks = 0;
                 Task::none()
             }
             Message::CloseHelpModal => {
-                self.show_help_modal = false;
+                self.modals.help = false;
                 Task::none()
             }
             Message::ToggleBookmarksModal => {
-                self.show_bookmarks_modal = !self.show_bookmarks_modal;
-                if self.show_bookmarks_modal {
-                    self.show_dropdown_menu = false;
-                    self.show_menu_modal = false;
-                    self.show_search_modal = false;
-                    self.show_settings_modal = false;
-                    self.show_help_modal = false;
-                    self.show_titlebar = false;
-                    self.toast_message = None;
+                self.modals.bookmarks = !self.modals.bookmarks;
+                if self.modals.bookmarks {
+                    self.titlebar.show_dropdown_menu = false;
+                    self.modals.menu = false;
+                    self.modals.search = false;
+                    self.modals.settings = false;
+                    self.modals.help = false;
+                    self.titlebar.show = false;
+                    self.overlay.clear_toast();
                     self.hovered_player_id = None;
-                    self.player_overlay_ticks = 0;
-                    self.player_overlay_fade_in_ticks = 0;
+                    self.overlay.ticks = 0;
+                    self.overlay.fade_in_ticks = 0;
                 }
                 Task::none()
             }
             Message::CloseBookmarksModal => {
-                self.show_bookmarks_modal = false;
+                self.modals.bookmarks = false;
                 Task::none()
             }
             Message::EscapePressed => {
-                if self.show_transcript_menu {
-                    self.show_transcript_menu = false;
+                if self.drawers.show_transcript_menu {
+                    self.drawers.show_transcript_menu = false;
                     return Task::none();
                 }
                 if self.open_audio_menu_player_id.is_some() {
@@ -236,30 +229,21 @@ impl WazooApp {
                     return Task::none();
                 }
                 if self.is_any_modal_open()
-                    || self.show_dropdown_menu
-                    || self.show_file_picker
-                    || self.show_transcript
-                    || self.show_history_drawer
+                    || self.titlebar.show_dropdown_menu
+                    || self.drawers.is_any_open()
                 {
-                    self.show_help_modal = false;
-                    self.show_search_modal = false;
-                    self.show_settings_modal = false;
-                    self.show_menu_modal = false;
-                    self.show_bookmarks_modal = false;
-                    self.show_dropdown_menu = false;
+                    self.modals.close_all();
+                    self.titlebar.show_dropdown_menu = false;
                     self.close_file_picker();
-                    self.show_transcript = false;
-                    self.show_transcript_menu = false;
-                    self.show_history_drawer = false;
+                    self.drawers.close_all();
                 } else {
-                    self.show_menu_modal = true;
-                    self.show_dropdown_menu = false;
+                    self.modals.menu = true;
+                    self.titlebar.show_dropdown_menu = false;
                 }
                 Task::none()
             }
             Message::DismissToast => {
-                self.toast_message = None;
-                self.toast_time_remaining = 0;
+                self.overlay.clear_toast();
                 Task::none()
             }
             Message::ModalCardClicked => Task::none(),

@@ -16,90 +16,90 @@ impl WazooApp {
     pub(crate) fn update_drawers(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::ToggleFilePicker => {
-                if self.show_file_picker {
+                if self.drawers.show_file_picker {
                     self.close_file_picker();
                 } else {
-                    self.show_file_picker = true;
-                    self.show_transcript = false;
-                    self.show_history_drawer = false;
-                    if self.file_picker_groups.is_empty() && !self.available_videos.is_empty() {
+                    self.drawers.show_file_picker = true;
+                    self.drawers.show_transcript = false;
+                    self.drawers.show_history_drawer = false;
+                    if self.drawers.file_picker_groups.is_empty() && !self.available_videos.is_empty() {
                         self.apply_file_picker_search();
                     }
                 }
-                self.show_dropdown_menu = false;
-                self.show_menu_modal = false;
+                self.titlebar.show_dropdown_menu = false;
+                self.modals.menu = false;
                 Task::none()
             }
             Message::ToggleTranscript => {
-                self.show_transcript = !self.show_transcript;
-                if !self.show_transcript {
-                    self.show_transcript_menu = false;
+                self.drawers.show_transcript = !self.drawers.show_transcript;
+                if !self.drawers.show_transcript {
+                    self.drawers.show_transcript_menu = false;
                 }
-                self.show_dropdown_menu = false;
-                self.show_menu_modal = false;
-                if self.show_transcript {
+                self.titlebar.show_dropdown_menu = false;
+                self.modals.menu = false;
+                if self.drawers.show_transcript {
                     self.close_file_picker();
-                    self.show_history_drawer = false;
+                    self.drawers.show_history_drawer = false;
                     return self.load_transcript_for_focused_player();
                 }
                 Task::none()
             }
             Message::ToggleTranscriptForPlayer(id) => {
                 let is_same_focused = self.focused_player_id() == Some(id);
-                if is_same_focused && self.show_transcript {
-                    self.show_transcript = false;
-                    self.show_transcript_menu = false;
+                if is_same_focused && self.drawers.show_transcript {
+                    self.drawers.show_transcript = false;
+                    self.drawers.show_transcript_menu = false;
                     return Task::none();
                 }
                 if let Some(idx) = self.players.iter().position(|p| p.id == id) {
                     self.focused_player_idx = idx;
                 }
-                self.show_transcript = true;
-                self.show_transcript_menu = false;
+                self.drawers.show_transcript = true;
+                self.drawers.show_transcript_menu = false;
                 self.close_file_picker();
-                self.show_history_drawer = false;
-                self.show_dropdown_menu = false;
-                self.show_menu_modal = false;
+                self.drawers.show_history_drawer = false;
+                self.titlebar.show_dropdown_menu = false;
+                self.modals.menu = false;
                 self.load_transcript_for_focused_player()
             }
             Message::ToggleHistoryDrawer => {
-                self.show_history_drawer = !self.show_history_drawer;
-                if self.show_history_drawer {
+                self.drawers.show_history_drawer = !self.drawers.show_history_drawer;
+                if self.drawers.show_history_drawer {
                     self.close_file_picker();
-                    self.show_transcript = false;
-                    self.show_transcript_menu = false;
+                    self.drawers.show_transcript = false;
+                    self.drawers.show_transcript_menu = false;
                 }
-                self.show_dropdown_menu = false;
-                self.show_menu_modal = false;
+                self.titlebar.show_dropdown_menu = false;
+                self.modals.menu = false;
                 Task::none()
             }
             Message::CloseHistoryDrawer => {
-                self.show_history_drawer = false;
+                self.drawers.show_history_drawer = false;
                 Task::none()
             }
             Message::HistorySearchChanged(s) => {
-                self.history_search = s;
+                self.drawers.history_search = s;
                 Task::none()
             }
             Message::ClearPlayHistory => {
-                self.play_history.clear();
+                self.drawers.play_history.clear();
                 Task::none()
             }
             Message::CloseTranscript => {
-                self.show_transcript = false;
-                self.show_transcript_menu = false;
+                self.drawers.show_transcript = false;
+                self.drawers.show_transcript_menu = false;
                 Task::none()
             }
             Message::TranscriptSearchChanged(s) => {
-                self.transcript_search = s;
+                self.drawers.transcript_search = s;
                 Task::none()
             }
             Message::TranscriptLoaded(path, track_idx, cues) => {
-                if self.transcript_video_path.as_deref() == Some(&path)
-                    && self.transcript_track_index == track_idx
+                if self.drawers.transcript_video_path.as_deref() == Some(&path)
+                    && self.drawers.transcript_track_index == track_idx
                 {
-                    self.transcript_loading = false;
-                    self.transcript_cues = cues;
+                    self.drawers.transcript_loading = false;
+                    self.drawers.transcript_cues = cues;
                 }
                 Task::none()
             }
@@ -115,16 +115,16 @@ impl WazooApp {
                 Task::none()
             }
             Message::ToggleTranscriptSubtitleMenu => {
-                self.show_transcript_menu = !self.show_transcript_menu;
+                self.drawers.show_transcript_menu = !self.drawers.show_transcript_menu;
                 Task::none()
             }
             Message::CloseTranscriptSubtitleMenu => {
-                self.show_transcript_menu = false;
+                self.drawers.show_transcript_menu = false;
                 Task::none()
             }
             Message::SelectTranscriptSubtitleTrack(track_idx, track_id) => {
-                self.show_transcript_menu = false;
-                self.transcript_track_index = track_idx;
+                self.drawers.show_transcript_menu = false;
+                self.drawers.transcript_track_index = track_idx;
                 self.subtitles_enabled = true;
                 if let Some(player) = self.focused_player_mut() {
                     player.set_subtitles_visible(true);
@@ -132,9 +132,9 @@ impl WazooApp {
                     let sub_track = player.subtitle_tracks().get(track_idx).cloned();
                     let path = player.state.path.clone();
                     if !path.is_empty() {
-                        self.transcript_video_path = Some(path.clone());
-                        self.transcript_loading = true;
-                        self.transcript_cues.clear();
+                        self.drawers.transcript_video_path = Some(path.clone());
+                        self.drawers.transcript_loading = true;
+                        self.drawers.transcript_cues.clear();
                         let path_clone = path.clone();
                         let ext_file = sub_track.as_ref().and_then(|t| t.external_filename.clone());
                         let ff_index = sub_track.as_ref().and_then(|t| t.ff_index);
@@ -156,26 +156,26 @@ impl WazooApp {
                 Task::none()
             }
             Message::ToggleFolderCollapse(folder) => {
-                if self.expanded_folders.contains(&folder) {
-                    self.expanded_folders.remove(&folder);
+                if self.drawers.expanded_folders.contains(&folder) {
+                    self.drawers.expanded_folders.remove(&folder);
                 } else {
-                    self.expanded_folders.insert(folder);
+                    self.drawers.expanded_folders.insert(folder);
                 }
                 Task::none()
             }
             Message::FilePickerSearchChanged(s) => {
-                self.file_picker_search = s;
-                let trimmed = self.file_picker_search.trim();
+                self.drawers.file_picker_search = s;
+                let trimmed = self.drawers.file_picker_search.trim();
                 if trimmed.is_empty() {
-                    self.file_picker_debounce_ticks = 0;
+                    self.drawers.file_picker_debounce_ticks = 0;
                     self.apply_file_picker_search();
                 } else {
-                    self.file_picker_debounce_ticks = crate::app::FILE_PICKER_DEBOUNCE_TICKS;
+                    self.drawers.file_picker_debounce_ticks = crate::app::FILE_PICKER_DEBOUNCE_TICKS;
                 }
                 Task::none()
             }
             Message::ApplyFilePickerSearch => {
-                self.file_picker_debounce_ticks = 0;
+                self.drawers.file_picker_debounce_ticks = 0;
                 self.apply_file_picker_search();
                 Task::none()
             }
@@ -202,10 +202,10 @@ impl WazooApp {
                         if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
                             *p = handle;
                         }
-                        self.toast_message =
+                        self.overlay.toast_message =
                             Some(self.t_with("player.playing", &[("title", &title)]));
-                        self.toast_time_remaining = LONG_TOAST_SECS;
-                        if self.show_transcript {
+                        self.overlay.toast_time_remaining = LONG_TOAST_SECS;
+                        if self.drawers.show_transcript {
                             return self.load_transcript_for_focused_player();
                         }
                     }

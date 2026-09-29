@@ -247,10 +247,10 @@ fn test_file_picker_confined_folder_badge_multilingual() {
     let _ = app.update(Message::SetLanguage("es".to_string()));
     let all_es = app.t("common.all");
     assert_eq!(all_es, "Todo");
-    assert_eq!(app.active_search_folder, "Todo");
-    assert_eq!(app.selected_search_folder, "Todo");
+    assert_eq!(app.search.active_folder, "Todo");
+    assert_eq!(app.search.selected_folder, "Todo");
     assert!(app.settings.last_folders.is_empty());
-    assert!(app.is_all_folder(&app.active_search_folder));
+    assert!(app.is_all_folder(&app.search.active_folder));
 
     // 2. File picker in Spanish does not show badge for Todo
     {
@@ -259,18 +259,18 @@ fn test_file_picker_confined_folder_badge_multilingual() {
 
     // 3. Search confined to anime
     let _ = app.update(Message::SelectSearchFolder("/media/anime".to_string()));
-    assert_eq!(app.active_search_folder, "Todo"); // Still Todo before search
+    assert_eq!(app.search.active_folder, "Todo"); // Still Todo before search
     let _ = app.update(Message::PerformSearch);
-    assert_eq!(app.active_search_folder, "/media/anime");
+    assert_eq!(app.search.active_folder, "/media/anime");
     assert_eq!(app.settings.last_folders, vec!["/media/anime".to_string()]);
-    assert!(!app.is_all_folder(&app.active_search_folder));
+    assert!(!app.is_all_folder(&app.search.active_folder));
 
     // 4. Reset search folder returns to Spanish All ("Todo")
     let _ = app.update(Message::ResetSearchFolder);
-    assert_eq!(app.active_search_folder, "Todo");
-    assert_eq!(app.selected_search_folder, "Todo");
+    assert_eq!(app.search.active_folder, "Todo");
+    assert_eq!(app.search.selected_folder, "Todo");
     assert!(app.settings.last_folders.is_empty());
-    assert!(app.is_all_folder(&app.active_search_folder));
+    assert!(app.is_all_folder(&app.search.active_folder));
 }
 
 #[test]
@@ -315,13 +315,13 @@ fn test_search_modal_folder_toggles_and_reset_to_all() {
 
     // 1. Initially "All" is active and selected
     assert!(app.is_all_search_selected());
-    assert!(app.selected_search_folders.is_empty());
+    assert!(app.search.selected_folders.is_empty());
 
     // 2. Toggle folder 1: /media/anime
     let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
     assert!(!app.is_all_search_selected());
     assert_eq!(
-        app.selected_search_folders,
+        app.search.selected_folders,
         vec!["/media/anime".to_string()]
     );
 
@@ -329,7 +329,7 @@ fn test_search_modal_folder_toggles_and_reset_to_all() {
     let _ = app.update(Message::ToggleSearchFolder("/media/movies".to_string()));
     assert!(!app.is_all_search_selected());
     assert_eq!(
-        app.selected_search_folders,
+        app.search.selected_folders,
         vec!["/media/anime".to_string(), "/media/movies".to_string()]
     );
 
@@ -337,25 +337,25 @@ fn test_search_modal_folder_toggles_and_reset_to_all() {
     let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
     assert!(!app.is_all_search_selected());
     assert_eq!(
-        app.selected_search_folders,
+        app.search.selected_folders,
         vec!["/media/movies".to_string()]
     );
 
     // 5. Toggle folder 2 off -> auto-reverts to All
     let _ = app.update(Message::ToggleSearchFolder("/media/movies".to_string()));
     assert!(app.is_all_search_selected());
-    assert!(app.selected_search_folders.is_empty());
-    assert!(app.is_all_folder(&app.selected_search_folder));
+    assert!(app.search.selected_folders.is_empty());
+    assert!(app.is_all_folder(&app.search.selected_folder));
 
     // 6. Select multiple folders again, then click "All" button
     let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
     let _ = app.update(Message::ToggleSearchFolder("/media/music".to_string()));
-    assert_eq!(app.selected_search_folders.len(), 2);
+    assert_eq!(app.search.selected_folders.len(), 2);
 
     let all_label = app.t("common.all");
     let _ = app.update(Message::SelectSearchFolder(all_label));
     assert!(app.is_all_search_selected());
-    assert!(app.selected_search_folders.is_empty());
+    assert!(app.search.selected_folders.is_empty());
 
     // 7. Mix and match /media/anime and /media/movies, then PerformSearch
     let _ = app.update(Message::ToggleSearchFolder("/media/anime".to_string()));
@@ -363,7 +363,7 @@ fn test_search_modal_folder_toggles_and_reset_to_all() {
     let _ = app.update(Message::PerformSearch);
 
     assert_eq!(
-        app.active_search_folders,
+        app.search.active_folders,
         vec!["/media/anime".to_string(), "/media/movies".to_string()]
     );
     assert_eq!(
@@ -392,7 +392,7 @@ fn test_search_modal_folder_toggles_and_reset_to_all() {
     let _ = app.update(Message::RemoveActiveSearchFolder(
         "/media/anime".to_string(),
     ));
-    assert_eq!(app.active_search_folders, vec!["/media/movies".to_string()]);
+    assert_eq!(app.search.active_folders, vec!["/media/movies".to_string()]);
     assert_eq!(app.available_videos.len(), 1);
     assert_eq!(app.available_videos[0].path, "/media/movies/movie.mp4");
 
@@ -400,8 +400,8 @@ fn test_search_modal_folder_toggles_and_reset_to_all() {
     let _ = app.update(Message::RemoveActiveSearchFolder(
         "/media/movies".to_string(),
     ));
-    assert!(app.active_search_folders.is_empty());
-    assert!(app.is_all_folder(&app.active_search_folder));
+    assert!(app.search.active_folders.is_empty());
+    assert!(app.is_all_folder(&app.search.active_folder));
     assert_eq!(app.available_videos.len(), 3);
 }
 
@@ -475,51 +475,51 @@ fn test_play_history_cap_deduplication_and_drawer() {
     let (mut app, _) = new_test_app();
 
     // 1. Initial state is empty and closed
-    assert!(app.play_history.is_empty());
-    assert!(!app.show_history_drawer);
+    assert!(app.drawers.play_history.is_empty());
+    assert!(!app.drawers.show_history_drawer);
 
     // 2. Record items with consecutive duplicates
     app.record_play_history("/media/video1.mp4");
     app.record_play_history("/media/video1.mp4"); // should be deduplicated
-    assert_eq!(app.play_history.len(), 1);
-    assert_eq!(app.play_history[0].path, "/media/video1.mp4");
-    assert_eq!(app.play_history[0].title, "video1");
+    assert_eq!(app.drawers.play_history.len(), 1);
+    assert_eq!(app.drawers.play_history[0].path, "/media/video1.mp4");
+    assert_eq!(app.drawers.play_history[0].title, "video1");
 
     app.record_play_history("/media/video2.mp4");
-    assert_eq!(app.play_history.len(), 2);
+    assert_eq!(app.drawers.play_history.len(), 2);
 
     // 3. Cap at 1000 entries
     for i in 3..=1050 {
         app.record_play_history(&format!("/media/video{}.mp4", i));
     }
-    assert_eq!(app.play_history.len(), 1000);
+    assert_eq!(app.drawers.play_history.len(), 1000);
     // The oldest items (video1 to video50) should be dropped; oldest in list should be video51
-    assert_eq!(app.play_history.first().unwrap().path, "/media/video51.mp4");
+    assert_eq!(app.drawers.play_history.first().unwrap().path, "/media/video51.mp4");
     assert_eq!(
-        app.play_history.last().unwrap().path,
+        app.drawers.play_history.last().unwrap().path,
         "/media/video1050.mp4"
     );
 
     // 4. Toggle drawer
     let _ = app.update(Message::ToggleHistoryDrawer);
-    assert!(app.show_history_drawer);
-    assert!(!app.show_file_picker);
-    assert!(!app.show_transcript);
+    assert!(app.drawers.show_history_drawer);
+    assert!(!app.drawers.show_file_picker);
+    assert!(!app.drawers.show_transcript);
 
     // 5. Search filter
     let _ = app.update(Message::HistorySearchChanged("video100".to_string()));
-    assert_eq!(app.history_search, "video100");
+    assert_eq!(app.drawers.history_search, "video100");
 
     // 6. View rendering does not panic
     let _ = app.view_history_drawer();
 
     // 7. Escape closes drawer
     let _ = app.update(Message::EscapePressed);
-    assert!(!app.show_history_drawer);
+    assert!(!app.drawers.show_history_drawer);
 
     // 8. Clear history
     let _ = app.update(Message::ClearPlayHistory);
-    assert!(app.play_history.is_empty());
+    assert!(app.drawers.play_history.is_empty());
     let _ = app.view_history_drawer();
 }
 
@@ -558,30 +558,30 @@ fn test_view_titlebar() {
 fn test_titlebar_persists_during_window_drag() {
     let (mut app, _) = new_test_app();
     let win_id = iced::window::Id::unique();
-    app.window_id = Some(win_id);
+    app.window.id = Some(win_id);
 
     // Move cursor to titlebar and show it
     let _ = app.update(Message::CursorMoved(win_id, Point::new(200.0, 15.0)));
-    app.show_titlebar = true;
-    app.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
+    app.titlebar.show = true;
+    app.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
     assert_eq!(app.titlebar_alpha(), 1.0);
 
     // Press titlebar
     let _ = app.update(Message::TitleBarPressed);
-    assert!(app.titlebar_drag_pending);
+    assert!(app.titlebar.drag_pending);
     assert_eq!(app.titlebar_alpha(), 1.0);
 
     // Move mouse by > 5px to initiate window drag
     let _ = app.update(Message::CursorMoved(win_id, Point::new(200.0, 25.0)));
-    assert!(app.is_window_dragging);
-    assert!(!app.titlebar_drag_pending);
+    assert!(app.window.is_dragging);
+    assert!(!app.titlebar.drag_pending);
     assert_eq!(app.titlebar_alpha(), 1.0);
 
     // Simulate wobbly windows: window moves and cursor flies around over video while dragging
     let _ = app.update(Message::WindowMoved(win_id, Point::new(105.0, 105.0)));
     let _ = app.update(Message::CursorMoved(win_id, Point::new(400.0, 500.0)));
-    assert!(app.is_window_dragging);
-    assert!(app.show_titlebar);
+    assert!(app.window.is_dragging);
+    assert!(app.titlebar.show);
     assert_eq!(app.titlebar_alpha(), 1.0);
 
     // Run 50 frame ticks with window moving (well beyond TITLEBAR_HIDE_TICKS = 50)
@@ -594,19 +594,19 @@ fn test_titlebar_persists_during_window_drag() {
     }
 
     // Titlebar MUST still be fully visible and alpha == 1.0 while moving
-    assert!(app.show_titlebar);
+    assert!(app.titlebar.show);
     assert_eq!(app.titlebar_alpha(), 1.0);
 
     // Release mouse button (mouseup) to conclude drag
     let _ = app.update(Message::LeftClickReleased);
-    assert!(!app.is_window_dragging);
-    assert_eq!(app.titlebar_hide_ticks, TITLEBAR_FADE_TICKS);
+    assert!(!app.window.is_dragging);
+    assert_eq!(app.titlebar.hide_ticks, TITLEBAR_FADE_TICKS);
 
     // After fading out over TITLEBAR_FADE_TICKS frames, titlebar is completely dismissed without wiggling
     for _ in 0..TITLEBAR_FADE_TICKS {
         let _ = app.update(Message::VideoFrameTick);
     }
-    assert!(!app.show_titlebar);
+    assert!(!app.titlebar.show);
     assert_eq!(app.titlebar_alpha(), 0.0);
 }
 
@@ -614,29 +614,29 @@ fn test_titlebar_persists_during_window_drag() {
 fn test_titlebar_dismisses_when_wm_eats_mouseup() {
     let (mut app, _) = new_test_app();
     let win_id = iced::window::Id::unique();
-    app.window_id = Some(win_id);
+    app.window.id = Some(win_id);
 
     let _ = app.update(Message::CursorMoved(win_id, Point::new(200.0, 15.0)));
     let _ = app.update(Message::TitleBarPressed);
     let _ = app.update(Message::CursorMoved(win_id, Point::new(200.0, 25.0)));
-    assert!(app.is_window_dragging);
+    assert!(app.window.is_dragging);
 
     // Window moves
     let _ = app.update(Message::WindowMoved(win_id, Point::new(100.0, 100.0)));
-    assert!(app.show_titlebar);
+    assert!(app.titlebar.show);
 
     // Simulate WM eating mouseup: window stops moving and time elapses
     std::thread::sleep(Duration::from_millis(320));
 
     // User moves mouse over video without clicking
     let _ = app.update(Message::CursorMoved(win_id, Point::new(300.0, 300.0)));
-    assert!(!app.is_window_dragging);
+    assert!(!app.window.is_dragging);
 
     // Titlebar smoothly fades out without needing a click on the video
     for _ in 0..TITLEBAR_FADE_TICKS {
         let _ = app.update(Message::VideoFrameTick);
     }
-    assert!(!app.show_titlebar);
+    assert!(!app.titlebar.show);
     assert_eq!(app.titlebar_alpha(), 0.0);
 }
 
@@ -694,29 +694,29 @@ fn test_scroll_mode_real_heights_and_recalculation() {
 #[test]
 fn test_unfocused_window_fps_throttling_30fps() {
     let (mut app, _) = new_test_app();
-    app.is_window_focused = false;
-    app.unfocused_frame_ticks = 0;
+    app.window.is_focused = false;
+    app.window.unfocused_frame_ticks = 0;
 
     // Tick 1: increments counter to 1, odd tick throttled
     let _ = app.update(Message::VideoFrameTick);
-    assert_eq!(app.unfocused_frame_ticks, 1);
+    assert_eq!(app.window.unfocused_frame_ticks, 1);
 
     // Tick 2: increments counter to 2, even tick executes (~30 FPS rate from 60 FPS base)
     let _ = app.update(Message::VideoFrameTick);
-    assert_eq!(app.unfocused_frame_ticks, 2);
+    assert_eq!(app.window.unfocused_frame_ticks, 2);
 
     // Tick 3: odd tick throttled
     let _ = app.update(Message::VideoFrameTick);
-    assert_eq!(app.unfocused_frame_ticks, 3);
+    assert_eq!(app.window.unfocused_frame_ticks, 3);
 
     // Tick 4: even tick executes
     let _ = app.update(Message::VideoFrameTick);
-    assert_eq!(app.unfocused_frame_ticks, 4);
+    assert_eq!(app.window.unfocused_frame_ticks, 4);
 
     // Regaining focus resets unfocused_frame_ticks
     let _ = app.update(Message::WindowFocused);
-    assert!(app.is_window_focused);
-    assert_eq!(app.unfocused_frame_ticks, 0);
+    assert!(app.window.is_focused);
+    assert_eq!(app.window.unfocused_frame_ticks, 0);
 }
 
 #[test]
@@ -758,7 +758,7 @@ fn test_add_new_player_focuses_new_player_and_can_be_removed() {
     let second_player_id = app.players[1].id;
     assert_ne!(first_player_id, second_player_id);
     assert_eq!(app.focused_player_id(), Some(second_player_id));
-    assert_eq!(app.focus_border_ticks, 0);
+    assert_eq!(app.overlay.focus_border_ticks, 0);
 
     // Press X (RemoveFocusedPlayer) removes the newly added active player
     let _ = app.update(Message::RemoveFocusedPlayer);
@@ -766,7 +766,7 @@ fn test_add_new_player_focuses_new_player_and_can_be_removed() {
     assert_eq!(app.players[0].id, first_player_id);
     assert_eq!(app.focused_player_idx, 0);
     assert_eq!(app.focused_player_id(), Some(first_player_id));
-    assert_eq!(app.focus_border_ticks, 0);
+    assert_eq!(app.overlay.focus_border_ticks, 0);
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
@@ -792,10 +792,10 @@ fn test_query_zero_matches_shows_no_matches_view_and_clear_search() {
     assert_eq!(app.db.get_video_count().unwrap(), 1);
 
     // Perform a search for a term that does not match
-    app.search_input = "nonexistent_query_xyz".to_string();
+    app.search.input = "nonexistent_query_xyz".to_string();
     let _ = app.update(Message::PerformSearch);
 
-    assert_eq!(app.active_search_query, "nonexistent_query_xyz");
+    assert_eq!(app.search.active_query, "nonexistent_query_xyz");
     assert!(app.available_videos.is_empty());
 
     // Calling view() exercises the view_no_matches code path
@@ -805,7 +805,7 @@ fn test_query_zero_matches_shows_no_matches_view_and_clear_search() {
 
     // Now clear search
     let _ = app.update(Message::ClearSearch);
-    assert!(app.active_search_query.is_empty());
+    assert!(app.search.active_query.is_empty());
     assert_eq!(app.available_videos.len(), 1);
 
     let _ = std::fs::remove_dir_all(&temp_dir);
@@ -817,7 +817,7 @@ fn test_settings_toggle_default_player() {
     assert!(!app.settings.is_default_player);
 
     let _ = app.update(Message::OpenSettingsModal);
-    assert!(app.show_settings_modal);
+    assert!(app.modals.settings);
 
     // Render settings modal with toggle button
     {
@@ -841,12 +841,12 @@ fn test_settings_toggle_default_player() {
 #[test]
 fn test_settings_modal_tabs_and_playback_options() {
     let (mut app, _) = new_test_app();
-    assert_eq!(app.settings_tab, SettingsTab::General);
+    assert_eq!(app.modals.settings_tab, SettingsTab::General);
 
     // Open settings modal
     let _ = app.update(Message::OpenSettingsModal);
-    assert!(app.show_settings_modal);
-    assert_eq!(app.settings_tab, SettingsTab::General);
+    assert!(app.modals.settings);
+    assert_eq!(app.modals.settings_tab, SettingsTab::General);
 
     // Render General tab
     {
@@ -855,7 +855,7 @@ fn test_settings_modal_tabs_and_playback_options() {
 
     // Switch to Playback tab
     let _ = app.update(Message::SetSettingsTab(SettingsTab::Playback));
-    assert_eq!(app.settings_tab, SettingsTab::Playback);
+    assert_eq!(app.modals.settings_tab, SettingsTab::Playback);
 
     // Render Playback tab
     {
@@ -913,7 +913,7 @@ fn test_settings_modal_tabs_and_playback_options() {
 
     // Switch to System tab (Window Opacity & Default Player)
     let _ = app.update(Message::SetSettingsTab(SettingsTab::System));
-    assert_eq!(app.settings_tab, SettingsTab::System);
+    assert_eq!(app.modals.settings_tab, SettingsTab::System);
     {
         let _view_system = app.view_settings_modal();
     }
@@ -953,49 +953,49 @@ fn test_settings_modal_tabs_and_playback_options() {
 
     // Switch back to General tab
     let _ = app.update(Message::SetSettingsTab(SettingsTab::General));
-    assert_eq!(app.settings_tab, SettingsTab::General);
+    assert_eq!(app.modals.settings_tab, SettingsTab::General);
     {
         let _view_general_back = app.view_settings_modal();
     }
 
     // Close settings modal
     let _ = app.update(Message::CloseSettingsModal);
-    assert!(!app.show_settings_modal);
+    assert!(!app.modals.settings);
 }
 
 #[test]
 fn test_menu_modal_open_close_and_render() {
     let (mut app, _) = new_test_app();
-    assert!(!app.show_menu_modal);
+    assert!(!app.modals.menu);
 
     let _ = app.update(Message::OpenMenuModal);
-    assert!(app.show_menu_modal);
+    assert!(app.modals.menu);
     {
         let _menu_view = app.view_menu_modal();
     }
 
     let _ = app.update(Message::CloseMenuModal);
-    assert!(!app.show_menu_modal);
+    assert!(!app.modals.menu);
 }
 
 #[test]
 fn test_search_and_bookmarks_modal_render() {
     let (mut app, _) = new_test_app();
     let _ = app.update(Message::OpenSearchModal);
-    assert!(app.show_search_modal);
+    assert!(app.modals.search);
     {
         let _search_view = app.view_search_modal();
     }
     let _ = app.update(Message::CloseSearchModal);
-    assert!(!app.show_search_modal);
+    assert!(!app.modals.search);
 
     let _ = app.update(Message::ToggleBookmarksModal);
-    assert!(app.show_bookmarks_modal);
+    assert!(app.modals.bookmarks);
     {
         let _bookmarks_view = app.view_bookmarks_modal();
     }
     let _ = app.update(Message::CloseBookmarksModal);
-    assert!(!app.show_bookmarks_modal);
+    assert!(!app.modals.bookmarks);
 }
 
 #[test]
@@ -1004,10 +1004,10 @@ fn test_top_menu_slide_down_animation() {
 
     let (mut app, _) = new_test_app();
     let win_id = iced::window::Id::unique();
-    app.window_id = Some(win_id);
+    app.window.id = Some(win_id);
 
     // Initial state: top menu is hidden
-    assert!(!app.show_titlebar);
+    assert!(!app.titlebar.show);
     assert_eq!(app.titlebar_slide_progress(), 0.0);
 
     // Move cursor into top menu trigger zone (y < 35.0)
@@ -1019,8 +1019,8 @@ fn test_top_menu_slide_down_animation() {
     }
 
     // After hover delay passes, titlebar begins showing and starts sliding down from 0.0
-    assert!(app.show_titlebar);
-    assert_eq!(app.titlebar_slide_ticks, 0);
+    assert!(app.titlebar.show);
+    assert_eq!(app.titlebar.slide_ticks, 0);
     assert_eq!(app.titlebar_slide_progress(), 0.0);
 
     // Initial view rendering at start of slide down
@@ -1057,7 +1057,7 @@ fn test_top_menu_slide_down_animation() {
     }
 
     // Dismissal complete
-    assert!(!app.show_titlebar);
+    assert!(!app.titlebar.show);
     assert_eq!(app.titlebar_slide_progress(), 0.0);
 }
 
@@ -1067,17 +1067,17 @@ fn test_dropdown_menu_slide_down_animation() {
 
     let (mut app, _) = new_test_app();
     let win_id = iced::window::Id::unique();
-    app.window_id = Some(win_id);
+    app.window.id = Some(win_id);
 
     // Initial state: dropdown menu is closed
-    assert!(!app.show_dropdown_menu);
+    assert!(!app.titlebar.show_dropdown_menu);
     assert_eq!(app.dropdown_menu_slide_progress(), 0.0);
 
     // Toggle dropdown menu open
     let _ = app.update(Message::ToggleDropdownMenu);
-    assert!(app.show_dropdown_menu);
-    assert!(app.show_titlebar);
-    assert_eq!(app.dropdown_menu_slide_ticks, 0);
+    assert!(app.titlebar.show_dropdown_menu);
+    assert!(app.titlebar.show);
+    assert_eq!(app.titlebar.dropdown_menu_slide_ticks, 0);
     assert_eq!(app.dropdown_menu_slide_progress(), 0.0);
 
     // View rendered at initial opening state
@@ -1107,7 +1107,7 @@ fn test_dropdown_menu_slide_down_animation() {
 
     // Close dropdown menu
     let _ = app.update(Message::CloseDropdownMenu);
-    assert!(!app.show_dropdown_menu);
+    assert!(!app.titlebar.show_dropdown_menu);
     assert_eq!(app.dropdown_menu_slide_progress(), 0.0);
 }
 
@@ -1117,10 +1117,10 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
 
     let (mut app, _) = new_test_app();
     let win_id = iced::window::Id::unique();
-    app.window_id = Some(win_id);
+    app.window.id = Some(win_id);
 
     // Initial state: player OSD is completely hidden
-    assert_eq!(app.player_overlay_ticks, 0);
+    assert_eq!(app.overlay.ticks, 0);
     assert_eq!(app.player_overlay_alpha(), 0.0);
 
     // Hover over a player to trigger OSD entrance
@@ -1128,7 +1128,7 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
     assert_eq!(app.hovered_player_id, Some(1));
 
     // On initial trigger, fade-in starts at alpha 0.0 (smooth entrance instead of popping to 1.0)
-    assert_eq!(app.player_overlay_fade_in_ticks, 0);
+    assert_eq!(app.overlay.fade_in_ticks, 0);
     assert_eq!(app.player_overlay_alpha(), 0.0);
 
     // Over PLAYER_OVERLAY_FADE_TICKS (12 ticks), alpha monotonically fades in to 1.0
@@ -1166,7 +1166,7 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
     }
 
     // Overlay completely dismissed
-    assert_eq!(app.player_overlay_ticks, 0);
+    assert_eq!(app.overlay.ticks, 0);
     assert_eq!(app.player_overlay_alpha(), 0.0);
     assert_eq!(app.hovered_player_id, None);
 
@@ -1180,26 +1180,26 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
 
     // Unhover while mid-entrance: fade-out smoothly reverses from current alpha (4/12)
     let _ = app.update(Message::PlayerUnhovered(1));
-    assert!(app.player_overlay_ticks <= 4);
+    assert!(app.overlay.ticks <= 4);
 
     for _ in 0..4 {
         let _ = app.update(Message::VideoFrameTick);
     }
-    assert_eq!(app.player_overlay_ticks, 0);
+    assert_eq!(app.overlay.ticks, 0);
     assert_eq!(app.player_overlay_alpha(), 0.0);
 }
 
 #[test]
 fn test_help_modal_shortcut_f1() {
     let (mut app, _) = new_test_app();
-    assert!(!app.show_help_modal);
+    assert!(!app.modals.help);
 
     // F1 should open the help modal
     let _ = app.update(Message::KeyPressed(
         iced::keyboard::Key::Named(iced::keyboard::key::Named::F1),
         iced::event::Status::Ignored,
     ));
-    assert!(app.show_help_modal);
+    assert!(app.modals.help);
     {
         let _help_view = app.view_help_modal();
     }
@@ -1209,7 +1209,7 @@ fn test_help_modal_shortcut_f1() {
         iced::keyboard::Key::Named(iced::keyboard::key::Named::Escape),
         iced::event::Status::Ignored,
     ));
-    assert!(!app.show_help_modal);
+    assert!(!app.modals.help);
 }
 
 #[test]
@@ -1221,43 +1221,43 @@ fn test_prev_next_frame_keybind_dispatch() {
         iced::keyboard::Key::Character(".".into()),
         iced::event::Status::Ignored,
     ));
-    assert!(app.player_overlay_ticks > 0);
+    assert!(app.overlay.ticks > 0);
 
     // Reset ticks to verify comma independently
-    app.player_overlay_ticks = 0;
+    app.overlay.ticks = 0;
 
     // Prev frame (',')
     let _ = app.update(Message::KeyPressed(
         iced::keyboard::Key::Character(",".into()),
         iced::event::Status::Ignored,
     ));
-    assert!(app.player_overlay_ticks > 0);
+    assert!(app.overlay.ticks > 0);
 }
 
 #[test]
 fn test_toggle_always_on_top_and_ghost_mode() {
     let (mut app, _) = new_test_app();
     assert!(!app.settings.is_always_on_top);
-    assert!(!app.ghost_passthrough_active);
+    assert!(!app.window.ghost_passthrough_active);
 
     // Toggle always on top on - Pin mode automatically engages ghost mode
     let _ = app.update(Message::ToggleAlwaysOnTop);
     assert!(app.settings.is_always_on_top);
-    assert!(app.toast_message.is_some());
+    assert!(app.overlay.toast_message.is_some());
 
     // When window loses focus, ghost passthrough becomes active
     let _ = app.update(Message::WindowUnfocused);
-    assert!(app.ghost_passthrough_active);
+    assert!(app.window.ghost_passthrough_active);
 
     // When window gains focus (e.g. taskbar click), ghost passthrough is disengaged and titlebar slides down
     let _ = app.update(Message::WindowFocused);
-    assert!(!app.ghost_passthrough_active);
-    assert!(app.show_titlebar);
+    assert!(!app.window.ghost_passthrough_active);
+    assert!(app.titlebar.show);
 
     // Unpinning disengages both always on top and ghost mode
     let _ = app.update(Message::ToggleAlwaysOnTop);
     assert!(!app.settings.is_always_on_top);
-    assert!(!app.ghost_passthrough_active);
+    assert!(!app.window.ghost_passthrough_active);
 }
 
 #[test]

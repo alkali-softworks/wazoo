@@ -84,103 +84,104 @@ impl WazooApp {
             }
 
             Message::VideoFrameTick => {
-                if !self.is_window_focused {
-                    self.unfocused_frame_ticks = self.unfocused_frame_ticks.wrapping_add(1);
+                if !self.window.is_focused {
+                    self.window.unfocused_frame_ticks = self.window.unfocused_frame_ticks.wrapping_add(1);
                     // When the window is behind another window or unfocused, throttle frame updates
                     // to ~30 FPS (every 2nd tick) so background playback remains smooth (movie standard)
                     // without hammering GPU presentation swapchains.
-                    if !self.unfocused_frame_ticks.is_multiple_of(2) {
+                    if !self.window.unfocused_frame_ticks.is_multiple_of(2) {
                         return Task::none();
                     }
                 }
                 self.spinner_ticks = self.spinner_ticks.wrapping_add(1);
                 if self.open_audio_menu_player_id.is_some() {
-                    self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
-                    self.player_overlay_fade_in_ticks = PLAYER_OVERLAY_FADE_TICKS;
-                } else if self.player_overlay_ticks > 0 {
-                    if self.player_overlay_fade_in_ticks < PLAYER_OVERLAY_FADE_TICKS {
-                        self.player_overlay_fade_in_ticks += 1;
+                    self.overlay.ticks = PLAYER_OVERLAY_HIDE_TICKS;
+                    self.overlay.fade_in_ticks = PLAYER_OVERLAY_FADE_TICKS;
+                } else if self.overlay.ticks > 0 {
+                    if self.overlay.fade_in_ticks < PLAYER_OVERLAY_FADE_TICKS {
+                        self.overlay.fade_in_ticks += 1;
                     }
-                    self.player_overlay_ticks -= 1;
-                    if self.player_overlay_ticks == 0 {
+                    self.overlay.ticks -= 1;
+                    if self.overlay.ticks == 0 {
                         self.hovered_player_id = None;
-                        self.player_overlay_fade_in_ticks = 0;
+                        self.overlay.fade_in_ticks = 0;
                     }
                 } else {
-                    self.player_overlay_fade_in_ticks = 0;
+                    self.overlay.fade_in_ticks = 0;
                 }
-                if self.title_pill_ticks > 0 {
-                    self.title_pill_ticks -= 1;
+                if self.overlay.title_pill_ticks > 0 {
+                    self.overlay.title_pill_ticks -= 1;
                 }
-                if self.focus_border_ticks > 0 {
-                    self.focus_border_ticks -= 1;
+                if self.overlay.focus_border_ticks > 0 {
+                    self.overlay.focus_border_ticks -= 1;
                 }
-                if self.file_picker_debounce_ticks > 0 {
-                    self.file_picker_debounce_ticks -= 1;
-                    if self.file_picker_debounce_ticks == 0 {
+                if self.drawers.file_picker_debounce_ticks > 0 {
+                    self.drawers.file_picker_debounce_ticks -= 1;
+                    if self.drawers.file_picker_debounce_ticks == 0 {
                         self.apply_file_picker_search();
                     }
                 }
-                if self.is_window_dragging
-                    || self.titlebar_drag_pending
-                    || self.is_point_in_titlebar(self.cursor_position)
-                    || self.show_dropdown_menu
+                if self.window.is_dragging
+                    || self.titlebar.drag_pending
+                    || self.is_point_in_titlebar(self.window.cursor_position)
+                    || self.titlebar.show_dropdown_menu
                 {
-                    if self.is_window_dragging || self.titlebar_drag_pending {
+                    if self.window.is_dragging || self.titlebar.drag_pending {
                         let is_still_moving = self
-                            .last_window_drag_move
+                            .window
+                            .last_drag_move
                             .map(|t| t.elapsed() < Duration::from_millis(300))
                             .unwrap_or(false);
                         if !is_still_moving
-                            && !self.titlebar_drag_pending
-                            && !self.is_point_in_titlebar(self.cursor_position)
+                            && !self.titlebar.drag_pending
+                            && !self.is_point_in_titlebar(self.window.cursor_position)
                         {
-                            self.is_window_dragging = false;
-                            self.last_window_drag_move = None;
-                            if self.titlebar_hide_ticks > TITLEBAR_FADE_TICKS {
-                                self.titlebar_hide_ticks = TITLEBAR_FADE_TICKS;
+                            self.window.is_dragging = false;
+                            self.window.last_drag_move = None;
+                            if self.titlebar.hide_ticks > TITLEBAR_FADE_TICKS {
+                                self.titlebar.hide_ticks = TITLEBAR_FADE_TICKS;
                             }
                         } else {
-                            self.show_titlebar = true;
-                            self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
-                            self.titlebar_hover_ticks = 0;
-                            self.titlebar_slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
+                            self.titlebar.show = true;
+                            self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
+                            self.titlebar.hover_ticks = 0;
+                            self.titlebar.slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
                         }
-                    } else if self.show_dropdown_menu {
-                        self.show_titlebar = true;
-                        self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
-                        self.titlebar_hover_ticks = 0;
-                        self.titlebar_slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
-                        if self.dropdown_menu_slide_ticks < crate::app::DROPDOWN_MENU_SLIDE_TICKS {
-                            self.dropdown_menu_slide_ticks += 1;
+                    } else if self.titlebar.show_dropdown_menu {
+                        self.titlebar.show = true;
+                        self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
+                        self.titlebar.hover_ticks = 0;
+                        self.titlebar.slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
+                        if self.titlebar.dropdown_menu_slide_ticks < crate::app::DROPDOWN_MENU_SLIDE_TICKS {
+                            self.titlebar.dropdown_menu_slide_ticks += 1;
                         }
-                    } else if self.show_titlebar {
-                        self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
-                        if self.titlebar_slide_ticks < crate::app::TITLEBAR_SLIDE_TICKS {
-                            self.titlebar_slide_ticks += 1;
+                    } else if self.titlebar.show {
+                        self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
+                        if self.titlebar.slide_ticks < crate::app::TITLEBAR_SLIDE_TICKS {
+                            self.titlebar.slide_ticks += 1;
                         }
                     } else {
-                        self.titlebar_hover_ticks += 1;
-                        if self.titlebar_hover_ticks >= TITLEBAR_SHOW_DELAY_TICKS {
-                            self.show_titlebar = true;
-                            self.titlebar_hide_ticks = TITLEBAR_HIDE_TICKS;
-                            self.titlebar_hover_ticks = 0;
-                            self.titlebar_slide_ticks = 0;
+                        self.titlebar.hover_ticks += 1;
+                        if self.titlebar.hover_ticks >= TITLEBAR_SHOW_DELAY_TICKS {
+                            self.titlebar.show = true;
+                            self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
+                            self.titlebar.hover_ticks = 0;
+                            self.titlebar.slide_ticks = 0;
                             if self.hovered_player_id.is_some() {
-                                let current_fade = self.player_overlay_fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
-                                self.player_overlay_ticks =
-                                    self.player_overlay_ticks.min(current_fade);
+                                let current_fade = self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                                self.overlay.ticks =
+                                    self.overlay.ticks.min(current_fade);
                             }
                         }
                     }
                 } else {
-                    self.titlebar_hover_ticks = 0;
-                    self.dropdown_menu_slide_ticks = 0;
-                    if self.titlebar_hide_ticks > 0 {
-                        self.titlebar_hide_ticks -= 1;
-                        if self.titlebar_hide_ticks == 0 {
-                            self.show_titlebar = false;
-                            self.titlebar_slide_ticks = 0;
+                    self.titlebar.hover_ticks = 0;
+                    self.titlebar.dropdown_menu_slide_ticks = 0;
+                    if self.titlebar.hide_ticks > 0 {
+                        self.titlebar.hide_ticks -= 1;
+                        if self.titlebar.hide_ticks == 0 {
+                            self.titlebar.show = false;
+                            self.titlebar.slide_ticks = 0;
                         }
                     }
                 }
@@ -209,8 +210,8 @@ impl WazooApp {
             }
 
             Message::WatchdogTick => {
-                if self.window_bounds_dirty {
-                    self.window_bounds_dirty = false;
+                if self.window.bounds_dirty {
+                    self.window.bounds_dirty = false;
                     let _ = self.config_mgr.save_settings(&self.settings);
                 }
                 // Auto-clear loading state if it exceeds 10 seconds to avoid indefinite spinner
@@ -255,11 +256,11 @@ impl WazooApp {
                     let _ = self.update(Message::AutoAdvanceVideo(id));
                 }
 
-                if self.toast_message.is_some() {
-                    if self.toast_time_remaining > 0 {
-                        self.toast_time_remaining -= 1;
+                if self.overlay.toast_message.is_some() {
+                    if self.overlay.toast_time_remaining > 0 {
+                        self.overlay.toast_time_remaining -= 1;
                     } else {
-                        self.toast_message = None;
+                        self.overlay.toast_message = None;
                     }
                 }
                 if self.settings.playback_mode == PlaybackMode::Flip {

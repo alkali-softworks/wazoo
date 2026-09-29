@@ -16,6 +16,7 @@ pub mod message;
 pub mod platform;
 pub mod scroll_view;
 pub mod slide;
+pub mod state;
 pub mod theme;
 pub mod update;
 pub mod views;

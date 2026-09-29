@@ -56,10 +56,10 @@ impl WazooApp {
         .spacing(14)
         .align_x(Alignment::Center);
 
-        if !self.active_search_query.trim().is_empty() {
+        if !self.search.active_query.trim().is_empty() {
             content = content.push(
                 container(
-                    text(format!("\"{}\"", self.active_search_query.trim()))
+                    text(format!("\"{}\"", self.search.active_query.trim()))
                         .size(13)
                         .color(theme::COLOR_PRIMARY),
                 )

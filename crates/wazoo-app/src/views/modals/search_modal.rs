@@ -56,7 +56,7 @@ impl WazooApp {
 
         for folder in &self.settings.media_folders {
             let label = format::ucwords(format::folder_basename(folder));
-            let is_selected = self.selected_search_folders.contains(folder);
+            let is_selected = self.search.selected_folders.contains(folder);
             chip_items.push((
                 label.clone(),
                 button(text(label).size(13))
@@ -68,7 +68,7 @@ impl WazooApp {
         }
 
         if self.db.has_misc_videos().unwrap_or(false) {
-            let is_misc_selected = self.selected_search_folders.contains(&"Misc".to_string());
+            let is_misc_selected = self.search.selected_folders.contains(&"Misc".to_string());
             let misc_label = self.t("common.miscellaneous");
             chip_items.push((
                 misc_label.clone(),
@@ -116,7 +116,7 @@ impl WazooApp {
 
         let mut tags_row = row![].spacing(6).align_y(Alignment::Center);
 
-        for (idx, tag) in self.search_tags.iter().enumerate() {
+        for (idx, tag) in self.search.tags.iter().enumerate() {
             let chip = container(
                 row![
                     text(tag).size(13).color(iced::Color::WHITE),
@@ -134,13 +134,13 @@ impl WazooApp {
             tags_row = tags_row.push(chip);
         }
 
-        let placeholder = if self.search_tags.is_empty() {
+        let placeholder = if self.search.tags.is_empty() {
             self.t("search.placeholder")
         } else {
             String::new()
         };
 
-        let input_widget = text_input(&placeholder, &self.search_input)
+        let input_widget = text_input(&placeholder, &self.search.input)
             .id("search_input")
             .on_input(Message::SearchInputChanged)
             .on_submit(Message::PerformSearch)

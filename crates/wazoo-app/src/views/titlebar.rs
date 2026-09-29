@@ -142,7 +142,7 @@ impl WazooApp {
 
         let slide_progress = self.titlebar_slide_progress();
 
-        if self.show_dropdown_menu {
+        if self.titlebar.show_dropdown_menu {
             let dp = self.dropdown_menu_slide_progress();
             let menu_dropdown = container(
                 self.view_app_menu_list([8, 14])

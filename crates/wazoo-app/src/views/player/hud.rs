@@ -233,7 +233,7 @@ impl WazooApp {
                 .center_y(Length::Shrink),
             )
             .style(theme::transcript_button_style_with_alpha(
-                self.show_transcript && is_focused,
+                self.drawers.show_transcript && is_focused,
                 overlay_alpha
             ))
             .on_press(Message::ToggleTranscriptForPlayer(player_id))

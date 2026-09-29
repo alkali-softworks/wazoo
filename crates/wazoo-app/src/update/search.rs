@@ -16,8 +16,8 @@ impl WazooApp {
                 if self.is_all_folder(&folder) {
                     self.reset_search_folder_selection();
                 } else {
-                    self.selected_search_folders = vec![folder.clone()];
-                    self.selected_search_folder = folder;
+                    self.search.selected_folders = vec![folder.clone()];
+                    self.search.selected_folder = folder;
                 }
                 Task::none()
             }
@@ -27,59 +27,60 @@ impl WazooApp {
             }
             Message::ResetSearchFolder => {
                 let all_label = self.t("common.all");
-                self.active_search_folders.clear();
-                self.selected_search_folders.clear();
-                self.active_search_folder = all_label.clone();
-                self.selected_search_folder = all_label.clone();
+                self.search.active_folders.clear();
+                self.search.selected_folders.clear();
+                self.search.active_folder = all_label.clone();
+                self.search.selected_folder = all_label.clone();
                 self.settings.last_folders.clear();
                 let _ = self.config_mgr.save_settings(&self.settings);
 
                 let folders: Vec<String> = Vec::new();
-                if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
+                if let Ok(results) = self.db.search_videos(&self.search.active_query, &folders) {
                     let total = results.len();
                     self.available_videos = results;
-                    self.file_picker_entries.clear();
+                    self.drawers.file_picker_entries.clear();
                     self.apply_file_picker_search();
                     self.show_video_totals_notice(total, &all_label);
                     self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
-                    if self.show_transcript {
+                    if self.drawers.show_transcript {
                         return self.load_transcript_for_focused_player();
                     }
                 }
                 Task::none()
             }
             Message::RemoveActiveSearchFolder(folder) => {
-                self.active_search_folders.retain(|f| f != &folder);
-                self.selected_search_folders.retain(|f| f != &folder);
+                self.search.active_folders.retain(|f| f != &folder);
+                self.search.selected_folders.retain(|f| f != &folder);
                 self.settings.last_folders.retain(|f| f != &folder);
 
                 let all_label = self.t("common.all");
-                if self.active_search_folders.is_empty() {
-                    self.active_search_folder = all_label.clone();
-                    self.selected_search_folder = all_label.clone();
-                } else if self.active_search_folders.len() == 1 {
-                    self.active_search_folder = self.active_search_folders[0].clone();
-                    self.selected_search_folder = self.active_search_folders[0].clone();
+                if self.search.active_folders.is_empty() {
+                    self.search.active_folder = all_label.clone();
+                    self.search.selected_folder = all_label.clone();
+                } else if self.search.active_folders.len() == 1 {
+                    self.search.active_folder = self.search.active_folders[0].clone();
+                    self.search.selected_folder = self.search.active_folders[0].clone();
                 } else {
-                    self.active_search_folder = self.active_search_folders.join(", ");
-                    self.selected_search_folder = self.active_search_folders.join(", ");
+                    self.search.active_folder = self.search.active_folders.join(", ");
+                    self.search.selected_folder = self.search.active_folders.join(", ");
                 }
                 let _ = self.config_mgr.save_settings(&self.settings);
 
-                let folders = self.active_search_folders.clone();
-                if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
+                let folders = self.search.active_folders.clone();
+                if let Ok(results) = self.db.search_videos(&self.search.active_query, &folders) {
                     let total = results.len();
                     self.available_videos = results;
-                    self.file_picker_entries.clear();
+                    self.drawers.file_picker_entries.clear();
                     self.apply_file_picker_search();
-                    let notice_folder = if self.active_search_folders.is_empty() {
+                    let notice_folder = if self.search.active_folders.is_empty() {
                         all_label
-                    } else if self.active_search_folders.len() == 1 {
-                        self.active_search_folders[0].clone()
+                    } else if self.search.active_folders.len() == 1 {
+                        self.search.active_folders[0].clone()
                     } else {
                         let names: Vec<String> = self
-                            .active_search_folders
+                            .search
+                            .active_folders
                             .iter()
                             .map(|f| format::folder_basename(f).to_string())
                             .collect();
@@ -88,7 +89,7 @@ impl WazooApp {
                     self.show_video_totals_notice(total, &notice_folder);
                     self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
-                    if self.show_transcript {
+                    if self.drawers.show_transcript {
                         return self.load_transcript_for_focused_player();
                     }
                 }
@@ -101,62 +102,64 @@ impl WazooApp {
                     for part in parts {
                         let tag = part.trim();
                         if !tag.is_empty()
-                            && !self.search_tags.iter().any(|t| t.eq_ignore_ascii_case(tag))
+                            && !self.search.tags.iter().any(|t| t.eq_ignore_ascii_case(tag))
                         {
-                            self.search_tags.push(tag.to_string());
+                            self.search.tags.push(tag.to_string());
                         }
                     }
-                    self.search_input = remainder.trim_start().to_string();
+                    self.search.input = remainder.trim_start().to_string();
                     iced::widget::operation::focus("search_input")
                 } else {
-                    self.search_input = val;
+                    self.search.input = val;
                     Task::none()
                 }
             }
             Message::RemoveSearchTag(idx) => {
-                if idx < self.search_tags.len() {
-                    self.search_tags.remove(idx);
+                if idx < self.search.tags.len() {
+                    self.search.tags.remove(idx);
                 }
                 iced::widget::operation::focus("search_input")
             }
             Message::PerformSearch => {
-                let pending = self.search_input.trim();
+                let pending = self.search.input.trim();
                 if !pending.is_empty()
                     && !self
-                        .search_tags
+                        .search
+                        .tags
                         .iter()
                         .any(|t| t.eq_ignore_ascii_case(pending))
                 {
-                    self.search_tags.push(pending.to_string());
+                    self.search.tags.push(pending.to_string());
                 }
-                self.search_input.clear();
-                self.active_search_query = self.search_tags.join(", ");
-                self.active_search_folders = self.selected_search_folders.clone();
-                if self.active_search_folders.is_empty() {
-                    self.active_search_folder = self.t("common.all");
-                } else if self.active_search_folders.len() == 1 {
-                    self.active_search_folder = self.active_search_folders[0].clone();
+                self.search.input.clear();
+                self.search.active_query = self.search.tags.join(", ");
+                self.search.active_folders = self.search.selected_folders.clone();
+                if self.search.active_folders.is_empty() {
+                    self.search.active_folder = self.t("common.all");
+                } else if self.search.active_folders.len() == 1 {
+                    self.search.active_folder = self.search.active_folders[0].clone();
                 } else {
-                    self.active_search_folder = self.active_search_folders.join(", ");
+                    self.search.active_folder = self.search.active_folders.join(", ");
                 }
-                self.settings.last_query = self.active_search_query.clone();
-                self.settings.last_folders = self.active_search_folders.clone();
+                self.settings.last_query = self.search.active_query.clone();
+                self.settings.last_folders = self.search.active_folders.clone();
                 let _ = self.config_mgr.save_settings(&self.settings);
 
-                let folders = self.active_search_folders.clone();
+                let folders = self.search.active_folders.clone();
 
-                if let Ok(results) = self.db.search_videos(&self.active_search_query, &folders) {
+                if let Ok(results) = self.db.search_videos(&self.search.active_query, &folders) {
                     let total = results.len();
                     self.available_videos = results;
-                    self.file_picker_entries.clear();
+                    self.drawers.file_picker_entries.clear();
                     self.apply_file_picker_search();
-                    let notice_folder = if self.active_search_folders.is_empty() {
+                    let notice_folder = if self.search.active_folders.is_empty() {
                         self.t("common.all")
-                    } else if self.active_search_folders.len() == 1 {
-                        self.active_search_folders[0].clone()
+                    } else if self.search.active_folders.len() == 1 {
+                        self.search.active_folders[0].clone()
                     } else {
                         let names: Vec<String> = self
-                            .active_search_folders
+                            .search
+                            .active_folders
                             .iter()
                             .map(|f| format::folder_basename(f).to_string())
                             .collect();
@@ -166,22 +169,22 @@ impl WazooApp {
 
                     self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
-                    if self.show_transcript {
+                    if self.drawers.show_transcript {
                         return self.load_transcript_for_focused_player();
                     }
                 }
-                self.show_search_modal = false;
+                self.modals.search = false;
                 Task::none()
             }
             Message::ClearSearch => {
                 let all_label = self.t("common.all");
-                self.search_input.clear();
-                self.search_tags.clear();
-                self.active_search_query.clear();
-                self.active_search_folders.clear();
-                self.selected_search_folders.clear();
-                self.active_search_folder = all_label.clone();
-                self.selected_search_folder = all_label.clone();
+                self.search.input.clear();
+                self.search.tags.clear();
+                self.search.active_query.clear();
+                self.search.active_folders.clear();
+                self.search.selected_folders.clear();
+                self.search.active_folder = all_label.clone();
+                self.search.selected_folder = all_label.clone();
                 self.settings.last_query.clear();
                 self.settings.last_folders.clear();
                 let _ = self.config_mgr.save_settings(&self.settings);
@@ -190,19 +193,19 @@ impl WazooApp {
                 if let Ok(results) = self.db.search_videos("", &folders) {
                     let total = results.len();
                     self.available_videos = results;
-                    self.file_picker_entries.clear();
+                    self.drawers.file_picker_entries.clear();
                     self.apply_file_picker_search();
                     self.show_video_totals_notice(total, &all_label);
                     self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
-                    if self.show_transcript {
+                    if self.drawers.show_transcript {
                         return self.load_transcript_for_focused_player();
                     }
                 }
                 Task::none()
             }
             Message::FolderInputChanged(val) => {
-                self.folder_input = val;
+                self.search.folder_input = val;
                 Task::none()
             }
             _ => Task::none(),

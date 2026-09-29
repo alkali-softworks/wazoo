@@ -23,7 +23,7 @@ impl WazooApp {
                 let was_already_active = self.focused_player_idx == pos;
                 self.focused_player_idx = pos;
                 if !was_already_active {
-                    self.focus_border_ticks = FOCUS_BORDER_TICKS;
+                    self.overlay.focus_border_ticks = FOCUS_BORDER_TICKS;
                 }
             }
             self.trigger_player_overlay();
@@ -120,7 +120,7 @@ impl WazooApp {
                 }
             }
         }
-        if self.show_transcript && self.focused_player_id() == Some(id) {
+        if self.drawers.show_transcript && self.focused_player_id() == Some(id) {
             return self.load_transcript_for_focused_player();
         }
         Task::none()
@@ -200,7 +200,7 @@ impl WazooApp {
             }
         }
 
-        if self.show_transcript && self.focused_player_id() == Some(id) {
+        if self.drawers.show_transcript && self.focused_player_id() == Some(id) {
             return self.load_transcript_for_focused_player();
         }
         Task::none()

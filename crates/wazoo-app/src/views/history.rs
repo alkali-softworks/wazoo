@@ -19,7 +19,7 @@ use iced::{
 
 impl WazooApp {
     pub fn view_history_drawer(&self) -> Element<'_, Message> {
-        let filter = self.history_search.trim().to_lowercase();
+        let filter = self.drawers.history_search.trim().to_lowercase();
 
         // 1. Header row
         let mut header_left = row![
@@ -34,11 +34,11 @@ impl WazooApp {
         .spacing(8)
         .align_y(Alignment::Center);
 
-        if !self.play_history.is_empty() {
+        if !self.drawers.play_history.is_empty() {
             let badge = container(
                 text(self.t_with(
                     "history.count",
-                    &[("count", &format::format_number(self.play_history.len()))],
+                    &[("count", &format::format_number(self.drawers.play_history.len()))],
                 ))
                 .size(11),
             )
@@ -51,7 +51,7 @@ impl WazooApp {
             .align_y(Alignment::Center)
             .spacing(8);
 
-        if !self.play_history.is_empty() {
+        if !self.drawers.play_history.is_empty() {
             header_row = header_row.push(
                 button(text(self.t("history.clear")).size(11))
                     .style(theme::tag_delete_button_style)
@@ -67,7 +67,7 @@ impl WazooApp {
         );
 
         // 2. Search filter input
-        let search_input = text_input(&self.t("history.search_placeholder"), &self.history_search)
+        let search_input = text_input(&self.t("history.search_placeholder"), &self.drawers.history_search)
             .on_input(Message::HistorySearchChanged)
             .style(theme::dark_input_style)
             .padding(8);
@@ -76,6 +76,7 @@ impl WazooApp {
         let mut list_col = column![].spacing(3);
 
         let filtered_items: Vec<(usize, &crate::app::PlayHistoryItem)> = self
+            .drawers
             .play_history
             .iter()
             .enumerate()
@@ -90,7 +91,7 @@ impl WazooApp {
             })
             .collect();
 
-        if self.play_history.is_empty() {
+        if self.drawers.play_history.is_empty() {
             list_col = list_col.push(
                 container(
                     text(self.t("history.empty"))
@@ -103,7 +104,7 @@ impl WazooApp {
         } else if filtered_items.is_empty() {
             list_col = list_col.push(
                 container(
-                    text(self.t_with("transcript.no_match", &[("query", &self.history_search)]))
+                    text(self.t_with("transcript.no_match", &[("query", &self.drawers.history_search)]))
                         .size(13)
                         .color(theme::COLOR_TEXT_MUTED),
                 )

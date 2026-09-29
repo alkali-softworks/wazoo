@@ -45,7 +45,7 @@ impl WazooApp {
         // or when audio menu is open, or while player is loading
         let show_overlay = (!self.is_modal_or_menu_open()
             && (is_hovered || is_audio_menu_open)
-            && self.player_overlay_ticks > 0)
+            && self.overlay.ticks > 0)
             || is_loading;
         let overlay_alpha = if is_loading || is_audio_menu_open {
             1.0
@@ -56,8 +56,8 @@ impl WazooApp {
         if show_overlay {
             let hud = self.view_player_hud(p, is_focused, is_loading, overlay_alpha);
             stack_children.push(hud);
-        } else if self.title_pill_ticks > 0 {
-            let pill_alpha = (self.title_pill_ticks as f32 / 20.0).min(1.0);
+        } else if self.overlay.title_pill_ticks > 0 {
+            let pill_alpha = (self.overlay.title_pill_ticks as f32 / 20.0).min(1.0);
             let title_pill = self.view_title_pill(&p.state.path, pill_alpha);
 
             let pill_column = column![
@@ -71,7 +71,7 @@ impl WazooApp {
             stack_children.push(Element::from(pill_column));
         }
 
-        let show_border = !is_scroll_mode && is_focused && self.focus_border_ticks > 0;
+        let show_border = !is_scroll_mode && is_focused && self.overlay.focus_border_ticks > 0;
         if show_border {
             let focus_ring = container(Space::new().width(Length::Fill).height(Length::Fill))
                 .width(Length::Fill)
