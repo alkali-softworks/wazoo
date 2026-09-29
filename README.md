@@ -108,8 +108,7 @@ wazoo "bebop"
 
 ### 3. Essential Shortcuts
 
-Press <kbd>F1</kbd> inside the app at any time to open the complete interactive keyboard shortcuts guide. Common shortcuts:
-
+- <kbd>F1</kbd> — Help / Keybinds Reference
 - <kbd>Space</kbd> — Play / Pause
 - <kbd>F</kbd> – Toggle **File Drawer**
 - <kbd>J</kbd> or <kbd>/</kbd> — Open the **Search** modal
