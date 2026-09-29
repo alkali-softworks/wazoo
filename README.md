@@ -54,16 +54,15 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 ### 📜 Interactive Subtitle Transcript Drawer
 - **Live Transcript**: View the active video's dialogue in a side drawer (<kbd>V</kbd> or <kbd>[TX]</kbd>).
 - **Click to Seek**: Click any subtitle line to jump directly to that timestamp - great for studying dialogue or language learning.
-- **Active Line Highlighting**: Follows spoken dialogue in real time.
 - **Searchable**: Filter lines to locate specific quotes or scenes.
 
 ### 🔖 Bookmarks & Scene Memory
-- **Save Scenes**: Press <kbd>+</kbd> or <kbd>=</kbd> to bookmark the current video, timestamp, search query, and playback mode.
+- **Save Scenes**: Press <kbd>+</kbd> or <kbd>=</kbd> to bookmark the current video, timestamp, and search query.
 - **Quick Recall**: Open the bookmarks drawer (<kbd>B</kbd>) to return to any saved scene in one click.
 - **Auto Save**: Wazoo automatically restores last open search + videos on launch.
 
 ### 🎞️ Frame-Stepping & Mark-In / Mark-Out Looping
-- **Frame-by-Frame Stepping**: Press <kbd>,</kbd> (`<`) or <kbd>.</kbd> (`>`) to step backward or forward by exactly one video frame.
+- **Frame-by-Frame Stepping**: Press <kbd>,</kbd> (`<`) or <kbd>.</kbd> (`>`) to step backward or forward by one video frame.
 - **Set Mark In**: Press <kbd>I</kbd> to set a loop start point (loops to the end of the video if no Out point is set).
 - **Set Mark Out**: Press <kbd>O</kbd> to set a loop end point (loops from the beginning if no In point is set).
 - **Visual Feedback**: The active loop range displays as an interactive badge in the player control bar.
