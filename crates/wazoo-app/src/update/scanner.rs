@@ -7,8 +7,8 @@
 use crate::app::{DEFAULT_TOAST_SECS, LONG_TOAST_SECS, WazooApp};
 use crate::format;
 use crate::message::Message;
-use iced::futures::SinkExt;
 use iced::Task;
+use iced::futures::SinkExt;
 use wazoo_scanner::Scanner;
 
 impl WazooApp {

@@ -22,7 +22,9 @@ impl WazooApp {
                     self.drawers.show_file_picker = true;
                     self.drawers.show_transcript = false;
                     self.drawers.show_history_drawer = false;
-                    if self.drawers.file_picker_groups.is_empty() && !self.available_videos.is_empty() {
+                    if self.drawers.file_picker_groups.is_empty()
+                        && !self.available_videos.is_empty()
+                    {
                         self.apply_file_picker_search();
                     }
                 }
@@ -142,10 +144,7 @@ impl WazooApp {
                         return Task::perform(
                             async move {
                                 wazoo_media::load_subtitles_for_track_details(
-                                    path,
-                                    ext_file,
-                                    ff_index,
-                                    track_idx,
+                                    path, ext_file, ff_index, track_idx,
                                 )
                                 .await
                             },
@@ -170,7 +169,8 @@ impl WazooApp {
                     self.drawers.file_picker_debounce_ticks = 0;
                     self.apply_file_picker_search();
                 } else {
-                    self.drawers.file_picker_debounce_ticks = crate::app::FILE_PICKER_DEBOUNCE_TICKS;
+                    self.drawers.file_picker_debounce_ticks =
+                        crate::app::FILE_PICKER_DEBOUNCE_TICKS;
                 }
                 Task::none()
             }

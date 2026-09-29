@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use wazoo_core::i18n::{get_dictionary, t, t_with, Language};
+use wazoo_core::i18n::{Language, get_dictionary, t, t_with};
 
 #[test]
 fn test_all_16_languages_parsed() {
@@ -69,10 +69,12 @@ fn test_rtl_detection() {
 #[test]
 fn test_all_locales_have_full_key_parity() {
     let dict = get_dictionary();
-    let en_keys: std::collections::HashSet<_> = dict.get("en").expect("en locale exists").keys().collect();
+    let en_keys: std::collections::HashSet<_> =
+        dict.get("en").expect("en locale exists").keys().collect();
 
     for lang in Language::ALL {
-        let lang_keys: std::collections::HashSet<_> = dict.get(lang.code).expect("locale exists").keys().collect();
+        let lang_keys: std::collections::HashSet<_> =
+            dict.get(lang.code).expect("locale exists").keys().collect();
         let missing: Vec<_> = en_keys.difference(&lang_keys).collect();
         let extra: Vec<_> = lang_keys.difference(&en_keys).collect();
         assert!(
@@ -89,4 +91,3 @@ fn test_all_locales_have_full_key_parity() {
         );
     }
 }
-

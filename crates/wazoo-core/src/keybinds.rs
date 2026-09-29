@@ -374,11 +374,12 @@ impl KeybindSettings {
             self.speed_or_bookmark_up.replace(',', " /")
         };
 
-        let file_picker_display = if self.toggle_file_picker == "h, f" || self.toggle_file_picker == "h" {
-            "h, f".to_string()
-        } else {
-            self.toggle_file_picker.clone()
-        };
+        let file_picker_display =
+            if self.toggle_file_picker == "h, f" || self.toggle_file_picker == "h" {
+                "h, f".to_string()
+            } else {
+                self.toggle_file_picker.clone()
+            };
 
         vec![
             (search_display, t("help.shortcuts.search_videos")),
@@ -390,10 +391,7 @@ impl KeybindSettings {
             ),
             (self.toggle_mute.clone(), t("help.shortcuts.toggle_mute")),
             (play_pause_display, t("help.shortcuts.play_pause")),
-            (
-                file_picker_display,
-                t("help.shortcuts.toggle_file_picker"),
-            ),
+            (file_picker_display, t("help.shortcuts.toggle_file_picker")),
             (self.add_player.clone(), t("help.shortcuts.add_player")),
             (
                 self.remove_player.clone(),
@@ -445,15 +443,16 @@ impl KeybindSettings {
             self.play_pause.to_uppercase()
         };
 
-        let file_picker_keys = if self.toggle_file_picker == "h, f" || self.toggle_file_picker == "h" {
-            vec!["H".to_string(), "F".to_string()]
-        } else {
-            self.toggle_file_picker
-                .split(',')
-                .map(|s| s.trim().to_uppercase())
-                .filter(|s| !s.is_empty())
-                .collect()
-        };
+        let file_picker_keys =
+            if self.toggle_file_picker == "h, f" || self.toggle_file_picker == "h" {
+                vec!["H".to_string(), "F".to_string()]
+            } else {
+                self.toggle_file_picker
+                    .split(',')
+                    .map(|s| s.trim().to_uppercase())
+                    .filter(|s| !s.is_empty())
+                    .collect()
+            };
 
         let search_keys = if self.search_videos == "j, /" || self.search_videos == "j, /, f" {
             vec!["J".to_string(), "/".to_string()]
@@ -659,4 +658,3 @@ pub struct HelpCategory {
     pub icon: &'static str,
     pub shortcuts: Vec<HelpShortcut>,
 }
-

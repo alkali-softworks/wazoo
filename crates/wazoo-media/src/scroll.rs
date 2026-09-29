@@ -244,4 +244,3 @@ impl ScrollEngine {
         (visible_height / item.height).clamp(0.0, 1.0) as f64
     }
 }
-

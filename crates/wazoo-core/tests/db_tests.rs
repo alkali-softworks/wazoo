@@ -51,7 +51,11 @@ fn test_search_videos_filtering_for_reconciliation() {
     db.batch_insert_videos(&[
         VideoRecord::new(0, "Breaking Bad S01E01", "/media/BreakingBad/S01E01.mp4"),
         VideoRecord::new(0, "Breaking Bad S01E02", "/media/BreakingBad/S01E02.mp4"),
-        VideoRecord::new(0, "Game of Thrones S01E01", "/media/GameOfThrones/S01E01.mp4"),
+        VideoRecord::new(
+            0,
+            "Game of Thrones S01E01",
+            "/media/GameOfThrones/S01E01.mp4",
+        ),
     ])
     .unwrap();
 
@@ -79,7 +83,11 @@ fn test_search_videos_multiple_folders_mix_and_match() {
     let mut db = Database::open_in_memory().unwrap();
     db.batch_insert_videos(&[
         VideoRecord::new(0, "Breaking Bad S01E01", "/media/BreakingBad/S01E01.mp4"),
-        VideoRecord::new(0, "Game of Thrones S01E01", "/media/GameOfThrones/S01E01.mp4"),
+        VideoRecord::new(
+            0,
+            "Game of Thrones S01E01",
+            "/media/GameOfThrones/S01E01.mp4",
+        ),
         VideoRecord::new(0, "The Wire S01E01", "/media/TheWire/S01E01.mp4"),
     ])
     .unwrap();
@@ -91,9 +99,21 @@ fn test_search_videos_multiple_folders_mix_and_match() {
     ];
     let results = db.search_videos("S01E01", &folders).unwrap();
     assert_eq!(results.len(), 2);
-    assert!(results.iter().any(|v| v.path == "/media/BreakingBad/S01E01.mp4"));
-    assert!(results.iter().any(|v| v.path == "/media/TheWire/S01E01.mp4"));
-    assert!(!results.iter().any(|v| v.path == "/media/GameOfThrones/S01E01.mp4"));
+    assert!(
+        results
+            .iter()
+            .any(|v| v.path == "/media/BreakingBad/S01E01.mp4")
+    );
+    assert!(
+        results
+            .iter()
+            .any(|v| v.path == "/media/TheWire/S01E01.mp4")
+    );
+    assert!(
+        !results
+            .iter()
+            .any(|v| v.path == "/media/GameOfThrones/S01E01.mp4")
+    );
 
     // 2. Search with empty folders list (All)
     let all_results = db.search_videos("S01E01", &[]).unwrap();
@@ -204,8 +224,12 @@ fn test_misc_virtual_folder_crud_and_search() {
     assert!(!db.has_misc_videos().unwrap());
 
     // 1. Insert normal library video
-    db.insert_or_update_video(&VideoRecord::new(0, "Regular Movie", "/media/movies/regular.mkv"))
-        .unwrap();
+    db.insert_or_update_video(&VideoRecord::new(
+        0,
+        "Regular Movie",
+        "/media/movies/regular.mkv",
+    ))
+    .unwrap();
 
     // 2. Check if file is in other folder
     let media_folders = vec!["/media/movies".to_string()];

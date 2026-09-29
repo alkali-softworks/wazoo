@@ -372,4 +372,3 @@ pub fn detach_from_console() {
 
 #[cfg(not(any(unix, windows)))]
 pub fn detach_from_console() {}
-

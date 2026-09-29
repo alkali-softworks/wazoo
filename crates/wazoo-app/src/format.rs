@@ -222,5 +222,3 @@ pub fn ucwords(s: &str) -> String {
 
     result
 }
-
-

@@ -108,7 +108,12 @@ fn test_player_nav_history_scrub_back_and_forward() {
     let _ = app.update(Message::SetPlayerCount(1));
     assert_eq!(app.players.len(), 1);
     let player_id = app.players[0].id;
-    app.players.player_mut(player_id).unwrap().nav_history.back_stack.clear();
+    app.players
+        .player_mut(player_id)
+        .unwrap()
+        .nav_history
+        .back_stack
+        .clear();
 
     // Simulate initial video A
     app.push_player_nav_entry(player_id, "/media/A.mp4".to_string(), None);
@@ -251,7 +256,12 @@ fn test_player_nav_history_cap_at_1000() {
     app.available_videos = vec![wazoo_core::VideoRecord::new(1, "A", f1.to_string_lossy())];
     let _ = app.update(Message::SetPlayerCount(1));
     let player_id = app.players[0].id;
-    app.players.player_mut(player_id).unwrap().nav_history.back_stack.clear();
+    app.players
+        .player_mut(player_id)
+        .unwrap()
+        .nav_history
+        .back_stack
+        .clear();
 
     for i in 0..1050 {
         app.push_player_nav_entry(player_id, format!("/media/video{}.mp4", i), None);
@@ -525,7 +535,10 @@ fn test_play_history_cap_deduplication_and_drawer() {
     }
     assert_eq!(app.drawers.play_history.len(), 1000);
     // The oldest items (video1 to video50) should be dropped; oldest in list should be video51
-    assert_eq!(app.drawers.play_history.first().unwrap().path, "/media/video51.mp4");
+    assert_eq!(
+        app.drawers.play_history.first().unwrap().path,
+        "/media/video51.mp4"
+    );
     assert_eq!(
         app.drawers.play_history.last().unwrap().path,
         "/media/video1050.mp4"
@@ -1339,4 +1352,3 @@ fn test_player_by_id_helpers() {
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
-

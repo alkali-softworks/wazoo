@@ -11,12 +11,12 @@ use crate::assets::APP_ICON_BYTES;
 use crate::cli::CliArgs;
 use crate::format;
 use crate::message::Message;
+use crate::state::{AppPlayer, PlayerList};
 use iced::{Point, Subscription, Task, Theme};
 use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use wazoo_core::{ConfigManager, Database, PlaybackMode, VideoRecord, VideoSession, WazooSettings};
-use crate::state::{AppPlayer, PlayerList};
 use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, StartTime, VideoHandle};
 
 /// Player controls overlay visibility duration: 2.5 seconds at 60 FPS (150 ticks)
@@ -309,7 +309,8 @@ impl WazooApp {
                 handle.set_muted(false);
                 handle.set_volume(1.0);
                 handle.set_subtitles_visible(app.subtitles_enabled);
-                app.players.push(AppPlayer::new(handle, app.default_shuffle_mode));
+                app.players
+                    .push(AppPlayer::new(handle, app.default_shuffle_mode));
                 app.push_player_nav_entry(id, path.clone(), Some(0.0));
             }
             app.overlay.title_pill_ticks = 240;
@@ -440,7 +441,10 @@ impl WazooApp {
     pub fn titlebar_slide_progress(&self) -> f32 {
         if !self.titlebar.show {
             0.0
-        } else if self.window.is_dragging || self.titlebar.drag_pending || self.titlebar.show_dropdown_menu {
+        } else if self.window.is_dragging
+            || self.titlebar.drag_pending
+            || self.titlebar.show_dropdown_menu
+        {
             1.0
         } else if self.titlebar.hide_ticks < TITLEBAR_FADE_TICKS {
             (self.titlebar.hide_ticks as f32 / TITLEBAR_FADE_TICKS as f32).clamp(0.0, 1.0)

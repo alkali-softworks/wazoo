@@ -10,9 +10,7 @@ fn test_determine_resize_direction_edges_and_corners() {
     let corner = 14.0;
 
     // Inside center: None
-    assert!(
-        determine_resize_direction(bounds, Point::new(400.0, 300.0), border, corner).is_none()
-    );
+    assert!(determine_resize_direction(bounds, Point::new(400.0, 300.0), border, corner).is_none());
 
     // North edge
     assert!(matches!(

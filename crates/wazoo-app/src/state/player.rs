@@ -7,9 +7,9 @@
  * per-player shuffle mode, navigation undo/redo history, and loading indicators.
  */
 
+use crate::app::PlayerNavHistory;
 use std::ops::{Deref, DerefMut};
 use wazoo_media::{PlayerId, VideoHandle};
-use crate::app::PlayerNavHistory;
 
 /// Encapsulates all state pertaining to a single active player in the application.
 #[derive(Debug)]

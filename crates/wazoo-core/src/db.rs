@@ -43,7 +43,9 @@ impl Database {
         )?;
 
         // Non-destructive migration if column didn't exist previously
-        let _ = self.conn.execute("ALTER TABLE Video ADD COLUMN folder TEXT", []);
+        let _ = self
+            .conn
+            .execute("ALTER TABLE Video ADD COLUMN folder TEXT", []);
 
         self.conn
             .execute("CREATE INDEX IF NOT EXISTS path_idx ON Video(path)", [])?;
@@ -84,7 +86,9 @@ impl Database {
     }
 
     pub fn clear_misc_videos(&self) -> Result<usize> {
-        let count = self.conn.execute("DELETE FROM Video WHERE folder = 'Misc'", [])?;
+        let count = self
+            .conn
+            .execute("DELETE FROM Video WHERE folder = 'Misc'", [])?;
         Ok(count)
     }
 
@@ -118,7 +122,9 @@ impl Database {
             }
         }
 
-        let mut stmt = self.conn.prepare("SELECT folder FROM Video WHERE path = ?1")?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT folder FROM Video WHERE path = ?1")?;
         let mut rows = stmt.query(params![path])?;
         if let Some(row) = rows.next()? {
             let folder: Option<String> = row.get(0)?;
@@ -350,7 +356,8 @@ impl Database {
                         .replace('_', "\\_");
                     let folder_prefix = format!("{escaped_folder}%");
                     param_values.push(folder_prefix);
-                    folder_conditions.push(format!("path LIKE ?{} ESCAPE '\\'", param_values.len()));
+                    folder_conditions
+                        .push(format!("path LIKE ?{} ESCAPE '\\'", param_values.len()));
                 }
             }
             where_conditions.push(format!("({})", folder_conditions.join(" OR ")));
@@ -417,4 +424,3 @@ impl Database {
         Ok(())
     }
 }
-

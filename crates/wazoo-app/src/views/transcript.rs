@@ -47,7 +47,10 @@ impl WazooApp {
             let badge = container(
                 text(self.t_with(
                     "transcript.cues_count",
-                    &[("count", &format::format_number(self.drawers.transcript_cues.len()))],
+                    &[(
+                        "count",
+                        &format::format_number(self.drawers.transcript_cues.len()),
+                    )],
                 ))
                 .size(11),
             )
@@ -272,9 +275,12 @@ impl WazooApp {
 
             if matched_count == 0 {
                 container(
-                    text(self.t_with("transcript.no_match", &[("query", &self.drawers.transcript_search)]))
-                        .size(13)
-                        .color(theme::COLOR_TEXT_MUTED),
+                    text(self.t_with(
+                        "transcript.no_match",
+                        &[("query", &self.drawers.transcript_search)],
+                    ))
+                    .size(13)
+                    .color(theme::COLOR_TEXT_MUTED),
                 )
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -299,7 +305,7 @@ impl WazooApp {
         };
 
         let mut content = column![
-            Space::new().height(Length::Fixed(24.0)),
+            Space::new().height(Length::Fixed(14.0)),
             header,
             video_subheading,
         ]

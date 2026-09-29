@@ -17,13 +17,13 @@ pub mod search;
 pub mod window;
 
 use crate::app::{
-    PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, TITLEBAR_FADE_TICKS,
-    TITLEBAR_HIDE_TICKS, TITLEBAR_SHOW_DELAY_TICKS, WazooApp,
+    PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, TITLEBAR_FADE_TICKS, TITLEBAR_HIDE_TICKS,
+    TITLEBAR_SHOW_DELAY_TICKS, WazooApp,
 };
 use crate::message::Message;
+use crate::state::{AppPlayer, PlayerList};
 use iced::Task;
 use std::time::Duration;
-use crate::state::{AppPlayer, PlayerList};
 use wazoo_core::PlaybackMode;
 use wazoo_media::VideoHandle;
 
@@ -60,7 +60,8 @@ impl WazooApp {
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
                             self.record_play_history(&handle.state.path);
-                            self.players.push(AppPlayer::new(handle, self.default_shuffle_mode));
+                            self.players
+                                .push(AppPlayer::new(handle, self.default_shuffle_mode));
                             needs_preload = true;
                         } else {
                             // Preloaded player still preparing in background - do NOT block!
@@ -82,7 +83,8 @@ impl WazooApp {
 
             Message::VideoFrameTick => {
                 if !self.window.is_focused {
-                    self.window.unfocused_frame_ticks = self.window.unfocused_frame_ticks.wrapping_add(1);
+                    self.window.unfocused_frame_ticks =
+                        self.window.unfocused_frame_ticks.wrapping_add(1);
                     // When the window is behind another window or unfocused, throttle frame updates
                     // to ~30 FPS (every 2nd tick) so background playback remains smooth (movie standard)
                     // without hammering GPU presentation swapchains.
@@ -149,7 +151,9 @@ impl WazooApp {
                         self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
                         self.titlebar.hover_ticks = 0;
                         self.titlebar.slide_ticks = crate::app::TITLEBAR_SLIDE_TICKS;
-                        if self.titlebar.dropdown_menu_slide_ticks < crate::app::DROPDOWN_MENU_SLIDE_TICKS {
+                        if self.titlebar.dropdown_menu_slide_ticks
+                            < crate::app::DROPDOWN_MENU_SLIDE_TICKS
+                        {
                             self.titlebar.dropdown_menu_slide_ticks += 1;
                         }
                     } else if self.titlebar.show {
@@ -165,9 +169,9 @@ impl WazooApp {
                             self.titlebar.hover_ticks = 0;
                             self.titlebar.slide_ticks = 0;
                             if self.hovered_player_id.is_some() {
-                                let current_fade = self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
-                                self.overlay.ticks =
-                                    self.overlay.ticks.min(current_fade);
+                                let current_fade =
+                                    self.overlay.fade_in_ticks.min(PLAYER_OVERLAY_FADE_TICKS);
+                                self.overlay.ticks = self.overlay.ticks.min(current_fade);
                             }
                         }
                     }

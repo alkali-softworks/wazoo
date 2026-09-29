@@ -9,10 +9,10 @@ use crate::app::{
     WazooApp,
 };
 use crate::message::Message;
+use crate::state::AppPlayer;
 use iced::{Point, Task, keyboard::Key};
 use std::time::{Duration, Instant};
 use wazoo_core::PlaybackMode;
-use crate::state::AppPlayer;
 
 impl WazooApp {
     pub(crate) fn update_window(&mut self, message: Message) -> Task<Message> {
@@ -87,7 +87,8 @@ impl WazooApp {
                 self.window.id = Some(id);
                 let new_x = point.x as i32;
                 let new_y = point.y as i32;
-                if self.settings.window_bounds.x != new_x || self.settings.window_bounds.y != new_y {
+                if self.settings.window_bounds.x != new_x || self.settings.window_bounds.y != new_y
+                {
                     self.settings.window_bounds.x = new_x;
                     self.settings.window_bounds.y = new_y;
                     self.window.bounds_dirty = true;
@@ -118,14 +119,17 @@ impl WazooApp {
                     }
                     self.scroll_engine.recalculate_positions();
                     let margin = self.scroll_engine.default_item_height() * 1.5;
-                    while let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(margin) {
+                    while let Some(spawn_y) =
+                        self.scroll_engine.needs_new_player_with_margin(margin)
+                    {
                         if let Some(mut handle) = self.preloaded_player.take() {
                             let item_h = self.calculate_player_scroll_height(&handle);
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
                             self.record_play_history(&handle.state.path);
-                            self.players.push(AppPlayer::new(handle, self.default_shuffle_mode));
+                            self.players
+                                .push(AppPlayer::new(handle, self.default_shuffle_mode));
                         } else {
                             break;
                         }

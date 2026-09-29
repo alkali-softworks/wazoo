@@ -6,12 +6,12 @@
 
 use crate::app::WazooApp;
 use crate::message::Message;
+use crate::state::AppPlayer;
 use crate::theme;
 use iced::{
     Element, Length, mouse,
     widget::{Space, Stack, column, container, mouse_area, row},
 };
-use crate::state::AppPlayer;
 
 impl WazooApp {
     pub(crate) fn view_single_player<'a>(&self, p: &'a AppPlayer) -> Element<'a, Message> {

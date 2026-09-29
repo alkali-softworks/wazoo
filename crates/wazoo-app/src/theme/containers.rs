@@ -5,10 +5,7 @@
  */
 
 use super::colors::*;
-use iced::{
-    Background, Border, Color, Shadow, Theme, Vector,
-    widget::container,
-};
+use iced::{Background, Border, Color, Shadow, Theme, Vector, widget::container};
 
 // Menu Dropdown Container (Titlebar Logo Dropdown)
 pub fn menu_dropdown_style(_theme: &Theme) -> container::Style {

@@ -65,10 +65,9 @@ pub fn decode_file_url(url: &str) -> String {
     let mut i = 0;
     while i < bytes.len() {
         if bytes[i] == b'%' && i + 2 < bytes.len() {
-            if let Ok(val) = u8::from_str_radix(
-                std::str::from_utf8(&bytes[i + 1..=i + 2]).unwrap_or(""),
-                16,
-            ) {
+            if let Ok(val) =
+                u8::from_str_radix(std::str::from_utf8(&bytes[i + 1..=i + 2]).unwrap_or(""), 16)
+            {
                 decoded.push(val);
                 i += 3;
                 continue;
@@ -165,7 +164,9 @@ where
                 query_flag = Some(val);
             } else {
                 eprintln!("error: flag '{}' requires a query value", arg);
-                eprintln!("Usage: wazoo [OPTIONS] [FILE | QUERY]...\nFor more information, try '--help'.");
+                eprintln!(
+                    "Usage: wazoo [OPTIONS] [FILE | QUERY]...\nFor more information, try '--help'."
+                );
                 std::process::exit(1);
             }
         } else if let Some(val) = arg.strip_prefix("--query=") {
@@ -179,7 +180,9 @@ where
             break;
         } else if arg.starts_with('-') && arg.len() > 1 {
             eprintln!("error: unexpected argument '{}'", arg);
-            eprintln!("Usage: wazoo [OPTIONS] [FILE | QUERY]...\nFor more information, try '--help'.");
+            eprintln!(
+                "Usage: wazoo [OPTIONS] [FILE | QUERY]...\nFor more information, try '--help'."
+            );
             std::process::exit(1);
         } else {
             positional.push(arg);
@@ -247,4 +250,3 @@ Options:
     );
     std::process::exit(0);
 }
-

@@ -148,4 +148,3 @@ impl TutorialDatabase {
             .query_row("SELECT COUNT(*) FROM notes", [], |row| row.get(0))
     }
 }
-

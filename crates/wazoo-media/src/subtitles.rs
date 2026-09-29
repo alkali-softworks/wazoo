@@ -297,13 +297,10 @@ pub async fn run_ffmpeg_subtitle_extract_async(
     #[cfg(target_os = "windows")]
     cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
 
-    let output = tokio::time::timeout(
-        std::time::Duration::from_secs(15),
-        cmd.output(),
-    )
-    .await
-    .ok()?
-    .ok()?;
+    let output = tokio::time::timeout(std::time::Duration::from_secs(15), cmd.output())
+        .await
+        .ok()?
+        .ok()?;
 
     if output.status.success() && !output.stdout.is_empty() {
         let content = String::from_utf8_lossy(&output.stdout).to_string();
@@ -431,4 +428,3 @@ pub fn load_subtitles_sync(video_path: &str) -> Vec<SubtitleCue> {
 pub async fn load_subtitles(video_path: String) -> Vec<SubtitleCue> {
     load_subtitles_for_track(video_path, 0).await
 }
-

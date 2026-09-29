@@ -268,11 +268,15 @@ fn load_windows_mpv() -> Option<MpvApi> {
                 static EMBEDDED_DLL: &[u8] = include_bytes!(env!("WAZOO_EMBED_MPV_PATH"));
                 let _ = std::fs::create_dir_all(&bin_dir);
                 log::info!("Unpacking embedded libmpv to {}", cached_dll.display());
-                if let Ok(decompressed) = miniz_oxide::inflate::decompress_to_vec_zlib(EMBEDDED_DLL) {
+                if let Ok(decompressed) = miniz_oxide::inflate::decompress_to_vec_zlib(EMBEDDED_DLL)
+                {
                     if std::fs::write(&cached_dll, &decompressed).is_ok() {
                         if let Ok(lib) = unsafe { Library::new(&cached_dll) } {
                             if let Some(api) = unsafe { load_symbols(lib) } {
-                                log::info!("Loaded unpacked embedded libmpv: {}", cached_dll.display());
+                                log::info!(
+                                    "Loaded unpacked embedded libmpv: {}",
+                                    cached_dll.display()
+                                );
                                 return Some(api);
                             }
                         }

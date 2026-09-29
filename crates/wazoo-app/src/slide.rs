@@ -73,10 +73,10 @@ where
         renderer: &Renderer,
         limits: &layout::Limits,
     ) -> layout::Node {
-        let mut child_node = self
-            .content
-            .as_widget_mut()
-            .layout(&mut tree.children[0], renderer, limits);
+        let mut child_node =
+            self.content
+                .as_widget_mut()
+                .layout(&mut tree.children[0], renderer, limits);
         let child_size = child_node.size();
 
         let p = self.progress.clamp(0.0, 1.0);
@@ -92,10 +92,7 @@ where
             child_size.height
         };
 
-        layout::Node::with_children(
-            Size::new(child_size.width, bounds_height),
-            vec![child_node],
-        )
+        layout::Node::with_children(Size::new(child_size.width, bounds_height), vec![child_node])
     }
 
     fn draw(
@@ -134,9 +131,12 @@ where
         operation: &mut dyn iced::advanced::widget::Operation,
     ) {
         if let Some(child_layout) = layout.children().next() {
-            self.content
-                .as_widget_mut()
-                .operate(&mut tree.children[0], child_layout, renderer, operation);
+            self.content.as_widget_mut().operate(
+                &mut tree.children[0],
+                child_layout,
+                renderer,
+                operation,
+            );
         }
     }
 

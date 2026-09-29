@@ -4,8 +4,8 @@
  * Media Scanner State
  */
 
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 use wazoo_scanner::ScanProgress;
 
 #[derive(Debug, Clone, Default)]

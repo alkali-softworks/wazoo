@@ -87,14 +87,10 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         ]
         .align_y(Alignment::Center),
         cursor::PointerCursor::new(
-            slider(
-                8..=512,
-                app.settings.buffer_size_mb,
-                Message::SetBufferSize
-            )
-            .step(8_u32)
-            .style(theme::settings_slider_style)
-            .width(Length::Fill),
+            slider(8..=512, app.settings.buffer_size_mb, Message::SetBufferSize)
+                .step(8_u32)
+                .style(theme::settings_slider_style)
+                .width(Length::Fill),
         ),
     ]
     .spacing(6);
@@ -186,8 +182,8 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     });
 
     let flip_interval_str = format!("{}s", app.settings.flip_interval_secs);
-    let flip_interval_active = app.settings.flip_interval_secs
-        != wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS;
+    let flip_interval_active =
+        app.settings.flip_interval_secs != wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS;
     let flip_interval_group = column![
         row![
             text(app.t("settings.flip_interval"))
@@ -197,9 +193,7 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             badge_with_reset(
                 flip_interval_str,
                 flip_interval_active,
-                Message::SetFlipInterval(
-                    wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS
-                ),
+                Message::SetFlipInterval(wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS),
             ),
         ]
         .align_y(Alignment::Center),

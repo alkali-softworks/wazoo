@@ -242,4 +242,3 @@ pub fn find_key_action(
 
     None
 }
-

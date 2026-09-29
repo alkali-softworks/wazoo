@@ -5,10 +5,7 @@
  */
 
 use super::colors::*;
-use iced::{
-    Background, Border, Color, Shadow, Theme, Vector,
-    widget::button,
-};
+use iced::{Background, Border, Color, Shadow, Theme, Vector, widget::button};
 
 // Titlebar Badge Style (Wazoo pill button)
 pub fn titlebar_badge_style(_theme: &Theme, status: button::Status) -> button::Style {
@@ -302,7 +299,9 @@ pub fn folder_chip_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> 
 }
 
 /// Tab Button in Settings Modal
-pub fn settings_tab_button_style(is_active: bool) -> impl Fn(&Theme, button::Status) -> button::Style {
+pub fn settings_tab_button_style(
+    is_active: bool,
+) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_theme: &Theme, status: button::Status| {
         let (bg, text_color, border_color) = if is_active {
             (
@@ -312,21 +311,13 @@ pub fn settings_tab_button_style(is_active: bool) -> impl Fn(&Theme, button::Sta
             )
         } else {
             match status {
-                button::Status::Hovered => (
-                    COLOR_BTN_HOVER,
-                    Color::WHITE,
-                    COLOR_BORDER,
-                ),
+                button::Status::Hovered => (COLOR_BTN_HOVER, Color::WHITE, COLOR_BORDER),
                 button::Status::Pressed => (
                     Color::from_rgb(0.14, 0.14, 0.14),
                     Color::WHITE,
                     COLOR_BORDER,
                 ),
-                _ => (
-                    Color::TRANSPARENT,
-                    COLOR_TEXT_MUTED,
-                    Color::TRANSPARENT,
-                ),
+                _ => (Color::TRANSPARENT, COLOR_TEXT_MUTED, Color::TRANSPARENT),
             }
         };
         button::Style {
@@ -346,21 +337,9 @@ pub fn settings_tab_button_style(is_active: bool) -> impl Fn(&Theme, button::Sta
 /// Small Reset Button in Settings Modal (↺)
 pub fn settings_reset_button_style(_theme: &Theme, status: button::Status) -> button::Style {
     let (bg, text_color, border_color) = match status {
-        button::Status::Hovered => (
-            COLOR_BTN_HOVER,
-            COLOR_PRIMARY,
-            COLOR_PRIMARY_BORDER,
-        ),
-        button::Status::Pressed => (
-            COLOR_BTN_BG,
-            COLOR_PRIMARY,
-            COLOR_PRIMARY,
-        ),
-        _ => (
-            COLOR_CARD_BG,
-            COLOR_TEXT_DIM,
-            COLOR_BORDER,
-        ),
+        button::Status::Hovered => (COLOR_BTN_HOVER, COLOR_PRIMARY, COLOR_PRIMARY_BORDER),
+        button::Status::Pressed => (COLOR_BTN_BG, COLOR_PRIMARY, COLOR_PRIMARY),
+        _ => (COLOR_CARD_BG, COLOR_TEXT_DIM, COLOR_BORDER),
     };
     button::Style {
         background: Some(Background::Color(bg)),
