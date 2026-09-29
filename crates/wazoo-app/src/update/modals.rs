@@ -145,9 +145,7 @@ impl WazooApp {
             Message::SetFlipInterval(secs) => {
                 let clamped = secs.clamp(1, 3600);
                 self.settings.flip_interval_secs = clamped;
-                if self.flip.countdown > clamped {
-                    self.flip.countdown = clamped;
-                }
+                self.stagger_flip_countdowns();
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
             }

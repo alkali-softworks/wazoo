@@ -182,6 +182,7 @@ impl WazooApp {
             Message::PlayFileInFocused(path) => {
                 if let Some(id) = self.focused_player_id() {
                     if let Some(p) = self.players.player_mut(id) {
+                        p.flip.reset(self.settings.flip_interval_secs);
                         p.start_loading();
                         p.nav_history.forward_stack.clear();
                     }

@@ -562,6 +562,10 @@ impl WazooApp {
                     }
                 }
 
+                if self.settings.playback_mode == PlaybackMode::Flip {
+                    self.stagger_flip_countdowns();
+                }
+
                 self.overlay.toast_message = Some(self.t_with(
                     "wazoo.set_players_count",
                     &[
@@ -663,7 +667,9 @@ impl WazooApp {
                     PlaybackMode::Flip => PlaybackMode::Normal,
                     _ => PlaybackMode::Flip,
                 };
-                self.flip.reset(self.settings.flip_interval_secs);
+                if self.settings.playback_mode == PlaybackMode::Flip {
+                    self.stagger_flip_countdowns();
+                }
                 self.overlay.toast_message = Some(match self.settings.playback_mode {
                     PlaybackMode::Flip => self.t("wazoo.flip_mode_enabled"),
                     _ => self.t("wazoo.flip_mode_disabled"),
@@ -871,6 +877,11 @@ impl WazooApp {
                 Task::none()
             }
             Message::JumpToBookmark(b) => {
+                if let Some(id) = self.focused_player_id() {
+                    if let Some(p) = self.players.player_mut(id) {
+                        p.flip.reset(self.settings.flip_interval_secs);
+                    }
+                }
                 // 1. Restore shuffle vs linear mode
                 self.default_shuffle_mode = b.is_shuffle;
                 if let Some(p) = self.focused_player_mut() {

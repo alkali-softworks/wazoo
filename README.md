@@ -86,9 +86,9 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 
 ### 1. Launching Wazoo
 
-Download a pre-compiled standalone binary or archive from [Desktop Builds](#-desktop-builds), or launch `wazoo` from your application launcher or terminal.
+Download a pre-compiled standalone binary or archive from [Desktop Builds](#-desktop-builds).
 
-On first launch, Wazoo displays the welcome screen where you can click **Add Folder** to select your video directories. Media files are automatically scanned and indexed in the background into an ultra-fast local SQLite database.
+On first launch, Wazoo displays the welcome screen where you can click **Add Folder** to select your media folders. Media files are automatically scanned and indexed in the background into an ultra-fast local SQLite database.
 
 ### 2. Command-Line Launch & Direct Playback
 
