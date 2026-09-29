@@ -27,8 +27,6 @@ use iced::{
 // `Color::from_rgb` takes red, green, and blue components in the 0.0 to 1.0 range.
 pub const COLOR_ACCENT: Color = Color::from_rgb(0.26, 0.72, 0.51); // #42b883 Emerald (Wazoo brand)
 pub const COLOR_ACCENT_HOVER: Color = Color::from_rgb(0.35, 0.82, 0.60);
-#[allow(dead_code)]
-pub const COLOR_BG_DARK: Color = Color::from_rgb(0.08, 0.08, 0.10);
 pub const COLOR_CARD_BG: Color = Color::from_rgb(0.13, 0.14, 0.17);
 pub const COLOR_CARD_BORDER: Color = Color::from_rgb(0.22, 0.23, 0.27);
 pub const COLOR_TEXT_MUTED: Color = Color::from_rgb(0.60, 0.62, 0.68);

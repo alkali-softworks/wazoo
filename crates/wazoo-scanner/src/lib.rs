@@ -191,20 +191,12 @@ pub struct ScanProgress {
     pub files_found: usize,
 }
 
-pub struct Scanner {
-    #[allow(dead_code)]
-    ffprobe_bin: Option<String>,
-}
-
-impl Default for Scanner {
-    fn default() -> Self {
-        Self::new(None)
-    }
-}
+#[derive(Default, Debug, Clone, Copy)]
+pub struct Scanner;
 
 impl Scanner {
-    pub fn new(ffprobe_bin: Option<String>) -> Self {
-        Self { ffprobe_bin }
+    pub fn new() -> Self {
+        Self
     }
 
     pub fn discover_files(folders: &[String]) -> Vec<PathBuf> {
