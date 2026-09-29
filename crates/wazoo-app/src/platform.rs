@@ -362,7 +362,7 @@ pub fn detach_from_console() {
     if cfg!(test) {
         return;
     }
-    extern "system" {
+    unsafe extern "system" {
         fn FreeConsole() -> i32;
     }
     unsafe {

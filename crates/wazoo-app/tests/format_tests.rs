@@ -1,6 +1,5 @@
 use wazoo_app::format::{
     clean_name, folder_basename, format_descriptive_title, format_title_lines, format_video_title,
-    ucwords,
 };
 
 #[test]
@@ -78,4 +77,27 @@ fn test_folder_basename() {
     assert_eq!(folder_basename("/media/Movies/"), "Movies");
     assert_eq!(folder_basename("C:\\Media\\Anime\\"), "Anime");
     assert_eq!(folder_basename("Anime"), "Anime");
+}
+
+#[test]
+fn test_season_episode_recognition() {
+    assert_eq!(
+        format_title_lines("Kare Kano s01e18 Progress.mkv"),
+        (
+            "Kare Kano".to_string(),
+            Some("S01E18 - Progress".to_string())
+        )
+    );
+    assert_eq!(
+        format_descriptive_title("Kare Kano s01e18 Progress.mkv"),
+        "Kare Kano — S01E18 - Progress"
+    );
+    assert_eq!(
+        format_descriptive_title("/media/Anime/Kare Kano/s01e18 Progress.mkv"),
+        "Kare Kano — S01E18 - Progress"
+    );
+    assert_eq!(
+        format_descriptive_title("Kare Kano s01e18.mkv"),
+        "Kare Kano — S01E18"
+    );
 }
