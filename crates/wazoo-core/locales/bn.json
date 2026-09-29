@@ -75,6 +75,7 @@
     "reset_playback": "ডিফল্টে রিসেট করুন",
     "buffer_duration": "বাফার সময়কাল",
     "buffer_size": "বাফার সাইজ",
+    "flip_interval": "ফ্লিপ ব্যবধান",
     "tab_system": "সিস্টেম",
     "always_on_top": "সর্বদা শীর্ষে",
     "always_on_top_desc": "Wazoo-কে অন্যান্য সমস্ত উইন্ডোর উপরে পিন করে রাখুন"

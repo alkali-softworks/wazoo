@@ -75,6 +75,7 @@
     "reset_playback": "Restaurar padrões",
     "buffer_duration": "Duração do buffer",
     "buffer_size": "Tamanho do buffer",
+    "flip_interval": "Intervalo de inversão",
     "tab_system": "Sistema",
     "always_on_top": "Sempre no topo",
     "always_on_top_desc": "Manter Wazoo fixado acima de todas as outras janelas"

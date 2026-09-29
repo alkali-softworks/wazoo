@@ -807,10 +807,42 @@ impl WazooApp {
                     ..Default::default()
                 });
 
+                let flip_interval_str = format!("{}s", self.settings.flip_interval_secs);
+                let flip_interval_active = self.settings.flip_interval_secs
+                    != wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS;
+                let flip_interval_group = column![
+                    row![
+                        text(self.t("settings.flip_interval"))
+                            .size(14)
+                            .color(theme::COLOR_TEXT_MUTED),
+                        Space::new().width(Length::Fill),
+                        badge_with_reset(
+                            flip_interval_str,
+                            flip_interval_active,
+                            Message::SetFlipInterval(
+                                wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS
+                            ),
+                        ),
+                    ]
+                    .align_y(Alignment::Center),
+                    cursor::PointerCursor::new(
+                        slider(
+                            1..=300_u32,
+                            self.settings.flip_interval_secs.clamp(1, 300) as u32,
+                            |secs| Message::SetFlipInterval(secs as u64),
+                        )
+                        .step(1_u32)
+                        .style(theme::settings_slider_style)
+                        .width(Length::Fill),
+                    ),
+                ]
+                .spacing(6);
+
                 column![
                     always_on_top_group,
                     opacity_group,
                     default_player_group,
+                    flip_interval_group,
                     buffer_dur_group,
                     buffer_size_group,
                 ]
@@ -848,7 +880,7 @@ impl WazooApp {
         Self::wrap_modal_with_backdrop(card, Message::CloseSettingsModal)
     }
 
-    pub(crate) fn view_help_modal(&self) -> Element<'_, Message> {
+    pub fn view_help_modal(&self) -> Element<'_, Message> {
         let or_text = self.t("common.or");
         let categories = self.settings.keybinds.help_categories(|k| self.t(k));
 
@@ -916,7 +948,7 @@ impl WazooApp {
             column![
                 header_row,
                 scrollable(scrollable_content)
-                    .height(Length::Fixed(480.0))
+                    .height(Length::Fixed(500.0))
                     .width(Length::Fill),
             ]
             .spacing(14)
@@ -1101,26 +1133,11 @@ impl WazooApp {
         Self::wrap_modal_with_backdrop(card, Message::CloseBookmarksModal)
     }
 
-    pub(crate) fn view_menu_modal(&self) -> Element<'_, Message> {
-        let card = container(
-            column![
-                row![
-                    text(self.t("common.menu"))
-                        .size(18)
-                        .color(iced::Color::WHITE),
-                    Space::new().width(Length::Fill),
-                    button(text("✕").size(14))
-                        .style(theme::window_control_button_style)
-                        .on_press(Message::CloseMenuModal),
-                ]
-                .align_y(Alignment::Center),
-                self.view_app_menu_list([8, 12]).spacing(4),
-            ]
-            .spacing(12)
-            .width(Length::Fixed(260.0)),
-        )
-        .padding(16)
-        .style(theme::modal_card_style);
+    pub fn view_menu_modal(&self) -> Element<'_, Message> {
+        let card = container(self.view_app_menu_list([8, 12]).spacing(4))
+            .width(Length::Fixed(260.0))
+            .padding(10)
+            .style(theme::modal_card_style);
 
         Self::wrap_modal_with_backdrop(card, Message::CloseMenuModal)
     }

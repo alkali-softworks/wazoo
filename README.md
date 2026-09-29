@@ -200,14 +200,6 @@ scoop install ffmpeg
 
 ## ⚙️ Configuration & Environment Variables
 
-### Environment Variables
-
-| Variable | Description | Default |
-| :--- | :--- | :--- |
-| `WAZOO_FLIP_INTERVAL` | Overrides the Flip Mode rotation interval in seconds. Clamped between 1 and 3600 seconds. | `45` |
-| `WAZOO_HWDEC` | Overrides the `libmpv` hardware video decoding profile (e.g. `auto-copy`, `vaapi`, `nvdec`, `no`). Software decoding is used by default (`no`) to prevent thread deadlocks and driver issues when windows are occluded or behind other applications. | `no` |
-| `WGPU_POWER_PREF` | Selects GPU power profile for the Iced/WGPU renderer (`low-power` or `high-performance`). Automatically defaults to `low-power` on Linux dual-GPU hybrid laptops when unset. | `low-power` / system default |
-
 ### Configuration & Database Files (`settings.json`, `wazoo.db`)
 
 Wazoo automatically persists user preferences, window state, and media library indexing together in the platform configuration directory:
@@ -229,11 +221,15 @@ Key properties configurable in `settings.json`:
   "keybinds": {}
 }
 ```
-
-- **`language`**: UI localization language code (e.g. `en`, `ja`, `es`, `de`, `fr`, etc.; default: `en`).
 - **`buffer_duration_secs`**: Demuxer readahead buffer duration in seconds (range: 2–300s, default: `10`).
 - **`buffer_size_mb`**: Maximum demuxer cache size in megabytes (range: 16–4096 MB, default: `32`).
 
+### Environment Variables
+
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `WAZOO_HWDEC` | Overrides the `libmpv` hardware video decoding profile (e.g. `auto-copy`, `vaapi`, `nvdec`, `no`). Software decoding is used by default (`no`) to prevent thread deadlocks and driver issues when windows are occluded or behind other applications. | `no` |
+| `WGPU_POWER_PREF` | Selects GPU power profile for the Iced/WGPU renderer (`low-power` or `high-performance`). Automatically defaults to `low-power` on Linux dual-GPU hybrid laptops when unset. | `low-power` / system default |
 ---
 
 ## 📄 License

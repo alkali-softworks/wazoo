@@ -75,6 +75,7 @@
     "reset_playback": "重置默认",
     "buffer_duration": "缓冲时长",
     "buffer_size": "缓冲大小",
+    "flip_interval": "翻转间隔",
     "tab_system": "系统",
     "always_on_top": "窗口置顶",
     "always_on_top_desc": "保持 Wazoo 始终置顶于其他窗口之上"

@@ -121,6 +121,7 @@ pub enum Message {
     SetPlaybackSpeed(f32),
     SetBufferDuration(u32),
     SetBufferSize(u32),
+    SetFlipInterval(u64),
     ResetPlaybackOptions,
     ToggleDefaultPlayer,
     OpenAlkaliWebsite,

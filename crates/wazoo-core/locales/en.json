@@ -75,6 +75,7 @@
     "reset_playback": "Reset to Defaults",
     "buffer_duration": "Buffer Duration",
     "buffer_size": "Buffer Size",
+    "flip_interval": "Flip Interval",
     "tab_system": "System",
     "always_on_top": "Always on Top",
     "always_on_top_desc": "Keep Wazoo pinned above all other windows"

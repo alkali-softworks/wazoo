@@ -931,6 +931,26 @@ fn test_settings_modal_tabs_and_playback_options() {
     let _ = app.update(Message::ToggleDefaultPlayer);
     assert!(!app.settings.is_default_player);
 
+    // Adjust flip interval on System tab
+    assert_eq!(app.settings.flip_interval_secs, 45);
+    let _ = app.update(Message::SetFlipInterval(90));
+    assert_eq!(app.settings.flip_interval_secs, 90);
+    {
+        let _view_system_flip_active = app.view_settings_modal();
+    }
+    // Reset flip interval via reset button
+    let _ = app.update(Message::SetFlipInterval(
+        wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS,
+    ));
+    assert_eq!(app.settings.flip_interval_secs, 45);
+
+    // Test flip interval clamping
+    let _ = app.update(Message::SetFlipInterval(0));
+    assert_eq!(app.settings.flip_interval_secs, 1);
+    let _ = app.update(Message::SetFlipInterval(99999));
+    assert_eq!(app.settings.flip_interval_secs, 3600);
+    let _ = app.update(Message::SetFlipInterval(45));
+
     // Switch back to General tab
     let _ = app.update(Message::SetSettingsTab(SettingsTab::General));
     assert_eq!(app.settings_tab, SettingsTab::General);
@@ -941,6 +961,21 @@ fn test_settings_modal_tabs_and_playback_options() {
     // Close settings modal
     let _ = app.update(Message::CloseSettingsModal);
     assert!(!app.show_settings_modal);
+}
+
+#[test]
+fn test_menu_modal_open_close_and_render() {
+    let (mut app, _) = new_test_app();
+    assert!(!app.show_menu_modal);
+
+    let _ = app.update(Message::OpenMenuModal);
+    assert!(app.show_menu_modal);
+    {
+        let _menu_view = app.view_menu_modal();
+    }
+
+    let _ = app.update(Message::CloseMenuModal);
+    assert!(!app.show_menu_modal);
 }
 
 #[test]
@@ -1145,6 +1180,9 @@ fn test_help_modal_shortcut_f1() {
         iced::event::Status::Ignored,
     ));
     assert!(app.show_help_modal);
+    {
+        let _help_view = app.view_help_modal();
+    }
 
     // Escape should close it
     let _ = app.update(Message::KeyPressed(

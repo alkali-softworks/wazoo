@@ -75,6 +75,7 @@
     "reset_playback": "Ripristina predefiniti",
     "buffer_duration": "Durata buffer",
     "buffer_size": "Dimensione buffer",
+    "flip_interval": "Intervallo di ribaltamento",
     "tab_system": "Sistema",
     "always_on_top": "Sempre in primo piano",
     "always_on_top_desc": "Mantieni Wazoo in primo piano rispetto alle altre finestre"

@@ -1,21 +1,17 @@
 use std::fs;
-use wazoo_core::models::WazooSettings;
 use wazoo_core::ConfigManager;
+use wazoo_core::models::WazooSettings;
 
 #[test]
 fn test_config_manager_paths() {
     let mgr = ConfigManager::new();
-    assert!(
-        mgr.config_file_path()
-            .to_string_lossy()
-            .contains("wazoo")
-    );
+    assert!(mgr.config_file_path().to_string_lossy().contains("wazoo"));
     assert!(mgr.database_path().to_string_lossy().contains("wazoo"));
-    assert_eq!(mgr.database_path().parent(), mgr.config_file_path().parent());
     assert_eq!(
-        mgr.database_path(),
-        mgr.config_dir.join("wazoo.db")
+        mgr.database_path().parent(),
+        mgr.config_file_path().parent()
     );
+    assert_eq!(mgr.database_path(), mgr.config_dir.join("wazoo.db"));
     assert!(mgr.config_dir.exists());
     assert!(mgr.data_dir.exists());
 }
@@ -39,13 +35,15 @@ fn test_default_player_setting_serialization() {
 #[test]
 fn test_session_videos_serialization() {
     let mut settings = WazooSettings::default();
-    settings.session_videos.push(wazoo_core::models::VideoSession {
-        path: "/path/to/video1.mp4".to_string(),
-        position_secs: 42.5,
-        is_muted: false,
-        volume: 0.8,
-        is_shuffle: false,
-    });
+    settings
+        .session_videos
+        .push(wazoo_core::models::VideoSession {
+            path: "/path/to/video1.mp4".to_string(),
+            position_secs: 42.5,
+            is_muted: false,
+            volume: 0.8,
+            is_shuffle: false,
+        });
 
     let json = serde_json::to_string(&settings).unwrap();
     let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
