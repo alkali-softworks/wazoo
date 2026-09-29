@@ -301,3 +301,75 @@ pub fn open_url(url: &str) {
         let _ = std::process::Command::new("xdg-open").arg(url).spawn();
     }
 }
+
+/**
+ * Detaches the process from the controlling terminal / console.
+ *
+ * Spawns a detached grandchild process in a new session with redirected standard I/O,
+ * allowing the launching console to be closed without terminating the application.
+ */
+#[cfg(unix)]
+pub fn detach_from_console() {
+    if cfg!(test) {
+        return;
+    }
+
+    unsafe {
+        // First fork: creates a child process
+        let pid = libc::fork();
+        if pid < 0 {
+            return;
+        }
+        if pid > 0 {
+            // Parent process exits immediately with success status (0),
+            // freeing the console and returning the shell prompt.
+            libc::_exit(0);
+        }
+
+        // Child process: create a new session and become session leader
+        if libc::setsid() < 0 {
+            // setsid failed, continue
+        }
+
+        // Ignore SIGHUP so terminal closure doesn't kill the child
+        libc::signal(libc::SIGHUP, libc::SIG_IGN);
+
+        // Second fork: ensures child is not a session leader,
+        // so it cannot acquire a controlling terminal.
+        let pid2 = libc::fork();
+        if pid2 < 0 {
+            return;
+        }
+        if pid2 > 0 {
+            libc::_exit(0);
+        }
+
+        // Redirect standard I/O file descriptors (0, 1, 2) to /dev/null
+        let devnull = libc::open(b"/dev/null\0".as_ptr() as *const libc::c_char, libc::O_RDWR);
+        if devnull >= 0 {
+            libc::dup2(devnull, libc::STDIN_FILENO);
+            libc::dup2(devnull, libc::STDOUT_FILENO);
+            libc::dup2(devnull, libc::STDERR_FILENO);
+            if devnull > 2 {
+                libc::close(devnull);
+            }
+        }
+    }
+}
+
+#[cfg(windows)]
+pub fn detach_from_console() {
+    if cfg!(test) {
+        return;
+    }
+    extern "system" {
+        fn FreeConsole() -> i32;
+    }
+    unsafe {
+        FreeConsole();
+    }
+}
+
+#[cfg(not(any(unix, windows)))]
+pub fn detach_from_console() {}
+

@@ -66,4 +66,19 @@ fn test_cli_parsing() {
     assert_eq!(multi.files.len(), 2);
     assert!(multi.file.as_ref().unwrap().to_string_lossy().replace('\\', "/").ends_with("/media/part1.mkv"));
     assert!(multi.files[1].to_string_lossy().replace('\\', "/").ends_with("/media/part2.mkv"));
+
+    // Foreground / no-detach flags
+    let default_bg = parse_cli_args_from(vec!["boku".to_string()]);
+    assert!(!default_bg.foreground);
+
+    let fg_short = parse_cli_args_from(vec!["-f".to_string(), "boku".to_string()]);
+    assert!(fg_short.foreground);
+    assert_eq!(fg_short.query, Some("boku".to_string()));
+
+    let fg_long = parse_cli_args_from(vec!["--foreground".to_string(), "/media/film.mkv".to_string()]);
+    assert!(fg_long.foreground);
+    assert!(fg_long.file.is_some());
+
+    let fg_nodetach = parse_cli_args_from(vec!["--no-detach".to_string()]);
+    assert!(fg_nodetach.foreground);
 }
