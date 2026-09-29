@@ -11,7 +11,7 @@ pub mod bookmarks_modal;
 pub mod help_modal;
 pub mod menu_modal;
 pub mod search_modal;
-pub mod settings_modal;
+pub mod settings;
 
 use crate::app::WazooApp;
 use crate::message::Message;
