@@ -16,13 +16,10 @@ graph TD
     Core["crates/wazoo-core<br/>(Models, SQLite DB, Config, i18n, Keybinds)"]
     Media["crates/wazoo-media<br/>(libmpv FFI, WGPU Pipeline, Scroll Engine, Subtitles)"]
     Scanner["crates/wazoo-scanner<br/>(Directory Traversal, ffprobe, Ingestion)"]
-    Tutorial["crates/wazoo-tutorial<br/>(Educational Sandbox for Rust & Iced)"]
-
     App --> Core
     App --> Media
     App --> Scanner
     Scanner --> Core
-    Tutorial -.-> Core
 ```
 
 ### Crate Roles & Summaries
@@ -181,5 +178,3 @@ Dive deeper into specific subsystem implementations:
    - Media discovery, directory recursion, filename normalization, `ffprobe` metadata inspection, and streaming channels.
 4. [**`wazoo-app` Architecture**](wazoo-app.md)
    - TEA application state, modular message reducers, multi-tile layout engines, slide drawers, frameless titlebar, and subscriptions.
-5. [**`wazoo-tutorial` Architecture**](wazoo-tutorial.md)
-   - Interactive tutorial architecture, educational sandboxes, and guide for extending the application.
