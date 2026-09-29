@@ -14,6 +14,7 @@ pub struct CliArgs {
     pub query: Option<String>,
     pub file: Option<PathBuf>,
     pub files: Vec<PathBuf>,
+    pub foreground: bool,
 }
 
 impl CliArgs {
@@ -22,6 +23,7 @@ impl CliArgs {
             query,
             file: None,
             files: Vec::new(),
+            foreground: false,
         }
     }
 
@@ -30,6 +32,7 @@ impl CliArgs {
             query: None,
             file: Some(file.clone()),
             files: vec![file],
+            foreground: false,
         }
     }
 
@@ -39,6 +42,7 @@ impl CliArgs {
             query: None,
             file,
             files,
+            foreground: false,
         }
     }
 }
@@ -49,6 +53,7 @@ impl From<Option<String>> for CliArgs {
             query,
             file: None,
             files: Vec::new(),
+            foreground: false,
         }
     }
 }
@@ -114,6 +119,7 @@ where
 {
     let mut positional: Vec<String> = Vec::new();
     let mut query_flag: Option<String> = None;
+    let mut foreground = false;
     let mut iter = args.into_iter();
 
     while let Some(arg) = iter.next() {
@@ -152,6 +158,8 @@ where
                     std::process::exit(1);
                 }
             }
+        } else if arg == "-f" || arg == "--foreground" || arg == "--no-detach" {
+            foreground = true;
         } else if arg == "-q" || arg == "--query" {
             if let Some(val) = iter.next() {
                 query_flag = Some(val);
@@ -214,6 +222,7 @@ where
         query,
         file,
         files,
+        foreground,
     }
 }
 
@@ -230,6 +239,7 @@ Arguments:
 
 Options:
   -q, --query <QUERY>  Search query to filter videos
+  -f, --foreground     Run in foreground (do not detach from console)
       --set-default    Register Wazoo as default video player
       --unset-default  Unregister Wazoo as default video player
   -h, --help           Print help

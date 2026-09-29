@@ -27,6 +27,9 @@ use iced::{Color, Theme};
 
 pub fn run() -> iced::Result {
     let cli = parse_cli_args();
+    if !cli.foreground {
+        crate::platform::detach_from_console();
+    }
     env_logger::init();
     let config_mgr = wazoo_core::ConfigManager::new();
     let initial_settings = config_mgr.load_settings();
