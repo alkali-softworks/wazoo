@@ -28,7 +28,7 @@ impl WazooApp {
             (self.t("transcript.no_active_player"), 0.0)
         };
 
-        let filter = self.transcript_search.trim().to_lowercase();
+        let filter = self.drawers.transcript_search.trim().to_lowercase();
 
         // 1. Header row
         let mut header_left = row![
@@ -43,11 +43,11 @@ impl WazooApp {
         .spacing(8)
         .align_y(Alignment::Center);
 
-        if !self.transcript_cues.is_empty() {
+        if !self.drawers.transcript_cues.is_empty() {
             let badge = container(
                 text(self.t_with(
                     "transcript.cues_count",
-                    &[("count", &format::format_number(self.transcript_cues.len()))],
+                    &[("count", &format::format_number(self.drawers.transcript_cues.len()))],
                 ))
                 .size(11),
             )
@@ -74,8 +74,8 @@ impl WazooApp {
             .map(|p| p.subtitle_tracks())
             .unwrap_or(&[]);
         let subtitle_selector: Option<Element<'_, Message>> = if sub_tracks.len() > 1 {
-            let current_track_idx = if self.transcript_track_index < sub_tracks.len() {
-                self.transcript_track_index
+            let current_track_idx = if self.drawers.transcript_track_index < sub_tracks.len() {
+                self.drawers.transcript_track_index
             } else {
                 sub_tracks.iter().position(|t| t.is_selected).unwrap_or(0)
             };
@@ -84,7 +84,7 @@ impl WazooApp {
                 .map(|t| wazoo_media::format_subtitle_track_label(t, current_track_idx))
                 .unwrap_or_else(|| format!("Track {}", current_track_idx + 1));
 
-            let arrow = if self.show_transcript_menu {
+            let arrow = if self.drawers.show_transcript_menu {
                 "▴"
             } else {
                 "▾"
@@ -102,14 +102,14 @@ impl WazooApp {
 
             let track_btn = button(track_btn_content)
                 .style(theme::transcript_track_button_style(
-                    self.show_transcript_menu,
+                    self.drawers.show_transcript_menu,
                 ))
                 .on_press(Message::ToggleTranscriptSubtitleMenu)
                 .padding([5, 10]);
 
             let mut selector_col = column![track_btn].spacing(4);
 
-            if self.show_transcript_menu {
+            if self.drawers.show_transcript_menu {
                 let menu_items: Vec<Element<'_, Message>> = sub_tracks
                     .iter()
                     .enumerate()
@@ -164,14 +164,14 @@ impl WazooApp {
         // 3. Dialogue Search Filter Input
         let search_box = text_input(
             &self.t("transcript.search_placeholder"),
-            &self.transcript_search,
+            &self.drawers.transcript_search,
         )
         .on_input(Message::TranscriptSearchChanged)
         .style(theme::dark_input_style)
         .padding(8);
 
         // 4. Content Area: Loading, Empty, or Scrollable Cues List
-        let content_body: Element<'_, Message> = if self.transcript_loading {
+        let content_body: Element<'_, Message> = if self.drawers.transcript_loading {
             container(
                 column![
                     text(self.t("transcript.extracting"))
@@ -189,7 +189,7 @@ impl WazooApp {
             .center_x(Length::Fill)
             .center_y(Length::Fill)
             .into()
-        } else if self.transcript_cues.is_empty() {
+        } else if self.drawers.transcript_cues.is_empty() {
             container(
                 column![
                     text(self.t("transcript.no_subtitles_found"))
@@ -216,6 +216,7 @@ impl WazooApp {
             // Determine the single active cue for the current playback position.
             // If cues overlap or share boundaries, select the one with the latest start_secs <= current_pos.
             let active_cue_idx = self
+                .drawers
                 .transcript_cues
                 .iter()
                 .enumerate()
@@ -230,7 +231,7 @@ impl WazooApp {
             let mut cues_column = column![].spacing(4);
             let mut matched_count = 0;
 
-            for (orig_idx, cue) in self.transcript_cues.iter().enumerate() {
+            for (orig_idx, cue) in self.drawers.transcript_cues.iter().enumerate() {
                 if !filter.is_empty() && !cue.text.to_lowercase().contains(&filter) {
                     continue;
                 }
@@ -271,7 +272,7 @@ impl WazooApp {
 
             if matched_count == 0 {
                 container(
-                    text(self.t_with("transcript.no_match", &[("query", &self.transcript_search)]))
+                    text(self.t_with("transcript.no_match", &[("query", &self.drawers.transcript_search)]))
                         .size(13)
                         .color(theme::COLOR_TEXT_MUTED),
                 )

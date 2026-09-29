@@ -14,10 +14,9 @@ use crate::message::Message;
 use iced::{Point, Subscription, Task, Theme};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use wazoo_core::{ConfigManager, Database, PlaybackMode, VideoRecord, VideoSession, WazooSettings};
 use wazoo_media::{BufferConfig, PlayerId, ScrollEngine, StartTime, VideoHandle};
-use wazoo_scanner::ScanProgress;
 
 /// Player controls overlay visibility duration: 2.5 seconds at 60 FPS (150 ticks)
 pub const PLAYER_OVERLAY_HIDE_TICKS: usize = 150;
@@ -91,50 +90,17 @@ pub struct WazooApp {
     pub players: Vec<VideoHandle>,
     pub scroll_engine: ScrollEngine,
     pub available_videos: Vec<VideoRecord>,
-    pub active_search_query: String,
-    pub search_input: String,
-    pub search_tags: Vec<String>,
-    pub folder_input: String,
-    pub active_search_folders: Vec<String>,
-    pub selected_search_folders: Vec<String>,
-    pub active_search_folder: String,
-    pub selected_search_folder: String,
-    pub show_search_modal: bool,
-    pub show_settings_modal: bool,
-    pub settings_tab: SettingsTab,
-    pub show_help_modal: bool,
-    pub show_menu_modal: bool,
-    pub show_bookmarks_modal: bool,
-    pub show_file_picker: bool,
-    pub file_picker_search: String,
-    pub(crate) file_picker_debounce_ticks: usize,
-    pub(crate) file_picker_entries: Vec<crate::views::file_picker::PrecomputedVideoMeta>,
-    pub(crate) file_picker_groups: Vec<crate::views::file_picker::FilePickerGroup>,
-    pub show_history_drawer: bool,
-    pub play_history: Vec<PlayHistoryItem>,
-    pub history_search: String,
-    pub show_titlebar: bool,
-    pub titlebar_hide_ticks: usize,
-    pub titlebar_hover_ticks: usize,
-    pub titlebar_slide_ticks: usize,
-    pub show_dropdown_menu: bool,
-    pub dropdown_menu_slide_ticks: usize,
-    pub is_alt_pressed: bool,
-    pub player_overlay_ticks: usize,
-    pub player_overlay_fade_in_ticks: usize,
-    pub title_pill_ticks: usize,
-    pub window_id: Option<iced::window::Id>,
+    pub search: crate::state::SearchState,
+    pub modals: crate::state::ModalState,
+    pub drawers: crate::state::DrawerState,
+    pub titlebar: crate::state::TitlebarState,
+    pub overlay: crate::state::OverlayState,
+    pub window: crate::state::WindowState,
     pub app_icon_handle: iced::widget::image::Handle,
-    pub toast_message: Option<String>,
-    pub toast_time_remaining: usize,
     pub last_total_videos: usize,
     pub next_player_id: PlayerId,
-    pub is_scanning: bool,
-    pub current_scan_id: u64,
-    pub scan_cancel: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
-    pub scan_progress: Option<ScanProgress>,
+    pub scanner: crate::state::ScannerState,
     pub focused_player_idx: usize,
-    pub focus_border_ticks: usize,
     pub is_shuffle_mode: bool,
     pub hovered_player_id: Option<PlayerId>,
     pub open_audio_menu_player_id: Option<PlayerId>,
@@ -144,27 +110,9 @@ pub struct WazooApp {
     pub spinner_ticks: u32,
     pub preloaded_player: Option<VideoHandle>,
     pub is_preloading: bool,
-    pub cursor_position: Point,
-    pub titlebar_press_origin: Option<Point>,
-    pub titlebar_drag_pending: bool,
-    pub is_window_dragging: bool,
-    pub last_window_drag_move: Option<Instant>,
-    pub last_titlebar_click: Option<Instant>,
-    pub expanded_folders: HashSet<String>,
-    pub show_transcript: bool,
-    pub transcript_cues: Vec<wazoo_media::SubtitleCue>,
-    pub transcript_search: String,
-    pub transcript_loading: bool,
-    pub transcript_video_path: Option<String>,
-    pub transcript_track_index: usize,
-    pub show_transcript_menu: bool,
-    pub is_window_focused: bool,
-    pub unfocused_frame_ticks: u32,
-    pub window_bounds_dirty: bool,
     pub player_nav_history: HashMap<PlayerId, PlayerNavHistory>,
     pub player_shuffle_modes: HashMap<PlayerId, bool>,
     pub flip_countdown: u64,
-    pub ghost_passthrough_active: bool,
 }
 
 impl WazooApp {
@@ -309,51 +257,34 @@ impl WazooApp {
             players: Vec::new(),
             scroll_engine,
             available_videos: videos,
-            active_search_query: active_query.clone(),
-            search_tags: active_query
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-                .collect(),
-            search_input: String::new(),
-            folder_input: String::new(),
-            active_search_folders: folders.clone(),
-            selected_search_folders: folders,
-            active_search_folder: selected_folder.clone(),
-            selected_search_folder: selected_folder,
-            show_search_modal: false,
-            show_settings_modal: false,
-            settings_tab: SettingsTab::General,
-            show_help_modal: false,
-            show_menu_modal: false,
-            show_bookmarks_modal: false,
-            show_file_picker: false,
-            file_picker_search: String::new(),
-            file_picker_debounce_ticks: 0,
-            file_picker_entries: Vec::new(),
-            file_picker_groups: Vec::new(),
-            show_titlebar: false,
-            titlebar_hide_ticks: 0,
-            titlebar_hover_ticks: 0,
-            titlebar_slide_ticks: 0,
-            show_dropdown_menu: false,
-            dropdown_menu_slide_ticks: 0,
-            is_alt_pressed: false,
-            player_overlay_ticks: 0,
-            player_overlay_fade_in_ticks: 0,
-            title_pill_ticks: 0,
-            window_id: None,
+            search: crate::state::SearchState {
+                active_query: active_query.clone(),
+                tags: active_query
+                    .split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect(),
+                input: String::new(),
+                folder_input: String::new(),
+                active_folders: folders.clone(),
+                selected_folders: folders,
+                active_folder: selected_folder.clone(),
+                selected_folder,
+            },
+            modals: crate::state::ModalState::default(),
+            drawers: crate::state::DrawerState::default(),
+            titlebar: crate::state::TitlebarState::default(),
+            overlay: crate::state::OverlayState {
+                toast_message: toast_msg,
+                toast_time_remaining,
+                ..Default::default()
+            },
+            window: crate::state::WindowState::default(),
             app_icon_handle: icon_handle,
-            toast_message: toast_msg,
-            toast_time_remaining,
             last_total_videos: total_videos,
             next_player_id: 1,
-            is_scanning: false,
-            current_scan_id: 0,
-            scan_cancel: None,
-            scan_progress: None,
+            scanner: crate::state::ScannerState::default(),
             focused_player_idx: 0,
-            focus_border_ticks: 0,
             is_shuffle_mode: true,
             hovered_player_id: None,
             open_audio_menu_player_id: None,
@@ -363,30 +294,9 @@ impl WazooApp {
             spinner_ticks: 0,
             preloaded_player: None,
             is_preloading: false,
-            cursor_position: Point::new(-1000.0, -1000.0),
-            titlebar_press_origin: None,
-            titlebar_drag_pending: false,
-            is_window_dragging: false,
-            last_window_drag_move: None,
-            last_titlebar_click: None,
-            expanded_folders: HashSet::new(),
-            show_transcript: false,
-            transcript_cues: Vec::new(),
-            transcript_search: String::new(),
-            transcript_loading: false,
-            transcript_video_path: None,
-            transcript_track_index: 0,
-            show_transcript_menu: false,
-            show_history_drawer: false,
-            play_history: Vec::new(),
-            history_search: String::new(),
-            is_window_focused: true,
-            unfocused_frame_ticks: 0,
-            window_bounds_dirty: false,
             player_nav_history: HashMap::new(),
             player_shuffle_modes: HashMap::new(),
             flip_countdown: settings.flip_interval_secs.max(1),
-            ghost_passthrough_active: false,
         };
 
         // Initialize players based on settings or restore saved session
@@ -412,7 +322,7 @@ impl WazooApp {
                 app.players.push(handle);
                 app.push_player_nav_entry(id, path.clone(), Some(0.0));
             }
-            app.title_pill_ticks = 240;
+            app.overlay.title_pill_ticks = 240;
         } else {
             for session in restored_sessions.into_iter().take(count) {
                 if std::path::Path::new(&session.path).exists() {
@@ -508,15 +418,11 @@ impl WazooApp {
     }
 
     pub(crate) fn is_any_modal_open(&self) -> bool {
-        self.show_search_modal
-            || self.show_settings_modal
-            || self.show_help_modal
-            || self.show_bookmarks_modal
-            || self.show_menu_modal
+        self.modals.is_any_open()
     }
 
     pub(crate) fn is_modal_or_menu_open(&self) -> bool {
-        self.is_any_modal_open() || self.show_dropdown_menu
+        self.is_any_modal_open() || self.titlebar.show_dropdown_menu
     }
 
     pub fn is_point_in_titlebar(&self, pos: Point) -> bool {
@@ -529,77 +435,59 @@ impl WazooApp {
     }
 
     pub fn titlebar_alpha(&self) -> f32 {
-        if !self.show_titlebar {
+        if !self.titlebar.show {
             0.0
-        } else if self.is_window_dragging
-            || self.titlebar_drag_pending
-            || self.is_point_in_titlebar(self.cursor_position)
-            || self.show_dropdown_menu
-            || self.titlebar_hide_ticks >= TITLEBAR_FADE_TICKS
+        } else if self.window.is_dragging
+            || self.titlebar.drag_pending
+            || self.is_point_in_titlebar(self.window.cursor_position)
+            || self.titlebar.show_dropdown_menu
+            || self.titlebar.hide_ticks >= TITLEBAR_FADE_TICKS
         {
             1.0
         } else {
-            (self.titlebar_hide_ticks as f32 / TITLEBAR_FADE_TICKS as f32).clamp(0.0, 1.0)
+            (self.titlebar.hide_ticks as f32 / TITLEBAR_FADE_TICKS as f32).clamp(0.0, 1.0)
         }
     }
 
     pub fn titlebar_slide_progress(&self) -> f32 {
-        if !self.show_titlebar {
+        if !self.titlebar.show {
             0.0
-        } else if self.is_window_dragging || self.titlebar_drag_pending || self.show_dropdown_menu {
+        } else if self.window.is_dragging || self.titlebar.drag_pending || self.titlebar.show_dropdown_menu {
             1.0
-        } else if self.titlebar_hide_ticks < TITLEBAR_FADE_TICKS {
-            (self.titlebar_hide_ticks as f32 / TITLEBAR_FADE_TICKS as f32).clamp(0.0, 1.0)
-        } else if self.titlebar_slide_ticks >= TITLEBAR_SLIDE_TICKS {
+        } else if self.titlebar.hide_ticks < TITLEBAR_FADE_TICKS {
+            (self.titlebar.hide_ticks as f32 / TITLEBAR_FADE_TICKS as f32).clamp(0.0, 1.0)
+        } else if self.titlebar.slide_ticks >= TITLEBAR_SLIDE_TICKS {
             1.0
         } else {
-            (self.titlebar_slide_ticks as f32 / TITLEBAR_SLIDE_TICKS as f32).clamp(0.0, 1.0)
+            (self.titlebar.slide_ticks as f32 / TITLEBAR_SLIDE_TICKS as f32).clamp(0.0, 1.0)
         }
     }
 
     pub fn dropdown_menu_slide_progress(&self) -> f32 {
-        if !self.show_dropdown_menu {
+        if !self.titlebar.show_dropdown_menu {
             0.0
-        } else if self.dropdown_menu_slide_ticks >= DROPDOWN_MENU_SLIDE_TICKS {
+        } else if self.titlebar.dropdown_menu_slide_ticks >= DROPDOWN_MENU_SLIDE_TICKS {
             1.0
         } else {
-            (self.dropdown_menu_slide_ticks as f32 / DROPDOWN_MENU_SLIDE_TICKS as f32)
+            (self.titlebar.dropdown_menu_slide_ticks as f32 / DROPDOWN_MENU_SLIDE_TICKS as f32)
                 .clamp(0.0, 1.0)
         }
     }
 
     pub fn trigger_player_overlay(&mut self) {
-        if self.player_overlay_ticks == 0 {
-            self.player_overlay_fade_in_ticks = 0;
-        } else if self.player_overlay_ticks < PLAYER_OVERLAY_FADE_TICKS {
-            self.player_overlay_fade_in_ticks = self.player_overlay_ticks;
-        }
-        self.player_overlay_ticks = PLAYER_OVERLAY_HIDE_TICKS;
+        self.overlay.trigger();
     }
 
     pub fn player_overlay_alpha(&self) -> f32 {
-        if self.player_overlay_ticks == 0 {
-            0.0
-        } else {
-            let in_alpha = (self.player_overlay_fade_in_ticks as f32
-                / PLAYER_OVERLAY_FADE_TICKS as f32)
-                .clamp(0.0, 1.0);
-            let out_alpha = if self.player_overlay_ticks >= PLAYER_OVERLAY_FADE_TICKS {
-                1.0
-            } else {
-                (self.player_overlay_ticks as f32 / PLAYER_OVERLAY_FADE_TICKS as f32)
-                    .clamp(0.0, 1.0)
-            };
-            in_alpha.min(out_alpha)
-        }
+        self.overlay.alpha()
     }
 
     pub fn should_hide_cursor(&self) -> bool {
         !self.players.is_empty()
-            && self.player_overlay_ticks == 0
+            && self.overlay.ticks == 0
             && self.open_audio_menu_player_id.is_none()
             && self.loading_player_ids.is_empty()
-            && !self.show_titlebar
+            && !self.titlebar.show
             && !self.is_modal_or_menu_open()
     }
 
@@ -637,36 +525,36 @@ impl WazooApp {
             let selected_pos = sub_tracks.iter().position(|t| t.is_selected).unwrap_or(0);
             (path, sub_tracks, selected_pos)
         } else {
-            self.transcript_cues.clear();
-            self.transcript_video_path = None;
-            self.transcript_loading = false;
-            self.transcript_track_index = 0;
-            self.show_transcript_menu = false;
+            self.drawers.transcript_cues.clear();
+            self.drawers.transcript_video_path = None;
+            self.drawers.transcript_loading = false;
+            self.drawers.transcript_track_index = 0;
+            self.drawers.show_transcript_menu = false;
             return Task::none();
         };
 
         if path.is_empty() {
-            self.transcript_cues.clear();
-            self.transcript_video_path = None;
-            self.transcript_loading = false;
-            self.transcript_track_index = 0;
-            self.show_transcript_menu = false;
+            self.drawers.transcript_cues.clear();
+            self.drawers.transcript_video_path = None;
+            self.drawers.transcript_loading = false;
+            self.drawers.transcript_track_index = 0;
+            self.drawers.show_transcript_menu = false;
             return Task::none();
         }
 
         // Sync track index with selected player subtitle track if video path changed
-        if self.transcript_video_path.as_deref() != Some(&path) {
-            self.transcript_track_index = selected_track_pos;
-            self.show_transcript_menu = false;
-        } else if !self.transcript_cues.is_empty() {
+        if self.drawers.transcript_video_path.as_deref() != Some(&path) {
+            self.drawers.transcript_track_index = selected_track_pos;
+            self.drawers.show_transcript_menu = false;
+        } else if !self.drawers.transcript_cues.is_empty() {
             return Task::none();
         }
 
-        self.transcript_video_path = Some(path.clone());
-        self.transcript_loading = true;
-        self.transcript_cues.clear();
+        self.drawers.transcript_video_path = Some(path.clone());
+        self.drawers.transcript_loading = true;
+        self.drawers.transcript_cues.clear();
         let path_clone = path.clone();
-        let track_idx = self.transcript_track_index;
+        let track_idx = self.drawers.transcript_track_index;
         let sub_track = sub_tracks.get(track_idx).cloned();
         let ext_file = sub_track.as_ref().and_then(|t| t.external_filename.clone());
         let ff_index = sub_track.as_ref().and_then(|t| t.ff_index);
@@ -797,18 +685,18 @@ impl WazooApp {
         if trimmed.is_empty() {
             return;
         }
-        if self.play_history.last().map(|e| e.path.as_str()) == Some(trimmed) {
+        if self.drawers.play_history.last().map(|e| e.path.as_str()) == Some(trimmed) {
             return;
         }
         let title = format::format_video_title(trimmed);
         let folder = format::format_video_folder(trimmed);
-        self.play_history.push(PlayHistoryItem {
+        self.drawers.play_history.push(PlayHistoryItem {
             path: trimmed.to_string(),
             title,
             folder,
         });
-        if self.play_history.len() > MAX_PLAY_HISTORY_ENTRIES {
-            self.play_history.remove(0);
+        if self.drawers.play_history.len() > MAX_PLAY_HISTORY_ENTRIES {
+            self.drawers.play_history.remove(0);
         }
     }
 
@@ -827,11 +715,11 @@ impl WazooApp {
     }
 
     pub(crate) fn close_file_picker(&mut self) {
-        self.show_file_picker = false;
-        self.file_picker_entries.clear();
-        self.file_picker_entries.shrink_to_fit();
-        self.file_picker_groups.clear();
-        self.file_picker_groups.shrink_to_fit();
+        self.drawers.show_file_picker = false;
+        self.drawers.file_picker_entries.clear();
+        self.drawers.file_picker_entries.shrink_to_fit();
+        self.drawers.file_picker_groups.clear();
+        self.drawers.file_picker_groups.shrink_to_fit();
     }
 
     pub(crate) fn buffer_config(&self) -> BufferConfig {
@@ -880,7 +768,7 @@ impl WazooApp {
     }
 
     pub fn current_opacity(&self) -> f32 {
-        if self.is_alt_pressed {
+        if self.window.is_alt_pressed {
             0.85
         } else {
             self.settings.window_opacity.clamp(0.05, 1.0)
@@ -954,10 +842,10 @@ impl WazooApp {
                 .collect();
             self.settings.session_videos = sessions;
         }
-        self.settings.last_query = self.active_search_query.clone();
-        self.settings.last_folders = self.active_search_folders.clone();
+        self.settings.last_query = self.search.active_query.clone();
+        self.settings.last_folders = self.search.active_folders.clone();
         let _ = self.config_mgr.save_settings(&self.settings);
-        self.window_bounds_dirty = false;
+        self.window.bounds_dirty = false;
     }
 
     /// Reconciles active players against `self.available_videos`.
@@ -1209,14 +1097,14 @@ impl WazooApp {
     }
 
     pub fn is_all_search_selected(&self) -> bool {
-        self.selected_search_folders.is_empty()
-            || (self.selected_search_folders.len() == 1
-                && self.is_all_folder(&self.selected_search_folders[0]))
+        self.search.selected_folders.is_empty()
+            || (self.search.selected_folders.len() == 1
+                && self.is_all_folder(&self.search.selected_folders[0]))
     }
 
     pub(crate) fn reset_search_folder_selection(&mut self) {
-        self.selected_search_folders.clear();
-        self.selected_search_folder = self.t("common.all");
+        self.search.selected_folders.clear();
+        self.search.selected_folder = self.t("common.all");
     }
 
     pub(crate) fn toggle_search_folder(&mut self, folder: &str) {
@@ -1226,21 +1114,22 @@ impl WazooApp {
         }
 
         if let Some(pos) = self
-            .selected_search_folders
+            .search
+            .selected_folders
             .iter()
             .position(|f| f == folder)
         {
-            self.selected_search_folders.remove(pos);
+            self.search.selected_folders.remove(pos);
         } else {
-            self.selected_search_folders.push(folder.to_string());
+            self.search.selected_folders.push(folder.to_string());
         }
 
-        if self.selected_search_folders.is_empty() {
-            self.selected_search_folder = self.t("common.all");
-        } else if self.selected_search_folders.len() == 1 {
-            self.selected_search_folder = self.selected_search_folders[0].clone();
+        if self.search.selected_folders.is_empty() {
+            self.search.selected_folder = self.t("common.all");
+        } else if self.search.selected_folders.len() == 1 {
+            self.search.selected_folder = self.search.selected_folders[0].clone();
         } else {
-            self.selected_search_folder = self.selected_search_folders.join(", ");
+            self.search.selected_folder = self.search.selected_folders.join(", ");
         }
     }
 
@@ -1252,8 +1141,8 @@ impl WazooApp {
                 let folder_clean = format::folder_basename(folder_label);
                 self.t_with("wazoo.no_files_found_in", &[("folder", folder_clean)])
             };
-            self.toast_message = Some(msg);
-            self.toast_time_remaining = LONG_TOAST_SECS;
+            self.overlay.toast_message = Some(msg);
+            self.overlay.toast_time_remaining = LONG_TOAST_SECS;
             return;
         }
 
@@ -1275,8 +1164,8 @@ impl WazooApp {
         };
 
         self.last_total_videos = total;
-        self.toast_message = Some(msg);
-        self.toast_time_remaining = LONG_TOAST_SECS;
+        self.overlay.toast_message = Some(msg);
+        self.overlay.toast_time_remaining = LONG_TOAST_SECS;
     }
 
     pub fn subscription(&self) -> Subscription<Message> {

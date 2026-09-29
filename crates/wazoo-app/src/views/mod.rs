@@ -29,17 +29,17 @@ impl WazooApp {
     pub fn view(&self) -> Element<'_, Message> {
         let main_content: Element<'_, Message> = if self.available_videos.is_empty() {
             let total_library_videos = self.db.get_video_count().unwrap_or(0);
-            let is_query_active = !self.active_search_query.trim().is_empty()
-                || !self.active_search_folders.is_empty()
-                || (!self.active_search_folder.is_empty()
-                    && !self.is_all_folder(&self.active_search_folder));
+            let is_query_active = !self.search.active_query.trim().is_empty()
+                || !self.search.active_folders.is_empty()
+                || (!self.search.active_folder.is_empty()
+                    && !self.is_all_folder(&self.search.active_folder));
 
             if total_library_videos > 0 || is_query_active {
                 self.view_no_matches()
             } else {
                 self.view_welcome()
             }
-        } else if self.show_file_picker {
+        } else if self.drawers.show_file_picker {
             row![
                 container(self.view_players())
                     .width(Length::Fill)
@@ -49,7 +49,7 @@ impl WazooApp {
             .width(Length::Fill)
             .height(Length::Fill)
             .into()
-        } else if self.show_transcript {
+        } else if self.drawers.show_transcript {
             row![
                 container(self.view_players())
                     .width(Length::Fill)
@@ -59,7 +59,7 @@ impl WazooApp {
             .width(Length::Fill)
             .height(Length::Fill)
             .into()
-        } else if self.show_history_drawer {
+        } else if self.drawers.show_history_drawer {
             row![
                 container(self.view_players())
                     .width(Length::Fill)
@@ -84,15 +84,15 @@ impl WazooApp {
         // This guarantees a stable 2-element stack where the modal is always child index 1.
         // Intermediate transient layers (toast, titlebar, scan banner) are never inserted/removed
         // while a modal is open, preventing iced::widget::Stack index shifts that destroy focus.
-        let modal: Option<Element<'_, Message>> = if self.show_search_modal {
+        let modal: Option<Element<'_, Message>> = if self.modals.search {
             Some(self.view_search_modal())
-        } else if self.show_settings_modal {
+        } else if self.modals.settings {
             Some(self.view_settings_modal())
-        } else if self.show_help_modal {
+        } else if self.modals.help {
             Some(self.view_help_modal())
-        } else if self.show_bookmarks_modal {
+        } else if self.modals.bookmarks {
             Some(self.view_bookmarks_modal())
-        } else if self.show_menu_modal {
+        } else if self.modals.menu {
             Some(self.view_menu_modal())
         } else {
             None
@@ -107,7 +107,7 @@ impl WazooApp {
             let mut root_stack_children: Vec<Element<'_, Message>> = vec![main_content];
 
             // 1.5. Dropdown backdrop for dismissal when clicking outside
-            if self.show_dropdown_menu {
+            if self.titlebar.show_dropdown_menu {
                 root_stack_children.push(Element::from(
                     mouse_area(
                         container(Space::new())
@@ -120,12 +120,12 @@ impl WazooApp {
             }
 
             // 2. Sliding Titlebar & Dropdown Menu Overlay
-            if self.show_titlebar {
+            if self.titlebar.show {
                 root_stack_children.push(self.view_titlebar());
             }
 
             // 3. Floating Notice (Matches Electron Notice.vue)
-            if let Some(ref toast) = self.toast_message {
+            if let Some(ref toast) = self.overlay.toast_message {
                 let toast_widget = container(
                     row![
                         text(toast).size(16).color(iced::Color::WHITE),
@@ -152,8 +152,8 @@ impl WazooApp {
             }
 
             // 4. Scan Toast Banner (Matches Electron scan toast across top)
-            if self.is_scanning {
-                let (label, status_text) = if let Some(ref progress) = self.scan_progress {
+            if self.scanner.is_scanning {
+                let (label, status_text) = if let Some(ref progress) = self.scanner.scan_progress {
                     match progress.stage {
                         ScanStage::Listing => {
                             let name = if progress.current_name.is_empty() {
@@ -206,7 +206,7 @@ impl WazooApp {
             }
 
             // 5. Alt Drag Overlay (Matches Electron Alt overlay)
-            if self.is_alt_pressed {
+            if self.window.is_alt_pressed {
                 let alt_overlay = container(
                     column![
                         text(self.t("app.drag_to_move"))

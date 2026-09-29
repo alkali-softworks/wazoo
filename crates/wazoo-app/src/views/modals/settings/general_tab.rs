@@ -83,8 +83,8 @@ pub fn view_general_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         );
     }
 
-    let scan_btn_text = if app.is_scanning {
-        if let Some(ref progress) = app.scan_progress {
+    let scan_btn_text = if app.scanner.is_scanning {
+        if let Some(ref progress) = app.scanner.scan_progress {
             match progress.stage {
                 ScanStage::Listing => {
                     if progress.percent > 0 {
@@ -118,7 +118,7 @@ pub fn view_general_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         app.t("settings.scan_folders")
     };
 
-    let scan_btn = if app.is_scanning {
+    let scan_btn = if app.scanner.is_scanning {
         button(text(scan_btn_text))
             .style(theme::action_button_style)
             .padding([8, 14])
@@ -141,8 +141,8 @@ pub fn view_general_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     ]
     .spacing(6);
 
-    if app.is_scanning {
-        if let Some(ref progress) = app.scan_progress {
+    if app.scanner.is_scanning {
+        if let Some(ref progress) = app.scanner.scan_progress {
             if !progress.current_name.is_empty() {
                 scan_controls = scan_controls.push(
                     text(&progress.current_name)

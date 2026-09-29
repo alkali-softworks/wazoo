@@ -40,12 +40,12 @@ pub(crate) struct PrecomputedVideoMeta {
 
 impl WazooApp {
     pub(crate) fn ensure_file_picker_meta(&mut self) {
-        let needs_rebuild = self.file_picker_entries.len() != self.available_videos.len()
+        let needs_rebuild = self.drawers.file_picker_entries.len() != self.available_videos.len()
             || (!self.available_videos.is_empty()
-                && self.file_picker_entries.first().map(|e| &e.path)
+                && self.drawers.file_picker_entries.first().map(|e| &e.path)
                     != self.available_videos.first().map(|v| &v.path));
         if needs_rebuild {
-            self.file_picker_entries = self
+            self.drawers.file_picker_entries = self
                 .available_videos
                 .iter()
                 .map(|v| {
@@ -77,15 +77,15 @@ impl WazooApp {
     pub(crate) fn apply_file_picker_search(&mut self) {
         self.ensure_file_picker_meta();
 
-        let search_filter = self.file_picker_search.trim().to_lowercase();
+        let search_filter = self.drawers.file_picker_search.trim().to_lowercase();
         let search_clean = search_filter.replace(['_', '-'], " ");
         let search_words: Vec<&str> = search_clean.split_whitespace().collect();
 
         let mut grouped_map: BTreeMap<String, Vec<FilePickerItem>> = BTreeMap::new();
 
         if search_words.is_empty() {
-            self.expanded_folders.clear();
-            for entry in &self.file_picker_entries {
+            self.drawers.expanded_folders.clear();
+            for entry in &self.drawers.file_picker_entries {
                 grouped_map
                     .entry(entry.folder_key.clone())
                     .or_default()
@@ -95,7 +95,7 @@ impl WazooApp {
                     });
             }
         } else {
-            for entry in &self.file_picker_entries {
+            for entry in &self.drawers.file_picker_entries {
                 let matches_all_words = search_words
                     .iter()
                     .all(|w| entry.folder_lower.contains(w) || entry.title_lower.contains(w));
@@ -112,18 +112,18 @@ impl WazooApp {
             }
 
             for folder in grouped_map.keys() {
-                self.expanded_folders.insert(folder.clone());
+                self.drawers.expanded_folders.insert(folder.clone());
             }
         }
 
-        self.file_picker_groups = grouped_map
+        self.drawers.file_picker_groups = grouped_map
             .into_iter()
             .map(|(folder, files)| FilePickerGroup { folder, files })
             .collect();
     }
 
     pub fn view_file_picker(&self) -> Element<'_, Message> {
-        let groups = &self.file_picker_groups;
+        let groups = &self.drawers.file_picker_groups;
 
         let playing_paths: std::collections::HashSet<&str> = self
             .players
@@ -135,7 +135,7 @@ impl WazooApp {
         let mut folders_col = column![].spacing(6);
         for group in groups {
             let count = group.files.len();
-            let is_expanded = self.expanded_folders.contains(&group.folder);
+            let is_expanded = self.drawers.expanded_folders.contains(&group.folder);
             let chevron = if is_expanded { "▼" } else { "▶" };
 
             let display_name = if group.folder == "Misc" {
@@ -227,8 +227,8 @@ impl WazooApp {
             })
             .width(Length::Fill);
 
-        let is_confined = !self.active_search_folders.is_empty()
-            || !self.is_all_folder(&self.active_search_folder);
+        let is_confined = !self.search.active_folders.is_empty()
+            || !self.is_all_folder(&self.search.active_folder);
         let mut header_row = row![
             text(self.t_with(
                 "settings.total_videos",
@@ -241,13 +241,14 @@ impl WazooApp {
         .align_y(Alignment::Center);
 
         if is_confined {
-            let folders_to_display: Vec<&String> = if !self.active_search_folders.is_empty() {
-                self.active_search_folders
+            let folders_to_display: Vec<&String> = if !self.search.active_folders.is_empty() {
+                self.search
+                    .active_folders
                     .iter()
                     .filter(|f| !self.is_all_folder(f))
                     .collect()
-            } else if !self.is_all_folder(&self.active_search_folder) {
-                vec![&self.active_search_folder]
+            } else if !self.is_all_folder(&self.search.active_folder) {
+                vec![&self.search.active_folder]
             } else {
                 Vec::new()
             };
@@ -295,7 +296,7 @@ impl WazooApp {
             header_row,
             text_input(
                 &self.t("file_picker.search_placeholder"),
-                &self.file_picker_search
+                &self.drawers.file_picker_search
             )
             .on_input(Message::FilePickerSearchChanged)
             .on_submit(Message::ApplyFilePickerSearch)

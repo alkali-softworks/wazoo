@@ -49,25 +49,25 @@ impl WazooApp {
                 }
                 if added_any {
                     let _ = self.config_mgr.save_settings(&self.settings);
-                    self.toast_message = Some(self.t("settings.folders_added_scanning"));
-                    self.toast_time_remaining = LONG_TOAST_SECS;
+                    self.overlay.toast_message = Some(self.t("settings.folders_added_scanning"));
+                    self.overlay.toast_time_remaining = LONG_TOAST_SECS;
                     return self.update(Message::StartScan);
                 }
                 Task::none()
             }
             Message::AddMediaFolder => {
-                let trimmed = self.folder_input.trim().to_string();
+                let trimmed = self.search.folder_input.trim().to_string();
                 if !trimmed.is_empty() {
                     if !self.settings.media_folders.contains(&trimmed) {
                         self.settings.media_folders.push(trimmed.clone());
-                        self.folder_input.clear();
+                        self.search.folder_input.clear();
                         let _ = self.config_mgr.save_settings(&self.settings);
-                        self.toast_message =
+                        self.overlay.toast_message =
                             Some(self.t_with("settings.folder_added", &[("folder", &trimmed)]));
-                        self.toast_time_remaining = LONG_TOAST_SECS;
+                        self.overlay.toast_time_remaining = LONG_TOAST_SECS;
                         return self.update(Message::StartScan);
                     } else {
-                        self.folder_input.clear();
+                        self.search.folder_input.clear();
                     }
                     Task::none()
                 } else {
@@ -78,7 +78,7 @@ impl WazooApp {
                 self.settings.media_folders.retain(|f| f != &folder);
                 let _ = self.config_mgr.save_settings(&self.settings);
 
-                let was_scanning = self.is_scanning;
+                let was_scanning = self.scanner.is_scanning;
 
                 // 1. Immediately delete all files belonging to this folder from the SQLite database
                 let removed_count = self.db.remove_videos_in_folder(&folder).unwrap_or(0);
@@ -89,20 +89,20 @@ impl WazooApp {
                 );
 
                 // 2. Immediately refresh in-memory available_videos from DB
-                if !self.active_search_query.is_empty() {
-                    let folders = if self.active_search_folders.is_empty() {
+                if !self.search.active_query.is_empty() {
+                    let folders = if self.search.active_folders.is_empty() {
                         self.settings.media_folders.clone()
                     } else {
-                        self.active_search_folders.clone()
+                        self.search.active_folders.clone()
                     };
                     self.available_videos = self
                         .db
-                        .search_videos(&self.active_search_query, &folders)
+                        .search_videos(&self.search.active_query, &folders)
                         .unwrap_or_default();
                 } else {
                     self.available_videos = self.db.get_all_videos().unwrap_or_default();
                 }
-                self.file_picker_entries.clear();
+                self.drawers.file_picker_entries.clear();
                 self.apply_file_picker_search();
 
                 // 3. Immediately update active players
@@ -117,24 +117,24 @@ impl WazooApp {
                 }
 
                 let all_label = self.t("common.all");
-                self.active_search_folders.retain(|f| f != &folder);
-                self.selected_search_folders.retain(|f| f != &folder);
+                self.search.active_folders.retain(|f| f != &folder);
+                self.search.selected_folders.retain(|f| f != &folder);
                 self.settings.last_folders.retain(|f| f != &folder);
 
-                if self.active_search_folders.is_empty() {
-                    self.active_search_folder = all_label.clone();
-                } else if self.active_search_folders.len() == 1 {
-                    self.active_search_folder = self.active_search_folders[0].clone();
+                if self.search.active_folders.is_empty() {
+                    self.search.active_folder = all_label.clone();
+                } else if self.search.active_folders.len() == 1 {
+                    self.search.active_folder = self.search.active_folders[0].clone();
                 } else {
-                    self.active_search_folder = self.active_search_folders.join(", ");
+                    self.search.active_folder = self.search.active_folders.join(", ");
                 }
 
-                if self.selected_search_folders.is_empty() {
-                    self.selected_search_folder = all_label.clone();
-                } else if self.selected_search_folders.len() == 1 {
-                    self.selected_search_folder = self.selected_search_folders[0].clone();
+                if self.search.selected_folders.is_empty() {
+                    self.search.selected_folder = all_label.clone();
+                } else if self.search.selected_folders.len() == 1 {
+                    self.search.selected_folder = self.search.selected_folders[0].clone();
                 } else {
-                    self.selected_search_folder = self.selected_search_folders.join(", ");
+                    self.search.selected_folder = self.search.selected_folders.join(", ");
                 }
 
                 let _ = self.config_mgr.save_settings(&self.settings);
@@ -146,11 +146,11 @@ impl WazooApp {
                     folder_name
                 };
                 let count_str = format::format_number(removed_count);
-                self.toast_message = Some(self.t_with(
+                self.overlay.toast_message = Some(self.t_with(
                     "settings.folder_removed",
                     &[("folder", &display_name), ("count", &count_str)],
                 ));
-                self.toast_time_remaining = DEFAULT_TOAST_SECS;
+                self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                 self.last_total_videos = self.available_videos.len();
 
                 if was_scanning {
@@ -163,17 +163,17 @@ impl WazooApp {
                 log::info!("Cleared {} Misc videos from database", removed_count);
 
                 // Refresh available_videos
-                if !self.active_search_query.is_empty() || !self.active_search_folders.is_empty() {
-                    let folders = self.active_search_folders.clone();
+                if !self.search.active_query.is_empty() || !self.search.active_folders.is_empty() {
+                    let folders = self.search.active_folders.clone();
                     self.available_videos = self
                         .db
-                        .search_videos(&self.active_search_query, &folders)
+                        .search_videos(&self.search.active_query, &folders)
                         .unwrap_or_default();
                 } else {
                     self.available_videos = self.db.get_all_videos().unwrap_or_default();
                 }
 
-                self.file_picker_entries.clear();
+                self.drawers.file_picker_entries.clear();
                 self.apply_file_picker_search();
 
                 // Reconcile players if any were playing a Misc video
@@ -187,32 +187,32 @@ impl WazooApp {
                     self.save_session_state();
                 }
 
-                self.active_search_folders.retain(|f| f != "Misc");
-                self.selected_search_folders.retain(|f| f != "Misc");
+                self.search.active_folders.retain(|f| f != "Misc");
+                self.search.selected_folders.retain(|f| f != "Misc");
                 self.settings.last_folders.retain(|f| f != "Misc");
                 let _ = self.config_mgr.save_settings(&self.settings);
 
                 let count_str = format::format_number(removed_count);
-                self.toast_message =
+                self.overlay.toast_message =
                     Some(self.t_with("settings.misc_cleared", &[("count", &count_str)]));
-                self.toast_time_remaining = DEFAULT_TOAST_SECS;
+                self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                 self.last_total_videos = self.available_videos.len();
                 Task::none()
             }
             Message::StartScan => {
                 // Cancel any currently running scan task
-                if let Some(cancel) = self.scan_cancel.take() {
+                if let Some(cancel) = self.scanner.scan_cancel.take() {
                     cancel.store(true, std::sync::atomic::Ordering::SeqCst);
                 }
-                self.current_scan_id += 1;
+                self.scanner.current_scan_id += 1;
 
                 if !self.settings.media_folders.is_empty() {
-                    let scan_id = self.current_scan_id;
+                    let scan_id = self.scanner.current_scan_id;
                     let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
-                    self.scan_cancel = Some(cancel.clone());
+                    self.scanner.scan_cancel = Some(cancel.clone());
 
-                    self.is_scanning = true;
-                    self.scan_progress = None;
+                    self.scanner.is_scanning = true;
+                    self.scanner.scan_progress = None;
                     let folders = self.settings.media_folders.clone();
                     let db_path = self.config_mgr.database_path();
 
@@ -254,42 +254,43 @@ impl WazooApp {
                         },
                     ))
                 } else {
-                    self.is_scanning = false;
-                    self.scan_progress = None;
+                    self.scanner.is_scanning = false;
+                    self.scanner.scan_progress = None;
                     Task::none()
                 }
             }
             Message::ScanProgressUpdate(scan_id, progress) => {
-                if scan_id != self.current_scan_id {
+                if scan_id != self.scanner.current_scan_id {
                     return Task::none();
                 }
-                self.scan_progress = Some(progress);
+                self.scanner.scan_progress = Some(progress);
                 Task::none()
             }
             Message::ScanFinished(scan_id, res) => {
-                if scan_id != self.current_scan_id {
+                if scan_id != self.scanner.current_scan_id {
                     return Task::none();
                 }
-                self.is_scanning = false;
-                self.scan_progress = None;
-                self.scan_cancel = None;
+                self.scanner.is_scanning = false;
+                self.scanner.scan_progress = None;
+                self.scanner.scan_cancel = None;
                 match res {
                     Ok(_count) => {
-                        let folders = self.active_search_folders.clone();
+                        let folders = self.search.active_folders.clone();
                         if let Ok(videos) =
-                            self.db.search_videos(&self.active_search_query, &folders)
+                            self.db.search_videos(&self.search.active_query, &folders)
                         {
                             let total = videos.len();
                             self.available_videos = videos;
-                            self.file_picker_entries.clear();
+                            self.drawers.file_picker_entries.clear();
                             self.apply_file_picker_search();
-                            let notice_folder = if self.active_search_folders.is_empty() {
+                            let notice_folder = if self.search.active_folders.is_empty() {
                                 self.t("common.all")
-                            } else if self.active_search_folders.len() == 1 {
-                                self.active_search_folders[0].clone()
+                            } else if self.search.active_folders.len() == 1 {
+                                self.search.active_folders[0].clone()
                             } else {
                                 let names: Vec<String> = self
-                                    .active_search_folders
+                                    .search
+                                    .active_folders
                                     .iter()
                                     .map(|f| format::folder_basename(f).to_string())
                                     .collect();
@@ -308,9 +309,9 @@ impl WazooApp {
                     }
                     Err(err) => {
                         if err != "Scan cancelled" {
-                            self.toast_message =
+                            self.overlay.toast_message =
                                 Some(self.t_with("settings.scan_error", &[("error", &err)]));
-                            self.toast_time_remaining = LONG_TOAST_SECS;
+                            self.overlay.toast_time_remaining = LONG_TOAST_SECS;
                         }
                     }
                 }

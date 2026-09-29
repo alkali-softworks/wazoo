@@ -21,9 +21,9 @@ use iced::{
 
 impl WazooApp {
     pub fn view_settings_modal(&self) -> Element<'_, Message> {
-        let is_general = self.settings_tab == SettingsTab::General;
-        let is_playback = self.settings_tab == SettingsTab::Playback;
-        let is_system = self.settings_tab == SettingsTab::System;
+        let is_general = self.modals.settings_tab == SettingsTab::General;
+        let is_playback = self.modals.settings_tab == SettingsTab::Playback;
+        let is_system = self.modals.settings_tab == SettingsTab::System;
 
         let tabs_bar = row![
             button(
@@ -74,7 +74,7 @@ impl WazooApp {
         ]
         .align_y(Alignment::Center);
 
-        let active_tab_content: Element<'_, Message> = match self.settings_tab {
+        let active_tab_content: Element<'_, Message> = match self.modals.settings_tab {
             SettingsTab::General => general_tab::view_general_tab(self),
             SettingsTab::Playback => playback_tab::view_playback_tab(self),
             SettingsTab::System => system_tab::view_system_tab(self),
