@@ -35,18 +35,7 @@
 // In Rust, files on your hard drive are NOT automatically compiled or autoloaded!
 // Writing `mod app;` tells the compiler:
 // "Go find `src/app.rs`, compile it, and attach it as a child module named `app`."
-mod app;
-mod db;
-mod message;
-mod style;
-mod tabs;
-
-// ==============================================================================
-// STEP 2: IMPORTS (`use`)
-// ==============================================================================
-// Now that `mod app;` declared the module, we use `use` as a shortcut so we can
-// refer to `TutorialApp` directly instead of writing `crate::app::TutorialApp`.
-use app::TutorialApp;
+use wazoo_tutorial::app::TutorialApp;
 
 /// The entry point of the executable.
 ///

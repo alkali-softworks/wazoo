@@ -18,7 +18,6 @@
  */
 
 use rusqlite::{Connection, Result, params};
-use std::path::Path;
 
 /// A strongly-typed Rust struct representing a note stored in SQLite.
 ///
@@ -53,17 +52,6 @@ impl TutorialDatabase {
         Ok(db)
     }
 
-    /// Opens or creates a file-backed SQLite database at the given path.
-    /// In `wazoo`, this is placed in the OS configuration directory alongside `settings.json`
-    /// (e.g. `~/.config/wazoo/` on Linux, `%APPDATA%\alkalisoftworks\wazoo\config\` on Windows,
-    /// or `~/Library/Application Support/com.alkalisoftworks.wazoo/` on macOS).
-    #[allow(dead_code)]
-    pub fn open_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let conn = Connection::open(path)?;
-        let db = Self { conn };
-        db.init_schema()?;
-        Ok(db)
-    }
 
     /// Initializes the database schema.
     /// Notice the `?` operator at the end of `execute`.
@@ -142,7 +130,6 @@ impl TutorialDatabase {
     }
 
     /// Returns the total count of notes.
-    #[allow(dead_code)]
     pub fn count_notes(&self) -> Result<i64> {
         self.conn
             .query_row("SELECT COUNT(*) FROM notes", [], |row| row.get(0))
