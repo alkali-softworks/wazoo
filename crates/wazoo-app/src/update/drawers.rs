@@ -11,6 +11,7 @@ use crate::format;
 use crate::message::Message;
 use iced::Task;
 use std::time::Duration;
+use wazoo_media::PlayerSliceExt;
 
 impl WazooApp {
     pub(crate) fn update_drawers(&mut self, message: Message) -> Task<Message> {
@@ -51,7 +52,7 @@ impl WazooApp {
                     self.drawers.show_transcript_menu = false;
                     return Task::none();
                 }
-                if let Some(idx) = self.players.iter().position(|p| p.id == id) {
+                if let Some(idx) = self.player_index(id) {
                     self.playback.focused_idx = idx;
                 }
                 self.drawers.show_transcript = true;
@@ -187,7 +188,7 @@ impl WazooApp {
                         hist.forward_stack.clear();
                     }
                     let title = format::format_video_title(&path);
-                    let curr_player = self.players.iter().find(|p| p.id == id);
+                    let curr_player = self.player(id);
                     let prev_muted = curr_player.map(|p| p.state.is_muted);
                     let prev_volume = curr_player.map(|p| p.state.volume);
 
@@ -198,7 +199,7 @@ impl WazooApp {
                         }
                         handle.set_subtitles_visible(self.playback.subtitles_enabled);
                         self.push_player_nav_entry(id, path.clone(), None);
-                        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                        if let Some(p) = self.players.player_mut(id) {
                             *p = handle;
                         }
                         self.overlay.toast_message =

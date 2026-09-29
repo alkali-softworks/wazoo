@@ -20,7 +20,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-
 pub struct VideoHandle {
     pub id: PlayerId,
     pub state: PlayerState,
@@ -1191,7 +1190,9 @@ impl VideoHandle {
                 });
 
                 if !current_already_matches {
-                    if let Some(matching_id) = find_matching_audio_track(&self.state.audio_tracks, pref) {
+                    if let Some(matching_id) =
+                        find_matching_audio_track(&self.state.audio_tracks, pref)
+                    {
                         if current_aid != Some(matching_id) {
                             self.set_audio_track(matching_id);
                             current_aid = Some(matching_id);
@@ -1211,8 +1212,8 @@ impl VideoHandle {
         let is_initial_load = !self.tracks_loaded || self.state.current_subtitle_track_id.is_none();
         let sid_i64 = self.get_property_i64("sid");
         let sid_str = self.get_property_string("sid");
-        let mpv_selected_sid = sid_i64
-            .or_else(|| sid_str.as_deref().and_then(|s| s.parse::<i64>().ok()));
+        let mpv_selected_sid =
+            sid_i64.or_else(|| sid_str.as_deref().and_then(|s| s.parse::<i64>().ok()));
         let mut current_sid = mpv_selected_sid
             .or_else(|| self.state.current_subtitle_track_id)
             .or_else(|| sub_tracks.iter().find(|t| t.is_selected).map(|t| t.id))
@@ -1482,3 +1483,43 @@ impl VideoHandle {
     }
 }
 
+/**
+ * Extension trait for collections and slices of `VideoHandle`.
+ *
+ * Provides convenient lookup helpers
+ */
+pub trait PlayerSliceExt {
+    /// Returns a reference to the player with the specified ID, if it exists.
+    fn player(&self, id: PlayerId) -> Option<&VideoHandle>;
+
+    /// Returns a mutable reference to the player with the specified ID, if it exists.
+    fn player_mut(&mut self, id: PlayerId) -> Option<&mut VideoHandle>;
+
+    /// Returns the slice index of the player with the specified ID, if it exists.
+    fn player_index(&self, id: PlayerId) -> Option<usize>;
+
+    /// Returns whether a player with the specified ID is present in the collection.
+    fn has_player(&self, id: PlayerId) -> bool;
+}
+
+impl PlayerSliceExt for [VideoHandle] {
+    #[inline]
+    fn player(&self, id: PlayerId) -> Option<&VideoHandle> {
+        self.iter().find(|p| p.id == id)
+    }
+
+    #[inline]
+    fn player_mut(&mut self, id: PlayerId) -> Option<&mut VideoHandle> {
+        self.iter_mut().find(|p| p.id == id)
+    }
+
+    #[inline]
+    fn player_index(&self, id: PlayerId) -> Option<usize> {
+        self.iter().position(|p| p.id == id)
+    }
+
+    #[inline]
+    fn has_player(&self, id: PlayerId) -> bool {
+        self.iter().any(|p| p.id == id)
+    }
+}

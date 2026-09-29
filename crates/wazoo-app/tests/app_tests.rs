@@ -1292,3 +1292,39 @@ fn test_pin_keybind_dispatch() {
     assert!(!app.settings.is_always_on_top);
 }
 
+#[test]
+fn test_player_by_id_helpers() {
+    let (mut app, _) = new_test_app();
+    let temp_dir = std::env::temp_dir().join(format!("test_player_helpers_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let f1 = temp_dir.join("v1.mp4");
+    let _ = std::fs::File::create(&f1);
+
+    app.available_videos = vec![wazoo_core::VideoRecord::new(1, "V1", f1.to_string_lossy())];
+    let _ = app.update(Message::SetPlayerCount(1));
+    assert_eq!(app.players.len(), 1);
+    let p_id = app.players[0].id;
+
+    // Test WazooApp helpers
+    assert!(app.has_player(p_id));
+    assert!(!app.has_player(999_999));
+    assert_eq!(app.player_index(p_id), Some(0));
+    assert_eq!(app.player_index(999_999), None);
+    assert_eq!(app.player(p_id).map(|p| p.id), Some(p_id));
+    assert!(app.player(999_999).is_none());
+
+    // Test mutable player lookup
+    if let Some(p) = app.player_mut(p_id) {
+        assert_eq!(p.id, p_id);
+    }
+
+    // Test slice extension trait helpers
+    use wazoo_media::PlayerSliceExt;
+    assert!(app.players.has_player(p_id));
+    assert_eq!(app.players.player_index(p_id), Some(0));
+    assert_eq!(app.players.player(p_id).map(|p| p.id), Some(p_id));
+    assert_eq!(app.players.player_mut(p_id).map(|p| p.id), Some(p_id));
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
