@@ -1,0 +1,218 @@
+/*!
+ * ALKALI SOFTWORKS - Wazoo
+ *
+ * Side Drawers Reducer
+ *
+ * Implements message handlers for File Picker, History Drawer, and Transcript Subtitles Drawer.
+ */
+
+use crate::app::{LONG_TOAST_SECS, WazooApp};
+use crate::format;
+use crate::message::Message;
+use iced::Task;
+use std::time::Duration;
+
+impl WazooApp {
+    pub(crate) fn update_drawers(&mut self, message: Message) -> Task<Message> {
+        match message {
+            Message::ToggleFilePicker => {
+                if self.show_file_picker {
+                    self.close_file_picker();
+                } else {
+                    self.show_file_picker = true;
+                    self.show_transcript = false;
+                    self.show_history_drawer = false;
+                    if self.file_picker_groups.is_empty() && !self.available_videos.is_empty() {
+                        self.apply_file_picker_search();
+                    }
+                }
+                self.show_dropdown_menu = false;
+                self.show_menu_modal = false;
+                Task::none()
+            }
+            Message::ToggleTranscript => {
+                self.show_transcript = !self.show_transcript;
+                if !self.show_transcript {
+                    self.show_transcript_menu = false;
+                }
+                self.show_dropdown_menu = false;
+                self.show_menu_modal = false;
+                if self.show_transcript {
+                    self.close_file_picker();
+                    self.show_history_drawer = false;
+                    return self.load_transcript_for_focused_player();
+                }
+                Task::none()
+            }
+            Message::ToggleTranscriptForPlayer(id) => {
+                let is_same_focused = self.focused_player_id() == Some(id);
+                if is_same_focused && self.show_transcript {
+                    self.show_transcript = false;
+                    self.show_transcript_menu = false;
+                    return Task::none();
+                }
+                if let Some(idx) = self.players.iter().position(|p| p.id == id) {
+                    self.focused_player_idx = idx;
+                }
+                self.show_transcript = true;
+                self.show_transcript_menu = false;
+                self.close_file_picker();
+                self.show_history_drawer = false;
+                self.show_dropdown_menu = false;
+                self.show_menu_modal = false;
+                self.load_transcript_for_focused_player()
+            }
+            Message::ToggleHistoryDrawer => {
+                self.show_history_drawer = !self.show_history_drawer;
+                if self.show_history_drawer {
+                    self.close_file_picker();
+                    self.show_transcript = false;
+                    self.show_transcript_menu = false;
+                }
+                self.show_dropdown_menu = false;
+                self.show_menu_modal = false;
+                Task::none()
+            }
+            Message::CloseHistoryDrawer => {
+                self.show_history_drawer = false;
+                Task::none()
+            }
+            Message::HistorySearchChanged(s) => {
+                self.history_search = s;
+                Task::none()
+            }
+            Message::ClearPlayHistory => {
+                self.play_history.clear();
+                Task::none()
+            }
+            Message::CloseTranscript => {
+                self.show_transcript = false;
+                self.show_transcript_menu = false;
+                Task::none()
+            }
+            Message::TranscriptSearchChanged(s) => {
+                self.transcript_search = s;
+                Task::none()
+            }
+            Message::TranscriptLoaded(path, track_idx, cues) => {
+                if self.transcript_video_path.as_deref() == Some(&path)
+                    && self.transcript_track_index == track_idx
+                {
+                    self.transcript_loading = false;
+                    self.transcript_cues = cues;
+                }
+                Task::none()
+            }
+            Message::SeekToSubtitle(secs) => {
+                if let Some(id) = self.focused_player_id() {
+                    // Offset by +10ms so playback starts cleanly inside the target cue,
+                    // avoiding boundary collision with the preceding cue.
+                    return self.update(Message::Seek(
+                        id,
+                        Duration::from_secs_f64((secs + 0.01).max(0.0)),
+                    ));
+                }
+                Task::none()
+            }
+            Message::ToggleTranscriptSubtitleMenu => {
+                self.show_transcript_menu = !self.show_transcript_menu;
+                Task::none()
+            }
+            Message::CloseTranscriptSubtitleMenu => {
+                self.show_transcript_menu = false;
+                Task::none()
+            }
+            Message::SelectTranscriptSubtitleTrack(track_idx, track_id) => {
+                self.show_transcript_menu = false;
+                self.transcript_track_index = track_idx;
+                self.subtitles_enabled = true;
+                if let Some(player) = self.focused_player_mut() {
+                    player.set_subtitles_visible(true);
+                    player.set_subtitle_track(track_id);
+                    let sub_track = player.subtitle_tracks().get(track_idx).cloned();
+                    let path = player.state.path.clone();
+                    if !path.is_empty() {
+                        self.transcript_video_path = Some(path.clone());
+                        self.transcript_loading = true;
+                        self.transcript_cues.clear();
+                        let path_clone = path.clone();
+                        let ext_file = sub_track.as_ref().and_then(|t| t.external_filename.clone());
+                        let ff_index = sub_track.as_ref().and_then(|t| t.ff_index);
+
+                        return Task::perform(
+                            async move {
+                                wazoo_media::load_subtitles_for_track_details(
+                                    path,
+                                    ext_file,
+                                    ff_index,
+                                    track_idx,
+                                )
+                                .await
+                            },
+                            move |cues| Message::TranscriptLoaded(path_clone, track_idx, cues),
+                        );
+                    }
+                }
+                Task::none()
+            }
+            Message::ToggleFolderCollapse(folder) => {
+                if self.expanded_folders.contains(&folder) {
+                    self.expanded_folders.remove(&folder);
+                } else {
+                    self.expanded_folders.insert(folder);
+                }
+                Task::none()
+            }
+            Message::FilePickerSearchChanged(s) => {
+                self.file_picker_search = s;
+                let trimmed = self.file_picker_search.trim();
+                if trimmed.is_empty() {
+                    self.file_picker_debounce_ticks = 0;
+                    self.apply_file_picker_search();
+                } else {
+                    self.file_picker_debounce_ticks = crate::app::FILE_PICKER_DEBOUNCE_TICKS;
+                }
+                Task::none()
+            }
+            Message::ApplyFilePickerSearch => {
+                self.file_picker_debounce_ticks = 0;
+                self.apply_file_picker_search();
+                Task::none()
+            }
+            Message::PlayFileInFocused(path) => {
+                if let Some(id) = self.focused_player_id() {
+                    self.loading_player_ids.insert(id);
+                    self.loading_player_ticks.insert(id, 0);
+                    self.record_current_player_nav_position(id);
+                    if let Some(hist) = self.player_nav_history.get_mut(&id) {
+                        hist.forward_stack.clear();
+                    }
+                    let title = format::format_video_title(&path);
+                    let curr_player = self.players.iter().find(|p| p.id == id);
+                    let prev_muted = curr_player.map(|p| p.state.is_muted);
+                    let prev_volume = curr_player.map(|p| p.state.volume);
+
+                    if let Ok(mut handle) = self.create_video_handle(id, &path, &title) {
+                        handle.set_muted(prev_muted.unwrap_or(true));
+                        if let Some(vol) = prev_volume {
+                            handle.set_volume(vol);
+                        }
+                        handle.set_subtitles_visible(self.subtitles_enabled);
+                        self.push_player_nav_entry(id, path.clone(), None);
+                        if let Some(p) = self.players.iter_mut().find(|p| p.id == id) {
+                            *p = handle;
+                        }
+                        self.toast_message =
+                            Some(self.t_with("player.playing", &[("title", &title)]));
+                        self.toast_time_remaining = LONG_TOAST_SECS;
+                        if self.show_transcript {
+                            return self.load_transcript_for_focused_player();
+                        }
+                    }
+                }
+                Task::none()
+            }
+            _ => Task::none(),
+        }
+    }
+}
