@@ -57,21 +57,30 @@ impl std::fmt::Debug for VideoHandle {
 impl Drop for VideoHandle {
     fn drop(&mut self) {
         self.alive.store(false, Ordering::SeqCst);
-        unsafe {
-            if !self.mpv.is_null() {
-                if let Ok(cmd_stop) = CString::new("stop") {
-                    let mut args = [cmd_stop.as_ptr(), std::ptr::null()];
-                    mpv_ffi::mpv_command(self.mpv, args.as_mut_ptr());
-                }
-            }
-            if !self.render_ctx.is_null() {
-                mpv_ffi::mpv_render_context_free(self.render_ctx);
-                self.render_ctx = std::ptr::null_mut();
-            }
-            if !self.mpv.is_null() {
-                mpv_ffi::mpv_terminate_destroy(self.mpv);
-                self.mpv = std::ptr::null_mut();
-            }
+        let mpv_addr = self.mpv as usize;
+        let render_ctx_addr = self.render_ctx as usize;
+        self.mpv = std::ptr::null_mut();
+        self.render_ctx = std::ptr::null_mut();
+
+        if mpv_addr != 0 || render_ctx_addr != 0 {
+            let _ = std::thread::Builder::new()
+                .name("wazoo-mpv-teardown".into())
+                .spawn(move || unsafe {
+                    let mpv = mpv_addr as *mut mpv_ffi::MpvHandle;
+                    let render_ctx = render_ctx_addr as *mut mpv_ffi::MpvRenderContext;
+                    if !mpv.is_null() {
+                        if let Ok(cmd_stop) = CString::new("stop") {
+                            let mut args = [cmd_stop.as_ptr(), std::ptr::null()];
+                            mpv_ffi::mpv_command(mpv, args.as_mut_ptr());
+                        }
+                    }
+                    if !render_ctx.is_null() {
+                        mpv_ffi::mpv_render_context_free(render_ctx);
+                    }
+                    if !mpv.is_null() {
+                        mpv_ffi::mpv_terminate_destroy(mpv);
+                    }
+                });
         }
     }
 }
@@ -388,6 +397,101 @@ impl VideoHandle {
             handle.set_volume(1.0);
             handle.refresh_audio_tracks();
             Ok(handle)
+        }
+    }
+
+    /// Seamlessly load a new media file into the existing libmpv player instance,
+    /// avoiding complete teardown and re-creation of libmpv, render contexts, and audio sinks.
+    pub fn load_file(
+        &mut self,
+        file_path: &str,
+        name: &str,
+        start_time: impl Into<StartTime>,
+    ) -> Result<(), String> {
+        let start_time = start_time.into();
+        unsafe {
+            if self.mpv.is_null() {
+                return Err("mpv handle is null".to_string());
+            }
+
+            let clean_path = if let Some(stripped) = file_path.strip_prefix("file://") {
+                stripped
+            } else {
+                file_path
+            };
+
+            if !clean_path.starts_with("http://")
+                && !clean_path.starts_with("https://")
+                && !std::path::Path::new(clean_path).exists()
+            {
+                return Err(format!("Media file does not exist: {clean_path}"));
+            }
+
+            match start_time {
+                StartTime::Beginning => {
+                    self.set_property_string("start", "0");
+                }
+                StartTime::Seconds(start) => {
+                    if start > 0.05 {
+                        self.set_property_string("start", &format!("{:.3}", start));
+                    } else {
+                        self.set_property_string("start", "0");
+                    }
+                }
+                StartTime::Percent(pct) => {
+                    let clamped = pct.clamp(0.0, 95.0);
+                    self.set_property_string("start", &format!("{:.1}%", clamped));
+                }
+                StartTime::Random => {
+                    let rand_pct = rand::thread_rng().gen_range(5.0..85.0);
+                    self.set_property_string("start", &format!("{:.1}%", rand_pct));
+                }
+            }
+
+            let cmd_loadfile = CString::new("loadfile").map_err(|e| e.to_string())?;
+            let path_arg = CString::new(clean_path).map_err(|e| e.to_string())?;
+            let replace_arg = CString::new("replace").map_err(|e| e.to_string())?;
+            let mut args: [*const std::ffi::c_char; 4] = [
+                cmd_loadfile.as_ptr(),
+                path_arg.as_ptr(),
+                replace_arg.as_ptr(),
+                std::ptr::null(),
+            ];
+            let res = mpv_ffi::mpv_command(self.mpv, args.as_mut_ptr());
+            if res < 0 {
+                return Err(format!("Failed to load file: {res}"));
+            }
+
+            self.set_property_string("pause", "no");
+            self.state.path = file_path.to_string();
+            self.state.name = name.to_string();
+            self.state.duration = Duration::ZERO;
+            self.state.position = Duration::ZERO;
+            self.state.is_playing = true;
+            self.is_eos = false;
+            self.tracks_loaded = false;
+            self.state.audio_tracks.clear();
+            self.state.subtitle_tracks.clear();
+            self.state.current_audio_track_id = None;
+            self.state.current_subtitle_track_id = None;
+
+            let (pending_seek, last_seek_time) = match start_time {
+                StartTime::Beginning => (None, None),
+                StartTime::Seconds(start) => {
+                    if start > 0.05 {
+                        self.state.position = Duration::from_secs_f64(start);
+                        (Some(Duration::from_secs_f64(start)), Some(Instant::now()))
+                    } else {
+                        (None, None)
+                    }
+                }
+                StartTime::Percent(_) | StartTime::Random => (None, Some(Instant::now())),
+            };
+            self.pending_seek = pending_seek;
+            self.last_seek_time = last_seek_time;
+            self.pending_seek_random = matches!(start_time, StartTime::Random);
+
+            Ok(())
         }
     }
 
