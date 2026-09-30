@@ -3,14 +3,12 @@
  *
  * Media Scanner & Library Indexer
  *
- * Discovers video files across media directories, cleans filenames, extracts metadata,
+ * Discovers video files across media directories, cleans filenames,
  * and batches database updates with real-time progress reporting.
  */
 
 use regex::Regex;
-use serde::Deserialize;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, LazyLock};
 use tokio::sync::mpsc;
@@ -46,132 +44,6 @@ pub fn clean_video_name(filename: &str) -> String {
         filename.to_string()
     } else {
         trimmed.to_string()
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct VideoMetadata {
-    pub codec: String,
-    pub width: u32,
-    pub height: u32,
-    pub duration: f64,
-    pub has_subtitles: bool,
-}
-
-#[derive(Deserialize)]
-struct FfprobeOutput {
-    streams: Option<Vec<FfprobeStream>>,
-    format: Option<FfprobeFormat>,
-}
-
-#[derive(Deserialize)]
-struct FfprobeStream {
-    codec_name: Option<String>,
-    codec_type: Option<String>,
-    profile: Option<String>,
-    width: Option<u32>,
-    height: Option<u32>,
-    duration: Option<String>,
-}
-
-#[derive(Deserialize)]
-struct FfprobeFormat {
-    duration: Option<String>,
-}
-
-pub fn probe_video_metadata<P: AsRef<Path>>(path: P, ffprobe_bin: Option<&str>) -> VideoMetadata {
-    let fallback = VideoMetadata {
-        codec: "unknown".to_string(),
-        width: 0,
-        height: 0,
-        duration: 0.0,
-        has_subtitles: false,
-    };
-
-    let bin = ffprobe_bin.unwrap_or("ffprobe");
-    let output = Command::new(bin)
-        .args([
-            "-v",
-            "error",
-            "-analyzeduration",
-            "100000",
-            "-probesize",
-            "5000000",
-            "-show_entries",
-            "stream=codec_name,profile,width,height,codec_type:format=duration",
-            "-of",
-            "json",
-            "--",
-            path.as_ref().to_str().unwrap_or_default(),
-        ])
-        .output();
-
-    let output = match output {
-        Ok(out) if out.status.success() => out.stdout,
-        _ => return fallback,
-    };
-
-    let data: FfprobeOutput = match serde_json::from_slice(&output) {
-        Ok(d) => d,
-        Err(_) => return fallback,
-    };
-
-    let mut codec = "unknown".to_string();
-    let mut width = 0;
-    let mut height = 0;
-    let mut stream_duration = 0.0;
-    let mut has_subtitles = false;
-
-    if let Some(streams) = data.streams {
-        for s in streams {
-            let codec_type = s.codec_type.as_deref().unwrap_or("");
-            if codec_type == "video" && width == 0 {
-                width = s.width.unwrap_or(0);
-                height = s.height.unwrap_or(0);
-                let codec_raw = s.codec_name.as_deref().unwrap_or("").to_lowercase();
-                let profile_raw = s.profile.as_deref().unwrap_or("").to_lowercase();
-
-                if codec_raw.contains("hevc") && profile_raw.contains("main 10") {
-                    codec = "hevc-10bit".to_string();
-                } else if codec_raw.contains("hevc") {
-                    codec = "hevc-8bit".to_string();
-                } else if codec_raw.contains("h264") {
-                    codec = "h264".to_string();
-                } else if codec_raw.contains("av1") {
-                    codec = "av1".to_string();
-                } else if codec_raw.contains("vp9") {
-                    codec = "vp9".to_string();
-                } else {
-                    codec = codec_raw;
-                }
-
-                if let Some(dur_str) = s.duration {
-                    stream_duration = dur_str.parse().unwrap_or(0.0);
-                }
-            } else if codec_type == "subtitle" {
-                has_subtitles = true;
-            }
-        }
-    }
-
-    let format_duration = data
-        .format
-        .and_then(|f| f.duration)
-        .and_then(|d| d.parse::<f64>().ok())
-        .unwrap_or(0.0);
-
-    let duration = if format_duration > 0.0 {
-        format_duration
-    } else {
-        stream_duration
-    };
-
-    VideoMetadata {
-        codec,
-        width,
-        height,
-        duration,
-        has_subtitles,
     }
 }
 

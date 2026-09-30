@@ -1,6 +1,6 @@
 # `wazoo-scanner` Subsystem Architecture
 
-The [`wazoo-scanner`] crate manages recursive directory traversal, filename sanitization, metadata inspection, and asynchronous ingestion of media libraries into the local SQLite database.
+The [`wazoo-scanner`] crate manages recursive directory traversal, filename sanitization, and asynchronous ingestion of media libraries into the local SQLite database.
 
 ---
 
@@ -8,7 +8,7 @@ The [`wazoo-scanner`] crate manages recursive directory traversal, filename sani
 
 ```
 crates/wazoo-scanner/src/
-└── lib.rs  # MediaScanner implementation, path filtering, and ffprobe inspection
+└── lib.rs  # MediaScanner implementation, path filtering, and database ingestion
 ```
 
 ---
@@ -47,23 +47,6 @@ graph LR
 
 > [!NOTE]
 > The original canonical path on disk is always preserved in [`VideoRecord::path`] to ensure media engines load the correct file. Only the user-facing title is sanitized.
-
----
-
-## 🎞️ Metadata Probing (`extract_metadata`)
-
-When `ffprobe` is available on the system path, Wazoo queries video metadata during ingestion:
-
-1. Runs `ffprobe` non-blockingly with JSON output:
-   ```bash
-   ffprobe -v quiet -print_format json -show_format -show_streams "<path>"
-   ```
-2. Extracts core properties:
-   - Video codec name (e.g. `hevc`, `h264`, `av1`, `vp9`).
-   - Dimensions (`width`, `height`).
-   - Duration in seconds.
-   - Presence of embedded subtitle streams (`codec_type == "subtitle"`).
-3. If `ffprobe` is not installed or fails on a corrupt file, the scanner gracefully falls back without blocking the overall library scan.
 
 ---
 

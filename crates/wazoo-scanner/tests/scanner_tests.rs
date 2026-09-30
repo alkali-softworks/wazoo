@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
-use wazoo_scanner::{ScanStage, Scanner, clean_video_name, is_video_file, probe_video_metadata};
+use wazoo_scanner::{ScanStage, Scanner, clean_video_name, is_video_file};
 
 #[test]
 fn test_clean_video_name() {
@@ -24,7 +24,7 @@ fn test_is_video_file() {
 }
 
 #[tokio::test]
-async fn test_scanner_no_ffprobe() {
+async fn test_scanner_basic() {
     let tmp = std::env::temp_dir().join(format!(
         "wazoo_test_{}",
         std::time::SystemTime::now()
@@ -121,12 +121,4 @@ async fn test_scanner_cancellation() {
     assert_eq!(res.err().as_deref(), Some("Scan cancelled"));
 
     let _ = std::fs::remove_dir_all(&tmp);
-}
-
-#[test]
-fn test_probe_dash_filename() {
-    // Filenames starting with '-' must not cause ffprobe option parsing errors
-    let meta = probe_video_metadata("-option_like_name.mp4", None);
-    assert_eq!(meta.codec, "unknown");
-    assert_eq!(meta.width, 0);
 }
