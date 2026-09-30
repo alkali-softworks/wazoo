@@ -94,7 +94,7 @@ graph TD
 
     AT --> ScrollPhysics["Advance Scroll Positions<br/>Despawn Offscreen Players<br/>Preload Next Video<br/>Modulate Proximity Audio"]
 
-    WT --> Watchdog["Recover Stuck Players (> 30s)<br/>Auto-advance Finished Videos<br/>Advance Flip Mode Timers<br/>Persist Bounds & Session"]
+    WT --> Watchdog["Recover Stuck Players<br/>Advance Finished Videos<br/>Advance Flip Mode Timers<br/>Persist Bounds & Session"]
 ```
 
 ### Video Frame Tick Optimizations

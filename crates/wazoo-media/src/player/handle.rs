@@ -76,7 +76,7 @@ impl Drop for VideoHandle {
 }
 
 impl VideoHandle {
-    pub const STUCK_THRESHOLD_SECONDS: usize = 30;
+    pub const STUCK_THRESHOLD_SECONDS: usize = 16;
     pub const SEEK_GRACE_PERIOD: Duration = Duration::from_secs(10);
 
     /// Construct FFmpeg `eq` video filter string for software rendering equalizer adjustments.
