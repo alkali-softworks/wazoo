@@ -57,11 +57,25 @@ impl std::fmt::Debug for VideoHandle {
 impl Drop for VideoHandle {
     fn drop(&mut self) {
         self.alive.store(false, Ordering::SeqCst);
-        let mpv_addr = self.mpv as usize;
-        let render_ctx_addr = self.render_ctx as usize;
+        let mpv = self.mpv;
+        let render_ctx = self.render_ctx;
         self.mpv = std::ptr::null_mut();
         self.render_ctx = std::ptr::null_mut();
 
+        // Immediately silence audio and halt playback asynchronously without blocking the UI thread.
+        // mpv_command_async never blocks the calling thread - it posts to libmpv's internal event queue
+        // and returns in < 1 microsecond, avoiding any core lock contention or demuxer stalls.
+        if !mpv.is_null() {
+            unsafe {
+                if let Ok(cmd_stop) = CString::new("stop") {
+                    let mut stop_args = [cmd_stop.as_ptr(), std::ptr::null()];
+                    mpv_ffi::mpv_command_async(mpv, 0, stop_args.as_mut_ptr());
+                }
+            }
+        }
+
+        let mpv_addr = mpv as usize;
+        let render_ctx_addr = render_ctx as usize;
         if mpv_addr != 0 || render_ctx_addr != 0 {
             let _ = std::thread::Builder::new()
                 .name("wazoo-mpv-teardown".into())
@@ -294,54 +308,9 @@ impl VideoHandle {
                 [cmd_loadfile.as_ptr(), path_arg.as_ptr(), std::ptr::null()];
             mpv_ffi::mpv_command(mpv, args.as_mut_ptr());
 
-            // Non-blocking pump of initial events so the UI thread is not frozen (bounded)
-            let mut init_events = 0;
-            while !mpv.is_null() && init_events < 64 {
-                init_events += 1;
-                let event = mpv_ffi::mpv_wait_event(mpv, 0.0);
-                if event.is_null() || (*event).event_id == mpv_ffi::MPV_EVENT_NONE {
-                    break;
-                }
-            }
-
-            let mut dur: f64 = 0.0;
-            let prop = CString::new("duration").unwrap();
-            let res = mpv_ffi::mpv_get_property(
-                mpv,
-                prop.as_ptr(),
-                mpv_ffi::MPV_FORMAT_DOUBLE,
-                &mut dur as *mut _ as *mut _,
-            );
-            let initial_duration = if res == 0 && dur > 0.0 {
-                Duration::from_secs_f64(dur)
-            } else {
-                Duration::ZERO
-            };
-
-            let mut render_width = 1280u32;
-            let mut render_height = 720u32;
-            let mut init_w: i64 = 0;
-            let mut init_h: i64 = 0;
-            let prop_w = CString::new("dwidth").unwrap();
-            let prop_h = CString::new("dheight").unwrap();
-            let res_w = mpv_ffi::mpv_get_property(
-                mpv,
-                prop_w.as_ptr(),
-                mpv_ffi::MPV_FORMAT_INT64,
-                &mut init_w as *mut _ as *mut _,
-            );
-            let res_h = mpv_ffi::mpv_get_property(
-                mpv,
-                prop_h.as_ptr(),
-                mpv_ffi::MPV_FORMAT_INT64,
-                &mut init_h as *mut _ as *mut _,
-            );
-            if res_w == 0 && res_h == 0 && init_w > 0 && init_h > 0 {
-                let max_dim = 1280.0f32;
-                let scale = (max_dim / (init_w as f32).max(init_h as f32)).min(1.0);
-                render_width = (((init_w as f32 * scale).round() as u32).max(16) / 2) * 2;
-                render_height = (((init_h as f32 * scale).round() as u32).max(16) / 2) * 2;
-            }
+            let initial_duration = Duration::ZERO;
+            let render_width = 1280u32;
+            let render_height = 720u32;
             let buffer_size = (render_width * render_height * 4) as usize;
             let mut pixel_buffer = vec![0u8; buffer_size];
             for chunk in pixel_buffer.chunks_exact_mut(4) {
@@ -446,6 +415,29 @@ impl VideoHandle {
                     let rand_pct = rand::thread_rng().gen_range(5.0..85.0);
                     self.set_property_string("start", &format!("{:.1}%", rand_pct));
                 }
+            }
+
+            // Immediately stop prior playback and audio so no previous audio bleeds
+            if let Ok(cmd_stop) = CString::new("stop") {
+                let mut stop_args = [cmd_stop.as_ptr(), std::ptr::null()];
+                mpv_ffi::mpv_command_async(self.mpv, 0, stop_args.as_mut_ptr());
+            }
+
+            // Immediately clear frame to solid black so no frozen frame of prior video is visible
+            if let Ok(mut frame) = self.frame.lock() {
+                for chunk in frame.pixels.chunks_exact_mut(4) {
+                    chunk[0] = 0;
+                    chunk[1] = 0;
+                    chunk[2] = 0;
+                    chunk[3] = 255;
+                }
+                frame.new_frame = true;
+            }
+            for chunk in self.pixel_buffer.chunks_exact_mut(4) {
+                chunk[0] = 0;
+                chunk[1] = 0;
+                chunk[2] = 0;
+                chunk[3] = 255;
             }
 
             let cmd_loadfile = CString::new("loadfile").map_err(|e| e.to_string())?;
@@ -729,6 +721,37 @@ impl VideoHandle {
 
     pub fn pause(&mut self) {
         self.set_pause_internal(true);
+    }
+
+    pub fn stop(&mut self) {
+        self.state.is_playing = false;
+        unsafe {
+            if !self.mpv.is_null() {
+                if let Ok(cmd) = CString::new("stop") {
+                    let mut args = [cmd.as_ptr(), std::ptr::null()];
+                    mpv_ffi::mpv_command_async(self.mpv, 0, args.as_mut_ptr());
+                }
+            }
+        }
+    }
+
+    /// Overwrite pixel and frame buffers with solid black so no previous frame is visible
+    pub fn clear_frame_black(&mut self) {
+        if let Ok(mut frame) = self.frame.lock() {
+            for chunk in frame.pixels.chunks_exact_mut(4) {
+                chunk[0] = 0;
+                chunk[1] = 0;
+                chunk[2] = 0;
+                chunk[3] = 255;
+            }
+            frame.new_frame = true;
+        }
+        for chunk in self.pixel_buffer.chunks_exact_mut(4) {
+            chunk[0] = 0;
+            chunk[1] = 0;
+            chunk[2] = 0;
+            chunk[3] = 255;
+        }
     }
 
     pub fn set_paused(&mut self, paused: bool) {

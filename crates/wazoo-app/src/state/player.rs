@@ -43,11 +43,12 @@ impl AppPlayer {
         }
     }
 
-    /// Marks this player as loading.
+    /// Marks this player as loading and blanks its frame to solid black.
     #[inline]
     pub fn start_loading(&mut self) {
         self.is_loading = true;
         self.loading_ticks = 0;
+        self.clear_frame_black();
     }
 
     /// Clears the loading state on this player.

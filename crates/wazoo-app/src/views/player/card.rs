@@ -34,11 +34,18 @@ impl WazooApp {
         let is_audio_menu_open = self.open_audio_menu_id == Some(player_id);
 
         let opacity = self.current_opacity();
-        let video_widget = p.view_full(opacity, is_scroll_mode, self.settings.crt_enabled);
-        let mut stack_children: Vec<Element<'a, Message>> = vec![video_widget];
+        let mut stack_children: Vec<Element<'a, Message>> = Vec::new();
 
         if is_loading {
+            let loading_backdrop = container(Space::new().width(Length::Fill).height(Length::Fill))
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .style(theme::player_container_style(opacity));
+            stack_children.push(Element::from(loading_backdrop));
             stack_children.push(self.view_loading_spinner());
+        } else {
+            let video_widget = p.view_full(opacity, is_scroll_mode, self.settings.crt_enabled);
+            stack_children.push(video_widget);
         }
 
         // Overlays show when mouse is actively moving over this specific player (fades after delay),
