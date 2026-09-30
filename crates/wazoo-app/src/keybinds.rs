@@ -97,6 +97,18 @@ fn match_single_key(token: &str, key: &Key) -> bool {
                     || token == "→"
             }
             Named::Tab => token.eq_ignore_ascii_case("tab"),
+            Named::F1 => token.eq_ignore_ascii_case("f1"),
+            Named::F2 => token.eq_ignore_ascii_case("f2"),
+            Named::F3 => token.eq_ignore_ascii_case("f3"),
+            Named::F4 => token.eq_ignore_ascii_case("f4"),
+            Named::F5 => token.eq_ignore_ascii_case("f5"),
+            Named::F6 => token.eq_ignore_ascii_case("f6"),
+            Named::F7 => token.eq_ignore_ascii_case("f7"),
+            Named::F8 => token.eq_ignore_ascii_case("f8"),
+            Named::F9 => token.eq_ignore_ascii_case("f9"),
+            Named::F10 => token.eq_ignore_ascii_case("f10"),
+            Named::F11 => token.eq_ignore_ascii_case("f11"),
+            Named::F12 => token.eq_ignore_ascii_case("f12"),
             _ => false,
         },
         Key::Character(s) => {
@@ -238,6 +250,15 @@ pub fn find_key_action(
     }
     if key_matches_binding(&keybinds.mark_out, key, false) {
         return Some(KeyAction::MarkOut);
+    }
+    if key_matches_binding(&keybinds.open_help, key, false) {
+        return Some(KeyAction::OpenHelp);
+    }
+    if key_matches_binding(&keybinds.open_settings, key, false) {
+        return Some(KeyAction::OpenSettings);
+    }
+    if key_matches_binding(&keybinds.toggle_crt, key, false) {
+        return Some(KeyAction::ToggleCrt);
     }
 
     None

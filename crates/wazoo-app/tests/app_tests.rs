@@ -470,6 +470,14 @@ fn test_boot_persists_default_keybinds() {
     let content = std::fs::read_to_string(app.config_mgr.config_file_path()).unwrap();
     assert!(content.contains("\"keybinds\""));
     assert_eq!(app.settings.keybinds.add_player, "n");
+    assert_eq!(app.settings.keybinds.open_help, "F1");
+    assert_eq!(app.settings.keybinds.open_settings, "F2");
+    assert_eq!(app.settings.keybinds.toggle_crt, "7");
+
+    // Every key in ALL_KEYS must be present in settings.json
+    for key in wazoo_core::KeybindSettings::ALL_KEYS {
+        assert!(content.contains(&format!("\"{}\"", key)), "settings.json must contain key {}", key);
+    }
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
@@ -500,6 +508,9 @@ fn test_boot_reconciles_and_persists_incomplete_keybinds() {
     assert_eq!(app.settings.keybinds.toggle_layout, "o");
     assert_eq!(app.settings.keybinds.close_app, "Alt+X");
     assert_eq!(app.settings.keybinds.add_player, "n");
+    assert_eq!(app.settings.keybinds.open_help, "F1");
+    assert_eq!(app.settings.keybinds.open_settings, "F2");
+    assert_eq!(app.settings.keybinds.toggle_crt, "7");
 
     // Boot should have written the complete list to settings.json
     assert!(app.config_mgr.has_complete_keybinds_in_settings());
@@ -507,6 +518,9 @@ fn test_boot_reconciles_and_persists_incomplete_keybinds() {
     assert!(updated_file_content.contains("\"toggle_layout\": \"o\""));
     assert!(updated_file_content.contains("\"close_app\": \"Alt+X\""));
     assert!(updated_file_content.contains("\"add_player\": \"n\""));
+    assert!(updated_file_content.contains("\"open_help\": \"F1\""));
+    assert!(updated_file_content.contains("\"open_settings\": \"F2\""));
+    assert!(updated_file_content.contains("\"toggle_crt\": \"7\""));
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
@@ -1257,6 +1271,29 @@ fn test_help_modal_shortcut_f1() {
 }
 
 #[test]
+fn test_settings_modal_shortcut_f2() {
+    let (mut app, _) = new_test_app();
+    assert!(!app.modals.settings);
+
+    // F2 should open the settings modal
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Named(iced::keyboard::key::Named::F2),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.modals.settings);
+    {
+        let _settings_view = app.view_settings_modal();
+    }
+
+    // Escape should close it
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Named(iced::keyboard::key::Named::Escape),
+        iced::event::Status::Ignored,
+    ));
+    assert!(!app.modals.settings);
+}
+
+#[test]
 fn test_prev_next_frame_keybind_dispatch() {
     let (mut app, _) = new_test_app();
 
@@ -1655,20 +1692,27 @@ fn test_set_active_query_updates_search_tags_and_reconciles() {
 }
 
 #[test]
-fn test_crt_filter_f7_hotkey_and_ui_toggle() {
+fn test_crt_filter_7_hotkey_and_ui_toggle() {
     let (mut app, _) = WazooApp::new_test_app();
     assert!(!app.settings.crt_enabled);
 
-    // Toggle via F7 hotkey
+    // F7 hotkey should NOT toggle CRT anymore
     let _ = app.update(Message::KeyPressed(
         iced::keyboard::Key::Named(iced::keyboard::key::Named::F7),
         iced::event::Status::Ignored,
     ));
+    assert!(!app.settings.crt_enabled);
+
+    // Toggle via '7' hotkey
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("7".into()),
+        iced::event::Status::Ignored,
+    ));
     assert!(app.settings.crt_enabled);
 
-    // Toggle via F7 hotkey again
+    // Toggle via '7' hotkey again
     let _ = app.update(Message::KeyPressed(
-        iced::keyboard::Key::Named(iced::keyboard::key::Named::F7),
+        iced::keyboard::Key::Character("7".into()),
         iced::event::Status::Ignored,
     ));
     assert!(!app.settings.crt_enabled);

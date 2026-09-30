@@ -247,13 +247,13 @@ impl WazooApp {
             ),
             Self::menu_item(
                 self.t("common.settings"),
-                None,
+                Some(kb.menu_hint(&kb.open_settings)),
                 Message::OpenSettingsModal,
                 padding,
             ),
             Self::menu_item(
                 self.t("common.help"),
-                Some("F1".to_string()),
+                Some(kb.menu_hint(&kb.open_help)),
                 Message::OpenHelpModal,
                 padding,
             ),

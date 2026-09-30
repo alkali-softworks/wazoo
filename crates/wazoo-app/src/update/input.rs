@@ -56,14 +56,6 @@ impl WazooApp {
             return Task::none();
         }
 
-        if key == Key::Named(Named::F1) {
-            return self.update(Message::OpenHelpModal);
-        }
-
-        if key == Key::Named(Named::F7) {
-            return self.update(Message::ToggleCrtFilter);
-        }
-
         if let Some(action) =
             find_key_action(&self.settings.keybinds, &key, self.window.is_alt_pressed)
         {
@@ -117,6 +109,9 @@ impl WazooApp {
                 KeyAction::MarkOut => return self.update(Message::MarkOutFocused),
                 KeyAction::ClearMarkIn => return self.update(Message::ClearMarkInFocused),
                 KeyAction::ClearMarkOut => return self.update(Message::ClearMarkOutFocused),
+                KeyAction::OpenHelp => return self.update(Message::OpenHelpModal),
+                KeyAction::OpenSettings => return self.update(Message::OpenSettingsModal),
+                KeyAction::ToggleCrt => return self.update(Message::ToggleCrtFilter),
             }
         }
         Task::none()

@@ -13,6 +13,9 @@ fn test_menu_hint() {
     assert_eq!(kb.menu_hint(&kb.toggle_history), "Y");
     assert_eq!(kb.menu_hint(&kb.close_app), "Alt+X");
     assert_eq!(kb.menu_hint(&kb.toggle_pin), "P");
+    assert_eq!(kb.menu_hint(&kb.open_help), "F1");
+    assert_eq!(kb.menu_hint(&kb.open_settings), "F2");
+    assert_eq!(kb.menu_hint(&kb.toggle_crt), "7");
 }
 
 #[test]
@@ -116,12 +119,36 @@ fn test_is_complete_json_and_reconcile_with_defaults() {
     // Reconcile blank value
     let mut kb = KeybindSettings {
         add_player: "  ".to_string(),
+        open_help: "".to_string(),
+        open_settings: "".to_string(),
+        toggle_crt: "  ".to_string(),
         ..Default::default()
     };
     kb.reconcile_with_defaults();
     assert_eq!(kb.add_player, "n");
+    assert_eq!(kb.open_help, "F1");
+    assert_eq!(kb.open_settings, "F2");
+    assert_eq!(kb.toggle_crt, "7");
 
     // Complete json with non-empty values
     let complete_json = serde_json::to_value(WazooSettings::default()).unwrap();
     assert!(KeybindSettings::is_complete_json(&complete_json));
+}
+
+#[test]
+fn test_all_keys_matches_keybind_settings_fields() {
+    let def = KeybindSettings::default();
+    let val = serde_json::to_value(&def).unwrap();
+    let obj = val.as_object().unwrap();
+
+    let mut keys_from_struct: Vec<&str> = obj.keys().map(|s| s.as_str()).collect();
+    keys_from_struct.sort();
+
+    let mut all_keys_sorted = KeybindSettings::ALL_KEYS.to_vec();
+    all_keys_sorted.sort();
+
+    assert_eq!(
+        keys_from_struct, all_keys_sorted,
+        "KeybindSettings::ALL_KEYS must contain every single field of KeybindSettings"
+    );
 }

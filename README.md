@@ -79,7 +79,7 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - **Escape Hatch**: Focusing Wazoo on your OS taskbar instantly disengages mouse passthrough and enables controls.
 
 ### 📺 Analog CRT Filter
-- Toggle an analog CRT monitor simulation complete with scanlines, subtle barrel curvature, vignette, and phosphor bloom (<kbd>F7</kbd> or via Playback Settings).
+- Toggle an analog CRT monitor simulation complete with scanlines, subtle barrel curvature, vignette, and phosphor bloom (<kbd>7</kbd> or via Playback Settings).
 - **GPU Accelerated**: Implemented directly in the WGPU shader pipeline with zero decoding overhead or frame latency.
 
 ### 🌐 Internationalization & Localization
@@ -113,6 +113,7 @@ wazoo "bebop"
 ### 3. Essential Shortcuts
 
 - <kbd>F1</kbd> — Help / Keybinds Reference
+- <kbd>F2</kbd> — Settings Modal
 - <kbd>Space</kbd> — Play / Pause
 - <kbd>F</kbd> – Toggle **File Drawer**
 - <kbd>J</kbd> or <kbd>/</kbd> — Open the **Search** modal
@@ -190,6 +191,7 @@ scoop install ffmpeg
 | <kbd>1</kbd> – <kbd>4</kbd> | Set active player count (1 to 4) |
 | <kbd>5</kbd> | Toggle **Scroll Mode** (vertical feed) |
 | <kbd>6</kbd> | Toggle **Flip Mode** (staggered auto-shuffle) |
+| <kbd>7</kbd> | Toggle **Analog CRT Filter** |
 | <kbd>+</kbd> / <kbd>=</kbd> | Add Bookmark (or increase Scroll Speed in Scroll Mode) |
 | <kbd>-</kbd> | Remove Bookmark (or decrease Scroll Speed in Scroll Mode) |
 | <kbd>I</kbd> / <kbd>O</kbd> — Set **Mark In** / **Mark Out** (A-B loop) |
@@ -197,7 +199,8 @@ scoop install ffmpeg
 | <kbd>R</kbd> | **Random Seek** on focused player |
 | <kbd>T</kbd> | Show video titles (all players) |
 | <kbd>,</kbd> / <kbd>.</kbd> | Step backward / forward one frame |
-| <kbd>F7</kbd> | Toggle **Analog CRT Filter** |
+| <kbd>F1</kbd> | Open **Keyboard Shortcuts & Help** |
+| <kbd>F2</kbd> | Open **Settings Modal** |
 
 ---
 

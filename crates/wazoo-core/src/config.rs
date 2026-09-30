@@ -109,9 +109,20 @@ impl ConfigManager {
         false
     }
 
+    /// Ensures that the settings.json file on disk exists and contains a complete entry for every keybind.
+    /// If the file is missing or incomplete, it loads settings, reconciles all keybind defaults, and saves it.
+    pub fn ensure_complete_keybinds_in_settings_file(&self) -> Result<(), std::io::Error> {
+        if !self.has_complete_keybinds_in_settings() {
+            let settings = self.load_settings();
+            self.save_settings(&settings)?;
+        }
+        Ok(())
+    }
+
     pub fn save_settings(&self, settings: &WazooSettings) -> Result<(), std::io::Error> {
         let path = self.config_file_path();
         let mut to_save = settings.clone();
+        to_save.keybinds.reconcile_with_defaults();
         if to_save.playback_mode == crate::models::PlaybackMode::Flip
             || to_save.playback_mode == crate::models::PlaybackMode::Scroll
         {
