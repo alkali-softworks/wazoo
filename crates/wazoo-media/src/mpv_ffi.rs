@@ -36,6 +36,22 @@ pub struct MpvEvent {
     pub data: *mut c_void,
 }
 
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct MpvEventEndFile {
+    pub reason: c_int,
+    pub error: c_int,
+    pub playlist_entry_id: i64,
+    pub playlist_insert_id: i64,
+    pub playlist_insert_num_entries: c_int,
+}
+
+pub const MPV_END_FILE_REASON_EOF: c_int = 0;
+pub const MPV_END_FILE_REASON_STOP: c_int = 2;
+pub const MPV_END_FILE_REASON_QUIT: c_int = 3;
+pub const MPV_END_FILE_REASON_ERROR: c_int = 4;
+pub const MPV_END_FILE_REASON_REDIRECT: c_int = 5;
+
 // Event IDs
 pub const MPV_EVENT_NONE: c_int = 0;
 pub const MPV_EVENT_SHUTDOWN: c_int = 1;

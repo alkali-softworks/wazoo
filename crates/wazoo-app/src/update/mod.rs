@@ -111,6 +111,9 @@ impl WazooApp {
                 let mut stuck_ids = Vec::new();
 
                 for p in &mut self.players {
+                    if p.is_loading {
+                        continue;
+                    }
                     if p.is_finished() {
                         finished_ids.push(p.id);
                     } else if p.check_stuck() {

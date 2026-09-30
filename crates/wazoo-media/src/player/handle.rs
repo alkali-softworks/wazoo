@@ -476,13 +476,13 @@ impl VideoHandle {
             self.state.current_subtitle_track_id = None;
 
             let (pending_seek, last_seek_time) = match start_time {
-                StartTime::Beginning => (None, None),
+                StartTime::Beginning => (None, Some(Instant::now())),
                 StartTime::Seconds(start) => {
                     if start > 0.05 {
                         self.state.position = Duration::from_secs_f64(start);
                         (Some(Duration::from_secs_f64(start)), Some(Instant::now()))
                     } else {
-                        (None, None)
+                        (None, Some(Instant::now()))
                     }
                 }
                 StartTime::Percent(_) | StartTime::Random => (None, Some(Instant::now())),
@@ -507,31 +507,31 @@ impl VideoHandle {
                 if event.is_null() || (*event).event_id == mpv_ffi::MPV_EVENT_NONE {
                     break;
                 }
-                if (*event).event_id == mpv_ffi::MPV_EVENT_END_FILE {
-                    self.is_eos = true;
+                if (*event).event_id == mpv_ffi::MPV_EVENT_START_FILE {
+                    self.is_eos = false;
                 }
-                if (*event).event_id == mpv_ffi::MPV_EVENT_FILE_LOADED
-                    || (*event).event_id == mpv_ffi::MPV_EVENT_TRACKS_CHANGED
+                if (*event).event_id == mpv_ffi::MPV_EVENT_END_FILE {
+                    if !(*event).data.is_null() {
+                        let end_data = &*((*event).data as *const mpv_ffi::MpvEventEndFile);
+                        if end_data.reason == mpv_ffi::MPV_END_FILE_REASON_EOF
+                            || end_data.reason == mpv_ffi::MPV_END_FILE_REASON_ERROR
+                        {
+                            self.is_eos = true;
+                        }
+                    } else {
+                        self.is_eos = true;
+                    }
+                }
+                if (*event).event_id == mpv_ffi::MPV_EVENT_FILE_LOADED {
+                    self.is_eos = false;
+                    self.tracks_loaded = true;
+                    needs_refresh_tracks = true;
+                } else if (*event).event_id == mpv_ffi::MPV_EVENT_TRACKS_CHANGED
                     || (*event).event_id == mpv_ffi::MPV_EVENT_PLAYBACK_RESTART
                     || (*event).event_id == mpv_ffi::MPV_EVENT_VIDEO_RECONFIG
                 {
+                    self.is_eos = false;
                     needs_refresh_tracks = true;
-                    self.tracks_loaded = true;
-                    if let Some(target) = self.pending_seek.take() {
-                        self.last_seek_time = Some(Instant::now());
-                        let cmd = format!("no-osd seek {:.3} absolute+exact", target.as_secs_f64());
-                        if let Ok(c_cmd) = CString::new(cmd) {
-                            mpv_ffi::mpv_command_string(self.mpv, c_cmd.as_ptr());
-                        }
-                    } else if self.pending_seek_random {
-                        let dur = self.duration();
-                        if dur > Duration::from_secs(2) {
-                            self.pending_seek_random = false;
-                            let max_secs = dur.as_secs_f64();
-                            let rand_secs = rand::thread_rng().gen_range(0.0..max_secs);
-                            self.seek_fast(Duration::from_secs_f64(rand_secs));
-                        }
-                    }
                 }
             }
 
@@ -560,8 +560,15 @@ impl VideoHandle {
                 let dur = self.duration();
                 if dur > Duration::from_secs(2) {
                     self.pending_seek_random = false;
+                    self.last_seek_time = Some(Instant::now());
                     let max_secs = dur.as_secs_f64();
-                    let rand_secs = rand::thread_rng().gen_range(0.0..max_secs);
+                    let min_secs = (max_secs * 0.05).min(5.0);
+                    let max_bound = (max_secs * 0.85).max(min_secs);
+                    let rand_secs = if max_bound > min_secs {
+                        rand::thread_rng().gen_range(min_secs..max_bound)
+                    } else {
+                        0.0
+                    };
                     self.seek_fast(Duration::from_secs_f64(rand_secs));
                 }
             }
@@ -1118,6 +1125,13 @@ impl VideoHandle {
     }
 
     pub fn is_finished(&self) -> bool {
+        if !self.tracks_loaded {
+            return false;
+        }
+        let dur = self.duration();
+        if dur < Duration::from_millis(500) {
+            return false;
+        }
         if self.has_loop() {
             return false;
         }
@@ -1140,17 +1154,14 @@ impl VideoHandle {
                 }
             }
         }
-        let dur = self.duration();
-        if dur > Duration::from_millis(500) {
-            let pos = self.position();
-            if pos >= dur || dur.saturating_sub(pos) <= Duration::from_millis(150) {
-                if let Some(seek_time) = self.last_seek_time {
-                    if seek_time.elapsed() < Duration::from_millis(1000) {
-                        return false;
-                    }
+        let pos = self.position();
+        if pos >= dur || dur.saturating_sub(pos) <= Duration::from_millis(150) {
+            if let Some(seek_time) = self.last_seek_time {
+                if seek_time.elapsed() < Duration::from_millis(1500) {
+                    return false;
                 }
-                return true;
             }
+            return true;
         }
         false
     }
