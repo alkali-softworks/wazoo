@@ -135,7 +135,13 @@ pub fn format_audio_track_label(track: &AudioTrack, index: usize) -> String {
         }
         (Some(title), None) => title,
         (None, Some(lang)) => lang,
-        (None, None) => format!("Track {}", index + 1),
+        (None, None) => {
+            if track.id > 0 {
+                format!("Track {}", track.id)
+            } else {
+                format!("Track {}", index + 1)
+            }
+        }
     }
 }
 
@@ -220,7 +226,13 @@ pub fn format_subtitle_track_label(track: &SubtitleTrack, index: usize) -> Strin
         }
         (Some(title), None) => title,
         (None, Some(lang)) => lang,
-        (None, None) => format!("Track {}", index + 1),
+        (None, None) => {
+            if track.id > 0 {
+                format!("Track {}", track.id)
+            } else {
+                format!("Track {}", index + 1)
+            }
+        }
     }
 }
 
@@ -316,6 +328,21 @@ pub fn get_track_preference_string(track: &AudioTrack) -> String {
     format!("Track {}", track.id)
 }
 
+pub fn matches_alias_token(text: &str, alias: &str) -> bool {
+    let lower_alias = alias.trim().to_ascii_lowercase();
+    if lower_alias.is_empty() {
+        return false;
+    }
+    let lower_text = text.to_ascii_lowercase();
+    if lower_alias.len() <= 2 {
+        lower_text
+            .split(|c: char| !c.is_alphanumeric())
+            .any(|w| w == lower_alias)
+    } else {
+        lower_text.contains(&lower_alias)
+    }
+}
+
 pub fn find_matching_audio_track(tracks: &[AudioTrack], preferred: &str) -> Option<i64> {
     if preferred.trim().is_empty() {
         return None;
@@ -336,11 +363,10 @@ pub fn find_matching_audio_track(tracks: &[AudioTrack], preferred: &str) -> Opti
         }
     }
 
-    // Pass 2: match on track.title containing any alias as a substring
+    // Pass 2: match on track.title containing alias token
     for t in tracks {
         if let Some(ref title) = t.title {
-            let lower_title = title.to_ascii_lowercase();
-            if aliases.iter().any(|a| lower_title.contains(a)) {
+            if aliases.iter().any(|a| matches_alias_token(title, a)) {
                 return Some(t.id);
             }
         }
@@ -348,8 +374,8 @@ pub fn find_matching_audio_track(tracks: &[AudioTrack], preferred: &str) -> Opti
 
     // Pass 3: match formatted label
     for (i, t) in tracks.iter().enumerate() {
-        let label = format_audio_track_label(t, i).to_ascii_lowercase();
-        if aliases.iter().any(|a| label.contains(a)) {
+        let label = format_audio_track_label(t, i);
+        if aliases.iter().any(|a| matches_alias_token(&label, a)) {
             return Some(t.id);
         }
     }
@@ -373,13 +399,12 @@ pub fn track_matches_preference(track: &AudioTrack, preferred: &str) -> bool {
         }
     }
     if let Some(ref title) = track.title {
-        let lower_title = title.to_ascii_lowercase();
-        if aliases.iter().any(|a| lower_title.contains(a)) {
+        if aliases.iter().any(|a| matches_alias_token(title, a)) {
             return true;
         }
     }
-    let label = format_audio_track_label(track, 0).to_ascii_lowercase();
-    if aliases.iter().any(|a| label.contains(a)) {
+    let label = format_audio_track_label(track, 0);
+    if aliases.iter().any(|a| matches_alias_token(&label, a)) {
         return true;
     }
     false

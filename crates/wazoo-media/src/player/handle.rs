@@ -10,7 +10,7 @@
 use super::state::{BufferConfig, PlayerState};
 use super::tracks::{
     AudioTrack, PlayerId, StartTime, SubtitleTrack, build_alang_string, find_matching_audio_track,
-    track_matches_preference,
+    get_track_preference_string, track_matches_preference,
 };
 use crate::mpv_ffi;
 use crate::pipeline::FrameData;
@@ -516,7 +516,6 @@ impl VideoHandle {
                 }
                 if (*event).event_id == mpv_ffi::MPV_EVENT_FILE_LOADED {
                     self.is_eos = false;
-                    self.tracks_loaded = true;
                     needs_refresh_tracks = true;
                 } else if (*event).event_id == mpv_ffi::MPV_EVENT_TRACKS_CHANGED
                     || (*event).event_id == mpv_ffi::MPV_EVENT_PLAYBACK_RESTART
@@ -533,7 +532,6 @@ impl VideoHandle {
                 let count = self.get_property_i64("track-list/count").unwrap_or(0);
                 if count > 0 {
                     self.refresh_audio_tracks();
-                    self.tracks_loaded = true;
                 }
             }
 
@@ -1258,6 +1256,18 @@ impl VideoHandle {
             for t in &mut self.state.audio_tracks {
                 t.is_selected = t.id == track_id;
             }
+            if let Some(track) = self.state.audio_tracks.iter().find(|t| t.id == track_id) {
+                let pref = get_track_preference_string(track);
+                if !pref.starts_with("Track ") {
+                    self.preferred_audio_language = Some(pref.clone());
+                    let alang = build_alang_string(&pref);
+                    if !alang.is_empty() {
+                        if let (Ok(c_prop), Ok(c_val)) = (CString::new("alang"), CString::new(alang)) {
+                            mpv_ffi::mpv_set_property_string(self.mpv, c_prop.as_ptr(), c_val.as_ptr());
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1338,38 +1348,50 @@ impl VideoHandle {
                 });
             }
         }
-        let aid_i64 = self.get_property_i64("aid");
-        let aid_str = self.get_property_string("aid");
-        let mut current_aid = aid_i64
-            .or_else(|| aid_str.as_deref().and_then(|s| s.parse::<i64>().ok()))
-            .or_else(|| audio_tracks.iter().find(|t| t.is_selected).map(|t| t.id))
-            .or_else(|| audio_tracks.first().map(|t| t.id));
-        self.state.audio_tracks = audio_tracks;
-        self.state.current_audio_track_id = current_aid;
+        // Query mpv for the currently active audio track.
+        // Important: mpv's "aid" property could be set to "no", "auto", or an ID from a previous/different file.
+        // We only consider an aid from mpv valid if it actually exists in this file's audio_tracks list.
+        let mpv_selected_aid = self
+            .get_property_i64("aid")
+            .or_else(|| {
+                self.get_property_string("aid")
+                    .as_deref()
+                    .and_then(|s| s.parse::<i64>().ok())
+            })
+            .filter(|id| audio_tracks.iter().any(|t| t.id == *id))
+            .or_else(|| audio_tracks.iter().find(|t| t.is_selected).map(|t| t.id));
 
-        // Auto-select preferred audio track on initial load if configured and not already matching
-        let is_initial_load = !self.tracks_loaded || self.state.current_audio_track_id.is_none();
-        if is_initial_load {
+        let mut current_aid = mpv_selected_aid.or(self.state.current_audio_track_id);
+
+        // Auto-select preferred audio track on initial load of the file tracks
+        if !self.tracks_loaded && !audio_tracks.is_empty() {
+            let mut target_aid = None;
             if let Some(ref pref) = self.preferred_audio_language {
-                let current_already_matches = current_aid.map_or(false, |aid| {
-                    self.state
-                        .audio_tracks
-                        .iter()
-                        .any(|t| t.id == aid && track_matches_preference(t, pref))
-                });
+                if let Some(matching_id) = find_matching_audio_track(&audio_tracks, pref) {
+                    target_aid = Some(matching_id);
+                }
+            }
 
-                if !current_already_matches {
-                    if let Some(matching_id) =
-                        find_matching_audio_track(&self.state.audio_tracks, pref)
-                    {
-                        if current_aid != Some(matching_id) {
-                            self.set_audio_track(matching_id);
-                            current_aid = Some(matching_id);
-                        }
-                    }
+            // Fallback: if no preference matched (or no preference configured) and mpv has no valid track selected,
+            // default to the container's default audio track or the first available audio track.
+            if target_aid.is_none() && current_aid.is_none() {
+                target_aid = audio_tracks
+                    .iter()
+                    .find(|t| t.is_selected)
+                    .map(|t| t.id)
+                    .or_else(|| audio_tracks.first().map(|t| t.id));
+            }
+
+            if let Some(desired_id) = target_aid {
+                if current_aid != Some(desired_id) {
+                    self.set_audio_track(desired_id);
+                    current_aid = Some(desired_id);
                 }
             }
         }
+
+        self.state.audio_tracks = audio_tracks;
+        self.state.current_audio_track_id = current_aid;
 
         if let Some(aid) = current_aid {
             for t in &mut self.state.audio_tracks {
@@ -1378,7 +1400,7 @@ impl VideoHandle {
         }
 
         // Subtitle tracks
-        let is_initial_load = !self.tracks_loaded || self.state.current_subtitle_track_id.is_none();
+        let is_sub_initial_load = !self.tracks_loaded || self.state.current_subtitle_track_id.is_none();
         let sid_i64 = self.get_property_i64("sid");
         let sid_str = self.get_property_string("sid");
         let mpv_selected_sid =
@@ -1388,7 +1410,7 @@ impl VideoHandle {
             .or_else(|| sub_tracks.iter().find(|t| t.is_selected).map(|t| t.id))
             .or_else(|| sub_tracks.first().map(|t| t.id));
 
-        if is_initial_load && !sub_tracks.is_empty() {
+        if is_sub_initial_load && !sub_tracks.is_empty() {
             if let Some(sid) = mpv_selected_sid {
                 // If mpv defaulted to a Signs/Songs track (which only contains signs/lyrics, no dialogue),
                 // and a full dialogue subtitle track exists (or external subtitle sidecar), automatically promote to the full track on initial load.
@@ -1489,6 +1511,10 @@ impl VideoHandle {
             for t in &mut self.state.subtitle_tracks {
                 t.is_selected = t.id == sid;
             }
+        }
+
+        if !self.state.audio_tracks.is_empty() || !self.state.subtitle_tracks.is_empty() {
+            self.tracks_loaded = true;
         }
     }
 
