@@ -193,7 +193,7 @@ impl WazooApp {
                     let prev_volume = curr_player.map(|p| p.state.volume);
 
                     if let Ok(mut handle) = self.create_video_handle(id, &path, &title) {
-                        handle.set_muted(prev_muted.unwrap_or(true));
+                        handle.set_muted(prev_muted.unwrap_or(false));
                         if let Some(vol) = prev_volume {
                             handle.set_volume(vol);
                         }

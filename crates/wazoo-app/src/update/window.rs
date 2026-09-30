@@ -123,6 +123,7 @@ impl WazooApp {
                         self.scroll_engine.needs_new_player_with_margin(margin)
                     {
                         if let Some(mut handle) = self.preloaded_player.take() {
+                            handle.set_muted(self.settings.scroll_mode_muted);
                             let item_h = self.calculate_player_scroll_height(&handle);
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);

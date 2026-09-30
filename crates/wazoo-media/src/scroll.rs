@@ -22,7 +22,7 @@ pub struct ScrollEngine {
     pub items: HashMap<PlayerId, ScrollItem>,
     pub window_width: f32,
     pub window_height: f32,
-    pub is_global_muted: bool,
+    pub scroll_mode_muted: bool,
 }
 
 impl ScrollEngine {
@@ -32,7 +32,7 @@ impl ScrollEngine {
             items: HashMap::new(),
             window_width: 0.0,
             window_height,
-            is_global_muted: true,
+            scroll_mode_muted: true,
         }
     }
 
@@ -42,7 +42,7 @@ impl ScrollEngine {
             items: HashMap::new(),
             window_width,
             window_height,
-            is_global_muted: true,
+            scroll_mode_muted: true,
         }
     }
 
@@ -221,7 +221,7 @@ impl ScrollEngine {
 
     /// Calculate the volume (0.0 to 1.0) for a given player based on its visibility intersection.
     pub fn calculate_player_volume(&self, player_id: PlayerId) -> f64 {
-        if self.is_global_muted {
+        if self.scroll_mode_muted {
             return 0.0;
         }
 

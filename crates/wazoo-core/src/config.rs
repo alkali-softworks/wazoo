@@ -22,18 +22,8 @@ impl ConfigManager {
         let proj_dirs = ProjectDirs::from("com", "alkalisoftworks", "wazoo")
             .expect("Unable to determine project directories");
 
-        let mut config_dir = proj_dirs.config_dir().to_path_buf();
-        let mut data_dir = proj_dirs.data_dir().to_path_buf();
-
-        // If legacy wazoo-rs directory exists and new wazoo dir does not, reuse legacy dir
-        if !config_dir.exists() {
-            if let Some(legacy) = ProjectDirs::from("com", "alkalisoftworks", "wazoo-rs") {
-                if legacy.config_dir().exists() {
-                    config_dir = legacy.config_dir().to_path_buf();
-                    data_dir = legacy.data_dir().to_path_buf();
-                }
-            }
-        }
+        let config_dir = proj_dirs.config_dir().to_path_buf();
+        let data_dir = proj_dirs.data_dir().to_path_buf();
 
         if !config_dir.exists() {
             let _ = fs::create_dir_all(&config_dir);
@@ -97,9 +87,8 @@ impl ConfigManager {
 
         settings.flip_interval_secs = settings.flip_interval_secs.clamp(1, 3600);
 
-        if settings.playback_mode == crate::models::PlaybackMode::Flip {
-            settings.playback_mode = crate::models::PlaybackMode::Normal;
-        }
+        // Playback mode is always Normal on boot
+        settings.playback_mode = crate::models::PlaybackMode::Normal;
 
         settings
     }
@@ -123,7 +112,9 @@ impl ConfigManager {
     pub fn save_settings(&self, settings: &WazooSettings) -> Result<(), std::io::Error> {
         let path = self.config_file_path();
         let mut to_save = settings.clone();
-        if to_save.playback_mode == crate::models::PlaybackMode::Flip {
+        if to_save.playback_mode == crate::models::PlaybackMode::Flip
+            || to_save.playback_mode == crate::models::PlaybackMode::Scroll
+        {
             to_save.playback_mode = crate::models::PlaybackMode::Normal;
         }
         let json = serde_json::to_string_pretty(&to_save)?;

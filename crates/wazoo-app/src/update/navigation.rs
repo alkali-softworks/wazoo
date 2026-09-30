@@ -41,7 +41,7 @@ impl WazooApp {
         prev_muted: Option<bool>,
         prev_volume: Option<f64>,
     ) {
-        new_handle.set_muted(prev_muted.unwrap_or(true));
+        new_handle.set_muted(prev_muted.unwrap_or(false));
         if let Some(vol) = prev_volume {
             new_handle.set_volume(vol);
         }
