@@ -239,3 +239,128 @@ fn test_player_mark_in_out() {
     assert_eq!(state.mark_in, None);
     assert_eq!(state.mark_out, None);
 }
+
+#[test]
+fn test_matches_alias_token_avoids_substring_false_positives() {
+    use wazoo_media::matches_alias_token;
+
+    // Short alias "en" must NOT match as substring in arbitrary words
+    assert!(!matches_alias_token("Clean", "en"));
+    assert!(!matches_alias_token("Opening Theme", "en"));
+    assert!(!matches_alias_token("French Audio", "en"));
+    assert!(!matches_alias_token("Scene Audio", "en"));
+
+    // Short alias "es" must NOT match in words like Remastered
+    assert!(!matches_alias_token("Remastered Audio", "es"));
+    assert!(!matches_alias_token("Effects Track", "es"));
+
+    // But should match as discrete tokens
+    assert!(matches_alias_token("Audio [EN]", "en"));
+    assert!(matches_alias_token("Track (en)", "en"));
+    assert!(matches_alias_token("Dub - en - 2.0", "en"));
+    assert!(matches_alias_token("Audio [ES]", "es"));
+
+    // Longer aliases work with normal substring matching
+    assert!(matches_alias_token("English Dub 5.1", "english"));
+    assert!(matches_alias_token("Stereo [eng]", "eng"));
+    assert!(matches_alias_token("Japanese Stereo", "japanese"));
+    assert!(matches_alias_token("Japanese Audio [jpn]", "jpn"));
+    assert!(matches_alias_token("Spanish Dubbed", "spanish"));
+}
+
+#[test]
+fn test_multitrack_preference_matching() {
+    use wazoo_media::{AudioTrack, find_matching_audio_track};
+
+    // Tracks matching Slayers MKV episodes (Stream 1: eng, Stream 2: jpn/Stereo, Stream 3: spa)
+    let tracks = vec![
+        AudioTrack {
+            id: 1,
+            title: None,
+            lang: Some("eng".to_string()),
+            codec: Some("vorbis".to_string()),
+            is_selected: true,
+        },
+        AudioTrack {
+            id: 2,
+            title: Some("Stereo".to_string()),
+            lang: Some("jpn".to_string()),
+            codec: Some("vorbis".to_string()),
+            is_selected: false,
+        },
+        AudioTrack {
+            id: 3,
+            title: None,
+            lang: Some("spa".to_string()),
+            codec: Some("vorbis".to_string()),
+            is_selected: false,
+        },
+    ];
+
+    // English preference -> Track 1
+    assert_eq!(find_matching_audio_track(&tracks, "English"), Some(1));
+    assert_eq!(find_matching_audio_track(&tracks, "eng"), Some(1));
+    assert_eq!(find_matching_audio_track(&tracks, "en"), Some(1));
+
+    // Japanese preference -> Track 2
+    assert_eq!(find_matching_audio_track(&tracks, "Japanese"), Some(2));
+    assert_eq!(find_matching_audio_track(&tracks, "jpn"), Some(2));
+    assert_eq!(find_matching_audio_track(&tracks, "ja"), Some(2));
+
+    // Spanish preference -> Track 3
+    assert_eq!(find_matching_audio_track(&tracks, "Spanish"), Some(3));
+    assert_eq!(find_matching_audio_track(&tracks, "spa"), Some(3));
+    assert_eq!(find_matching_audio_track(&tracks, "es"), Some(3));
+
+    // Non-existent preference -> None
+    assert_eq!(find_matching_audio_track(&tracks, "German"), None);
+}
+
+#[test]
+fn test_format_audio_track_label_prefers_track_id() {
+    use wazoo_media::{AudioTrack, format_audio_track_label};
+
+    let track_untagged = AudioTrack {
+        id: 3,
+        title: None,
+        lang: None,
+        codec: None,
+        is_selected: false,
+    };
+
+    // Even when passing index 0, should format using track.id = 3 -> "Track 3"
+    assert_eq!(format_audio_track_label(&track_untagged, 0), "Track 3");
+}
+
+#[test]
+fn test_audio_track_preference_updates_and_retention() {
+    use wazoo_media::{AudioTrack, get_track_preference_string};
+
+    let track_spanish = AudioTrack {
+        id: 3,
+        title: None,
+        lang: Some("spa".to_string()),
+        codec: Some("vorbis".to_string()),
+        is_selected: true,
+    };
+    assert_eq!(get_track_preference_string(&track_spanish), "Spanish");
+
+    let track_english = AudioTrack {
+        id: 1,
+        title: None,
+        lang: Some("eng".to_string()),
+        codec: Some("vorbis".to_string()),
+        is_selected: false,
+    };
+    assert_eq!(get_track_preference_string(&track_english), "English");
+
+    let track_japanese = AudioTrack {
+        id: 2,
+        title: Some("Stereo".to_string()),
+        lang: Some("jpn".to_string()),
+        codec: Some("vorbis".to_string()),
+        is_selected: false,
+    };
+    assert_eq!(get_track_preference_string(&track_japanese), "Japanese");
+}
+

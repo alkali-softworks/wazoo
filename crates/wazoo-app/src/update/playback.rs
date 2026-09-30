@@ -374,11 +374,11 @@ impl WazooApp {
                     self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                 }
                 if let Some(pref) = selected_pref {
-                    self.settings.preferred_audio_language = Some(pref.clone());
-                    let _ = self.config_mgr.save_settings(&self.settings);
-                    for other in &mut self.players {
-                        if other.id != id {
-                            other.set_preferred_audio_language(Some(pref.clone()));
+                    if !pref.starts_with("Track ") {
+                        self.settings.preferred_audio_language = Some(pref.clone());
+                        let _ = self.config_mgr.save_settings(&self.settings);
+                        for player in &mut self.players {
+                            player.set_preferred_audio_language(Some(pref.clone()));
                         }
                     }
                 }
