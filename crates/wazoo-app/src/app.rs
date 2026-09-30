@@ -720,8 +720,8 @@ impl WazooApp {
 
     pub(crate) fn record_current_player_nav_position(&mut self, id: PlayerId) {
         if let Some(p) = self.players.player_mut(id) {
-            let pos_secs = p.position().as_secs_f64();
-            let dur_secs = p.duration().as_secs_f64();
+            let pos_secs = p.state.position.as_secs_f64();
+            let dur_secs = p.state.duration.as_secs_f64();
             let saved_pos = if dur_secs > 10.0 && (dur_secs - pos_secs) < 3.0 {
                 None
             } else if pos_secs > 0.5 {

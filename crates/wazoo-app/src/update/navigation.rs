@@ -48,6 +48,7 @@ impl WazooApp {
         new_handle.set_subtitles_visible(self.subtitles_enabled);
         if let Some(p) = self.players.player_mut(id) {
             p.handle = new_handle;
+            p.start_loading();
         }
     }
 
@@ -64,6 +65,7 @@ impl WazooApp {
         self.focus_player_for_navigation(id, request_focus);
         if let Some(p) = self.players.player_mut(id) {
             p.clear_marks();
+            p.stop();
         }
 
         let curr_player = self.players.player(id);
@@ -86,27 +88,12 @@ impl WazooApp {
                 .map(|v| v.name.clone())
                 .unwrap_or_else(|| format::format_video_title(&target.path));
 
-            let start_time = target
-                .position_secs
-                .map(StartTime::Seconds)
-                .unwrap_or(StartTime::Beginning);
-
-            if let Some(p) = self.players.player_mut(id) {
-                if p.handle.load_file(&target.path, &name, start_time).is_ok() {
-                    p.handle.set_subtitles_visible(self.subtitles_enabled);
-                    self.push_player_nav_entry(id, target.path.clone(), target.position_secs);
-                    loaded = true;
-                }
-            }
-
-            if !loaded {
-                if let Ok(new_handle) =
-                    self.create_video_handle_with_start(id, &target.path, &name, target.position_secs)
-                {
-                    self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
-                    self.push_player_nav_entry(id, target.path.clone(), target.position_secs);
-                    loaded = true;
-                }
+            if let Ok(new_handle) =
+                self.create_video_handle_with_start(id, &target.path, &name, target.position_secs)
+            {
+                self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
+                self.push_player_nav_entry(id, target.path.clone(), target.position_secs);
+                loaded = true;
             }
         }
 
@@ -123,14 +110,6 @@ impl WazooApp {
                 if let Some(video_rec) = self
                     .get_next_video_rec_with_mode(curr_path.as_deref(), self.is_player_shuffle(id))
                 {
-                    if let Some(p) = self.players.player_mut(id) {
-                        if p.handle.load_file(&video_rec.path, &video_rec.name, start_time).is_ok() {
-                            p.handle.set_subtitles_visible(self.subtitles_enabled);
-                            self.push_player_nav_entry(id, video_rec.path.clone(), None);
-                            break;
-                        }
-                    }
-
                     if let Ok(new_handle) = self.create_video_handle_with_start_time(
                         id,
                         &video_rec.path,
@@ -168,6 +147,7 @@ impl WazooApp {
         self.focus_player_for_navigation(id, request_focus);
         if let Some(p) = self.players.player_mut(id) {
             p.clear_marks();
+            p.stop();
         }
 
         let curr_player = self.players.player(id);
@@ -204,27 +184,12 @@ impl WazooApp {
                 .map(|v| v.name.clone())
                 .unwrap_or_else(|| format::format_video_title(&target.path));
 
-            let start_time = target
-                .position_secs
-                .map(StartTime::Seconds)
-                .unwrap_or(StartTime::Beginning);
-
-            if let Some(p) = self.players.player_mut(id) {
-                if p.handle.load_file(&target.path, &name, start_time).is_ok() {
-                    p.handle.set_subtitles_visible(self.subtitles_enabled);
-                    self.record_play_history(&target.path);
-                    loaded = true;
-                }
-            }
-
-            if !loaded {
-                if let Ok(new_handle) =
-                    self.create_video_handle_with_start(id, &target.path, &name, target.position_secs)
-                {
-                    self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
-                    self.record_play_history(&target.path);
-                    loaded = true;
-                }
+            if let Ok(new_handle) =
+                self.create_video_handle_with_start(id, &target.path, &name, target.position_secs)
+            {
+                self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
+                self.record_play_history(&target.path);
+                loaded = true;
             }
         }
 
@@ -234,14 +199,6 @@ impl WazooApp {
                 if let Some(video_rec) = self
                     .get_prev_video_rec_with_mode(curr_path.as_deref(), self.is_player_shuffle(id))
                 {
-                    if let Some(p) = self.players.player_mut(id) {
-                        if p.handle.load_file(&video_rec.path, &video_rec.name, StartTime::Beginning).is_ok() {
-                            p.handle.set_subtitles_visible(self.subtitles_enabled);
-                            self.push_player_nav_entry(id, video_rec.path.clone(), None);
-                            break;
-                        }
-                    }
-
                     if let Ok(new_handle) =
                         self.create_video_handle(id, &video_rec.path, &video_rec.name)
                     {

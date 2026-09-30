@@ -118,6 +118,11 @@ pub struct MpvApi {
         unsafe extern "C" fn(ctx: *mut MpvHandle, name: *const c_char) -> *mut c_char,
     pub mpv_free: unsafe extern "C" fn(data: *mut c_void),
     pub mpv_command: unsafe extern "C" fn(ctx: *mut MpvHandle, args: *mut *const c_char) -> c_int,
+    pub mpv_command_async: unsafe extern "C" fn(
+        ctx: *mut MpvHandle,
+        reply_userdata: u64,
+        args: *mut *const c_char,
+    ) -> c_int,
     pub mpv_command_string: unsafe extern "C" fn(ctx: *mut MpvHandle, args: *const c_char) -> c_int,
     pub mpv_wait_event:
         unsafe extern "C" fn(ctx: *mut MpvHandle, timeout: c_double) -> *mut MpvEvent,
@@ -170,6 +175,7 @@ unsafe fn load_symbols(lib: Library) -> Option<MpvApi> {
             mpv_get_property_string: get_sym!(mpv_get_property_string),
             mpv_free: get_sym!(mpv_free),
             mpv_command: get_sym!(mpv_command),
+            mpv_command_async: get_sym!(mpv_command_async),
             mpv_command_string: get_sym!(mpv_command_string),
             mpv_wait_event: get_sym!(mpv_wait_event),
             mpv_render_context_create: get_sym!(mpv_render_context_create),
@@ -572,6 +578,20 @@ pub unsafe fn mpv_command(ctx: *mut MpvHandle, args: *mut *const c_char) -> c_in
     unsafe {
         if let Some(api) = get_mpv_api() {
             (api.mpv_command)(ctx, args)
+        } else {
+            -1
+        }
+    }
+}
+
+pub unsafe fn mpv_command_async(
+    ctx: *mut MpvHandle,
+    reply_userdata: u64,
+    args: *mut *const c_char,
+) -> c_int {
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_command_async)(ctx, reply_userdata, args)
         } else {
             -1
         }
