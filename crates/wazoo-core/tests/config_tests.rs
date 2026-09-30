@@ -25,11 +25,6 @@ fn test_default_player_setting_serialization() {
     let json = serde_json::to_string(&settings).unwrap();
     let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
     assert!(deserialized.is_default_player);
-
-    // Verify backwards compatibility when is_default_player is omitted
-    let json_legacy = r#"{"window_opacity":1.0}"#;
-    let legacy_settings: WazooSettings = serde_json::from_str(json_legacy).unwrap();
-    assert!(!legacy_settings.is_default_player);
 }
 
 #[test]
@@ -53,18 +48,6 @@ fn test_session_videos_serialization() {
     assert!(!deserialized.session_videos[0].is_muted);
     assert_eq!(deserialized.session_videos[0].volume, 0.8);
     assert!(!deserialized.session_videos[0].is_shuffle);
-
-    // Verify legacy video session JSON without is_shuffle defaults to true
-    let legacy_session_json = r#"{"path":"/path/legacy.mp4","position_secs":12.0}"#;
-    let legacy_session: wazoo_core::models::VideoSession =
-        serde_json::from_str(legacy_session_json).unwrap();
-    assert!(legacy_session.is_shuffle);
-
-    // Verify backwards compatibility when session_videos is omitted from JSON
-    let json_legacy = r#"{"window_bounds":{"x":0,"y":0,"width":1280,"height":720},"window_opacity":1.0,"media_folders":[],"player_count":1,"layout":"grid","playback_mode":"normal","scroll_speed":1.0,"is_global_muted":true,"last_query":"","last_folder":"All"}"#;
-    let legacy_settings: WazooSettings = serde_json::from_str(json_legacy).unwrap();
-    assert!(legacy_settings.session_videos.is_empty());
-    assert!(legacy_settings.bookmarks.is_empty());
 }
 
 #[test]
@@ -86,13 +69,6 @@ fn test_bookmarks_serialization() {
     assert_eq!(deserialized.bookmarks[0].path, "/media/scifi/ep01.mp4");
     assert_eq!(deserialized.bookmarks[0].position_secs, 125.4);
     assert!(!deserialized.bookmarks[0].is_shuffle);
-
-    // Verify legacy bookmark JSON without is_shuffle defaults to true
-    let legacy_bookmark_json =
-        r#"{"name":"Legacy","query":"test","path":"/path/test.mp4","position_secs":10.0}"#;
-    let legacy_bookmark: wazoo_core::models::Bookmark =
-        serde_json::from_str(legacy_bookmark_json).unwrap();
-    assert!(legacy_bookmark.is_shuffle);
 }
 
 #[test]
@@ -165,11 +141,6 @@ fn test_preferred_audio_language_serialization() {
         deserialized.preferred_audio_language.as_deref(),
         Some("Japanese")
     );
-
-    // Backwards compatibility when omitted
-    let legacy_json = r#"{"window_opacity":1.0}"#;
-    let legacy: WazooSettings = serde_json::from_str(legacy_json).unwrap();
-    assert_eq!(legacy.preferred_audio_language, None);
 }
 
 #[test]
@@ -191,12 +162,7 @@ fn test_keybinds_serialization_and_has_keybinds() {
     // Initially no settings file exists
     assert!(!mgr.has_keybinds_in_settings());
 
-    // Save legacy settings without keybinds field
-    let legacy_json = r#"{"window_opacity":0.95}"#;
-    fs::write(mgr.config_file_path(), legacy_json).unwrap();
-    assert!(!mgr.has_keybinds_in_settings());
-
-    // Loading legacy settings fills in default keybinds
+    // Loading settings provides default keybinds
     let mut loaded = mgr.load_settings();
     assert_eq!(loaded.keybinds.add_player, "n");
 
@@ -285,11 +251,6 @@ fn test_flip_interval_serialization_and_clamping() {
     let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.flip_interval_secs, 60);
 
-    // Verify legacy settings without flip_interval_secs defaults to 45
-    let legacy_json = r#"{"window_opacity":1.0}"#;
-    let legacy: WazooSettings = serde_json::from_str(legacy_json).unwrap();
-    assert_eq!(legacy.flip_interval_secs, 45);
-
     // Verify clamping in load_settings
     let temp_dir = std::env::temp_dir().join(format!(
         "wazoo_flip_test_{}",
@@ -316,11 +277,11 @@ fn test_flip_interval_serialization_and_clamping() {
 }
 
 #[test]
-fn test_flip_mode_does_not_persist() {
+fn test_playback_mode_does_not_persist_scroll_or_flip() {
     use wazoo_core::models::PlaybackMode;
 
     let temp_dir = std::env::temp_dir().join(format!(
-        "wazoo_flip_persist_test_{}",
+        "wazoo_mode_persist_test_{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -347,19 +308,28 @@ fn test_flip_mode_does_not_persist() {
     let loaded = mgr.load_settings();
     assert_eq!(loaded.playback_mode, PlaybackMode::Normal);
 
-    // 2. Scroll mode does persist
+    // 2. If save_settings is called while in Scroll mode, it should save as Normal mode
     let scroll_settings = WazooSettings {
         playback_mode: PlaybackMode::Scroll,
         ..Default::default()
     };
     mgr.save_settings(&scroll_settings).unwrap();
-    let loaded_scroll = mgr.load_settings();
-    assert_eq!(loaded_scroll.playback_mode, PlaybackMode::Scroll);
+    let content_scroll = fs::read_to_string(mgr.config_file_path()).unwrap();
+    assert!(!content_scroll.contains(r#""playback_mode": "scroll""#));
+    assert!(content_scroll.contains(r#""playback_mode": "normal""#));
 
-    // 3. Pre-existing settings file with "flip" is coerced to Normal on load
+    let loaded_scroll = mgr.load_settings();
+    assert_eq!(loaded_scroll.playback_mode, PlaybackMode::Normal);
+
+    // 3. Pre-existing settings file with "flip" is coerced to Normal on load (boot)
     fs::write(mgr.config_file_path(), r#"{"playback_mode": "flip"}"#).unwrap();
-    let loaded_legacy = mgr.load_settings();
-    assert_eq!(loaded_legacy.playback_mode, PlaybackMode::Normal);
+    let loaded_flip = mgr.load_settings();
+    assert_eq!(loaded_flip.playback_mode, PlaybackMode::Normal);
+
+    // 4. Pre-existing settings file with "scroll" is coerced to Normal on load (boot)
+    fs::write(mgr.config_file_path(), r#"{"playback_mode": "scroll"}"#).unwrap();
+    let loaded_scroll_setting = mgr.load_settings();
+    assert_eq!(loaded_scroll_setting.playback_mode, PlaybackMode::Normal);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
@@ -419,4 +389,15 @@ fn test_playback_settings_serialization_and_clamping() {
     assert_eq!(loaded.playback_speed, 4.0);
 
     let _ = fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_scroll_mode_muted_default() {
+    let settings = WazooSettings::default();
+    assert!(settings.scroll_mode_muted);
+
+    // Verify explicit false
+    let json_unmuted = r#"{"scroll_mode_muted": false}"#;
+    let unmuted: WazooSettings = serde_json::from_str(json_unmuted).unwrap();
+    assert!(!unmuted.scroll_mode_muted);
 }

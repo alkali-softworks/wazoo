@@ -431,17 +431,19 @@ impl WazooApp {
                 Task::none()
             }
             Message::ToggleGlobalMute => {
-                self.settings.is_global_muted = !self.settings.is_global_muted;
-                self.scroll_engine.is_global_muted = self.settings.is_global_muted;
+                self.settings.scroll_mode_muted = !self.settings.scroll_mode_muted;
+                self.scroll_engine.scroll_mode_muted = self.settings.scroll_mode_muted;
                 for p in &mut self.players {
+                    p.set_muted(self.settings.scroll_mode_muted);
                     if self.settings.playback_mode == PlaybackMode::Scroll {
                         let vol = self.scroll_engine.calculate_player_volume(p.id);
                         p.set_volume(vol);
-                    } else {
-                        p.set_muted(self.settings.is_global_muted);
                     }
                 }
-                self.overlay.toast_message = Some(if self.settings.is_global_muted {
+                if let Some(ref mut preloaded) = self.preloaded_player {
+                    preloaded.set_muted(self.settings.scroll_mode_muted);
+                }
+                self.overlay.toast_message = Some(if self.settings.scroll_mode_muted {
                     self.t("wazoo.global_mode_muted")
                 } else {
                     self.t("wazoo.global_mode_unmuted")
@@ -451,15 +453,17 @@ impl WazooApp {
                 Task::none()
             }
             Message::GlobalUnmute => {
-                self.settings.is_global_muted = false;
-                self.scroll_engine.is_global_muted = false;
+                self.settings.scroll_mode_muted = false;
+                self.scroll_engine.scroll_mode_muted = false;
                 for p in &mut self.players {
+                    p.set_muted(false);
                     if self.settings.playback_mode == PlaybackMode::Scroll {
                         let vol = self.scroll_engine.calculate_player_volume(p.id);
                         p.set_volume(vol);
-                    } else {
-                        p.set_muted(false);
                     }
+                }
+                if let Some(ref mut preloaded) = self.preloaded_player {
+                    preloaded.set_muted(false);
                 }
                 self.overlay.toast_message = Some(self.t("wazoo.global_mode_unmuted"));
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
@@ -586,8 +590,7 @@ impl WazooApp {
                     _ => PlaybackMode::Scroll,
                 };
                 if self.settings.playback_mode == PlaybackMode::Scroll {
-                    self.settings.is_global_muted = true;
-                    self.scroll_engine.is_global_muted = true;
+                    self.scroll_engine.scroll_mode_muted = self.settings.scroll_mode_muted;
                     let window_w = self.settings.window_bounds.width as f32;
                     let window_h = self.settings.window_bounds.height as f32;
                     self.scroll_engine.set_window_size(window_w, window_h);
@@ -628,6 +631,7 @@ impl WazooApp {
                     }
 
                     for p in &mut self.players {
+                        p.set_muted(self.settings.scroll_mode_muted);
                         let vol = self.scroll_engine.calculate_player_volume(p.id);
                         p.set_volume(vol);
                     }
@@ -704,7 +708,7 @@ impl WazooApp {
                 match result {
                     Ok(mut handle) => {
                         handle.set_subtitles_visible(self.subtitles_enabled);
-                        handle.set_muted(self.settings.is_global_muted);
+                        handle.set_muted(self.settings.scroll_mode_muted);
                         let item_h = self.calculate_player_scroll_height(&handle);
                         let margin = self.scroll_engine.default_item_height() * 1.5;
                         if let Some(spawn_y) =
@@ -929,7 +933,7 @@ impl WazooApp {
                         &title,
                         Some(b.position_secs),
                     ) {
-                        handle.set_muted(prev_muted.unwrap_or(true));
+                        handle.set_muted(prev_muted.unwrap_or(false));
                         if let Some(vol) = prev_volume {
                             handle.set_volume(vol);
                         }
@@ -950,7 +954,7 @@ impl WazooApp {
                         &title,
                         Some(b.position_secs),
                     ) {
-                        handle.set_muted(true);
+                        handle.set_muted(false);
                         handle.set_subtitles_visible(self.subtitles_enabled);
                         self.push_player_nav_entry(id, b.path.clone(), Some(b.position_secs));
                         self.players.push(AppPlayer::new(handle, b.is_shuffle));

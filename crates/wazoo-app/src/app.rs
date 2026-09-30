@@ -323,7 +323,7 @@ impl WazooApp {
             settings.window_bounds.height as f32,
         );
         scroll_engine.set_speed(settings.scroll_speed);
-        scroll_engine.is_global_muted = settings.is_global_muted;
+        scroll_engine.scroll_mode_muted = settings.scroll_mode_muted;
 
         let icon_handle = iced::widget::image::Handle::from_bytes(APP_ICON_BYTES);
         let total_videos = videos.len();
@@ -839,11 +839,13 @@ impl WazooApp {
         let id = self.next_player_id;
         self.next_player_id += 1;
 
-        // In scroll mode, mute follows the scroll feed's global mute setting.
-        // In ambient grid mode, new players start muted by default so they don't
-        // create unexpected noise or audio overlap.
+        // In scroll mode, mute follows the scroll feed's global mute setting (muted by default).
+        // In ambient grid/normal mode, the first player starts unmuted so the user hears audio
+        // when opening the app normally with no prior user preference, while subsequent background players start muted.
         let initial_muted = if self.settings.playback_mode == PlaybackMode::Scroll {
-            self.settings.is_global_muted
+            self.settings.scroll_mode_muted
+        } else if self.players.is_empty() {
+            false
         } else {
             true
         };
@@ -1154,7 +1156,7 @@ impl WazooApp {
             self.scroll_engine.clear();
             self.preloaded_player = None;
             self.is_preloading = false;
-            if self.settings.is_global_muted {
+            if self.settings.scroll_mode_muted {
                 for p in &mut self.players {
                     p.set_muted(true);
                 }

@@ -1476,3 +1476,149 @@ fn test_flip_countdown_resets_on_interval_change_and_manual_navigation() {
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_mute_default_when_no_preference() {
+    let (mut app, _) = new_test_app();
+    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Normal);
+
+    let temp_dir = std::env::temp_dir().join(format!("test_mute_pref_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let f1 = temp_dir.join("V1.mp4");
+    let f2 = temp_dir.join("V2.mp4");
+    let _ = std::fs::File::create(&f1);
+    let _ = std::fs::File::create(&f2);
+
+    app.available_videos = vec![
+        wazoo_core::VideoRecord::new(1, "V1", f1.to_string_lossy()),
+        wazoo_core::VideoRecord::new(2, "V2", f2.to_string_lossy()),
+    ];
+
+    // Initial player should NOT be muted when opening app normally with no prior preference
+    let _ = app.update(Message::SetPlayerCount(1));
+    assert_eq!(app.players.len(), 1);
+    assert!(!app.players[0].state.is_muted);
+
+    let p0_id = app.players[0].id;
+
+    // Advancing video preserves unmuted state
+    let _ = app.update(Message::NextVideo(p0_id));
+    assert!(!app.players[0].state.is_muted);
+
+    // Playing file from drawer preserves unmuted state
+    let _ = app.update(Message::PlayFileInFocused(f2.to_string_lossy().to_string()));
+    assert!(!app.players[0].state.is_muted);
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_mute_preference_preserved_when_user_explicitly_mutes() {
+    let (mut app, _) = new_test_app();
+    let temp_dir = std::env::temp_dir().join(format!("test_mute_explicit_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let f1 = temp_dir.join("V1.mp4");
+    let f2 = temp_dir.join("V2.mp4");
+    let _ = std::fs::File::create(&f1);
+    let _ = std::fs::File::create(&f2);
+
+    app.available_videos = vec![
+        wazoo_core::VideoRecord::new(1, "V1", f1.to_string_lossy()),
+        wazoo_core::VideoRecord::new(2, "V2", f2.to_string_lossy()),
+    ];
+
+    let _ = app.update(Message::SetPlayerCount(1));
+    assert_eq!(app.players.len(), 1);
+    let p0_id = app.players[0].id;
+    assert!(!app.players[0].state.is_muted);
+
+    // Explicitly mute player 0 (user sets preference)
+    let _ = app.update(Message::TogglePlayerMute(p0_id));
+    assert!(app.players[0].state.is_muted);
+
+    // Navigating preserves user's explicit muted preference
+    let _ = app.update(Message::NextVideo(p0_id));
+    assert!(app.players[0].state.is_muted);
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_scroll_mode_m_key_toggles_global_mute_and_spawns_with_preference() {
+    let (mut app, _) = new_test_app();
+    let temp_dir = std::env::temp_dir().join(format!("test_scroll_mute_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let f1 = temp_dir.join("S1.mp4");
+    let f2 = temp_dir.join("S2.mp4");
+    let _ = std::fs::File::create(&f1);
+    let _ = std::fs::File::create(&f2);
+
+    app.available_videos = vec![
+        wazoo_core::VideoRecord::new(1, "S1", f1.to_string_lossy()),
+        wazoo_core::VideoRecord::new(2, "S2", f2.to_string_lossy()),
+    ];
+
+    // Enter Scroll Mode -> scroll mode defaults to muted
+    let _ = app.update(Message::ToggleScrollMode);
+    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Scroll);
+    assert!(app.settings.scroll_mode_muted);
+    assert!(app.scroll_engine.scroll_mode_muted);
+    for p in &app.players {
+        assert!(p.state.is_muted);
+    }
+
+    // Hit 'm' key -> ToggleMuteFocused in Scroll mode toggles scroll_mode_muted to false (unmuted)
+    let _ = app.update(Message::ToggleMuteFocused);
+    assert!(!app.settings.scroll_mode_muted);
+    assert!(!app.scroll_engine.scroll_mode_muted);
+    for p in &app.players {
+        assert!(!p.state.is_muted);
+    }
+    if let Some(ref preloaded) = app.preloaded_player {
+        assert!(!preloaded.state.is_muted);
+    }
+
+    // Trigger video frame tick to attach preloaded player if ready -> must spawn unmuted
+    let _ = app.update(Message::VideoFrameTick);
+    for p in &app.players {
+        assert!(!p.state.is_muted);
+    }
+
+    // Hit 'm' key again -> toggles back to muted (true)
+    let _ = app.update(Message::ToggleMuteFocused);
+    assert!(app.settings.scroll_mode_muted);
+    assert!(app.scroll_engine.scroll_mode_muted);
+    for p in &app.players {
+        assert!(p.state.is_muted);
+    }
+    if let Some(ref preloaded) = app.preloaded_player {
+        assert!(preloaded.state.is_muted);
+    }
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_boot_playback_mode_is_always_normal_even_if_scroll_was_used() {
+    let (mut app, _) = new_test_app();
+    app.settings.playback_mode = wazoo_core::PlaybackMode::Scroll;
+    app.config_mgr.save_settings(&app.settings).unwrap();
+
+    // Verify settings file does not save "scroll"
+    let content = std::fs::read_to_string(app.config_mgr.config_file_path()).unwrap();
+    assert!(!content.contains(r#""playback_mode": "scroll""#));
+    assert!(content.contains(r#""playback_mode": "normal""#));
+
+    // Verify load_settings always returns Normal
+    let loaded = app.config_mgr.load_settings();
+    assert_eq!(loaded.playback_mode, wazoo_core::PlaybackMode::Normal);
+
+    // Verify booted app with backend always starts in Normal mode
+    let db = wazoo_core::Database::open_in_memory().unwrap();
+    let (booted_app, _) = WazooApp::new_with_backend(None, app.config_mgr, db);
+    assert_eq!(
+        booted_app.settings.playback_mode,
+        wazoo_core::PlaybackMode::Normal
+    );
+}
+

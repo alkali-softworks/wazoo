@@ -3,7 +3,7 @@ use wazoo_media::ScrollEngine;
 #[test]
 fn test_scroll_engine() {
     let mut engine = ScrollEngine::new(1000.0);
-    engine.is_global_muted = false;
+    engine.scroll_mode_muted = false;
 
     engine.add_item(1, 0.0, 500.0);
     assert_eq!(engine.calculate_player_volume(1), 1.0);
@@ -113,4 +113,12 @@ fn test_scroll_engine_real_aspect_ratio_heights() {
     assert_eq!(engine.items.get(&1).unwrap().y_pos, 0.0);
     assert_eq!(engine.items.get(&1).unwrap().height, new_h1);
     assert_eq!(engine.items.get(&2).unwrap().y_pos, 800.0);
+}
+
+#[test]
+fn test_scroll_engine_default_muted() {
+    let engine = ScrollEngine::new(1000.0);
+    assert!(engine.scroll_mode_muted);
+    let engine_size = ScrollEngine::with_window_size(1920.0, 1080.0);
+    assert!(engine_size.scroll_mode_muted);
 }

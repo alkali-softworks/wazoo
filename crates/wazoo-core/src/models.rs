@@ -132,7 +132,8 @@ pub struct WazooSettings {
     pub layout: LayoutMode,
     pub playback_mode: PlaybackMode,
     pub scroll_speed: f32,
-    pub is_global_muted: bool,
+    #[serde(default = "default_scroll_mode_muted")]
+    pub scroll_mode_muted: bool,
     pub last_query: String,
     #[serde(default)]
     pub last_folders: Vec<String>,
@@ -172,6 +173,10 @@ fn default_playback_speed() -> f32 {
     1.0
 }
 
+fn default_scroll_mode_muted() -> bool {
+    true
+}
+
 impl Default for WazooSettings {
     fn default() -> Self {
         Self {
@@ -182,7 +187,7 @@ impl Default for WazooSettings {
             layout: LayoutMode::Grid,
             playback_mode: PlaybackMode::Normal,
             scroll_speed: 1.0,
-            is_global_muted: true,
+            scroll_mode_muted: true,
             last_query: String::new(),
             last_folders: Vec::new(),
             buffer_duration_secs: 10,
