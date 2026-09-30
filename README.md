@@ -78,6 +78,10 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - Pair Pin Mode with **Window Opacity** (in System Settings) to turn Wazoo into a semi-transparent, floating reference board. 
 - **Escape Hatch**: Focusing Wazoo on your OS taskbar instantly disengages mouse passthrough and enables controls.
 
+### 📺 Analog CRT Filter
+- Toggle an analog CRT monitor simulation complete with scanlines, subtle barrel curvature, vignette, and phosphor bloom (<kbd>F7</kbd> or via Playback Settings).
+- **GPU Accelerated**: Implemented directly in the WGPU shader pipeline with zero decoding overhead or frame latency.
+
 ### 🌐 Internationalization & Localization
 - **16 Supported Languages**: Complete UI translations for English (`en`), Spanish (`es`), French (`fr`), German (`de`), Italian (`it`), Portuguese (`pt`), Russian (`ru`), Simplified Chinese (`zh`), Japanese (`ja`), Korean (`ko`), Thai (`th`), Hebrew (`he`), Arabic (`ar`), Hindi (`hi`), Bengali (`bn`), and Indonesian (`id`).
 
@@ -193,6 +197,7 @@ scoop install ffmpeg
 | <kbd>R</kbd> | **Random Seek** on focused player |
 | <kbd>T</kbd> | Show video titles (all players) |
 | <kbd>,</kbd> / <kbd>.</kbd> | Step backward / forward one frame |
+| <kbd>F7</kbd> | Toggle **Analog CRT Filter** |
 
 ---
 
