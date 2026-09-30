@@ -24,11 +24,11 @@ use iced::{
 use wazoo_core::PlaybackMode;
 
 impl WazooApp {
-    pub(crate) fn view_title_pill<'a>(&self, path: &str, alpha: f32) -> Element<'a, Message> {
+    pub fn view_title_pill<'a>(&self, path: &str, alpha: f32) -> Element<'a, Message> {
         let (primary, secondary) = format::format_title_lines(path);
         let content: Element<'a, Message> = if let Some(sub) = secondary {
             column![
-                text(primary)
+                text(primary.clone())
                     .size(18)
                     .font(iced::Font {
                         weight: iced::font::Weight::Bold,
@@ -49,7 +49,7 @@ impl WazooApp {
             .spacing(4)
             .into()
         } else {
-            text(primary)
+            text(primary.clone())
                 .size(18)
                 .font(iced::Font {
                     weight: iced::font::Weight::Bold,
@@ -59,16 +59,21 @@ impl WazooApp {
                 .into()
         };
 
-        container(content)
+        let query = primary.trim().to_string();
+        let mut pill_btn = button(content)
             .padding(iced::Padding {
                 top: 10.0,
                 right: 20.0,
                 bottom: 10.0,
                 left: 16.0,
             })
-            .max_width(700.0)
-            .style(theme::title_pill_style_with_alpha(alpha))
-            .into()
+            .style(theme::title_pill_button_style_with_alpha(alpha));
+
+        if !query.is_empty() {
+            pill_btn = pill_btn.on_press(Message::SetActiveQuery(query));
+        }
+
+        cursor::PointerCursor::new(container(pill_btn).max_width(700.0)).into()
     }
 
     pub(crate) fn view_loading_spinner<'a>(&self) -> Element<'a, Message> {

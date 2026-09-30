@@ -44,6 +44,61 @@ pub fn titlebar_badge_style_with_alpha(
     }
 }
 
+// Video Player Title Pill Button Style
+pub fn title_pill_button_style(_theme: &Theme, status: button::Status) -> button::Style {
+    let (bg, shadow_color) = match status {
+        button::Status::Hovered => (
+            Color::from_rgba(0.14, 0.14, 0.18, 0.95),
+            Color::from_rgba(0.0, 0.0, 0.0, 0.65),
+        ),
+        button::Status::Pressed => (
+            Color::from_rgba(0.06, 0.06, 0.08, 0.98),
+            Color::from_rgba(0.0, 0.0, 0.0, 0.70),
+        ),
+        _ => (
+            Color::from_rgba(0.08, 0.08, 0.10, 0.88),
+            Color::from_rgba(0.0, 0.0, 0.0, 0.55),
+        ),
+    };
+    button::Style {
+        background: Some(Background::Color(bg)),
+        text_color: Color::WHITE,
+        border: Border {
+            radius: iced::border::Radius {
+                top_left: 0.0,
+                top_right: 14.0,
+                bottom_right: 14.0,
+                bottom_left: 0.0,
+            },
+            width: 0.0,
+            color: Color::TRANSPARENT,
+        },
+        shadow: Shadow {
+            color: shadow_color,
+            offset: Vector::new(0.0, 4.0),
+            blur_radius: 18.0,
+        },
+        ..Default::default()
+    }
+}
+
+pub fn title_pill_button_style_with_alpha(
+    alpha: f32,
+) -> impl Fn(&Theme, button::Status) -> button::Style {
+    move |theme, status| {
+        let base = title_pill_button_style(theme, status);
+        button::Style {
+            background: base.background.map(|bg| background_with_alpha(bg, alpha)),
+            text_color: with_alpha(base.text_color, alpha),
+            shadow: Shadow {
+                color: with_alpha(base.shadow.color, alpha),
+                ..base.shadow
+            },
+            ..base
+        }
+    }
+}
+
 // Titlebar Brand Link Style ("ALKALI" button)
 pub fn titlebar_brand_link_style(_theme: &Theme, status: button::Status) -> button::Style {
     let (bg, text_color) = match status {

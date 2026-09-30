@@ -110,6 +110,8 @@ pub enum Message {
     RemoveSearchTag(usize),
     PerformSearch,
     ClearSearch,
+    SetActiveQuery(String),
+    TitleOverlayClicked(String),
     OpenSettingsModal,
     CloseSettingsModal,
     SetSettingsTab(crate::app::SettingsTab),
