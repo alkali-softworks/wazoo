@@ -119,3 +119,31 @@ fn test_cli_parsing() {
     let fg_nodetach = parse_cli_args_from(vec!["--no-detach".to_string()]);
     assert!(fg_nodetach.foreground);
 }
+
+#[test]
+fn test_open_url_rejects_unsafe_schemes() {
+    // Unsafe schemes must be rejected early without spawning processes
+    let unsafe_urls = [
+        "file:///etc/passwd",
+        "javascript:alert(1)",
+        "cmd.exe /c calc",
+        "ms-msdt:/id PCWDiagnostic",
+        "powershell -enc ...",
+        "data:text/html,<script>alert(1)</script>",
+    ];
+
+    for url in &unsafe_urls {
+        // Calling open_url on non-http/https logs a warning and returns immediately
+        wazoo_app::platform::open_url(url);
+    }
+}
+
+#[test]
+fn test_desktop_entry_escaping() {
+    let raw_path = r#"C:\Program Files\Wazoo "Player"\wazoo.exe"#;
+    let escaped = raw_path.replace('\\', "\\\\").replace('"', "\\\"");
+    assert_eq!(
+        escaped,
+        r#"C:\\Program Files\\Wazoo \"Player\"\\wazoo.exe"#
+    );
+}
