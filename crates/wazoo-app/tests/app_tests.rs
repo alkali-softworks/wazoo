@@ -1653,3 +1653,52 @@ fn test_set_active_query_updates_search_tags_and_reconciles() {
     assert_eq!(app.available_videos.len(), 2);
     assert!(app.available_videos.iter().all(|v| v.path.contains("ShowA")));
 }
+
+#[test]
+fn test_crt_filter_f7_hotkey_and_ui_toggle() {
+    let (mut app, _) = WazooApp::new_test_app();
+    assert!(!app.settings.crt_enabled);
+
+    // Toggle via F7 hotkey
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Named(iced::keyboard::key::Named::F7),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.settings.crt_enabled);
+
+    // Toggle via F7 hotkey again
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Named(iced::keyboard::key::Named::F7),
+        iced::event::Status::Ignored,
+    ));
+    assert!(!app.settings.crt_enabled);
+
+    // Toggle via Message::ToggleCrtFilter
+    let _ = app.update(Message::ToggleCrtFilter);
+    assert!(app.settings.crt_enabled);
+
+    // Explicit set via Message::SetCrtFilter
+    let _ = app.update(Message::SetCrtFilter(false));
+    assert!(!app.settings.crt_enabled);
+
+    let _ = app.update(Message::SetCrtFilter(true));
+    assert!(app.settings.crt_enabled);
+
+    // Ensure settings modal renders with CRT toggle
+    let _ = app.update(Message::OpenSettingsModal);
+    let _ = app.update(Message::SetSettingsTab(SettingsTab::Playback));
+    {
+        let _settings_view = app.view_settings_modal();
+    }
+
+    // Ensure titlebar renders with CRT menu item
+    app.titlebar.show_dropdown_menu = true;
+    {
+        let _titlebar_view = app.view_titlebar();
+    }
+
+    // Reset playback options resets CRT filter to false
+    let _ = app.update(Message::ResetPlaybackOptions);
+    assert!(!app.settings.crt_enabled);
+}
+

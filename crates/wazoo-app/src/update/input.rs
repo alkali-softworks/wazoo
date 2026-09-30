@@ -60,6 +60,10 @@ impl WazooApp {
             return self.update(Message::OpenHelpModal);
         }
 
+        if key == Key::Named(Named::F7) {
+            return self.update(Message::ToggleCrtFilter);
+        }
+
         if let Some(action) =
             find_key_action(&self.settings.keybinds, &key, self.window.is_alt_pressed)
         {

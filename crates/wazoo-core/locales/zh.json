@@ -18,7 +18,8 @@
     "clear_loop": "清除循环",
     "loop": "循环",
     "start": "起始",
-    "end": "结束"
+    "end": "结束",
+    "crt_filter": "CRT 滤镜"
   },
   "app": {
     "drag_to_move": "拖动以移动",
@@ -78,7 +79,9 @@
     "flip_interval": "翻转间隔",
     "tab_system": "系统",
     "always_on_top": "窗口置顶",
-    "always_on_top_desc": "保持 Wazoo 始终置顶于其他窗口之上"
+    "always_on_top_desc": "保持 Wazoo 始终置顶于其他窗口之上",
+    "crt_filter": "CRT 滤镜",
+    "crt_filter_desc": "复古模拟阴极射线管仿真，具有扫描线、曲面和荧光粉发光效果"
   },
   "search": {
     "folder": "文件夹:",

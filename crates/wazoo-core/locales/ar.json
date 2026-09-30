@@ -18,7 +18,8 @@
     "clear_loop": "مسح التكرار",
     "loop": "تكرار",
     "start": "البداية",
-    "end": "النهاية"
+    "end": "النهاية",
+    "crt_filter": "مرشح CRT"
   },
   "app": {
     "drag_to_move": "اسحب للتحريك",
@@ -78,7 +79,9 @@
     "flip_interval": "فاصل التقليب",
     "tab_system": "النظام",
     "always_on_top": "دائمًا في المقدمة",
-    "always_on_top_desc": "إبقاء Wazoo مثبتًا فوق جميع النوافذ الأخرى"
+    "always_on_top_desc": "إبقاء Wazoo مثبتًا فوق جميع النوافذ الأخرى",
+    "crt_filter": "مرشح CRT",
+    "crt_filter_desc": "محاكاة أنبوب أشعة كاثودية تناظري كلاسيكي مع خطوط مسح وانحناء وتوهج فسفوري"
   },
   "search": {
     "folder": "مجلد:",

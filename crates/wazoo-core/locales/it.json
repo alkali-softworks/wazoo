@@ -18,7 +18,8 @@
     "clear_loop": "Cancella loop",
     "loop": "Loop",
     "start": "Inizio",
-    "end": "Fine"
+    "end": "Fine",
+    "crt_filter": "Filtro CRT"
   },
   "app": {
     "drag_to_move": "Trascina per spostare",
@@ -78,7 +79,9 @@
     "flip_interval": "Intervallo di ribaltamento",
     "tab_system": "Sistema",
     "always_on_top": "Sempre in primo piano",
-    "always_on_top_desc": "Mantieni Wazoo in primo piano rispetto alle altre finestre"
+    "always_on_top_desc": "Mantieni Wazoo in primo piano rispetto alle altre finestre",
+    "crt_filter": "Filtro CRT",
+    "crt_filter_desc": "Simulazione di tubo a raggi catodici analogico retrò con linee di scansione, curvatura e bagliore di fosfori"
   },
   "search": {
     "folder": "Cartella:",

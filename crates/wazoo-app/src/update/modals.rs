@@ -132,6 +132,23 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
             }
+            Message::ToggleCrtFilter => {
+                let new_state = !self.settings.crt_enabled;
+                self.settings.crt_enabled = new_state;
+                for player in &mut self.players {
+                    player.set_crt_enabled(new_state);
+                }
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetCrtFilter(enabled) => {
+                self.settings.crt_enabled = enabled;
+                for player in &mut self.players {
+                    player.set_crt_enabled(enabled);
+                }
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
             Message::SetBufferDuration(secs) => {
                 self.settings.buffer_duration_secs = secs.clamp(2, 60);
                 let _ = self.config_mgr.save_settings(&self.settings);
@@ -155,12 +172,14 @@ impl WazooApp {
                 self.settings.brightness = 0.0;
                 self.settings.saturation = 0.0;
                 self.settings.playback_speed = 1.0;
+                self.settings.crt_enabled = false;
                 for player in &mut self.players {
                     player.set_gamma(0.0);
                     player.set_contrast(0.0);
                     player.set_brightness(0.0);
                     player.set_saturation(0.0);
                     player.set_speed(1.0);
+                    player.set_crt_enabled(false);
                 }
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()

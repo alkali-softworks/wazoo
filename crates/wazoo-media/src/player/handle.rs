@@ -40,6 +40,7 @@ pub struct VideoHandle {
     contrast: f64,
     brightness: f64,
     saturation: f64,
+    pub crt_enabled: bool,
 }
 
 unsafe impl Send for VideoHandle {}
@@ -381,6 +382,7 @@ impl VideoHandle {
                 contrast: config.contrast,
                 brightness: config.brightness,
                 saturation: config.saturation,
+                crt_enabled: config.crt_enabled,
             };
 
             handle.set_volume(1.0);
@@ -544,14 +546,33 @@ impl VideoHandle {
         opacity: f32,
         fit_cover: bool,
     ) -> iced::Element<'a, Message> {
-        let program = crate::pipeline::VideoProgram::new_with_fit(
+        self.view_full(opacity, fit_cover, self.crt_enabled)
+    }
+
+    /// Render video frame with custom fit and explicit CRT filter setting
+    pub fn view_full<'a, Message: 'a>(
+        &'a self,
+        opacity: f32,
+        fit_cover: bool,
+        crt_enabled: bool,
+    ) -> iced::Element<'a, Message> {
+        let program = crate::pipeline::VideoProgram::new_full(
             self.id as u64,
             Arc::clone(&self.frame),
             Arc::clone(&self.alive),
             opacity,
             fit_cover,
+            crt_enabled,
         );
         iced::Element::new(crate::pipeline::video_shader(program))
+    }
+
+    pub fn set_crt_enabled(&mut self, enabled: bool) {
+        self.crt_enabled = enabled;
+    }
+
+    pub fn crt_enabled(&self) -> bool {
+        self.crt_enabled
     }
 
     pub fn set_volume(&mut self, volume: f64) {

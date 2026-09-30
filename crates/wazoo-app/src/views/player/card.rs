@@ -34,7 +34,7 @@ impl WazooApp {
         let is_audio_menu_open = self.open_audio_menu_id == Some(player_id);
 
         let opacity = self.current_opacity();
-        let video_widget = p.view_with_fit(opacity, is_scroll_mode);
+        let video_widget = p.view_full(opacity, is_scroll_mode, self.settings.crt_enabled);
         let mut stack_children: Vec<Element<'a, Message>> = vec![video_widget];
 
         if is_loading {

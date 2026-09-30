@@ -120,6 +120,8 @@ pub enum Message {
     SetBrightness(f32),
     SetSaturation(f32),
     SetPlaybackSpeed(f32),
+    ToggleCrtFilter,
+    SetCrtFilter(bool),
     SetBufferDuration(u32),
     SetBufferSize(u32),
     SetFlipInterval(u64),

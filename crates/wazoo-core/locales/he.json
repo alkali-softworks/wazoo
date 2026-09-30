@@ -18,7 +18,8 @@
     "clear_loop": "נקה לולאה",
     "loop": "לולאה",
     "start": "התחלה",
-    "end": "סיום"
+    "end": "סיום",
+    "crt_filter": "מסנן CRT"
   },
   "app": {
     "drag_to_move": "גרור להזזה",
@@ -78,7 +79,9 @@
     "flip_interval": "מרווח היפוך",
     "tab_system": "מערכת",
     "always_on_top": "תמיד עליון",
-    "always_on_top_desc": "השאר את Wazoo מוצמד מעל כל שאר החלונות"
+    "always_on_top_desc": "השאר את Wazoo מוצמד מעל כל שאר החלונות",
+    "crt_filter": "מסנן CRT",
+    "crt_filter_desc": "הדמיית שפופרת קרן קתודית אנלוגית רטרו עם קווי סריקה, עקמומיות וזוהר זרחן"
   },
   "search": {
     "folder": "תיקייה:",

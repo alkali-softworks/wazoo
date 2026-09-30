@@ -401,3 +401,21 @@ fn test_scroll_mode_muted_default() {
     let unmuted: WazooSettings = serde_json::from_str(json_unmuted).unwrap();
     assert!(!unmuted.scroll_mode_muted);
 }
+
+#[test]
+fn test_crt_enabled_serialization() {
+    let default_settings = WazooSettings::default();
+    assert!(!default_settings.crt_enabled);
+
+    let mut settings = WazooSettings::default();
+    settings.crt_enabled = true;
+    let json = serde_json::to_string(&settings).unwrap();
+    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
+    assert!(deserialized.crt_enabled);
+
+    // Verify default fallback when missing in json
+    let missing_json = r#"{}"#;
+    let loaded: WazooSettings = serde_json::from_str(missing_json).unwrap();
+    assert!(!loaded.crt_enabled);
+}
+
