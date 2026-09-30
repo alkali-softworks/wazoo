@@ -128,3 +128,14 @@ Wazoo's user interface is fully custom and frameless:
   - Transport controls (play/pause, volume slider, next/prev, shuffle toggle).
   - Visual A-B loop badges displaying active In and Out timestamps.
   - Toast message banner for instant feedback on hotkey actions.
+
+---
+
+## 🖥️ Platform Integration (`platform.rs`)
+
+Provides secure operating system integration hooks:
+
+1. **POSIX-Safe Process Detaching**: Spawns a detached child process with `--foreground` and standard I/O bound to `Stdio::null()` in a new process group, avoiding thread/allocator deadlocks associated with raw `libc::fork()` under custom global allocators (`mimalloc`).
+2. **Hardened Web Navigation**: `open_url` strictly validates URL schemes (`http://`, `https://`) and invokes `rundll32 url.dll,FileProtocolHandler` on Windows to avoid shell interpretation and command separator injection (`&`, `|`, `^`, `%`).
+3. **Desktop Entry Generation**: Dynamically creates `.desktop` integration entries on Linux with proper character escaping for `Exec` arguments following the XDG Desktop Entry Specification.
+4. **Hybrid GPU Detection**: Detects dual-GPU hybrid laptops on Linux to default to the integrated GPU, preventing cross-GPU DRI3 PRIME swapchain presentation failures.

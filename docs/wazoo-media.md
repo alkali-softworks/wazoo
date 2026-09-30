@@ -30,9 +30,9 @@ The media engine wraps `libmpv` directly via C FFI.
 
 To provide maximum portability across operating systems and distribution packaging:
 1. `mpv_ffi` first attempts to dynamically load `libmpv` at runtime:
-   - **Linux:** `libmpv.so.2`, `libmpv.so.1`
-   - **macOS:** `libmpv.dylib`
-   - **Windows:** Embedded inside the portable binary or loaded from `mpv-2.dll` / `mpv-1.dll`.
+   - **Linux:** `libmpv.so.2`, `libmpv.so` (beside executable or `/usr/lib`)
+   - **macOS:** `libmpv.2.dylib`, `libmpv.dylib` (beside executable, Frameworks, or Homebrew)
+   - **Windows:** Embedded inside the portable binary, or loaded from `libmpv-2.dll` / `mpv-2.dll` beside the executable, user-isolated AppData, or system path. Current working directory (CWD) is excluded in release builds to prevent binary planting / DLL hijacking.
 2. If dynamic loading fails, it falls back to linked C symbols resolved at build time.
 
 ### `libmpv` Configuration & Hardening
@@ -42,6 +42,7 @@ Each player instance is initialized with options tuned for multi-window ambient 
 - `hwdec`: Configurable via the `WAZOO_HWDEC` environment variable (defaults to software decoding `no` to eliminate GPU driver deadlocks when windows are occluded or behind other apps).
 - `demuxer-readahead-secs` & `demuxer-max-bytes`: Configured by [`BufferConfig`] to keep memory usage bounded across multiple concurrent players.
 - `force-seekable=yes` & `hr-seek-framedrop=yes`: Ensures ultra-responsive scrubbing and random seeking.
+- `Security Hardening`: In release builds on Windows, DLL resolution is strictly restricted to trusted executable, user AppData, and system paths. Subtitle extraction processes strictly enforce protocol sandboxing (`-protocol_whitelist file,crypto`), validate stream mappings, and protect against leading-hyphen argument confusion.
 
 ---
 
@@ -116,3 +117,4 @@ The subtitle subsystem extracts and parses timed dialogue lines:
 2. **Container Stream Extraction**: Uses an asynchronous background `ffmpeg` process to extract embedded subtitle tracks without freezing playback.
 3. **Timestamp Normalization**: Parses various timestamp conventions (`00:01:23,450`, `00:01:23.450`, `0:01:23.45`) into floating-point seconds ([`SubtitleCue`]).
 4. **Interactive Seeking**: Clicking any cue in the transcript drawer dispatches a seek command to that cue's `start_secs`.
+5. **Resource Limits & Sandboxing**: External sidecar reads are strictly bounded to 10 MB (`MAX_SUBTITLE_FILE_BYTES`) and parsed cues are capped at 50,000 (`MAX_SUBTITLE_CUES`) to prevent memory exhaustion and UI lockups. FFmpeg extractions enforce `-protocol_whitelist file,crypto` and validate stream mapping arguments.
