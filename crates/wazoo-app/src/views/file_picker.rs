@@ -38,6 +38,78 @@ pub(crate) struct PrecomputedVideoMeta {
     pub folder_lower: String,
 }
 
+/// Matches a string against an anchor/wildcard pattern.
+///
+/// Supported patterns:
+/// - `^prefix`   : text starts with prefix (e.g. `^k`)
+/// - `suffix$`   : text ends with suffix (e.g. `s01$`)
+/// - `^exact$`   : text exactly matches exact (e.g. `^bleach$`)
+/// - `foo*bar`   : wildcard match (`foo` followed by `bar`)
+/// - `^foo*bar$` : wildcard match anchored at start and end
+/// - `substring` : contains substring (standard fallback)
+pub(crate) fn pattern_matches(pattern: &str, text: &str) -> bool {
+    if pattern.is_empty() || pattern == "^" || pattern == "$" || pattern == "^$" || pattern == "*" {
+        return true;
+    }
+
+    let has_start_anchor = pattern.starts_with('^');
+    let has_end_anchor = pattern.len() > 1 && pattern.ends_with('$');
+
+    let core = match (has_start_anchor, has_end_anchor) {
+        (true, true) => {
+            if pattern.len() <= 2 {
+                return true;
+            }
+            &pattern[1..pattern.len() - 1]
+        }
+        (true, false) => &pattern[1..],
+        (false, true) => &pattern[..pattern.len() - 1],
+        (false, false) => pattern,
+    };
+
+    if core.is_empty() {
+        return true;
+    }
+
+    if !core.contains('*') {
+        return match (has_start_anchor, has_end_anchor) {
+            (true, true) => text == core,
+            (true, false) => text.starts_with(core),
+            (false, true) => text.ends_with(core),
+            (false, false) => text.contains(core),
+        };
+    }
+
+    // Handles wildcard '*'
+    let parts: Vec<&str> = core.split('*').collect();
+    let mut remainder = text;
+
+    for (i, part) in parts.iter().enumerate() {
+        if part.is_empty() {
+            continue;
+        }
+        if i == 0 && has_start_anchor {
+            if !remainder.starts_with(part) {
+                return false;
+            }
+            remainder = &remainder[part.len()..];
+        } else if i == parts.len() - 1 && has_end_anchor {
+            if !remainder.ends_with(part) {
+                return false;
+            }
+        } else {
+            match remainder.find(part) {
+                Some(idx) => {
+                    remainder = &remainder[idx + part.len()..];
+                }
+                None => return false,
+            }
+        }
+    }
+
+    true
+}
+
 impl WazooApp {
     pub(crate) fn ensure_file_picker_meta(&mut self) {
         let needs_rebuild = self.drawers.file_picker_entries.len() != self.available_videos.len()
@@ -95,11 +167,26 @@ impl WazooApp {
                     });
             }
         } else {
+            let is_whole_anchored = (search_filter.starts_with('^')
+                && !search_filter.starts_with("^^"))
+                || (search_filter.ends_with('$') && !search_filter.ends_with("$$"));
+
             for entry in &self.drawers.file_picker_entries {
-                let matches_all_words = search_words
-                    .iter()
-                    .all(|w| entry.folder_lower.contains(w) || entry.title_lower.contains(w));
-                if !matches_all_words {
+                let matches = if is_whole_anchored {
+                    pattern_matches(&search_filter, &entry.folder_lower)
+                        || pattern_matches(&search_filter, &entry.title_lower)
+                        || search_words.iter().all(|w| {
+                            pattern_matches(w, &entry.folder_lower)
+                                || pattern_matches(w, &entry.title_lower)
+                        })
+                } else {
+                    search_words.iter().all(|w| {
+                        pattern_matches(w, &entry.folder_lower)
+                            || pattern_matches(w, &entry.title_lower)
+                    })
+                };
+
+                if !matches {
                     continue;
                 }
                 grouped_map

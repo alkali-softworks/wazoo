@@ -301,29 +301,132 @@ impl Database {
                     continue;
                 }
 
+                let has_start_anchor = term.starts_with('^') && !term.starts_with("^^");
+                let has_end_anchor =
+                    term.len() > 1 && term.ends_with('$') && !term.ends_with("$$");
+
+                let core_term = match (has_start_anchor, has_end_anchor) {
+                    (true, true) => {
+                        if term.len() <= 2 {
+                            ""
+                        } else {
+                            &term[1..term.len() - 1]
+                        }
+                    }
+                    (true, false) => &term[1..],
+                    (false, true) => &term[..term.len() - 1],
+                    (false, false) => term,
+                };
+
+                if core_term.is_empty() {
+                    continue;
+                }
+
                 // Escape SQL LIKE special characters: '\', '%', and '_'
-                let escaped_term = term
+                // Also support '*' as an unescaped SQL wildcard '%'
+                let escaped_term = core_term
                     .replace('\\', "\\\\")
                     .replace('%', "\\%")
-                    .replace('_', "\\_");
+                    .replace('_', "\\_")
+                    .replace('*', "%");
 
                 // Match original wazoo-js: replace '-' with space, split words, join with '%'
-                let wildcard = format!(
-                    "%{}%",
-                    escaped_term
-                        .replace('-', " ")
-                        .split_whitespace()
-                        .collect::<Vec<_>>()
-                        .join("%")
-                );
+                let words = escaped_term
+                    .replace('-', " ")
+                    .split_whitespace()
+                    .collect::<Vec<_>>()
+                    .join("%");
 
-                param_values.push(wildcard);
-                let param_idx = param_values.len();
+                let is_path_prefix = has_start_anchor
+                    && (core_term.starts_with('/')
+                        || core_term.starts_with('\\')
+                        || (core_term.len() >= 2 && core_term.as_bytes()[1] == b':'));
 
-                if is_not {
-                    negative_conditions.push(format!("path NOT LIKE ?{param_idx} ESCAPE '\\'"));
+                if is_path_prefix {
+                    let pattern = if has_end_anchor {
+                        words
+                    } else {
+                        format!("{words}%")
+                    };
+                    param_values.push(pattern);
+                    let p_idx = param_values.len();
+                    if is_not {
+                        negative_conditions.push(format!("path NOT LIKE ?{p_idx} ESCAPE '\\'"));
+                    } else {
+                        positive_conditions.push(format!("path LIKE ?{p_idx} ESCAPE '\\'"));
+                    }
                 } else {
-                    positive_conditions.push(format!("path LIKE ?{param_idx} ESCAPE '\\'"));
+                    match (has_start_anchor, has_end_anchor) {
+                        (true, true) => {
+                            // Exact anchor: ^term$
+                            param_values.push(words.clone());
+                            let p1 = param_values.len();
+                            param_values.push(format!("%/{words}.%"));
+                            let p2 = param_values.len();
+                            param_values.push(format!("%\\\\{words}.%"));
+                            let p3 = param_values.len();
+
+                            if is_not {
+                                negative_conditions.push(format!(
+                                    "(name NOT LIKE ?{p1} ESCAPE '\\' AND path NOT LIKE ?{p2} ESCAPE '\\' AND path NOT LIKE ?{p3} ESCAPE '\\')"
+                                ));
+                            } else {
+                                positive_conditions.push(format!(
+                                    "(name LIKE ?{p1} ESCAPE '\\' OR path LIKE ?{p2} ESCAPE '\\' OR path LIKE ?{p3} ESCAPE '\\')"
+                                ));
+                            }
+                        }
+                        (true, false) => {
+                            // Prefix anchor: ^term
+                            param_values.push(format!("{words}%"));
+                            let p1 = param_values.len();
+                            param_values.push(format!("%/{words}%"));
+                            let p2 = param_values.len();
+                            param_values.push(format!("%\\\\{words}%"));
+                            let p3 = param_values.len();
+
+                            if is_not {
+                                negative_conditions.push(format!(
+                                    "(name NOT LIKE ?{p1} ESCAPE '\\' AND path NOT LIKE ?{p2} ESCAPE '\\' AND path NOT LIKE ?{p3} ESCAPE '\\')"
+                                ));
+                            } else {
+                                positive_conditions.push(format!(
+                                    "(name LIKE ?{p1} ESCAPE '\\' OR path LIKE ?{p2} ESCAPE '\\' OR path LIKE ?{p3} ESCAPE '\\')"
+                                ));
+                            }
+                        }
+                        (false, true) => {
+                            // Suffix anchor: term$
+                            param_values.push(format!("%{words}"));
+                            let p1 = param_values.len();
+                            param_values.push(format!("%{words}.%"));
+                            let p2 = param_values.len();
+
+                            if is_not {
+                                negative_conditions.push(format!(
+                                    "(name NOT LIKE ?{p1} ESCAPE '\\' AND path NOT LIKE ?{p2} ESCAPE '\\' AND path NOT LIKE ?{p1} ESCAPE '\\')"
+                                ));
+                            } else {
+                                positive_conditions.push(format!(
+                                    "(name LIKE ?{p1} ESCAPE '\\' OR path LIKE ?{p2} ESCAPE '\\' OR path LIKE ?{p1} ESCAPE '\\')"
+                                ));
+                            }
+                        }
+                        (false, false) => {
+                            // Standard unanchored search
+                            let wildcard = format!("%{words}%");
+                            param_values.push(wildcard);
+                            let p_idx = param_values.len();
+
+                            if is_not {
+                                negative_conditions
+                                    .push(format!("path NOT LIKE ?{p_idx} ESCAPE '\\'"));
+                            } else {
+                                positive_conditions
+                                    .push(format!("path LIKE ?{p_idx} ESCAPE '\\'"));
+                            }
+                        }
+                    }
                 }
             }
 
