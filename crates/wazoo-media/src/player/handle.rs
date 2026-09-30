@@ -57,6 +57,12 @@ impl Drop for VideoHandle {
     fn drop(&mut self) {
         self.alive.store(false, Ordering::SeqCst);
         unsafe {
+            if !self.mpv.is_null() {
+                if let Ok(cmd_stop) = CString::new("stop") {
+                    let mut args = [cmd_stop.as_ptr(), std::ptr::null()];
+                    mpv_ffi::mpv_command(self.mpv, args.as_mut_ptr());
+                }
+            }
             if !self.render_ctx.is_null() {
                 mpv_ffi::mpv_render_context_free(self.render_ctx);
                 self.render_ctx = std::ptr::null_mut();
@@ -591,6 +597,10 @@ impl VideoHandle {
 
     pub fn pause(&mut self) {
         self.set_pause_internal(true);
+    }
+
+    pub fn set_paused(&mut self, paused: bool) {
+        self.set_pause_internal(paused);
     }
 
     pub fn is_playing(&self) -> bool {

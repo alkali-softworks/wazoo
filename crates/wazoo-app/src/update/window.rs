@@ -124,6 +124,7 @@ impl WazooApp {
                     {
                         if let Some(mut handle) = self.preloaded_player.take() {
                             handle.set_muted(self.settings.scroll_mode_muted);
+                            handle.set_paused(false);
                             let item_h = self.calculate_player_scroll_height(&handle);
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
@@ -176,11 +177,16 @@ impl WazooApp {
             }
             Message::CloseApp => {
                 self.save_session_state();
+                self.cleanup_scroll_mode();
+                self.players.clear();
+                self.preloaded_player = None;
                 if let Some(id) = self.window.id {
-                    iced::window::close(id)
-                } else {
-                    std::process::exit(0);
+                    let _: Task<Message> = iced::window::close(id);
                 }
+                #[cfg(not(test))]
+                std::process::exit(0);
+                #[cfg(test)]
+                Task::none()
             }
             Message::ModifiersChanged(modifiers) => {
                 self.window.is_alt_pressed = modifiers.alt();
