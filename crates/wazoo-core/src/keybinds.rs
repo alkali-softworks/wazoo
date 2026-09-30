@@ -47,6 +47,9 @@ pub enum KeyAction {
     MarkOut,
     ClearMarkIn,
     ClearMarkOut,
+    OpenHelp,
+    OpenSettings,
+    ToggleCrt,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -89,6 +92,9 @@ pub struct KeybindSettings {
     pub mark_out: String,
     pub clear_mark_in: String,
     pub clear_mark_out: String,
+    pub open_help: String,
+    pub open_settings: String,
+    pub toggle_crt: String,
 }
 
 impl Default for KeybindSettings {
@@ -131,6 +137,9 @@ impl Default for KeybindSettings {
             mark_out: "o".to_string(),
             clear_mark_in: "Alt+I".to_string(),
             clear_mark_out: "Alt+O".to_string(),
+            open_help: "F1".to_string(),
+            open_settings: "F2".to_string(),
+            toggle_crt: "7".to_string(),
         }
     }
 }
@@ -174,6 +183,9 @@ impl KeybindSettings {
         "mark_out",
         "clear_mark_in",
         "clear_mark_out",
+        "open_help",
+        "open_settings",
+        "toggle_crt",
     ];
 
     /// Validates if a JSON value contains the complete dictionary of non-empty key bindings.
@@ -303,6 +315,15 @@ impl KeybindSettings {
         }
         if self.clear_mark_out.trim().is_empty() {
             self.clear_mark_out = def.clear_mark_out;
+        }
+        if self.open_help.trim().is_empty() {
+            self.open_help = def.open_help;
+        }
+        if self.open_settings.trim().is_empty() {
+            self.open_settings = def.open_settings;
+        }
+        if self.toggle_crt.trim().is_empty() {
+            self.toggle_crt = def.toggle_crt;
         }
     }
 
