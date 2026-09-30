@@ -15,7 +15,7 @@ graph TD
     App["crates/wazoo-app<br/>(Iced UI, TEA Reducers, Presentation)"]
     Core["crates/wazoo-core<br/>(Models, SQLite DB, Config, i18n, Keybinds)"]
     Media["crates/wazoo-media<br/>(libmpv FFI, WGPU Pipeline, Scroll Engine, Subtitles)"]
-    Scanner["crates/wazoo-scanner<br/>(Directory Traversal, ffprobe, Ingestion)"]
+    Scanner["crates/wazoo-scanner<br/>(Directory Traversal, Name Sanitization, Ingestion)"]
     App --> Core
     App --> Media
     App --> Scanner
@@ -28,7 +28,7 @@ graph TD
 | :--- | :--- | :--- | :--- |
 | [**`wazoo-core`**] | Domain models, SQLite database management, settings persistence, localization, and keybinding configuration. | `rusqlite`, `serde`, `directories`, `regex` | [Core Architecture] |
 | [**`wazoo-media`**] | High-level media playback (`VideoHandle`), low-level C FFI bindings to `libmpv`, custom WGPU shader rendering pipeline, continuous scroll physics engine, and subtitle transcript parsing. | `iced_wgpu`, `wgpu`, `bytemuck`, `tokio`, `rand` | [Media Architecture] |
-| [**`wazoo-scanner`**] | Asynchronous directory scanner, media file validation, filename sanitization, `ffprobe` metadata extraction, and streaming database batching. | `walkdir`, `tokio`, `serde_json`, `regex`, `wazoo-core` | [Scanner Architecture] |
+| [**`wazoo-scanner`**] | Asynchronous directory scanner, media file validation, filename sanitization, and streaming database batching. | `walkdir`, `tokio`, `regex`, `wazoo-core` | [Scanner Architecture] |
 | [**`wazoo-app`**] | Main desktop application entry point, TEA state machine, modular update reducers, UI components, multi-tile layout engines, drawers, and modal dialogs. | `iced`, `wazoo-core`, `wazoo-media`, `wazoo-scanner` | [App Architecture] |
 
 ---
@@ -76,7 +76,6 @@ sequenceDiagram
     participant UI as WazooApp (views / scanner)
     participant Scanner as MediaScanner (wazoo-scanner)
     participant WalkDir as walkdir worker
-    participant FFprobe as ffprobe process
     participant Channel as tokio::sync::mpsc
     participant DB as Database (wazoo-core)
 
@@ -84,7 +83,6 @@ sequenceDiagram
     Scanner->>WalkDir: Recursively traverse directories
     WalkDir->>Scanner: Discovered file paths (.mkv, .mp4, .webm, etc.)
     Scanner->>Scanner: clean_video_name (strip brackets, normalize spaces)
-    Scanner->>FFprobe: Probe dimensions, codec, duration, subtitle streams
     Scanner->>Channel: Send VideoRecord batches + progress updates
     Channel->>UI: ScanProgressUpdate(scanned, total)
     Channel->>DB: batch_insert_videos (atomic SQLite transaction)
@@ -174,6 +172,6 @@ Dive deeper into specific subsystem implementations:
 2. [**`wazoo-media` Architecture**](wazoo-media.md)
    - `libmpv` FFI initialization, WGPU shader pipeline, `VideoHandle` API, scroll physics, and subtitle transcript parsing.
 3. [**`wazoo-scanner` Architecture**](wazoo-scanner.md)
-   - Media discovery, directory recursion, filename normalization, `ffprobe` metadata inspection, and streaming channels.
+   - Media discovery, directory recursion, filename normalization, and streaming channels.
 4. [**`wazoo-app` Architecture**](wazoo-app.md)
    - TEA application state, modular message reducers, multi-tile layout engines, slide drawers, frameless titlebar, and subscriptions.
