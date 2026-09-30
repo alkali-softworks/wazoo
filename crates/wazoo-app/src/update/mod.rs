@@ -222,7 +222,9 @@ impl WazooApp {
             | Message::RemoveSearchTag(_)
             | Message::PerformSearch
             | Message::ClearSearch
-            | Message::FolderInputChanged(_) => self.update_search(message),
+            | Message::FolderInputChanged(_)
+            | Message::SetActiveQuery(_)
+            | Message::TitleOverlayClicked(_) => self.update_search(message),
 
             // =========================================================================
             // Scanner & Library Folders

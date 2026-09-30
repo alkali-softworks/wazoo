@@ -1622,3 +1622,34 @@ fn test_boot_playback_mode_is_always_normal_even_if_scroll_was_used() {
     );
 }
 
+#[test]
+fn test_set_active_query_updates_search_tags_and_reconciles() {
+    let (mut app, _) = new_test_app();
+    app.db
+        .insert_or_update_video(&wazoo_core::VideoRecord::new(
+            1,
+            "ShowA - S01E01",
+            "/media/Shows/ShowA - S01E01.mp4",
+        ))
+        .unwrap();
+    app.db
+        .insert_or_update_video(&wazoo_core::VideoRecord::new(
+            2,
+            "ShowA - S01E02",
+            "/media/Shows/ShowA - S01E02.mp4",
+        ))
+        .unwrap();
+    app.db
+        .insert_or_update_video(&wazoo_core::VideoRecord::new(
+            3,
+            "ShowB - S01E01",
+            "/media/Shows/ShowB - S01E01.mp4",
+        ))
+        .unwrap();
+
+    let _ = app.update(Message::SetActiveQuery("ShowA".to_string()));
+    assert_eq!(app.search.active_query, "ShowA");
+    assert_eq!(app.search.tags, vec!["ShowA"]);
+    assert_eq!(app.available_videos.len(), 2);
+    assert!(app.available_videos.iter().all(|v| v.path.contains("ShowA")));
+}
