@@ -10,5 +10,7 @@
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 pub fn main() -> iced::Result {
-    wazoo_app::run()
+    let result = wazoo_app::run();
+    let exit_code = if result.is_err() { 1 } else { 0 };
+    std::process::exit(exit_code);
 }

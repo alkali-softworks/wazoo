@@ -1018,10 +1018,17 @@ impl WazooApp {
                     .iter()
                     .any(|v| v.path == preloaded.state.path)
                 {
-                    self.preloaded_player = None;
+                    if let Some(handle) = self.preloaded_player.take() {
+                        std::thread::spawn(move || drop(handle));
+                    }
                     self.is_preloading = false;
                 }
             }
+        } else if self.preloaded_player.is_some() {
+            if let Some(handle) = self.preloaded_player.take() {
+                std::thread::spawn(move || drop(handle));
+            }
+            self.is_preloading = false;
         }
     }
 
@@ -1061,12 +1068,14 @@ impl WazooApp {
                         buffer_config,
                         StartTime::Random,
                     )?;
+                    handle.set_muted(true);
+                    handle.set_paused(true);
 
                     // Background pre-buffer: decode initial presentation frame off-thread
                     // so the player is 100% ready when attached to the scroll feed without hitching.
                     let start = std::time::Instant::now();
                     while !handle.has_decoded_frame()
-                        && start.elapsed() < Duration::from_millis(2000)
+                        && start.elapsed() < Duration::from_millis(1500)
                     {
                         if handle.update_frame() {
                             break;
@@ -1151,23 +1160,23 @@ impl WazooApp {
 
     /// Resets scroll engine and transitions playback mode back to Normal
     pub(crate) fn cleanup_scroll_mode(&mut self) {
-        if self.settings.playback_mode == PlaybackMode::Scroll {
-            self.settings.playback_mode = PlaybackMode::Normal;
-            self.scroll_engine.clear();
-            self.preloaded_player = None;
-            self.is_preloading = false;
-            if self.settings.scroll_mode_muted {
-                for p in &mut self.players {
+        self.settings.playback_mode = PlaybackMode::Normal;
+        self.scroll_engine.clear();
+        if let Some(handle) = self.preloaded_player.take() {
+            std::thread::spawn(move || drop(handle));
+        }
+        self.is_preloading = false;
+        if self.settings.scroll_mode_muted {
+            for p in &mut self.players {
+                p.set_muted(true);
+            }
+        } else {
+            for (i, p) in self.players.iter_mut().enumerate() {
+                if i == self.focused_idx {
+                    p.set_muted(false);
+                    p.set_volume(1.0);
+                } else {
                     p.set_muted(true);
-                }
-            } else {
-                for (i, p) in self.players.iter_mut().enumerate() {
-                    if i == self.focused_idx {
-                        p.set_muted(false);
-                        p.set_volume(1.0);
-                    } else {
-                        p.set_muted(true);
-                    }
                 }
             }
         }

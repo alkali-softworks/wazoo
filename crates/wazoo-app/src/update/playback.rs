@@ -585,11 +585,8 @@ impl WazooApp {
             Message::ToggleScrollMode => {
                 self.modals.menu = false;
                 self.titlebar.show_dropdown_menu = false;
-                self.settings.playback_mode = match self.settings.playback_mode {
-                    PlaybackMode::Scroll => PlaybackMode::Normal,
-                    _ => PlaybackMode::Scroll,
-                };
-                if self.settings.playback_mode == PlaybackMode::Scroll {
+                if self.settings.playback_mode != PlaybackMode::Scroll {
+                    self.settings.playback_mode = PlaybackMode::Scroll;
                     self.scroll_engine.scroll_mode_muted = self.settings.scroll_mode_muted;
                     let window_w = self.settings.window_bounds.width as f32;
                     let window_h = self.settings.window_bounds.height as f32;
@@ -697,6 +694,9 @@ impl WazooApp {
             Message::PreloadedPlayerReady(holder) => {
                 self.is_preloading = false;
                 if self.settings.playback_mode != PlaybackMode::Scroll {
+                    if let Some(Ok(handle)) = holder.lock().ok().and_then(|mut g| g.take()) {
+                        std::thread::spawn(move || drop(handle));
+                    }
                     return Task::none();
                 }
 
@@ -717,6 +717,7 @@ impl WazooApp {
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
                             handle.set_volume(vol);
+                            handle.set_paused(false);
                             self.record_play_history(&handle.state.path);
                             self.players
                                 .push(AppPlayer::new(handle, self.default_shuffle_mode));
@@ -727,7 +728,6 @@ impl WazooApp {
                     }
                     Err(err) => {
                         log::error!("Background player preload failed: {err}");
-                        return self.trigger_preload_task();
                     }
                 }
                 Task::none()
