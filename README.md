@@ -132,7 +132,6 @@ brew install mpv ffmpeg
 ```
 
 #### Windows
-No manual library setup or separate DLLs required! The build process automatically embeds and pre-compresses `libmpv` into a 100% self-contained, single-file executable (`wazoo.exe`) with official application icon and PE metadata embedded.
 
 *(Optional)* For embedded subtitle extraction in the transcript drawer, install `ffmpeg`:
 ```powershell
