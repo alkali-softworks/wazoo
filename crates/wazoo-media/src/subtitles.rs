@@ -90,6 +90,23 @@ pub fn clean_subtitle_text(input: &str) -> String {
     out.split_whitespace().collect::<Vec<&str>>().join(" ")
 }
 
+pub const MAX_SUBTITLE_FILE_BYTES: u64 = 10 * 1024 * 1024; // 10 MB limit
+pub const MAX_SUBTITLE_CUES: usize = 50_000;
+
+fn sanitize_ffmpeg_path(path: &str) -> String {
+    if path.starts_with('-') {
+        format!("./{path}")
+    } else {
+        path.to_string()
+    }
+}
+
+fn is_valid_map_arg(map_arg: &str) -> bool {
+    !map_arg.is_empty()
+        && map_arg.len() <= 32
+        && map_arg.chars().all(|c| c.is_ascii_alphanumeric() || c == ':')
+}
+
 /// Parses SubRip (.srt) and WebVTT (.vtt) text content into structured cues.
 pub fn parse_srt_or_vtt(content: &str) -> Vec<SubtitleCue> {
     let mut cues = Vec::new();
@@ -97,6 +114,9 @@ pub fn parse_srt_or_vtt(content: &str) -> Vec<SubtitleCue> {
     let mut idx = 0;
 
     while idx < lines.len() {
+        if cues.len() >= MAX_SUBTITLE_CUES {
+            break;
+        }
         let line = lines[idx].trim();
         if line.contains("-->") {
             let parts: Vec<&str> = line.split("-->").collect();
@@ -137,6 +157,9 @@ pub fn parse_ass(content: &str) -> Vec<SubtitleCue> {
     let mut cues = Vec::new();
 
     for line in content.lines() {
+        if cues.len() >= MAX_SUBTITLE_CUES {
+            break;
+        }
         let trimmed = line.trim();
         if let Some(rest) = trimmed.strip_prefix("Dialogue:") {
             let parts: Vec<&str> = rest.splitn(10, ',').collect();
@@ -176,6 +199,10 @@ pub fn parse_subtitles(content: &str) -> Vec<SubtitleCue> {
 }
 
 fn run_ffmpeg_subtitle_extract(video_path: &str, map_arg: &str) -> Option<Vec<SubtitleCue>> {
+    if !is_valid_map_arg(map_arg) {
+        return None;
+    }
+    let safe_path = sanitize_ffmpeg_path(video_path);
     let output = std::process::Command::new("ffmpeg")
         .args([
             "-nostdin",
@@ -184,7 +211,7 @@ fn run_ffmpeg_subtitle_extract(video_path: &str, map_arg: &str) -> Option<Vec<Su
             "-v",
             "error",
             "-i",
-            video_path,
+            &safe_path,
             "-map",
             map_arg,
             "-f",
@@ -250,16 +277,18 @@ pub fn load_subtitles_for_stream_sync(
             ];
 
             for cand in candidates {
-                if cand.exists() {
-                    if let Ok(content) = std::fs::read_to_string(&cand) {
-                        let cues = parse_subtitles(&content);
-                        if !cues.is_empty() {
-                            log::info!(
-                                "Loaded {} subtitle cues from sidecar {:?}",
-                                cues.len(),
-                                cand
-                            );
-                            return cues;
+                if let Ok(meta) = std::fs::metadata(&cand) {
+                    if meta.is_file() && meta.len() <= MAX_SUBTITLE_FILE_BYTES {
+                        if let Ok(content) = std::fs::read_to_string(&cand) {
+                            let cues = parse_subtitles(&content);
+                            if !cues.is_empty() {
+                                log::info!(
+                                    "Loaded {} subtitle cues from sidecar {:?}",
+                                    cues.len(),
+                                    cand
+                                );
+                                return cues;
+                            }
                         }
                     }
                 }
@@ -277,6 +306,10 @@ pub async fn run_ffmpeg_subtitle_extract_async(
     video_path: &str,
     map_arg: &str,
 ) -> Option<Vec<SubtitleCue>> {
+    if !is_valid_map_arg(map_arg) {
+        return None;
+    }
+    let safe_path = sanitize_ffmpeg_path(video_path);
     let mut cmd = tokio::process::Command::new("ffmpeg");
     cmd.args([
         "-nostdin",
@@ -285,7 +318,7 @@ pub async fn run_ffmpeg_subtitle_extract_async(
         "-v",
         "error",
         "-i",
-        video_path,
+        &safe_path,
         "-map",
         map_arg,
         "-f",
@@ -324,13 +357,15 @@ pub async fn load_subtitles_for_track_details(
 ) -> Vec<SubtitleCue> {
     // 1. If an external subtitle file is explicitly specified, load and parse it asynchronously off-thread
     if let Some(ext_file) = external_filename {
-        if tokio::fs::try_exists(&ext_file).await.unwrap_or(false) {
-            if let Ok(content) = tokio::fs::read_to_string(&ext_file).await {
-                let cues = tokio::task::spawn_blocking(move || parse_subtitles(&content))
-                    .await
-                    .unwrap_or_default();
-                if !cues.is_empty() {
-                    return cues;
+        if let Ok(meta) = tokio::fs::metadata(&ext_file).await {
+            if meta.is_file() && meta.len() <= MAX_SUBTITLE_FILE_BYTES {
+                if let Ok(content) = tokio::fs::read_to_string(&ext_file).await {
+                    let cues = tokio::task::spawn_blocking(move || parse_subtitles(&content))
+                        .await
+                        .unwrap_or_default();
+                    if !cues.is_empty() {
+                        return cues;
+                    }
                 }
             }
         }

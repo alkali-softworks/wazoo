@@ -228,10 +228,10 @@ fn load_windows_mpv() -> Option<MpvApi> {
         }
     }
 
-    // 2. Check current working directory & known workspace directories
+    // 2. In debug builds only, check known workspace target directories for developer convenience
+    #[cfg(debug_assertions)]
     if let Ok(cwd) = std::env::current_dir() {
         let search_dirs = [
-            cwd.clone(),
             cwd.join("target/mpv-win64"),
             cwd.join("target/debug"),
             cwd.join("target/debug/deps"),
@@ -247,11 +247,10 @@ fn load_windows_mpv() -> Option<MpvApi> {
         }
     }
 
-    // 3. Check local app data cache & fallback temp cache
+    // 3. Check local app data cache (user-private directory only; no shared temp fallback)
     let fallback_data_dirs = [
         directories::ProjectDirs::from("com", "Alkali Softworks", "Wazoo")
             .map(|p| p.data_local_dir().to_path_buf()),
-        Some(std::env::temp_dir().join("wazoo-mpv-cache")),
     ];
 
     for data_dir_opt in fallback_data_dirs {

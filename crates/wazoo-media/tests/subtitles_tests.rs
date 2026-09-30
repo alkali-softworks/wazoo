@@ -94,3 +94,65 @@ async fn test_run_ffmpeg_subtitle_extract_async_nonexistent_file() {
     // Gracefully returns None without panicking or blocking
     assert!(cues.is_none());
 }
+
+#[tokio::test]
+async fn test_oversized_subtitle_file_rejected() {
+    let dir = std::env::temp_dir().join(format!("wazoo_sub_oversize_{}", rand::random::<u32>()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let srt_path = dir.join("oversized.srt");
+
+    // Create a sparse file larger than MAX_SUBTITLE_FILE_BYTES (10 MB + 1 byte)
+    let file = std::fs::File::create(&srt_path).unwrap();
+    file.set_len(10 * 1024 * 1024 + 1).unwrap();
+
+    let cues = wazoo_media::load_subtitles_for_track_details(
+        "dummy_video.mp4".to_string(),
+        Some(srt_path.to_string_lossy().to_string()),
+        None,
+        0,
+    )
+    .await;
+
+    // Must be rejected without attempting to read into memory
+    assert!(cues.is_empty());
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[tokio::test]
+async fn test_invalid_map_arg_rejected() {
+    // Malicious map args with command injection, path traversal, or option flags
+    let bad_args = [
+        "0:s:0; rm -rf /",
+        "-nostdin",
+        "0:s:0 | echo hacked",
+        "0:s:0\n-v error",
+        "",
+    ];
+
+    for bad in &bad_args {
+        let res = wazoo_media::run_ffmpeg_subtitle_extract_async("dummy.mp4", bad).await;
+        assert!(res.is_none(), "Invalid map_arg '{}' should be rejected", bad);
+    }
+}
+
+#[test]
+fn test_max_cues_limit() {
+    // Generate an SRT stream exceeding MAX_SUBTITLE_CUES (50,000)
+    use std::fmt::Write;
+    let mut huge_srt = String::new();
+    for i in 0..50_050 {
+        let _ = writeln!(
+            &mut huge_srt,
+            "{}\n00:00:01,000 --> 00:00:02,000\nLine {}\n",
+            i + 1,
+            i
+        );
+    }
+
+    let cues = parse_srt_or_vtt(&huge_srt);
+    assert_eq!(
+        cues.len(),
+        wazoo_media::subtitles::MAX_SUBTITLE_CUES,
+        "Cue parsing should be bounded by MAX_SUBTITLE_CUES"
+    );
+}

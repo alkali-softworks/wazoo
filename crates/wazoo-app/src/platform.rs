@@ -115,6 +115,7 @@ pub fn init_linux_desktop_entry(is_default_player: bool) {
 
         if let Some(current_exe) = target_exe {
             let exe_str = current_exe.to_string_lossy();
+            let escaped_exe = exe_str.replace('\\', "\\\\").replace('"', "\\\"");
             let mime_line = if is_default_player {
                 let mimetypes = format!("{};", SUPPORTED_VIDEO_MIMETYPES.join(";"));
                 format!("MimeType={}\n", mimetypes)
@@ -133,7 +134,7 @@ pub fn init_linux_desktop_entry(is_default_player: bool) {
                 Categories=AudioVideo;Video;Player;\n\
                 StartupWMClass=wazoo\n\
                 {}",
-                exe_str, mime_line
+                escaped_exe, mime_line
             );
             let _ = std::fs::write(&desktop_path, desktop_content);
             let _ = std::process::Command::new("update-desktop-database")
@@ -286,10 +287,17 @@ pub fn is_hybrid_laptop() -> bool {
 }
 
 pub fn open_url(url: &str) {
+    // Only permit safe web protocols to prevent arbitrary scheme execution (file://, ms-msdt:, etc.)
+    if !url.starts_with("https://") && !url.starts_with("http://") {
+        log::warn!("Rejected unsafe URL navigation request: {}", url);
+        return;
+    }
+
     #[cfg(target_os = "windows")]
     {
-        let _ = std::process::Command::new("cmd")
-            .args(["/c", "start", "", url])
+        // Use rundll32 url.dll,FileProtocolHandler to avoid cmd.exe shell interpretation (&, |, ^, %)
+        let _ = std::process::Command::new("rundll32")
+            .args(["url.dll,FileProtocolHandler", url])
             .spawn();
     }
     #[cfg(target_os = "macos")]
@@ -305,7 +313,7 @@ pub fn open_url(url: &str) {
 /**
  * Detaches the process from the controlling terminal / console.
  *
- * Spawns a detached grandchild process in a new session with redirected standard I/O,
+ * Spawns a detached process in a new session with redirected standard I/O,
  * allowing the launching console to be closed without terminating the application.
  */
 #[cfg(unix)]
@@ -314,45 +322,20 @@ pub fn detach_from_console() {
         return;
     }
 
-    unsafe {
-        // First fork: creates a child process
-        let pid = libc::fork();
-        if pid < 0 {
-            return;
-        }
-        if pid > 0 {
-            // Parent process exits immediately with success status (0),
-            // freeing the console and returning the shell prompt.
-            libc::_exit(0);
-        }
+    use std::os::unix::process::CommandExt;
+    use std::process::{Command, Stdio};
 
-        // Child process: create a new session and become session leader
-        if libc::setsid() < 0 {
-            // setsid failed, continue
-        }
+    if let Ok(exe) = std::env::current_exe() {
+        let mut cmd = Command::new(exe);
+        cmd.args(std::env::args().skip(1));
+        cmd.arg("--foreground");
+        cmd.stdin(Stdio::null());
+        cmd.stdout(Stdio::null());
+        cmd.stderr(Stdio::null());
+        cmd.process_group(0);
 
-        // Ignore SIGHUP so terminal closure doesn't kill the child
-        libc::signal(libc::SIGHUP, libc::SIG_IGN);
-
-        // Second fork: ensures child is not a session leader,
-        // so it cannot acquire a controlling terminal.
-        let pid2 = libc::fork();
-        if pid2 < 0 {
-            return;
-        }
-        if pid2 > 0 {
-            libc::_exit(0);
-        }
-
-        // Redirect standard I/O file descriptors (0, 1, 2) to /dev/null
-        let devnull = libc::open(b"/dev/null\0".as_ptr() as *const libc::c_char, libc::O_RDWR);
-        if devnull >= 0 {
-            libc::dup2(devnull, libc::STDIN_FILENO);
-            libc::dup2(devnull, libc::STDOUT_FILENO);
-            libc::dup2(devnull, libc::STDERR_FILENO);
-            if devnull > 2 {
-                libc::close(devnull);
-            }
+        if cmd.spawn().is_ok() {
+            std::process::exit(0);
         }
     }
 }
