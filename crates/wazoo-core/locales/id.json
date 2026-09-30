@@ -18,7 +18,8 @@
     "clear_loop": "Hapus Loop",
     "loop": "Loop",
     "start": "Mulai",
-    "end": "Selesai"
+    "end": "Selesai",
+    "crt_filter": "Filter CRT"
   },
   "app": {
     "drag_to_move": "Seret untuk memindahkan",
@@ -78,7 +79,9 @@
     "flip_interval": "Interval Balik",
     "tab_system": "Sistem",
     "always_on_top": "Selalu di Atas",
-    "always_on_top_desc": "Pertahankan Wazoo disematkan di atas jendela lainnya"
+    "always_on_top_desc": "Pertahankan Wazoo disematkan di atas jendela lainnya",
+    "crt_filter": "Filter CRT",
+    "crt_filter_desc": "Simulasi tabung sinar katode analog retro dengan garis pindai, kelengkungan, dan pendaran fosfor"
   },
   "search": {
     "folder": "Folder:",

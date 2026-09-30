@@ -9,7 +9,10 @@
 
 use std::collections::BTreeMap;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, LazyLock, Mutex};
+use std::time::Instant;
+
+static START_TIME: LazyLock<Instant> = LazyLock::new(Instant::now);
 
 use bytemuck::{Pod, Zeroable};
 use iced::advanced::graphics::Viewport;
@@ -22,7 +25,12 @@ use iced_wgpu::wgpu;
 struct Uniforms {
     scale: [f32; 2],
     opacity: f32,
+    crt_enabled: f32,
+    resolution: [f32; 2],
+    video_res: [f32; 2],
+    time: f32,
     _pad: f32,
+    _pad2: [f32; 2],
 }
 
 pub struct FrameData {
@@ -53,14 +61,15 @@ struct VideoEntry {
 }
 
 pub struct VideoPipeline {
-    pipeline: wgpu::RenderPipeline,
+    default_pipeline: wgpu::RenderPipeline,
+    crt_pipeline: wgpu::RenderPipeline,
     bind_group_layout: wgpu::BindGroupLayout,
     sampler: wgpu::Sampler,
     texture_format: wgpu::TextureFormat,
     videos: BTreeMap<u64, VideoEntry>,
 }
 
-const SHADER_SRC: &str = r#"
+const DEFAULT_SHADER_SRC: &str = r#"
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) uv: vec2<f32>,
@@ -69,7 +78,12 @@ struct VertexOutput {
 struct Uniforms {
     scale: vec2<f32>,
     opacity: f32,
+    crt_enabled: f32,
+    resolution: vec2<f32>,
+    video_res: vec2<f32>,
+    time: f32,
     _pad: f32,
+    _pad2: vec2<f32>,
 }
 
 @group(0) @binding(0)
@@ -102,7 +116,6 @@ fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> VertexOutput {
 
     var out: VertexOutput;
     out.position = vec4<f32>(pos[in_vertex_index], 0.0, 1.0);
-    // Center video and scale inside viewport
     let raw_uv = uv[in_vertex_index];
     out.uv = (raw_uv - vec2<f32>(0.5, 0.5)) / uniforms.scale + vec2<f32>(0.5, 0.5);
     return out;
@@ -113,8 +126,146 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     if in.uv.x < 0.0 || in.uv.x > 1.0 || in.uv.y < 0.0 || in.uv.y > 1.0 {
         return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
     }
-    var col = textureSample(tex, s, in.uv);
+    var col = textureSampleLevel(tex, s, in.uv, 0.0);
     return vec4<f32>(col.rgb, col.a * uniforms.opacity);
+}
+"#;
+
+const CRT_SHADER_SRC: &str = r#"
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) uv: vec2<f32>,
+}
+
+struct Uniforms {
+    scale: vec2<f32>,
+    opacity: f32,
+    crt_enabled: f32,
+    resolution: vec2<f32>,
+    video_res: vec2<f32>,
+    time: f32,
+    _pad: f32,
+    _pad2: vec2<f32>,
+}
+
+@group(0) @binding(0)
+var tex: texture_2d<f32>;
+
+@group(0) @binding(1)
+var s: sampler;
+
+@group(0) @binding(2)
+var<uniform> uniforms: Uniforms;
+
+@vertex
+fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> VertexOutput {
+    var pos = array<vec2<f32>, 6>(
+        vec2<f32>(-1.0,  1.0),
+        vec2<f32>( 1.0,  1.0),
+        vec2<f32>(-1.0, -1.0),
+        vec2<f32>( 1.0,  1.0),
+        vec2<f32>( 1.0, -1.0),
+        vec2<f32>(-1.0, -1.0),
+    );
+    var uv = array<vec2<f32>, 6>(
+        vec2<f32>(0.0, 0.0),
+        vec2<f32>(1.0, 0.0),
+        vec2<f32>(0.0, 1.0),
+        vec2<f32>(1.0, 0.0),
+        vec2<f32>(1.0, 1.0),
+        vec2<f32>(0.0, 1.0),
+    );
+
+    var out: VertexOutput;
+    out.position = vec4<f32>(pos[in_vertex_index], 0.0, 1.0);
+    let raw_uv = uv[in_vertex_index];
+    out.uv = (raw_uv - vec2<f32>(0.5, 0.5)) / uniforms.scale + vec2<f32>(0.5, 0.5);
+    return out;
+}
+
+fn curve(uv: vec2<f32>, curvature: f32) -> vec2<f32> {
+    var u = (uv - 0.5) * 2.0;
+    u.x = u.x * (1.0 + pow(abs(u.y) / curvature, 2.0));
+    u.y = u.y * (1.0 + pow(abs(u.x) / curvature, 2.0));
+    return (u / 2.0) + 0.5;
+}
+
+fn hash(p: vec2<f32>) -> f32 {
+    return fract(sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.5453123);
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    // Classic curved CRT bulb tube (curvature = 3.2 for a more pronounced rounded picture)
+    let curved_uv = curve(in.uv, 3.2);
+
+    if curved_uv.x < 0.0 || curved_uv.x > 1.0 || curved_uv.y < 0.0 || curved_uv.y > 1.0 {
+        return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
+    }
+
+    // Smooth rounded CRT glass envelope corners
+    let corner_box = abs(curved_uv - vec2<f32>(0.5, 0.5)) * 2.0;
+    let corner_dist = pow(corner_box.x, 10.0) + pow(corner_box.y, 10.0);
+    if corner_dist > 1.05 {
+        return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
+    }
+
+    // Signal glitches / VHS tracking distortion
+    let time_step = floor(uniforms.time * 6.0);
+    let glitch_chance = hash(vec2<f32>(time_step, 17.0));
+
+    var glitch_offset = 0.0;
+    var shift = 0.0018;
+
+    if glitch_chance > 0.84 {
+        let band_start = hash(vec2<f32>(time_step, 42.0));
+        let band_end = band_start + 0.02 + hash(vec2<f32>(time_step, 99.0)) * 0.08;
+
+        if curved_uv.y >= band_start && curved_uv.y <= band_end {
+            glitch_offset = (hash(vec2<f32>(time_step, floor(curved_uv.y * 50.0))) - 0.5) * 0.004;
+            shift += 0.0045 * hash(vec2<f32>(time_step, 88.0));
+        }
+
+        let roll = fract(uniforms.time * 0.2);
+        let roll_dist = abs(curved_uv.y - roll);
+        if roll_dist < 0.04 {
+            glitch_offset += sin((curved_uv.y - roll) * 50.0) * 0.0015;
+            shift += 0.0025;
+        }
+    }
+
+    let warped_uv = clamp(vec2<f32>(curved_uv.x + glitch_offset, curved_uv.y), vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0));
+
+    // Funky radial chromatic aberration: magnetic yoke beam divergence flaring towards the curved edges
+    let center_dir = warped_uv - vec2<f32>(0.5, 0.5);
+    let dist_sq = dot(center_dir, center_dir);
+    let ca_radial = center_dir * (dist_sq * 0.045);
+    let ca_offset = ca_radial + vec2<f32>(shift, 0.0);
+
+    let uv_r = clamp(warped_uv + ca_offset, vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0));
+    let uv_g = warped_uv;
+    let uv_b = clamp(warped_uv - ca_offset, vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0));
+
+    let r = textureSampleLevel(tex, s, uv_r, 0.0).r;
+    let g = textureSampleLevel(tex, s, uv_g, 0.0).g;
+    let b = textureSampleLevel(tex, s, uv_b, 0.0).b;
+    let a = textureSampleLevel(tex, s, warped_uv, 0.0).a;
+    var base_color = vec4<f32>(r, g, b, a);
+
+    // Active rolling cathode scanlines
+    let scanline = sin(curved_uv.y * 600.0 + uniforms.time * 5.0) * 0.5 + 0.5;
+    var rgb = base_color.rgb - scanline * 0.20;
+
+    // Animated RF static noise
+    let noise = (hash(curved_uv + vec2<f32>(uniforms.time, uniforms.time)) - 0.5) * 0.016;
+    rgb += vec3<f32>(noise, noise, noise);
+
+    // CRT bezel falloff vignette
+    let vignette = curved_uv.x * curved_uv.y * (1.0 - curved_uv.x) * (1.0 - curved_uv.y);
+    let vig_factor = clamp(pow(16.0 * vignette, 0.28), 0.0, 1.0);
+    rgb *= vig_factor;
+
+    return vec4<f32>(clamp(rgb, vec3<f32>(0.0), vec3<f32>(1.0)), base_color.a * uniforms.opacity);
 }
 "#;
 
@@ -186,9 +337,14 @@ impl VideoPipeline {
 
 impl Pipeline for VideoPipeline {
     fn new(device: &wgpu::Device, _queue: &wgpu::Queue, format: wgpu::TextureFormat) -> Self {
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("wazoo video shader module"),
-            source: wgpu::ShaderSource::Wgsl(SHADER_SRC.into()),
+        let default_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("wazoo default video shader module"),
+            source: wgpu::ShaderSource::Wgsl(DEFAULT_SHADER_SRC.into()),
+        });
+
+        let crt_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("wazoo crt video shader module"),
+            source: wgpu::ShaderSource::Wgsl(CRT_SHADER_SRC.into()),
         });
 
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -229,11 +385,11 @@ impl Pipeline for VideoPipeline {
             push_constant_ranges: &[],
         });
 
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("wazoo video render pipeline"),
+        let default_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("wazoo default video render pipeline"),
             layout: Some(&pipeline_layout),
             vertex: wgpu::VertexState {
-                module: &shader,
+                module: &default_shader,
                 entry_point: Some("vs_main"),
                 buffers: &[],
                 compilation_options: Default::default(),
@@ -246,7 +402,37 @@ impl Pipeline for VideoPipeline {
                 alpha_to_coverage_enabled: false,
             },
             fragment: Some(wgpu::FragmentState {
-                module: &shader,
+                module: &default_shader,
+                entry_point: Some("fs_main"),
+                targets: &[Some(wgpu::ColorTargetState {
+                    format,
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+                compilation_options: Default::default(),
+            }),
+            multiview: None,
+            cache: None,
+        });
+
+        let crt_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("wazoo crt video render pipeline"),
+            layout: Some(&pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &crt_shader,
+                entry_point: Some("vs_main"),
+                buffers: &[],
+                compilation_options: Default::default(),
+            },
+            primitive: wgpu::PrimitiveState::default(),
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &crt_shader,
                 entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
                     format,
@@ -281,7 +467,8 @@ impl Pipeline for VideoPipeline {
         };
 
         VideoPipeline {
-            pipeline,
+            default_pipeline,
+            crt_pipeline,
             bind_group_layout,
             sampler,
             texture_format,
@@ -302,6 +489,7 @@ pub struct VideoPrimitive {
     alive: Arc<AtomicBool>,
     opacity: f32,
     fit_cover: bool,
+    crt_enabled: bool,
 }
 
 impl Primitive for VideoPrimitive {
@@ -387,17 +575,29 @@ impl Primitive for VideoPrimitive {
             (1.0, 1.0)
         };
 
+        let time_secs = (START_TIME.elapsed().as_secs_f64() % 3600.0) as f32;
+
         let uniforms = Uniforms {
             scale: [scale_x, scale_y],
             opacity: self.opacity,
+            crt_enabled: if self.crt_enabled { 1.0 } else { 0.0 },
+            resolution: [bw.max(1.0), bh.max(1.0)],
+            video_res: [vw.max(1.0), vh.max(1.0)],
+            time: time_secs,
             _pad: 0.0,
+            _pad2: [0.0, 0.0],
         };
         queue.write_buffer(&entry.uniform_buffer, 0, bytemuck::bytes_of(&uniforms));
     }
 
     fn draw(&self, pipeline: &Self::Pipeline, render_pass: &mut wgpu::RenderPass<'_>) -> bool {
         if let Some(entry) = pipeline.videos.get(&self.player_id) {
-            render_pass.set_pipeline(&pipeline.pipeline);
+            let active_pipeline = if self.crt_enabled {
+                &pipeline.crt_pipeline
+            } else {
+                &pipeline.default_pipeline
+            };
+            render_pass.set_pipeline(active_pipeline);
             render_pass.set_bind_group(0, &entry.bind_group, &[]);
             render_pass.draw(0..6, 0..1);
             return true;
@@ -412,6 +612,7 @@ pub struct VideoProgram {
     alive: Arc<AtomicBool>,
     opacity: f32,
     fit_cover: bool,
+    crt_enabled: bool,
 }
 
 impl VideoProgram {
@@ -431,12 +632,24 @@ impl VideoProgram {
         opacity: f32,
         fit_cover: bool,
     ) -> Self {
+        Self::new_full(player_id, frame, alive, opacity, fit_cover, false)
+    }
+
+    pub fn new_full(
+        player_id: u64,
+        frame: Arc<Mutex<FrameData>>,
+        alive: Arc<AtomicBool>,
+        opacity: f32,
+        fit_cover: bool,
+        crt_enabled: bool,
+    ) -> Self {
         Self {
             player_id,
             frame,
             alive,
             opacity,
             fit_cover,
+            crt_enabled,
         }
     }
 }
@@ -457,6 +670,7 @@ impl<Message> Program<Message> for VideoProgram {
             alive: Arc::clone(&self.alive),
             opacity: self.opacity,
             fit_cover: self.fit_cover,
+            crt_enabled: self.crt_enabled,
         }
     }
 }
@@ -466,3 +680,4 @@ pub fn video_shader<Message>(program: VideoProgram) -> Shader<Message, VideoProg
         .width(Length::Fill)
         .height(Length::Fill)
 }
+

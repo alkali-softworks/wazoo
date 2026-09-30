@@ -18,7 +18,8 @@
     "clear_loop": "Clear Loop",
     "loop": "Loop",
     "start": "Start",
-    "end": "End"
+    "end": "End",
+    "crt_filter": "CRT Filter"
   },
   "app": {
     "drag_to_move": "Drag to Move",
@@ -78,7 +79,9 @@
     "flip_interval": "Flip Interval",
     "tab_system": "System",
     "always_on_top": "Always on Top",
-    "always_on_top_desc": "Keep Wazoo pinned above all other windows"
+    "always_on_top_desc": "Keep Wazoo pinned above all other windows",
+    "crt_filter": "CRT Filter",
+    "crt_filter_desc": "Retro analog cathode ray tube simulation with scanlines, curvature, and phosphor glow"
   },
   "search": {
     "folder": "Folder:",

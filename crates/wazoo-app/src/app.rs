@@ -795,6 +795,7 @@ impl WazooApp {
             brightness: self.settings.brightness as f64,
             saturation: self.settings.saturation as f64,
             playback_speed: self.settings.playback_speed as f64,
+            crt_enabled: self.settings.crt_enabled,
         }
     }
 

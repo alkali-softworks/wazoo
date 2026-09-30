@@ -18,7 +18,8 @@
     "clear_loop": "Schleife löschen",
     "loop": "Schleife",
     "start": "Start",
-    "end": "Ende"
+    "end": "Ende",
+    "crt_filter": "CRT-Filter"
   },
   "app": {
     "drag_to_move": "Zum Verschieben ziehen",
@@ -78,7 +79,9 @@
     "flip_interval": "Flip-Intervall",
     "tab_system": "System",
     "always_on_top": "Immer im Vordergrund",
-    "always_on_top_desc": "Wazoo über allen anderen Fenstern halten"
+    "always_on_top_desc": "Wazoo über allen anderen Fenstern halten",
+    "crt_filter": "CRT-Filter",
+    "crt_filter_desc": "Retro-analoge Kathodenstrahlröhren-Simulation mit Scanlines, Krümmung und Phosphorleuchten"
   },
   "search": {
     "folder": "Ordner:",

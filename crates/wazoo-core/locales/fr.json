@@ -18,7 +18,8 @@
     "clear_loop": "Effacer la boucle",
     "loop": "Boucle",
     "start": "Début",
-    "end": "Fin"
+    "end": "Fin",
+    "crt_filter": "Filtre CRT"
   },
   "app": {
     "drag_to_move": "Faites glisser pour déplacer",
@@ -78,7 +79,9 @@
     "flip_interval": "Intervalle de retournement",
     "tab_system": "Système",
     "always_on_top": "Toujours au premier plan",
-    "always_on_top_desc": "Garder Wazoo épinglé au-dessus des autres fenêtres"
+    "always_on_top_desc": "Garder Wazoo épinglé au-dessus des autres fenêtres",
+    "crt_filter": "Filtre CRT",
+    "crt_filter_desc": "Simulation de tube cathodique analogique rétro avec lignes de balayage, courbure et lueur de phosphore"
   },
   "search": {
     "folder": "Dossier :",

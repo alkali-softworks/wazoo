@@ -18,7 +18,8 @@
     "clear_loop": "Limpar repetição",
     "loop": "Repetição",
     "start": "Início",
-    "end": "Fim"
+    "end": "Fim",
+    "crt_filter": "Filtro CRT"
   },
   "app": {
     "drag_to_move": "Arraste para mover",
@@ -78,7 +79,9 @@
     "flip_interval": "Intervalo de inversão",
     "tab_system": "Sistema",
     "always_on_top": "Sempre no topo",
-    "always_on_top_desc": "Manter Wazoo fixado acima de todas as outras janelas"
+    "always_on_top_desc": "Manter Wazoo fixado acima de todas as outras janelas",
+    "crt_filter": "Filtro CRT",
+    "crt_filter_desc": "Simulação de tubo de raios catódicos analógico retrô com linhas de varredura, curvatura e brilho de fósforo"
   },
   "search": {
     "folder": "Pasta:",

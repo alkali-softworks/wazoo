@@ -18,7 +18,8 @@
     "clear_loop": "반복 구간 해제",
     "loop": "반복",
     "start": "시작",
-    "end": "끝"
+    "end": "끝",
+    "crt_filter": "CRT 필터"
   },
   "app": {
     "drag_to_move": "드래그하여 이동",
@@ -78,7 +79,9 @@
     "flip_interval": "플립 간격",
     "tab_system": "시스템",
     "always_on_top": "항상 위에 고정",
-    "always_on_top_desc": "Wazoo를 다른 모든 창 위에 고정합니다"
+    "always_on_top_desc": "Wazoo를 다른 모든 창 위에 고정합니다",
+    "crt_filter": "CRT 필터",
+    "crt_filter_desc": "스캔라인, 곡률 및 형광체 발광을 갖춘 레트로 아날로그 브라운관 시뮬레이션"
   },
   "search": {
     "folder": "폴더:",

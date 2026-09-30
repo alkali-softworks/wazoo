@@ -61,6 +61,7 @@ pub struct BufferConfig {
     pub brightness: f64,
     pub saturation: f64,
     pub playback_speed: f64,
+    pub crt_enabled: bool,
 }
 
 impl Default for BufferConfig {
@@ -75,6 +76,8 @@ impl Default for BufferConfig {
             brightness: 0.0,
             saturation: 0.0,
             playback_speed: 1.0,
+            crt_enabled: false,
         }
     }
 }
+

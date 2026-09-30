@@ -167,6 +167,8 @@ pub struct WazooSettings {
     pub saturation: f32,
     #[serde(default = "default_playback_speed")]
     pub playback_speed: f32,
+    #[serde(default)]
+    pub crt_enabled: bool,
 }
 
 fn default_playback_speed() -> f32 {
@@ -205,6 +207,7 @@ impl Default for WazooSettings {
             brightness: 0.0,
             saturation: 0.0,
             playback_speed: 1.0,
+            crt_enabled: false,
         }
     }
 }
