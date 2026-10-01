@@ -1904,3 +1904,29 @@ fn test_crt_filter_7_hotkey_and_ui_toggle() {
     assert!(!app.settings.crt_enabled);
 }
 
+#[test]
+fn test_color_static_loading_frames_and_animation() {
+    let (mut app, _) = WazooApp::new_test_app();
+
+    // Verify all 20 frames of color-static.gif were decoded into handles
+    assert_eq!(app.color_static_frames.len(), 20);
+
+    // Verify frame index timing calculation (advances every 2 ticks at 60Hz ~30ms)
+    app.overlay.spinner_ticks = 0;
+    assert_eq!(app.overlay.color_static_frame_index(20), 0);
+    app.overlay.spinner_ticks = 1;
+    assert_eq!(app.overlay.color_static_frame_index(20), 0);
+    app.overlay.spinner_ticks = 2;
+    assert_eq!(app.overlay.color_static_frame_index(20), 1);
+    app.overlay.spinner_ticks = 39;
+    assert_eq!(app.overlay.color_static_frame_index(20), 19);
+    app.overlay.spinner_ticks = 40;
+    assert_eq!(app.overlay.color_static_frame_index(20), 0);
+
+    // Verify player rendering in loading state renders the color static container
+    if let Some(player) = app.players.iter_mut().next() {
+        player.is_loading = true;
+    }
+    let _view = app.view();
+}
+

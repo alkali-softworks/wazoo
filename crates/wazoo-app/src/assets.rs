@@ -8,6 +8,34 @@
  */
 
 pub static APP_ICON_BYTES: &[u8] = include_bytes!("../resources/icon.png");
+pub static COLOR_STATIC_GIF_BYTES: &[u8] = include_bytes!("../resources/color-static.gif");
+
+/// Decodes all animated frames of `color-static.gif` into cached Iced image handles.
+pub fn load_color_static_frames() -> Vec<iced::widget::image::Handle> {
+    use image::codecs::gif::GifDecoder;
+    use image::AnimationDecoder;
+    use std::io::Cursor;
+
+    let Ok(decoder) = GifDecoder::new(Cursor::new(COLOR_STATIC_GIF_BYTES)) else {
+        log::error!("Failed to initialize GifDecoder for color-static.gif");
+        return Vec::new();
+    };
+
+    let Ok(frames) = decoder.into_frames().collect_frames() else {
+        log::error!("Failed to decode frames from color-static.gif");
+        return Vec::new();
+    };
+
+    frames
+        .into_iter()
+        .map(|frame| {
+            let buffer = frame.into_buffer();
+            let width = buffer.width();
+            let height = buffer.height();
+            iced::widget::image::Handle::from_rgba(width, height, buffer.into_raw())
+        })
+        .collect()
+}
 
 // Crisp vector SVGs for window controls matching modern desktop apps
 pub static SVG_WINDOW_MINIMIZE: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><line x1="0" y1="5" x2="10" y2="5" stroke="#cccccc" stroke-width="1.2"/></svg>"##;
