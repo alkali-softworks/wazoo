@@ -12,8 +12,8 @@ pub static COLOR_STATIC_GIF_BYTES: &[u8] = include_bytes!("../resources/color-st
 
 /// Decodes all animated frames of `color-static.gif` into cached Iced image handles.
 pub fn load_color_static_frames() -> Vec<iced::widget::image::Handle> {
-    use image::codecs::gif::GifDecoder;
     use image::AnimationDecoder;
+    use image::codecs::gif::GifDecoder;
     use std::io::Cursor;
 
     let Ok(decoder) = GifDecoder::new(Cursor::new(COLOR_STATIC_GIF_BYTES)) else {

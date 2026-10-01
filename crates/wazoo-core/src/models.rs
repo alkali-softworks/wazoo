@@ -61,10 +61,8 @@ pub enum LoadingIndicator {
 }
 
 impl LoadingIndicator {
-    pub const ALL: &'static [LoadingIndicator] = &[
-        LoadingIndicator::TvStatic,
-        LoadingIndicator::Spinner,
-    ];
+    pub const ALL: &'static [LoadingIndicator] =
+        &[LoadingIndicator::TvStatic, LoadingIndicator::Spinner];
 }
 
 impl std::fmt::Display for LoadingIndicator {

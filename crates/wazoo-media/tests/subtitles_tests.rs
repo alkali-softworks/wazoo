@@ -131,7 +131,11 @@ async fn test_invalid_map_arg_rejected() {
 
     for bad in &bad_args {
         let res = wazoo_media::run_ffmpeg_subtitle_extract_async("dummy.mp4", bad).await;
-        assert!(res.is_none(), "Invalid map_arg '{}' should be rejected", bad);
+        assert!(
+            res.is_none(),
+            "Invalid map_arg '{}' should be rejected",
+            bad
+        );
     }
 }
 

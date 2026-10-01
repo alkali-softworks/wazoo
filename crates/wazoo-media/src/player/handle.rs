@@ -1262,8 +1262,14 @@ impl VideoHandle {
                     self.preferred_audio_language = Some(pref.clone());
                     let alang = build_alang_string(&pref);
                     if !alang.is_empty() {
-                        if let (Ok(c_prop), Ok(c_val)) = (CString::new("alang"), CString::new(alang)) {
-                            mpv_ffi::mpv_set_property_string(self.mpv, c_prop.as_ptr(), c_val.as_ptr());
+                        if let (Ok(c_prop), Ok(c_val)) =
+                            (CString::new("alang"), CString::new(alang))
+                        {
+                            mpv_ffi::mpv_set_property_string(
+                                self.mpv,
+                                c_prop.as_ptr(),
+                                c_val.as_ptr(),
+                            );
                         }
                     }
                 }
@@ -1400,7 +1406,8 @@ impl VideoHandle {
         }
 
         // Subtitle tracks
-        let is_sub_initial_load = !self.tracks_loaded || self.state.current_subtitle_track_id.is_none();
+        let is_sub_initial_load =
+            !self.tracks_loaded || self.state.current_subtitle_track_id.is_none();
         let sid_i64 = self.get_property_i64("sid");
         let sid_str = self.get_property_string("sid");
         let mpv_selected_sid =

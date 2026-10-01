@@ -302,8 +302,7 @@ impl Database {
                 }
 
                 let has_start_anchor = term.starts_with('^') && !term.starts_with("^^");
-                let has_end_anchor =
-                    term.len() > 1 && term.ends_with('$') && !term.ends_with("$$");
+                let has_end_anchor = term.len() > 1 && term.ends_with('$') && !term.ends_with("$$");
 
                 let core_term = match (has_start_anchor, has_end_anchor) {
                     (true, true) => {
@@ -422,8 +421,7 @@ impl Database {
                                 negative_conditions
                                     .push(format!("path NOT LIKE ?{p_idx} ESCAPE '\\'"));
                             } else {
-                                positive_conditions
-                                    .push(format!("path LIKE ?{p_idx} ESCAPE '\\'"));
+                                positive_conditions.push(format!("path LIKE ?{p_idx} ESCAPE '\\'"));
                             }
                         }
                     }

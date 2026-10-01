@@ -231,7 +231,11 @@ fn load_initial_videos(
     videos
 }
 
-fn build_initial_toast(is_cli: bool, language: &str, total_videos: usize) -> (Option<String>, usize) {
+fn build_initial_toast(
+    is_cli: bool,
+    language: &str,
+    total_videos: usize,
+) -> (Option<String>, usize) {
     if !is_cli {
         return (None, 0);
     }
@@ -393,7 +397,8 @@ impl WazooApp {
             self.next_player_id += 1;
             direct_file_player_id = Some(id);
             let name = format::format_video_title(path);
-            if let Ok(mut handle) = self.create_video_handle_with_start(id, path, &name, Some(0.0)) {
+            if let Ok(mut handle) = self.create_video_handle_with_start(id, path, &name, Some(0.0))
+            {
                 handle.set_muted(false);
                 handle.set_volume(1.0);
                 handle.set_subtitles_visible(self.subtitles_enabled);
@@ -422,7 +427,8 @@ impl WazooApp {
                         handle.set_muted(session.is_muted);
                         handle.set_volume(session.volume);
                         handle.set_subtitles_visible(self.subtitles_enabled);
-                        self.players.push(AppPlayer::new(handle, session.is_shuffle));
+                        self.players
+                            .push(AppPlayer::new(handle, session.is_shuffle));
                         self.push_player_nav_entry(id, session.path.clone(), start_secs);
                     }
                 }
@@ -648,10 +654,8 @@ impl WazooApp {
         if is_shuffle {
             if pool.len() > 1 {
                 if let Some(curr) = current_path {
-                    let candidates: Vec<&VideoRecord> = pool
-                        .iter()
-                        .filter(|v| v.path != curr)
-                        .collect();
+                    let candidates: Vec<&VideoRecord> =
+                        pool.iter().filter(|v| v.path != curr).collect();
                     if !candidates.is_empty() {
                         let idx = rand::random::<usize>() % candidates.len();
                         return Some(candidates[idx].clone());
@@ -664,11 +668,7 @@ impl WazooApp {
             if let Some(curr) = current_path {
                 if let Some(pos) = pool.iter().position(|v| v.path == curr) {
                     // If we reach the end of the list in sequential mode, start over from the beginning
-                    let next_pos = if pos + 1 >= pool.len() {
-                        0
-                    } else {
-                        pos + 1
-                    };
+                    let next_pos = if pos + 1 >= pool.len() { 0 } else { pos + 1 };
                     return Some(pool[next_pos].clone());
                 }
             }
@@ -688,10 +688,8 @@ impl WazooApp {
         if is_shuffle {
             if pool.len() > 1 {
                 if let Some(curr) = current_path {
-                    let candidates: Vec<&VideoRecord> = pool
-                        .iter()
-                        .filter(|v| v.path != curr)
-                        .collect();
+                    let candidates: Vec<&VideoRecord> =
+                        pool.iter().filter(|v| v.path != curr).collect();
                     if !candidates.is_empty() {
                         let idx = rand::random::<usize>() % candidates.len();
                         return Some(candidates[idx].clone());
@@ -1082,7 +1080,9 @@ impl WazooApp {
         }
 
         let curr_path = self.players.last().map(|p| p.state.path.clone());
-        let video_rec = match self.get_next_video_rec_for_navigation(curr_path.as_deref(), self.default_shuffle_mode) {
+        let video_rec = match self
+            .get_next_video_rec_for_navigation(curr_path.as_deref(), self.default_shuffle_mode)
+        {
             Some(rec) => rec,
             None => return Task::none(),
         };

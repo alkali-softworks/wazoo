@@ -37,7 +37,8 @@ impl WazooApp {
         let mut stack_children: Vec<Element<'a, Message>> = Vec::new();
 
         if is_loading {
-            let use_tv_static = self.settings.loading_indicator == wazoo_core::LoadingIndicator::TvStatic
+            let use_tv_static = self.settings.loading_indicator
+                == wazoo_core::LoadingIndicator::TvStatic
                 && !self.color_static_frames.is_empty();
 
             if use_tv_static {

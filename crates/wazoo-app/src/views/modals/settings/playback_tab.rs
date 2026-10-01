@@ -172,7 +172,11 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 .spacing(2),
                 Space::new().width(Length::Fill),
                 badge_with_reset(
-                    if crt_active { "ON".to_string() } else { "OFF".to_string() },
+                    if crt_active {
+                        "ON".to_string()
+                    } else {
+                        "OFF".to_string()
+                    },
                     crt_active,
                     Message::ToggleCrtFilter,
                 ),

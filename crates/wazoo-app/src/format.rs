@@ -128,11 +128,15 @@ pub fn find_season_episode_match(s: &str) -> Option<SeasonEpisodeMatch<'_>> {
 
         let prefix = raw_prefix
             .trim()
-            .trim_matches(|c: char| c == '-' || c == '—' || c == '–' || c == ':' || c == '.' || c == ' ')
+            .trim_matches(|c: char| {
+                c == '-' || c == '—' || c == '–' || c == ':' || c == '.' || c == ' '
+            })
             .trim();
         let suffix = raw_suffix
             .trim()
-            .trim_matches(|c: char| c == '-' || c == '—' || c == '–' || c == ':' || c == '.' || c == ' ')
+            .trim_matches(|c: char| {
+                c == '-' || c == '—' || c == '–' || c == ':' || c == '.' || c == ' '
+            })
             .trim();
 
         return Some(SeasonEpisodeMatch {
@@ -153,11 +157,15 @@ pub fn find_season_episode_match(s: &str) -> Option<SeasonEpisodeMatch<'_>> {
 
         let prefix = raw_prefix
             .trim()
-            .trim_matches(|c: char| c == '-' || c == '—' || c == '–' || c == ':' || c == '.' || c == ' ')
+            .trim_matches(|c: char| {
+                c == '-' || c == '—' || c == '–' || c == ':' || c == '.' || c == ' '
+            })
             .trim();
         let suffix = raw_suffix
             .trim()
-            .trim_matches(|c: char| c == '-' || c == '—' || c == '–' || c == ':' || c == '.' || c == ' ')
+            .trim_matches(|c: char| {
+                c == '-' || c == '—' || c == '–' || c == ':' || c == '.' || c == ' '
+            })
             .trim();
 
         // Avoid false positive on titles starting with NxN (e.g. "3x3 Eyes") when no preceding show name
@@ -369,13 +377,12 @@ pub fn format_title_lines(path: &str) -> (String, Option<String>) {
         };
 
         if !se_match.prefix.is_empty() {
-            let show_name = if !folder.is_empty()
-                && is_title_redundant_with_folder(&folder, se_match.prefix)
-            {
-                folder
-            } else {
-                se_match.prefix.to_string()
-            };
+            let show_name =
+                if !folder.is_empty() && is_title_redundant_with_folder(&folder, se_match.prefix) {
+                    folder
+                } else {
+                    se_match.prefix.to_string()
+                };
             return (show_name, Some(ep_str));
         } else if !folder.is_empty()
             && !is_generic_folder(&folder)
