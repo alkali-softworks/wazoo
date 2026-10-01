@@ -84,15 +84,16 @@ impl WazooApp {
                     return Task::none();
                 }
 
+                // Suspend all tick animations, video frame decoding, and layout recalculations
+                // while actively resizing to maintain fluid window manipulation without stutter.
+                if self.window.is_resizing() {
+                    return Task::none();
+                }
+
                 self.tick_overlay_animations();
                 self.tick_titlebar_animation();
-
-                // Suspend video frame decoding and scroll layout recalculation while actively resizing
-                // to maintain fluid 60+ FPS window manipulation without CPU/GPU stutter.
-                if !self.window.is_resizing() {
-                    self.update_player_frames();
-                    self.sync_scroll_item_heights();
-                }
+                self.update_player_frames();
+                self.sync_scroll_item_heights();
 
                 Task::none()
             }

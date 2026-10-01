@@ -237,7 +237,8 @@ impl WazooApp {
                 Task::none()
             }
             Message::PlayerHovered(id) => {
-                if self.is_modal_or_menu_open()
+                if self.window.is_resizing()
+                    || self.is_modal_or_menu_open()
                     || (self.titlebar.show
                         && self.is_point_in_titlebar(self.window.cursor_position))
                 {
@@ -253,7 +254,7 @@ impl WazooApp {
                 Task::none()
             }
             Message::PlayerUnhovered(id) => {
-                if self.open_audio_menu_id == Some(id) {
+                if self.window.is_resizing() || self.open_audio_menu_id == Some(id) {
                     return Task::none();
                 }
                 if self.hovered_player_id == Some(id) {

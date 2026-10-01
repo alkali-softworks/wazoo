@@ -28,8 +28,9 @@ impl WazooApp {
         is_scroll_mode: bool,
     ) -> Element<'a, Message> {
         let player_id = p.id;
+        let is_resizing = self.window.is_resizing();
         let is_focused = self.focused_player_id() == Some(player_id);
-        let is_hovered = !self.is_modal_or_menu_open() && self.hovered_player_id == Some(player_id);
+        let is_hovered = !is_resizing && !self.is_modal_or_menu_open() && self.hovered_player_id == Some(player_id);
         let is_loading = p.is_loading;
         let is_audio_menu_open = self.open_audio_menu_id == Some(player_id);
 
@@ -72,11 +73,13 @@ impl WazooApp {
         }
 
         // Overlays show when mouse is actively moving over this specific player (fades after delay),
-        // or when audio menu is open, or while player is loading
-        let show_overlay = (!self.is_modal_or_menu_open()
-            && (is_hovered || is_audio_menu_open)
-            && self.overlay.ticks > 0)
-            || is_loading;
+        // or when audio menu is open, or while player is loading.
+        // Paused during window resize to prevent layout thrashing and widget tree churn.
+        let show_overlay = !is_resizing
+            && (((!self.is_modal_or_menu_open()
+                && (is_hovered || is_audio_menu_open)
+                && self.overlay.ticks > 0))
+                || is_loading);
         let overlay_alpha = if is_loading || is_audio_menu_open {
             1.0
         } else {
@@ -86,7 +89,7 @@ impl WazooApp {
         if show_overlay {
             let hud = self.view_player_hud(p, is_focused, is_loading, overlay_alpha);
             stack_children.push(hud);
-        } else if self.overlay.title_pill_ticks > 0 {
+        } else if !is_resizing && self.overlay.title_pill_ticks > 0 {
             let pill_alpha = (self.overlay.title_pill_ticks as f32 / 20.0).min(1.0);
             let title_pill = self.view_title_pill(&p.state.path, pill_alpha);
 
@@ -101,7 +104,7 @@ impl WazooApp {
             stack_children.push(Element::from(pill_column));
         }
 
-        let show_border = !is_scroll_mode && is_focused && self.overlay.focus_border_ticks > 0;
+        let show_border = !is_resizing && !is_scroll_mode && is_focused && self.overlay.focus_border_ticks > 0;
         if show_border {
             let focus_ring = container(Space::new().width(Length::Fill).height(Length::Fill))
                 .width(Length::Fill)
@@ -119,14 +122,17 @@ impl WazooApp {
             .height(Length::Fill)
             .style(theme::player_container_style(opacity));
 
-        let mut area = mouse_area(player_box)
-            .on_press(Message::PlayerClicked(player_id))
-            .on_enter(Message::PlayerHovered(player_id))
-            .on_move(move |_| Message::PlayerHovered(player_id))
-            .on_exit(Message::PlayerUnhovered(player_id));
+        let mut area = mouse_area(player_box);
+        if !is_resizing {
+            area = area
+                .on_press(Message::PlayerClicked(player_id))
+                .on_enter(Message::PlayerHovered(player_id))
+                .on_move(move |_| Message::PlayerHovered(player_id))
+                .on_exit(Message::PlayerUnhovered(player_id));
 
-        if self.should_hide_cursor() {
-            area = area.interaction(mouse::Interaction::Hidden);
+            if self.should_hide_cursor() {
+                area = area.interaction(mouse::Interaction::Hidden);
+            }
         }
 
         area.into()
