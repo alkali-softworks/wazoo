@@ -81,7 +81,11 @@
     "always_on_top": "窗口置顶",
     "always_on_top_desc": "保持 Wazoo 始终置顶于其他窗口之上",
     "crt_filter": "CRT 滤镜",
-    "crt_filter_desc": "复古模拟阴极射线管仿真，具有扫描线、曲面和荧光粉发光效果"
+    "crt_filter_desc": "复古模拟阴极射线管仿真，具有扫描线、曲面和荧光粉发光效果",
+    "loading_indicator": "加载指示器",
+    "loading_indicator_desc": "视频缓冲和加载时显示的视觉动画",
+    "loading_tv_static": "电视雪花",
+    "loading_spinner": "旋转图标"
   },
   "search": {
     "folder": "文件夹:",

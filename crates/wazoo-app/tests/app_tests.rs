@@ -1930,3 +1930,63 @@ fn test_color_static_loading_frames_and_animation() {
     let _view = app.view();
 }
 
+#[test]
+fn test_loading_indicator_settings_option_and_rendering() {
+    let (mut app, _) = WazooApp::new_test_app();
+
+    // Default loading indicator is TV Static
+    assert_eq!(
+        app.settings.loading_indicator,
+        wazoo_core::LoadingIndicator::TvStatic
+    );
+
+    // Set player to loading and render
+    if let Some(player) = app.players.iter_mut().next() {
+        player.is_loading = true;
+    }
+    {
+        let _view_tv_static = app.view();
+    }
+
+    // Switch to Spinner via Message
+    let _ = app.update(Message::SetLoadingIndicator(
+        wazoo_core::LoadingIndicator::Spinner,
+    ));
+    assert_eq!(
+        app.settings.loading_indicator,
+        wazoo_core::LoadingIndicator::Spinner
+    );
+
+    // Verify settings persistence
+    let reloaded = app.config_mgr.load_settings();
+    assert_eq!(
+        reloaded.loading_indicator,
+        wazoo_core::LoadingIndicator::Spinner
+    );
+
+    // Verify view renders with Spinner in loading state
+    {
+        let _view_spinner = app.view();
+    }
+
+    // Switch back to TV Static
+    let _ = app.update(Message::SetLoadingIndicator(
+        wazoo_core::LoadingIndicator::TvStatic,
+    ));
+    assert_eq!(
+        app.settings.loading_indicator,
+        wazoo_core::LoadingIndicator::TvStatic
+    );
+    let reloaded_tv = app.config_mgr.load_settings();
+    assert_eq!(
+        reloaded_tv.loading_indicator,
+        wazoo_core::LoadingIndicator::TvStatic
+    );
+
+    // Verify system tab UI renders with both options
+    app.modals.settings_tab = wazoo_app::app::SettingsTab::System;
+    {
+        let _sys_view = wazoo_app::views::modals::settings::system_tab::view_system_tab(&app);
+    }
+}
+

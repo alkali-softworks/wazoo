@@ -81,7 +81,11 @@
     "always_on_top": "همیشه در بالا",
     "always_on_top_desc": "پین نگه‌داشتن وازو بالای همه پنجره‌های دیگر",
     "crt_filter": "فیلتر CRT",
-    "crt_filter_desc": "شبیه‌سازی مانیتور قدیمی CRT با خطوط اسکن، خمیدگی و درخشش فسفری"
+    "crt_filter_desc": "شبیه‌سازی مانیتور قدیمی CRT با خطوط اسکن، خمیدگی و درخشش فسفری",
+    "loading_indicator": "نشانگر بارگذاری",
+    "loading_indicator_desc": "پویانمایی بصری هنگام بافر و بارگذاری ویدیو",
+    "loading_tv_static": "برفک تلویزیون",
+    "loading_spinner": "چرخانک"
   },
   "search": {
     "folder": "پوشه:",

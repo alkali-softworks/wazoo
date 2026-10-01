@@ -81,7 +81,11 @@
     "always_on_top": "常に最前面に表示",
     "always_on_top_desc": "他のウィンドウの手前に常に固定します",
     "crt_filter": "CRTフィルター",
-    "crt_filter_desc": "走査線、湾曲、蛍光体グローを備えたレトロアナログブラウン管シミュレーション"
+    "crt_filter_desc": "走査線、湾曲、蛍光体グローを備えたレトロアナログブラウン管シミュレーション",
+    "loading_indicator": "読み込みインジケーター",
+    "loading_indicator_desc": "動画のバッファリングと読み込み中に表示されるアニメーション",
+    "loading_tv_static": "TV砂嵐",
+    "loading_spinner": "スピナー"
   },
   "search": {
     "folder": "フォルダー:",

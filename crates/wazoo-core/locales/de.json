@@ -81,7 +81,11 @@
     "always_on_top": "Immer im Vordergrund",
     "always_on_top_desc": "Wazoo über allen anderen Fenstern halten",
     "crt_filter": "CRT-Filter",
-    "crt_filter_desc": "Retro-analoge Kathodenstrahlröhren-Simulation mit Scanlines, Krümmung und Phosphorleuchten"
+    "crt_filter_desc": "Retro-analoge Kathodenstrahlröhren-Simulation mit Scanlines, Krümmung und Phosphorleuchten",
+    "loading_indicator": "Ladeanzeige",
+    "loading_indicator_desc": "Visuelle Animation beim Puffern und Laden von Videos",
+    "loading_tv_static": "TV-Rauschen",
+    "loading_spinner": "Spinner"
   },
   "search": {
     "folder": "Ordner:",

@@ -81,7 +81,11 @@
     "always_on_top": "Altijd op voorgrond",
     "always_on_top_desc": "Houd Wazoo vastgepind boven alle andere vensters",
     "crt_filter": "CRT-filter",
-    "crt_filter_desc": "Retro analoge beeldbuissimulatie met scanlijnen, kromming en fosforgloed"
+    "crt_filter_desc": "Retro analoge beeldbuissimulatie met scanlijnen, kromming en fosforgloed",
+    "loading_indicator": "Laadindicator",
+    "loading_indicator_desc": "Visuele animatie weergegeven tijdens het bufferen en laden van video",
+    "loading_tv_static": "TV-ruis",
+    "loading_spinner": "Spinner"
   },
   "search": {
     "folder": "Map:",

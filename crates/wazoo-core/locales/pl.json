@@ -81,7 +81,11 @@
     "always_on_top": "Zawsze na wierzchu",
     "always_on_top_desc": "Utrzymuj Wazoo przypięte nad wszystkimi innymi oknami",
     "crt_filter": "Filtr CRT",
-    "crt_filter_desc": "Symulacja kineskopu CRT w stylu retro z liniami skanowania, krzywizną i poświatą luminoforu"
+    "crt_filter_desc": "Symulacja kineskopu CRT w stylu retro z liniami skanowania, krzywizną i poświatą luminoforu",
+    "loading_indicator": "Wskaźnik ładowania",
+    "loading_indicator_desc": "Animacja wizualna wyświetlana podczas buforowania i ładowania wideo",
+    "loading_tv_static": "Szum telewizyjny",
+    "loading_spinner": "Kołowrotek"
   },
   "search": {
     "folder": "Folder:",

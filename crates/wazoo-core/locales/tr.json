@@ -81,7 +81,11 @@
     "always_on_top": "Her Zaman Üstte",
     "always_on_top_desc": "Wazoo'yu diğer tüm pencerelerin üzerinde sabit tutun",
     "crt_filter": "CRT Filtresi",
-    "crt_filter_desc": "Tarama çizgileri, eğrilik ve fosfor parlaması ile retro analog katot ışınlı tüp simülasyonu"
+    "crt_filter_desc": "Tarama çizgileri, eğrilik ve fosfor parlaması ile retro analog katot ışınlı tüp simülasyonu",
+    "loading_indicator": "Yükleme Göstergesi",
+    "loading_indicator_desc": "Video arabelleğe alınırken ve yüklenirken görüntülenen görsel animasyon",
+    "loading_tv_static": "TV Paraziti",
+    "loading_spinner": "Dönen Halka"
   },
   "search": {
     "folder": "Klasör:",

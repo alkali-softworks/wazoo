@@ -81,7 +81,11 @@
     "always_on_top": "Toujours au premier plan",
     "always_on_top_desc": "Garder Wazoo épinglé au-dessus des autres fenêtres",
     "crt_filter": "Filtre CRT",
-    "crt_filter_desc": "Simulation de tube cathodique analogique rétro avec lignes de balayage, courbure et lueur de phosphore"
+    "crt_filter_desc": "Simulation de tube cathodique analogique rétro avec lignes de balayage, courbure et lueur de phosphore",
+    "loading_indicator": "Indicateur de chargement",
+    "loading_indicator_desc": "Animation visuelle affichée pendant la mise en mémoire tampon et le chargement de la vidéo",
+    "loading_tv_static": "Neige TV",
+    "loading_spinner": "Spinner"
   },
   "search": {
     "folder": "Dossier :",

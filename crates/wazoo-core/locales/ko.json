@@ -81,7 +81,11 @@
     "always_on_top": "항상 위에 고정",
     "always_on_top_desc": "Wazoo를 다른 모든 창 위에 고정합니다",
     "crt_filter": "CRT 필터",
-    "crt_filter_desc": "스캔라인, 곡률 및 형광체 발광을 갖춘 레트로 아날로그 브라운관 시뮬레이션"
+    "crt_filter_desc": "스캔라인, 곡률 및 형광체 발광을 갖춘 레트로 아날로그 브라운관 시뮬레이션",
+    "loading_indicator": "로딩 표시기",
+    "loading_indicator_desc": "비디오 버퍼링 및 로딩 중에 표시되는 시각적 애니메이션",
+    "loading_tv_static": "TV 노이즈",
+    "loading_spinner": "스피너"
   },
   "search": {
     "folder": "폴더:",

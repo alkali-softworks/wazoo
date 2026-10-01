@@ -149,6 +149,11 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
             }
+            Message::SetLoadingIndicator(indicator) => {
+                self.settings.loading_indicator = indicator;
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
             Message::SetBufferDuration(secs) => {
                 self.settings.buffer_duration_secs = secs.clamp(2, 60);
                 let _ = self.config_mgr.save_settings(&self.settings);

@@ -81,7 +81,11 @@
     "always_on_top": "תמיד עליון",
     "always_on_top_desc": "השאר את Wazoo מוצמד מעל כל שאר החלונות",
     "crt_filter": "מסנן CRT",
-    "crt_filter_desc": "הדמיית שפופרת קרן קתודית אנלוגית רטרו עם קווי סריקה, עקמומיות וזוהר זרחן"
+    "crt_filter_desc": "הדמיית שפופרת קרן קתודית אנלוגית רטרו עם קווי סריקה, עקמומיות וזוהר זרחן",
+    "loading_indicator": "מחוון טעינה",
+    "loading_indicator_desc": "הנפשה חזותית המוצגת בזמן שהווידאו נאגר ונטען",
+    "loading_tv_static": "שלג בטלוויזיה",
+    "loading_spinner": "סביבון"
   },
   "search": {
     "folder": "תיקייה:",
