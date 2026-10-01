@@ -170,6 +170,44 @@ fn test_preferred_audio_language_serialization() {
 }
 
 #[test]
+fn test_preferred_subtitle_language_serialization() {
+    let mut settings = WazooSettings::default();
+    assert_eq!(settings.preferred_subtitle_language, None);
+
+    settings.preferred_subtitle_language = Some("English".to_string());
+    let json = serde_json::to_string(&settings).unwrap();
+    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
+    assert_eq!(
+        deserialized.preferred_subtitle_language.as_deref(),
+        Some("English")
+    );
+}
+
+#[test]
+fn test_effective_subtitle_language_defaults_to_i18n_language() {
+    let mut settings = WazooSettings::default();
+    assert_eq!(settings.preferred_subtitle_language, None);
+    assert_eq!(settings.language, "en");
+    // When preferred_subtitle_language is not known (None), use the "language" i18n setting
+    assert_eq!(settings.effective_subtitle_language(), "en");
+
+    // Changing i18n language setting
+    settings.language = "es".to_string();
+    assert_eq!(settings.effective_subtitle_language(), "es");
+
+    // When preferred_subtitle_language is explicitly set (known), it takes priority
+    settings.preferred_subtitle_language = Some("Japanese".to_string());
+    assert_eq!(settings.effective_subtitle_language(), "Japanese");
+
+    // If preferred_subtitle_language is cleared or empty, falls back to i18n language setting
+    settings.preferred_subtitle_language = None;
+    assert_eq!(settings.effective_subtitle_language(), "es");
+
+    settings.preferred_subtitle_language = Some("  ".to_string());
+    assert_eq!(settings.effective_subtitle_language(), "es");
+}
+
+#[test]
 fn test_keybinds_serialization_and_has_keybinds() {
     let temp_dir = std::env::temp_dir().join(format!(
         "wazoo_keybinds_test_{}",

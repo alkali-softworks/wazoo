@@ -128,29 +128,45 @@ impl WazooApp {
                 self.drawers.show_transcript_menu = false;
                 self.drawers.transcript_track_index = track_idx;
                 self.subtitles_enabled = true;
+                let mut selected_pref = None;
+                let mut task_args = None;
                 if let Some(player) = self.focused_player_mut() {
                     player.set_subtitles_visible(true);
                     player.set_subtitle_track(track_id);
                     let sub_track = player.subtitle_tracks().get(track_idx).cloned();
+                    if let Some(ref track) = sub_track {
+                        selected_pref = Some(wazoo_media::get_subtitle_track_preference_string(track));
+                    }
                     let path = player.state.path.clone();
                     if !path.is_empty() {
                         self.drawers.transcript_video_path = Some(path.clone());
                         self.drawers.transcript_loading = true;
                         self.drawers.transcript_cues.clear();
-                        let path_clone = path.clone();
                         let ext_file = sub_track.as_ref().and_then(|t| t.external_filename.clone());
                         let ff_index = sub_track.as_ref().and_then(|t| t.ff_index);
-
-                        return Task::perform(
-                            async move {
-                                wazoo_media::load_subtitles_for_track_details(
-                                    path, ext_file, ff_index, track_idx,
-                                )
-                                .await
-                            },
-                            move |cues| Message::TranscriptLoaded(path_clone, track_idx, cues),
-                        );
+                        task_args = Some((path, ext_file, ff_index));
                     }
+                }
+                if let Some(pref) = selected_pref {
+                    if !pref.starts_with("Track ") {
+                        self.settings.preferred_subtitle_language = Some(pref.clone());
+                        let _ = self.config_mgr.save_settings(&self.settings);
+                        for p in &mut self.players {
+                            p.set_preferred_subtitle_language(Some(pref.clone()));
+                        }
+                    }
+                }
+                if let Some((path, ext_file, ff_index)) = task_args {
+                    let path_clone = path.clone();
+                    return Task::perform(
+                        async move {
+                            wazoo_media::load_subtitles_for_track_details(
+                                path, ext_file, ff_index, track_idx,
+                            )
+                            .await
+                        },
+                        move |cues| Message::TranscriptLoaded(path_clone, track_idx, cues),
+                    );
                 }
                 Task::none()
             }

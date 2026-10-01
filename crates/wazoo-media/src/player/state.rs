@@ -56,12 +56,26 @@ pub struct BufferConfig {
     pub size_mb: u32,
     pub read_chunk_kb: u32,
     pub preferred_audio_language: Option<String>,
+    pub preferred_subtitle_language: Option<String>,
+    pub i18n_language: Option<String>,
     pub gamma: f64,
     pub contrast: f64,
     pub brightness: f64,
     pub saturation: f64,
     pub playback_speed: f64,
     pub crt_enabled: bool,
+}
+
+impl BufferConfig {
+    /// Returns the preferred subtitle language if known; otherwise falls back to the i18n language setting
+    /// (defaulting to "en" if neither is known).
+    pub fn effective_subtitle_language(&self) -> &str {
+        self.preferred_subtitle_language
+            .as_deref()
+            .filter(|s| !s.trim().is_empty())
+            .or_else(|| self.i18n_language.as_deref().filter(|s| !s.trim().is_empty()))
+            .unwrap_or("en")
+    }
 }
 
 impl Default for BufferConfig {
@@ -71,6 +85,8 @@ impl Default for BufferConfig {
             size_mb: 16,
             read_chunk_kb: 512,
             preferred_audio_language: None,
+            preferred_subtitle_language: None,
+            i18n_language: Some("en".to_string()),
             gamma: 0.0,
             contrast: 0.0,
             brightness: 0.0,

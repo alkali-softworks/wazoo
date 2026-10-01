@@ -827,6 +827,8 @@ impl WazooApp {
             size_mb: per_player_mb,
             read_chunk_kb: 512,
             preferred_audio_language: self.settings.preferred_audio_language.clone(),
+            preferred_subtitle_language: self.settings.preferred_subtitle_language.clone(),
+            i18n_language: Some(self.settings.language.clone()),
             gamma: self.settings.gamma as f64,
             contrast: self.settings.contrast as f64,
             brightness: self.settings.brightness as f64,
