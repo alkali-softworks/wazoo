@@ -634,19 +634,18 @@ impl WazooApp {
             .unwrap_or(self.default_shuffle_mode)
     }
 
-    pub(crate) fn get_next_video_rec_with_mode(
-        &self,
+    pub(crate) fn get_next_video_rec_from_pool(
+        pool: &[VideoRecord],
         current_path: Option<&str>,
         is_shuffle: bool,
     ) -> Option<VideoRecord> {
-        if self.available_videos.is_empty() {
+        if pool.is_empty() {
             return None;
         }
         if is_shuffle {
-            if self.available_videos.len() > 1 {
+            if pool.len() > 1 {
                 if let Some(curr) = current_path {
-                    let candidates: Vec<&VideoRecord> = self
-                        .available_videos
+                    let candidates: Vec<&VideoRecord> = pool
                         .iter()
                         .filter(|v| v.path != curr)
                         .collect();
@@ -656,23 +655,69 @@ impl WazooApp {
                     }
                 }
             }
-            let idx = rand::random::<usize>() % self.available_videos.len();
-            Some(self.available_videos[idx].clone())
+            let idx = rand::random::<usize>() % pool.len();
+            Some(pool[idx].clone())
         } else {
             if let Some(curr) = current_path {
-                if let Some(pos) = self.available_videos.iter().position(|v| v.path == curr) {
+                if let Some(pos) = pool.iter().position(|v| v.path == curr) {
                     // If we reach the end of the list in sequential mode, start over from the beginning
-                    let next_pos = if pos + 1 >= self.available_videos.len() {
+                    let next_pos = if pos + 1 >= pool.len() {
                         0
                     } else {
                         pos + 1
                     };
-                    return Some(self.available_videos[next_pos].clone());
+                    return Some(pool[next_pos].clone());
                 }
             }
             // If current video is not found or not provided, start from beginning of list
-            Some(self.available_videos[0].clone())
+            Some(pool[0].clone())
         }
+    }
+
+    pub(crate) fn get_prev_video_rec_from_pool(
+        pool: &[VideoRecord],
+        current_path: Option<&str>,
+        is_shuffle: bool,
+    ) -> Option<VideoRecord> {
+        if pool.is_empty() {
+            return None;
+        }
+        if is_shuffle {
+            if pool.len() > 1 {
+                if let Some(curr) = current_path {
+                    let candidates: Vec<&VideoRecord> = pool
+                        .iter()
+                        .filter(|v| v.path != curr)
+                        .collect();
+                    if !candidates.is_empty() {
+                        let idx = rand::random::<usize>() % candidates.len();
+                        return Some(candidates[idx].clone());
+                    }
+                }
+            }
+            let idx = rand::random::<usize>() % pool.len();
+            Some(pool[idx].clone())
+        } else {
+            if let Some(curr) = current_path {
+                if let Some(pos) = pool.iter().position(|v| v.path == curr) {
+                    let prev_pos = if pos == 0 {
+                        pool.len().saturating_sub(1)
+                    } else {
+                        pos - 1
+                    };
+                    return Some(pool[prev_pos].clone());
+                }
+            }
+            pool.last().cloned()
+        }
+    }
+
+    pub(crate) fn get_next_video_rec_with_mode(
+        &self,
+        current_path: Option<&str>,
+        is_shuffle: bool,
+    ) -> Option<VideoRecord> {
+        Self::get_next_video_rec_from_pool(&self.available_videos, current_path, is_shuffle)
     }
 
     pub fn get_next_video_rec(&self, current_path: Option<&str>) -> Option<VideoRecord> {
@@ -684,38 +729,60 @@ impl WazooApp {
         current_path: Option<&str>,
         is_shuffle: bool,
     ) -> Option<VideoRecord> {
-        if self.available_videos.is_empty() {
-            return None;
-        }
-        if is_shuffle {
-            if self.available_videos.len() > 1 {
-                if let Some(curr) = current_path {
-                    let candidates: Vec<&VideoRecord> = self
-                        .available_videos
-                        .iter()
-                        .filter(|v| v.path != curr)
-                        .collect();
-                    if !candidates.is_empty() {
-                        let idx = rand::random::<usize>() % candidates.len();
-                        return Some(candidates[idx].clone());
-                    }
-                }
+        Self::get_prev_video_rec_from_pool(&self.available_videos, current_path, is_shuffle)
+    }
+
+    pub(crate) fn video_record_matches_file_picker_filter(
+        &self,
+        video: &VideoRecord,
+        filter: &str,
+    ) -> bool {
+        crate::views::file_picker::video_matches_file_picker_filter(
+            &video.path,
+            &video.name,
+            video.folder.as_deref(),
+            filter,
+        )
+    }
+
+    pub fn get_next_video_rec_for_navigation(
+        &self,
+        current_path: Option<&str>,
+        is_shuffle: bool,
+    ) -> Option<VideoRecord> {
+        let filter = self.drawers.file_picker_search.trim();
+        if !filter.is_empty() {
+            let filtered: Vec<VideoRecord> = self
+                .available_videos
+                .iter()
+                .filter(|v| self.video_record_matches_file_picker_filter(v, filter))
+                .cloned()
+                .collect();
+            if !filtered.is_empty() {
+                return Self::get_next_video_rec_from_pool(&filtered, current_path, is_shuffle);
             }
-            let idx = rand::random::<usize>() % self.available_videos.len();
-            Some(self.available_videos[idx].clone())
-        } else {
-            if let Some(curr) = current_path {
-                if let Some(pos) = self.available_videos.iter().position(|v| v.path == curr) {
-                    let prev_pos = if pos == 0 {
-                        self.available_videos.len().saturating_sub(1)
-                    } else {
-                        pos - 1
-                    };
-                    return Some(self.available_videos[prev_pos].clone());
-                }
-            }
-            self.available_videos.last().cloned()
         }
+        self.get_next_video_rec_with_mode(current_path, is_shuffle)
+    }
+
+    pub fn get_prev_video_rec_for_navigation(
+        &self,
+        current_path: Option<&str>,
+        is_shuffle: bool,
+    ) -> Option<VideoRecord> {
+        let filter = self.drawers.file_picker_search.trim();
+        if !filter.is_empty() {
+            let filtered: Vec<VideoRecord> = self
+                .available_videos
+                .iter()
+                .filter(|v| self.video_record_matches_file_picker_filter(v, filter))
+                .cloned()
+                .collect();
+            if !filtered.is_empty() {
+                return Self::get_prev_video_rec_from_pool(&filtered, current_path, is_shuffle);
+            }
+        }
+        self.get_prev_video_rec_with_mode(current_path, is_shuffle)
     }
 
     pub(crate) fn record_current_player_nav_position(&mut self, id: PlayerId) {
@@ -1043,7 +1110,7 @@ impl WazooApp {
         }
 
         let curr_path = self.players.last().map(|p| p.state.path.clone());
-        let video_rec = match self.get_next_video_rec(curr_path.as_deref()) {
+        let video_rec = match self.get_next_video_rec_for_navigation(curr_path.as_deref(), self.default_shuffle_mode) {
             Some(rec) => rec,
             None => return Task::none(),
         };

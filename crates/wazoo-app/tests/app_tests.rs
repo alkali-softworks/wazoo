@@ -98,6 +98,164 @@ fn test_get_prev_video_rec_sequential_and_random() {
 }
 
 #[test]
+fn test_navigation_secondary_filter_from_file_picker_search() {
+    let (mut app, _) = new_test_app();
+    app.available_videos = vec![
+        VideoRecord::new(1, "Cowboy Bebop - 01", "/anime/Cowboy Bebop/01.mkv"),
+        VideoRecord::new(2, "Cowboy Bebop - 02", "/anime/Cowboy Bebop/02.mkv"),
+        VideoRecord::new(3, "Space Dandy - 01", "/anime/Space Dandy/01.mkv"),
+        VideoRecord::new(4, "Space Dandy - 02", "/anime/Space Dandy/02.mkv"),
+        VideoRecord::new(5, "Trigun - 01", "/anime/Trigun/01.mkv"),
+    ];
+
+    // 1. When file picker search is empty or whitespace, sequential navigation walks all available videos
+    app.drawers.file_picker_search = "".to_string();
+    let next = app
+        .get_next_video_rec_for_navigation(Some("/anime/Cowboy Bebop/01.mkv"), false)
+        .unwrap();
+    assert_eq!(next.path, "/anime/Cowboy Bebop/02.mkv");
+
+    app.drawers.file_picker_search = "   ".to_string();
+    let next_space_blank = app
+        .get_next_video_rec_for_navigation(Some("/anime/Cowboy Bebop/01.mkv"), false)
+        .unwrap();
+    assert_eq!(next_space_blank.path, "/anime/Cowboy Bebop/02.mkv");
+
+    // 2. When file picker search has a secondary filter "space", candidates are filtered
+    app.drawers.file_picker_search = "space".to_string();
+    // Starting from Bebop (which is outside the filter), next should enter Space Dandy
+    let next1 = app
+        .get_next_video_rec_for_navigation(Some("/anime/Cowboy Bebop/01.mkv"), false)
+        .unwrap();
+    assert_eq!(next1.path, "/anime/Space Dandy/01.mkv");
+
+    // Advancing from Space Dandy 01 gives Space Dandy 02
+    let next2 = app
+        .get_next_video_rec_for_navigation(Some("/anime/Space Dandy/01.mkv"), false)
+        .unwrap();
+    assert_eq!(next2.path, "/anime/Space Dandy/02.mkv");
+
+    // Advancing from Space Dandy 02 wraps around to Space Dandy 01 within the filtered pool
+    let next3 = app
+        .get_next_video_rec_for_navigation(Some("/anime/Space Dandy/02.mkv"), false)
+        .unwrap();
+    assert_eq!(next3.path, "/anime/Space Dandy/01.mkv");
+
+    // Going backwards from Space Dandy 01 wraps to Space Dandy 02 within filtered pool
+    let prev1 = app
+        .get_prev_video_rec_for_navigation(Some("/anime/Space Dandy/01.mkv"), false)
+        .unwrap();
+    assert_eq!(prev1.path, "/anime/Space Dandy/02.mkv");
+
+    // 3. Fallback when filter matches no videos: falls back to available_videos
+    app.drawers.file_picker_search = "nonexistent_query_xyz".to_string();
+    let fallback = app
+        .get_next_video_rec_for_navigation(Some("/anime/Cowboy Bebop/01.mkv"), false)
+        .unwrap();
+    assert_eq!(fallback.path, "/anime/Cowboy Bebop/02.mkv");
+}
+
+#[test]
+fn test_typing_in_file_picker_search_does_not_swap_playing_video() {
+    let (mut app, _) = new_test_app();
+    let temp_dir = std::env::temp_dir().join(format!("test_typing_filter_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let f1 = temp_dir.join("Cowboy Bebop - 01.mp4");
+    let f2 = temp_dir.join("Space Dandy - 01.mp4");
+    let _ = std::fs::File::create(&f1);
+    let _ = std::fs::File::create(&f2);
+
+    let path1 = f1.to_string_lossy().to_string();
+    let path2 = f2.to_string_lossy().to_string();
+
+    app.available_videos = vec![
+        VideoRecord::new(1, "Cowboy Bebop - 01", &path1),
+        VideoRecord::new(2, "Space Dandy - 01", &path2),
+    ];
+    app.default_shuffle_mode = false;
+
+    // Initialize 1 player; it plays first video (Cowboy Bebop)
+    let _ = app.update(Message::SetPlayerCount(1));
+    assert_eq!(app.players.len(), 1);
+    let p0_id = app.players[0].id;
+    app.players[0].shuffle = false;
+    assert_eq!(app.players[0].state.path, path1);
+
+    // User types in file picker drawer search box
+    let _ = app.update(Message::FilePickerSearchChanged("space".to_string()));
+    assert_eq!(app.drawers.file_picker_search, "space");
+    // Playing video MUST NOT be swapped while typing!
+    assert_eq!(app.players[0].state.path, path1);
+
+    // Debounce timer arrives to apply drawer search UI filtering
+    let _ = app.update(Message::ApplyFilePickerSearch);
+    // Playing video STILL MUST NOT be swapped!
+    assert_eq!(app.players[0].state.path, path1);
+
+    // Only when user advances to next video does the secondary filter take effect
+    let _ = app.update(Message::NextVideo(p0_id));
+    assert_eq!(app.players[0].state.path, path2);
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_forward_and_back_stack_are_not_filtered_by_file_picker_search() {
+    let (mut app, _) = new_test_app();
+    let temp_dir = std::env::temp_dir().join(format!("test_forward_unfiltered_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let f1 = temp_dir.join("Bebop 1.mp4");
+    let f2 = temp_dir.join("Bebop 2.mp4");
+    let f3 = temp_dir.join("Space Dandy 1.mp4");
+    let _ = std::fs::File::create(&f1);
+    let _ = std::fs::File::create(&f2);
+    let _ = std::fs::File::create(&f3);
+
+    let path1 = f1.to_string_lossy().to_string();
+    let path2 = f2.to_string_lossy().to_string();
+    let path3 = f3.to_string_lossy().to_string();
+
+    app.available_videos = vec![
+        VideoRecord::new(1, "Bebop 1", &path1),
+        VideoRecord::new(2, "Bebop 2", &path2),
+        VideoRecord::new(3, "Space Dandy 1", &path3),
+    ];
+    app.default_shuffle_mode = false;
+
+    // Start with 1 player playing Bebop 1
+    let _ = app.update(Message::SetPlayerCount(1));
+    let p0_id = app.players[0].id;
+    app.players[0].shuffle = false;
+    assert_eq!(app.players[0].state.path, path1);
+
+    // Advance to Bebop 2 (via sequential navigation)
+    let _ = app.update(Message::NextVideo(p0_id));
+    assert_eq!(app.players[0].state.path, path2);
+
+    // Press Previous to go back to Bebop 1 (Bebop 2 is pushed onto forward_stack)
+    let _ = app.update(Message::PrevVideo(p0_id));
+    assert_eq!(app.players[0].state.path, path1);
+    assert_eq!(app.players[0].nav_history.forward_stack.len(), 1);
+    assert_eq!(app.players[0].nav_history.forward_stack[0].path, path2);
+
+    // User types "space" in drawer search
+    app.drawers.file_picker_search = "space".to_string();
+
+    // Now user presses Next (browser forward).
+    // Forward stack should behave like a web browser: pop Bebop 2 and play it, NOT filtered!
+    let _ = app.update(Message::NextVideo(p0_id));
+    assert_eq!(app.players[0].state.path, path2);
+    assert_eq!(app.players[0].nav_history.forward_stack.len(), 0);
+
+    // Now that forward stack is empty, pressing Next generates the next candidate,
+    // which DOES apply the secondary search filter "space", playing Space Dandy 1!
+    let _ = app.update(Message::NextVideo(p0_id));
+    assert_eq!(app.players[0].state.path, path3);
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
 fn test_player_nav_history_scrub_back_and_forward() {
     let (mut app, _) = new_test_app();
     let temp_dir = std::env::temp_dir().join(format!("test_nav_hist_{}", std::process::id()));
