@@ -1,9 +1,5 @@
 use iced::Point;
-use std::time::Duration;
-use wazoo_app::app::{
-    MAX_PLAYER_NAV_HISTORY_ENTRIES, PlaybackHistoryEntry, SettingsTab, TITLEBAR_FADE_TICKS,
-    TITLEBAR_HIDE_TICKS, WazooApp, new_test_app,
-};
+use wazoo_app::app::{SettingsTab, WazooApp, new_test_app};
 use wazoo_app::message::Message;
 use wazoo_core::{ConfigManager, Database, VideoRecord};
 
