@@ -81,7 +81,11 @@
     "always_on_top": "Luôn ở trên cùng",
     "always_on_top_desc": "Giữ Wazoo luôn hiển thị phía trên các cửa sổ khác",
     "crt_filter": "Bộ lọc CRT",
-    "crt_filter_desc": "Mô phỏng màn hình CRT cổ điển với đường quét, độ cong và ánh lân quang"
+    "crt_filter_desc": "Mô phỏng màn hình CRT cổ điển với đường quét, độ cong và ánh lân quang",
+    "loading_indicator": "Chỉ báo tải",
+    "loading_indicator_desc": "Hình ảnh động hiển thị khi video đang tải vào bộ đệm",
+    "loading_tv_static": "Nhiễu TV",
+    "loading_spinner": "Vòng xoay"
   },
   "search": {
     "folder": "Thư mục:",

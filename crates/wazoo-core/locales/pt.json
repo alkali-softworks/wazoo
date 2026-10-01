@@ -81,7 +81,11 @@
     "always_on_top": "Sempre no topo",
     "always_on_top_desc": "Manter Wazoo fixado acima de todas as outras janelas",
     "crt_filter": "Filtro CRT",
-    "crt_filter_desc": "Simulação de tubo de raios catódicos analógico retrô com linhas de varredura, curvatura e brilho de fósforo"
+    "crt_filter_desc": "Simulação de tubo de raios catódicos analógico retrô com linhas de varredura, curvatura e brilho de fósforo",
+    "loading_indicator": "Indicador de carregamento",
+    "loading_indicator_desc": "Animação visual exibida enquanto o vídeo carrega no buffer",
+    "loading_tv_static": "Estática de TV",
+    "loading_spinner": "Girador"
   },
   "search": {
     "folder": "Pasta:",

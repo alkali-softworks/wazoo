@@ -81,7 +81,11 @@
     "always_on_top": "Siempre al frente",
     "always_on_top_desc": "Mantener Wazoo fijado sobre otras ventanas",
     "crt_filter": "Filtro CRT",
-    "crt_filter_desc": "Simulación de tubo de rayos catódicos analógico retro con líneas de escaneo, curvatura y brillo de fósforo"
+    "crt_filter_desc": "Simulación de tubo de rayos catódicos analógico retro con líneas de escaneo, curvatura y brillo de fósforo",
+    "loading_indicator": "Indicador de carga",
+    "loading_indicator_desc": "Animación visual que se muestra mientras el video se almacena en búfer y se carga",
+    "loading_tv_static": "Estática de TV",
+    "loading_spinner": "Giroscopio"
   },
   "search": {
     "folder": "Carpeta:",

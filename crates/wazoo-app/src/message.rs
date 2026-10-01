@@ -122,6 +122,7 @@ pub enum Message {
     SetPlaybackSpeed(f32),
     ToggleCrtFilter,
     SetCrtFilter(bool),
+    SetLoadingIndicator(wazoo_core::LoadingIndicator),
     SetBufferDuration(u32),
     SetBufferSize(u32),
     SetFlipInterval(u64),

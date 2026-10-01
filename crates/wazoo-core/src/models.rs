@@ -52,6 +52,30 @@ pub enum PlaybackMode {
     Flip,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LoadingIndicator {
+    #[default]
+    TvStatic,
+    Spinner,
+}
+
+impl LoadingIndicator {
+    pub const ALL: &'static [LoadingIndicator] = &[
+        LoadingIndicator::TvStatic,
+        LoadingIndicator::Spinner,
+    ];
+}
+
+impl std::fmt::Display for LoadingIndicator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::TvStatic => write!(f, "TV Static"),
+            Self::Spinner => write!(f, "Spinner"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WindowBounds {
     pub x: i32,
@@ -169,6 +193,8 @@ pub struct WazooSettings {
     pub playback_speed: f32,
     #[serde(default)]
     pub crt_enabled: bool,
+    #[serde(default)]
+    pub loading_indicator: LoadingIndicator,
 }
 
 fn default_playback_speed() -> f32 {
@@ -208,6 +234,7 @@ impl Default for WazooSettings {
             saturation: 0.0,
             playback_speed: 1.0,
             crt_enabled: false,
+            loading_indicator: LoadingIndicator::TvStatic,
         }
     }
 }

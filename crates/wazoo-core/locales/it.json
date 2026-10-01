@@ -81,7 +81,11 @@
     "always_on_top": "Sempre in primo piano",
     "always_on_top_desc": "Mantieni Wazoo in primo piano rispetto alle altre finestre",
     "crt_filter": "Filtro CRT",
-    "crt_filter_desc": "Simulazione di tubo a raggi catodici analogico retrò con linee di scansione, curvatura e bagliore di fosfori"
+    "crt_filter_desc": "Simulazione di tubo a raggi catodici analogico retrò con linee di scansione, curvatura e bagliore di fosfori",
+    "loading_indicator": "Indicatore di caricamento",
+    "loading_indicator_desc": "Animazione visiva visualizzata durante il buffering e il caricamento del video",
+    "loading_tv_static": "Effetto Neve TV",
+    "loading_spinner": "Spinner"
   },
   "search": {
     "folder": "Cartella:",

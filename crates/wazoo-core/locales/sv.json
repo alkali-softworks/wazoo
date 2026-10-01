@@ -81,7 +81,11 @@
     "always_on_top": "Alltid överst",
     "always_on_top_desc": "Håll Wazoo fäst över alla andra fönster",
     "crt_filter": "CRT-filter",
-    "crt_filter_desc": "Retro analog katodstrålerörssimulering med sveplinjer, krökning och fosforglöd"
+    "crt_filter_desc": "Retro analog katodstrålerörssimulering med sveplinjer, krökning och fosforglöd",
+    "loading_indicator": "Laddningsindikator",
+    "loading_indicator_desc": "Visuell animering som visas medan video buffras och läses in",
+    "loading_tv_static": "TV-brus",
+    "loading_spinner": "Snurra"
   },
   "search": {
     "folder": "Mapp:",
