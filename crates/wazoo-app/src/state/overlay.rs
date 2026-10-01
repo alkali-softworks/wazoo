@@ -21,6 +21,16 @@ impl OverlayState {
     pub fn spinner_angle(&self) -> f32 {
         ((self.spinner_ticks * 12) % 360) as f32
     }
+
+    /// Computes the active frame index for the color-static TV static animation.
+    /// Advances every 2 ticks (~30ms) at 60Hz to match the original GIF animation timing.
+    pub fn color_static_frame_index(&self, total_frames: usize) -> usize {
+        if total_frames == 0 {
+            0
+        } else {
+            (self.spinner_ticks as usize / 2) % total_frames
+        }
+    }
     pub fn trigger(&mut self) {
         if self.ticks == 0 {
             self.fade_in_ticks = 0;

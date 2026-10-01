@@ -98,6 +98,7 @@ pub struct WazooApp {
     pub overlay: crate::state::OverlayState,
     pub window: crate::state::WindowState,
     pub app_icon_handle: iced::widget::image::Handle,
+    pub color_static_frames: Vec<iced::widget::image::Handle>,
     pub last_total_videos: usize,
     pub next_player_id: PlayerId,
     pub scanner: crate::state::ScannerState,
@@ -326,6 +327,7 @@ impl WazooApp {
         scroll_engine.scroll_mode_muted = settings.scroll_mode_muted;
 
         let icon_handle = iced::widget::image::Handle::from_bytes(APP_ICON_BYTES);
+        let color_static_frames = crate::assets::load_color_static_frames();
         let total_videos = videos.len();
         let (toast_message, toast_time_remaining) =
             build_initial_toast(search.is_cli, &settings.language, total_videos);
@@ -362,6 +364,7 @@ impl WazooApp {
             },
             window: crate::state::WindowState::default(),
             app_icon_handle: icon_handle,
+            color_static_frames,
             last_total_videos: total_videos,
             next_player_id: 1,
             scanner: crate::state::ScannerState::default(),

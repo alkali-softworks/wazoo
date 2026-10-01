@@ -37,12 +37,31 @@ impl WazooApp {
         let mut stack_children: Vec<Element<'a, Message>> = Vec::new();
 
         if is_loading {
-            let loading_backdrop = container(Space::new().width(Length::Fill).height(Length::Fill))
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .style(theme::player_container_style(opacity));
-            stack_children.push(Element::from(loading_backdrop));
-            stack_children.push(self.view_loading_spinner());
+            if !self.color_static_frames.is_empty() {
+                let frame_idx = self
+                    .overlay
+                    .color_static_frame_index(self.color_static_frames.len());
+                let handle = self.color_static_frames[frame_idx].clone();
+                let static_img = iced::widget::image(handle)
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .content_fit(iced::ContentFit::Cover);
+
+                let static_view = container(static_img)
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .clip(true)
+                    .style(theme::player_container_style(opacity));
+                stack_children.push(Element::from(static_view));
+            } else {
+                let loading_backdrop =
+                    container(Space::new().width(Length::Fill).height(Length::Fill))
+                        .width(Length::Fill)
+                        .height(Length::Fill)
+                        .style(theme::player_container_style(opacity));
+                stack_children.push(Element::from(loading_backdrop));
+                stack_children.push(self.view_loading_spinner());
+            }
         } else {
             let video_widget = p.view_full(opacity, is_scroll_mode, self.settings.crt_enabled);
             stack_children.push(video_widget);
