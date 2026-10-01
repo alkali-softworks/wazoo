@@ -102,6 +102,7 @@ impl WazooApp {
             }
             Message::WindowResized(id, size) => {
                 self.window.id = Some(id);
+                self.window.mark_resized();
                 let new_w = (size.width as u32).clamp(200, 7680);
                 let new_h = (size.height as u32).clamp(150, 4320);
                 if self.settings.window_bounds.width != new_w
@@ -169,6 +170,7 @@ impl WazooApp {
                 }
             }
             Message::DragResize(direction) => {
+                self.window.mark_resized();
                 if let Some(id) = self.window.id {
                     iced::window::drag_resize(id, direction)
                 } else {
@@ -238,6 +240,7 @@ impl WazooApp {
                 self.titlebar.drag_pending = false;
                 self.titlebar.press_origin = None;
                 self.window.last_drag_move = None;
+                self.window.last_resize_time = None;
                 if was_dragging {
                     if self.is_point_in_titlebar(self.window.cursor_position) {
                         self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;

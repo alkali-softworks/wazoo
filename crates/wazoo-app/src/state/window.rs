@@ -5,7 +5,7 @@
  */
 
 use iced::Point;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone)]
 pub struct WindowState {
@@ -18,6 +18,23 @@ pub struct WindowState {
     pub bounds_dirty: bool,
     pub ghost_passthrough_active: bool,
     pub is_alt_pressed: bool,
+    pub last_resize_time: Option<Instant>,
+}
+
+impl WindowState {
+    /// Window resize debounce duration: video frame rendering is suspended while
+    /// the window is actively being resized, ensuring stutter-free border dragging.
+    pub const RESIZE_DEBOUNCE_DURATION: Duration = Duration::from_millis(200);
+
+    pub fn is_resizing(&self) -> bool {
+        self.last_resize_time
+            .map(|t| t.elapsed() < Self::RESIZE_DEBOUNCE_DURATION)
+            .unwrap_or(false)
+    }
+
+    pub fn mark_resized(&mut self) {
+        self.last_resize_time = Some(Instant::now());
+    }
 }
 
 impl Default for WindowState {
@@ -32,6 +49,7 @@ impl Default for WindowState {
             bounds_dirty: false,
             ghost_passthrough_active: false,
             is_alt_pressed: false,
+            last_resize_time: None,
         }
     }
 }

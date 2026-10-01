@@ -1141,3 +1141,42 @@ fn test_set_active_query_updates_search_tags_and_reconciles() {
             .all(|v| v.path.contains("ShowA"))
     );
 }
+
+#[test]
+fn test_window_resize_suspends_frame_rendering_and_debounces() {
+    let (mut app, _) = new_test_app();
+    let win_id = iced::window::Id::unique();
+    app.window.id = Some(win_id);
+
+    // Initial state: not resizing
+    assert!(!app.window.is_resizing());
+    assert!(app.window.last_resize_time.is_none());
+
+    // WindowResized marks window as resizing
+    let _ = app.update(Message::WindowResized(win_id, iced::Size::new(960.0, 540.0)));
+    assert!(app.window.is_resizing());
+    assert!(app.window.last_resize_time.is_some());
+
+    // VideoFrameTick runs cleanly while resizing (skipping video frames and scroll sync)
+    let _ = app.update(Message::VideoFrameTick);
+    assert!(app.window.is_resizing());
+
+    // LeftClickReleased resets resize state immediately
+    let _ = app.update(Message::LeftClickReleased);
+    assert!(!app.window.is_resizing());
+    assert!(app.window.last_resize_time.is_none());
+
+    // DragResize also activates resizing state
+    let _ = app.update(Message::DragResize(iced::window::Direction::East));
+    assert!(app.window.is_resizing());
+    assert!(app.window.last_resize_time.is_some());
+
+    // Simulating elapsed debounce duration expires the resizing state
+    app.window.last_resize_time = Some(
+        std::time::Instant::now()
+            - wazoo_app::state::WindowState::RESIZE_DEBOUNCE_DURATION
+            - std::time::Duration::from_millis(10),
+    );
+    assert!(!app.window.is_resizing());
+}
+
