@@ -86,8 +86,13 @@ impl WazooApp {
 
                 self.tick_overlay_animations();
                 self.tick_titlebar_animation();
-                self.update_player_frames();
-                self.sync_scroll_item_heights();
+
+                // Suspend video frame decoding and scroll layout recalculation while actively resizing
+                // to maintain fluid 60+ FPS window manipulation without CPU/GPU stutter.
+                if !self.window.is_resizing() {
+                    self.update_player_frames();
+                    self.sync_scroll_item_heights();
+                }
 
                 Task::none()
             }
