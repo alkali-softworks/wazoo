@@ -732,55 +732,24 @@ impl WazooApp {
         Self::get_prev_video_rec_from_pool(&self.available_videos, current_path, is_shuffle)
     }
 
-    pub(crate) fn video_record_matches_file_picker_filter(
-        &self,
-        video: &VideoRecord,
-        filter: &str,
-    ) -> bool {
-        crate::views::file_picker::video_matches_file_picker_filter(
-            &video.path,
-            &video.name,
-            video.folder.as_deref(),
-            filter,
-        )
-    }
-
     pub fn get_next_video_rec_for_navigation(
-        &self,
+        &mut self,
         current_path: Option<&str>,
         is_shuffle: bool,
     ) -> Option<VideoRecord> {
-        let filter = self.drawers.file_picker_search.trim();
-        if !filter.is_empty() {
-            let filtered: Vec<VideoRecord> = self
-                .available_videos
-                .iter()
-                .filter(|v| self.video_record_matches_file_picker_filter(v, filter))
-                .cloned()
-                .collect();
-            if !filtered.is_empty() {
-                return Self::get_next_video_rec_from_pool(&filtered, current_path, is_shuffle);
-            }
+        if let Some(filtered) = self.file_picker_filtered_videos() {
+            return Self::get_next_video_rec_from_pool(&filtered, current_path, is_shuffle);
         }
         self.get_next_video_rec_with_mode(current_path, is_shuffle)
     }
 
     pub fn get_prev_video_rec_for_navigation(
-        &self,
+        &mut self,
         current_path: Option<&str>,
         is_shuffle: bool,
     ) -> Option<VideoRecord> {
-        let filter = self.drawers.file_picker_search.trim();
-        if !filter.is_empty() {
-            let filtered: Vec<VideoRecord> = self
-                .available_videos
-                .iter()
-                .filter(|v| self.video_record_matches_file_picker_filter(v, filter))
-                .cloned()
-                .collect();
-            if !filtered.is_empty() {
-                return Self::get_prev_video_rec_from_pool(&filtered, current_path, is_shuffle);
-            }
+        if let Some(filtered) = self.file_picker_filtered_videos() {
+            return Self::get_prev_video_rec_from_pool(&filtered, current_path, is_shuffle);
         }
         self.get_prev_video_rec_with_mode(current_path, is_shuffle)
     }
