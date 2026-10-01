@@ -4,7 +4,7 @@
  * Internationalization & Localization (i18n) Engine
  *
  * Provides translation lookup, placeholder interpolation, and language metadata across
- * 16 supported languages matching wazoo-desktop. Translation files are embedded at compile time.
+ * 23 supported languages. Translation files are embedded at compile time.
  */
 
 use std::collections::HashMap;
@@ -25,6 +25,11 @@ impl Language {
             is_rtl: false,
         },
         Language {
+            code: "nl",
+            display_name: "Nederlands",
+            is_rtl: false,
+        },
+        Language {
             code: "es",
             display_name: "Español",
             is_rtl: false,
@@ -32,11 +37,6 @@ impl Language {
         Language {
             code: "fr",
             display_name: "Français",
-            is_rtl: false,
-        },
-        Language {
-            code: "de",
-            display_name: "Deutsch",
             is_rtl: false,
         },
         Language {
@@ -50,8 +50,73 @@ impl Language {
             is_rtl: false,
         },
         Language {
+            code: "de",
+            display_name: "Deutsch",
+            is_rtl: false,
+        },
+        Language {
+            code: "cs",
+            display_name: "Čeština",
+            is_rtl: false,
+        },
+        Language {
+            code: "pl",
+            display_name: "Polski",
+            is_rtl: false,
+        },
+        Language {
+            code: "uk",
+            display_name: "Українська",
+            is_rtl: false,
+        },
+        Language {
             code: "ru",
             display_name: "Русский (Russian)",
+            is_rtl: false,
+        },
+        Language {
+            code: "sv",
+            display_name: "Svenska",
+            is_rtl: false,
+        },
+        Language {
+            code: "tr",
+            display_name: "Türkçe",
+            is_rtl: false,
+        },
+        Language {
+            code: "ar",
+            display_name: "العربية (Arabic)",
+            is_rtl: true,
+        },
+        Language {
+            code: "he",
+            display_name: "עברית (Hebrew)",
+            is_rtl: true,
+        },
+        Language {
+            code: "fa",
+            display_name: "فارسی (Persian)",
+            is_rtl: true,
+        },
+        Language {
+            code: "hi",
+            display_name: "हिन्दी (Hindi)",
+            is_rtl: false,
+        },
+        Language {
+            code: "bn",
+            display_name: "বাংলা (Bengali)",
+            is_rtl: false,
+        },
+        Language {
+            code: "th",
+            display_name: "ไทย (Thai)",
+            is_rtl: false,
+        },
+        Language {
+            code: "vi",
+            display_name: "Tiếng Việt",
             is_rtl: false,
         },
         Language {
@@ -67,36 +132,6 @@ impl Language {
         Language {
             code: "ko",
             display_name: "한국어 (Korean)",
-            is_rtl: false,
-        },
-        Language {
-            code: "th",
-            display_name: "ไทย (Thai)",
-            is_rtl: false,
-        },
-        Language {
-            code: "he",
-            display_name: "עברית (Hebrew)",
-            is_rtl: true,
-        },
-        Language {
-            code: "ar",
-            display_name: "العربية (Arabic)",
-            is_rtl: true,
-        },
-        Language {
-            code: "hi",
-            display_name: "हिन्दी (Hindi)",
-            is_rtl: false,
-        },
-        Language {
-            code: "bn",
-            display_name: "বাংলা (Bengali)",
-            is_rtl: false,
-        },
-        Language {
-            code: "id",
-            display_name: "Bahasa Indonesia",
             is_rtl: false,
         },
     ];
@@ -123,21 +158,28 @@ impl std::fmt::Display for Language {
 // Compile-time embedded JSON files
 const RAW_LOCALES: &[(&str, &str)] = &[
     ("en", include_str!("../locales/en.json")),
+    ("nl", include_str!("../locales/nl.json")),
     ("es", include_str!("../locales/es.json")),
     ("fr", include_str!("../locales/fr.json")),
-    ("de", include_str!("../locales/de.json")),
     ("it", include_str!("../locales/it.json")),
     ("pt", include_str!("../locales/pt.json")),
+    ("de", include_str!("../locales/de.json")),
+    ("cs", include_str!("../locales/cs.json")),
+    ("pl", include_str!("../locales/pl.json")),
+    ("uk", include_str!("../locales/uk.json")),
     ("ru", include_str!("../locales/ru.json")),
+    ("sv", include_str!("../locales/sv.json")),
+    ("tr", include_str!("../locales/tr.json")),
+    ("ar", include_str!("../locales/ar.json")),
+    ("he", include_str!("../locales/he.json")),
+    ("fa", include_str!("../locales/fa.json")),
+    ("hi", include_str!("../locales/hi.json")),
+    ("bn", include_str!("../locales/bn.json")),
+    ("th", include_str!("../locales/th.json")),
+    ("vi", include_str!("../locales/vi.json")),
     ("zh", include_str!("../locales/zh.json")),
     ("ja", include_str!("../locales/ja.json")),
     ("ko", include_str!("../locales/ko.json")),
-    ("th", include_str!("../locales/th.json")),
-    ("he", include_str!("../locales/he.json")),
-    ("ar", include_str!("../locales/ar.json")),
-    ("hi", include_str!("../locales/hi.json")),
-    ("bn", include_str!("../locales/bn.json")),
-    ("id", include_str!("../locales/id.json")),
 ];
 
 static DICTIONARY: OnceLock<HashMap<&'static str, HashMap<String, String>>> = OnceLock::new();

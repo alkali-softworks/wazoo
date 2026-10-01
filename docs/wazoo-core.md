@@ -96,32 +96,39 @@ All incoming values are clamped to safe ranges on load and save:
 
 ## 🌐 Internationalization Engine (`i18n.rs`)
 
-Wazoo contains 100% offline, embedded localization files for 16 languages:
+Wazoo contains 100% offline, embedded localization files for 23 languages:
 
 | Code | Language | Script Direction |
 | :--- | :--- | :--- |
 | `en` | English | LTR |
+| `nl` | Dutch | LTR |
 | `es` | Spanish | LTR |
 | `fr` | French | LTR |
-| `de` | German | LTR |
 | `it` | Italian | LTR |
 | `pt` | Portuguese | LTR |
+| `de` | German | LTR |
+| `cs` | Czech | LTR |
+| `pl` | Polish | LTR |
+| `uk` | Ukrainian | LTR |
 | `ru` | Russian | LTR |
+| `sv` | Swedish | LTR |
+| `tr` | Turkish | LTR |
+| `ar` | Arabic | **RTL** |
+| `he` | Hebrew | **RTL** |
+| `fa` | Persian (Farsi) | **RTL** |
+| `hi` | Hindi | LTR |
+| `bn` | Bengali | LTR |
+| `th` | Thai | LTR |
+| `vi` | Vietnamese | LTR |
 | `zh` | Simplified Chinese | LTR |
 | `ja` | Japanese | LTR |
 | `ko` | Korean | LTR |
-| `th` | Thai | LTR |
-| `he` | Hebrew | **RTL** |
-| `ar` | Arabic | **RTL** |
-| `hi` | Hindi | LTR |
-| `bn` | Bengali | LTR |
-| `id` | Indonesian | LTR |
 
 ### Interpolation & Fallback Logic
 
 - [`t(key)`]: Looks up the translation key in the active language catalog. If missing, it automatically falls back to English (`en`).
 - [`t_with(key, &[("name", val)])`]: Replaces `{name}` placeholders inside translated strings dynamically.
-- [`is_rtl()`]: Returns true for Hebrew (`he`) and Arabic (`ar`), enabling right-to-left layout alignment in UI widgets.
+- [`is_rtl()`]: Returns true for Arabic (`ar`), Hebrew (`he`), and Persian (`fa`), enabling right-to-left layout alignment in UI widgets.
 
 ---
 

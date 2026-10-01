@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use wazoo_core::i18n::{Language, get_dictionary, t, t_with};
 
 #[test]
-fn test_all_16_languages_parsed() {
+fn test_all_23_languages_parsed() {
     let dict: &'static HashMap<&'static str, HashMap<String, String>> = get_dictionary();
-    assert_eq!(dict.len(), 16);
+    assert_eq!(dict.len(), 23);
     for lang in Language::ALL {
         assert!(
             dict.contains_key(lang.code),
@@ -35,6 +35,14 @@ fn test_translations_and_fallbacks() {
     assert_eq!(t("zh", "common.settings"), "设置");
     assert_eq!(t("de", "common.settings"), "Einstellungen");
     assert_eq!(t("ar", "common.settings"), "الإعدادات");
+    assert_eq!(t("pl", "common.settings"), "Ustawienia");
+    assert_eq!(t("tr", "common.settings"), "Ayarlar");
+    assert_eq!(t("nl", "common.settings"), "Instellingen");
+    assert_eq!(t("sv", "common.settings"), "Inställningar");
+    assert_eq!(t("cs", "common.settings"), "Nastavení");
+    assert_eq!(t("uk", "common.settings"), "Налаштування");
+    assert_eq!(t("fa", "common.settings"), "تنظیمات");
+    assert_eq!(t("vi", "common.settings"), "Cài đặt");
 
     // Non-existent key falls back to key itself
     assert_eq!(t("es", "nonexistent.key.test"), "nonexistent.key.test");
@@ -61,9 +69,12 @@ fn test_t_with_interpolation() {
 fn test_rtl_detection() {
     assert!(Language::is_rtl_code("ar"));
     assert!(Language::is_rtl_code("he"));
+    assert!(Language::is_rtl_code("fa"));
     assert!(!Language::is_rtl_code("en"));
     assert!(!Language::is_rtl_code("es"));
     assert!(!Language::is_rtl_code("ja"));
+    assert!(!Language::is_rtl_code("nl"));
+    assert!(!Language::is_rtl_code("vi"));
 }
 
 #[test]
