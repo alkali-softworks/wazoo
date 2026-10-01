@@ -10,8 +10,8 @@ use crate::cursor;
 use crate::message::Message;
 use crate::theme;
 use iced::{
-    Alignment, Element, Length,
-    widget::{Space, button, column, row, slider, text},
+    Alignment, Element, Length, Theme,
+    widget::{Space, button, column, container, row, slider, text},
 };
 
 pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
@@ -219,6 +219,78 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         .width(Length::Fill),
     );
 
+    let is_tv_static = app.settings.loading_indicator == wazoo_core::LoadingIndicator::TvStatic;
+    let is_spinner = app.settings.loading_indicator == wazoo_core::LoadingIndicator::Spinner;
+
+    let tv_static_btn = cursor::PointerCursor::new(
+        button(
+            text(format!(
+                "{}{}",
+                if is_tv_static { "✓ " } else { "" },
+                app.t("settings.loading_tv_static")
+            ))
+            .size(12)
+            .font(if is_tv_static {
+                theme::FONT_BOLD
+            } else {
+                Default::default()
+            }),
+        )
+        .style(theme::folder_chip_style(is_tv_static))
+        .on_press(Message::SetLoadingIndicator(
+            wazoo_core::LoadingIndicator::TvStatic,
+        ))
+        .padding([6, 14]),
+    );
+
+    let spinner_btn = cursor::PointerCursor::new(
+        button(
+            text(format!(
+                "{}{}",
+                if is_spinner { "✓ " } else { "" },
+                app.t("settings.loading_spinner")
+            ))
+            .size(12)
+            .font(if is_spinner {
+                theme::FONT_BOLD
+            } else {
+                Default::default()
+            }),
+        )
+        .style(theme::folder_chip_style(is_spinner))
+        .on_press(Message::SetLoadingIndicator(
+            wazoo_core::LoadingIndicator::Spinner,
+        ))
+        .padding([6, 14]),
+    );
+
+    let loading_indicator_group = container(
+        row![
+            column![
+                text(app.t("settings.loading_indicator"))
+                    .size(14)
+                    .color(iced::Color::WHITE),
+                text(app.t("settings.loading_indicator_desc"))
+                    .size(12)
+                    .color(theme::COLOR_TEXT_MUTED),
+            ]
+            .spacing(2),
+            Space::new().width(Length::Fill),
+            row![spinner_btn, tv_static_btn].spacing(8),
+        ]
+        .align_y(Alignment::Center),
+    )
+    .padding([12, 14])
+    .style(|_theme: &Theme| container::Style {
+        background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
+        border: iced::Border {
+            radius: 6.0.into(),
+            width: 1.0,
+            color: theme::COLOR_BORDER,
+        },
+        ..Default::default()
+    });
+
     let reset_btn = button(
         row![
             text("↺").size(14),
@@ -238,6 +310,7 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         saturation_group,
         speed_group,
         crt_toggle_btn,
+        loading_indicator_group,
         reset_btn,
     ]
     .spacing(16)
