@@ -85,6 +85,9 @@ impl WazooApp {
             }
             Message::WindowMoved(id, point) => {
                 self.window.id = Some(id);
+                if self.window.is_resizing() {
+                    self.window.mark_resized();
+                }
                 let new_x = point.x as i32;
                 let new_y = point.y as i32;
                 if self.settings.window_bounds.x != new_x || self.settings.window_bounds.y != new_y
@@ -113,7 +116,7 @@ impl WazooApp {
                     self.window.bounds_dirty = true;
                 }
                 self.scroll_engine.set_window_size(size.width, size.height);
-                if self.settings.playback_mode == PlaybackMode::Scroll {
+                if self.settings.playback_mode == PlaybackMode::Scroll && !self.window.is_resizing() {
                     for p in &self.players {
                         let item_h = self.calculate_player_scroll_height(p);
                         self.scroll_engine.update_height(p.id, item_h);
@@ -236,11 +239,16 @@ impl WazooApp {
             }
             Message::LeftClickReleased => {
                 let was_dragging = self.window.is_dragging;
+                let was_resizing = self.window.is_resizing();
                 self.window.is_dragging = false;
                 self.titlebar.drag_pending = false;
                 self.titlebar.press_origin = None;
                 self.window.last_drag_move = None;
                 self.window.last_resize_time = None;
+                if was_resizing {
+                    self.update_player_frames();
+                    self.sync_scroll_item_heights();
+                }
                 if was_dragging {
                     if self.is_point_in_titlebar(self.window.cursor_position) {
                         self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;

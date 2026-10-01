@@ -129,6 +129,10 @@ impl WazooApp {
         self.window.is_focused = true;
         self.window.unfocused_frame_ticks = 0;
 
+        if self.window.is_resizing() {
+            return Task::none();
+        }
+
         if self.window.is_dragging {
             let is_still_moving = self
                 .window

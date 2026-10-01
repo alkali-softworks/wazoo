@@ -119,8 +119,8 @@ impl WazooApp {
                 ));
             }
 
-            // 2. Sliding Titlebar & Dropdown Menu Overlay
-            if self.titlebar.show {
+            // 2. Sliding Titlebar & Dropdown Menu Overlay (suppressed while resizing borders)
+            if !self.window.is_resizing() && self.titlebar.show {
                 root_stack_children.push(self.view_titlebar());
             }
 

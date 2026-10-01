@@ -1301,8 +1301,15 @@ impl WazooApp {
     }
 
     pub fn subscription(&self) -> Subscription<Message> {
+        let is_resizing = self.window.is_resizing();
+        let frame_interval = if is_resizing {
+            crate::state::WindowState::RESIZE_DEBOUNCE_DURATION
+        } else {
+            Duration::from_millis(16)
+        };
+
         let mut subs = vec![
-            iced::time::every(Duration::from_millis(16)).map(|_| Message::VideoFrameTick),
+            iced::time::every(frame_interval).map(|_| Message::VideoFrameTick),
             iced::time::every(Duration::from_secs(1)).map(|_| Message::WatchdogTick),
             iced::event::listen_with(|event, status, window_id| match event {
                 iced::Event::Window(iced::window::Event::Opened { .. }) => {

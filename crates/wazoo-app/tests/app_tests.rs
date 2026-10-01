@@ -1180,3 +1180,43 @@ fn test_window_resize_suspends_frame_rendering_and_debounces() {
     assert!(!app.window.is_resizing());
 }
 
+#[test]
+fn test_video_tile_layout_engine_pauses_during_resize() {
+    let (mut app, _) = new_test_app();
+    let win_id = iced::window::Id::unique();
+    app.window.id = Some(win_id);
+
+    // Initial state: not resizing
+    assert!(!app.window.is_resizing());
+
+    // WindowResized marks window as resizing
+    let _ = app.update(Message::WindowResized(win_id, iced::Size::new(1280.0, 720.0)));
+    assert!(app.window.is_resizing());
+
+    // Cursor movement during resize is ignored to prevent titlebar/hover thrashing
+    let _ = app.update(Message::CursorMoved(win_id, iced::Point::new(10.0, 10.0)));
+    assert_eq!(app.titlebar.hover_ticks, 0);
+
+    // Player hover messages during resize are suppressed
+    let _ = app.update(Message::PlayerHovered(1));
+    assert_eq!(app.hovered_player_id, None);
+
+    // Player unhover messages during resize are suppressed
+    let _ = app.update(Message::PlayerUnhovered(1));
+    assert_eq!(app.hovered_player_id, None);
+
+    // WindowMoved also keeps resize debounce alive
+    let _ = app.update(Message::WindowMoved(win_id, iced::Point::new(100.0, 100.0)));
+    assert!(app.window.is_resizing());
+
+    // Root view during resize renders smoothly without titlebar injection
+    {
+        let _root_view = app.view();
+    }
+
+    // Releasing left click immediately exits resizing and flushes layout updates
+    let _ = app.update(Message::LeftClickReleased);
+    assert!(!app.window.is_resizing());
+}
+
+
