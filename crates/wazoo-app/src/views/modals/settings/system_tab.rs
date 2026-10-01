@@ -267,7 +267,7 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             ]
             .spacing(2),
             Space::new().width(Length::Fill),
-            row![tv_static_btn, spinner_btn].spacing(8),
+            row![spinner_btn, tv_static_btn].spacing(8),
         ]
         .align_y(Alignment::Center),
     )
