@@ -56,13 +56,13 @@ pub enum PlaybackMode {
 #[serde(rename_all = "snake_case")]
 pub enum LoadingIndicator {
     #[default]
-    TvStatic,
     Spinner,
+    TvStatic,
 }
 
 impl LoadingIndicator {
     pub const ALL: &'static [LoadingIndicator] =
-        &[LoadingIndicator::TvStatic, LoadingIndicator::Spinner];
+        &[LoadingIndicator::Spinner, LoadingIndicator::TvStatic];
 }
 
 impl std::fmt::Display for LoadingIndicator {
@@ -232,7 +232,7 @@ impl Default for WazooSettings {
             saturation: 0.0,
             playback_speed: 1.0,
             crt_enabled: false,
-            loading_indicator: LoadingIndicator::TvStatic,
+            loading_indicator: LoadingIndicator::Spinner,
         }
     }
 }

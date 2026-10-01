@@ -32,24 +32,24 @@ fn test_loading_indicator_serialization() {
     let mut settings = WazooSettings::default();
     assert_eq!(
         settings.loading_indicator,
-        wazoo_core::LoadingIndicator::TvStatic
+        wazoo_core::LoadingIndicator::Spinner
     );
 
-    settings.loading_indicator = wazoo_core::LoadingIndicator::Spinner;
+    settings.loading_indicator = wazoo_core::LoadingIndicator::TvStatic;
     let json = serde_json::to_string(&settings).unwrap();
-    assert!(json.contains(r#""loading_indicator":"spinner""#));
+    assert!(json.contains(r#""loading_indicator":"tv_static""#));
 
     let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
     assert_eq!(
         deserialized.loading_indicator,
-        wazoo_core::LoadingIndicator::Spinner
+        wazoo_core::LoadingIndicator::TvStatic
     );
 
     // Fallback default on empty/missing field
     let default_from_empty: WazooSettings = serde_json::from_str("{}").unwrap();
     assert_eq!(
         default_from_empty.loading_indicator,
-        wazoo_core::LoadingIndicator::TvStatic
+        wazoo_core::LoadingIndicator::Spinner
     );
 }
 
