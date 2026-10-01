@@ -52,7 +52,6 @@ impl TutorialDatabase {
         Ok(db)
     }
 
-
     /// Initializes the database schema.
     /// Notice the `?` operator at the end of `execute`.
     ///

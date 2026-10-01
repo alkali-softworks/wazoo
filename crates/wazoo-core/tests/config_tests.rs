@@ -444,4 +444,3 @@ fn test_crt_enabled_serialization() {
     let loaded: WazooSettings = serde_json::from_str(missing_json).unwrap();
     assert!(!loaded.crt_enabled);
 }
-

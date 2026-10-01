@@ -680,4 +680,3 @@ pub fn video_shader<Message>(program: VideoProgram) -> Shader<Message, VideoProg
         .width(Length::Fill)
         .height(Length::Fill)
 }
-

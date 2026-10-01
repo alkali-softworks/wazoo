@@ -142,8 +142,5 @@ fn test_open_url_rejects_unsafe_schemes() {
 fn test_desktop_entry_escaping() {
     let raw_path = r#"C:\Program Files\Wazoo "Player"\wazoo.exe"#;
     let escaped = raw_path.replace('\\', "\\\\").replace('"', "\\\"");
-    assert_eq!(
-        escaped,
-        r#"C:\\Program Files\\Wazoo \"Player\"\\wazoo.exe"#
-    );
+    assert_eq!(escaped, r#"C:\\Program Files\\Wazoo \"Player\"\\wazoo.exe"#);
 }

@@ -108,9 +108,10 @@ impl WazooApp {
             };
             let mut candidate_curr_path = curr_path;
             for _ in 0..MAX_VIDEO_LOAD_RETRIES {
-                if let Some(video_rec) = self
-                    .get_next_video_rec_for_navigation(candidate_curr_path.as_deref(), self.is_player_shuffle(id))
-                {
+                if let Some(video_rec) = self.get_next_video_rec_for_navigation(
+                    candidate_curr_path.as_deref(),
+                    self.is_player_shuffle(id),
+                ) {
                     if let Ok(new_handle) = self.create_video_handle_with_start_time(
                         id,
                         &video_rec.path,
@@ -199,9 +200,10 @@ impl WazooApp {
         if !loaded {
             let mut candidate_curr_path = curr_path;
             for _ in 0..MAX_VIDEO_LOAD_RETRIES {
-                if let Some(video_rec) = self
-                    .get_prev_video_rec_for_navigation(candidate_curr_path.as_deref(), self.is_player_shuffle(id))
-                {
+                if let Some(video_rec) = self.get_prev_video_rec_for_navigation(
+                    candidate_curr_path.as_deref(),
+                    self.is_player_shuffle(id),
+                ) {
                     if let Ok(new_handle) =
                         self.create_video_handle(id, &video_rec.path, &video_rec.name)
                     {

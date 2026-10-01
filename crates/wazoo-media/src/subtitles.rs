@@ -104,7 +104,9 @@ fn sanitize_ffmpeg_path(path: &str) -> String {
 fn is_valid_map_arg(map_arg: &str) -> bool {
     !map_arg.is_empty()
         && map_arg.len() <= 32
-        && map_arg.chars().all(|c| c.is_ascii_alphanumeric() || c == ':')
+        && map_arg
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == ':')
 }
 
 /// Parses SubRip (.srt) and WebVTT (.vtt) text content into structured cues.

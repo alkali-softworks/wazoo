@@ -363,4 +363,3 @@ fn test_audio_track_preference_updates_and_retention() {
     };
     assert_eq!(get_track_preference_string(&track_japanese), "Japanese");
 }
-

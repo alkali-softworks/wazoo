@@ -334,8 +334,7 @@ impl WazooApp {
     /// Throttles frame rendering to ~30 FPS (every 2nd tick) when the window is unfocused or obscured.
     pub(crate) fn should_throttle_unfocused_frame(&mut self) -> bool {
         if !self.window.is_focused {
-            self.window.unfocused_frame_ticks =
-                self.window.unfocused_frame_ticks.wrapping_add(1);
+            self.window.unfocused_frame_ticks = self.window.unfocused_frame_ticks.wrapping_add(1);
             !self.window.unfocused_frame_ticks.is_multiple_of(2)
         } else {
             false
