@@ -84,9 +84,10 @@ impl WazooApp {
                     return Task::none();
                 }
 
-                // Suspend all tick animations, video frame decoding, and layout recalculations
-                // while actively resizing to maintain fluid window manipulation without stutter.
+                // Suspend all tick animations and layout
+                // while resizing to avoid UI stutter.
                 if self.window.is_resizing() {
+                    self.update_player_frames();
                     return Task::none();
                 }
 
