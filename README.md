@@ -83,7 +83,7 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - **GPU Accelerated**: Implemented directly in the WGPU shader pipeline with zero decoding overhead or frame latency.
 
 ### 🌐 Internationalization & Localization
-- **16 Supported Languages**: Complete UI translations for English (`en`), Spanish (`es`), French (`fr`), German (`de`), Italian (`it`), Portuguese (`pt`), Russian (`ru`), Simplified Chinese (`zh`), Japanese (`ja`), Korean (`ko`), Thai (`th`), Hebrew (`he`), Arabic (`ar`), Hindi (`hi`), Bengali (`bn`), and Indonesian (`id`).
+- **23 Supported Languages**: Complete UI translations for English (`en`), Dutch (`nl`), Spanish (`es`), French (`fr`), Italian (`it`), Portuguese (`pt`), German (`de`), Czech (`cs`), Polish (`pl`), Ukrainian (`uk`), Russian (`ru`), Swedish (`sv`), Turkish (`tr`), Arabic (`ar`), Hebrew (`he`), Persian (`fa`), Hindi (`hi`), Bengali (`bn`), Thai (`th`), Vietnamese (`vi`), Simplified Chinese (`zh`), Japanese (`ja`), and Korean (`ko`).
 
 ---
 
