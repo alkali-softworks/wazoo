@@ -110,6 +110,57 @@ pub(crate) fn pattern_matches(pattern: &str, text: &str) -> bool {
     true
 }
 
+pub(crate) fn video_matches_file_picker_filter(
+    path: &str,
+    name: &str,
+    folder: Option<&str>,
+    search_filter: &str,
+) -> bool {
+    let search_filter = search_filter.trim().to_lowercase();
+    if search_filter.is_empty() {
+        return true;
+    }
+
+    let folder_key = if folder == Some("Misc") {
+        "Misc".to_string()
+    } else {
+        let f = format::format_video_folder(path);
+        if f.is_empty() {
+            "Other".to_string()
+        } else {
+            f
+        }
+    };
+    let title = format::format_video_title(path);
+    let folder_lower = folder_key.to_lowercase();
+    let title_lower = title.to_lowercase();
+    let name_lower = name.to_lowercase();
+    let path_lower = path.to_lowercase();
+
+    let search_clean = search_filter.replace(['_', '-'], " ");
+    let search_words: Vec<&str> = search_clean.split_whitespace().collect();
+    if search_words.is_empty() {
+        return true;
+    }
+
+    let is_whole_anchored = (search_filter.starts_with('^')
+        && !search_filter.starts_with("^^"))
+        || (search_filter.ends_with('$') && !search_filter.ends_with("$$"));
+
+    let matches_any = |pat: &str| {
+        pattern_matches(pat, &folder_lower)
+            || pattern_matches(pat, &title_lower)
+            || pattern_matches(pat, &name_lower)
+            || pattern_matches(pat, &path_lower)
+    };
+
+    if is_whole_anchored {
+        matches_any(&search_filter) || search_words.iter().all(|w| matches_any(w))
+    } else {
+        search_words.iter().all(|w| matches_any(w))
+    }
+}
+
 impl WazooApp {
     pub(crate) fn ensure_file_picker_meta(&mut self) {
         let needs_rebuild = self.drawers.file_picker_entries.len() != self.available_videos.len()
