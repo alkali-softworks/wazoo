@@ -210,82 +210,9 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     ]
     .spacing(6);
 
-    let is_tv_static = app.settings.loading_indicator == wazoo_core::LoadingIndicator::TvStatic;
-    let is_spinner = app.settings.loading_indicator == wazoo_core::LoadingIndicator::Spinner;
-
-    let tv_static_btn = cursor::PointerCursor::new(
-        button(
-            text(format!(
-                "{}{}",
-                if is_tv_static { "✓ " } else { "" },
-                app.t("settings.loading_tv_static")
-            ))
-            .size(12)
-            .font(if is_tv_static {
-                theme::FONT_BOLD
-            } else {
-                Default::default()
-            }),
-        )
-        .style(theme::folder_chip_style(is_tv_static))
-        .on_press(Message::SetLoadingIndicator(
-            wazoo_core::LoadingIndicator::TvStatic,
-        ))
-        .padding([6, 14]),
-    );
-
-    let spinner_btn = cursor::PointerCursor::new(
-        button(
-            text(format!(
-                "{}{}",
-                if is_spinner { "✓ " } else { "" },
-                app.t("settings.loading_spinner")
-            ))
-            .size(12)
-            .font(if is_spinner {
-                theme::FONT_BOLD
-            } else {
-                Default::default()
-            }),
-        )
-        .style(theme::folder_chip_style(is_spinner))
-        .on_press(Message::SetLoadingIndicator(
-            wazoo_core::LoadingIndicator::Spinner,
-        ))
-        .padding([6, 14]),
-    );
-
-    let loading_indicator_group = container(
-        row![
-            column![
-                text(app.t("settings.loading_indicator"))
-                    .size(14)
-                    .color(iced::Color::WHITE),
-                text(app.t("settings.loading_indicator_desc"))
-                    .size(12)
-                    .color(theme::COLOR_TEXT_MUTED),
-            ]
-            .spacing(2),
-            Space::new().width(Length::Fill),
-            row![spinner_btn, tv_static_btn].spacing(8),
-        ]
-        .align_y(Alignment::Center),
-    )
-    .padding([12, 14])
-    .style(|_theme: &Theme| container::Style {
-        background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
-        border: iced::Border {
-            radius: 6.0.into(),
-            width: 1.0,
-            color: theme::COLOR_BORDER,
-        },
-        ..Default::default()
-    });
-
     column![
         always_on_top_group,
         opacity_group,
-        loading_indicator_group,
         default_player_group,
         flip_interval_group,
         buffer_dur_group,
