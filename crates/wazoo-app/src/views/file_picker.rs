@@ -110,58 +110,35 @@ pub(crate) fn pattern_matches(pattern: &str, text: &str) -> bool {
     true
 }
 
-pub(crate) fn video_matches_file_picker_filter(
-    path: &str,
-    name: &str,
-    folder: Option<&str>,
-    search_filter: &str,
-) -> bool {
-    let search_filter = search_filter.trim().to_lowercase();
-    if search_filter.is_empty() {
-        return true;
-    }
-
-    let folder_key = if folder == Some("Misc") {
-        "Misc".to_string()
-    } else {
-        let f = format::format_video_folder(path);
-        if f.is_empty() {
-            "Other".to_string()
-        } else {
-            f
-        }
-    };
-    let title = format::format_video_title(path);
-    let folder_lower = folder_key.to_lowercase();
-    let title_lower = title.to_lowercase();
-    let name_lower = name.to_lowercase();
-    let path_lower = path.to_lowercase();
-
-    let search_clean = search_filter.replace(['_', '-'], " ");
-    let search_words: Vec<&str> = search_clean.split_whitespace().collect();
-    if search_words.is_empty() {
-        return true;
-    }
-
-    let is_whole_anchored = (search_filter.starts_with('^')
-        && !search_filter.starts_with("^^"))
-        || (search_filter.ends_with('$') && !search_filter.ends_with("$$"));
-
-    let matches_any = |pat: &str| {
-        pattern_matches(pat, &folder_lower)
-            || pattern_matches(pat, &title_lower)
-            || pattern_matches(pat, &name_lower)
-            || pattern_matches(pat, &path_lower)
-    };
-
-    if is_whole_anchored {
-        matches_any(&search_filter) || search_words.iter().all(|w| matches_any(w))
-    } else {
-        search_words.iter().all(|w| matches_any(w))
-    }
-}
-
 impl WazooApp {
+    pub(crate) fn file_picker_filtered_videos(&mut self) -> Option<Vec<wazoo_core::VideoRecord>> {
+        let filter = self.drawers.file_picker_search.trim();
+        if filter.is_empty() {
+            return None;
+        }
+
+        self.apply_file_picker_search();
+
+        let matching_paths: std::collections::HashSet<&str> = self
+            .drawers
+            .file_picker_groups
+            .iter()
+            .flat_map(|g| &g.files)
+            .map(|f| f.path.as_str())
+            .collect();
+
+        if matching_paths.is_empty() {
+            return None;
+        }
+
+        Some(
+            self.available_videos
+                .iter()
+                .filter(|v| matching_paths.contains(v.path.as_str()))
+                .cloned()
+                .collect(),
+        )
+    }
     pub(crate) fn ensure_file_picker_meta(&mut self) {
         let needs_rebuild = self.drawers.file_picker_entries.len() != self.available_videos.len()
             || (!self.available_videos.is_empty()
