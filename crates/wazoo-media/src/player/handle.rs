@@ -9,8 +9,11 @@
 
 use super::state::{BufferConfig, PlayerState};
 use super::tracks::{
-    AudioTrack, PlayerId, StartTime, SubtitleTrack, build_alang_string, find_matching_audio_track,
-    get_track_preference_string, track_matches_preference,
+    AudioTrack, PlayerId, StartTime, SubtitleTrack, build_alang_string, build_slang_string,
+    build_slang_string_with_fallback, find_matching_audio_track, get_subtitle_track_preference_string,
+    get_track_preference_string, is_signs_or_songs_track,
+    select_best_subtitle_track_with_fallback, subtitle_track_matches_preference,
+    track_matches_preference,
 };
 use crate::mpv_ffi;
 use crate::pipeline::FrameData;
@@ -36,6 +39,8 @@ pub struct VideoHandle {
     pending_seek_random: bool,
     tracks_loaded: bool,
     preferred_audio_language: Option<String>,
+    preferred_subtitle_language: Option<String>,
+    i18n_language: Option<String>,
     gamma: f64,
     contrast: f64,
     brightness: f64,
@@ -246,6 +251,14 @@ impl VideoHandle {
                 }
             }
 
+            let slang = build_slang_string_with_fallback(
+                config.preferred_subtitle_language.as_deref(),
+                config.i18n_language.as_deref(),
+            );
+            if !slang.is_empty() {
+                set_opt("slang", &slang);
+            }
+
             match start_time {
                 StartTime::Beginning => {}
                 StartTime::Seconds(start) => {
@@ -356,6 +369,8 @@ impl VideoHandle {
                 pending_seek_random: false,
                 tracks_loaded: false,
                 preferred_audio_language: config.preferred_audio_language,
+                preferred_subtitle_language: config.preferred_subtitle_language,
+                i18n_language: config.i18n_language,
                 gamma: config.gamma,
                 contrast: config.contrast,
                 brightness: config.brightness,
@@ -1305,6 +1320,18 @@ impl VideoHandle {
             for t in &mut self.state.subtitle_tracks {
                 t.is_selected = t.id == track_id;
             }
+            if let Some(track) = self.state.subtitle_tracks.iter().find(|t| t.id == track_id) {
+                let pref = get_subtitle_track_preference_string(track);
+                if !pref.starts_with("Track ") {
+                    self.preferred_subtitle_language = Some(pref.clone());
+                    let slang = build_slang_string(&pref);
+                    if !slang.is_empty() {
+                        if let (Ok(c_prop), Ok(c_val)) = (CString::new("slang"), CString::new(slang)) {
+                            mpv_ffi::mpv_set_property_string(self.mpv, c_prop.as_ptr(), c_val.as_ptr());
+                        }
+                    }
+                }
+            }
             self.set_subtitles_visible(true);
             if let Ok(cmd) = CString::new("no-osd seek 0 relative+exact") {
                 mpv_ffi::mpv_command_string(self.mpv, cmd.as_ptr());
@@ -1343,12 +1370,20 @@ impl VideoHandle {
                 let external_filename =
                     self.get_property_string(&format!("track-list/{}/external-filename", i));
                 let ff_index = self.get_property_i64(&format!("track-list/{}/ff-index", i));
+                let default = self
+                    .get_property_bool(&format!("track-list/{}/default", i))
+                    .unwrap_or(false);
+                let forced = self
+                    .get_property_bool(&format!("track-list/{}/forced", i))
+                    .unwrap_or(false);
                 sub_tracks.push(SubtitleTrack {
                     id,
                     title,
                     lang,
                     codec,
                     is_selected: selected,
+                    is_default: default,
+                    is_forced: forced,
                     external_filename,
                     ff_index,
                 });
@@ -1410,105 +1445,52 @@ impl VideoHandle {
             !self.tracks_loaded || self.state.current_subtitle_track_id.is_none();
         let sid_i64 = self.get_property_i64("sid");
         let sid_str = self.get_property_string("sid");
-        let mpv_selected_sid =
-            sid_i64.or_else(|| sid_str.as_deref().and_then(|s| s.parse::<i64>().ok()));
-        let mut current_sid = mpv_selected_sid
-            .or_else(|| self.state.current_subtitle_track_id)
-            .or_else(|| sub_tracks.iter().find(|t| t.is_selected).map(|t| t.id))
-            .or_else(|| sub_tracks.first().map(|t| t.id));
+        let mpv_selected_sid = sid_i64
+            .or_else(|| sid_str.as_deref().and_then(|s| s.parse::<i64>().ok()))
+            .filter(|id| sub_tracks.iter().any(|t| t.id == *id))
+            .or_else(|| sub_tracks.iter().find(|t| t.is_selected).map(|t| t.id));
+
+        let mut current_sid = mpv_selected_sid.or(self.state.current_subtitle_track_id);
 
         if is_sub_initial_load && !sub_tracks.is_empty() {
+            let pref = self.preferred_subtitle_language.as_deref();
+            let i18n_lang = self.i18n_language.as_deref();
+            let effective_lang = self.effective_subtitle_language();
+
+            let mut target_sid = None;
+
             if let Some(sid) = mpv_selected_sid {
-                // If mpv defaulted to a Signs/Songs track (which only contains signs/lyrics, no dialogue),
-                // and a full dialogue subtitle track exists (or external subtitle sidecar), automatically promote to the full track on initial load.
-                if let Some(active_track) = sub_tracks.iter().find(|t| t.id == sid) {
-                    let is_signs = active_track
-                        .title
-                        .as_ref()
-                        .map(|t| {
-                            let l = t.to_ascii_lowercase();
-                            l.contains("sign") || l.contains("song")
-                        })
-                        .unwrap_or(false);
+                let active_track = sub_tracks.iter().find(|t| t.id == sid);
+                let is_signs = active_track.map_or(false, is_signs_or_songs_track);
+                let matches_pref = active_track.map_or(false, |t| {
+                    subtitle_track_matches_preference(t, effective_lang)
+                });
 
-                    if is_signs {
-                        let preferred_full_track = sub_tracks
-                            .iter()
-                            .find(|t| {
-                                if t.id == sid {
-                                    return false;
-                                }
-                                if let Some(ref title) = t.title {
-                                    let l = title.to_ascii_lowercase();
-                                    if l.contains("sign") || l.contains("song") {
-                                        return false;
-                                    }
-                                    if l.contains("full") {
-                                        return true;
-                                    }
-                                }
-                                t.external_filename.is_some()
-                            })
-                            .or_else(|| {
-                                sub_tracks.iter().find(|t| {
-                                    if t.id == sid {
-                                        return false;
-                                    }
-                                    if let Some(ref title) = t.title {
-                                        let l = title.to_ascii_lowercase();
-                                        if l.contains("sign") || l.contains("song") {
-                                            return false;
-                                        }
-                                    }
-                                    true
-                                })
-                            });
-
-                        if let Some(full_track) = preferred_full_track {
-                            log::info!(
-                                "Auto-promoting subtitle track from Signs/Songs (id {}) to full dialogue track (id {})",
-                                sid,
-                                full_track.id
-                            );
-                            self.set_subtitle_track(full_track.id);
-                            current_sid = Some(full_track.id);
+                // If mpv selected a Signs/Songs track, or a track that does not match the effective language
+                // while an explicit preferred or i18n language match is available, select the matching track instead.
+                if is_signs || !matches_pref {
+                    if let Some(best) = select_best_subtitle_track_with_fallback(&sub_tracks, pref, i18n_lang) {
+                        if best != sid {
+                            target_sid = Some(best);
                         }
                     }
                 }
-            } else if let Some(target_id) = current_sid {
-                // mpv did not automatically select a subtitle track (e.g. MKV container tracks with disposition 'default: 0').
-                // Select the preferred full dialogue track (or first available track) and explicitly configure mpv.
-                let best_track = sub_tracks
-                    .iter()
-                    .find(|t| {
-                        if let Some(ref title) = t.title {
-                            let l = title.to_ascii_lowercase();
-                            if l.contains("full") {
-                                return true;
-                            }
-                        }
-                        t.external_filename.is_some()
-                    })
-                    .or_else(|| {
-                        sub_tracks.iter().find(|t| {
-                            if let Some(ref title) = t.title {
-                                let l = title.to_ascii_lowercase();
-                                if l.contains("sign") || l.contains("song") {
-                                    return false;
-                                }
-                            }
-                            true
-                        })
-                    })
-                    .map(|t| t.id)
-                    .unwrap_or(target_id);
+            } else if sid_str.as_deref() == Some("no") || current_sid.is_some() {
+                // mpv defaulted to no track (e.g. MKV container tracks with disposition 'default: 0')
+                // or has no valid track selected. Select the best track according to preference/defaults.
+                target_sid = select_best_subtitle_track_with_fallback(&sub_tracks, pref, i18n_lang);
+            }
 
-                log::info!(
-                    "Auto-selecting subtitle track (id {}) on initial load (mpv defaulted to no track)",
-                    best_track
-                );
-                self.set_subtitle_track(best_track);
-                current_sid = Some(best_track);
+            if let Some(desired_id) = target_sid {
+                if current_sid != Some(desired_id) {
+                    log::info!(
+                        "Auto-selecting subtitle track (id {}) on initial load (effective preference: {})",
+                        desired_id,
+                        effective_lang
+                    );
+                    self.set_subtitle_track(desired_id);
+                    current_sid = Some(desired_id);
+                }
             }
         }
 
@@ -1520,9 +1502,71 @@ impl VideoHandle {
             }
         }
 
-        if !self.state.audio_tracks.is_empty() || !self.state.subtitle_tracks.is_empty() {
+        if !self.state.audio_tracks.is_empty()
+            || (!self.state.subtitle_tracks.is_empty()
+                && (current_sid.is_some() || sid_str.as_deref() == Some("no")))
+        {
             self.tracks_loaded = true;
         }
+    }
+
+    /// Returns the preferred subtitle language if known; otherwise falls back to the i18n language setting
+    /// (defaulting to "en" if neither is known).
+    pub fn effective_subtitle_language(&self) -> &str {
+        self.preferred_subtitle_language
+            .as_deref()
+            .filter(|s| !s.trim().is_empty())
+            .or_else(|| self.i18n_language.as_deref().filter(|s| !s.trim().is_empty()))
+            .unwrap_or("en")
+    }
+
+    pub fn set_preferred_subtitle_language(&mut self, pref: Option<String>) {
+        self.preferred_subtitle_language = pref;
+        let slang = build_slang_string_with_fallback(
+            self.preferred_subtitle_language.as_deref(),
+            self.i18n_language.as_deref(),
+        );
+        if !slang.is_empty() {
+            if let (Ok(c_prop), Ok(c_val)) = (CString::new("slang"), CString::new(slang)) {
+                unsafe {
+                    if !self.mpv.is_null() {
+                        mpv_ffi::mpv_set_property_string(
+                            self.mpv,
+                            c_prop.as_ptr(),
+                            c_val.as_ptr(),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn preferred_subtitle_language(&self) -> Option<&str> {
+        self.preferred_subtitle_language.as_deref()
+    }
+
+    pub fn set_i18n_language(&mut self, lang: Option<String>) {
+        self.i18n_language = lang;
+        if self.preferred_subtitle_language.is_none() {
+            let slang = build_slang_string_with_fallback(None, self.i18n_language.as_deref());
+            if !slang.is_empty() {
+                if let (Ok(c_prop), Ok(c_val)) = (CString::new("slang"), CString::new(slang)) {
+                    unsafe {
+                        if !self.mpv.is_null() {
+                            mpv_ffi::mpv_set_property_string(
+                                self.mpv,
+                                c_prop.as_ptr(),
+                                c_val.as_ptr(),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn i18n_language(&self) -> Option<&str> {
+        self.i18n_language.as_deref()
     }
 
     pub fn set_preferred_audio_language(&mut self, pref: Option<String>) {

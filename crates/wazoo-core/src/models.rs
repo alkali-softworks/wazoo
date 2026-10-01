@@ -174,6 +174,8 @@ pub struct WazooSettings {
     #[serde(default)]
     pub preferred_audio_language: Option<String>,
     #[serde(default)]
+    pub preferred_subtitle_language: Option<String>,
+    #[serde(default)]
     pub is_default_player: bool,
     #[serde(default)]
     pub is_always_on_top: bool,
@@ -223,6 +225,7 @@ impl Default for WazooSettings {
             session_videos: Vec::new(),
             bookmarks: Vec::new(),
             preferred_audio_language: None,
+            preferred_subtitle_language: None,
             is_default_player: false,
             is_always_on_top: false,
             keybinds: KeybindSettings::default(),
@@ -234,5 +237,16 @@ impl Default for WazooSettings {
             crt_enabled: false,
             loading_indicator: LoadingIndicator::Spinner,
         }
+    }
+}
+
+impl WazooSettings {
+    /// Returns the subtitle language preference if explicitly set;
+    /// otherwise falls back to the "language" i18n setting.
+    pub fn effective_subtitle_language(&self) -> &str {
+        self.preferred_subtitle_language
+            .as_deref()
+            .filter(|s| !s.trim().is_empty())
+            .unwrap_or(&self.language)
     }
 }

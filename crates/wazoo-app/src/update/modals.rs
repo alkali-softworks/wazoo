@@ -85,6 +85,9 @@ impl WazooApp {
                     self.search.selected_folder = self.t("common.all");
                 }
                 let _ = self.config_mgr.save_settings(&self.settings);
+                for p in &mut self.players {
+                    p.set_i18n_language(Some(self.settings.language.clone()));
+                }
                 Task::none()
             }
             Message::SetGamma(val) => {

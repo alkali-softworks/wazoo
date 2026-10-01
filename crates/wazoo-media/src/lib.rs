@@ -15,9 +15,13 @@ pub mod subtitles;
 
 pub use player::{
     AudioTrack, BufferConfig, PlayerId, PlayerState, StartTime, SubtitleTrack, VideoHandle,
-    build_alang_string, find_matching_audio_track, format_audio_track_label,
-    format_subtitle_track_label, get_track_preference_string, language_aliases,
-    language_display_name, matches_alias_token, track_matches_preference,
+    build_alang_string, build_slang_string, build_slang_string_with_fallback,
+    find_matching_audio_track, find_matching_subtitle_track, format_audio_track_label,
+    format_subtitle_track_label, get_subtitle_track_preference_string,
+    get_track_preference_string, is_forced_track, is_signs_or_songs_track, language_aliases,
+    language_display_name, matches_alias_token, select_best_subtitle_track,
+    select_best_subtitle_track_with_fallback, subtitle_track_matches_preference,
+    track_matches_preference,
 };
 pub use scroll::{ScrollEngine, ScrollItem};
 pub use subtitles::{
