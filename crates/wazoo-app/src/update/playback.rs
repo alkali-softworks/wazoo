@@ -546,21 +546,24 @@ impl WazooApp {
 
                 self.settings.player_count = target;
 
-                // If shrinking player count, preserve the focused player
-                if target < self.players.len() {
-                    if self.focused_idx < self.players.len() && self.focused_idx >= target {
-                        let focused = self.players.remove(self.focused_idx);
-                        self.players.insert(0, focused);
-                        self.focused_idx = 0;
-                    }
-                    while self.players.len() > target {
-                        self.players.pop();
+                // Adjust grid player count without affecting any active 3D cube players
+                let grid_count = self.players.iter().filter(|p| !p.is_cube).count();
+                if target < grid_count {
+                    let mut remove_needed = grid_count - target;
+                    let mut i = self.players.len();
+                    while i > 0 && remove_needed > 0 {
+                        i -= 1;
+                        if !self.players[i].is_cube {
+                            let mut p = self.players.remove(i);
+                            p.stop();
+                            remove_needed -= 1;
+                        }
                     }
                     if self.focused_idx >= self.players.len() && !self.players.is_empty() {
                         self.focused_idx = self.players.len() - 1;
                     }
-                } else {
-                    while self.players.len() < target {
+                } else if target > grid_count {
+                    while self.players.iter().filter(|p| !p.is_cube).count() < target {
                         if self.add_player_internal().is_none() {
                             break;
                         }
@@ -748,6 +751,11 @@ impl WazooApp {
                 task
             }
             Message::RemoveFocusedPlayer => {
+                if let Some(player) = self.focused_player() {
+                    if player.is_cube {
+                        return self.update(Message::ClearCubes);
+                    }
+                }
                 if self.settings.playback_mode == PlaybackMode::Scroll {
                     self.cleanup_scroll_mode();
                     let target_count = self.settings.player_count.clamp(1, 12);
@@ -791,9 +799,19 @@ impl WazooApp {
                         self.overlay.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                     self.focused_idx = next_idx;
-                    let idx_str = (self.focused_idx + 1).to_string();
-                    self.overlay.toast_message =
-                        Some(self.t_with("player.focused_player", &[("index", &idx_str)]));
+                    let target_player = &self.players[self.focused_idx];
+                    let toast = if target_player.is_cube {
+                        "Focused: 3D Video Cube".to_string()
+                    } else {
+                        let grid_idx = self
+                            .players
+                            .iter()
+                            .take(self.focused_idx + 1)
+                            .filter(|p| !p.is_cube)
+                            .count();
+                        self.t_with("player.focused_player", &[("index", &grid_idx.to_string())])
+                    };
+                    self.overlay.toast_message = Some(toast);
                     self.overlay.toast_time_remaining = SHORT_TOAST_SECS;
                     if self.drawers.show_transcript {
                         return self.load_transcript_for_focused_player();

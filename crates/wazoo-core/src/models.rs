@@ -195,6 +195,10 @@ pub struct WazooSettings {
     pub crt_enabled: bool,
     #[serde(default)]
     pub loading_indicator: LoadingIndicator,
+    #[serde(default = "default_cube_speed")]
+    pub cube_speed: f32,
+    #[serde(default = "default_cube_size")]
+    pub cube_size: f32,
 }
 
 fn default_playback_speed() -> f32 {
@@ -203,6 +207,14 @@ fn default_playback_speed() -> f32 {
 
 fn default_scroll_mode_muted() -> bool {
     true
+}
+
+fn default_cube_speed() -> f32 {
+    1.0
+}
+
+fn default_cube_size() -> f32 {
+    1.0
 }
 
 impl Default for WazooSettings {
@@ -236,6 +248,8 @@ impl Default for WazooSettings {
             playback_speed: 1.0,
             crt_enabled: false,
             loading_indicator: LoadingIndicator::Spinner,
+            cube_speed: 1.0,
+            cube_size: 1.0,
         }
     }
 }

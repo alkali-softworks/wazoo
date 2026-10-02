@@ -692,6 +692,29 @@ fn test_settings_modal_tabs_and_playback_options() {
     assert_eq!(app.settings.flip_interval_secs, 3600);
     let _ = app.update(Message::SetFlipInterval(45));
 
+    // Switch to Cube tab (3D Cube Screensaver settings)
+    let _ = app.update(Message::SetSettingsTab(SettingsTab::Cube));
+    assert_eq!(app.modals.settings_tab, SettingsTab::Cube);
+    {
+        let _view_cube = app.view_settings_modal();
+    }
+
+    // Toggle cube screensaver, adjust speed & size, spawn additional cube
+    let _ = app.update(Message::ToggleCubeScreensaver);
+    assert!(app.cube.enabled);
+    assert_eq!(app.cube.cubes.len(), 1);
+    {
+        let _view_cube_active = app.view_settings_modal();
+    }
+    let _ = app.update(Message::SetCubeSpeed(1.5));
+    assert_eq!(app.cube.speed_multiplier, 1.5);
+    let _ = app.update(Message::SetCubeSize(1.8));
+    assert_eq!(app.cube.size_multiplier, 1.8);
+    let _ = app.update(Message::SpawnCube);
+    assert_eq!(app.cube.cubes.len(), 2);
+    let _ = app.update(Message::ClearCubes);
+    assert_eq!(app.cube.cubes.len(), 0);
+
     // Switch back to General tab
     let _ = app.update(Message::SetSettingsTab(SettingsTab::General));
     assert_eq!(app.modals.settings_tab, SettingsTab::General);

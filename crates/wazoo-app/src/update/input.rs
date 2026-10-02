@@ -113,6 +113,12 @@ impl WazooApp {
                 KeyAction::OpenSettings => return self.update(Message::OpenSettingsModal),
                 KeyAction::ToggleCrt => return self.update(Message::ToggleCrtFilter),
             }
+        } else if !self.window.is_alt_pressed {
+            if let Key::Character(ref s) = key {
+                if s == "8" {
+                    return self.update(Message::ToggleCubeScreensaver);
+                }
+            }
         }
         Task::none()
     }

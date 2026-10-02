@@ -336,6 +336,7 @@ impl VideoHandle {
                 height: render_height,
                 pixels: pixel_buffer.clone(),
                 new_frame: true,
+                frame_seq: 1,
             }));
 
             let mut state = PlayerState::new(id, file_path.to_string(), name.to_string());
@@ -639,6 +640,7 @@ impl VideoHandle {
                         }
                         frame_guard.pixels.copy_from_slice(&self.pixel_buffer);
                         frame_guard.new_frame = true;
+                        frame_guard.frame_seq = frame_guard.frame_seq.wrapping_add(1);
                     }
 
                     self.state.position = self.position();
@@ -968,6 +970,14 @@ impl VideoHandle {
 
     pub fn frame_snapshot(&self) -> Option<Vec<u8>> {
         self.frame.lock().ok().map(|g| g.pixels.clone())
+    }
+
+    pub fn frame(&self) -> Arc<Mutex<FrameData>> {
+        Arc::clone(&self.frame)
+    }
+
+    pub fn alive(&self) -> Arc<AtomicBool> {
+        Arc::clone(&self.alive)
     }
 
     pub fn is_pending_seek_random(&self) -> bool {

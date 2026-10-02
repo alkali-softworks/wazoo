@@ -482,3 +482,51 @@ fn test_crt_enabled_serialization() {
     let loaded: WazooSettings = serde_json::from_str(missing_json).unwrap();
     assert!(!loaded.crt_enabled);
 }
+
+#[test]
+fn test_cube_settings_serialization_and_clamping() {
+    let default_settings = WazooSettings::default();
+    assert_eq!(default_settings.cube_speed, 1.0);
+    assert_eq!(default_settings.cube_size, 1.0);
+
+    let mut settings = WazooSettings::default();
+    settings.cube_speed = 2.4;
+    settings.cube_size = 1.6;
+
+    let json = serde_json::to_string(&settings).unwrap();
+    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
+    assert_eq!(deserialized.cube_speed, 2.4);
+    assert_eq!(deserialized.cube_size, 1.6);
+
+    // Fallback default on empty/missing JSON
+    let loaded: WazooSettings = serde_json::from_str("{}").unwrap();
+    assert_eq!(loaded.cube_speed, 1.0);
+    assert_eq!(loaded.cube_size, 1.0);
+
+    // Verify clamping via ConfigManager
+    let temp_dir = std::env::temp_dir().join(format!(
+        "wazoo_cube_clamp_test_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = fs::create_dir_all(&temp_dir);
+    let mgr = ConfigManager {
+        config_dir: temp_dir.clone(),
+        data_dir: temp_dir.clone(),
+    };
+
+    let extreme_settings = WazooSettings {
+        cube_speed: 99.0,
+        cube_size: 0.01,
+        ..Default::default()
+    };
+    mgr.save_settings(&extreme_settings).unwrap();
+
+    let loaded = mgr.load_settings();
+    assert_eq!(loaded.cube_speed, 4.0);
+    assert_eq!(loaded.cube_size, 0.4);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}
