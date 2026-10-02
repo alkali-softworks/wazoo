@@ -8,8 +8,7 @@
  */
 
 use crate::app::{
-    DEFAULT_TOAST_SECS, FOCUS_BORDER_TICKS, MAX_PLAYER_NAV_HISTORY_ENTRIES,
-    MAX_VIDEO_LOAD_RETRIES, WazooApp,
+    FOCUS_BORDER_TICKS, MAX_PLAYER_NAV_HISTORY_ENTRIES, MAX_VIDEO_LOAD_RETRIES, WazooApp,
 };
 use crate::format;
 use crate::message::Message;
@@ -99,7 +98,7 @@ impl WazooApp {
                     if p.is_cube {
                         let (primary, _) = format::format_title_lines(&path_clone);
                         self.overlay
-                            .show_toast(format!("🧊 3D Cube: {}", primary), DEFAULT_TOAST_SECS);
+                            .show_toast(format!("🧊 3D Cube: {}", primary));
                     }
                 }
                 loaded = true;
@@ -138,10 +137,10 @@ impl WazooApp {
                         if let Some(p) = self.players.player(id) {
                             if p.is_cube {
                                 let (primary, _) = format::format_title_lines(&path_clone);
-                                self.overlay.show_toast(
-                                    format!("🧊 3D Cube: {}", primary),
-                                    DEFAULT_TOAST_SECS,
-                                );
+                                self.overlay.show_toast(format!(
+                                    "🧊 3D Cube: {}",
+                                    primary
+                                ));
                             }
                         }
                         break;
@@ -216,7 +215,7 @@ impl WazooApp {
                     if p.is_cube {
                         let (primary, _) = format::format_title_lines(&path_clone);
                         self.overlay
-                            .show_toast(format!("🧊 3D Cube: {}", primary), DEFAULT_TOAST_SECS);
+                            .show_toast(format!("🧊 3D Cube: {}", primary));
                     }
                 }
                 loaded = true;
@@ -245,10 +244,10 @@ impl WazooApp {
                         if let Some(p) = self.players.player(id) {
                             if p.is_cube {
                                 let (primary, _) = format::format_title_lines(&path_clone);
-                                self.overlay.show_toast(
-                                    format!("🧊 3D Cube: {}", primary),
-                                    DEFAULT_TOAST_SECS,
-                                );
+                                self.overlay.show_toast(format!(
+                                    "🧊 3D Cube: {}",
+                                    primary
+                                ));
                             }
                         }
                         break;

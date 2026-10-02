@@ -17,8 +17,7 @@ pub mod search;
 pub mod window;
 
 use crate::app::{
-    DEFAULT_TOAST_SECS, LONG_TOAST_SECS, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS,
-    WazooApp,
+    LONG_TOAST_SECS, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, WazooApp,
 };
 use crate::message::Message;
 use crate::state::{AppPlayer, PlayerList};
@@ -300,7 +299,7 @@ impl WazooApp {
                     let exit_task = self.exit_desktop_cube_overlay();
                     self.cube.clear();
                     self.cleanup_cube_players();
-                    self.overlay.show_toast("🧊 3D Video Cube dismissed", DEFAULT_TOAST_SECS);
+                    self.overlay.show_toast("🧊 3D Video Cube dismissed");
                     return exit_task;
                 } else {
                     if self.settings.playback_mode == PlaybackMode::Scroll {
@@ -318,7 +317,6 @@ impl WazooApp {
                     self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
                     self.overlay.show_toast(
                         "🧊 3D Video Cube spawned! (Press [8] to toggle, [Tab] to cycle)",
-                        DEFAULT_TOAST_SECS,
                     );
                 }
                 Task::none()
@@ -366,7 +364,7 @@ impl WazooApp {
                         }
                     }
 
-                    self.overlay.show_toast(
+                    self.overlay.show_toast_with_duration(
                         "🧊 Desktop Screensaver Mode (Click-Passthrough Active - Press [9] to exit)",
                         LONG_TOAST_SECS,
                     );
@@ -395,13 +393,10 @@ impl WazooApp {
                     }
                 }
                 self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
-                self.overlay.show_toast(
-                    format!(
-                        "🧊 Spawned 3D Cube #{}! (Press [8] to toggle, [Tab] to cycle)",
-                        self.cube.cubes.len()
-                    ),
-                    DEFAULT_TOAST_SECS,
-                );
+                self.overlay.show_toast(format!(
+                    "🧊 Spawned 3D Cube #{}! (Press [8] to toggle, [Tab] to cycle)",
+                    self.cube.cubes.len()
+                ));
                 Task::none()
             }
             Message::RemoveCube => {
@@ -427,7 +422,7 @@ impl WazooApp {
                 let exit_task = self.exit_desktop_cube_overlay();
                 self.cube.clear();
                 self.cleanup_cube_players();
-                self.overlay.show_toast("🧊 All 3D Cubes dismissed", DEFAULT_TOAST_SECS);
+                self.overlay.show_toast("🧊 All 3D Cubes dismissed");
                 exit_task
             }
             Message::SetCubeSpeed(speed) => {
@@ -562,7 +557,7 @@ impl WazooApp {
         }
 
         self.overlay
-            .show_toast("🧊 Desktop Screensaver Mode disabled", DEFAULT_TOAST_SECS);
+            .show_toast("🧊 Desktop Screensaver Mode disabled");
 
         if let Some(id) = self.window.id {
             let level = if self.settings.is_always_on_top {
