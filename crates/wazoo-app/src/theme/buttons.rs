@@ -424,6 +424,31 @@ pub fn tag_delete_button_style(_theme: &Theme, status: button::Status) -> button
     }
 }
 
+// Search Input Clear (✕) button
+pub fn search_clear_button_style(_theme: &Theme, status: button::Status) -> button::Style {
+    let (bg, text_color) = match status {
+        button::Status::Hovered => (
+            Some(Background::Color(Color::from_rgba(1.0, 1.0, 1.0, 0.15))),
+            Color::WHITE,
+        ),
+        button::Status::Pressed => (
+            Some(Background::Color(Color::from_rgba(1.0, 1.0, 1.0, 0.25))),
+            Color::WHITE,
+        ),
+        _ => (None, Color::from_rgb8(0x9a, 0x9a, 0xa2)),
+    };
+    button::Style {
+        background: bg,
+        text_color,
+        border: Border {
+            radius: 4.0.into(),
+            ..Default::default()
+        },
+        shadow: Shadow::default(),
+        ..Default::default()
+    }
+}
+
 // Emerald Green Search Button (matching wazoo-desktop)
 pub fn search_button_style(_theme: &Theme, status: button::Status) -> button::Style {
     let bg = match status {

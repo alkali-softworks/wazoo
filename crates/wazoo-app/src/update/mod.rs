@@ -219,6 +219,7 @@ impl WazooApp {
             | Message::SelectTranscriptSubtitleTrack(_, _)
             | Message::ToggleFolderCollapse(_)
             | Message::FilePickerSearchChanged(_)
+            | Message::ClearFilePickerSearch
             | Message::ApplyFilePickerSearch
             | Message::PlayFileInFocused(_) => self.update_drawers(message),
 

@@ -44,6 +44,7 @@ pub enum Message {
     ToggleFilePicker,
     ToggleFolderCollapse(String),
     FilePickerSearchChanged(String),
+    ClearFilePickerSearch,
     ApplyFilePickerSearch,
     ToggleHistoryDrawer,
     CloseHistoryDrawer,

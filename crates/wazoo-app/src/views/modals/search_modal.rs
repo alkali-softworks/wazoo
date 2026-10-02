@@ -39,6 +39,30 @@ fn estimate_chip_width(label: &str) -> f32 {
     text_width + 32.0
 }
 
+fn estimate_tag_chip_width(label: &str) -> f32 {
+    let text_width: f32 = label
+        .chars()
+        .map(|c| {
+            if c.is_ascii() {
+                if c.is_ascii_uppercase() || matches!(c, 'm' | 'w' | 'M' | 'W' | '@' | '%') {
+                    9.5
+                } else if matches!(
+                    c,
+                    'i' | 'l' | 'j' | 't' | 'f' | '!' | '.' | ':' | ';' | '\'' | ' '
+                ) {
+                    4.5
+                } else {
+                    7.5
+                }
+            } else {
+                13.0
+            }
+        })
+        .sum();
+    // 12px padding (6 left + 6 right) + 4px spacing + 14px (✕ button) + 6px row spacing
+    text_width + 36.0
+}
+
 impl WazooApp {
     pub fn view_search_modal(&self) -> Element<'_, Message> {
         let mut chip_items: Vec<(String, Element<'_, Message>)> = Vec::new();
@@ -80,7 +104,9 @@ impl WazooApp {
             ));
         }
 
-        let max_row_width = 440.0;
+        let modal_width = 640.0;
+        let card_padding = 24.0;
+        let max_row_width = modal_width - (card_padding * 2.0); // 592.0
         let mut folders_col = column![].spacing(8);
         let mut current_row = row![].spacing(8).align_y(Alignment::Center);
         let mut current_width = 0.0;
@@ -114,9 +140,20 @@ impl WazooApp {
             folders_col.into()
         };
 
-        let mut tags_row = row![].spacing(6).align_y(Alignment::Center);
+        let max_tag_row_width = max_row_width - 72.0; // 520.0 (leaves margin for search btn & tag_box padding)
+        let min_input_width = 70.0;
+        let mut tags_col = column![].spacing(6);
+        let mut current_row = row![].spacing(6).align_y(Alignment::Center);
+        let mut current_width = 0.0;
 
         for (idx, tag) in self.search.tags.iter().enumerate() {
+            let chip_w = estimate_tag_chip_width(tag);
+            if current_width + chip_w > max_tag_row_width && current_width > 0.0 {
+                tags_col = tags_col.push(current_row);
+                current_row = row![].spacing(6).align_y(Alignment::Center);
+                current_width = 0.0;
+            }
+
             let chip = container(
                 row![
                     text(tag).size(13).color(iced::Color::WHITE),
@@ -131,7 +168,8 @@ impl WazooApp {
             .padding([2, 6])
             .style(theme::tag_chip_style);
 
-            tags_row = tags_row.push(chip);
+            current_row = current_row.push(chip);
+            current_width += chip_w;
         }
 
         let placeholder = if self.search.tags.is_empty() {
@@ -148,10 +186,16 @@ impl WazooApp {
             .padding([4, 6])
             .width(Length::Fill);
 
-        tags_row = tags_row.push(input_widget);
+        if current_width + min_input_width > max_tag_row_width && current_width > 0.0 {
+            tags_col = tags_col.push(current_row);
+            current_row = row![].spacing(6).align_y(Alignment::Center);
+        }
 
-        let tag_box = container(tags_row)
-            .padding([3, 8])
+        current_row = current_row.push(input_widget);
+        tags_col = tags_col.push(current_row);
+
+        let tag_box = container(tags_col)
+            .padding([6, 8])
             .style(theme::tag_input_box_style)
             .width(Length::Fill);
 
@@ -186,10 +230,10 @@ impl WazooApp {
                 .size(12)
                 .color(theme::COLOR_TEXT_MUTED),
             ]
-            .spacing(14)
-            .width(Length::Fixed(480.0)),
+            .spacing(16)
+            .width(Length::Fixed(modal_width)),
         )
-        .padding(20)
+        .padding(card_padding)
         .style(theme::modal_card_style);
 
         Self::wrap_modal_with_backdrop(card, Message::CloseSearchModal)

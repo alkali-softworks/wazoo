@@ -1219,4 +1219,97 @@ fn test_video_tile_layout_engine_pauses_during_resize() {
     assert!(!app.window.is_resizing());
 }
 
+#[test]
+fn test_file_picker_search_clear_button() {
+    let (mut app, _) = new_test_app();
+    app.available_videos = vec![
+        VideoRecord::new(1, "Space Odyssey", "/media/movies/space_odyssey.mp4"),
+        VideoRecord::new(2, "Anime 1", "/media/anime/a1.mp4"),
+    ];
+
+    // Open file picker drawer
+    let _ = app.update(Message::ToggleFilePicker);
+    assert!(app.drawers.show_file_picker);
+
+    // Initial empty search: view file picker renders without clear button
+    assert!(app.drawers.file_picker_search.is_empty());
+    {
+        let _view_empty = app.view_file_picker();
+    }
+
+    // User types in search: search input is not empty
+    let _ = app.update(Message::FilePickerSearchChanged("space".to_string()));
+    assert_eq!(app.drawers.file_picker_search, "space");
+    assert!(app.drawers.file_picker_debounce_ticks > 0);
+
+    // View renders with clear button layered on search bar
+    {
+        let _view_with_query = app.view_file_picker();
+    }
+
+    // Navigating with "space" active yields Space Odyssey even starting from Anime 1
+    let next_filtered = app
+        .get_next_video_rec_for_navigation(Some("/media/anime/a1.mp4"), false)
+        .unwrap();
+    assert_eq!(next_filtered.name, "Space Odyssey");
+
+    // Pressing the clear button:
+    let _ = app.update(Message::ClearFilePickerSearch);
+    assert_eq!(app.drawers.file_picker_search, "");
+    assert_eq!(app.drawers.file_picker_debounce_ticks, 0);
+
+    // Filter cleared: sequential navigation from Space Odyssey advances to Anime 1
+    let next_all = app
+        .get_next_video_rec_for_navigation(Some("/media/movies/space_odyssey.mp4"), false)
+        .unwrap();
+    assert_eq!(next_all.name, "Anime 1");
+
+    // View renders cleanly with empty search input (no clear button)
+    {
+        let _view_cleared = app.view_file_picker();
+    }
+}
+
+#[test]
+fn test_search_modal_long_tags_list_wrapping_and_scrolling() {
+    let (mut app, _) = new_test_app();
+
+    // 1. Open search modal with no tags
+    let _ = app.update(Message::OpenSearchModal);
+    assert!(app.modals.search);
+    assert!(app.search.tags.is_empty());
+    {
+        let _view_empty = app.view_search_modal();
+    }
+
+    // 2. Add multiple tags matching the user's scenario
+    let _ = app.update(Message::SearchInputChanged(
+        "not dragon ball, twilight, boku, hotel, otome wa boku desu,".to_string(),
+    ));
+    assert_eq!(app.search.tags.len(), 5);
+    assert_eq!(app.search.tags[0], "not dragon ball");
+    assert_eq!(app.search.tags[4], "otome wa boku desu");
+    {
+        let _view_wrapped = app.view_search_modal();
+    }
+
+    // 3. Add more tags to trigger the scrollable view (> 3 rows)
+    let _ = app.update(Message::SearchInputChanged(
+        "tag6, tag7, tag8, tag9, tag10, tag11, tag12, tag13,".to_string(),
+    ));
+    assert_eq!(app.search.tags.len(), 13);
+    {
+        let _view_scrollable = app.view_search_modal();
+    }
+
+    // 4. Remove a tag and verify view renders cleanly
+    let _ = app.update(Message::RemoveSearchTag(0));
+    assert_eq!(app.search.tags.len(), 12);
+    {
+        let _view_after_remove = app.view_search_modal();
+    }
+}
+
+
+
 
