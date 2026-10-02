@@ -293,33 +293,17 @@ impl WazooApp {
                 let w = self.settings.window_bounds.width as f32;
                 let h = self.settings.window_bounds.height as f32;
                 if self.cube.enabled && !self.cube.cubes.is_empty() {
-                    let had_desktop = self.cube.desktop_overlay;
+                    let exit_task = self.exit_desktop_cube_overlay();
                     self.cube.clear();
                     self.cleanup_cube_players();
                     self.overlay.show_toast("🧊 3D Video Cube dismissed", 120);
-                    if had_desktop {
-                        for p in &mut self.players {
-                            if !p.is_cube && !p.was_paused_before_desktop {
-                                p.set_paused(false);
-                            }
-                        }
-                        if let Some(id) = self.window.id {
-                            let level = if self.settings.is_always_on_top {
-                                iced::window::Level::AlwaysOnTop
-                            } else {
-                                iced::window::Level::Normal
-                            };
-                            let level_task = iced::window::set_level(id, level);
-                            let passthrough_task =
-                                if self.settings.is_always_on_top && !self.window.is_focused {
-                                    iced::window::enable_mouse_passthrough(id)
-                                } else {
-                                    iced::window::disable_mouse_passthrough(id)
-                                };
-                            return Task::batch([level_task, passthrough_task]);
-                        }
-                    }
+                    return exit_task;
                 } else {
+                    if self.settings.playback_mode == PlaybackMode::Scroll {
+                        self.cleanup_scroll_mode();
+                        self.settings.playback_mode = PlaybackMode::Normal;
+                        self.restore_grid_players_to_target(self.settings.player_count);
+                    }
                     let cube_pid = self.spawn_cube_player();
                     self.cube.spawn_cube_with_player(w, h, 0, cube_pid);
                     if let Some(pid) = cube_pid {
@@ -336,13 +320,26 @@ impl WazooApp {
                 Task::none()
             }
             Message::ToggleDesktopCubeScreensaver => {
-                self.modals.menu = false;
+                self.modals.close_all();
+                self.drawers.close_all();
                 self.titlebar.show_dropdown_menu = false;
-                self.cube.desktop_overlay = !self.cube.desktop_overlay;
 
                 if self.cube.desktop_overlay {
+                    self.exit_desktop_cube_overlay()
+                } else {
+                    // Clean up scroll mode if active so Scroll Mode never runs invisibly behind Mode 9
+                    if self.settings.playback_mode == PlaybackMode::Scroll {
+                        self.cleanup_scroll_mode();
+                        self.settings.playback_mode = PlaybackMode::Normal;
+                        self.restore_grid_players_to_target(self.settings.player_count);
+                    }
+
+                    // Track whether the cube was already active before entering Mode 9
+                    let was_active = self.cube.enabled && !self.cube.cubes.is_empty();
+                    self.cube.spawned_for_desktop = !was_active;
+
                     // Ensure cube is enabled and at least one cube is bouncing
-                    if !self.cube.enabled || self.cube.cubes.is_empty() {
+                    if !was_active {
                         let w = self.settings.window_bounds.width as f32;
                         let h = self.settings.window_bounds.height as f32;
                         let cube_pid = self.spawn_cube_player();
@@ -354,6 +351,8 @@ impl WazooApp {
                             }
                         }
                     }
+
+                    self.cube.desktop_overlay = true;
 
                     // Suspend background decoding and audio for all invisible regular players (0% CPU waste)
                     for p in &mut self.players {
@@ -372,36 +371,10 @@ impl WazooApp {
                         let level_task =
                             iced::window::set_level(id, iced::window::Level::AlwaysOnTop);
                         let passthrough_task = iced::window::enable_mouse_passthrough(id);
-                        return Task::batch([level_task, passthrough_task]);
+                        Task::batch([level_task, passthrough_task])
+                    } else {
+                        Task::none()
                     }
-                    Task::none()
-                } else {
-                    // Resume regular grid players that were actively playing
-                    for p in &mut self.players {
-                        if !p.is_cube && !p.was_paused_before_desktop {
-                            p.set_paused(false);
-                        }
-                    }
-
-                    self.overlay
-                        .show_toast("🧊 Desktop Screensaver Mode disabled", 120);
-
-                    if let Some(id) = self.window.id {
-                        let level = if self.settings.is_always_on_top {
-                            iced::window::Level::AlwaysOnTop
-                        } else {
-                            iced::window::Level::Normal
-                        };
-                        let level_task = iced::window::set_level(id, level);
-                        let passthrough_task =
-                            if self.settings.is_always_on_top && !self.window.is_focused {
-                                iced::window::enable_mouse_passthrough(id)
-                            } else {
-                                iced::window::disable_mouse_passthrough(id)
-                            };
-                        return Task::batch([level_task, passthrough_task]);
-                    }
-                    Task::none()
                 }
             }
             Message::SpawnCube => {
@@ -437,65 +410,21 @@ impl WazooApp {
                     }
                 }
                 if self.cube.cubes.is_empty() {
-                    let had_desktop = self.cube.desktop_overlay;
-                    self.cube.enabled = false;
-                    self.cube.desktop_overlay = false;
+                    let exit_task = self.exit_desktop_cube_overlay();
+                    self.cube.clear();
                     self.cleanup_cube_players();
-                    if had_desktop {
-                        for p in &mut self.players {
-                            if !p.is_cube && !p.was_paused_before_desktop {
-                                p.set_paused(false);
-                            }
-                        }
-                        if let Some(id) = self.window.id {
-                            let level = if self.settings.is_always_on_top {
-                                iced::window::Level::AlwaysOnTop
-                            } else {
-                                iced::window::Level::Normal
-                            };
-                            let level_task = iced::window::set_level(id, level);
-                            let passthrough_task =
-                                if self.settings.is_always_on_top && !self.window.is_focused {
-                                    iced::window::enable_mouse_passthrough(id)
-                                } else {
-                                    iced::window::disable_mouse_passthrough(id)
-                                };
-                            return Task::batch([level_task, passthrough_task]);
-                        }
-                    }
+                    return exit_task;
                 }
                 Task::none()
             }
             Message::ClearCubes => {
                 self.modals.menu = false;
                 self.titlebar.show_dropdown_menu = false;
-                let had_desktop = self.cube.desktop_overlay;
+                let exit_task = self.exit_desktop_cube_overlay();
                 self.cube.clear();
                 self.cleanup_cube_players();
                 self.overlay.show_toast("🧊 All 3D Cubes dismissed", 120);
-                if had_desktop {
-                    for p in &mut self.players {
-                        if !p.is_cube && !p.was_paused_before_desktop {
-                            p.set_paused(false);
-                        }
-                    }
-                    if let Some(id) = self.window.id {
-                        let level = if self.settings.is_always_on_top {
-                            iced::window::Level::AlwaysOnTop
-                        } else {
-                            iced::window::Level::Normal
-                        };
-                        let level_task = iced::window::set_level(id, level);
-                        let passthrough_task =
-                            if self.settings.is_always_on_top && !self.window.is_focused {
-                                iced::window::enable_mouse_passthrough(id)
-                            } else {
-                                iced::window::disable_mouse_passthrough(id)
-                            };
-                        return Task::batch([level_task, passthrough_task]);
-                    }
-                }
-                Task::none()
+                exit_task
             }
             Message::SetCubeSpeed(speed) => {
                 let clamped = speed.clamp(0.2, 4.0);
@@ -603,6 +532,50 @@ impl WazooApp {
             let w = self.settings.window_bounds.width as f32;
             let h = self.settings.window_bounds.height as f32;
             self.cube.tick(w, h);
+        }
+    }
+
+    /// Disables Desktop Cube Screensaver Mode (Mode 9), restoring normal window level,
+    /// turning off click-passthrough, unpausing regular players, and dismissing the cube
+    /// if it was spawned exclusively for the desktop screensaver.
+    pub(crate) fn exit_desktop_cube_overlay(&mut self) -> Task<Message> {
+        if !self.cube.desktop_overlay {
+            return Task::none();
+        }
+        self.cube.desktop_overlay = false;
+
+        // If the cube was spawned solely for Mode 9, dismiss it completely
+        if self.cube.spawned_for_desktop {
+            self.cube.clear();
+            self.cleanup_cube_players();
+        }
+
+        // Resume regular grid players that were actively playing before entering Mode 9
+        for p in &mut self.players {
+            if !p.is_cube && !p.was_paused_before_desktop {
+                p.set_paused(false);
+            }
+        }
+
+        self.overlay
+            .show_toast("🧊 Desktop Screensaver Mode disabled", 120);
+
+        if let Some(id) = self.window.id {
+            let level = if self.settings.is_always_on_top {
+                iced::window::Level::AlwaysOnTop
+            } else {
+                iced::window::Level::Normal
+            };
+            let level_task = iced::window::set_level(id, level);
+            let passthrough_task =
+                if self.settings.is_always_on_top && !self.window.is_focused {
+                    iced::window::enable_mouse_passthrough(id)
+                } else {
+                    iced::window::disable_mouse_passthrough(id)
+                };
+            Task::batch([level_task, passthrough_task])
+        } else {
+            Task::none()
         }
     }
 }
