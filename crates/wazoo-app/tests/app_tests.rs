@@ -1350,6 +1350,53 @@ fn test_search_modal_long_tags_list_wrapping_and_scrolling() {
     }
 }
 
+#[test]
+fn test_playback_settings_sliders_debounced() {
+    let (mut app, _) = new_test_app();
+
+    // Open settings modal
+    let _ = app.update(Message::OpenSettingsModal);
+    let _ = app.update(Message::SetSettingsTab(SettingsTab::Playback));
+    assert!(app.modals.settings);
+    assert_eq!(app.modals.playback_settings_debounce_ticks, 0);
+
+    // 1. Moving sliders updates app.settings immediately for responsive UI
+    let _ = app.update(Message::SetGamma(35.0));
+    assert_eq!(app.settings.gamma, 35.0);
+    assert_eq!(
+        app.modals.playback_settings_debounce_ticks,
+        wazoo_app::app::PLAYBACK_SETTINGS_DEBOUNCE_TICKS
+    );
+
+    let _ = app.update(Message::SetSaturation(-20.0));
+    assert_eq!(app.settings.saturation, -20.0);
+    assert_eq!(
+        app.modals.playback_settings_debounce_ticks,
+        wazoo_app::app::PLAYBACK_SETTINGS_DEBOUNCE_TICKS
+    );
+
+    // 2. Debounce ticks count down with VideoFrameTick
+    let _ = app.update(Message::VideoFrameTick);
+    assert_eq!(
+        app.modals.playback_settings_debounce_ticks,
+        wazoo_app::app::PLAYBACK_SETTINGS_DEBOUNCE_TICKS - 1
+    );
+
+    // 3. Advancing all remaining ticks flushes the debounce
+    while app.modals.playback_settings_debounce_ticks > 0 {
+        let _ = app.update(Message::VideoFrameTick);
+    }
+    assert_eq!(app.modals.playback_settings_debounce_ticks, 0);
+
+    // 4. Closing the settings modal immediately flushes any pending debounced settings
+    let _ = app.update(Message::SetBrightness(15.0));
+    assert!(app.modals.playback_settings_debounce_ticks > 0);
+    let _ = app.update(Message::CloseSettingsModal);
+    assert_eq!(app.modals.playback_settings_debounce_ticks, 0);
+    assert_eq!(app.settings.brightness, 15.0);
+}
+
+
 
 
 

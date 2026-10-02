@@ -45,6 +45,7 @@ pub struct VideoHandle {
     contrast: f64,
     brightness: f64,
     saturation: f64,
+    speed: f64,
     pub crt_enabled: bool,
 }
 
@@ -375,6 +376,7 @@ impl VideoHandle {
                 contrast: config.contrast,
                 brightness: config.brightness,
                 saturation: config.saturation,
+                speed: config.playback_speed,
                 crt_enabled: config.crt_enabled,
             };
 
@@ -864,23 +866,58 @@ impl VideoHandle {
         }
     }
 
+    pub fn set_equalizer(&mut self, gamma: f64, contrast: f64, brightness: f64, saturation: f64) {
+        let g = gamma.clamp(-100.0, 100.0);
+        let c = contrast.clamp(-100.0, 100.0);
+        let b = brightness.clamp(-100.0, 100.0);
+        let s = saturation.clamp(-100.0, 100.0);
+        if (self.gamma - g).abs() < 0.001
+            && (self.contrast - c).abs() < 0.001
+            && (self.brightness - b).abs() < 0.001
+            && (self.saturation - s).abs() < 0.001
+        {
+            return;
+        }
+        self.gamma = g;
+        self.contrast = c;
+        self.brightness = b;
+        self.saturation = s;
+        self.update_equalizer();
+    }
+
     pub fn set_gamma(&mut self, gamma: f64) {
-        self.gamma = gamma.clamp(-100.0, 100.0);
+        let clamped = gamma.clamp(-100.0, 100.0);
+        if (self.gamma - clamped).abs() < 0.001 {
+            return;
+        }
+        self.gamma = clamped;
         self.update_equalizer();
     }
 
     pub fn set_contrast(&mut self, contrast: f64) {
-        self.contrast = contrast.clamp(-100.0, 100.0);
+        let clamped = contrast.clamp(-100.0, 100.0);
+        if (self.contrast - clamped).abs() < 0.001 {
+            return;
+        }
+        self.contrast = clamped;
         self.update_equalizer();
     }
 
     pub fn set_brightness(&mut self, brightness: f64) {
-        self.brightness = brightness.clamp(-100.0, 100.0);
+        let clamped = brightness.clamp(-100.0, 100.0);
+        if (self.brightness - clamped).abs() < 0.001 {
+            return;
+        }
+        self.brightness = clamped;
         self.update_equalizer();
     }
 
     pub fn set_saturation(&mut self, saturation: f64) {
-        self.saturation = saturation.clamp(-100.0, 100.0);
+        let clamped = saturation.clamp(-100.0, 100.0);
+        if (self.saturation - clamped).abs() < 0.001 {
+            return;
+        }
+        self.saturation = clamped;
         self.update_equalizer();
     }
 
@@ -902,6 +939,10 @@ impl VideoHandle {
 
     pub fn set_speed(&mut self, speed: f64) {
         let clamped = speed.clamp(0.25, 4.0);
+        if (self.speed - clamped).abs() < 0.001 {
+            return;
+        }
+        self.speed = clamped;
         unsafe {
             let prop = CString::new("speed").unwrap();
             mpv_ffi::mpv_set_property(
@@ -911,6 +952,10 @@ impl VideoHandle {
                 &clamped as *const _ as *mut _,
             );
         }
+    }
+
+    pub fn speed(&self) -> f64 {
+        self.speed
     }
 
     pub fn has_decoded_frame(&self) -> bool {

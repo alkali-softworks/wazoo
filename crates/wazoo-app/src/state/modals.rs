@@ -14,6 +14,7 @@ pub struct ModalState {
     pub help: bool,
     pub menu: bool,
     pub bookmarks: bool,
+    pub playback_settings_debounce_ticks: usize,
 }
 
 impl ModalState {
