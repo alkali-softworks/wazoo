@@ -28,6 +28,49 @@ use wazoo_scanner::ScanStage;
 
 impl WazooApp {
     pub fn view(&self) -> Element<'_, Message> {
+        // Desktop Cube Screensaver Mode: hide all normal chrome and UI,
+        // displaying only the 3D bouncing video cube directly over the transparent desktop
+        if self.cube.desktop_overlay {
+            let mut overlay_stack: Vec<Element<'_, Message>> = vec![
+                container(Space::new())
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .into(),
+            ];
+            if self.cube.enabled && !self.cube.cubes.is_empty() {
+                overlay_stack.push(self.view_cube_overlay());
+            }
+            if let Some(ref toast) = self.overlay.toast_message {
+                let toast_widget = container(
+                    row![
+                        text(toast).size(16).color(iced::Color::WHITE),
+                        button(text("✕").size(12))
+                            .style(theme::window_control_button_style)
+                            .on_press(Message::DismissToast)
+                            .padding(2),
+                    ]
+                    .spacing(12)
+                    .align_y(Alignment::Center),
+                )
+                .padding([6, 18])
+                .style(theme::notice_pill_style);
+
+                let toast_layer = container(
+                    column![Space::new().height(Length::Fixed(35.0)), toast_widget,]
+                        .align_x(Alignment::Center),
+                )
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center_x(Length::Fill);
+
+                overlay_stack.push(Element::from(toast_layer));
+            }
+            return Stack::with_children(overlay_stack)
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .into();
+        }
+
         let main_content: Element<'_, Message> = if self.available_videos.is_empty() {
             let total_library_videos = self.db.get_video_count().unwrap_or(0);
             let is_query_active = !self.search.active_query.trim().is_empty()

@@ -104,7 +104,11 @@
     "cube_size": "Scala del cubo",
     "cube_size_desc": "Dimensioni della geometria del cubo 3D",
     "cube_spawn": "Genera un altro cubo",
-    "cube_dismiss_all": "Rimuovi tutti i cubi"
+    "cube_dismiss_all": "Rimuovi tutti i cubi",
+    "cube_desktop_enable": "Attiva salvaschermo desktop (click passante)",
+    "cube_desktop_disable": "Disattiva salvaschermo desktop",
+    "cube_desktop_shortcut_hint": "Scorciatoia: premi 9 ovunque per attivare/disattivare",
+    "cube_badge_desktop_on": "DESKTOP"
   },
   "search": {
     "folder": "Cartella:",

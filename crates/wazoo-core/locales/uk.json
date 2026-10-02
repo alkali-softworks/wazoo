@@ -104,7 +104,11 @@
     "cube_size": "Розмір куба",
     "cube_size_desc": "Розміри геометрії плавучого 3D-куба",
     "cube_spawn": "Створити ще один куб",
-    "cube_dismiss_all": "Прибрати всі куби"
+    "cube_dismiss_all": "Прибрати всі куби",
+    "cube_desktop_enable": "Увімкнути заставку робочого столу (наскрізні кліки)",
+    "cube_desktop_disable": "Вимкнути заставку робочого столу",
+    "cube_desktop_shortcut_hint": "Гаряча клавіша: натисніть 9 для швидкого перемикання",
+    "cube_badge_desktop_on": "РОБОЧИЙ СТІЛ"
   },
   "search": {
     "folder": "Папка:",

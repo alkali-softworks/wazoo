@@ -256,6 +256,16 @@ impl WazooApp {
                 padding,
             ),
             Self::menu_item(
+                if self.cube.desktop_overlay {
+                    "Exit Desktop Screensaver".to_string()
+                } else {
+                    "Desktop Screensaver (Click-thru)".to_string()
+                },
+                Some("9".to_string()),
+                Message::ToggleDesktopCubeScreensaver,
+                padding,
+            ),
+            Self::menu_item(
                 self.t("common.settings"),
                 Some(kb.menu_hint(&kb.open_settings)),
                 Message::OpenSettingsModal,

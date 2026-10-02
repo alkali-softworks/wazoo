@@ -515,13 +515,7 @@ impl WazooApp {
                 self.modals.menu = false;
                 if self.settings.playback_mode == PlaybackMode::Scroll {
                     self.cleanup_scroll_mode();
-                    let target_count = self.settings.player_count.clamp(1, 12);
-                    while self.players.len() > target_count {
-                        self.players.pop();
-                    }
-                    while self.players.len() < target_count {
-                        self.add_player_internal();
-                    }
+                    self.restore_grid_players_to_target(self.settings.player_count);
                 }
                 self.settings.layout = match self.settings.layout {
                     LayoutMode::Grid => LayoutMode::Row,
@@ -545,30 +539,7 @@ impl WazooApp {
                 }
 
                 self.settings.player_count = target;
-
-                // Adjust grid player count without affecting any active 3D cube players
-                let grid_count = self.players.iter().filter(|p| !p.is_cube).count();
-                if target < grid_count {
-                    let mut remove_needed = grid_count - target;
-                    let mut i = self.players.len();
-                    while i > 0 && remove_needed > 0 {
-                        i -= 1;
-                        if !self.players[i].is_cube {
-                            let mut p = self.players.remove(i);
-                            p.stop();
-                            remove_needed -= 1;
-                        }
-                    }
-                    if self.focused_idx >= self.players.len() && !self.players.is_empty() {
-                        self.focused_idx = self.players.len() - 1;
-                    }
-                } else if target > grid_count {
-                    while self.players.iter().filter(|p| !p.is_cube).count() < target {
-                        if self.add_player_internal().is_none() {
-                            break;
-                        }
-                    }
-                }
+                self.restore_grid_players_to_target(target);
 
                 if self.settings.playback_mode == PlaybackMode::Flip {
                     self.stagger_flip_countdowns();
@@ -596,23 +567,46 @@ impl WazooApp {
                     let window_h = self.settings.window_bounds.height as f32;
                     self.scroll_engine.set_window_size(window_w, window_h);
 
-                    if self.players.len() > 1 {
-                        let keep_idx = if self.focused_idx < self.players.len() {
+                    let grid_indices: Vec<usize> = self
+                        .players
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(i, p)| if !p.is_cube { Some(i) } else { None })
+                        .collect();
+
+                    if grid_indices.is_empty() {
+                        self.add_player_internal();
+                    } else {
+                        let keep_grid_idx = if !self.players.is_empty()
+                            && self.focused_idx < self.players.len()
+                            && !self.players[self.focused_idx].is_cube
+                        {
                             self.focused_idx
                         } else {
-                            0
+                            grid_indices[0]
                         };
-                        let focused_player = self.players.remove(keep_idx);
-                        self.players.clear();
-                        self.players.push(focused_player);
-                        self.focused_idx = 0;
-                    } else if self.players.is_empty() {
-                        self.add_player_internal();
+                        let keep_pid = self.players[keep_grid_idx].id;
+
+                        let mut i = self.players.len();
+                        while i > 0 {
+                            i -= 1;
+                            if !self.players[i].is_cube && self.players[i].id != keep_pid {
+                                let mut p = self.players.remove(i);
+                                p.stop();
+                            }
+                        }
+
+                        if let Some(pos) = self.players.player_index(keep_pid) {
+                            if self.focused_player().map(|p| !p.is_cube).unwrap_or(true) {
+                                self.focused_idx = pos;
+                            }
+                        }
                     }
 
                     let items_with_heights: Vec<(PlayerId, f32)> = self
                         .players
                         .iter()
+                        .filter(|p| !p.is_cube)
                         .map(|p| (p.id, self.calculate_player_scroll_height(p)))
                         .collect();
                     self.scroll_engine
@@ -632,9 +626,11 @@ impl WazooApp {
                     }
 
                     for p in &mut self.players {
-                        p.set_muted(self.settings.scroll_mode_muted);
-                        let vol = self.scroll_engine.calculate_player_volume(p.id);
-                        p.set_volume(vol);
+                        if !p.is_cube {
+                            p.set_muted(self.settings.scroll_mode_muted);
+                            let vol = self.scroll_engine.calculate_player_volume(p.id);
+                            p.set_volume(vol);
+                        }
                     }
 
                     self.overlay.toast_message = Some(self.t("wazoo.scroll_mode_enabled"));
@@ -644,13 +640,7 @@ impl WazooApp {
                     return self.trigger_preload_task();
                 } else {
                     self.cleanup_scroll_mode();
-                    let target_count = self.settings.player_count.clamp(1, 12);
-                    while self.players.len() > target_count {
-                        self.players.pop();
-                    }
-                    while self.players.len() < target_count {
-                        self.add_player_internal();
-                    }
+                    self.restore_grid_players_to_target(self.settings.player_count);
                     self.overlay.toast_message = Some(self.t("wazoo.scroll_mode_disabled"));
                 }
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
@@ -660,13 +650,7 @@ impl WazooApp {
             Message::ToggleFlipMode => {
                 if self.settings.playback_mode == PlaybackMode::Scroll {
                     self.cleanup_scroll_mode();
-                    let target_count = self.settings.player_count.clamp(1, 12);
-                    while self.players.len() > target_count {
-                        self.players.pop();
-                    }
-                    while self.players.len() < target_count {
-                        self.add_player_internal();
-                    }
+                    self.restore_grid_players_to_target(self.settings.player_count);
                 }
                 self.settings.playback_mode = match self.settings.playback_mode {
                     PlaybackMode::Flip => PlaybackMode::Normal,
@@ -758,15 +742,9 @@ impl WazooApp {
                 }
                 if self.settings.playback_mode == PlaybackMode::Scroll {
                     self.cleanup_scroll_mode();
-                    let target_count = self.settings.player_count.clamp(1, 12);
-                    while self.players.len() > target_count {
-                        self.players.pop();
-                    }
-                    while self.players.len() < target_count {
-                        self.add_player_internal();
-                    }
+                    self.restore_grid_players_to_target(self.settings.player_count);
                 }
-                if self.players.len() <= 1 {
+                if self.players.iter().filter(|p| !p.is_cube).count() <= 1 {
                     return Task::none();
                 }
                 if let Some(id) = self.focused_player_id() {
@@ -777,11 +755,12 @@ impl WazooApp {
                     if self.open_audio_menu_id == Some(id) {
                         self.open_audio_menu_id = None;
                     }
-                    self.settings.player_count = self.players.len();
+                    let grid_count = self.players.iter().filter(|p| !p.is_cube).count();
+                    self.settings.player_count = grid_count;
                     if self.focused_idx >= self.players.len() && !self.players.is_empty() {
                         self.focused_idx = self.players.len() - 1;
                     }
-                    let count_str = self.players.len().to_string();
+                    let count_str = grid_count.to_string();
                     self.overlay.toast_message =
                         Some(self.t_with("player.players_count", &[("count", &count_str)]));
                     self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
@@ -1047,6 +1026,33 @@ impl WazooApp {
                 Task::none()
             }
             _ => Task::none(),
+        }
+    }
+
+    /// Restores regular (non-cube) player count to the target count without affecting active 3D cube players.
+    pub(crate) fn restore_grid_players_to_target(&mut self, target: usize) {
+        let target_count = target.clamp(1, 12);
+        let grid_count = self.players.iter().filter(|p| !p.is_cube).count();
+        if grid_count > target_count {
+            let mut remove_needed = grid_count - target_count;
+            let mut i = self.players.len();
+            while i > 0 && remove_needed > 0 {
+                i -= 1;
+                if !self.players[i].is_cube {
+                    let mut p = self.players.remove(i);
+                    p.stop();
+                    remove_needed -= 1;
+                }
+            }
+        } else if grid_count < target_count {
+            while self.players.iter().filter(|p| !p.is_cube).count() < target_count {
+                if self.add_player_internal().is_none() {
+                    break;
+                }
+            }
+        }
+        if self.focused_idx >= self.players.len() && !self.players.is_empty() {
+            self.focused_idx = self.players.len() - 1;
         }
     }
 }

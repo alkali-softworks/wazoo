@@ -104,7 +104,11 @@
     "cube_size": "Kích thước khối",
     "cube_size_desc": "Kích thước hình học khối 3D trôi nổi",
     "cube_spawn": "Tạo thêm một khối",
-    "cube_dismiss_all": "Đóng tất cả các khối"
+    "cube_dismiss_all": "Đóng tất cả các khối",
+    "cube_desktop_enable": "Bật bảo vệ màn hình trên màn hình nền (nhấp xuyên qua)",
+    "cube_desktop_disable": "Tắt bảo vệ màn hình trên màn hình nền",
+    "cube_desktop_shortcut_hint": "Phím tắt: Nhấn 9 ở bất kỳ đâu để bật/tắt ngay lập tức",
+    "cube_badge_desktop_on": "MÀN HÌNH NỀN"
   },
   "search": {
     "folder": "Thư mục:",

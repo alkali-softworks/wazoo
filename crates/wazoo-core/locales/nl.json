@@ -104,7 +104,11 @@
     "cube_size": "Kubusschaal",
     "cube_size_desc": "Afmetingen van de 3D-kubusgeometrie",
     "cube_spawn": "Nog een kubus maken",
-    "cube_dismiss_all": "Alle kubussen sluiten"
+    "cube_dismiss_all": "Alle kubussen sluiten",
+    "cube_desktop_enable": "Desktop-schermbeveiliging inschakelen (klik-doorslag)",
+    "cube_desktop_disable": "Desktop-schermbeveiliging uitschakelen",
+    "cube_desktop_shortcut_hint": "Sneltoets: druk overal op 9 om direct te schakelen",
+    "cube_badge_desktop_on": "DESKTOP"
   },
   "search": {
     "folder": "Map:",

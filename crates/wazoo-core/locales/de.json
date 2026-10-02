@@ -104,7 +104,11 @@
     "cube_size": "Würfelgröße",
     "cube_size_desc": "Abmessungen der 3D-Würfelgeometrie",
     "cube_spawn": "Einen weiteren Würfel erstellen",
-    "cube_dismiss_all": "Alle Würfel verwerfen"
+    "cube_dismiss_all": "Alle Würfel verwerfen",
+    "cube_desktop_enable": "Desktop-Bildschirmschoner aktivieren (Klick-Durchgriff)",
+    "cube_desktop_disable": "Desktop-Bildschirmschoner deaktivieren",
+    "cube_desktop_shortcut_hint": "Tastenkürzel: Drücken Sie 9, um sofort umzuschalten",
+    "cube_badge_desktop_on": "DESKTOP"
   },
   "search": {
     "folder": "Ordner:",

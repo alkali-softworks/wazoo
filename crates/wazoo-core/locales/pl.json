@@ -104,7 +104,11 @@
     "cube_size": "Rozmiar kostki",
     "cube_size_desc": "Wymiary geometrii pływającej kostki 3D",
     "cube_spawn": "Utwórz kolejną kostkę",
-    "cube_dismiss_all": "Zamknij wszystkie kostki"
+    "cube_dismiss_all": "Zamknij wszystkie kostki",
+    "cube_desktop_enable": "Włącz wygaszacz pulpitu (przekazywanie kliknięć)",
+    "cube_desktop_disable": "Wyłącz wygaszacz pulpitu",
+    "cube_desktop_shortcut_hint": "Skrót: naciśnij 9 w dowolnym miejscu, aby przełączyć",
+    "cube_badge_desktop_on": "PULPIT"
   },
   "search": {
     "folder": "Folder:",

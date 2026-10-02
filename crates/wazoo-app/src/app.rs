@@ -1276,15 +1276,28 @@ impl WazooApp {
         self.is_preloading = false;
         if self.settings.scroll_mode_muted {
             for p in &mut self.players {
-                p.set_muted(true);
+                if !p.is_cube {
+                    p.set_muted(true);
+                }
             }
         } else {
+            let has_focused_grid = self
+                .players
+                .get(self.focused_idx)
+                .map(|p| !p.is_cube)
+                .unwrap_or(false);
+            let mut unmuted_one = false;
             for (i, p) in self.players.iter_mut().enumerate() {
-                if i == self.focused_idx {
-                    p.set_muted(false);
-                    p.set_volume(1.0);
-                } else {
-                    p.set_muted(true);
+                if !p.is_cube {
+                    if (has_focused_grid && i == self.focused_idx)
+                        || (!has_focused_grid && !unmuted_one)
+                    {
+                        p.set_muted(false);
+                        p.set_volume(1.0);
+                        unmuted_one = true;
+                    } else {
+                        p.set_muted(true);
+                    }
                 }
             }
         }

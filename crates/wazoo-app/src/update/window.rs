@@ -44,7 +44,11 @@ impl WazooApp {
                 self.window.is_focused = true;
                 self.window.unfocused_frame_ticks = 0;
                 self.window.is_alt_pressed = false;
-                if self.settings.is_always_on_top && self.window.ghost_passthrough_active {
+                if self.cube.desktop_overlay {
+                    if let Some(id) = self.window.id {
+                        return iced::window::enable_mouse_passthrough(id);
+                    }
+                } else if self.settings.is_always_on_top && self.window.ghost_passthrough_active {
                     self.window.ghost_passthrough_active = false;
                     self.titlebar.show = true;
                     self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
@@ -72,7 +76,11 @@ impl WazooApp {
                     self.window.bounds_dirty = false;
                     let _ = self.config_mgr.save_settings(&self.settings);
                 }
-                if self.settings.is_always_on_top
+                if self.cube.desktop_overlay {
+                    if let Some(id) = self.window.id {
+                        return iced::window::enable_mouse_passthrough(id);
+                    }
+                } else if self.settings.is_always_on_top
                     && !self.window.ghost_passthrough_active
                     && !self.is_modal_or_menu_open()
                 {
@@ -361,6 +369,9 @@ impl WazooApp {
 
     /// Throttles frame rendering to ~30 FPS (every 2nd tick) when the window is unfocused or obscured.
     pub(crate) fn should_throttle_unfocused_frame(&mut self) -> bool {
+        if self.cube.desktop_overlay {
+            return false;
+        }
         if !self.window.is_focused {
             self.window.unfocused_frame_ticks = self.window.unfocused_frame_ticks.wrapping_add(1);
             !self.window.unfocused_frame_ticks.is_multiple_of(2)

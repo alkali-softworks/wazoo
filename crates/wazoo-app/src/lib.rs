@@ -70,10 +70,10 @@ pub fn run() -> iced::Result {
     .subscription(WazooApp::subscription)
     .theme(WazooApp::theme)
     .style(|app: &WazooApp, _theme: &Theme| iced::theme::Style {
-        background_color: if app.available_videos.is_empty() {
-            Color::from_rgba(0.05, 0.05, 0.05, app.current_opacity())
-        } else {
+        background_color: if app.cube.desktop_overlay || !app.available_videos.is_empty() {
             Color::TRANSPARENT
+        } else {
+            Color::from_rgba(0.05, 0.05, 0.05, app.current_opacity())
         },
         text_color: Color::WHITE,
     })

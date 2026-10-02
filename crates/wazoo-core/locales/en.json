@@ -104,7 +104,11 @@
     "cube_size": "Cube Scale",
     "cube_size_desc": "Dimensions of the floating 3D cube geometry",
     "cube_spawn": "Spawn Another Cube",
-    "cube_dismiss_all": "Dismiss All Cubes"
+    "cube_dismiss_all": "Dismiss All Cubes",
+    "cube_desktop_enable": "Enable Desktop Screensaver (Click-Passthrough)",
+    "cube_desktop_disable": "Disable Desktop Screensaver",
+    "cube_desktop_shortcut_hint": "Shortcut: Press 9 anywhere to toggle instantly",
+    "cube_badge_desktop_on": "DESKTOP"
   },
   "search": {
     "folder": "Folder:",

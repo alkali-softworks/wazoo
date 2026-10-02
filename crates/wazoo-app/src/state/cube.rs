@@ -57,6 +57,7 @@ impl BouncingCube {
 #[derive(Debug, Clone)]
 pub struct CubeState {
     pub enabled: bool,
+    pub desktop_overlay: bool,
     pub cubes: Vec<BouncingCube>,
     pub next_id: u64,
     pub speed_multiplier: f32,
@@ -67,6 +68,7 @@ impl Default for CubeState {
     fn default() -> Self {
         Self {
             enabled: false,
+            desktop_overlay: false,
             cubes: Vec::new(),
             next_id: 1,
             speed_multiplier: 1.0,
@@ -144,12 +146,14 @@ impl CubeState {
         self.cubes.pop();
         if self.cubes.is_empty() {
             self.enabled = false;
+            self.desktop_overlay = false;
         }
     }
 
     pub fn clear(&mut self) {
         self.cubes.clear();
         self.enabled = false;
+        self.desktop_overlay = false;
     }
 
     pub fn toggle(&mut self, window_w: f32, window_h: f32, player_idx: usize) -> bool {

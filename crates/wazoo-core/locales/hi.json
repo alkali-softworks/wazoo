@@ -104,7 +104,11 @@
     "cube_size": "क्यूब का आकार",
     "cube_size_desc": "फ्लोटिंग 3D क्यूब ज्यामिति के आयाम",
     "cube_spawn": "एक और क्यूब उत्पन्न करें",
-    "cube_dismiss_all": "सभी क्यूब्स हटाएं"
+    "cube_dismiss_all": "सभी क्यूब्स हटाएं",
+    "cube_desktop_enable": "डेस्कटॉप स्क्रीनसेवर सक्षम करें (क्लिक पास-थ्रू)",
+    "cube_desktop_disable": "डेस्कटॉप स्क्रीनसेवर अक्षम करें",
+    "cube_desktop_shortcut_hint": "शॉर्टकट: तुरंत टॉगल करने के लिए कहीं भी 9 दबाएं",
+    "cube_badge_desktop_on": "डेस्कटॉप"
   },
   "search": {
     "folder": "फ़ोल्डर:",

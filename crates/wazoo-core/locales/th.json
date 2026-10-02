@@ -104,7 +104,11 @@
     "cube_size": "ขนาดลูกบาศก์",
     "cube_size_desc": "ขนาดของรูปทรงลูกบาศก์ 3D ลอยตัว",
     "cube_spawn": "สร้างลูกบาศก์เพิ่ม",
-    "cube_dismiss_all": "ปิดลูกบาศก์ทั้งหมด"
+    "cube_dismiss_all": "ปิดลูกบาศก์ทั้งหมด",
+    "cube_desktop_enable": "เปิดใช้งานสกรีนเซฟเวอร์เดสก์ท็อป (คลิกทะลุ)",
+    "cube_desktop_disable": "ปิดใช้งานสกรีนเซฟเวอร์เดสก์ท็อป",
+    "cube_desktop_shortcut_hint": "ทางลัด: กด 9 ได้ทุกที่เพื่อสลับทันที",
+    "cube_badge_desktop_on": "เดสก์ท็อป"
   },
   "search": {
     "folder": "โฟลเดอร์:",

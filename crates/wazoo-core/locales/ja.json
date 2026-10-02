@@ -104,7 +104,11 @@
     "cube_size": "キューブのサイズ",
     "cube_size_desc": "浮遊する3Dキューブジオメトリの寸法",
     "cube_spawn": "キューブを追加生成",
-    "cube_dismiss_all": "すべてのキューブを閉じる"
+    "cube_dismiss_all": "すべてのキューブを閉じる",
+    "cube_desktop_enable": "デスクトップスクリーンセーバーを有効化（クリック透過）",
+    "cube_desktop_disable": "デスクトップスクリーンセーバーを無効化",
+    "cube_desktop_shortcut_hint": "ショートカット: 9キーを押していつでも切り替え",
+    "cube_badge_desktop_on": "デスクトップ"
   },
   "search": {
     "folder": "フォルダー:",
