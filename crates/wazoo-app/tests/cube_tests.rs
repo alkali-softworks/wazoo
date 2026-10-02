@@ -621,4 +621,40 @@ fn test_mode_9_exits_on_modal_or_drawer_open() {
     assert!(app.drawers.show_file_picker);
 }
 
+#[test]
+fn test_mode_9_toast_auto_hides_in_few_seconds() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    // Toggle Desktop Screensaver (Mode 9)
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+
+    // Toast should be visible with a short duration (3 seconds)
+    assert!(app.overlay.toast_message.is_some());
+    let remaining = app.overlay.toast_time_remaining;
+    assert!(
+        remaining <= 3 && remaining > 0,
+        "Toast duration should be 3 seconds or less, got {}",
+        remaining
+    );
+
+    // After 1 second tick (WatchdogTick)
+    let _ = app.update(wazoo_app::message::Message::WatchdogTick);
+    assert_eq!(app.overlay.toast_time_remaining, remaining - 1);
+    assert!(app.overlay.toast_message.is_some());
+
+    // Tick remaining seconds until expiry
+    for _ in 0..remaining - 1 {
+        let _ = app.update(wazoo_app::message::Message::WatchdogTick);
+    }
+
+    // Now the toast must have automatically hidden
+    assert_eq!(app.overlay.toast_time_remaining, 0);
+    assert!(
+        app.overlay.toast_message.is_none(),
+        "Toast message must be None after watchdog timer ticks expire"
+    );
+}
+
+
 
