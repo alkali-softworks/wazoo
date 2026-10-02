@@ -73,6 +73,8 @@ impl ConfigManager {
                     settings.brightness = settings.brightness.clamp(-100.0, 100.0);
                     settings.saturation = settings.saturation.clamp(-100.0, 100.0);
                     settings.playback_speed = settings.playback_speed.clamp(0.25, 4.0);
+                    settings.cube_speed = settings.cube_speed.clamp(0.2, 4.0);
+                    settings.cube_size = settings.cube_size.clamp(0.4, 3.0);
                     settings.keybinds.reconcile_with_defaults();
                     settings
                 } else {

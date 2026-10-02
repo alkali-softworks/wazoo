@@ -82,6 +82,11 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - Toggle an analog CRT monitor simulation complete with scanlines, subtle barrel curvature, vignette, and phosphor bloom (<kbd>7</kbd> or via Playback Settings).
 - **GPU Accelerated**: Implemented directly in the WGPU shader pipeline with zero decoding overhead or frame latency.
 
+### 🧊 3D Bouncing Video Cube (Screensaver Mode)
+- Spawn 3D cubes that rotate on multiple axes and bounce around the screen (<kbd>8</kbd> or via 3D Cube Settings).
+- **Video on All 6 Sides**: Maps the live playing video directly onto every face of the cube in real-time.
+- **Customizable**: Adjust bounce speed, cube scale, and spawn multiple cubes with independent video streams.
+
 ### 🌐 Internationalization & Localization
 - **23 Supported Languages**: Complete UI translations for English (`en`), Dutch (`nl`), Spanish (`es`), French (`fr`), Italian (`it`), Portuguese (`pt`), German (`de`), Czech (`cs`), Polish (`pl`), Ukrainian (`uk`), Russian (`ru`), Swedish (`sv`), Turkish (`tr`), Arabic (`ar`), Hebrew (`he`), Persian (`fa`), Hindi (`hi`), Bengali (`bn`), Thai (`th`), Vietnamese (`vi`), Simplified Chinese (`zh`), Japanese (`ja`), and Korean (`ko`).
 

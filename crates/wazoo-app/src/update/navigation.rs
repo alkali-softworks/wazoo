@@ -91,8 +91,15 @@ impl WazooApp {
             if let Ok(new_handle) =
                 self.create_video_handle_with_start(id, &target.path, &name, target.position_secs)
             {
+                let path_clone = target.path.clone();
                 self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
-                self.push_player_nav_entry(id, target.path.clone(), target.position_secs);
+                self.push_player_nav_entry(id, path_clone.clone(), target.position_secs);
+                if let Some(p) = self.players.player(id) {
+                    if p.is_cube {
+                        let (primary, _) = format::format_title_lines(&path_clone);
+                        self.overlay.show_toast(format!("🧊 3D Cube: {}", primary), 160);
+                    }
+                }
                 loaded = true;
             }
         }
@@ -118,13 +125,20 @@ impl WazooApp {
                         &video_rec.name,
                         start_time,
                     ) {
+                        let path_clone = video_rec.path.clone();
                         self.apply_playback_state_and_replace(
                             id,
                             new_handle,
                             prev_muted,
                             prev_volume,
                         );
-                        self.push_player_nav_entry(id, video_rec.path.clone(), None);
+                        self.push_player_nav_entry(id, path_clone.clone(), None);
+                        if let Some(p) = self.players.player(id) {
+                            if p.is_cube {
+                                let (primary, _) = format::format_title_lines(&path_clone);
+                                self.overlay.show_toast(format!("🧊 3D Cube: {}", primary), 160);
+                            }
+                        }
                         break;
                     }
                     candidate_curr_path = Some(video_rec.path);
@@ -190,8 +204,15 @@ impl WazooApp {
             if let Ok(new_handle) =
                 self.create_video_handle_with_start(id, &target.path, &name, target.position_secs)
             {
+                let path_clone = target.path.clone();
                 self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
-                self.record_play_history(&target.path);
+                self.record_play_history(&path_clone);
+                if let Some(p) = self.players.player(id) {
+                    if p.is_cube {
+                        let (primary, _) = format::format_title_lines(&path_clone);
+                        self.overlay.show_toast(format!("🧊 3D Cube: {}", primary), 160);
+                    }
+                }
                 loaded = true;
             }
         }
@@ -207,13 +228,20 @@ impl WazooApp {
                     if let Ok(new_handle) =
                         self.create_video_handle(id, &video_rec.path, &video_rec.name)
                     {
+                        let path_clone = video_rec.path.clone();
                         self.apply_playback_state_and_replace(
                             id,
                             new_handle,
                             prev_muted,
                             prev_volume,
                         );
-                        self.push_player_nav_entry(id, video_rec.path.clone(), None);
+                        self.push_player_nav_entry(id, path_clone.clone(), None);
+                        if let Some(p) = self.players.player(id) {
+                            if p.is_cube {
+                                let (primary, _) = format::format_title_lines(&path_clone);
+                                self.overlay.show_toast(format!("🧊 3D Cube: {}", primary), 160);
+                            }
+                        }
                         break;
                     }
                     candidate_curr_path = Some(video_rec.path);

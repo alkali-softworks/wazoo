@@ -246,6 +246,16 @@ impl WazooApp {
                 padding,
             ),
             Self::menu_item(
+                if self.cube.enabled && !self.cube.cubes.is_empty() {
+                    "Dismiss 3D Cube".to_string()
+                } else {
+                    "Spawn 3D Cube".to_string()
+                },
+                Some("8".to_string()),
+                Message::ToggleCubeScreensaver,
+                padding,
+            ),
+            Self::menu_item(
                 self.t("common.settings"),
                 Some(kb.menu_hint(&kb.open_settings)),
                 Message::OpenSettingsModal,

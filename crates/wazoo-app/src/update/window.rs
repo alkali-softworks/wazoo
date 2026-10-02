@@ -262,6 +262,23 @@ impl WazooApp {
                     self.window.bounds_dirty = false;
                     let _ = self.config_mgr.save_settings(&self.settings);
                 }
+
+                // If user clicked directly on any active 3D cube, focus its independent player
+                if !was_dragging && !was_resizing && !self.is_any_modal_open() && self.cube.enabled {
+                    let click_pos = self.window.cursor_position;
+                    let szm = self.cube.size_multiplier.clamp(0.4, 3.0);
+                    for cube in &self.cube.cubes {
+                        let radius = cube.size * szm * 1.15;
+                        let dx = click_pos.x - cube.x;
+                        let dy = click_pos.y - cube.y;
+                        if dx * dx + dy * dy <= radius * radius {
+                            if let Some(pid) = cube.player_id {
+                                return self.update(Message::PlayerClicked(pid));
+                            }
+                        }
+                    }
+                }
+
                 Task::none()
             }
             Message::RightClickPressed(win_id) => {

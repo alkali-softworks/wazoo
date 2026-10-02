@@ -4,6 +4,7 @@
  * Application State Models
  */
 
+pub mod cube;
 pub mod drawers;
 pub mod flip;
 pub mod modals;
@@ -14,6 +15,7 @@ pub mod search;
 pub mod titlebar;
 pub mod window;
 
+pub use cube::{BouncingCube, CubeState};
 pub use drawers::DrawerState;
 pub use flip::FlipState;
 pub use modals::ModalState;

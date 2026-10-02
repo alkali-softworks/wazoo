@@ -17,7 +17,8 @@ use wazoo_core::{LayoutMode, PlaybackMode};
 
 impl WazooApp {
     pub(crate) fn view_players(&self) -> Element<'_, Message> {
-        if self.players.is_empty() {
+        let grid_players: Vec<&AppPlayer> = self.players.iter().filter(|p| !p.is_cube).collect();
+        if grid_players.is_empty() {
             return container(
                 text(self.t("wazoo.no_players"))
                     .size(18)
@@ -37,7 +38,7 @@ impl WazooApp {
         match self.settings.layout {
             LayoutMode::Row => {
                 let mut r = row![].spacing(0).width(Length::Fill).height(Length::Fill);
-                for p in &self.players {
+                for p in &grid_players {
                     r = r.push(self.view_single_player(p));
                 }
                 r.into()
@@ -47,19 +48,19 @@ impl WazooApp {
                     .spacing(0)
                     .width(Length::Fill)
                     .height(Length::Fill);
-                for p in &self.players {
+                for p in &grid_players {
                     c = c.push(self.view_single_player(p));
                 }
                 c.into()
             }
             LayoutMode::Grid => {
-                let count = self.players.len();
+                let count = grid_players.len();
                 if count == 1 {
-                    self.view_single_player(&self.players[0])
+                    self.view_single_player(grid_players[0])
                 } else if count == 2 {
                     row![
-                        self.view_single_player(&self.players[0]),
-                        self.view_single_player(&self.players[1]),
+                        self.view_single_player(grid_players[0]),
+                        self.view_single_player(grid_players[1]),
                     ]
                     .spacing(0)
                     .width(Length::Fill)
@@ -68,12 +69,12 @@ impl WazooApp {
                 } else if count == 3 {
                     // Electron 3-player special layout: top player spans full width, bottom row has 2
                     column![
-                        container(self.view_single_player(&self.players[0]))
+                        container(self.view_single_player(grid_players[0]))
                             .width(Length::Fill)
                             .height(Length::FillPortion(1)),
                         row![
-                            self.view_single_player(&self.players[1]),
-                            self.view_single_player(&self.players[2]),
+                            self.view_single_player(grid_players[1]),
+                            self.view_single_player(grid_players[2]),
                         ]
                         .spacing(0)
                         .width(Length::Fill)
@@ -95,7 +96,7 @@ impl WazooApp {
                         .spacing(0)
                         .width(Length::Fill)
                         .height(Length::Fill);
-                    for chunk in self.players.chunks(cols) {
+                    for chunk in grid_players.chunks(cols) {
                         let mut r = row![].spacing(0).width(Length::Fill).height(Length::Fill);
                         for p in chunk {
                             r = r.push(self.view_single_player(p));

@@ -90,6 +90,8 @@ pub enum Message {
     ClearMarkOutFocused,
     ClearLoop(PlayerId),
     ClearLoopFocused,
+    RandomSeekFocused,
+    ShowTitleOverlay,
 
     // Layout & Modes
     CycleLayout,
@@ -154,15 +156,13 @@ pub enum Message {
     SelectTranscriptSubtitleTrack(usize, i64),
     EscapePressed,
 
-    // Bookmarks & wazoo-js shortcuts
+    // Bookmarks
     ToggleBookmarksModal,
     CloseBookmarksModal,
     AddBookmarkFocused,
     RemoveBookmarkFocused,
     RemoveBookmark(usize),
     JumpToBookmark(Bookmark),
-    RandomSeekFocused,
-    ShowTitleOverlay,
 
     // Timers & Ticks
     AnimationTick,
@@ -170,4 +170,12 @@ pub enum Message {
     WatchdogTick,
     DismissToast,
     ModalCardClicked,
+
+    // 3D Video Cube Screensaver (Experimental)
+    ToggleCubeScreensaver,
+    SpawnCube,
+    RemoveCube,
+    ClearCubes,
+    SetCubeSpeed(f32),
+    SetCubeSize(f32),
 }

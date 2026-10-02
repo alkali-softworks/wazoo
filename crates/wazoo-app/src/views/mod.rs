@@ -7,6 +7,7 @@
  * sliding titlebars, floating toast notices, scan banners, and modal dialogs.
  */
 
+pub mod cube;
 pub mod file_picker;
 pub mod history;
 pub mod modals;
@@ -233,6 +234,11 @@ impl WazooApp {
                 root_stack_children.push(Element::from(
                     mouse_area(alt_overlay).on_press(Message::DragWindow),
                 ));
+            }
+
+            // 6. 3D Bouncing Video Cube (Screensaver overlay on top of everything)
+            if self.cube.enabled && !self.cube.cubes.is_empty() {
+                root_stack_children.push(self.view_cube_overlay());
             }
 
             Stack::with_children(root_stack_children)

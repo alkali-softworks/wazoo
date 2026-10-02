@@ -302,7 +302,6 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     .style(theme::action_button_style)
     .on_press(Message::ResetPlaybackOptions)
     .padding([8, 16]);
-
     column![
         gamma_group,
         contrast_group,

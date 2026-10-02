@@ -26,6 +26,8 @@ pub struct AppPlayer {
     pub loading_ticks: usize,
     /// Per-player flip mode runtime countdown state
     pub flip: crate::state::FlipState,
+    /// Whether this player is an independent 3D cube screensaver player
+    pub is_cube: bool,
 }
 
 pub type Player = AppPlayer;
@@ -40,6 +42,20 @@ impl AppPlayer {
             is_loading: false,
             loading_ticks: 0,
             flip: crate::state::FlipState::new(wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS),
+            is_cube: false,
+        }
+    }
+
+    /// Creates a new `AppPlayer` for the independent 3D screensaver cube.
+    pub fn new_cube(handle: VideoHandle, shuffle: bool) -> Self {
+        Self {
+            handle,
+            shuffle,
+            nav_history: PlayerNavHistory::default(),
+            is_loading: false,
+            loading_ticks: 0,
+            flip: crate::state::FlipState::new(wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS),
+            is_cube: true,
         }
     }
 

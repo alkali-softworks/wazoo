@@ -7,6 +7,7 @@
  * vertical scroll engine abstractions.
  */
 
+pub mod cube;
 pub mod mpv_ffi;
 pub mod pipeline;
 pub mod player;

@@ -38,6 +38,7 @@ pub struct FrameData {
     pub height: u32,
     pub pixels: Vec<u8>,
     pub new_frame: bool,
+    pub frame_seq: u64,
 }
 
 impl std::fmt::Debug for FrameData {
@@ -47,6 +48,7 @@ impl std::fmt::Debug for FrameData {
             .field("height", &self.height)
             .field("pixels_len", &self.pixels.len())
             .field("new_frame", &self.new_frame)
+            .field("frame_seq", &self.frame_seq)
             .finish()
     }
 }
@@ -58,6 +60,7 @@ struct VideoEntry {
     width: u32,
     height: u32,
     alive: Arc<AtomicBool>,
+    last_frame_seq: u64,
 }
 
 pub struct VideoPipeline {
@@ -331,6 +334,7 @@ impl VideoPipeline {
             width,
             height,
             alive,
+            last_frame_seq: 0,
         }
     }
 }
@@ -503,7 +507,7 @@ impl Primitive for VideoPrimitive {
         bounds: &Rectangle,
         _viewport: &Viewport,
     ) {
-        let mut frame_guard = self.frame.lock().unwrap();
+        let frame_guard = self.frame.lock().unwrap();
         let width = frame_guard.width;
         let height = frame_guard.height;
 
@@ -528,7 +532,11 @@ impl Primitive for VideoPrimitive {
 
         let entry = pipeline.videos.get_mut(&self.player_id).unwrap();
 
-        if (just_created || frame_guard.new_frame) && !frame_guard.pixels.is_empty() {
+        let is_new_frame = just_created
+            || frame_guard.new_frame
+            || entry.last_frame_seq != frame_guard.frame_seq;
+
+        if is_new_frame && !frame_guard.pixels.is_empty() {
             queue.write_texture(
                 wgpu::TexelCopyTextureInfo {
                     texture: &entry.texture,
@@ -548,7 +556,7 @@ impl Primitive for VideoPrimitive {
                     depth_or_array_layers: 1,
                 },
             );
-            frame_guard.new_frame = false;
+            entry.last_frame_seq = frame_guard.frame_seq;
         }
 
         let (vw, vh) = (width as f32, height as f32);

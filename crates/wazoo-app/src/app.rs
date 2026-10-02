@@ -84,6 +84,7 @@ pub enum SettingsTab {
     General,
     Playback,
     System,
+    Cube,
 }
 
 pub struct WazooApp {
@@ -111,6 +112,7 @@ pub struct WazooApp {
     pub default_shuffle_mode: bool,
     pub preloaded_player: Option<VideoHandle>,
     pub is_preloading: bool,
+    pub cube: crate::state::CubeState,
 }
 
 struct InitialSearch {
@@ -381,6 +383,11 @@ impl WazooApp {
             default_shuffle_mode: true,
             preloaded_player: None,
             is_preloading: false,
+            cube: crate::state::CubeState {
+                speed_multiplier: settings.cube_speed,
+                size_multiplier: settings.cube_size,
+                ..Default::default()
+            },
         }
     }
 
@@ -930,6 +937,61 @@ impl WazooApp {
         None
     }
 
+    /// Spawns an independent video player dedicated to the 3D screensaver cube.
+    pub(crate) fn spawn_cube_player(&mut self) -> Option<PlayerId> {
+        let id = self.next_player_id;
+        self.next_player_id += 1;
+
+        // Cube player starts muted by default so it doesn't clash with existing audio
+        let initial_muted = true;
+        let start_time = StartTime::Beginning;
+
+        for _ in 0..MAX_VIDEO_LOAD_RETRIES {
+            if let Some(video_rec) = self.get_next_video_rec(None) {
+                match self.create_video_handle_with_start_time(
+                    id,
+                    &video_rec.path,
+                    &video_rec.name,
+                    start_time,
+                ) {
+                    Ok(mut handle) => {
+                        handle.set_muted(initial_muted);
+                        handle.set_subtitles_visible(self.subtitles_enabled);
+                        let mut player = AppPlayer::new_cube(handle, self.default_shuffle_mode);
+                        player.flip.reset(self.settings.flip_interval_secs);
+                        player.start_loading();
+                        self.push_player_nav_entry(id, video_rec.path.clone(), None);
+                        self.players.push(player);
+                        return Some(id);
+                    }
+                    Err(err) => {
+                        log::error!(
+                            "Failed to create VideoHandle for 3D cube {}: {}",
+                            video_rec.path,
+                            err
+                        );
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    /// Cleans up and stops all independent 3D cube players.
+    pub(crate) fn cleanup_cube_players(&mut self) {
+        self.players.retain_mut(|p| {
+            if p.is_cube {
+                p.stop();
+                false
+            } else {
+                true
+            }
+        });
+        if self.focused_idx >= self.players.len() && !self.players.is_empty() {
+            self.focused_idx = self.players.len() - 1;
+        }
+    }
+
     /// Resets and staggers the flip countdowns across all active players so they do not all cycle at the same time.
     pub fn stagger_flip_countdowns(&mut self) {
         let n = self.players.len();
@@ -950,10 +1012,10 @@ impl WazooApp {
 
     /// Persists the exact current playback session (file, timestamp, mute, volume, shuffle) to settings
     pub fn save_session_state(&mut self) {
-        if !self.players.is_empty() {
-            let sessions: Vec<VideoSession> = self
-                .players
-                .iter()
+        let normal_players: Vec<&AppPlayer> = self.players.iter().filter(|p| !p.is_cube).collect();
+        if !normal_players.is_empty() {
+            let sessions: Vec<VideoSession> = normal_players
+                .into_iter()
                 .map(|p| VideoSession {
                     path: p.state.path.clone(),
                     position_secs: p.position().as_secs_f64(),
@@ -964,6 +1026,8 @@ impl WazooApp {
                 .collect();
             self.settings.session_videos = sessions;
         }
+        self.settings.cube_speed = self.cube.speed_multiplier;
+        self.settings.cube_size = self.cube.size_multiplier;
         self.settings.last_query = self.search.active_query.clone();
         self.settings.last_folders = self.search.active_folders.clone();
         let _ = self.config_mgr.save_settings(&self.settings);

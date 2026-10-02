@@ -95,6 +95,7 @@ impl WazooApp {
                 self.tick_titlebar_animation();
                 self.update_player_frames();
                 self.sync_scroll_item_heights();
+                self.tick_cube_screensaver();
 
                 Task::none()
             }
@@ -284,6 +285,92 @@ impl WazooApp {
             | Message::ModalCardClicked => self.update_modals(message),
 
             // =========================================================================
+            // 3D Video Cube Screensaver (Experimental)
+            // =========================================================================
+            Message::ToggleCubeScreensaver => {
+                self.modals.menu = false;
+                self.titlebar.show_dropdown_menu = false;
+                let w = self.settings.window_bounds.width as f32;
+                let h = self.settings.window_bounds.height as f32;
+                if self.cube.enabled && !self.cube.cubes.is_empty() {
+                    self.cube.clear();
+                    self.cleanup_cube_players();
+                    self.overlay.show_toast("🧊 3D Video Cube dismissed", 120);
+                } else {
+                    let cube_pid = self.spawn_cube_player();
+                    self.cube.spawn_cube_with_player(w, h, 0, cube_pid);
+                    if let Some(pid) = cube_pid {
+                        if let Some(pos) = self.players.player_index(pid) {
+                            self.focused_idx = pos;
+                        }
+                    }
+                    self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
+                    self.overlay.show_toast("🧊 3D Video Cube spawned! (Press [8] to toggle, [Tab] to cycle)", 180);
+                }
+                Task::none()
+            }
+            Message::SpawnCube => {
+                self.modals.menu = false;
+                self.titlebar.show_dropdown_menu = false;
+                let w = self.settings.window_bounds.width as f32;
+                let h = self.settings.window_bounds.height as f32;
+                let cube_pid = self.spawn_cube_player();
+                let count = self.cube.cubes.len();
+                self.cube.spawn_cube_with_player(w, h, count, cube_pid);
+                if let Some(pid) = cube_pid {
+                    if let Some(pos) = self.players.player_index(pid) {
+                        self.focused_idx = pos;
+                    }
+                }
+                self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
+                self.overlay.show_toast(
+                    format!(
+                        "🧊 Spawned 3D Cube #{}! (Press [8] to toggle, [Tab] to cycle)",
+                        self.cube.cubes.len()
+                    ),
+                    180,
+                );
+                Task::none()
+            }
+            Message::RemoveCube => {
+                if let Some(removed) = self.cube.cubes.pop() {
+                    if let Some(pid) = removed.player_id {
+                        if let Some(pos) = self.players.player_index(pid) {
+                            let mut p = self.players.remove(pos);
+                            p.stop();
+                        }
+                    }
+                }
+                if self.cube.cubes.is_empty() {
+                    self.cube.enabled = false;
+                    self.cleanup_cube_players();
+                }
+                Task::none()
+            }
+            Message::ClearCubes => {
+                self.modals.menu = false;
+                self.titlebar.show_dropdown_menu = false;
+                self.cube.clear();
+                self.cleanup_cube_players();
+                self.overlay.show_toast("🧊 All 3D Cubes dismissed", 120);
+                Task::none()
+            }
+            Message::SetCubeSpeed(speed) => {
+                let clamped = speed.clamp(0.2, 4.0);
+                self.cube.speed_multiplier = clamped;
+                self.settings.cube_speed = clamped;
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetCubeSize(size) => {
+                let clamped = size.clamp(0.4, 3.0);
+                self.cube.size_multiplier = clamped;
+                self.settings.cube_size = clamped;
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+
+            // =========================================================================
             // Playback, Layout & Multi-Player Navigation
             // =========================================================================
             _ => self.update_playback(message),
@@ -352,6 +439,15 @@ impl WazooApp {
             if heights_changed {
                 self.scroll_engine.recalculate_positions();
             }
+        }
+    }
+
+    /// Advances physics, multi-axis 3D rotations, and screen edge collisions for 3D cubes.
+    pub(crate) fn tick_cube_screensaver(&mut self) {
+        if self.cube.enabled && !self.cube.cubes.is_empty() {
+            let w = self.settings.window_bounds.width as f32;
+            let h = self.settings.window_bounds.height as f32;
+            self.cube.tick(w, h);
         }
     }
 }
