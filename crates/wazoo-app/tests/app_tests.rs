@@ -234,6 +234,46 @@ fn test_file_picker_confined_folder_badge_multilingual() {
 }
 
 #[test]
+fn test_file_picker_multiple_confined_folder_chips_wrap() {
+    let (mut app, _) = new_test_app();
+    app.settings.media_folders = vec![
+        "/media/anime".to_string(),
+        "/media/tv".to_string(),
+        "/media/Sat_Morning_Shows".to_string(),
+    ];
+    app.available_videos = vec![
+        VideoRecord::new(1, "Anime 1", "/media/anime/a1.mp4"),
+        VideoRecord::new(2, "TV 1", "/media/tv/t1.mp4"),
+        VideoRecord::new(3, "Sat Show 1", "/media/Sat_Morning_Shows/s1.mp4"),
+    ];
+
+    // Select multiple folders
+    app.search.active_folders = vec![
+        "/media/anime".to_string(),
+        "/media/tv".to_string(),
+        "/media/Sat_Morning_Shows".to_string(),
+    ];
+
+    // Open file picker drawer
+    let _ = app.update(Message::ToggleFilePicker);
+    assert!(app.drawers.show_file_picker);
+
+    // Verify view renders with wrapped chips
+    {
+        let _view = app.view_file_picker();
+    }
+
+    // Remove one chip
+    let _ = app.update(Message::RemoveActiveSearchFolder("/media/tv".to_string()));
+    assert_eq!(app.search.active_folders.len(), 2);
+    assert!(!app.search.active_folders.contains(&"/media/tv".to_string()));
+
+    {
+        let _view_after_remove = app.view_file_picker();
+    }
+}
+
+#[test]
 fn test_file_picker_highlights_playing_video() {
     let (mut app, _) = new_test_app();
     app.available_videos = vec![

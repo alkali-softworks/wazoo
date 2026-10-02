@@ -11,6 +11,7 @@ use crate::app::WazooApp;
 use crate::format;
 use crate::message::Message;
 use crate::theme;
+use crate::wrap::Wrap;
 use iced::{
     Alignment, Element, Length,
     widget::{Space, Stack, button, column, container, row, scrollable, text, text_input},
@@ -342,16 +343,16 @@ impl WazooApp {
 
         let is_confined = !self.search.active_folders.is_empty()
             || !self.is_all_folder(&self.search.active_folder);
-        let mut header_row = row![
+        let mut header_items: Vec<Element<'_, Message>> = Vec::new();
+        header_items.push(
             text(self.t_with(
                 "settings.total_videos",
                 &[("count", &format::format_number(self.available_videos.len()))]
             ))
             .size(17)
-            .color(iced::Color::WHITE),
-        ]
-        .spacing(8)
-        .align_y(Alignment::Center);
+            .color(iced::Color::WHITE)
+            .into(),
+        );
 
         if is_confined {
             let folders_to_display: Vec<&String> = if !self.search.active_folders.is_empty() {
@@ -373,8 +374,8 @@ impl WazooApp {
                     format::folder_basename(folder).to_string()
                 };
 
-                let display_name = if folder_label.chars().count() > 18 {
-                    format!("{}...", folder_label.chars().take(16).collect::<String>())
+                let display_name = if folder_label.chars().count() > 24 {
+                    format!("{}...", folder_label.chars().take(22).collect::<String>())
                 } else {
                     folder_label.to_string()
                 };
@@ -393,16 +394,26 @@ impl WazooApp {
                 .on_press(Message::RemoveActiveSearchFolder(folder.clone()))
                 .padding([3, 8]);
 
-                header_row = header_row.push(badge);
+                header_items.push(badge.into());
             }
         }
 
-        header_row = header_row.push(Space::new().width(Length::Fill));
-        header_row = header_row.push(
-            button(text("✕").size(14))
-                .style(theme::window_control_button_style)
-                .on_press(Message::ToggleFilePicker),
-        );
+        let header_wrap = Wrap::with_elements(header_items)
+            .spacing(8)
+            .vertical_spacing(8)
+            .align_items(Alignment::Center)
+            .width(Length::Fill);
+
+        let close_btn = button(text("✕").size(14))
+            .style(theme::window_control_button_style)
+            .on_press(Message::ToggleFilePicker);
+
+        let header_row = row![
+            header_wrap,
+            close_btn,
+        ]
+        .spacing(8)
+        .align_y(Alignment::Start);
 
         let search_is_empty = self.drawers.file_picker_search.is_empty();
         let search_input = text_input(
