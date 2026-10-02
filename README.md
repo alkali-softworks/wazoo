@@ -4,7 +4,7 @@
 
 **Wazoo** is a video player and "moving mood-board" made for artists and curators who want a continuous stream of visual reference and inspiration from their local video collection. It provides a continuous **multi-player** view based on your library and optional search query. 
 
-Wazoo is an idea in development since 2020 - originally as a JS app, then Electron, and now finally a Rust app, ported with all the best features from prior versions.
+Wazoo is an idea in development since 2020 - now ported to **native Rust** with all the best features from prior versions.
 
 ---
 
@@ -24,7 +24,7 @@ For a quick setup without compiling from source, you can download the latest pre
 ## Features
 
 ### 🧠 High-Performance Architecture
-- Built in native **🦀 Rust** and [**🧊 Iced**](https://github.com/iced-rs/iced) with **libmpv** (plays virtually any video, just like VLC) 
+- Built in **🦀 Rust** and [**🧊 Iced**](https://github.com/iced-rs/iced) with **libmpv** (plays virtually any video, just like VLC) 
 - Fast **SQLite** indexing: Query tens of thousands of video files instantly.
 - Detailed technical architecture in [**docs**](docs/README.md).
 
