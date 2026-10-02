@@ -10,150 +10,69 @@ use crate::app::WazooApp;
 use crate::format;
 use crate::message::Message;
 use crate::theme;
+use crate::wrap::Wrap;
 use iced::{
     Alignment, Element, Length,
     widget::{Space, button, column, container, row, scrollable, text, text_input},
 };
 
-fn estimate_chip_width(label: &str) -> f32 {
-    let text_width: f32 = label
-        .chars()
-        .map(|c| {
-            if c.is_ascii() {
-                if c.is_ascii_uppercase() || matches!(c, 'm' | 'w' | 'M' | 'W' | '@' | '%') {
-                    9.5
-                } else if matches!(
-                    c,
-                    'i' | 'l' | 'j' | 't' | 'f' | '!' | '.' | ':' | ';' | '\'' | ' '
-                ) {
-                    4.5
-                } else {
-                    7.5
-                }
-            } else {
-                13.0
-            }
-        })
-        .sum();
-    // 24px horizontal padding (12 left + 12 right) + 8px row spacing
-    text_width + 32.0
-}
-
-fn estimate_tag_chip_width(label: &str) -> f32 {
-    let text_width: f32 = label
-        .chars()
-        .map(|c| {
-            if c.is_ascii() {
-                if c.is_ascii_uppercase() || matches!(c, 'm' | 'w' | 'M' | 'W' | '@' | '%') {
-                    9.5
-                } else if matches!(
-                    c,
-                    'i' | 'l' | 'j' | 't' | 'f' | '!' | '.' | ':' | ';' | '\'' | ' '
-                ) {
-                    4.5
-                } else {
-                    7.5
-                }
-            } else {
-                13.0
-            }
-        })
-        .sum();
-    // 12px padding (6 left + 6 right) + 4px spacing + 14px (✕ button) + 6px row spacing
-    text_width + 36.0
-}
-
 impl WazooApp {
     pub fn view_search_modal(&self) -> Element<'_, Message> {
-        let mut chip_items: Vec<(String, Element<'_, Message>)> = Vec::new();
+        let mut folder_chips: Vec<Element<'_, Message>> = Vec::new();
 
         let all_label = self.t("common.all");
         let is_all_selected = self.is_all_search_selected();
-        chip_items.push((
-            all_label.clone(),
+        folder_chips.push(
             button(text(all_label.clone()).size(13))
                 .style(theme::folder_chip_style(is_all_selected))
                 .on_press(Message::SelectSearchFolder(all_label))
                 .padding([4, 12])
                 .into(),
-        ));
+        );
 
         for folder in &self.settings.media_folders {
             let label = format::ucwords(format::folder_basename(folder));
             let is_selected = self.search.selected_folders.contains(folder);
-            chip_items.push((
-                label.clone(),
+            folder_chips.push(
                 button(text(label).size(13))
                     .style(theme::folder_chip_style(is_selected))
                     .on_press(Message::ToggleSearchFolder(folder.clone()))
                     .padding([4, 12])
                     .into(),
-            ));
+            );
         }
 
         if self.db.has_misc_videos().unwrap_or(false) {
             let is_misc_selected = self.search.selected_folders.contains(&"Misc".to_string());
             let misc_label = self.t("common.miscellaneous");
-            chip_items.push((
-                misc_label.clone(),
+            folder_chips.push(
                 button(text(misc_label).size(13))
                     .style(theme::folder_chip_style(is_misc_selected))
                     .on_press(Message::ToggleSearchFolder("Misc".to_string()))
                     .padding([4, 12])
                     .into(),
-            ));
+            );
         }
 
-        let modal_width = 640.0;
-        let card_padding = 24.0;
-        let max_row_width = modal_width - (card_padding * 2.0); // 592.0
-        let mut folders_col = column![].spacing(8);
-        let mut current_row = row![].spacing(8).align_y(Alignment::Center);
-        let mut current_width = 0.0;
-        let mut row_count = 0;
+        let folders_wrap = Wrap::with_elements(folder_chips)
+            .spacing(8)
+            .vertical_spacing(8)
+            .align_items(Alignment::Center);
 
-        for (label, chip_elem) in chip_items {
-            let chip_width = estimate_chip_width(&label);
-            if current_width + chip_width > max_row_width && current_width > 0.0 {
-                folders_col = folders_col.push(current_row);
-                current_row = row![].spacing(8).align_y(Alignment::Center);
-                current_width = 0.0;
-                row_count += 1;
-            }
-            current_row = current_row.push(chip_elem);
-            current_width += chip_width;
-        }
-
-        if current_width > 0.0 {
-            folders_col = folders_col.push(current_row);
-            row_count += 1;
-        }
-
-        let folders_widget: Element<'_, Message> = if row_count > 4 {
-            scrollable(folders_col)
+        let folders_widget: Element<'_, Message> = if self.settings.media_folders.len() > 12 {
+            scrollable(folders_wrap)
                 .direction(scrollable::Direction::Vertical(
                     scrollable::Scrollbar::default(),
                 ))
                 .height(Length::Fixed(135.0))
                 .into()
         } else {
-            folders_col.into()
+            folders_wrap.into()
         };
 
-        let max_tag_row_width = max_row_width - 72.0; // 520.0 (leaves margin for search btn & tag_box padding)
-        let min_input_width = 70.0;
-        let mut tags_col = column![].spacing(6);
-        let mut current_row = row![].spacing(6).align_y(Alignment::Center);
-        let mut current_width = 0.0;
+        let mut tag_elements: Vec<Element<'_, Message>> = Vec::new();
 
         for (idx, tag) in self.search.tags.iter().enumerate() {
-            let chip_w = estimate_tag_chip_width(tag);
-            if current_width + chip_w > max_tag_row_width && current_width > 0.0 {
-                tags_col = tags_col.push(current_row);
-                current_row = row![].spacing(6).align_y(Alignment::Center);
-                current_width = 0.0;
-            }
-
             let chip = container(
                 row![
                     text(tag).size(13).color(iced::Color::WHITE),
@@ -168,8 +87,7 @@ impl WazooApp {
             .padding([2, 6])
             .style(theme::tag_chip_style);
 
-            current_row = current_row.push(chip);
-            current_width += chip_w;
+            tag_elements.push(chip.into());
         }
 
         let placeholder = if self.search.tags.is_empty() {
@@ -183,18 +101,17 @@ impl WazooApp {
             .on_input(Message::SearchInputChanged)
             .on_submit(Message::PerformSearch)
             .style(theme::transparent_input_style)
-            .padding([4, 6])
-            .width(Length::Fill);
+            .padding([4, 6]);
 
-        if current_width + min_input_width > max_tag_row_width && current_width > 0.0 {
-            tags_col = tags_col.push(current_row);
-            current_row = row![].spacing(6).align_y(Alignment::Center);
-        }
+        tag_elements.push(input_widget.into());
 
-        current_row = current_row.push(input_widget);
-        tags_col = tags_col.push(current_row);
+        let tags_wrap = Wrap::with_elements(tag_elements)
+            .spacing(6)
+            .vertical_spacing(6)
+            .align_items(Alignment::Center)
+            .fill_last(70.0);
 
-        let tag_box = container(tags_col)
+        let tag_box = container(tags_wrap)
             .padding([6, 8])
             .style(theme::tag_input_box_style)
             .width(Length::Fill);
@@ -208,6 +125,9 @@ impl WazooApp {
         ]
         .spacing(10)
         .align_y(Alignment::Center);
+
+        let modal_width = 640.0;
+        let card_padding = 24.0;
 
         let card = container(
             column![

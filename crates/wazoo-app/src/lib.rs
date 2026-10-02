@@ -20,6 +20,7 @@ pub mod state;
 pub mod theme;
 pub mod update;
 pub mod views;
+pub mod wrap;
 
 use crate::app::WazooApp;
 use crate::cli::parse_cli_args;
