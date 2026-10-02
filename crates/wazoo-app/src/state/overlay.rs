@@ -4,7 +4,7 @@
  * Player Overlay, Toasts & Focus State
  */
 
-use crate::app::{PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS};
+use crate::app::{DEFAULT_TOAST_SECS, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS};
 
 #[derive(Debug, Clone, Default)]
 pub struct OverlayState {
@@ -58,7 +58,13 @@ impl OverlayState {
         (fade_in * fade_out).clamp(0.0, 1.0)
     }
 
-    pub fn show_toast(&mut self, msg: impl Into<String>, duration_secs: usize) {
+    /// Shows a toast notification for the default duration (`DEFAULT_TOAST_SECS` = 2s).
+    pub fn show_toast(&mut self, msg: impl Into<String>) {
+        self.show_toast_with_duration(msg, DEFAULT_TOAST_SECS);
+    }
+
+    /// Shows a toast notification with an explicit duration in seconds.
+    pub fn show_toast_with_duration(&mut self, msg: impl Into<String>, duration_secs: usize) {
         self.toast_message = Some(msg.into());
         // Toast duration in seconds (typically DEFAULT_TOAST_SECS = 2, LONG_TOAST_SECS = 3).
         // If a caller mistakenly passed 60-FPS frame ticks (> 10), convert to seconds.
