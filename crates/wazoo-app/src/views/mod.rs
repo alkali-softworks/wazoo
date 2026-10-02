@@ -22,7 +22,7 @@ use crate::message::Message;
 use crate::theme;
 use iced::{
     Alignment, Element, Length, Theme, mouse,
-    widget::{Space, Stack, button, column, container, mouse_area, row, text},
+    widget::{Space, Stack, column, container, mouse_area, row, text},
 };
 use wazoo_scanner::ScanStage;
 
@@ -163,15 +163,7 @@ impl WazooApp {
             // 3. Floating Notice (Matches Electron Notice.vue)
             if let Some(ref toast) = self.overlay.toast_message {
                 let toast_widget = container(
-                    row![
-                        text(toast).size(16).color(iced::Color::WHITE),
-                        button(text("✕").size(12))
-                            .style(theme::window_control_button_style)
-                            .on_press(Message::DismissToast)
-                            .padding(2),
-                    ]
-                    .spacing(12)
-                    .align_y(Alignment::Center),
+                    text(toast).size(16).color(iced::Color::WHITE),
                 )
                 .padding([6, 18])
                 .style(theme::notice_pill_style);
