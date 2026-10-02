@@ -42,15 +42,7 @@ impl WazooApp {
             }
             if let Some(ref toast) = self.overlay.toast_message {
                 let toast_widget = container(
-                    row![
-                        text(toast).size(16).color(iced::Color::WHITE),
-                        button(text("✕").size(12))
-                            .style(theme::window_control_button_style)
-                            .on_press(Message::DismissToast)
-                            .padding(2),
-                    ]
-                    .spacing(12)
-                    .align_y(Alignment::Center),
+                    text(toast).size(16).color(iced::Color::WHITE),
                 )
                 .padding([6, 18])
                 .style(theme::notice_pill_style);

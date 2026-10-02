@@ -58,9 +58,15 @@ impl OverlayState {
         (fade_in * fade_out).clamp(0.0, 1.0)
     }
 
-    pub fn show_toast(&mut self, msg: impl Into<String>, duration_ticks: usize) {
+    pub fn show_toast(&mut self, msg: impl Into<String>, duration_secs: usize) {
         self.toast_message = Some(msg.into());
-        self.toast_time_remaining = duration_ticks;
+        // Toast duration in seconds (typically DEFAULT_TOAST_SECS = 2, LONG_TOAST_SECS = 3).
+        // If a caller mistakenly passed 60-FPS frame ticks (> 10), convert to seconds.
+        self.toast_time_remaining = if duration_secs > 10 {
+            (duration_secs / 60).clamp(1, 4)
+        } else {
+            duration_secs.clamp(1, 10)
+        };
     }
 
     pub fn clear_toast(&mut self) {
