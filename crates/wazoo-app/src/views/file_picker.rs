@@ -13,7 +13,7 @@ use crate::message::Message;
 use crate::theme;
 use iced::{
     Alignment, Element, Length,
-    widget::{Space, button, column, container, row, scrollable, text, text_input},
+    widget::{Space, Stack, button, column, container, row, scrollable, text, text_input},
 };
 use std::collections::BTreeMap;
 
@@ -404,17 +404,50 @@ impl WazooApp {
                 .on_press(Message::ToggleFilePicker),
         );
 
+        let search_is_empty = self.drawers.file_picker_search.is_empty();
+        let search_input = text_input(
+            &self.t("file_picker.search_placeholder"),
+            &self.drawers.file_picker_search,
+        )
+        .id("file_picker_search_input")
+        .on_input(Message::FilePickerSearchChanged)
+        .on_submit(Message::ApplyFilePickerSearch)
+        .style(theme::dark_input_style)
+        .padding(iced::Padding {
+            top: 8.0,
+            right: 28.0,
+            bottom: 8.0,
+            left: 8.0,
+        })
+        .width(Length::Fill);
+
+        let mut stack_children: Vec<Element<'_, Message>> = vec![search_input.into()];
+
+        if !search_is_empty {
+            let clear_btn = button(text("✕").size(11))
+                .style(theme::search_clear_button_style)
+                .on_press(Message::ClearFilePickerSearch)
+                .padding([2, 5]);
+
+            let btn_container = container(clear_btn)
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .align_x(iced::alignment::Horizontal::Right)
+                .align_y(Alignment::Center)
+                .padding(iced::Padding {
+                    right: 6.0,
+                    ..Default::default()
+                });
+
+            stack_children.push(btn_container.into());
+        }
+
+        let search_bar = Stack::with_children(stack_children);
+
         let content = column![
             Space::new().height(Length::Fixed(14.0)),
             header_row,
-            text_input(
-                &self.t("file_picker.search_placeholder"),
-                &self.drawers.file_picker_search
-            )
-            .on_input(Message::FilePickerSearchChanged)
-            .on_submit(Message::ApplyFilePickerSearch)
-            .style(theme::dark_input_style)
-            .padding(8),
+            search_bar,
             scrollable(scrollable_folders)
                 .height(Length::Fill)
                 .width(Length::Fill),

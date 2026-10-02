@@ -190,6 +190,12 @@ impl WazooApp {
                 }
                 Task::none()
             }
+            Message::ClearFilePickerSearch => {
+                self.drawers.file_picker_search.clear();
+                self.drawers.file_picker_debounce_ticks = 0;
+                self.apply_file_picker_search();
+                iced::widget::operation::focus("file_picker_search_input")
+            }
             Message::ApplyFilePickerSearch => {
                 self.drawers.file_picker_debounce_ticks = 0;
                 self.apply_file_picker_search();
