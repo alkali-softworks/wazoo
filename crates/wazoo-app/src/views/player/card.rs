@@ -10,20 +10,20 @@ use crate::state::AppPlayer;
 use crate::theme;
 use iced::{
     Element, Length, mouse,
-    widget::{Space, Stack, column, container, mouse_area, row},
+    widget::{Space, Stack, column, container, mouse_area, responsive, row},
 };
 
 impl WazooApp {
-    pub(crate) fn view_single_player<'a>(&self, p: &'a AppPlayer) -> Element<'a, Message> {
+    pub(crate) fn view_single_player<'a>(&'a self, p: &'a AppPlayer) -> Element<'a, Message> {
         self.view_player_internal(p, false)
     }
 
-    pub(crate) fn view_scroll_player<'a>(&self, p: &'a AppPlayer) -> Element<'a, Message> {
+    pub(crate) fn view_scroll_player<'a>(&'a self, p: &'a AppPlayer) -> Element<'a, Message> {
         self.view_player_internal(p, true)
     }
 
     pub(crate) fn view_player_internal<'a>(
-        &self,
+        &'a self,
         p: &'a AppPlayer,
         is_scroll_mode: bool,
     ) -> Element<'a, Message> {
@@ -87,21 +87,48 @@ impl WazooApp {
         };
 
         if show_overlay {
-            let hud = self.view_player_hud(p, is_focused, is_loading, overlay_alpha);
-            stack_children.push(hud);
+            let hud = responsive(move |size| {
+                let (video_x, video_y) =
+                    compute_video_offset(size, p.aspect_ratio(), is_scroll_mode);
+                self.view_player_hud(
+                    p,
+                    is_focused,
+                    is_loading,
+                    overlay_alpha,
+                    video_x,
+                    video_y,
+                )
+            });
+            stack_children.push(Element::from(hud));
         } else if !is_resizing && self.overlay.title_pill_ticks > 0 {
             let pill_alpha = (self.overlay.title_pill_ticks as f32 / 20.0).min(1.0);
-            let title_pill = self.view_title_pill(&p.state.path, pill_alpha);
+            let pill_view = responsive(move |size| {
+                let (video_x, video_y) =
+                    compute_video_offset(size, p.aspect_ratio(), is_scroll_mode);
+                let title_pill = self.view_title_pill(&p.state.path, pill_alpha);
 
-            let pill_column = column![
-                Space::new().height(Length::Fixed(80.0)),
-                row![title_pill, Space::new().width(Length::Fill)].width(Length::Fill),
-                Space::new().height(Length::Fill),
-            ]
-            .width(Length::Fill)
-            .height(Length::Fill);
+                let top_row = if video_x > 0.0 {
+                    row![
+                        Space::new().width(Length::Fixed(video_x)),
+                        title_pill,
+                        Space::new().width(Length::Fill),
+                    ]
+                } else {
+                    row![title_pill, Space::new().width(Length::Fill)]
+                }
+                .width(Length::Fill);
 
-            stack_children.push(Element::from(pill_column));
+                column![
+                    Space::new().height(Length::Fixed(80.0 + video_y)),
+                    top_row,
+                    Space::new().height(Length::Fill),
+                ]
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .into()
+            });
+
+            stack_children.push(Element::from(pill_view));
         }
 
         let show_border = !is_resizing && !is_scroll_mode && is_focused && self.overlay.focus_border_ticks > 0;
@@ -138,3 +165,110 @@ impl WazooApp {
         area.into()
     }
 }
+
+/// Calculates the (x, y) offset of the letterboxed/pillarboxed video inside the player tile.
+/// When the window/tile is wider than the video, `x > 0` represents the left black bar width.
+/// When the window/tile is taller than the video, `y > 0` represents the top black bar height.
+pub(crate) fn compute_video_offset(
+    size: iced::Size,
+    aspect_ratio: Option<f32>,
+    is_scroll_mode: bool,
+) -> (f32, f32) {
+    if is_scroll_mode || size.width <= 0.0 || size.height <= 0.0 {
+        return (0.0, 0.0);
+    }
+
+    if let Some(video_aspect) = aspect_ratio.filter(|&a| a > 0.0) {
+        let bounds_aspect = size.width / size.height;
+        if bounds_aspect > video_aspect {
+            // Pillarbox: black bars on left & right
+            let video_w = size.height * video_aspect;
+            let video_x = ((size.width - video_w) / 2.0).max(0.0);
+            let video_x = if video_x > 1.0 { video_x } else { 0.0 };
+            return (video_x, 0.0);
+        } else if bounds_aspect < video_aspect {
+            // Letterbox: black bars on top & bottom
+            let video_h = size.width / video_aspect;
+            let video_y = ((size.height - video_h) / 2.0).max(0.0);
+            let video_y = if video_y > 1.0 { video_y } else { 0.0 };
+            return (0.0, video_y);
+        }
+    }
+
+    (0.0, 0.0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use iced::Size;
+
+    #[test]
+    fn test_compute_video_offset_matching_aspect() {
+        let size = Size::new(1920.0, 1080.0);
+        let (x, y) = compute_video_offset(size, Some(16.0 / 9.0), false);
+        assert_eq!(x, 0.0);
+        assert_eq!(y, 0.0);
+    }
+
+    #[test]
+    fn test_compute_video_offset_wide_window_pillarbox() {
+        // Ultrawide: 2560x1080 window with 16:9 video
+        let size = Size::new(2560.0, 1080.0);
+        let (x, y) = compute_video_offset(size, Some(16.0 / 9.0), false);
+        // video_w = 1080 * 16/9 = 1920
+        // x = (2560 - 1920) / 2 = 320
+        assert!((x - 320.0).abs() < 0.1);
+        assert_eq!(y, 0.0);
+    }
+
+    #[test]
+    fn test_compute_video_offset_tall_window_letterbox() {
+        // Tall / portrait window: 1080x1920 with 16:9 video
+        let size = Size::new(1080.0, 1920.0);
+        let (x, y) = compute_video_offset(size, Some(16.0 / 9.0), false);
+        // video_h = 1080 / (16/9) = 607.5
+        // y = (1920 - 607.5) / 2 = 656.25
+        assert_eq!(x, 0.0);
+        assert!((y - 656.25).abs() < 0.1);
+    }
+
+    #[test]
+    fn test_compute_video_offset_4_3_in_16_9_window() {
+        // 4:3 video in 1920x1080 window
+        let size = Size::new(1920.0, 1080.0);
+        let (x, y) = compute_video_offset(size, Some(4.0 / 3.0), false);
+        // video_w = 1080 * (4/3) = 1440
+        // x = (1920 - 1440) / 2 = 240
+        assert!((x - 240.0).abs() < 0.1);
+        assert_eq!(y, 0.0);
+    }
+
+    #[test]
+    fn test_compute_video_offset_vertical_video_in_landscape() {
+        // 9:16 phone video in 1920x1080 window
+        let size = Size::new(1920.0, 1080.0);
+        let (x, y) = compute_video_offset(size, Some(9.0 / 16.0), false);
+        // video_w = 1080 * (9/16) = 607.5
+        // x = (1920 - 607.5) / 2 = 656.25
+        assert!((x - 656.25).abs() < 0.1);
+        assert_eq!(y, 0.0);
+    }
+
+    #[test]
+    fn test_compute_video_offset_scroll_mode_disabled() {
+        let size = Size::new(2560.0, 1080.0);
+        let (x, y) = compute_video_offset(size, Some(16.0 / 9.0), true);
+        assert_eq!(x, 0.0);
+        assert_eq!(y, 0.0);
+    }
+
+    #[test]
+    fn test_compute_video_offset_none_aspect() {
+        let size = Size::new(2560.0, 1080.0);
+        let (x, y) = compute_video_offset(size, None, false);
+        assert_eq!(x, 0.0);
+        assert_eq!(y, 0.0);
+    }
+}
+

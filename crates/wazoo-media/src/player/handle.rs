@@ -1705,6 +1705,13 @@ impl VideoHandle {
                 }
             }
         }
+        if self.has_decoded_frame() {
+            if let Ok(guard) = self.frame.lock() {
+                if guard.width > 0 && guard.height > 0 {
+                    return Some(guard.width as f32 / guard.height as f32);
+                }
+            }
+        }
         None
     }
 

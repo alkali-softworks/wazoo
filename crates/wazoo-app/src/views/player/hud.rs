@@ -130,6 +130,8 @@ impl WazooApp {
         is_focused: bool,
         is_loading: bool,
         overlay_alpha: f32,
+        video_x: f32,
+        video_y: f32,
     ) -> Element<'a, Message> {
         let player_id = p.id;
         let pos = p.position();
@@ -176,7 +178,16 @@ impl WazooApp {
         let is_audio_menu_open = self.open_audio_menu_id == Some(player_id);
 
         let title_pill = self.view_title_pill(&p.state.path, overlay_alpha);
-        let top_row = row![title_pill, Space::new().width(Length::Fill)].width(Length::Fill);
+        let top_row = if video_x > 0.0 {
+            row![
+                Space::new().width(Length::Fixed(video_x)),
+                title_pill,
+                Space::new().width(Length::Fill),
+            ]
+        } else {
+            row![title_pill, Space::new().width(Length::Fill)]
+        }
+        .width(Length::Fill);
 
         let seek_slider = slider(0.0..=1.0, progress_ratio, move |ratio| {
             Message::SeekRatio(player_id, ratio)
@@ -508,15 +519,17 @@ impl WazooApp {
             .width(Length::Fill)
             .center_x(Length::Fill);
 
+        let top_space = 80.0 + video_y;
+
         let overlays_column = if is_loading {
             column![
-                Space::new().height(Length::Fixed(80.0)),
+                Space::new().height(Length::Fixed(top_space)),
                 top_row,
                 Space::new().height(Length::Fill),
             ]
         } else {
             column![
-                Space::new().height(Length::Fixed(80.0)),
+                Space::new().height(Length::Fixed(top_space)),
                 top_row,
                 Space::new().height(Length::FillPortion(PLAYER_CONTROLS_TOP_PORTION)),
                 centered_overlay,
