@@ -513,6 +513,14 @@ impl WazooApp {
             Message::CycleLayout => {
                 self.titlebar.show_dropdown_menu = false;
                 self.modals.menu = false;
+                let exit_task = if self.cube.desktop_overlay {
+                    let task = self.exit_desktop_cube_overlay();
+                    self.cube.clear();
+                    self.cleanup_cube_players();
+                    task
+                } else {
+                    Task::none()
+                };
                 if self.settings.playback_mode == PlaybackMode::Scroll {
                     self.cleanup_scroll_mode();
                     self.restore_grid_players_to_target(self.settings.player_count);
@@ -529,9 +537,17 @@ impl WazooApp {
                 });
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                 let _ = self.config_mgr.save_settings(&self.settings);
-                Task::none()
+                exit_task
             }
             Message::SetPlayerCount(count) => {
+                let exit_task = if self.cube.desktop_overlay {
+                    let task = self.exit_desktop_cube_overlay();
+                    self.cube.clear();
+                    self.cleanup_cube_players();
+                    task
+                } else {
+                    Task::none()
+                };
                 let target = count.clamp(1, 12);
                 let was_scroll = self.settings.playback_mode == PlaybackMode::Scroll;
                 if was_scroll {
@@ -555,11 +571,19 @@ impl WazooApp {
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                 let _ = self.config_mgr.save_settings(&self.settings);
                 self.save_session_state();
-                Task::none()
+                exit_task
             }
             Message::ToggleScrollMode => {
                 self.modals.menu = false;
                 self.titlebar.show_dropdown_menu = false;
+                let exit_task = if self.cube.desktop_overlay {
+                    let task = self.exit_desktop_cube_overlay();
+                    self.cube.clear();
+                    self.cleanup_cube_players();
+                    task
+                } else {
+                    Task::none()
+                };
                 if self.settings.playback_mode != PlaybackMode::Scroll {
                     self.settings.playback_mode = PlaybackMode::Scroll;
                     self.scroll_engine.scroll_mode_muted = self.settings.scroll_mode_muted;
@@ -637,7 +661,7 @@ impl WazooApp {
                     self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                     let _ = self.config_mgr.save_settings(&self.settings);
 
-                    return self.trigger_preload_task();
+                    return Task::batch([exit_task, self.trigger_preload_task()]);
                 } else {
                     self.cleanup_scroll_mode();
                     self.restore_grid_players_to_target(self.settings.player_count);
@@ -645,7 +669,7 @@ impl WazooApp {
                 }
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                 let _ = self.config_mgr.save_settings(&self.settings);
-                Task::none()
+                exit_task
             }
             Message::ToggleFlipMode => {
                 if self.settings.playback_mode == PlaybackMode::Scroll {
@@ -744,8 +768,16 @@ impl WazooApp {
                     self.cleanup_scroll_mode();
                     self.restore_grid_players_to_target(self.settings.player_count);
                 }
+                let exit_task = if self.cube.desktop_overlay {
+                    let task = self.exit_desktop_cube_overlay();
+                    self.cube.clear();
+                    self.cleanup_cube_players();
+                    task
+                } else {
+                    Task::none()
+                };
                 if self.players.iter().filter(|p| !p.is_cube).count() <= 1 {
-                    return Task::none();
+                    return exit_task;
                 }
                 if let Some(id) = self.focused_player_id() {
                     self.players.retain(|p| p.id != id);
@@ -766,10 +798,11 @@ impl WazooApp {
                     self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                     let _ = self.config_mgr.save_settings(&self.settings);
                     if self.drawers.show_transcript {
-                        return self.load_transcript_for_focused_player();
+                        return Task::batch([exit_task, self.load_transcript_for_focused_player()]);
                     }
+                    return exit_task;
                 }
-                Task::none()
+                exit_task
             }
             Message::CycleFocusedPlayer => {
                 if !self.players.is_empty() {

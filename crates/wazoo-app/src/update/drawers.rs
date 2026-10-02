@@ -14,6 +14,19 @@ use std::time::Duration;
 
 impl WazooApp {
     pub(crate) fn update_drawers(&mut self, message: Message) -> Task<Message> {
+        let exit_task = if matches!(
+            message,
+            Message::ToggleFilePicker
+                | Message::ToggleTranscript
+                | Message::ToggleTranscriptForPlayer(_)
+                | Message::ToggleHistoryDrawer
+        ) && self.cube.desktop_overlay
+        {
+            self.exit_desktop_cube_overlay()
+        } else {
+            Task::none()
+        };
+
         match message {
             Message::ToggleFilePicker => {
                 if self.drawers.show_file_picker {
@@ -30,7 +43,7 @@ impl WazooApp {
                 }
                 self.titlebar.show_dropdown_menu = false;
                 self.modals.menu = false;
-                Task::none()
+                exit_task
             }
             Message::ToggleTranscript => {
                 self.drawers.show_transcript = !self.drawers.show_transcript;
@@ -42,16 +55,16 @@ impl WazooApp {
                 if self.drawers.show_transcript {
                     self.close_file_picker();
                     self.drawers.show_history_drawer = false;
-                    return self.load_transcript_for_focused_player();
+                    return Task::batch([exit_task, self.load_transcript_for_focused_player()]);
                 }
-                Task::none()
+                exit_task
             }
             Message::ToggleTranscriptForPlayer(id) => {
                 let is_same_focused = self.focused_player_id() == Some(id);
                 if is_same_focused && self.drawers.show_transcript {
                     self.drawers.show_transcript = false;
                     self.drawers.show_transcript_menu = false;
-                    return Task::none();
+                    return exit_task;
                 }
                 if let Some(idx) = self.players.player_index(id) {
                     self.focused_idx = idx;
@@ -62,7 +75,7 @@ impl WazooApp {
                 self.drawers.show_history_drawer = false;
                 self.titlebar.show_dropdown_menu = false;
                 self.modals.menu = false;
-                self.load_transcript_for_focused_player()
+                Task::batch([exit_task, self.load_transcript_for_focused_player()])
             }
             Message::ToggleHistoryDrawer => {
                 self.drawers.show_history_drawer = !self.drawers.show_history_drawer;
@@ -73,7 +86,7 @@ impl WazooApp {
                 }
                 self.titlebar.show_dropdown_menu = false;
                 self.modals.menu = false;
-                Task::none()
+                exit_task
             }
             Message::CloseHistoryDrawer => {
                 self.drawers.show_history_drawer = false;

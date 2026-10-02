@@ -423,4 +423,202 @@ fn test_desktop_cube_pauses_background_players_to_save_cpu() {
     assert!(app.players[grid_idx].is_playing());
 }
 
+#[test]
+fn test_mode_9_mutually_exclusive_with_player_modes_1_to_4() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    let tmp = std::env::temp_dir().join(format!(
+        "wazoo_mode_9_excl_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&tmp);
+    let f1 = tmp.join("v1.mp4");
+    let _ = std::fs::File::create(&f1);
+
+    app.available_videos = vec![wazoo_core::VideoRecord::new(1, "S1", f1.to_string_lossy())];
+    let _ = app.update(wazoo_app::message::Message::AddNewPlayer);
+    let _ = app.update(wazoo_app::message::Message::AddNewPlayer);
+    assert_eq!(app.players.iter().filter(|p| !p.is_cube).count(), 2);
+
+    // Enter Mode 9 (Desktop Cube Screensaver)
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+    assert!(app.cube.enabled);
+
+    // Press Mode 1 (SetPlayerCount(1)) - MUST exit Mode 9
+    let _ = app.update(wazoo_app::message::Message::SetPlayerCount(1));
+    assert!(!app.cube.desktop_overlay, "Pressing 1 must exit Mode 9");
+    assert!(!app.cube.enabled, "Cube must be dismissed when exiting Mode 9 via player modes");
+    assert_eq!(app.players.iter().filter(|p| !p.is_cube).count(), 1);
+    assert!(app.players[0].is_playing(), "Regular player must be unpaused");
+
+    // Enter Mode 9 again
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+
+    // Press Mode 3 (SetPlayerCount(3)) - MUST exit Mode 9
+    let _ = app.update(wazoo_app::message::Message::SetPlayerCount(3));
+    assert!(!app.cube.desktop_overlay, "Pressing 3 must exit Mode 9");
+    assert_eq!(app.players.iter().filter(|p| !p.is_cube).count(), 3);
+}
+
+#[test]
+fn test_mode_9_mutually_exclusive_with_scroll_mode_5() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    let tmp = std::env::temp_dir().join(format!(
+        "wazoo_mode_9_scroll_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&tmp);
+    let f1 = tmp.join("v1.mp4");
+    let _ = std::fs::File::create(&f1);
+
+    app.available_videos = vec![wazoo_core::VideoRecord::new(1, "S1", f1.to_string_lossy())];
+    let _ = app.update(wazoo_app::message::Message::AddNewPlayer);
+
+    // 1. Enter Mode 9, then press 5 (ToggleScrollMode) -> must exit Mode 9 and start scroll mode
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+
+    let _ = app.update(wazoo_app::message::Message::ToggleScrollMode);
+    assert!(!app.cube.desktop_overlay, "Pressing 5 must exit Mode 9");
+    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Scroll);
+    assert!(!app.cube.enabled, "Cube must be dismissed when entering Scroll Mode");
+
+    // 2. While in Scroll Mode, press 9 (ToggleDesktopCubeScreensaver) -> must clean up Scroll Mode
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+    assert_ne!(app.settings.playback_mode, wazoo_core::PlaybackMode::Scroll, "Entering Mode 9 cleans up Scroll Mode");
+    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Normal);
+}
+
+#[test]
+fn test_mode_9_mixes_fine_with_modes_6_and_7() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    let tmp = std::env::temp_dir().join(format!(
+        "wazoo_mode_9_mix_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&tmp);
+    let f1 = tmp.join("v1.mp4");
+    let _ = std::fs::File::create(&f1);
+
+    app.available_videos = vec![wazoo_core::VideoRecord::new(1, "S1", f1.to_string_lossy())];
+    let _ = app.update(wazoo_app::message::Message::AddNewPlayer);
+
+    // Enter Mode 9
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+
+    // Mode 6 (Flip Mode) toggles without exiting Mode 9
+    let _ = app.update(wazoo_app::message::Message::ToggleFlipMode);
+    assert!(app.cube.desktop_overlay, "Mode 6 must not exit Mode 9");
+    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Flip);
+
+    let _ = app.update(wazoo_app::message::Message::ToggleFlipMode);
+    assert!(app.cube.desktop_overlay);
+    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Normal);
+
+    // Mode 7 (CRT Filter) toggles without exiting Mode 9
+    let _ = app.update(wazoo_app::message::Message::ToggleCrtFilter);
+    assert!(app.cube.desktop_overlay, "Mode 7 must not exit Mode 9");
+    assert!(app.settings.crt_enabled);
+
+    let _ = app.update(wazoo_app::message::Message::ToggleCrtFilter);
+    assert!(app.cube.desktop_overlay);
+    assert!(!app.settings.crt_enabled);
+}
+
+#[test]
+fn test_mode_9_and_mode_8_clean_transitions() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    let tmp = std::env::temp_dir().join(format!(
+        "wazoo_mode_8_9_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&tmp);
+    let f1 = tmp.join("v1.mp4");
+    let _ = std::fs::File::create(&f1);
+
+    app.available_videos = vec![wazoo_core::VideoRecord::new(1, "S1", f1.to_string_lossy())];
+    let _ = app.update(wazoo_app::message::Message::AddNewPlayer);
+
+    // Case 1: Enter Mode 9 directly from normal app
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+    assert!(app.cube.spawned_for_desktop);
+
+    // Pressing 8 while in Mode 9 cleanly dismisses the cube and exits Mode 9
+    let _ = app.update(wazoo_app::message::Message::ToggleCubeScreensaver);
+    assert!(!app.cube.desktop_overlay);
+    assert!(!app.cube.enabled);
+    assert!(app.cube.cubes.is_empty());
+
+    // Case 2: Start in Mode 8 (in-app cube)
+    let _ = app.update(wazoo_app::message::Message::ToggleCubeScreensaver);
+    assert!(app.cube.enabled);
+    assert!(!app.cube.desktop_overlay);
+
+    // Switch from Mode 8 to Mode 9
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+    assert!(!app.cube.spawned_for_desktop, "Cube was already active before Mode 9");
+
+    // Exit Mode 9 by pressing 9 -> returns to Mode 8!
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(!app.cube.desktop_overlay);
+    assert!(app.cube.enabled, "Cube returns to Mode 8 in-app screensaver");
+
+    // Dismiss Mode 8
+    let _ = app.update(wazoo_app::message::Message::ToggleCubeScreensaver);
+    assert!(!app.cube.enabled);
+}
+
+#[test]
+fn test_mode_9_exits_on_modal_or_drawer_open() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    // 1. Enter Mode 9, open Settings modal (F2) -> Mode 9 must exit
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+    let _ = app.update(wazoo_app::message::Message::OpenSettingsModal);
+    assert!(!app.cube.desktop_overlay, "Opening settings modal must exit Mode 9");
+    assert!(app.modals.settings);
+
+    // Close settings modal
+    let _ = app.update(wazoo_app::message::Message::CloseSettingsModal);
+
+    // 2. Enter Mode 9, open Help modal (F1) -> Mode 9 must exit
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+    let _ = app.update(wazoo_app::message::Message::OpenHelpModal);
+    assert!(!app.cube.desktop_overlay, "Opening help modal must exit Mode 9");
+    assert!(app.modals.help);
+
+    // Close help modal
+    let _ = app.update(wazoo_app::message::Message::CloseHelpModal);
+
+    // 3. Enter Mode 9, toggle File Picker (h/f) -> Mode 9 must exit
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+    let _ = app.update(wazoo_app::message::Message::ToggleFilePicker);
+    assert!(!app.cube.desktop_overlay, "Opening file picker must exit Mode 9");
+    assert!(app.drawers.show_file_picker);
+}
+
 

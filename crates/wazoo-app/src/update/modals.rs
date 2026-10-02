@@ -13,6 +13,20 @@ use iced::Task;
 
 impl WazooApp {
     pub(crate) fn update_modals(&mut self, message: Message) -> Task<Message> {
+        let exit_task = if matches!(
+            message,
+            Message::OpenMenuModal
+                | Message::OpenSearchModal
+                | Message::OpenSettingsModal
+                | Message::OpenHelpModal
+                | Message::ToggleBookmarksModal
+        ) && self.cube.desktop_overlay
+        {
+            self.exit_desktop_cube_overlay()
+        } else {
+            Task::none()
+        };
+
         match message {
             Message::OpenMenuModal => {
                 self.modals.close_all();
@@ -21,7 +35,7 @@ impl WazooApp {
                 self.hovered_player_id = None;
                 self.overlay.ticks = 0;
                 self.overlay.fade_in_ticks = 0;
-                Task::none()
+                exit_task
             }
             Message::CloseMenuModal => {
                 self.modals.menu = false;
@@ -46,7 +60,7 @@ impl WazooApp {
                 self.search.selected_folders = self.search.active_folders.clone();
                 self.search.selected_folder = self.search.active_folder.clone();
                 self.search.input.clear();
-                Task::batch([iced::widget::operation::focus("search_input")])
+                Task::batch([exit_task, iced::widget::operation::focus("search_input")])
             }
             Message::CloseSearchModal => {
                 self.modals.search = false;
@@ -61,7 +75,7 @@ impl WazooApp {
                 self.hovered_player_id = None;
                 self.overlay.ticks = 0;
                 self.overlay.fade_in_ticks = 0;
-                Task::none()
+                exit_task
             }
             Message::CloseSettingsModal => {
                 if self.modals.playback_settings_debounce_ticks > 0 {
@@ -212,7 +226,7 @@ impl WazooApp {
                 self.hovered_player_id = None;
                 self.overlay.ticks = 0;
                 self.overlay.fade_in_ticks = 0;
-                Task::none()
+                exit_task
             }
             Message::CloseHelpModal => {
                 self.modals.help = false;
@@ -232,7 +246,7 @@ impl WazooApp {
                     self.overlay.ticks = 0;
                     self.overlay.fade_in_ticks = 0;
                 }
-                Task::none()
+                exit_task
             }
             Message::CloseBookmarksModal => {
                 self.modals.bookmarks = false;
