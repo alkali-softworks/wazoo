@@ -629,13 +629,13 @@ fn test_mode_9_toast_auto_hides_in_few_seconds() {
     let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
     assert!(app.cube.desktop_overlay);
 
-    // Toast should be visible with a short duration (3 seconds)
+    // Toast should be visible with uniform default duration (2 seconds)
     assert!(app.overlay.toast_message.is_some());
     let remaining = app.overlay.toast_time_remaining;
-    assert!(
-        remaining <= 3 && remaining > 0,
-        "Toast duration should be 3 seconds or less, got {}",
-        remaining
+    assert_eq!(
+        remaining,
+        wazoo_app::app::DEFAULT_TOAST_SECS,
+        "Toast duration should match uniform DEFAULT_TOAST_SECS"
     );
 
     // After 1 second tick (WatchdogTick)
