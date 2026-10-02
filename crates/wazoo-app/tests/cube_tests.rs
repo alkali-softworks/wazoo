@@ -267,4 +267,118 @@ fn test_cube_focus_green_outline_flash() {
     }
 }
 
+#[test]
+fn test_scroll_mode_toggle_with_active_cube_preserves_grid_and_cube_players() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    let tmp = std::env::temp_dir().join(format!(
+        "wazoo_scroll_cube_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&tmp);
+    let f1 = tmp.join("v1.mp4");
+    let f2 = tmp.join("v2.mp4");
+    let _ = std::fs::File::create(&f1);
+    let _ = std::fs::File::create(&f2);
+
+    app.available_videos = vec![
+        wazoo_core::VideoRecord::new(1, "S1", f1.to_string_lossy()),
+        wazoo_core::VideoRecord::new(2, "S2", f2.to_string_lossy()),
+    ];
+
+    // Add regular grid player
+    let _ = app.update(wazoo_app::message::Message::AddNewPlayer);
+    assert_eq!(app.players.iter().filter(|p| !p.is_cube).count(), 1);
+    let _ = app.update(wazoo_app::message::Message::ToggleCubeScreensaver);
+    assert!(app.cube.enabled);
+    assert_eq!(app.cube.cubes.len(), 1);
+    assert_eq!(app.players.iter().filter(|p| p.is_cube).count(), 1);
+    assert_eq!(app.players.iter().filter(|p| !p.is_cube).count(), 1);
+
+    // Focus the cube player (tab to cube)
+    if let Some(pos) = app.players.iter().position(|p| p.is_cube) {
+        app.focused_idx = pos;
+    }
+    assert!(app.players[app.focused_idx].is_cube);
+
+    // Press '5' (ToggleScrollMode) while cube is active
+    let _ = app.update(wazoo_app::message::Message::ToggleScrollMode);
+    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Scroll);
+    // Grid player must still exist in scroll mode, and cube player must be preserved!
+    assert_eq!(app.players.iter().filter(|p| !p.is_cube).count(), 1);
+    assert_eq!(app.players.iter().filter(|p| p.is_cube).count(), 1);
+
+    // Press '5' again (ToggleScrollMode to return to normal)
+    let _ = app.update(wazoo_app::message::Message::ToggleScrollMode);
+    assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Normal);
+
+    // Both regular grid player and cube player MUST still be present!
+    assert_eq!(
+        app.players.iter().filter(|p| !p.is_cube).count(),
+        1,
+        "Regular grid player must be preserved!"
+    );
+    assert_eq!(
+        app.players.iter().filter(|p| p.is_cube).count(),
+        1,
+        "Cube player must be preserved!"
+    );
+
+    // View must render normally
+    {
+        let _view = app.view();
+    }
+}
+
+#[test]
+fn test_desktop_cube_screensaver_toggle_key_9_and_escape() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+    assert!(!app.cube.desktop_overlay);
+
+    // Toggle Desktop Cube Screensaver via message / key 9
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+    assert!(app.cube.enabled);
+    assert_eq!(app.cube.cubes.len(), 1);
+
+    // View should render desktop overlay stack without crashing
+    {
+        let _view = app.view();
+    }
+
+    // Key 9 again toggles off
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(!app.cube.desktop_overlay);
+
+    // Toggle back on
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+
+    // Escape exits desktop overlay
+    let _ = app.update(wazoo_app::message::Message::EscapePressed);
+    assert!(!app.cube.desktop_overlay);
+}
+
+#[test]
+fn test_desktop_cube_key_event_routing() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    // Send key '9'
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Character("9".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.cube.desktop_overlay);
+
+    // Send key '9' again
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Character("9".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(!app.cube.desktop_overlay);
+}
+
 

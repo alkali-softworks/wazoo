@@ -173,6 +173,7 @@ pub enum Message {
 
     // 3D Video Cube Screensaver (Experimental)
     ToggleCubeScreensaver,
+    ToggleDesktopCubeScreensaver,
     SpawnCube,
     RemoveCube,
     ClearCubes,

@@ -239,6 +239,9 @@ impl WazooApp {
                 Task::none()
             }
             Message::EscapePressed => {
+                if self.cube.desktop_overlay {
+                    return self.update(Message::ToggleDesktopCubeScreensaver);
+                }
                 if self.drawers.show_transcript_menu {
                     self.drawers.show_transcript_menu = false;
                     return Task::none();

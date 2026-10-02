@@ -104,7 +104,11 @@
     "cube_size": "اندازه مکعب",
     "cube_size_desc": "ابعاد هندسی مکعب سه‌بعدی شناور",
     "cube_spawn": "ایجاد یک مکعب دیگر",
-    "cube_dismiss_all": "بستن همه مکعب‌ها"
+    "cube_dismiss_all": "بستن همه مکعب‌ها",
+    "cube_desktop_enable": "فعال‌سازی محافظ صفحه دسکتاپ (کلیک عبوری)",
+    "cube_desktop_disable": "غیرفعال‌سازی محافظ صفحه دسکتاپ",
+    "cube_desktop_shortcut_hint": "میانبر: کلید 9 را برای تغییر فوری فشار دهید",
+    "cube_badge_desktop_on": "دسکتاپ"
   },
   "search": {
     "folder": "پوشه:",

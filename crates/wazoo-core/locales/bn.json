@@ -104,7 +104,11 @@
     "cube_size": "কিউবের স্কেল",
     "cube_size_desc": "ভাসমান 3D কিউব জ্যামিতির মাত্রা",
     "cube_spawn": "আরেকটি কিউব তৈরি করুন",
-    "cube_dismiss_all": "সবগুলো কিউব সরান"
+    "cube_dismiss_all": "সবগুলো কিউব সরান",
+    "cube_desktop_enable": "ডেস্কটপ স্ক্রিনসেভার সক্রিয় করুন (ক্লিক পাস-থ্রু)",
+    "cube_desktop_disable": "ডেস্কটপ স্ক্রিনসেভার নিষ্ক্রিয় করুন",
+    "cube_desktop_shortcut_hint": "শর্টকাট: সাথে সাথে টগল করতে যেকোনো জায়গায় 9 চাপুন",
+    "cube_badge_desktop_on": "ডেস্কটপ"
   },
   "search": {
     "folder": "ফোল্ডার:",

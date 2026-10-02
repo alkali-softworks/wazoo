@@ -104,7 +104,11 @@
     "cube_size": "Размер куба",
     "cube_size_desc": "Габариты геометрии парящего 3D-куба",
     "cube_spawn": "Создать еще один куб",
-    "cube_dismiss_all": "Убрать все кубы"
+    "cube_dismiss_all": "Убрать все кубы",
+    "cube_desktop_enable": "Включить заставку на рабочем столе (сквозные клики)",
+    "cube_desktop_disable": "Отключить заставку на рабочем столе",
+    "cube_desktop_shortcut_hint": "Горячая клавиша: нажмите 9 для быстрого переключения",
+    "cube_badge_desktop_on": "РАБОЧИЙ СТОЛ"
   },
   "search": {
     "folder": "Папка:",

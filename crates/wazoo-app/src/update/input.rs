@@ -117,6 +117,8 @@ impl WazooApp {
             if let Key::Character(ref s) = key {
                 if s == "8" {
                     return self.update(Message::ToggleCubeScreensaver);
+                } else if s == "9" {
+                    return self.update(Message::ToggleDesktopCubeScreensaver);
                 }
             }
         }

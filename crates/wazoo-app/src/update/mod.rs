@@ -293,9 +293,27 @@ impl WazooApp {
                 let w = self.settings.window_bounds.width as f32;
                 let h = self.settings.window_bounds.height as f32;
                 if self.cube.enabled && !self.cube.cubes.is_empty() {
+                    let had_desktop = self.cube.desktop_overlay;
                     self.cube.clear();
                     self.cleanup_cube_players();
                     self.overlay.show_toast("🧊 3D Video Cube dismissed", 120);
+                    if had_desktop {
+                        if let Some(id) = self.window.id {
+                            let level = if self.settings.is_always_on_top {
+                                iced::window::Level::AlwaysOnTop
+                            } else {
+                                iced::window::Level::Normal
+                            };
+                            let level_task = iced::window::set_level(id, level);
+                            let passthrough_task =
+                                if self.settings.is_always_on_top && !self.window.is_focused {
+                                    iced::window::enable_mouse_passthrough(id)
+                                } else {
+                                    iced::window::disable_mouse_passthrough(id)
+                                };
+                            return Task::batch([level_task, passthrough_task]);
+                        }
+                    }
                 } else {
                     let cube_pid = self.spawn_cube_player();
                     self.cube.spawn_cube_with_player(w, h, 0, cube_pid);
@@ -305,9 +323,65 @@ impl WazooApp {
                         }
                     }
                     self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
-                    self.overlay.show_toast("🧊 3D Video Cube spawned! (Press [8] to toggle, [Tab] to cycle)", 180);
+                    self.overlay.show_toast(
+                        "🧊 3D Video Cube spawned! (Press [8] to toggle, [Tab] to cycle)",
+                        180,
+                    );
                 }
                 Task::none()
+            }
+            Message::ToggleDesktopCubeScreensaver => {
+                self.modals.menu = false;
+                self.titlebar.show_dropdown_menu = false;
+                self.cube.desktop_overlay = !self.cube.desktop_overlay;
+
+                if self.cube.desktop_overlay {
+                    // Ensure cube is enabled and at least one cube is bouncing
+                    if !self.cube.enabled || self.cube.cubes.is_empty() {
+                        let w = self.settings.window_bounds.width as f32;
+                        let h = self.settings.window_bounds.height as f32;
+                        let cube_pid = self.spawn_cube_player();
+                        let count = self.cube.cubes.len();
+                        self.cube.spawn_cube_with_player(w, h, count, cube_pid);
+                        if let Some(pid) = cube_pid {
+                            if let Some(pos) = self.players.player_index(pid) {
+                                self.focused_idx = pos;
+                            }
+                        }
+                    }
+                    self.overlay.show_toast(
+                        "🧊 Desktop Screensaver Mode (Click-Passthrough Active - Press [9] to exit)",
+                        180,
+                    );
+
+                    if let Some(id) = self.window.id {
+                        let level_task =
+                            iced::window::set_level(id, iced::window::Level::AlwaysOnTop);
+                        let passthrough_task = iced::window::enable_mouse_passthrough(id);
+                        return Task::batch([level_task, passthrough_task]);
+                    }
+                    Task::none()
+                } else {
+                    self.overlay
+                        .show_toast("🧊 Desktop Screensaver Mode disabled", 120);
+
+                    if let Some(id) = self.window.id {
+                        let level = if self.settings.is_always_on_top {
+                            iced::window::Level::AlwaysOnTop
+                        } else {
+                            iced::window::Level::Normal
+                        };
+                        let level_task = iced::window::set_level(id, level);
+                        let passthrough_task =
+                            if self.settings.is_always_on_top && !self.window.is_focused {
+                                iced::window::enable_mouse_passthrough(id)
+                            } else {
+                                iced::window::disable_mouse_passthrough(id)
+                            };
+                        return Task::batch([level_task, passthrough_task]);
+                    }
+                    Task::none()
+                }
             }
             Message::SpawnCube => {
                 self.modals.menu = false;
@@ -342,17 +416,54 @@ impl WazooApp {
                     }
                 }
                 if self.cube.cubes.is_empty() {
+                    let had_desktop = self.cube.desktop_overlay;
                     self.cube.enabled = false;
+                    self.cube.desktop_overlay = false;
                     self.cleanup_cube_players();
+                    if had_desktop {
+                        if let Some(id) = self.window.id {
+                            let level = if self.settings.is_always_on_top {
+                                iced::window::Level::AlwaysOnTop
+                            } else {
+                                iced::window::Level::Normal
+                            };
+                            let level_task = iced::window::set_level(id, level);
+                            let passthrough_task =
+                                if self.settings.is_always_on_top && !self.window.is_focused {
+                                    iced::window::enable_mouse_passthrough(id)
+                                } else {
+                                    iced::window::disable_mouse_passthrough(id)
+                                };
+                            return Task::batch([level_task, passthrough_task]);
+                        }
+                    }
                 }
                 Task::none()
             }
             Message::ClearCubes => {
                 self.modals.menu = false;
                 self.titlebar.show_dropdown_menu = false;
+                let had_desktop = self.cube.desktop_overlay;
                 self.cube.clear();
                 self.cleanup_cube_players();
                 self.overlay.show_toast("🧊 All 3D Cubes dismissed", 120);
+                if had_desktop {
+                    if let Some(id) = self.window.id {
+                        let level = if self.settings.is_always_on_top {
+                            iced::window::Level::AlwaysOnTop
+                        } else {
+                            iced::window::Level::Normal
+                        };
+                        let level_task = iced::window::set_level(id, level);
+                        let passthrough_task =
+                            if self.settings.is_always_on_top && !self.window.is_focused {
+                                iced::window::enable_mouse_passthrough(id)
+                            } else {
+                                iced::window::disable_mouse_passthrough(id)
+                            };
+                        return Task::batch([level_task, passthrough_task]);
+                    }
+                }
                 Task::none()
             }
             Message::SetCubeSpeed(speed) => {

@@ -104,7 +104,11 @@
     "cube_size": "Escala do cubo",
     "cube_size_desc": "Dimensões da geometria do cubo 3D",
     "cube_spawn": "Gerar outro cubo",
-    "cube_dismiss_all": "Dispensar todos os cubos"
+    "cube_dismiss_all": "Dispensar todos os cubos",
+    "cube_desktop_enable": "Ativar protetor de tela da área de trabalho (clique direto)",
+    "cube_desktop_disable": "Desativar protetor de tela da área de trabalho",
+    "cube_desktop_shortcut_hint": "Atalho: pressione 9 em qualquer lugar para alternar",
+    "cube_badge_desktop_on": "ÁREA DE TRABALHO"
   },
   "search": {
     "folder": "Pasta:",

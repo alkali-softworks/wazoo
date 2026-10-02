@@ -104,7 +104,11 @@
     "cube_size": "Échelle du cube",
     "cube_size_desc": "Dimensions de la géométrie du cube 3D flottant",
     "cube_spawn": "Générer un autre cube",
-    "cube_dismiss_all": "Fermer tous les cubes"
+    "cube_dismiss_all": "Fermer tous les cubes",
+    "cube_desktop_enable": "Activer l'économiseur d'écran de bureau (clics traversants)",
+    "cube_desktop_disable": "Désactiver l'économiseur d'écran de bureau",
+    "cube_desktop_shortcut_hint": "Raccourci : appuyez sur 9 pour basculer instantanément",
+    "cube_badge_desktop_on": "BUREAU"
   },
   "search": {
     "folder": "Dossier :",

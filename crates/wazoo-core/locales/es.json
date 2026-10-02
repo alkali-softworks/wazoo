@@ -104,7 +104,11 @@
     "cube_size": "Escala del cubo",
     "cube_size_desc": "Dimensiones de la geometría del cubo 3D flotante",
     "cube_spawn": "Generar otro cubo",
-    "cube_dismiss_all": "Descartar todos los cubos"
+    "cube_dismiss_all": "Descartar todos los cubos",
+    "cube_desktop_enable": "Activar salvapantallas de escritorio (clic transparente)",
+    "cube_desktop_disable": "Desactivar salvapantallas de escritorio",
+    "cube_desktop_shortcut_hint": "Atajo: presione 9 en cualquier lugar para alternar",
+    "cube_badge_desktop_on": "ESCRITORIO"
   },
   "search": {
     "folder": "Carpeta:",

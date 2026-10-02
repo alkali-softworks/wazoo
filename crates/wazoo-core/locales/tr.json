@@ -104,7 +104,11 @@
     "cube_size": "Küp Ölçeği",
     "cube_size_desc": "Yüzen 3D küp geometrisinin boyutları",
     "cube_spawn": "Yeni Bir Küp Oluştur",
-    "cube_dismiss_all": "Tüm Küpleri Kapat"
+    "cube_dismiss_all": "Tüm Küpleri Kapat",
+    "cube_desktop_enable": "Masaüstü Ekran Koruyucuyu Etkinleştir (Tıklama Geçişi)",
+    "cube_desktop_disable": "Masaüstü Ekran Koruyucuyu Devre Dışı Bırak",
+    "cube_desktop_shortcut_hint": "Kısayol: Anında geçiş yapmak için herhangi bir yerde 9'a basın",
+    "cube_badge_desktop_on": "MASAÜSTÜ"
   },
   "search": {
     "folder": "Klasör:",

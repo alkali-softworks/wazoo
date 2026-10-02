@@ -206,6 +206,79 @@ pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         .width(Length::Fill),
     );
 
+    // 2b. Desktop Screensaver Mode Toggle (Click-Passthrough)
+    let desktop_active = app.cube.desktop_overlay;
+    let desktop_button = cursor::PointerCursor::new(
+        button(
+            row![
+                text(if desktop_active { "⏹" } else { "🖥️" }).size(16),
+                column![
+                    text(if desktop_active {
+                        app.t("settings.cube_desktop_disable")
+                    } else {
+                        app.t("settings.cube_desktop_enable")
+                    })
+                    .size(13)
+                    .font(theme::FONT_BOLD)
+                    .color(if desktop_active {
+                        theme::COLOR_PRIMARY
+                    } else {
+                        iced::Color::WHITE
+                    }),
+                    text(app.t("settings.cube_desktop_shortcut_hint"))
+                        .size(11)
+                        .color(theme::COLOR_TEXT_MUTED),
+                ]
+                .spacing(2),
+                Space::new().width(Length::Fill),
+                badge_with_reset(
+                    if desktop_active {
+                        app.t("settings.cube_badge_desktop_on")
+                    } else {
+                        app.t("settings.cube_badge_off")
+                    },
+                    desktop_active,
+                    Message::ToggleDesktopCubeScreensaver,
+                ),
+            ]
+            .spacing(12)
+            .align_y(Alignment::Center),
+        )
+        .style(move |_theme: &iced::Theme, status| {
+            let bg = if desktop_active {
+                match status {
+                    button::Status::Hovered => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.22),
+                    button::Status::Pressed => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.3),
+                    _ => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.12),
+                }
+            } else {
+                match status {
+                    button::Status::Hovered => theme::COLOR_BTN_HOVER,
+                    button::Status::Pressed => iced::Color::from_rgb(0.15, 0.15, 0.15),
+                    _ => theme::COLOR_BTN_BG,
+                }
+            };
+            button::Style {
+                background: Some(iced::Background::Color(bg)),
+                text_color: iced::Color::WHITE,
+                border: iced::Border {
+                    radius: 8.0.into(),
+                    width: 1.0,
+                    color: if desktop_active {
+                        theme::COLOR_PRIMARY
+                    } else {
+                        iced::Color::from_rgb(0.25, 0.25, 0.28)
+                    },
+                },
+                shadow: iced::Shadow::default(),
+                ..Default::default()
+            }
+        })
+        .on_press(Message::ToggleDesktopCubeScreensaver)
+        .padding([12, 16])
+        .width(Length::Fill),
+    );
+
     // 3. Physics & Dynamics Controls (Speed & Size)
     let speed_val = app.cube.speed_multiplier;
     let speed_label = format!("{:.1}x", speed_val);
@@ -313,7 +386,7 @@ pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         ..Default::default()
     });
 
-    let mut content = column![header_card, toggle_button].spacing(14);
+    let mut content = column![header_card, toggle_button, desktop_button].spacing(14);
 
     if cube_active {
         content = content.push(dynamics_card);

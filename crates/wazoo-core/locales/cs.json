@@ -104,7 +104,11 @@
     "cube_size": "Měřítko krychle",
     "cube_size_desc": "Rozměry geometrie plovoucí 3D krychle",
     "cube_spawn": "Vytvořit další krychli",
-    "cube_dismiss_all": "Zavřít všechny krychle"
+    "cube_dismiss_all": "Zavřít všechny krychle",
+    "cube_desktop_enable": "Aktivovat spořič plochy (průchozí kliknutí)",
+    "cube_desktop_disable": "Deaktivovat spořič plochy",
+    "cube_desktop_shortcut_hint": "Zkratka: stiskněte 9 kdekoliv pro okamžité přepnutí",
+    "cube_badge_desktop_on": "PLOCHA"
   },
   "search": {
     "folder": "Složka:",

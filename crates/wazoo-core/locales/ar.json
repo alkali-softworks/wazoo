@@ -104,7 +104,11 @@
     "cube_size": "مقياس المكعب",
     "cube_size_desc": "أبعاد هندسة المكعب ثلاثي الأبعاد العائم",
     "cube_spawn": "إنشاء مكعب آخر",
-    "cube_dismiss_all": "إغلاق جميع المكعبات"
+    "cube_dismiss_all": "إغلاق جميع المكعبات",
+    "cube_desktop_enable": "تفعيل شاشة توقف سطح المكتب (تمرير النقر)",
+    "cube_desktop_disable": "تعطيل شاشة توقف سطح المكتب",
+    "cube_desktop_shortcut_hint": "اختصار: اضغط 9 في أي مكان للتبديل الفوري",
+    "cube_badge_desktop_on": "سطح المكتب"
   },
   "search": {
     "folder": "مجلد:",

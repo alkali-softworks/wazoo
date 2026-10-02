@@ -104,7 +104,11 @@
     "cube_size": "קנה מידה של הקובייה",
     "cube_size_desc": "מידות הגאומטריה של הקובייה התלת-ממדית",
     "cube_spawn": "צור קובייה נוספת",
-    "cube_dismiss_all": "סגור את כל הקוביות"
+    "cube_dismiss_all": "סגור את כל הקוביות",
+    "cube_desktop_enable": "הפעל שומר מסך לשולחן העבודה (מעבר לחיצות)",
+    "cube_desktop_disable": "השבת שומר מסך לשולחן העבודה",
+    "cube_desktop_shortcut_hint": "קיצור דרך: הקש 9 בכל מקום להפעלה/השבתה",
+    "cube_badge_desktop_on": "שולחן עבודה"
   },
   "search": {
     "folder": "תיקייה:",

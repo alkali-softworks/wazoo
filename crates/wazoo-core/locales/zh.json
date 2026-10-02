@@ -104,7 +104,11 @@
     "cube_size": "立方体尺寸",
     "cube_size_desc": "悬浮 3D 立方体几何体的尺寸",
     "cube_spawn": "生成另一个立方体",
-    "cube_dismiss_all": "清除所有立方体"
+    "cube_dismiss_all": "清除所有立方体",
+    "cube_desktop_enable": "启用桌面屏幕保护程序（鼠标穿透）",
+    "cube_desktop_disable": "禁用桌面屏幕保护程序",
+    "cube_desktop_shortcut_hint": "快捷键：随时按 9 快速切换",
+    "cube_badge_desktop_on": "桌面模式"
   },
   "search": {
     "folder": "文件夹:",

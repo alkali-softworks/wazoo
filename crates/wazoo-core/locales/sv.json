@@ -104,7 +104,11 @@
     "cube_size": "Kubskala",
     "cube_size_desc": "Dimensioner för den svävande 3D-kubgeometrin",
     "cube_spawn": "Skapa en till kub",
-    "cube_dismiss_all": "Avfärda alla kuber"
+    "cube_dismiss_all": "Avfärda alla kuber",
+    "cube_desktop_enable": "Aktivera skrivbordsskärmsläckare (klickgenomströmning)",
+    "cube_desktop_disable": "Inaktivera skrivbordsskärmsläckare",
+    "cube_desktop_shortcut_hint": "Genväg: tryck på 9 var som helst för att växla",
+    "cube_badge_desktop_on": "SKRIVBORD"
   },
   "search": {
     "folder": "Mapp:",

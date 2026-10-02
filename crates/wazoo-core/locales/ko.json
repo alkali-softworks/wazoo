@@ -104,7 +104,11 @@
     "cube_size": "큐브 크기",
     "cube_size_desc": "회전하는 3D 큐브 기하 구조의 치수",
     "cube_spawn": "큐브 추가 생성",
-    "cube_dismiss_all": "모든 큐브 닫기"
+    "cube_dismiss_all": "모든 큐브 닫기",
+    "cube_desktop_enable": "데스크톱 화면 보호기 활성화 (클릭 통과)",
+    "cube_desktop_disable": "데스크톱 화면 보호기 비활성화",
+    "cube_desktop_shortcut_hint": "단축키: 언제든지 9를 눌러 즉시 전환",
+    "cube_badge_desktop_on": "데스크톱"
   },
   "search": {
     "folder": "폴더:",
