@@ -16,9 +16,7 @@ pub mod scanner;
 pub mod search;
 pub mod window;
 
-use crate::app::{
-    LONG_TOAST_SECS, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, WazooApp,
-};
+use crate::app::{PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS, WazooApp};
 use crate::message::Message;
 use crate::state::{AppPlayer, PlayerList};
 use iced::Task;
@@ -315,9 +313,8 @@ impl WazooApp {
                         }
                     }
                     self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
-                    self.overlay.show_toast(
-                        "🧊 3D Video Cube spawned! (Press [8] to toggle, [Tab] to cycle)",
-                    );
+                    self.overlay
+                        .show_toast("🧊 3D Video Cube spawned! (Press [8] to toggle)");
                 }
                 Task::none()
             }
@@ -364,9 +361,8 @@ impl WazooApp {
                         }
                     }
 
-                    self.overlay.show_toast_with_duration(
-                        "🧊 Desktop Screensaver Mode (Click-Passthrough Active - Press [9] to exit)",
-                        LONG_TOAST_SECS,
+                    self.overlay.show_toast(
+                        "Desktop Screensaver Mode (Click-Passthrough Active - Press [9] to exit)",
                     );
 
                     if let Some(id) = self.window.id {
@@ -566,12 +562,11 @@ impl WazooApp {
                 iced::window::Level::Normal
             };
             let level_task = iced::window::set_level(id, level);
-            let passthrough_task =
-                if self.settings.is_always_on_top && !self.window.is_focused {
-                    iced::window::enable_mouse_passthrough(id)
-                } else {
-                    iced::window::disable_mouse_passthrough(id)
-                };
+            let passthrough_task = if self.settings.is_always_on_top && !self.window.is_focused {
+                iced::window::enable_mouse_passthrough(id)
+            } else {
+                iced::window::disable_mouse_passthrough(id)
+            };
             Task::batch([level_task, passthrough_task])
         } else {
             Task::none()
