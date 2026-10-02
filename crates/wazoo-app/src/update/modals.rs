@@ -64,11 +64,17 @@ impl WazooApp {
                 Task::none()
             }
             Message::CloseSettingsModal => {
+                if self.modals.playback_settings_debounce_ticks > 0 {
+                    self.apply_playback_settings();
+                }
                 self.modals.settings = false;
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
             }
             Message::SetSettingsTab(tab) => {
+                if self.modals.playback_settings_debounce_ticks > 0 {
+                    self.apply_playback_settings();
+                }
                 self.modals.settings_tab = tab;
                 Task::none()
             }
@@ -93,46 +99,36 @@ impl WazooApp {
             Message::SetGamma(val) => {
                 let clamped = val.clamp(-100.0, 100.0);
                 self.settings.gamma = clamped;
-                for player in &mut self.players {
-                    player.set_gamma(clamped as f64);
-                }
-                let _ = self.config_mgr.save_settings(&self.settings);
+                self.modals.playback_settings_debounce_ticks =
+                    crate::app::PLAYBACK_SETTINGS_DEBOUNCE_TICKS;
                 Task::none()
             }
             Message::SetContrast(val) => {
                 let clamped = val.clamp(-100.0, 100.0);
                 self.settings.contrast = clamped;
-                for player in &mut self.players {
-                    player.set_contrast(clamped as f64);
-                }
-                let _ = self.config_mgr.save_settings(&self.settings);
+                self.modals.playback_settings_debounce_ticks =
+                    crate::app::PLAYBACK_SETTINGS_DEBOUNCE_TICKS;
                 Task::none()
             }
             Message::SetBrightness(val) => {
                 let clamped = val.clamp(-100.0, 100.0);
                 self.settings.brightness = clamped;
-                for player in &mut self.players {
-                    player.set_brightness(clamped as f64);
-                }
-                let _ = self.config_mgr.save_settings(&self.settings);
+                self.modals.playback_settings_debounce_ticks =
+                    crate::app::PLAYBACK_SETTINGS_DEBOUNCE_TICKS;
                 Task::none()
             }
             Message::SetSaturation(val) => {
                 let clamped = val.clamp(-100.0, 100.0);
                 self.settings.saturation = clamped;
-                for player in &mut self.players {
-                    player.set_saturation(clamped as f64);
-                }
-                let _ = self.config_mgr.save_settings(&self.settings);
+                self.modals.playback_settings_debounce_ticks =
+                    crate::app::PLAYBACK_SETTINGS_DEBOUNCE_TICKS;
                 Task::none()
             }
             Message::SetPlaybackSpeed(val) => {
                 let clamped = val.clamp(0.25, 3.0);
                 self.settings.playback_speed = clamped;
-                for player in &mut self.players {
-                    player.set_speed(clamped as f64);
-                }
-                let _ = self.config_mgr.save_settings(&self.settings);
+                self.modals.playback_settings_debounce_ticks =
+                    crate::app::PLAYBACK_SETTINGS_DEBOUNCE_TICKS;
                 Task::none()
             }
             Message::ToggleCrtFilter => {
@@ -175,6 +171,7 @@ impl WazooApp {
                 Task::none()
             }
             Message::ResetPlaybackOptions => {
+                self.modals.playback_settings_debounce_ticks = 0;
                 self.settings.gamma = 0.0;
                 self.settings.contrast = 0.0;
                 self.settings.brightness = 0.0;
@@ -182,10 +179,7 @@ impl WazooApp {
                 self.settings.playback_speed = 1.0;
                 self.settings.crt_enabled = false;
                 for player in &mut self.players {
-                    player.set_gamma(0.0);
-                    player.set_contrast(0.0);
-                    player.set_brightness(0.0);
-                    player.set_saturation(0.0);
+                    player.set_equalizer(0.0, 0.0, 0.0, 0.0);
                     player.set_speed(1.0);
                     player.set_crt_enabled(false);
                 }
@@ -257,6 +251,9 @@ impl WazooApp {
                     || self.titlebar.show_dropdown_menu
                     || self.drawers.is_any_open()
                 {
+                    if self.modals.playback_settings_debounce_ticks > 0 {
+                        self.apply_playback_settings();
+                    }
                     self.modals.close_all();
                     self.titlebar.show_dropdown_menu = false;
                     self.close_file_picker();
@@ -274,5 +271,22 @@ impl WazooApp {
             Message::ModalCardClicked => Task::none(),
             _ => Task::none(),
         }
+    }
+
+    /// Applies pending debounced equalizer and playback speed settings across all active video players
+    /// and commits the settings to persistent storage.
+    pub fn apply_playback_settings(&mut self) {
+        self.modals.playback_settings_debounce_ticks = 0;
+        let gamma = self.settings.gamma as f64;
+        let contrast = self.settings.contrast as f64;
+        let brightness = self.settings.brightness as f64;
+        let saturation = self.settings.saturation as f64;
+        let speed = self.settings.playback_speed as f64;
+
+        for player in &mut self.players {
+            player.set_equalizer(gamma, contrast, brightness, saturation);
+            player.set_speed(speed);
+        }
+        let _ = self.config_mgr.save_settings(&self.settings);
     }
 }

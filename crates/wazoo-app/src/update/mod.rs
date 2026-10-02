@@ -321,6 +321,13 @@ impl WazooApp {
                 self.apply_file_picker_search();
             }
         }
+
+        if self.modals.playback_settings_debounce_ticks > 0 {
+            self.modals.playback_settings_debounce_ticks -= 1;
+            if self.modals.playback_settings_debounce_ticks == 0 {
+                self.apply_playback_settings();
+            }
+        }
     }
 
     /// Renders new video frames on all active player handles, clearing loading state upon completion.
