@@ -28,6 +28,8 @@ pub struct AppPlayer {
     pub flip: crate::state::FlipState,
     /// Whether this player is an independent 3D cube screensaver player
     pub is_cube: bool,
+    /// Whether this player was paused before entering desktop overlay mode
+    pub was_paused_before_desktop: bool,
 }
 
 pub type Player = AppPlayer;
@@ -43,6 +45,7 @@ impl AppPlayer {
             loading_ticks: 0,
             flip: crate::state::FlipState::new(wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS),
             is_cube: false,
+            was_paused_before_desktop: false,
         }
     }
 
@@ -56,6 +59,7 @@ impl AppPlayer {
             loading_ticks: 0,
             flip: crate::state::FlipState::new(wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS),
             is_cube: true,
+            was_paused_before_desktop: false,
         }
     }
 

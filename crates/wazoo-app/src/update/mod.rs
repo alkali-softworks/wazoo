@@ -298,6 +298,11 @@ impl WazooApp {
                     self.cleanup_cube_players();
                     self.overlay.show_toast("🧊 3D Video Cube dismissed", 120);
                     if had_desktop {
+                        for p in &mut self.players {
+                            if !p.is_cube && !p.was_paused_before_desktop {
+                                p.set_paused(false);
+                            }
+                        }
                         if let Some(id) = self.window.id {
                             let level = if self.settings.is_always_on_top {
                                 iced::window::Level::AlwaysOnTop
@@ -349,6 +354,15 @@ impl WazooApp {
                             }
                         }
                     }
+
+                    // Suspend background decoding and audio for all invisible regular players (0% CPU waste)
+                    for p in &mut self.players {
+                        if !p.is_cube {
+                            p.was_paused_before_desktop = !p.is_playing();
+                            p.set_paused(true);
+                        }
+                    }
+
                     self.overlay.show_toast(
                         "🧊 Desktop Screensaver Mode (Click-Passthrough Active - Press [9] to exit)",
                         180,
@@ -362,6 +376,13 @@ impl WazooApp {
                     }
                     Task::none()
                 } else {
+                    // Resume regular grid players that were actively playing
+                    for p in &mut self.players {
+                        if !p.is_cube && !p.was_paused_before_desktop {
+                            p.set_paused(false);
+                        }
+                    }
+
                     self.overlay
                         .show_toast("🧊 Desktop Screensaver Mode disabled", 120);
 
@@ -421,6 +442,11 @@ impl WazooApp {
                     self.cube.desktop_overlay = false;
                     self.cleanup_cube_players();
                     if had_desktop {
+                        for p in &mut self.players {
+                            if !p.is_cube && !p.was_paused_before_desktop {
+                                p.set_paused(false);
+                            }
+                        }
                         if let Some(id) = self.window.id {
                             let level = if self.settings.is_always_on_top {
                                 iced::window::Level::AlwaysOnTop
@@ -448,6 +474,11 @@ impl WazooApp {
                 self.cleanup_cube_players();
                 self.overlay.show_toast("🧊 All 3D Cubes dismissed", 120);
                 if had_desktop {
+                    for p in &mut self.players {
+                        if !p.is_cube && !p.was_paused_before_desktop {
+                            p.set_paused(false);
+                        }
+                    }
                     if let Some(id) = self.window.id {
                         let level = if self.settings.is_always_on_top {
                             iced::window::Level::AlwaysOnTop
@@ -528,8 +559,18 @@ impl WazooApp {
         }
     }
 
-    /// Renders new video frames on all active player handles, clearing loading state upon completion.
+    /// Renders new video frames on active player handles, clearing loading state upon completion.
+    /// In desktop overlay mode, only the active 3D cube player updates frames to save 100% background CPU.
     fn update_player_frames(&mut self) {
+        if self.cube.desktop_overlay {
+            for p in &mut self.players {
+                if p.is_cube && p.update_frame() {
+                    p.stop_loading();
+                }
+            }
+            return;
+        }
+
         for p in &mut self.players {
             if p.update_frame() {
                 p.stop_loading();
@@ -539,6 +580,9 @@ impl WazooApp {
 
     /// Synchronizes scroll stream layout heights with players' native aspect ratios.
     fn sync_scroll_item_heights(&mut self) {
+        if self.cube.desktop_overlay {
+            return;
+        }
         if self.settings.playback_mode == PlaybackMode::Scroll {
             let mut heights_changed = false;
             for p in &self.players {

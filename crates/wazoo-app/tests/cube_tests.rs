@@ -381,4 +381,46 @@ fn test_desktop_cube_key_event_routing() {
     assert!(!app.cube.desktop_overlay);
 }
 
+#[test]
+fn test_desktop_cube_pauses_background_players_to_save_cpu() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    let tmp = std::env::temp_dir().join(format!(
+        "wazoo_desktop_cpu_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&tmp);
+    let f1 = tmp.join("v1.mp4");
+    let _ = std::fs::File::create(&f1);
+
+    app.available_videos = vec![wazoo_core::VideoRecord::new(1, "S1", f1.to_string_lossy())];
+    let _ = app.update(wazoo_app::message::Message::AddNewPlayer);
+    assert_eq!(app.players.iter().filter(|p| !p.is_cube).count(), 1);
+
+    // Initial regular player is playing (not paused)
+    let grid_idx = app.players.iter().position(|p| !p.is_cube).unwrap();
+    assert!(app.players[grid_idx].is_playing());
+
+    // Turn ON mode 9 (Desktop Cube Screensaver)
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+
+    // Grid player must now be paused to prevent CPU/GPU decoding waste!
+    assert!(!app.players[grid_idx].is_playing());
+
+    // Cube player must NOT be paused
+    let cube_idx = app.players.iter().position(|p| p.is_cube).unwrap();
+    assert!(app.players[cube_idx].is_playing());
+
+    // Turn OFF mode 9
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(!app.cube.desktop_overlay);
+
+    // Grid player must automatically resume playing
+    assert!(app.players[grid_idx].is_playing());
+}
+
 
