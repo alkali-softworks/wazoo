@@ -13,6 +13,8 @@ use iced::Task;
 use std::time::Duration;
 
 impl WazooApp {
+    /// Handles messages for side drawer visibility, file picker searching/filtering,
+    /// subtitle track selection, transcript cues seeking, and play history navigation.
     pub(crate) fn update_drawers(&mut self, message: Message) -> Task<Message> {
         let exit_task = if matches!(
             message,

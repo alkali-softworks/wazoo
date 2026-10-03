@@ -22,6 +22,8 @@ use iced_wgpu::wgpu;
 
 use crate::pipeline::FrameData;
 
+/// GPU uniform buffer layout for the 3D cube vertex and fragment shaders.
+/// Matches `struct CubeUniforms` in WGSL, strictly aligned to 16-byte boundaries (80 bytes total).
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 pub struct CubeUniforms {
@@ -49,6 +51,7 @@ struct CubeGpuEntry {
     last_frame_seq: u64,
 }
 
+/// Manages WGPU render pipeline state, texture sampling, and GPU buffer lifecycle for 3D cubes.
 pub struct CubePipeline {
     render_pipeline: wgpu::RenderPipeline,
     bind_group_layout: wgpu::BindGroupLayout,
@@ -510,6 +513,8 @@ impl Pipeline for CubePipeline {
     }
 }
 
+/// Represents a single active 3D cube instance to be rendered in the current frame,
+/// packaging spatial transform parameters, video frame buffers, and shader effect toggles.
 #[derive(Debug, Clone)]
 pub struct CubeInstance {
     pub cube_id: u64,
@@ -528,6 +533,7 @@ pub struct CubeInstance {
     pub opacity: f32,
 }
 
+/// Primitive shader bundle containing all active 3D cube instances for WGPU dispatch.
 #[derive(Debug, Clone)]
 pub struct CubePrimitive {
     pub instances: Vec<CubeInstance>,
@@ -641,11 +647,13 @@ impl Primitive for CubePrimitive {
     }
 }
 
+/// Bridges iced's custom shader widget framework with the 3D cube rendering pipeline.
 pub struct CubeProgram {
     instances: Vec<CubeInstance>,
 }
 
 impl CubeProgram {
+    /// Creates a new `CubeProgram` with the specified collection of cube instances.
     pub fn new(instances: Vec<CubeInstance>) -> Self {
         Self { instances }
     }
@@ -667,6 +675,7 @@ impl<Message> Program<Message> for CubeProgram {
     }
 }
 
+/// Creates a full-window iced `Shader` element that renders all active 3D bouncing cubes.
 pub fn cube_shader<Message>(program: CubeProgram) -> Shader<Message, CubeProgram> {
     Shader::new(program)
         .width(Length::Fill)

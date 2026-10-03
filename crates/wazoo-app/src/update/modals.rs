@@ -12,6 +12,8 @@ use crate::message::Message;
 use iced::Task;
 
 impl WazooApp {
+    /// Handles messages for modal dialog visibility (Settings, Search, Help, Bookmarks, Menu),
+    /// tab switching, and user preference persistence to disk.
     pub(crate) fn update_modals(&mut self, message: Message) -> Task<Message> {
         let exit_task = if matches!(
             message,

@@ -25,6 +25,8 @@ use wazoo_core::PlaybackMode;
 use wazoo_media::VideoHandle;
 
 impl WazooApp {
+    /// Primary state reducer for the application. Processes incoming messages,
+    /// coordinates engine ticks, routes sub-domain events, and produces asynchronous tasks.
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             // =========================================================================
@@ -32,6 +34,7 @@ impl WazooApp {
             // =========================================================================
             Message::AnimationTick => {
                 if self.settings.playback_mode == PlaybackMode::Scroll {
+                    // Advance scroll physics and collect player IDs that have moved entirely off-screen
                     let offscreen = self.scroll_engine.tick();
                     if !offscreen.is_empty() {
                         let (keep, despawned): (Vec<_>, Vec<_>) = self
@@ -39,6 +42,8 @@ impl WazooApp {
                             .drain(..)
                             .partition(|p| !offscreen.contains(&p.id));
                         self.players = PlayerList(keep);
+                        // Offload pipeline teardown to a background thread to prevent deallocation
+                        // and driver teardown latency (20-50ms) from causing UI frame drops during fast scrolling.
                         if !despawned.is_empty() {
                             std::thread::spawn(move || drop(despawned));
                         }
@@ -47,7 +52,7 @@ impl WazooApp {
                     let margin = self.scroll_engine.default_item_height() * 1.5;
                     let mut needs_preload = false;
 
-                    // Non-blocking spawn: attach preloaded player seamlessly if ready
+                    // Non-blocking spawn: attach preloaded player seamlessly into the feed if ready
                     while let Some(spawn_y) =
                         self.scroll_engine.needs_new_player_with_margin(margin)
                     {
@@ -63,16 +68,18 @@ impl WazooApp {
                                 .push(AppPlayer::new(handle, self.default_shuffle_mode));
                             needs_preload = true;
                         } else {
-                            // Preloaded player still preparing in background - do NOT block!
+                            // Preloaded player is still decoding in the background; do not block UI thread
                             break;
                         }
                     }
 
+                    // Dynamically update audio volume falloff based on vertical proximity to viewport center
                     for p in &mut self.players {
                         let vol = self.scroll_engine.calculate_player_volume(p.id);
                         p.set_volume(vol);
                     }
 
+                    // Trigger next background pre-warm task if the pipeline buffer is empty
                     if needs_preload || (self.preloaded_player.is_none() && !self.is_preloading) {
                         return self.trigger_preload_task();
                     }
@@ -81,12 +88,13 @@ impl WazooApp {
             }
 
             Message::VideoFrameTick => {
+                // Drop non-essential frame processing when window is unfocused to conserve battery/CPU
                 if self.should_throttle_unfocused_frame() {
                     return Task::none();
                 }
 
-                // Suspend all tick animations and layout
-                // while resizing to avoid UI stutter.
+                // Suspend all tick animations, layout recalculations, and physics
+                // while the window is actively being resized to eliminate visual tearing and IPC lag.
                 if self.window.is_resizing() {
                     self.update_player_frames();
                     return Task::none();
@@ -102,11 +110,15 @@ impl WazooApp {
             }
 
             Message::WatchdogTick => {
+                // Debounced persistence: saves window geometry to disk on watchdog intervals
+                // rather than thrashing disk I/O on every single pixel of mouse dragging.
                 if self.window.bounds_dirty {
                     self.window.bounds_dirty = false;
                     let _ = self.config_mgr.save_settings(&self.settings);
                 }
-                // Auto-clear loading state if it exceeds 10 seconds to avoid indefinite spinner
+
+                // Watchdog safety: auto-clear loading state if it exceeds 10 seconds (~10 watchdog ticks)
+                // to prevent an indefinite spinning loading indicator if a decoder hangs.
                 for p in &mut self.players {
                     if p.is_loading {
                         p.loading_ticks += 1;
@@ -116,6 +128,7 @@ impl WazooApp {
                     }
                 }
 
+                // Detect completed streams and frozen playback pipelines
                 let mut finished_ids = Vec::new();
                 let mut stuck_ids = Vec::new();
 
@@ -130,11 +143,13 @@ impl WazooApp {
                     }
                 }
 
+                // Automatically advance ended videos to keep the continuous playback experience seamless
                 for id in finished_ids {
                     log::info!("Player {id} video reached end, advancing to next video");
                     let _ = self.update(Message::AutoAdvanceVideo(id));
                 }
 
+                // Skip stalled pipelines that have stopped producing frames past the threshold
                 for id in stuck_ids {
                     log::warn!(
                         "Player {id} playback stuck for {}s, skipping to next video",
@@ -143,6 +158,7 @@ impl WazooApp {
                     let _ = self.update(Message::AutoAdvanceVideo(id));
                 }
 
+                // Decrement active toast notification countdown
                 if self.overlay.toast_message.is_some() {
                     if self.overlay.toast_time_remaining > 0 {
                         self.overlay.toast_time_remaining -= 1;
@@ -151,6 +167,8 @@ impl WazooApp {
                         self.overlay.toast_message = None;
                     }
                 }
+
+                // In Flip Mode, decrement player flip countdowns and stagger video transitions
                 if self.settings.playback_mode == PlaybackMode::Flip {
                     let interval = self.settings.flip_interval_secs.max(1);
                     let mut to_flip = Vec::new();
@@ -172,6 +190,8 @@ impl WazooApp {
                         let _ = self.advance_player_to_next_video(id, false);
                     }
                 }
+
+                // Persist active video paths and playhead positions periodically
                 self.save_session_state();
                 Task::none()
             }

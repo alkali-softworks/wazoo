@@ -4,6 +4,7 @@
  * Search Queries & Folder Filters State
  */
 
+/// Manages active search queries, tokenized tags, and folder filter selections.
 #[derive(Debug, Clone, Default)]
 pub struct SearchState {
     pub active_query: String,
@@ -17,6 +18,8 @@ pub struct SearchState {
 }
 
 impl SearchState {
+    /// Returns true if an active non-empty search query filter is currently applied.
+    #[inline]
     pub fn is_query_active(&self) -> bool {
         !self.active_query.trim().is_empty()
     }

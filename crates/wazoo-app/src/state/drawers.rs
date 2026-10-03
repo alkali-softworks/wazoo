@@ -9,6 +9,7 @@ use crate::views::file_picker::{FilePickerGroup, PrecomputedVideoMeta};
 use std::collections::HashSet;
 use wazoo_media::SubtitleCue;
 
+/// Manages visibility and search states for sliding side panels (File Picker, Transcript, and Play History).
 #[derive(Debug, Clone, Default)]
 pub struct DrawerState {
     // File Picker
@@ -35,10 +36,14 @@ pub struct DrawerState {
 }
 
 impl DrawerState {
+    /// Returns true if any slide-out drawer panel is currently open.
+    #[inline]
     pub fn is_any_open(&self) -> bool {
         self.show_file_picker || self.show_transcript || self.show_history_drawer
     }
 
+    /// Closes all open side drawer panels and associated sub-menus.
+    #[inline]
     pub fn close_all(&mut self) {
         self.show_file_picker = false;
         self.show_transcript = false;
