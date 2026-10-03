@@ -153,7 +153,6 @@ impl CubeState {
         let removed = self.cubes.pop();
         if self.cubes.is_empty() {
             self.enabled = false;
-            self.desktop_overlay = false;
         }
         removed
     }
