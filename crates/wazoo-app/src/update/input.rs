@@ -91,14 +91,18 @@ impl WazooApp {
                 KeyAction::Player3 => return self.update(Message::SetPlayerCount(3)),
                 KeyAction::Player4 => return self.update(Message::SetPlayerCount(4)),
                 KeyAction::SpeedOrBookmarkDown => {
-                    if self.settings.playback_mode == PlaybackMode::Scroll {
+                    if self.cube.is_present() {
+                        return self.update(Message::RemoveCube);
+                    } else if self.settings.playback_mode == PlaybackMode::Scroll {
                         return self.update(Message::AdjustScrollSpeed(-0.1));
                     } else {
                         return self.update(Message::RemoveBookmarkFocused);
                     }
                 }
                 KeyAction::SpeedOrBookmarkUp => {
-                    if self.settings.playback_mode == PlaybackMode::Scroll {
+                    if self.cube.is_present() {
+                        return self.update(Message::SpawnCube);
+                    } else if self.settings.playback_mode == PlaybackMode::Scroll {
                         return self.update(Message::AdjustScrollSpeed(0.1));
                     } else {
                         return self.update(Message::AddBookmarkFocused);

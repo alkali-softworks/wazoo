@@ -84,6 +84,11 @@ impl CubeState {
         Self::default()
     }
 
+    /// Returns true if the 3D cube screensaver or overlay is active and at least one cube exists.
+    pub fn is_present(&self) -> bool {
+        self.enabled && !self.cubes.is_empty()
+    }
+
     pub fn spawn_cube(&mut self, window_w: f32, window_h: f32, player_idx: usize) {
         self.spawn_cube_with_player(window_w, window_h, player_idx, None);
     }
