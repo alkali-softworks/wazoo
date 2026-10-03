@@ -152,11 +152,11 @@ impl WazooApp {
                 self.settings.filters_enabled = new_state;
                 self.sync_player_filters();
                 let _ = self.config_mgr.save_settings(&self.settings);
-                let shortcut = self.settings.keybinds.toggle_filters.as_str();
+                let key = self.settings.keybinds.toggle_filters.to_uppercase();
                 let msg = if new_state {
-                    format!("{} ({})", self.t("toast.filters_enabled"), shortcut)
+                    self.t_with("toast.filters_enabled", &[("key", &key)])
                 } else {
-                    format!("{} ({})", self.t("toast.filters_disabled"), shortcut)
+                    self.t("toast.filters_disabled")
                 };
                 self.overlay.show_toast(msg);
                 Task::none()
