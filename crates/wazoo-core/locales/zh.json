@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "快捷键：按 {key} 切换",
     "cube_badge_desktop_on": "覆盖模式",
     "cube_sheen": "3D 光照与光泽",
-    "cube_sheen_desc": "立方体表面的定向光照与高光反射"
+    "cube_sheen_desc": "立方体表面的定向光照与高光反射",
+    "wavy_filter": "波浪滤镜",
+    "wavy_filter_desc": "流体波浪位移着色器效果",
+    "fog_filter": "迷雾滤镜",
+    "fog_filter_desc": "大气翻滚体积迷雾与云层模拟",
+    "master_filters": "着色器滤镜",
+    "master_filters_desc": "启用或禁用所有处于活动状态的视觉后期处理着色器"
   },
   "search": {
     "folder": "文件夹:",
@@ -160,7 +166,8 @@
       "clear_marks": "清除出入点循环",
       "toggle_cube": "切换 3D 立方体",
       "toggle_cube_overlay": "切换立方体覆盖模式",
-      "toggle_fullscreen": "切换全屏"
+      "toggle_fullscreen": "切换全屏",
+      "toggle_filters": "切换着色器滤镜"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "已禁用立方体覆盖模式",
     "cube_playing": "3D 立方体: {title}",
     "fullscreen_enabled": "全屏已启用 (按 [{key}] 或 Esc 退出)",
-    "fullscreen_disabled": "全屏已禁用"
+    "fullscreen_disabled": "全屏已禁用",
+    "filters_enabled": "着色器滤镜已启用 (按 [{key}] 切换)",
+    "filters_disabled": "着色器滤镜已禁用"
   }
 }

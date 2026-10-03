@@ -321,7 +321,7 @@ fn test_boot_persists_default_keybinds() {
     assert_eq!(app.settings.keybinds.add_player, "n");
     assert_eq!(app.settings.keybinds.open_help, "F1");
     assert_eq!(app.settings.keybinds.open_settings, "F2");
-    assert_eq!(app.settings.keybinds.toggle_crt, "7");
+    assert_eq!(app.settings.keybinds.toggle_filters, "7");
 
     // Every key in ALL_KEYS must be present in settings.json
     for key in wazoo_core::KeybindSettings::ALL_KEYS {
@@ -363,7 +363,7 @@ fn test_boot_reconciles_and_persists_incomplete_keybinds() {
     assert_eq!(app.settings.keybinds.add_player, "n");
     assert_eq!(app.settings.keybinds.open_help, "F1");
     assert_eq!(app.settings.keybinds.open_settings, "F2");
-    assert_eq!(app.settings.keybinds.toggle_crt, "7");
+    assert_eq!(app.settings.keybinds.toggle_filters, "7");
 
     // Boot should have written the complete list to settings.json
     assert!(app.config_mgr.has_complete_keybinds_in_settings());
@@ -373,7 +373,7 @@ fn test_boot_reconciles_and_persists_incomplete_keybinds() {
     assert!(updated_file_content.contains("\"add_player\": \"n\""));
     assert!(updated_file_content.contains("\"open_help\": \"F1\""));
     assert!(updated_file_content.contains("\"open_settings\": \"F2\""));
-    assert!(updated_file_content.contains("\"toggle_crt\": \"7\""));
+    assert!(updated_file_content.contains("\"toggle_filters\": \"7\""));
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
@@ -652,18 +652,27 @@ fn test_settings_modal_tabs_and_playback_options() {
     let _ = app.update(Message::SetContrast(0.0));
     assert_eq!(app.settings.contrast, 0.0);
 
-    // Switch to Filters tab (CRT Filter)
+    // Switch to Filters tab (Shader Filters)
     let _ = app.update(Message::SetSettingsTab(SettingsTab::Filters));
     assert_eq!(app.modals.settings_tab, SettingsTab::Filters);
     {
         let _view_filters = app.view_settings_modal();
     }
-    let _ = app.update(Message::ToggleCrtFilter);
+    // Master filter toggle enables all checked filters (CRT is checked by default)
+    let _ = app.update(Message::ToggleFilters);
+    assert!(app.settings.filters_enabled);
     assert!(app.settings.crt_enabled);
     {
         let _view_filters_active = app.view_settings_modal();
     }
-    let _ = app.update(Message::ToggleCrtFilter);
+    // Individual filter toggles work
+    let _ = app.update(Message::ToggleWavyFilter);
+    assert!(app.settings.filter_wavy);
+    let _ = app.update(Message::ToggleFogFilter);
+    assert!(app.settings.filter_fog);
+
+    let _ = app.update(Message::ToggleFilters);
+    assert!(!app.settings.filters_enabled);
     assert!(!app.settings.crt_enabled);
 
     // Switch to System tab (Window Opacity & Default Player)

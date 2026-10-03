@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "Skrót: naciśnij {key}, aby przełączyć",
     "cube_badge_desktop_on": "NAKŁADKA",
     "cube_sheen": "Światło i połysk 3D",
-    "cube_sheen_desc": "Kierunkowe oświetlenie i odblaski na powierzchniach kostki"
+    "cube_sheen_desc": "Kierunkowe oświetlenie i odblaski na powierzchniach kostki",
+    "wavy_filter": "Filtr falisty",
+    "wavy_filter_desc": "Efekt cieniowania płynnego przesunięcia falowego",
+    "fog_filter": "Filtr mgły",
+    "fog_filter_desc": "Atmosferyczna symulacja objętościowej mgły i chmur",
+    "master_filters": "Filtry cieniowania",
+    "master_filters_desc": "Włącz lub wyłącz wszystkie aktywne shadery postprocessingu wizualnego"
   },
   "search": {
     "folder": "Folder:",
@@ -160,7 +166,8 @@
       "clear_marks": "Wyczyść pętlę punktów In / Out",
       "toggle_cube": "Przełącz kostkę 3D",
       "toggle_cube_overlay": "Przełącz tryb nakładki kostki",
-      "toggle_fullscreen": "Przełącz pełny ekran"
+      "toggle_fullscreen": "Przełącz pełny ekran",
+      "toggle_filters": "Przełącz filtry cieniowania"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "Tryb nakładki kostki wyłączony",
     "cube_playing": "Kostka 3D: {title}",
     "fullscreen_enabled": "Pełny ekran włączony (Naciśnij [{key}] lub Esc, aby wyjść)",
-    "fullscreen_disabled": "Pełny ekran wyłączony"
+    "fullscreen_disabled": "Pełny ekran wyłączony",
+    "filters_enabled": "Filtry cieniowania włączone (Naciśnij [{key}], aby przełączyć)",
+    "filters_disabled": "Filtry cieniowania wyłączone"
   }
 }

@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "Phím tắt: Nhấn {key} để bật/tắt",
     "cube_badge_desktop_on": "LỚP PHỦ",
     "cube_sheen": "Ánh sáng & độ bóng 3D",
-    "cube_sheen_desc": "Ánh sáng định hướng và phản xạ trên các bề mặt khối"
+    "cube_sheen_desc": "Ánh sáng định hướng và phản xạ trên các bề mặt khối",
+    "wavy_filter": "Bộ lọc lượn sóng",
+    "wavy_filter_desc": "Hiệu ứng đổ bóng dịch chuyển sóng uyển chuyển",
+    "fog_filter": "Bộ lọc sương mù",
+    "fog_filter_desc": "Mô phỏng sương mù và mây thể tích trong khí quyển",
+    "master_filters": "Bộ lọc đổ bóng",
+    "master_filters_desc": "Bật hoặc tắt tất cả các bộ đổ bóng xử lý hậu kỳ hình ảnh đang hoạt động"
   },
   "search": {
     "folder": "Thư mục:",
@@ -160,7 +166,8 @@
       "clear_marks": "Xóa đoạn lặp In / Out",
       "toggle_cube": "Bật/tắt khối 3D",
       "toggle_cube_overlay": "Bật/tắt chế độ lớp phủ khối",
-      "toggle_fullscreen": "Bật/tắt toàn màn hình"
+      "toggle_fullscreen": "Bật/tắt toàn màn hình",
+      "toggle_filters": "Bật/Tắt bộ lọc đổ bóng"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "Đã tắt chế độ lớp phủ khối",
     "cube_playing": "Khối 3D: {title}",
     "fullscreen_enabled": "Đã bật toàn màn hình (Nhấn [{key}] hoặc Esc để thoát)",
-    "fullscreen_disabled": "Đã tắt toàn màn hình"
+    "fullscreen_disabled": "Đã tắt toàn màn hình",
+    "filters_enabled": "Đã bật bộ lọc đổ bóng (Nhấn [{key}] để chuyển đổi)",
+    "filters_disabled": "Đã tắt bộ lọc đổ bóng"
   }
 }

@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "اختصار: اضغط {key} للتبديل",
     "cube_badge_desktop_on": "تراكب",
     "cube_sheen": "إضاءة ولمعان ثلاثي الأبعاد",
-    "cube_sheen_desc": "إضاءة اتجاهية وانعكاسات على أسطح المكعب"
+    "cube_sheen_desc": "إضاءة اتجاهية وانعكاسات على أسطح المكعب",
+    "wavy_filter": "فلتر التموج",
+    "wavy_filter_desc": "تأثير تظليل إزاحة الموجة السلسة المتموجة",
+    "fog_filter": "فلتر الضباب",
+    "fog_filter_desc": "محاكاة الضباب والغيوم الحجمية الجوية المتدحرجة",
+    "master_filters": "فلاتر التظليل",
+    "master_filters_desc": "تمكين أو تعطيل جميع برامج تظليل معالجة الصور المرئية النشطة"
   },
   "search": {
     "folder": "مجلد:",
@@ -160,7 +166,8 @@
       "clear_marks": "مسح تكرار البداية / النهاية",
       "toggle_cube": "تبديل المكعب ثلاثي الأبعاد",
       "toggle_cube_overlay": "تبديل وضع تراكب المكعب",
-      "toggle_fullscreen": "تبديل ملء الشاشة"
+      "toggle_fullscreen": "تبديل ملء الشاشة",
+      "toggle_filters": "تبديل فلاتر التظليل"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "تم تعطيل وضع تراكب المكعب",
     "cube_playing": "مكعب ثلاثي الأبعاد: {title}",
     "fullscreen_enabled": "تم تمكين ملء الشاشة (اضغط على [{key}] أو Esc للخروج)",
-    "fullscreen_disabled": "تم تعطيل ملء الشاشة"
+    "fullscreen_disabled": "تم تعطيل ملء الشاشة",
+    "filters_enabled": "تم تمكين فلاتر التظليل (اضغط على [{key}] للتبديل)",
+    "filters_disabled": "تم تعطيل فلاتر التظليل"
   }
 }

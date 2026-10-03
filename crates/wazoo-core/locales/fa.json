@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "میانبر: کلید {key} را برای تغییر فشار دهید",
     "cube_badge_desktop_on": "هم‌پوشانی",
     "cube_sheen": "نور و درخشش سه‌بعدی",
-    "cube_sheen_desc": "نورپردازی جهتی و بازتاب‌های براق بر سطوح مکعب"
+    "cube_sheen_desc": "نورپردازی جهتی و بازتاب‌های براق بر سطوح مکعب",
+    "wavy_filter": "فیلتر موج‌دار",
+    "wavy_filter_desc": "اثر سایه‌زن جابجایی موج روان",
+    "fog_filter": "فیلتر مه",
+    "fog_filter_desc": "شبیه‌سازی جوی مه حجمی و ابرهای غلتان",
+    "master_filters": "فیلترهای سایه‌زن",
+    "master_filters_desc": "فعال یا غیرفعال کردن همه سایه‌زن‌های پس‌پردازش بصری فعال"
   },
   "search": {
     "folder": "پوشه:",
@@ -160,7 +166,8 @@
       "clear_marks": "پاک کردن محدوده تکرار",
       "toggle_cube": "تغییر وضعیت مکعب سه‌بعدی",
       "toggle_cube_overlay": "تغییر وضعیت حالت هم‌پوشانی مکعب",
-      "toggle_fullscreen": "تغییر حالت تمام صفحه"
+      "toggle_fullscreen": "تغییر حالت تمام صفحه",
+      "toggle_filters": "تغییر وضعیت فیلترهای سایه‌زن"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "حالت هم‌پوشانی مکعب غیرفعال شد",
     "cube_playing": "مکعب سه‌بعدی: {title}",
     "fullscreen_enabled": "تمام صفحه فعال شد (برای خروج [{key}] یا Esc را فشار دهید)",
-    "fullscreen_disabled": "تمام صفحه غیرفعال شد"
+    "fullscreen_disabled": "تمام صفحه غیرفعال شد",
+    "filters_enabled": "فیلترهای سایه‌زن فعال شد (برای تغییر [{key}] را فشار دهید)",
+    "filters_disabled": "فیلترهای سایه‌زن غیرفعال شد"
   }
 }

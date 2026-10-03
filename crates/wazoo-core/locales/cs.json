@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "Zkratka: stiskněte {key} pro přepnutí",
     "cube_badge_desktop_on": "PŘEKRYTÍ",
     "cube_sheen": "3D světlo a lesk",
-    "cube_sheen_desc": "Směrové osvětlení a zrcadlové odlesky na povrchu kostky"
+    "cube_sheen_desc": "Směrové osvětlení a zrcadlové odlesky na povrchu kostky",
+    "wavy_filter": "Vlnový filtr",
+    "wavy_filter_desc": "Efekt shaderu plynulého vlnového posunutí",
+    "fog_filter": "Mlohový filtr",
+    "fog_filter_desc": "Atmosférická simulace objemové mlhy a mraků",
+    "master_filters": "Shadery filtrů",
+    "master_filters_desc": "Povolit nebo zakázat všechny aktivní shadery vizuálního následného zpracování"
   },
   "search": {
     "folder": "Složka:",
@@ -160,7 +166,8 @@
       "clear_marks": "Vymazat smyčku In / Out",
       "toggle_cube": "Přepnout 3D kostku",
       "toggle_cube_overlay": "Přepnout režim překrytí kostky",
-      "toggle_fullscreen": "Přepnout celou obrazovku"
+      "toggle_fullscreen": "Přepnout celou obrazovku",
+      "toggle_filters": "Přepnout shadery filtrů"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "Režim překrytí kostky deaktivován",
     "cube_playing": "3D krychle: {title}",
     "fullscreen_enabled": "Celá obrazovka povolena (Stiskněte [{key}] nebo Esc pro ukončení)",
-    "fullscreen_disabled": "Celá obrazovka zakázána"
+    "fullscreen_disabled": "Celá obrazovka zakázána",
+    "filters_enabled": "Shadery filtrů povoleny (Stiskněte [{key}] pro přepnutí)",
+    "filters_disabled": "Shadery filtrů zakázány"
   }
 }

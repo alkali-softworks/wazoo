@@ -854,7 +854,9 @@ impl WazooApp {
             brightness: self.settings.brightness as f64,
             saturation: self.settings.saturation as f64,
             playback_speed: self.settings.playback_speed as f64,
-            crt_enabled: self.settings.crt_enabled,
+            crt_enabled: self.settings.filters_enabled && self.settings.filter_crt,
+            wavy_enabled: self.settings.filters_enabled && self.settings.filter_wavy,
+            fog_enabled: self.settings.filters_enabled && self.settings.filter_fog,
         }
     }
 

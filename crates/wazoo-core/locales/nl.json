@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "Sneltoets: druk op {key} om te schakelen",
     "cube_badge_desktop_on": "OVERLAY",
     "cube_sheen": "3D-licht & glans",
-    "cube_sheen_desc": "Gericht licht en reflecties op de kubusoppervlakken"
+    "cube_sheen_desc": "Gericht licht en reflecties op de kubusoppervlakken",
+    "wavy_filter": "Golf filter",
+    "wavy_filter_desc": "Vloeiend golvend golfverschuivingseffect",
+    "fog_filter": "Mistfilter",
+    "fog_filter_desc": "Atmosferische rollende volumetrische mist- en wolkensimulatie",
+    "master_filters": "Shaderfilters",
+    "master_filters_desc": "Schakel alle actieve visuele nabewerkingsshaders in of uit"
   },
   "search": {
     "folder": "Map:",
@@ -160,7 +166,8 @@
       "clear_marks": "Herhalingspunten wissen",
       "toggle_cube": "3D-kubus in-/uitschakelen",
       "toggle_cube_overlay": "Kubus-overlaymodus in-/uitschakelen",
-      "toggle_fullscreen": "Volledig scherm in-/uitschakelen"
+      "toggle_fullscreen": "Volledig scherm in-/uitschakelen",
+      "toggle_filters": "Schakel shaderfilters in/uit"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "Kubus-overlaymodus uitgeschakeld",
     "cube_playing": "3D-kubus: {title}",
     "fullscreen_enabled": "Volledig scherm ingeschakeld (Druk op [{key}] of Esc om af te sluiten)",
-    "fullscreen_disabled": "Volledig scherm uitgeschakeld"
+    "fullscreen_disabled": "Volledig scherm uitgeschakeld",
+    "filters_enabled": "Shaderfilters ingeschakeld (Druk op [{key}] om te schakelen)",
+    "filters_disabled": "Shaderfilters uitgeschakeld"
   }
 }

@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "Atalho: pressione {key} para alternar",
     "cube_badge_desktop_on": "SOBREPOSIÇÃO",
     "cube_sheen": "Luz e Brilho 3D",
-    "cube_sheen_desc": "Iluminação direcional e reflexos especulares nas superfícies"
+    "cube_sheen_desc": "Iluminação direcional e reflexos especulares nas superfícies",
+    "wavy_filter": "Filtro ondulado",
+    "wavy_filter_desc": "Efeito de sombreador de deslocamento de onda fluida e ondulante",
+    "fog_filter": "Filtro de névoa",
+    "fog_filter_desc": "Simulação atmosférica de névoa volumétrica e nuvens",
+    "master_filters": "Filtros de sombreador",
+    "master_filters_desc": "Ativar ou desativar todos os sombreadores de pós-processamento visual ativos"
   },
   "search": {
     "folder": "Pasta:",
@@ -160,7 +166,8 @@
       "clear_marks": "Limpar repetição de entrada / saída",
       "toggle_cube": "Alternar Cubo 3D",
       "toggle_cube_overlay": "Alternar Modo de Sobreposição do Cubo",
-      "toggle_fullscreen": "Alternar tela cheia"
+      "toggle_fullscreen": "Alternar tela cheia",
+      "toggle_filters": "Alternar filtros de sombreador"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "Modo de Sobreposição do Cubo desativado",
     "cube_playing": "Cubo 3D: {title}",
     "fullscreen_enabled": "Tela cheia ativada (Pressione [{key}] ou Esc para sair)",
-    "fullscreen_disabled": "Tela cheia desativada"
+    "fullscreen_disabled": "Tela cheia desativada",
+    "filters_enabled": "Filtros de sombreador ativados (Pressione [{key}] para alternar)",
+    "filters_disabled": "Filtros de sombreador desativados"
   }
 }

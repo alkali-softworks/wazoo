@@ -290,8 +290,14 @@ impl WazooApp {
             | Message::SetBrightness(_)
             | Message::SetSaturation(_)
             | Message::SetPlaybackSpeed(_)
+            | Message::ToggleFilters
+            | Message::SetFiltersEnabled(_)
             | Message::ToggleCrtFilter
             | Message::SetCrtFilter(_)
+            | Message::ToggleWavyFilter
+            | Message::SetWavyFilter(_)
+            | Message::ToggleFogFilter
+            | Message::SetFogFilter(_)
             | Message::SetLoadingIndicator(_)
             | Message::SetBufferDuration(_)
             | Message::SetBufferSize(_)

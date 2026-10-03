@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "শর্টকাট: টগল করতে {key} চাপুন",
     "cube_badge_desktop_on": "ওভারলে",
     "cube_sheen": "3D আলো এবং উজ্জ্বলতা",
-    "cube_sheen_desc": "কিউবের তলে দিকনির্দেশক আলো এবং প্রতিফলন"
+    "cube_sheen_desc": "কিউবের তলে দিকনির্দেশক আলো এবং প্রতিফলন",
+    "wavy_filter": "ওয়েভি ফিল্টার",
+    "wavy_filter_desc": "তরল তরঙ্গ স্থানচ্যুতি শেডার প্রভাব",
+    "fog_filter": "কুয়াশা ফিল্টার",
+    "fog_filter_desc": "বায়ুমণ্ডলীয় ঘূর্ণায়মান ভলিউমেট্রিক কুয়াশা এবং মেঘের সিমুলেশন",
+    "master_filters": "শেডার ফিল্টার",
+    "master_filters_desc": "সমস্ত সক্রিয় ভিজ্যুয়াল পোস্ট-প্রসেসিং শেডার সক্ষম বা নিষ্ক্রিয় করুন"
   },
   "search": {
     "folder": "ফোল্ডার:",
@@ -160,7 +166,8 @@
       "clear_marks": "মার্ক ইন/আউট লুপ সাফ করুন",
       "toggle_cube": "3D কিউব টগল করুন",
       "toggle_cube_overlay": "কিউব ওভারলে মোড টগল করুন",
-      "toggle_fullscreen": "ফুলস্ক্রিন টগল করুন"
+      "toggle_fullscreen": "ফুলস্ক্রিন টগল করুন",
+      "toggle_filters": "শেডার ফিল্টার টগল করুন"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "কিউব ওভারলে মোড নিষ্ক্রিয় করা হয়েছে",
     "cube_playing": "3D কিউব: {title}",
     "fullscreen_enabled": "ফুলস্ক্রিন সক্রিয় (প্রস্থান করতে [{key}] বা Esc চাপুন)",
-    "fullscreen_disabled": "ফুলস্ক্রিন নিষ্ক্রিয়"
+    "fullscreen_disabled": "ফুলস্ক্রিন নিষ্ক্রিয়",
+    "filters_enabled": "শেডার ফিল্টার সক্রিয় ([{key}] চাপুন টগল করতে)",
+    "filters_disabled": "শেডার ফিল্টার নিষ্ক্রিয়"
   }
 }

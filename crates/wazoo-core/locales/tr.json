@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "Kısayol: Geçiş yapmak için {key}'e basın",
     "cube_badge_desktop_on": "YERLEŞİM",
     "cube_sheen": "3D Işık ve Parlaklık",
-    "cube_sheen_desc": "Küp yüzeylerinde yönlü ışık ve yansımalar"
+    "cube_sheen_desc": "Küp yüzeylerinde yönlü ışık ve yansımalar",
+    "wavy_filter": "Dalgalı Filtre",
+    "wavy_filter_desc": "Akışkan dalgalı yer değiştirme gölgelendirici efekti",
+    "fog_filter": "Sis Filtresi",
+    "fog_filter_desc": "Atmosferik yuvarlanan hacimsel sis ve bulut simülasyonu",
+    "master_filters": "Gölgelendirici Filtreleri",
+    "master_filters_desc": "Tüm etkin görsel son işleme gölgelendiricilerini etkinleştirin veya devre dışı bırakın"
   },
   "search": {
     "folder": "Klasör:",
@@ -160,7 +166,8 @@
       "clear_marks": "Giriş / Çıkış Puan Döngüsünü Temizle",
       "toggle_cube": "3D Küpü Değiştir",
       "toggle_cube_overlay": "Küp Yerleşimi Modunu Değiştir",
-      "toggle_fullscreen": "Tam Ekranı Aç/Kapat"
+      "toggle_fullscreen": "Tam Ekranı Aç/Kapat",
+      "toggle_filters": "Gölgelendirici Filtrelerini Aç/Kapat"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "Küp Yerleşimi Modu Devre Dışı Bırakıldı",
     "cube_playing": "3D Küp: {title}",
     "fullscreen_enabled": "Tam Ekran Etkinleştirildi (Çıkmak için [{key}] veya Esc tuşuna basın)",
-    "fullscreen_disabled": "Tam Ekran Devre Dışı Bırakıldı"
+    "fullscreen_disabled": "Tam Ekran Devre Dışı Bırakıldı",
+    "filters_enabled": "Gölgelendirici Filtreleri Etkinleştirildi (Geçiş yapmak için [{key}] tuşuna basın)",
+    "filters_disabled": "Gölgelendirici Filtreleri Devre Dışı Bırakıldı"
   }
 }

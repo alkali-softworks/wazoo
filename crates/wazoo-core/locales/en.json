@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "Shortcut: Press {key} to toggle",
     "cube_badge_desktop_on": "OVERLAY",
     "cube_sheen": "3D Light & Sheen",
-    "cube_sheen_desc": "Directional lighting and specular reflections on cube surfaces"
+    "cube_sheen_desc": "Directional lighting and specular reflections on cube surfaces",
+    "wavy_filter": "Wavy Filter",
+    "wavy_filter_desc": "Fluid undulating wave displacement shader effect",
+    "fog_filter": "Fog Filter",
+    "fog_filter_desc": "Atmospheric rolling volumetric mist and cloud simulation",
+    "master_filters": "Shader Filters",
+    "master_filters_desc": "Enable or disable all active visual post-processing shaders"
   },
   "search": {
     "folder": "Folder:",
@@ -160,7 +166,8 @@
       "clear_marks": "Clear Mark In / Out Loop",
       "toggle_cube": "Toggle 3D Cube",
       "toggle_cube_overlay": "Toggle Cube Overlay Mode",
-      "toggle_fullscreen": "Toggle Fullscreen"
+      "toggle_fullscreen": "Toggle Fullscreen",
+      "toggle_filters": "Toggle Shader Filters"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "Cube Overlay Mode Disabled",
     "cube_playing": "3D Cube: {title}",
     "fullscreen_enabled": "Fullscreen Enabled (Press [{key}] or Esc to exit)",
-    "fullscreen_disabled": "Fullscreen Disabled"
+    "fullscreen_disabled": "Fullscreen Disabled",
+    "filters_enabled": "Shader Filters Enabled (Press [{key}] to toggle)",
+    "filters_disabled": "Shader Filters Disabled"
   }
 }

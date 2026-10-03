@@ -147,20 +147,62 @@ impl WazooApp {
                     crate::app::PLAYBACK_SETTINGS_DEBOUNCE_TICKS;
                 Task::none()
             }
+            Message::ToggleFilters => {
+                let new_state = !self.settings.filters_enabled;
+                self.settings.filters_enabled = new_state;
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                let shortcut = self.settings.keybinds.toggle_filters.as_str();
+                let msg = if new_state {
+                    format!("{} ({})", self.t("toast.filters_enabled"), shortcut)
+                } else {
+                    format!("{} ({})", self.t("toast.filters_disabled"), shortcut)
+                };
+                self.overlay.show_toast(msg);
+                Task::none()
+            }
+            Message::SetFiltersEnabled(enabled) => {
+                self.settings.filters_enabled = enabled;
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
             Message::ToggleCrtFilter => {
-                let new_state = !self.settings.crt_enabled;
-                self.settings.crt_enabled = new_state;
-                for player in &mut self.players {
-                    player.set_crt_enabled(new_state);
-                }
+                let new_state = !self.settings.filter_crt;
+                self.settings.filter_crt = new_state;
+                self.sync_player_filters();
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
             }
             Message::SetCrtFilter(enabled) => {
-                self.settings.crt_enabled = enabled;
-                for player in &mut self.players {
-                    player.set_crt_enabled(enabled);
-                }
+                self.settings.filter_crt = enabled;
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::ToggleWavyFilter => {
+                let new_state = !self.settings.filter_wavy;
+                self.settings.filter_wavy = new_state;
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetWavyFilter(enabled) => {
+                self.settings.filter_wavy = enabled;
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::ToggleFogFilter => {
+                let new_state = !self.settings.filter_fog;
+                self.settings.filter_fog = new_state;
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetFogFilter(enabled) => {
+                self.settings.filter_fog = enabled;
+                self.sync_player_filters();
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
             }
@@ -193,11 +235,14 @@ impl WazooApp {
                 self.settings.brightness = 0.0;
                 self.settings.saturation = 0.0;
                 self.settings.playback_speed = 1.0;
-                self.settings.crt_enabled = false;
+                self.settings.filters_enabled = false;
+                self.settings.filter_crt = true;
+                self.settings.filter_wavy = false;
+                self.settings.filter_fog = false;
+                self.sync_player_filters();
                 for player in &mut self.players {
                     player.set_equalizer(0.0, 0.0, 0.0, 0.0);
                     player.set_speed(1.0);
-                    player.set_crt_enabled(false);
                 }
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
@@ -309,5 +354,18 @@ impl WazooApp {
             player.set_speed(speed);
         }
         let _ = self.config_mgr.save_settings(&self.settings);
+    }
+
+    /// Synchronizes active GPU shader filters (CRT, Wavy, Fog) across all active video players
+    /// based on the master filters_enabled switch and individual filter checkboxes.
+    pub fn sync_player_filters(&mut self) {
+        let master = self.settings.filters_enabled;
+        let crt = master && self.settings.filter_crt;
+        let wavy = master && self.settings.filter_wavy;
+        let fog = master && self.settings.filter_fog;
+        self.settings.crt_enabled = crt;
+        for player in &mut self.players {
+            player.set_filters(crt, wavy, fog);
+        }
     }
 }

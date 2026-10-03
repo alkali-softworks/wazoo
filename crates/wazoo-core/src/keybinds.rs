@@ -49,7 +49,7 @@ pub enum KeyAction {
     ClearMarkOut,
     OpenHelp,
     OpenSettings,
-    ToggleCrt,
+    ToggleFilters,
     ToggleCube,
     ToggleCubeOverlay,
     ToggleFullscreen,
@@ -97,7 +97,8 @@ pub struct KeybindSettings {
     pub clear_mark_out: String,
     pub open_help: String,
     pub open_settings: String,
-    pub toggle_crt: String,
+    #[serde(alias = "toggle_crt")]
+    pub toggle_filters: String,
     pub toggle_cube: String,
     pub toggle_cube_overlay: String,
     pub toggle_fullscreen: String,
@@ -145,7 +146,7 @@ impl Default for KeybindSettings {
             clear_mark_out: "Alt+O".to_string(),
             open_help: "F1".to_string(),
             open_settings: "F2".to_string(),
-            toggle_crt: "7".to_string(),
+            toggle_filters: "7".to_string(),
             toggle_cube: "8".to_string(),
             toggle_cube_overlay: "9".to_string(),
             toggle_fullscreen: "F11".to_string(),
@@ -194,7 +195,7 @@ impl KeybindSettings {
         "clear_mark_out",
         "open_help",
         "open_settings",
-        "toggle_crt",
+        "toggle_filters",
         "toggle_cube",
         "toggle_cube_overlay",
         "toggle_fullscreen",
@@ -334,8 +335,8 @@ impl KeybindSettings {
         if self.open_settings.trim().is_empty() {
             self.open_settings = def.open_settings;
         }
-        if self.toggle_crt.trim().is_empty() {
-            self.toggle_crt = def.toggle_crt;
+        if self.toggle_filters.trim().is_empty() {
+            self.toggle_filters = def.toggle_filters;
         }
         if self.toggle_cube.trim().is_empty() {
             self.toggle_cube = def.toggle_cube;
@@ -481,6 +482,10 @@ impl KeybindSettings {
             (
                 self.toggle_cube_overlay.clone(),
                 t("help.shortcuts.toggle_cube_overlay"),
+            ),
+            (
+                self.toggle_filters.clone(),
+                t("help.shortcuts.toggle_filters"),
             ),
             (
                 self.toggle_fullscreen.clone(),
@@ -668,6 +673,10 @@ impl KeybindSettings {
                     HelpShortcut {
                         key: KeyDisplay::Alternatives(bookmarks_save_keys),
                         description: t("bookmarks.bookmark_current"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.toggle_filters.to_uppercase()),
+                        description: t("help.shortcuts.toggle_filters"),
                     },
                 ],
             },
