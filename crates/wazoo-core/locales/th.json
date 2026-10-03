@@ -95,7 +95,7 @@
     "cube_desc": "ลูกบาศก์ 3 มิติลอยได้พร้อมเล่นวิดีโอบนทุกพื้นผิว",
     "cube_enable": "เปิดใช้งานลูกบาศก์ 3 มิติ",
     "cube_disable": "ปิดใช้งานลูกบาศก์ 3 มิติ",
-    "cube_shortcut_hint": "ทางลัด: กด 8 เพื่อสลับ",
+    "cube_shortcut_hint": "ทางลัด: กด {key} เพื่อสลับ",
     "cube_badge_on": "เปิด ({count})",
     "cube_badge_off": "ปิด",
     "cube_physics_scale": "การเคลื่อนที่และขนาด",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "ลบลูกบาศก์ทั้งหมด",
     "cube_desktop_enable": "เปิดใช้งานโหมดโอเวอร์เลย์ลูกบาศก์",
     "cube_desktop_disable": "ปิดใช้งานโหมดโอเวอร์เลย์ลูกบาศก์",
-    "cube_desktop_shortcut_hint": "ทางลัด: กด 9 เพื่อสลับ",
+    "cube_desktop_shortcut_hint": "ทางลัด: กด {key} เพื่อสลับ",
     "cube_badge_desktop_on": "โอเวอร์เลย์",
     "cube_sheen": "แสงและความเงา 3 มิติ",
     "cube_sheen_desc": "แสงตามทิศทางและการสะท้อนแสงบนพื้นผิวลูกบาศก์"
@@ -154,7 +154,9 @@
       "toggle_pin": "สลับแสดงด้านบนเสมอ",
       "mark_in": "กำหนดจุดเริ่มต้น (In)",
       "mark_out": "กำหนดจุดสิ้นสุด (Out)",
-      "clear_marks": "ล้างการวนซ้ำจุดเข้า/ออก"
+      "clear_marks": "ล้างการวนซ้ำจุดเข้า/ออก",
+      "toggle_cube": "สลับลูกบาศก์ 3 มิติ",
+      "toggle_cube_overlay": "สลับโหมดโอเวอร์เลย์ลูกบาศก์"
     }
   },
   "file_picker": {

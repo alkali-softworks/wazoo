@@ -95,7 +95,7 @@
     "cube_desc": "مكعب عائم ثلاثي الأبعاد مع تشغيل فيديو حي على جميع الأسطح.",
     "cube_enable": "تفعيل المكعب ثلاثي الأبعاد",
     "cube_disable": "تعطيل المكعب ثلاثي الأبعاد",
-    "cube_shortcut_hint": "اختصار: اضغط 8 للتبديل",
+    "cube_shortcut_hint": "اختصار: اضغط {key} للتبديل",
     "cube_badge_on": "تشغيل ({count})",
     "cube_badge_off": "إيقاف",
     "cube_physics_scale": "الحركة والحجم",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "إزالة جميع المكعبات",
     "cube_desktop_enable": "تفعيل وضع تراكب المكعب",
     "cube_desktop_disable": "تعطيل وضع تراكب المكعب",
-    "cube_desktop_shortcut_hint": "اختصار: اضغط 9 للتبديل",
+    "cube_desktop_shortcut_hint": "اختصار: اضغط {key} للتبديل",
     "cube_badge_desktop_on": "تراكب",
     "cube_sheen": "إضاءة ولمعان ثلاثي الأبعاد",
     "cube_sheen_desc": "إضاءة اتجاهية وانعكاسات على أسطح المكعب"
@@ -154,7 +154,9 @@
       "toggle_pin": "تبديل الوضع دائمًا في المقدمة",
       "mark_in": "تعيين نقطة البداية",
       "mark_out": "تعيين نقطة النهاية",
-      "clear_marks": "مسح تكرار البداية / النهاية"
+      "clear_marks": "مسح تكرار البداية / النهاية",
+      "toggle_cube": "تبديل المكعب ثلاثي الأبعاد",
+      "toggle_cube_overlay": "تبديل وضع تراكب المكعب"
     }
   },
   "file_picker": {

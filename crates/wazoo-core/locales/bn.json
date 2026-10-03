@@ -95,7 +95,7 @@
     "cube_desc": "সব তলে লাইভ ভিডিও প্লেব্যাক সহ ভাসমান 3D কিউব।",
     "cube_enable": "3D কিউব সক্রিয় করুন",
     "cube_disable": "3D কিউব নিষ্ক্রিয় করুন",
-    "cube_shortcut_hint": "শর্টকাট: টগল করতে 8 চাপুন",
+    "cube_shortcut_hint": "শর্টকাট: টগল করতে {key} চাপুন",
     "cube_badge_on": "চালু ({count})",
     "cube_badge_off": "বন্ধ",
     "cube_physics_scale": "গতি এবং আকার",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "সমস্ত কিউব সরান",
     "cube_desktop_enable": "কিউব ওভারলে মোড সক্রিয় করুন",
     "cube_desktop_disable": "কিউব ওভারলে মোড নিষ্ক্রিয় করুন",
-    "cube_desktop_shortcut_hint": "শর্টকাট: টগল করতে 9 চাপুন",
+    "cube_desktop_shortcut_hint": "শর্টকাট: টগল করতে {key} চাপুন",
     "cube_badge_desktop_on": "ওভারলে",
     "cube_sheen": "3D আলো এবং উজ্জ্বলতা",
     "cube_sheen_desc": "কিউবের তলে দিকনির্দেশক আলো এবং প্রতিফলন"
@@ -154,7 +154,9 @@
       "toggle_pin": "সর্বদা শীর্ষে টগল করুন",
       "mark_in": "মার্ক ইন সেট করুন",
       "mark_out": "মার্ক আউট সেট করুন",
-      "clear_marks": "মার্ক ইন/আউট লুপ সাফ করুন"
+      "clear_marks": "মার্ক ইন/আউট লুপ সাফ করুন",
+      "toggle_cube": "3D কিউব টগল করুন",
+      "toggle_cube_overlay": "কিউব ওভারলে মোড টগল করুন"
     }
   },
   "file_picker": {

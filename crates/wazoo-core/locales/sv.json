@@ -95,7 +95,7 @@
     "cube_desc": "Svävande 3D-kub med videouppspelning på alla ytor.",
     "cube_enable": "Aktivera 3D-kub",
     "cube_disable": "Inaktivera 3D-kub",
-    "cube_shortcut_hint": "Genväg: tryck på 8 för att växla",
+    "cube_shortcut_hint": "Genväg: tryck på {key} för att växla",
     "cube_badge_on": "PÅ ({count})",
     "cube_badge_off": "AV",
     "cube_physics_scale": "Rörelse & storlek",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "Ta bort alla kuber",
     "cube_desktop_enable": "Aktivera kuböverläggsläge",
     "cube_desktop_disable": "Inaktivera kuböverläggsläge",
-    "cube_desktop_shortcut_hint": "Genväg: tryck på 9 för att växla",
+    "cube_desktop_shortcut_hint": "Genväg: tryck på {key} för att växla",
     "cube_badge_desktop_on": "ÖVERLÄGG",
     "cube_sheen": "3D-ljus & glans",
     "cube_sheen_desc": "Riktat ljus och speglande reflektioner på kubytorna"
@@ -154,7 +154,9 @@
       "toggle_pin": "Växla alltid överst",
       "mark_in": "Ställ in startpunkt (In)",
       "mark_out": "Ställ in slutpunkt (Out)",
-      "clear_marks": "Rensa slinga"
+      "clear_marks": "Rensa slinga",
+      "toggle_cube": "Växla 3D-kub",
+      "toggle_cube_overlay": "Växla kuböverläggsläge"
     }
   },
   "file_picker": {

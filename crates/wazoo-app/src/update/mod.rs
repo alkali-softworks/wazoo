@@ -304,8 +304,9 @@ impl WazooApp {
                     }
                     self.spawn_new_cube();
                     self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
+                    let key = self.settings.keybinds.menu_hint(&self.settings.keybinds.toggle_cube);
                     self.overlay
-                        .show_toast("3D Cube Added! (Press [8] to toggle)");
+                        .show_toast(format!("3D Cube Added! (Press [{key}] to toggle)"));
                 }
                 Task::none()
             }
@@ -343,8 +344,9 @@ impl WazooApp {
                         }
                     }
 
+                    let key = self.settings.keybinds.menu_hint(&self.settings.keybinds.toggle_cube_overlay);
                     self.overlay
-                        .show_toast("Cube Overlay Mode (Press [9] to exit)");
+                        .show_toast(format!("Cube Overlay Mode (Press [{key}] to exit)"));
 
                     if let Some(id) = self.window.id {
                         let level_task =
@@ -361,8 +363,9 @@ impl WazooApp {
                 self.titlebar.show_dropdown_menu = false;
                 self.spawn_new_cube();
                 self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
+                let key = self.settings.keybinds.menu_hint(&self.settings.keybinds.toggle_cube);
                 self.overlay.show_toast(format!(
-                    "Added 3D Cube #{}! (Press [8] to toggle)",
+                    "Added 3D Cube #{}! (Press [{key}] to toggle)",
                     self.cube.cubes.len()
                 ));
                 Task::none()

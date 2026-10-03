@@ -95,7 +95,7 @@
     "cube_desc": "Cubo 3D fluttuante con riproduzione video su tutte le superfici.",
     "cube_enable": "Attiva Cubo 3D",
     "cube_disable": "Disattiva Cubo 3D",
-    "cube_shortcut_hint": "Scorciatoia: premi 8 per attivare/disattivare",
+    "cube_shortcut_hint": "Scorciatoia: premi {key} per attivare/disattivare",
     "cube_badge_on": "ON ({count})",
     "cube_badge_off": "OFF",
     "cube_physics_scale": "Movimento e dimensioni",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "Rimuovi tutti i cubi",
     "cube_desktop_enable": "Attiva Modalità Sovrapposizione Cubo",
     "cube_desktop_disable": "Disattiva Modalità Sovrapposizione Cubo",
-    "cube_desktop_shortcut_hint": "Scorciatoia: premi 9 per attivare/disattivare",
+    "cube_desktop_shortcut_hint": "Scorciatoia: premi {key} per attivare/disattivare",
     "cube_badge_desktop_on": "OVERLAY",
     "cube_sheen": "Luce e riflesso 3D",
     "cube_sheen_desc": "Illuminazione direzionale e riflessi speculari sulle superfici"
@@ -154,7 +154,9 @@
       "toggle_pin": "Attiva/disattiva sempre in primo piano",
       "mark_in": "Imposta punto iniziale",
       "mark_out": "Imposta punto finale",
-      "clear_marks": "Cancella loop inizio / fine"
+      "clear_marks": "Cancella loop inizio / fine",
+      "toggle_cube": "Attiva/disattiva Cubo 3D",
+      "toggle_cube_overlay": "Attiva/disattiva Modalità Sovrapposizione Cubo"
     }
   },
   "file_picker": {

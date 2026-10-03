@@ -260,6 +260,12 @@ pub fn find_key_action(
     if key_matches_binding(&keybinds.toggle_crt, key, false) {
         return Some(KeyAction::ToggleCrt);
     }
+    if key_matches_binding(&keybinds.toggle_cube, key, false) {
+        return Some(KeyAction::ToggleCube);
+    }
+    if key_matches_binding(&keybinds.toggle_cube_overlay, key, false) {
+        return Some(KeyAction::ToggleCubeOverlay);
+    }
 
     None
 }

@@ -95,7 +95,7 @@
     "cube_desc": "Floating 3D cube with independent live video playback mapped onto all surfaces.",
     "cube_enable": "Enable 3D Cube",
     "cube_disable": "Disable 3D Cube",
-    "cube_shortcut_hint": "Shortcut: Press 8 to toggle",
+    "cube_shortcut_hint": "Shortcut: Press {key} to toggle",
     "cube_badge_on": "ON ({count})",
     "cube_badge_off": "OFF",
     "cube_physics_scale": "Movement & Size",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "Remove All Cubes",
     "cube_desktop_enable": "Enable Cube Overlay Mode",
     "cube_desktop_disable": "Disable Cube Overlay Mode",
-    "cube_desktop_shortcut_hint": "Shortcut: Press 9 to toggle",
+    "cube_desktop_shortcut_hint": "Shortcut: Press {key} to toggle",
     "cube_badge_desktop_on": "OVERLAY",
     "cube_sheen": "3D Light & Sheen",
     "cube_sheen_desc": "Directional lighting and specular reflections on cube surfaces"
@@ -154,7 +154,9 @@
       "toggle_pin": "Toggle Always on Top",
       "mark_in": "Set Mark In Point",
       "mark_out": "Set Mark Out Point",
-      "clear_marks": "Clear Mark In / Out Loop"
+      "clear_marks": "Clear Mark In / Out Loop",
+      "toggle_cube": "Toggle 3D Cube",
+      "toggle_cube_overlay": "Toggle Cube Overlay Mode"
     }
   },
   "file_picker": {

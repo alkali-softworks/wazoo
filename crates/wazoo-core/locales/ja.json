@@ -95,7 +95,7 @@
     "cube_desc": "すべての面にリアルタイム動画が再生される3Dキューブ。",
     "cube_enable": "3Dキューブを有効化",
     "cube_disable": "3Dキューブを無効化",
-    "cube_shortcut_hint": "ショートカット: 8キーで切り替え",
+    "cube_shortcut_hint": "ショートカット: {key}キーで切り替え",
     "cube_badge_on": "オン ({count})",
     "cube_badge_off": "オフ",
     "cube_physics_scale": "動きとサイズ",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "すべてのキューブを削除",
     "cube_desktop_enable": "キューブオーバーレイモードを有効化",
     "cube_desktop_disable": "キューブオーバーレイモードを無効化",
-    "cube_desktop_shortcut_hint": "ショートカット: 9キーで切り替え",
+    "cube_desktop_shortcut_hint": "ショートカット: {key}キーで切り替え",
     "cube_badge_desktop_on": "オーバーレイ",
     "cube_sheen": "3Dライティングと光沢",
     "cube_sheen_desc": "キューブ表面のディレクショナルライトと鏡面反射"
@@ -154,7 +154,9 @@
       "toggle_pin": "最前面表示の切り替え",
       "mark_in": "イン点を設定",
       "mark_out": "アウト点を設定",
-      "clear_marks": "イン/アウト点のループを解除"
+      "clear_marks": "イン/アウト点のループを解除",
+      "toggle_cube": "3Dキューブを切り替え",
+      "toggle_cube_overlay": "キューブオーバーレイモードを切り替え"
     }
   },
   "file_picker": {

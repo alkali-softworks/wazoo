@@ -95,7 +95,7 @@
     "cube_desc": "مکعب شناور سه‌بعدی با پخش ویدیو در تمام سطوح.",
     "cube_enable": "فعال‌سازی مکعب سه‌بعدی",
     "cube_disable": "غیرفعال‌سازی مکعب سه‌بعدی",
-    "cube_shortcut_hint": "میانبر: کلید 8 را برای تغییر فشار دهید",
+    "cube_shortcut_hint": "میانبر: کلید {key} را برای تغییر فشار دهید",
     "cube_badge_on": "روشن ({count})",
     "cube_badge_off": "خاموش",
     "cube_physics_scale": "حرکت و اندازه",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "حذف همه مکعب‌ها",
     "cube_desktop_enable": "فعال‌سازی حالت هم‌پوشانی مکعب",
     "cube_desktop_disable": "غیرفعال‌سازی حالت هم‌پوشانی مکعب",
-    "cube_desktop_shortcut_hint": "میانبر: کلید 9 را برای تغییر فشار دهید",
+    "cube_desktop_shortcut_hint": "میانبر: کلید {key} را برای تغییر فشار دهید",
     "cube_badge_desktop_on": "هم‌پوشانی",
     "cube_sheen": "نور و درخشش سه‌بعدی",
     "cube_sheen_desc": "نورپردازی جهتی و بازتاب‌های براق بر سطوح مکعب"
@@ -154,7 +154,9 @@
       "toggle_pin": "تغییر همیشه در بالا",
       "mark_in": "تنظیم نقطه شروع (In)",
       "mark_out": "تنظیم نقطه پایان (Out)",
-      "clear_marks": "پاک کردن محدوده تکرار"
+      "clear_marks": "پاک کردن محدوده تکرار",
+      "toggle_cube": "تغییر وضعیت مکعب سه‌بعدی",
+      "toggle_cube_overlay": "تغییر وضعیت حالت هم‌پوشانی مکعب"
     }
   },
   "file_picker": {

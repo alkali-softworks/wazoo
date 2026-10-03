@@ -95,7 +95,7 @@
     "cube_desc": "קובייה תלת-ממדית מרחפת עם ניגון וידאו על כל המשטחים.",
     "cube_enable": "הפעל קובייה תלת-ממדית",
     "cube_disable": "השבת קובייה תלת-ממדית",
-    "cube_shortcut_hint": "קיצור דרך: הקש 8 להפעלה/השבתה",
+    "cube_shortcut_hint": "קיצור דרך: הקש {key} להפעלה/השבתה",
     "cube_badge_on": "פעיל ({count})",
     "cube_badge_off": "כבוי",
     "cube_physics_scale": "תנועה וגודל",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "הסר את כל הקוביות",
     "cube_desktop_enable": "הפעל מצב שכבת קובייה",
     "cube_desktop_disable": "השבת מצב שכבת קובייה",
-    "cube_desktop_shortcut_hint": "קיצור דרך: הקש 9 להפעלה/השבתה",
+    "cube_desktop_shortcut_hint": "קיצור דרך: הקש {key} להפעלה/השבתה",
     "cube_badge_desktop_on": "שכבה",
     "cube_sheen": "תאורה וברק תלת-ממדי",
     "cube_sheen_desc": "תאורה כיוונית והשתקפויות על משטחי הקובייה"
@@ -154,7 +154,9 @@
       "toggle_pin": "החלף מצב תמיד עליון",
       "mark_in": "הגדר נקודת התחלה (In)",
       "mark_out": "הגדר נקודת סיום (Out)",
-      "clear_marks": "נקה לולאת התחלה / סיום"
+      "clear_marks": "נקה לולאת התחלה / סיום",
+      "toggle_cube": "הפעל/השבת קובייה תלת-ממדית",
+      "toggle_cube_overlay": "הפעל/השבת מצב שכבת קובייה"
     }
   },
   "file_picker": {

@@ -95,7 +95,7 @@
     "cube_desc": "Tüm yüzeylerinde canlı video oynatılan 3D küp.",
     "cube_enable": "3D Küpü Etkinleştir",
     "cube_disable": "3D Küpü Devre Dışı Bırak",
-    "cube_shortcut_hint": "Kısayol: Geçiş yapmak için 8'e basın",
+    "cube_shortcut_hint": "Kısayol: Geçiş yapmak için {key}'e basın",
     "cube_badge_on": "AÇIK ({count})",
     "cube_badge_off": "KAPALI",
     "cube_physics_scale": "Hareket ve Boyut",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "Tüm Küpleri Kaldır",
     "cube_desktop_enable": "Küp Yerleşimi Modunu Etkinleştir",
     "cube_desktop_disable": "Küp Yerleşimi Modunu Devre Dışı Bırak",
-    "cube_desktop_shortcut_hint": "Kısayol: Geçiş yapmak için 9'a basın",
+    "cube_desktop_shortcut_hint": "Kısayol: Geçiş yapmak için {key}'e basın",
     "cube_badge_desktop_on": "YERLEŞİM",
     "cube_sheen": "3D Işık ve Parlaklık",
     "cube_sheen_desc": "Küp yüzeylerinde yönlü ışık ve yansımalar"
@@ -154,7 +154,9 @@
       "toggle_pin": "Her Zaman Üstte Aç/Kapat",
       "mark_in": "Giriş Noktasını Ayarla (In)",
       "mark_out": "Çıkış Noktasını Ayarla (Out)",
-      "clear_marks": "Giriş / Çıkış Puan Döngüsünü Temizle"
+      "clear_marks": "Giriş / Çıkış Puan Döngüsünü Temizle",
+      "toggle_cube": "3D Küpü Değiştir",
+      "toggle_cube_overlay": "Küp Yerleşimi Modunu Değiştir"
     }
   },
   "file_picker": {
