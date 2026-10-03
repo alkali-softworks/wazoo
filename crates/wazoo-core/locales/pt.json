@@ -228,7 +228,7 @@
     "cube_all_removed": "Todos os cubos 3D removidos",
     "cube_overlay_disabled": "Modo de Sobreposição do Cubo desativado",
     "cube_playing": "Cubo 3D: {title}",
-    "fullscreen_enabled": "Tela cheia ativada (Pressione F11 ou Esc para sair)",
+    "fullscreen_enabled": "Tela cheia ativada (Pressione [{key}] ou Esc para sair)",
     "fullscreen_disabled": "Tela cheia desativada"
   }
 }

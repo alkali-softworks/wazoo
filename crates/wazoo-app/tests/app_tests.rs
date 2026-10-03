@@ -1429,13 +1429,23 @@ fn test_fullscreen_toggle_and_escape() {
     assert!(app.window.is_fullscreen);
     assert!(app.overlay.toast_message.is_some());
     assert!(app.overlay.toast_message.as_ref().unwrap().contains("Fullscreen Enabled"));
+    assert!(app.overlay.toast_message.as_ref().unwrap().contains("[F11]"));
 
     // 2. Escape exits fullscreen when no modals/drawers are open
     let _ = app.update(Message::EscapePressed);
     assert!(!app.window.is_fullscreen);
     assert!(app.overlay.toast_message.as_ref().unwrap().contains("Fullscreen Disabled"));
 
-    // 3. F11 key input toggles fullscreen
+    // 3. Rebind toggle_fullscreen and verify toast reflects the new key
+    app.settings.keybinds.toggle_fullscreen = "f12".to_string();
+    let _ = app.update(Message::ToggleFullscreen);
+    assert!(app.window.is_fullscreen);
+    assert!(app.overlay.toast_message.as_ref().unwrap().contains("[F12]"));
+    let _ = app.update(Message::ToggleFullscreen);
+    assert!(!app.window.is_fullscreen);
+    app.settings.keybinds.toggle_fullscreen = "F11".to_string();
+
+    // 4. F11 key input toggles fullscreen
     use iced::keyboard::key::Named;
     let _ = app.update(Message::KeyPressed(
         iced::keyboard::Key::Named(Named::F11),
@@ -1443,14 +1453,14 @@ fn test_fullscreen_toggle_and_escape() {
     ));
     assert!(app.window.is_fullscreen);
 
-    // 4. Opening a drawer or modal while in fullscreen, then pressing Escape closes drawer first without exiting fullscreen
+    // 5. Opening a drawer or modal while in fullscreen, then pressing Escape closes drawer first without exiting fullscreen
     let _ = app.update(Message::ToggleFilePicker);
     assert!(app.drawers.show_file_picker);
     let _ = app.update(Message::EscapePressed);
     assert!(!app.drawers.show_file_picker);
     assert!(app.window.is_fullscreen, "Closing drawer should not exit fullscreen");
 
-    // 5. Subsequent Escape exits fullscreen
+    // 6. Subsequent Escape exits fullscreen
     let _ = app.update(Message::EscapePressed);
     assert!(!app.window.is_fullscreen);
 }

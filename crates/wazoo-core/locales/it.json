@@ -228,7 +228,7 @@
     "cube_all_removed": "Tutti i cubi 3D rimossi",
     "cube_overlay_disabled": "Modalità Sovrapposizione Cubo disattivata",
     "cube_playing": "Cubo 3D: {title}",
-    "fullscreen_enabled": "Schermo intero attivato (Premi F11 o Esc per uscire)",
+    "fullscreen_enabled": "Schermo intero attivato (Premi [{key}] o Esc per uscire)",
     "fullscreen_disabled": "Schermo intero disattivato"
   }
 }

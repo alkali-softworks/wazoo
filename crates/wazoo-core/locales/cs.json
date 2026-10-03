@@ -228,7 +228,7 @@
     "cube_all_removed": "Všechny 3D krychle odebrány",
     "cube_overlay_disabled": "Režim překrytí kostky deaktivován",
     "cube_playing": "3D krychle: {title}",
-    "fullscreen_enabled": "Celá obrazovka povolena (Stiskněte F11 nebo Esc pro ukončení)",
+    "fullscreen_enabled": "Celá obrazovka povolena (Stiskněte [{key}] nebo Esc pro ukončení)",
     "fullscreen_disabled": "Celá obrazovka zakázána"
   }
 }

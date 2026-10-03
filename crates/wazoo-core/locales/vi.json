@@ -228,7 +228,7 @@
     "cube_all_removed": "Đã xóa tất cả các khối 3D",
     "cube_overlay_disabled": "Đã tắt chế độ lớp phủ khối",
     "cube_playing": "Khối 3D: {title}",
-    "fullscreen_enabled": "Đã bật toàn màn hình (Nhấn F11 hoặc Esc để thoát)",
+    "fullscreen_enabled": "Đã bật toàn màn hình (Nhấn [{key}] hoặc Esc để thoát)",
     "fullscreen_disabled": "Đã tắt toàn màn hình"
   }
 }

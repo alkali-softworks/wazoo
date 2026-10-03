@@ -228,7 +228,7 @@
     "cube_all_removed": "모든 3D 큐브 제거됨",
     "cube_overlay_disabled": "큐브 오버레이 모드 비활성화됨",
     "cube_playing": "3D 큐브: {title}",
-    "fullscreen_enabled": "전체 화면 활성화됨 (종료하려면 F11 또는 Esc 누름)",
+    "fullscreen_enabled": "전체 화면 활성화됨 (종료하려면 [{key}] 또는 Esc 누름)",
     "fullscreen_disabled": "전체 화면 비활성화됨"
   }
 }

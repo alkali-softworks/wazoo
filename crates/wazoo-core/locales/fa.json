@@ -228,7 +228,7 @@
     "cube_all_removed": "همه مکعب‌های سه‌بعدی حذف شدند",
     "cube_overlay_disabled": "حالت هم‌پوشانی مکعب غیرفعال شد",
     "cube_playing": "مکعب سه‌بعدی: {title}",
-    "fullscreen_enabled": "تمام صفحه فعال شد (برای خروج F11 یا Esc را فشار دهید)",
+    "fullscreen_enabled": "تمام صفحه فعال شد (برای خروج [{key}] یا Esc را فشار دهید)",
     "fullscreen_disabled": "تمام صفحه غیرفعال شد"
   }
 }

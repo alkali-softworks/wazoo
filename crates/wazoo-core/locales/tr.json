@@ -228,7 +228,7 @@
     "cube_all_removed": "Tüm 3D Küpler Kaldırıldı",
     "cube_overlay_disabled": "Küp Yerleşimi Modu Devre Dışı Bırakıldı",
     "cube_playing": "3D Küp: {title}",
-    "fullscreen_enabled": "Tam Ekran Etkinleştirildi (Çıkmak için F11 veya Esc tuşuna basın)",
+    "fullscreen_enabled": "Tam Ekran Etkinleştirildi (Çıkmak için [{key}] veya Esc tuşuna basın)",
     "fullscreen_disabled": "Tam Ekran Devre Dışı Bırakıldı"
   }
 }

@@ -182,7 +182,12 @@ impl WazooApp {
                     iced::window::Mode::Windowed
                 };
                 if self.window.is_fullscreen {
-                    self.overlay.show_toast(self.t("toast.fullscreen_enabled"));
+                    let key = self
+                        .settings
+                        .keybinds
+                        .menu_hint(&self.settings.keybinds.toggle_fullscreen);
+                    self.overlay
+                        .show_toast(self.t_with("toast.fullscreen_enabled", &[("key", &key)]));
                 } else {
                     self.overlay.show_toast(self.t("toast.fullscreen_disabled"));
                 }

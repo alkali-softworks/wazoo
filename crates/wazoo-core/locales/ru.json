@@ -228,7 +228,7 @@
     "cube_all_removed": "Все 3D-кубы удалены",
     "cube_overlay_disabled": "Режим наложения куба выключен",
     "cube_playing": "3D-куб: {title}",
-    "fullscreen_enabled": "Полноэкранный режим включен (Нажмите F11 или Esc для выхода)",
+    "fullscreen_enabled": "Полноэкранный режим включен (Нажмите [{key}] или Esc для выхода)",
     "fullscreen_disabled": "Полноэкранный режим выключен"
   }
 }

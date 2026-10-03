@@ -228,7 +228,7 @@
     "cube_all_removed": "تمت إزالة جميع المكعبات ثلاثية الأبعاد",
     "cube_overlay_disabled": "تم تعطيل وضع تراكب المكعب",
     "cube_playing": "مكعب ثلاثي الأبعاد: {title}",
-    "fullscreen_enabled": "تم تمكين ملء الشاشة (اضغط على F11 أو Esc للخروج)",
+    "fullscreen_enabled": "تم تمكين ملء الشاشة (اضغط على [{key}] أو Esc للخروج)",
     "fullscreen_disabled": "تم تعطيل ملء الشاشة"
   }
 }

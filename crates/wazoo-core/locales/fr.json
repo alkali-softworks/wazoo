@@ -228,7 +228,7 @@
     "cube_all_removed": "Tous les cubes 3D supprimés",
     "cube_overlay_disabled": "Mode superposition de cube désactivé",
     "cube_playing": "Cube 3D : {title}",
-    "fullscreen_enabled": "Plein écran activé (Appuyez sur F11 ou Échap pour quitter)",
+    "fullscreen_enabled": "Plein écran activé (Appuyez sur [{key}] ou Échap pour quitter)",
     "fullscreen_disabled": "Plein écran désactivé"
   }
 }

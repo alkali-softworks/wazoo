@@ -228,7 +228,7 @@
     "cube_all_removed": "Alla 3D-kuber borttagna",
     "cube_overlay_disabled": "Kuböverläggsläge inaktiverat",
     "cube_playing": "3D-kub: {title}",
-    "fullscreen_enabled": "Helskärm aktiverad (Tryck på F11 eller Esc för att avsluta)",
+    "fullscreen_enabled": "Helskärm aktiverad (Tryck på [{key}] eller Esc för att avsluta)",
     "fullscreen_disabled": "Helskärm inaktiverad"
   }
 }

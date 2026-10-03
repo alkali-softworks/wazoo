@@ -228,7 +228,7 @@
     "cube_all_removed": "Alle 3D-kubussen verwijderd",
     "cube_overlay_disabled": "Kubus-overlaymodus uitgeschakeld",
     "cube_playing": "3D-kubus: {title}",
-    "fullscreen_enabled": "Volledig scherm ingeschakeld (Druk op F11 of Esc om af te sluiten)",
+    "fullscreen_enabled": "Volledig scherm ingeschakeld (Druk op [{key}] of Esc om af te sluiten)",
     "fullscreen_disabled": "Volledig scherm uitgeschakeld"
   }
 }
