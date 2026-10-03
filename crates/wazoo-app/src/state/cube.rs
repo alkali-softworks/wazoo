@@ -39,6 +39,7 @@ pub struct BouncingCube {
 }
 
 impl BouncingCube {
+    /// Increments bounce counter, cycles edge color in the neon palette, and recalibrates spin rates.
     pub fn on_bounce(&mut self) {
         self.bounce_count = self.bounce_count.wrapping_add(1);
         self.color_index = (self.color_index + 1) % NEON_PALETTE.len();
@@ -80,6 +81,7 @@ impl Default for CubeState {
 }
 
 impl CubeState {
+    /// Creates a default `CubeState` with all cubes cleared and features disabled.
     pub fn new() -> Self {
         Self::default()
     }
@@ -89,10 +91,12 @@ impl CubeState {
         self.enabled && !self.cubes.is_empty()
     }
 
+    /// Spawns a floating 3D cube instance using the given window bounds and player index.
     pub fn spawn_cube(&mut self, window_w: f32, window_h: f32, player_idx: usize) {
         self.spawn_cube_with_player(window_w, window_h, player_idx, None);
     }
 
+    /// Spawns a floating 3D cube instance with initial trajectory, rotation velocity, and optional player ID.
     pub fn spawn_cube_with_player(
         &mut self,
         window_w: f32,
@@ -149,6 +153,7 @@ impl CubeState {
         self.enabled = true;
     }
 
+    /// Removes the most recently spawned cube, disabling cube mode if no cubes remain.
     pub fn remove_cube(&mut self) -> Option<BouncingCube> {
         let removed = self.cubes.pop();
         if self.cubes.is_empty() {
@@ -157,6 +162,7 @@ impl CubeState {
         removed
     }
 
+    /// Clears all bouncing cubes and disables cube and desktop overlay modes.
     pub fn clear(&mut self) {
         self.cubes.clear();
         self.enabled = false;
@@ -164,10 +170,12 @@ impl CubeState {
         self.spawned_for_desktop = false;
     }
 
+    /// Toggles the cube on or off, clearing all cubes if active or spawning an initial cube.
     pub fn toggle(&mut self, window_w: f32, window_h: f32, player_idx: usize) -> bool {
         self.toggle_with_player(window_w, window_h, player_idx, None)
     }
 
+    /// Toggles the cube on or off with an associated independent player handle.
     pub fn toggle_with_player(
         &mut self,
         window_w: f32,
@@ -184,6 +192,7 @@ impl CubeState {
         }
     }
 
+    /// Advances physics, multi-axis rotations, and window border collisions for all active cubes.
     pub fn tick(&mut self, window_w: f32, window_h: f32) {
         if !self.is_present() {
             return;
