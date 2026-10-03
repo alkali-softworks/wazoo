@@ -10,10 +10,24 @@ permissions:
 
 jobs:
   # -------------------------------------------------------------
+  # STAGE 0: Fast pre-flight i18n parity check
+  # -------------------------------------------------------------
+  i18n-check:
+    name: Check i18n Parity & Integrity
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Verify i18n Locales
+        run: ./scripts/check-i18n.sh
+
+  # -------------------------------------------------------------
   # STAGE 1: Build all platforms in parallel
   # -------------------------------------------------------------
   build:
     name: Build (${{ matrix.os }})
+    needs: [i18n-check]
     runs-on: ${{ matrix.os }}
     env:
       CARGO_TERM_COLOR: always

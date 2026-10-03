@@ -6,8 +6,6 @@ Alkali Softworks
 Scans all locale files in crates/wazoo-core/locales/ to verify:
 1. Complete Key Parity:
    Every key defined in ANY language must exist across ALL languages.
-   If a key is added only to English, or only to Arabic, or only to Japanese,
-   it is immediately detected and flagged.
 2. Placeholder Consistency:
    Placeholders like {key}, {count}, {title} must match across all translations.
 3. Non-Empty Values:
