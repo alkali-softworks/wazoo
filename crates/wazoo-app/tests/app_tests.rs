@@ -652,6 +652,20 @@ fn test_settings_modal_tabs_and_playback_options() {
     let _ = app.update(Message::SetContrast(0.0));
     assert_eq!(app.settings.contrast, 0.0);
 
+    // Switch to Filters tab (CRT Filter)
+    let _ = app.update(Message::SetSettingsTab(SettingsTab::Filters));
+    assert_eq!(app.modals.settings_tab, SettingsTab::Filters);
+    {
+        let _view_filters = app.view_settings_modal();
+    }
+    let _ = app.update(Message::ToggleCrtFilter);
+    assert!(app.settings.crt_enabled);
+    {
+        let _view_filters_active = app.view_settings_modal();
+    }
+    let _ = app.update(Message::ToggleCrtFilter);
+    assert!(!app.settings.crt_enabled);
+
     // Switch to System tab (Window Opacity & Default Player)
     let _ = app.update(Message::SetSettingsTab(SettingsTab::System));
     assert_eq!(app.modals.settings_tab, SettingsTab::System);

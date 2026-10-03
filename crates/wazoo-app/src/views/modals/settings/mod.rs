@@ -8,6 +8,7 @@
 
 pub mod badge;
 pub mod cube_tab;
+pub mod filters_tab;
 pub mod general_tab;
 pub mod playback_tab;
 pub mod system_tab;
@@ -24,6 +25,7 @@ impl WazooApp {
     pub fn view_settings_modal(&self) -> Element<'_, Message> {
         let is_general = self.modals.settings_tab == SettingsTab::General;
         let is_playback = self.modals.settings_tab == SettingsTab::Playback;
+        let is_filters = self.modals.settings_tab == SettingsTab::Filters;
         let is_system = self.modals.settings_tab == SettingsTab::System;
         let is_cube = self.modals.settings_tab == SettingsTab::Cube;
 
@@ -49,6 +51,17 @@ impl WazooApp {
             )
             .style(theme::settings_tab_button_style(is_playback))
             .on_press(Message::SetSettingsTab(SettingsTab::Playback))
+            .padding([7, 16]),
+            button(
+                row![
+                    text("✨").size(14),
+                    text(self.t("settings.tab_filters")).size(13),
+                ]
+                .spacing(6)
+                .align_y(Alignment::Center),
+            )
+            .style(theme::settings_tab_button_style(is_filters))
+            .on_press(Message::SetSettingsTab(SettingsTab::Filters))
             .padding([7, 16]),
             button(
                 row![
@@ -90,6 +103,7 @@ impl WazooApp {
         let active_tab_content: Element<'_, Message> = match self.modals.settings_tab {
             SettingsTab::General => general_tab::view_general_tab(self),
             SettingsTab::Playback => playback_tab::view_playback_tab(self),
+            SettingsTab::Filters => filters_tab::view_filters_tab(self),
             SettingsTab::System => system_tab::view_system_tab(self),
             SettingsTab::Cube => cube_tab::view_cube_tab(self),
         };
