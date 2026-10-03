@@ -514,10 +514,7 @@ impl WazooApp {
                 self.titlebar.show_dropdown_menu = false;
                 self.modals.menu = false;
                 let exit_task = if self.cube.desktop_overlay {
-                    let task = self.exit_desktop_cube_overlay();
-                    self.cube.clear();
-                    self.cleanup_cube_players();
-                    task
+                    self.dismiss_all_cubes()
                 } else {
                     Task::none()
                 };
@@ -541,10 +538,7 @@ impl WazooApp {
             }
             Message::SetPlayerCount(count) => {
                 let exit_task = if self.cube.desktop_overlay {
-                    let task = self.exit_desktop_cube_overlay();
-                    self.cube.clear();
-                    self.cleanup_cube_players();
-                    task
+                    self.dismiss_all_cubes()
                 } else {
                     Task::none()
                 };
@@ -577,10 +571,7 @@ impl WazooApp {
                 self.modals.menu = false;
                 self.titlebar.show_dropdown_menu = false;
                 let exit_task = if self.cube.desktop_overlay {
-                    let task = self.exit_desktop_cube_overlay();
-                    self.cube.clear();
-                    self.cleanup_cube_players();
-                    task
+                    self.dismiss_all_cubes()
                 } else {
                     Task::none()
                 };
@@ -769,10 +760,7 @@ impl WazooApp {
                     self.restore_grid_players_to_target(self.settings.player_count);
                 }
                 let exit_task = if self.cube.desktop_overlay {
-                    let task = self.exit_desktop_cube_overlay();
-                    self.cube.clear();
-                    self.cleanup_cube_players();
-                    task
+                    self.dismiss_all_cubes()
                 } else {
                     Task::none()
                 };

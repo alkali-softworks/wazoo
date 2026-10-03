@@ -37,7 +37,7 @@ impl WazooApp {
                     .height(Length::Fill)
                     .into(),
             ];
-            if self.cube.enabled && !self.cube.cubes.is_empty() {
+            if self.cube.is_present() {
                 overlay_stack.push(self.view_cube_overlay());
             }
             if let Some(ref toast) = self.overlay.toast_message {
@@ -264,7 +264,7 @@ impl WazooApp {
             }
 
             // 6. 3D Bouncing Video Cube (Screensaver overlay on top of everything)
-            if self.cube.enabled && !self.cube.cubes.is_empty() {
+            if self.cube.is_present() {
                 root_stack_children.push(self.view_cube_overlay());
             }
 

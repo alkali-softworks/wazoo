@@ -291,12 +291,8 @@ impl WazooApp {
             Message::ToggleCubeScreensaver => {
                 self.modals.menu = false;
                 self.titlebar.show_dropdown_menu = false;
-                let w = self.settings.window_bounds.width as f32;
-                let h = self.settings.window_bounds.height as f32;
-                if self.cube.enabled && !self.cube.cubes.is_empty() {
-                    let exit_task = self.exit_desktop_cube_overlay();
-                    self.cube.clear();
-                    self.cleanup_cube_players();
+                if self.cube.is_present() {
+                    let exit_task = self.dismiss_all_cubes();
                     self.overlay.show_toast("3D Cube Removed");
                     return exit_task;
                 } else {
@@ -305,13 +301,7 @@ impl WazooApp {
                         self.settings.playback_mode = PlaybackMode::Normal;
                         self.restore_grid_players_to_target(self.settings.player_count);
                     }
-                    let cube_pid = self.spawn_cube_player();
-                    self.cube.spawn_cube_with_player(w, h, 0, cube_pid);
-                    if let Some(pid) = cube_pid {
-                        if let Some(pos) = self.players.player_index(pid) {
-                            self.focused_idx = pos;
-                        }
-                    }
+                    self.spawn_new_cube();
                     self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
                     self.overlay
                         .show_toast("3D Cube Added! (Press [8] to toggle)");
@@ -334,21 +324,12 @@ impl WazooApp {
                     }
 
                     // Track whether the cube was already active before entering Mode 9
-                    let was_active = self.cube.enabled && !self.cube.cubes.is_empty();
+                    let was_active = self.cube.is_present();
                     self.cube.spawned_for_desktop = !was_active;
 
                     // Ensure cube is enabled and at least one cube is bouncing
                     if !was_active {
-                        let w = self.settings.window_bounds.width as f32;
-                        let h = self.settings.window_bounds.height as f32;
-                        let cube_pid = self.spawn_cube_player();
-                        let count = self.cube.cubes.len();
-                        self.cube.spawn_cube_with_player(w, h, count, cube_pid);
-                        if let Some(pid) = cube_pid {
-                            if let Some(pos) = self.players.player_index(pid) {
-                                self.focused_idx = pos;
-                            }
-                        }
+                        self.spawn_new_cube();
                     }
 
                     self.cube.desktop_overlay = true;
@@ -377,16 +358,7 @@ impl WazooApp {
             Message::SpawnCube => {
                 self.modals.menu = false;
                 self.titlebar.show_dropdown_menu = false;
-                let w = self.settings.window_bounds.width as f32;
-                let h = self.settings.window_bounds.height as f32;
-                let cube_pid = self.spawn_cube_player();
-                let count = self.cube.cubes.len();
-                self.cube.spawn_cube_with_player(w, h, count, cube_pid);
-                if let Some(pid) = cube_pid {
-                    if let Some(pos) = self.players.player_index(pid) {
-                        self.focused_idx = pos;
-                    }
-                }
+                self.spawn_new_cube();
                 self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
                 self.overlay.show_toast(format!(
                     "Added 3D Cube #{}! (Press [8] to toggle)",
@@ -395,7 +367,7 @@ impl WazooApp {
                 Task::none()
             }
             Message::RemoveCube => {
-                if let Some(removed) = self.cube.cubes.pop() {
+                if let Some(removed) = self.cube.remove_cube() {
                     if let Some(pid) = removed.player_id {
                         if let Some(pos) = self.players.player_index(pid) {
                             let mut p = self.players.remove(pos);
@@ -408,9 +380,7 @@ impl WazooApp {
                 }
                 if self.cube.cubes.is_empty() {
                     let was_desktop = self.cube.desktop_overlay;
-                    let exit_task = self.exit_desktop_cube_overlay();
-                    self.cube.clear();
-                    self.cleanup_cube_players();
+                    let exit_task = self.dismiss_all_cubes();
                     if !was_desktop {
                         self.overlay.show_toast("3D Cube Removed");
                     }
@@ -426,9 +396,7 @@ impl WazooApp {
             Message::ClearCubes => {
                 self.modals.menu = false;
                 self.titlebar.show_dropdown_menu = false;
-                let exit_task = self.exit_desktop_cube_overlay();
-                self.cube.clear();
-                self.cleanup_cube_players();
+                let exit_task = self.dismiss_all_cubes();
                 self.overlay.show_toast("All 3D Cubes Removed");
                 exit_task
             }
@@ -534,11 +502,33 @@ impl WazooApp {
 
     /// Advances physics, multi-axis 3D rotations, and screen edge collisions for 3D cubes.
     pub(crate) fn tick_cube_screensaver(&mut self) {
-        if self.cube.enabled && !self.cube.cubes.is_empty() {
+        if self.cube.is_present() {
             let w = self.settings.window_bounds.width as f32;
             let h = self.settings.window_bounds.height as f32;
             self.cube.tick(w, h);
         }
+    }
+
+    /// Spawns a new independent video player and 3D cube instance, focusing it.
+    pub(crate) fn spawn_new_cube(&mut self) {
+        let w = self.settings.window_bounds.width as f32;
+        let h = self.settings.window_bounds.height as f32;
+        let cube_pid = self.spawn_cube_player();
+        let count = self.cube.cubes.len();
+        self.cube.spawn_cube_with_player(w, h, count, cube_pid);
+        if let Some(pid) = cube_pid {
+            if let Some(pos) = self.players.player_index(pid) {
+                self.focused_idx = pos;
+            }
+        }
+    }
+
+    /// Completely dismisses all 3D cubes, cleans up their players, and exits Mode 9 if active.
+    pub(crate) fn dismiss_all_cubes(&mut self) -> Task<Message> {
+        let exit_task = self.exit_desktop_cube_overlay();
+        self.cube.clear();
+        self.cleanup_cube_players();
+        exit_task
     }
 
     /// Disables Desktop Cube Screensaver Mode (Mode 9), restoring normal window level,
