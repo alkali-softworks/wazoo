@@ -10,8 +10,8 @@ use crate::cursor;
 use crate::message::Message;
 use crate::theme;
 use iced::{
-    Alignment, Element, Length, Theme,
-    widget::{Space, button, column, container, row, slider, text},
+    Alignment, Element, Length,
+    widget::{Space, button, column, row, slider, text},
 };
 
 pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
@@ -324,30 +324,14 @@ pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         actions_row = actions_row.push(dismiss_all_btn);
     }
 
-    let dynamics_card = container(
-        column![
-            text(app.t("settings.cube_physics_scale"))
-                .size(14)
-                .font(theme::FONT_BOLD)
-                .color(iced::Color::WHITE),
-            speed_slider,
-            size_slider,
-            actions_row,
-        ]
-        .spacing(14),
-    )
-    .padding(14)
-    .style(|_theme: &Theme| container::Style {
-        background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
-        border: iced::Border {
-            radius: 8.0.into(),
-            width: 1.0,
-            color: theme::COLOR_BORDER,
-        },
-        ..Default::default()
-    });
-
-    column![toggle_button, desktop_button, sheen_button, dynamics_card]
-        .spacing(14)
-        .into()
+    column![
+        toggle_button,
+        desktop_button,
+        sheen_button,
+        speed_slider,
+        size_slider,
+        actions_row,
+    ]
+    .spacing(14)
+    .into()
 }
