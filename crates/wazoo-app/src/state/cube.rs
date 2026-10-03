@@ -3,19 +3,9 @@
  *
  * 3D Bouncing Video Cube State
  *
- * Manages the physics, multi-axis 3D rotations, edge collision detection,
- * and neon palette cycling for interactive floating video cubes.
+ * Manages the physics, multi-axis 3D rotations, and edge collision detection
+ * for interactive floating video cubes.
  */
-
-pub const NEON_PALETTE: &[[f32; 4]] = &[
-    [0.26, 0.72, 0.51, 1.0], // Emerald Green (Wazoo signature)
-    [0.00, 0.90, 1.00, 1.0], // Electric Cyan
-    [0.83, 0.00, 0.98, 1.0], // Neon Violet
-    [1.00, 0.15, 0.45, 1.0], // Hot Coral Pink
-    [1.00, 0.84, 0.00, 1.0], // Solar Gold
-    [1.00, 0.42, 0.00, 1.0], // Vivid Amber
-    [0.16, 0.47, 1.00, 1.0], // Laser Blue
-];
 
 #[derive(Debug, Clone)]
 pub struct BouncingCube {
@@ -31,19 +21,15 @@ pub struct BouncingCube {
     pub vrx: f32,
     pub vry: f32,
     pub vrz: f32,
-    pub edge_color: [f32; 4],
-    pub color_index: usize,
     pub player_index: usize,
     pub player_id: Option<wazoo_media::PlayerId>,
     pub bounce_count: u32,
 }
 
 impl BouncingCube {
-    /// Increments bounce counter, cycles edge color in the neon palette, and recalibrates spin rates.
+    /// Increments bounce counter and recalibrates spin rates.
     pub fn on_bounce(&mut self) {
         self.bounce_count = self.bounce_count.wrapping_add(1);
-        self.color_index = (self.color_index + 1) % NEON_PALETTE.len();
-        self.edge_color = NEON_PALETTE[self.color_index];
 
         // Maintain calm, smooth spin dynamics on bounce without chaotic fluctuations
         let speed_factor = if self.bounce_count % 2 == 0 { 1.02 } else { 0.98 };
@@ -126,7 +112,6 @@ impl CubeState {
         let vrx = 0.0015;
         let vrz = 0.0010;
 
-        let color_idx = count % NEON_PALETTE.len();
         let cube = BouncingCube {
             id: self.next_id,
             x: center_x,
@@ -141,8 +126,6 @@ impl CubeState {
             vrx,
             vry,
             vrz,
-            edge_color: NEON_PALETTE[color_idx],
-            color_index: color_idx,
             player_index: player_idx,
             player_id,
             bounce_count: 0,
