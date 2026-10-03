@@ -7,7 +7,7 @@
  * multi-cube management, uniform buffer byte layout, and application message integration.
  */
 
-use wazoo_app::state::cube::{BouncingCube, CubeState, NEON_PALETTE};
+use wazoo_app::state::cube::{BouncingCube, CubeState};
 use wazoo_media::cube::CubeUniforms;
 
 #[test]
@@ -36,7 +36,6 @@ fn test_cube_state_spawn_and_toggle() {
     assert!(cube.y > 0.0 && cube.y < 720.0);
     assert_ne!(cube.vx, 0.0);
     assert_ne!(cube.vy, 0.0);
-    assert_eq!(cube.edge_color, NEON_PALETTE[0]);
 
     // Toggle off
     let is_on = state.toggle(1280.0, 720.0, 0);
@@ -98,8 +97,6 @@ fn test_cube_screensaver_bounce_physics() {
         vrx: 0.01,
         vry: 0.01,
         vrz: 0.01,
-        edge_color: NEON_PALETTE[0],
-        color_index: 0,
         player_index: 0,
         player_id: None,
         bounce_count: 0,
@@ -117,8 +114,6 @@ fn test_cube_screensaver_bounce_physics() {
         "Velocity x should be negative after right wall bounce"
     );
     assert_eq!(bounced.bounce_count, 1);
-    assert_eq!(bounced.color_index, 1);
-    assert_eq!(bounced.edge_color, NEON_PALETTE[1]);
     assert!(bounced.x <= win_w - 50.0);
 
     // Test top wall bounce
@@ -131,8 +126,6 @@ fn test_cube_screensaver_bounce_physics() {
         "Velocity y should be positive after top wall bounce"
     );
     assert_eq!(state.cubes[0].bounce_count, 2);
-    assert_eq!(state.cubes[0].color_index, 2);
-    assert_eq!(state.cubes[0].edge_color, NEON_PALETTE[2]);
 }
 
 #[test]
