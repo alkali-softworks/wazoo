@@ -228,7 +228,7 @@
     "cube_all_removed": "সমস্ত 3D কিউব সরানো হয়েছে",
     "cube_overlay_disabled": "কিউব ওভারলে মোড নিষ্ক্রিয় করা হয়েছে",
     "cube_playing": "3D কিউব: {title}",
-    "fullscreen_enabled": "ফুলস্ক্রিন সক্রিয় (প্রস্থান করতে F11 বা Esc চাপুন)",
+    "fullscreen_enabled": "ফুলস্ক্রিন সক্রিয় (প্রস্থান করতে [{key}] বা Esc চাপুন)",
     "fullscreen_disabled": "ফুলস্ক্রিন নিষ্ক্রিয়"
   }
 }

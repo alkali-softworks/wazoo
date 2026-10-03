@@ -228,7 +228,7 @@
     "cube_all_removed": "सभी 3D क्यूब हटाए गए",
     "cube_overlay_disabled": "क्यूब ओवरले मोड अक्षम किया गया",
     "cube_playing": "3D क्यूब: {title}",
-    "fullscreen_enabled": "पूर्ण स्क्रीन सक्षम (बाहर निकलने के लिए F11 या Esc दबाएं)",
+    "fullscreen_enabled": "पूर्ण स्क्रीन सक्षम (बाहर निकलने के लिए [{key}] या Esc दबाएं)",
     "fullscreen_disabled": "पूर्ण स्क्रीन अक्षम"
   }
 }

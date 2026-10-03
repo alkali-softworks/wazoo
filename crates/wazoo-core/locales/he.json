@@ -228,7 +228,7 @@
     "cube_all_removed": "כל הקוביות התלת-ממדיות הוסרו",
     "cube_overlay_disabled": "מצב שכבת קובייה הושבת",
     "cube_playing": "קובייה תלת-ממדית: {title}",
-    "fullscreen_enabled": "מסך מלא הופעל (לחץ על F11 או Esc כדי לצאת)",
+    "fullscreen_enabled": "מסך מלא הופעל (לחץ על [{key}] או Esc כדי לצאת)",
     "fullscreen_disabled": "מסך מלא הושבת"
   }
 }

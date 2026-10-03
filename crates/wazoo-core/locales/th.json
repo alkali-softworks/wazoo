@@ -228,7 +228,7 @@
     "cube_all_removed": "ลบลูกบาศก์ 3D ทั้งหมดแล้ว",
     "cube_overlay_disabled": "ปิดใช้งานโหมดโอเวอร์เลย์ลูกบาศก์แล้ว",
     "cube_playing": "ลูกบาศก์ 3D: {title}",
-    "fullscreen_enabled": "เปิดใช้งานเต็มหน้าจอแล้ว (กด F11 หรือ Esc เพื่อออก)",
+    "fullscreen_enabled": "เปิดใช้งานเต็มหน้าจอแล้ว (กด [{key}] หรือ Esc เพื่อออก)",
     "fullscreen_disabled": "ปิดใช้งานเต็มหน้าจอแล้ว"
   }
 }

@@ -228,7 +228,7 @@
     "cube_all_removed": "Alle 3D-Würfel entfernt",
     "cube_overlay_disabled": "Würfel-Overlay-Modus deaktiviert",
     "cube_playing": "3D-Würfel: {title}",
-    "fullscreen_enabled": "Vollbild aktiviert (F11 oder Esc zum Beenden drücken)",
+    "fullscreen_enabled": "Vollbild aktiviert ([{key}] oder Esc zum Beenden drücken)",
     "fullscreen_disabled": "Vollbild deaktiviert"
   }
 }

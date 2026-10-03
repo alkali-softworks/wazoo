@@ -228,7 +228,7 @@
     "cube_all_removed": "All 3D Cubes Removed",
     "cube_overlay_disabled": "Cube Overlay Mode Disabled",
     "cube_playing": "3D Cube: {title}",
-    "fullscreen_enabled": "Fullscreen Enabled (Press F11 or Esc to exit)",
+    "fullscreen_enabled": "Fullscreen Enabled (Press [{key}] or Esc to exit)",
     "fullscreen_disabled": "Fullscreen Disabled"
   }
 }

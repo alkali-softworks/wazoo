@@ -228,7 +228,7 @@
     "cube_all_removed": "すべての3Dキューブを削除しました",
     "cube_overlay_disabled": "キューブオーバーレイモードが無効になりました",
     "cube_playing": "3Dキューブ: {title}",
-    "fullscreen_enabled": "全画面表示が有効化されました (F11またはEscで終了)",
+    "fullscreen_enabled": "全画面表示が有効化されました ([{key}]またはEscで終了)",
     "fullscreen_disabled": "全画面表示が無効化されました"
   }
 }
