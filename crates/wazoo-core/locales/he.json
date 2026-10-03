@@ -19,7 +19,9 @@
     "loop": "לולאה",
     "start": "התחלה",
     "end": "סיום",
-    "crt_filter": "מסנן CRT"
+    "crt_filter": "מסנן CRT",
+    "fullscreen": "מסך מלא",
+    "exit_fullscreen": "יציאה ממסך מלא"
   },
   "app": {
     "drag_to_move": "גרור להזזה",
@@ -156,7 +158,8 @@
       "mark_out": "הגדר נקודת סיום (Out)",
       "clear_marks": "נקה לולאת התחלה / סיום",
       "toggle_cube": "הפעל/השבת קובייה תלת-ממדית",
-      "toggle_cube_overlay": "הפעל/השבת מצב שכבת קובייה"
+      "toggle_cube_overlay": "הפעל/השבת מצב שכבת קובייה",
+      "toggle_fullscreen": "מעבר למסך מלא"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "קובייה תלת-ממדית הוסרה ({count} נותרו)",
     "cube_all_removed": "כל הקוביות התלת-ממדיות הוסרו",
     "cube_overlay_disabled": "מצב שכבת קובייה הושבת",
-    "cube_playing": "קובייה תלת-ממדית: {title}"
+    "cube_playing": "קובייה תלת-ממדית: {title}",
+    "fullscreen_enabled": "מסך מלא הופעל (לחץ על F11 או Esc כדי לצאת)",
+    "fullscreen_disabled": "מסך מלא הושבת"
   }
 }

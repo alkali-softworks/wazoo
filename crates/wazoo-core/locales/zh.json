@@ -19,7 +19,9 @@
     "loop": "循环",
     "start": "起始",
     "end": "结束",
-    "crt_filter": "CRT 滤镜"
+    "crt_filter": "CRT 滤镜",
+    "fullscreen": "全屏",
+    "exit_fullscreen": "退出全屏"
   },
   "app": {
     "drag_to_move": "拖动以移动",
@@ -156,7 +158,8 @@
       "mark_out": "设置出点",
       "clear_marks": "清除出入点循环",
       "toggle_cube": "切换 3D 立方体",
-      "toggle_cube_overlay": "切换立方体覆盖模式"
+      "toggle_cube_overlay": "切换立方体覆盖模式",
+      "toggle_fullscreen": "切换全屏"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "已移除 3D 立方体（剩余 {count} 个）",
     "cube_all_removed": "已移除所有 3D 立方体",
     "cube_overlay_disabled": "已禁用立方体覆盖模式",
-    "cube_playing": "3D 立方体: {title}"
+    "cube_playing": "3D 立方体: {title}",
+    "fullscreen_enabled": "全屏已启用 (按 F11 或 Esc 退出)",
+    "fullscreen_disabled": "全屏已禁用"
   }
 }

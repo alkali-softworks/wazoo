@@ -18,13 +18,14 @@ fn test_menu_hint() {
     assert_eq!(kb.menu_hint(&kb.toggle_crt), "7");
     assert_eq!(kb.menu_hint(&kb.toggle_cube), "8");
     assert_eq!(kb.menu_hint(&kb.toggle_cube_overlay), "9");
+    assert_eq!(kb.menu_hint(&kb.toggle_fullscreen), "F11");
 }
 
 #[test]
 fn test_help_shortcuts_generation() {
     let kb = KeybindSettings::default();
     let shortcuts = kb.help_shortcuts_with_descriptions(|key| key.to_string());
-    assert_eq!(shortcuts.len(), 28);
+    assert_eq!(shortcuts.len(), 29);
     assert_eq!(
         shortcuts[0],
         (

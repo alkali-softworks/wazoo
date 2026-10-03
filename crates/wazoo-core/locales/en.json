@@ -19,7 +19,9 @@
     "loop": "Loop",
     "start": "Start",
     "end": "End",
-    "crt_filter": "CRT Filter"
+    "crt_filter": "CRT Filter",
+    "fullscreen": "Fullscreen",
+    "exit_fullscreen": "Exit Fullscreen"
   },
   "app": {
     "drag_to_move": "Drag to Move",
@@ -156,7 +158,8 @@
       "mark_out": "Set Mark Out Point",
       "clear_marks": "Clear Mark In / Out Loop",
       "toggle_cube": "Toggle 3D Cube",
-      "toggle_cube_overlay": "Toggle Cube Overlay Mode"
+      "toggle_cube_overlay": "Toggle Cube Overlay Mode",
+      "toggle_fullscreen": "Toggle Fullscreen"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "3D Cube Removed ({count} Remaining)",
     "cube_all_removed": "All 3D Cubes Removed",
     "cube_overlay_disabled": "Cube Overlay Mode Disabled",
-    "cube_playing": "3D Cube: {title}"
+    "cube_playing": "3D Cube: {title}",
+    "fullscreen_enabled": "Fullscreen Enabled (Press F11 or Esc to exit)",
+    "fullscreen_disabled": "Fullscreen Disabled"
   }
 }

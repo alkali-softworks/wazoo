@@ -19,7 +19,9 @@
     "loop": "লুপ",
     "start": "শুরু",
     "end": "শেষ",
-    "crt_filter": "সিআরটি ফিল্টার"
+    "crt_filter": "সিআরটি ফিল্টার",
+    "fullscreen": "ফুলস্ক্রিন",
+    "exit_fullscreen": "ফুলস্ক্রিন থেকে বের হন"
   },
   "app": {
     "drag_to_move": "সরানোর জন্য টেনে আনুন",
@@ -156,7 +158,8 @@
       "mark_out": "মার্ক আউট সেট করুন",
       "clear_marks": "মার্ক ইন/আউট লুপ সাফ করুন",
       "toggle_cube": "3D কিউব টগল করুন",
-      "toggle_cube_overlay": "কিউব ওভারলে মোড টগল করুন"
+      "toggle_cube_overlay": "কিউব ওভারলে মোড টগল করুন",
+      "toggle_fullscreen": "ফুলস্ক্রিন টগল করুন"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "3D কিউব সরানো হয়েছে ({count}টি বাকি)",
     "cube_all_removed": "সমস্ত 3D কিউব সরানো হয়েছে",
     "cube_overlay_disabled": "কিউব ওভারলে মোড নিষ্ক্রিয় করা হয়েছে",
-    "cube_playing": "3D কিউব: {title}"
+    "cube_playing": "3D কিউব: {title}",
+    "fullscreen_enabled": "ফুলস্ক্রিন সক্রিয় (প্রস্থান করতে F11 বা Esc চাপুন)",
+    "fullscreen_disabled": "ফুলস্ক্রিন নিষ্ক্রিয়"
   }
 }

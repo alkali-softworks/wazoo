@@ -19,7 +19,9 @@
     "loop": "Петля",
     "start": "Початок",
     "end": "Кінець",
-    "crt_filter": "Фільтр ЕПТ"
+    "crt_filter": "Фільтр ЕПТ",
+    "fullscreen": "Повноекранний режим",
+    "exit_fullscreen": "Вийти з повноекранного режиму"
   },
   "app": {
     "drag_to_move": "Потягніть для переміщення",
@@ -156,7 +158,8 @@
       "mark_out": "Встановити точку виходу (Out)",
       "clear_marks": "Очистити петлю точок In / Out",
       "toggle_cube": "Перемкнути 3D-куб",
-      "toggle_cube_overlay": "Перемкнути режим накладення куба"
+      "toggle_cube_overlay": "Перемкнути режим накладення куба",
+      "toggle_fullscreen": "Перемкнути повноекранний режим"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "3D-куб видалено (залишилося {count})",
     "cube_all_removed": "Усі 3D-куби видалено",
     "cube_overlay_disabled": "Режим накладення куба вимкнено",
-    "cube_playing": "3D-куб: {title}"
+    "cube_playing": "3D-куб: {title}",
+    "fullscreen_enabled": "Повноекранний режим увімкнено (Натисніть F11 або Esc для виходу)",
+    "fullscreen_disabled": "Повноекранний режим вимкнено"
   }
 }

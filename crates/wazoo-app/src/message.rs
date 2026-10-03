@@ -32,6 +32,7 @@ pub enum Message {
     KeyReleased(Key),
     MinimizeWindow,
     MaximizeWindow,
+    ToggleFullscreen,
     CloseApp,
     DragWindow,
     DragResize(iced::window::Direction),

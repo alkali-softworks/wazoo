@@ -19,7 +19,9 @@
     "loop": "Loop",
     "start": "Inizio",
     "end": "Fine",
-    "crt_filter": "Filtro CRT"
+    "crt_filter": "Filtro CRT",
+    "fullscreen": "Schermo intero",
+    "exit_fullscreen": "Esci da schermo intero"
   },
   "app": {
     "drag_to_move": "Trascina per spostare",
@@ -156,7 +158,8 @@
       "mark_out": "Imposta punto finale",
       "clear_marks": "Cancella loop inizio / fine",
       "toggle_cube": "Attiva/disattiva Cubo 3D",
-      "toggle_cube_overlay": "Attiva/disattiva Modalità Sovrapposizione Cubo"
+      "toggle_cube_overlay": "Attiva/disattiva Modalità Sovrapposizione Cubo",
+      "toggle_fullscreen": "Attiva/disattiva schermo intero"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "Cubo 3D rimosso ({count} rimanenti)",
     "cube_all_removed": "Tutti i cubi 3D rimossi",
     "cube_overlay_disabled": "Modalità Sovrapposizione Cubo disattivata",
-    "cube_playing": "Cubo 3D: {title}"
+    "cube_playing": "Cubo 3D: {title}",
+    "fullscreen_enabled": "Schermo intero attivato (Premi F11 o Esc per uscire)",
+    "fullscreen_disabled": "Schermo intero disattivato"
   }
 }

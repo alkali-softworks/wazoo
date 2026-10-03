@@ -266,6 +266,9 @@ pub fn find_key_action(
     if key_matches_binding(&keybinds.toggle_cube_overlay, key, false) {
         return Some(KeyAction::ToggleCubeOverlay);
     }
+    if key_matches_binding(&keybinds.toggle_fullscreen, key, false) {
+        return Some(KeyAction::ToggleFullscreen);
+    }
 
     None
 }

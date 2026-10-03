@@ -19,7 +19,9 @@
     "loop": "लूप",
     "start": "शुरू",
     "end": "अंत",
-    "crt_filter": "सीआरटी फ़िल्टर"
+    "crt_filter": "सीआरटी फ़िल्टर",
+    "fullscreen": "पूर्ण स्क्रीन",
+    "exit_fullscreen": "पूर्ण स्क्रीन से बाहर निकलें"
   },
   "app": {
     "drag_to_move": "स्थानांतरित करने के लिए खींचें",
@@ -156,7 +158,8 @@
       "mark_out": "मार्क आउट सेट करें",
       "clear_marks": "मार्क इन/आउट लूप साफ़ करें",
       "toggle_cube": "3D क्यूब टॉगल करें",
-      "toggle_cube_overlay": "क्यूब ओवरले मोड टॉगल करें"
+      "toggle_cube_overlay": "क्यूब ओवरले मोड टॉगल करें",
+      "toggle_fullscreen": "पूर्ण स्क्रीन टॉगल करें"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "3D क्यूब हटाया गया ({count} शेष)",
     "cube_all_removed": "सभी 3D क्यूब हटाए गए",
     "cube_overlay_disabled": "क्यूब ओवरले मोड अक्षम किया गया",
-    "cube_playing": "3D क्यूब: {title}"
+    "cube_playing": "3D क्यूब: {title}",
+    "fullscreen_enabled": "पूर्ण स्क्रीन सक्षम (बाहर निकलने के लिए F11 या Esc दबाएं)",
+    "fullscreen_disabled": "पूर्ण स्क्रीन अक्षम"
   }
 }

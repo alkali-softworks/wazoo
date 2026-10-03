@@ -118,6 +118,7 @@ impl WazooApp {
                 KeyAction::ToggleCrt => return self.update(Message::ToggleCrtFilter),
                 KeyAction::ToggleCube => return self.update(Message::ToggleCubeScreensaver),
                 KeyAction::ToggleCubeOverlay => return self.update(Message::ToggleDesktopCubeScreensaver),
+                KeyAction::ToggleFullscreen => return self.update(Message::ToggleFullscreen),
             }
         }
         Task::none()

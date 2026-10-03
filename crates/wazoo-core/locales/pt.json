@@ -19,7 +19,9 @@
     "loop": "Repetição",
     "start": "Início",
     "end": "Fim",
-    "crt_filter": "Filtro CRT"
+    "crt_filter": "Filtro CRT",
+    "fullscreen": "Tela cheia",
+    "exit_fullscreen": "Sair da tela cheia"
   },
   "app": {
     "drag_to_move": "Arraste para mover",
@@ -156,7 +158,8 @@
       "mark_out": "Definir ponto de saída",
       "clear_marks": "Limpar repetição de entrada / saída",
       "toggle_cube": "Alternar Cubo 3D",
-      "toggle_cube_overlay": "Alternar Modo de Sobreposição do Cubo"
+      "toggle_cube_overlay": "Alternar Modo de Sobreposição do Cubo",
+      "toggle_fullscreen": "Alternar tela cheia"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "Cubo 3D removido ({count} restantes)",
     "cube_all_removed": "Todos os cubos 3D removidos",
     "cube_overlay_disabled": "Modo de Sobreposição do Cubo desativado",
-    "cube_playing": "Cubo 3D: {title}"
+    "cube_playing": "Cubo 3D: {title}",
+    "fullscreen_enabled": "Tela cheia ativada (Pressione F11 ou Esc para sair)",
+    "fullscreen_disabled": "Tela cheia desativada"
   }
 }

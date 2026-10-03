@@ -171,6 +171,27 @@ impl WazooApp {
                     Task::none()
                 }
             }
+            Message::ToggleFullscreen => {
+                self.titlebar.last_click = None;
+                self.titlebar.drag_pending = false;
+                self.titlebar.press_origin = None;
+                self.window.is_fullscreen = !self.window.is_fullscreen;
+                let mode = if self.window.is_fullscreen {
+                    iced::window::Mode::Fullscreen
+                } else {
+                    iced::window::Mode::Windowed
+                };
+                if self.window.is_fullscreen {
+                    self.overlay.show_toast(self.t("toast.fullscreen_enabled"));
+                } else {
+                    self.overlay.show_toast(self.t("toast.fullscreen_disabled"));
+                }
+                if let Some(id) = self.window.id {
+                    iced::window::set_mode(id, mode)
+                } else {
+                    Task::none()
+                }
+            }
             Message::DragWindow => {
                 if let Some(id) = self.window.id {
                     self.window.is_dragging = true;

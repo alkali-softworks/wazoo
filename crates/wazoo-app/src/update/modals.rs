@@ -277,6 +277,8 @@ impl WazooApp {
                     self.titlebar.show_dropdown_menu = false;
                     self.close_file_picker();
                     self.drawers.close_all();
+                } else if self.window.is_fullscreen {
+                    return self.update(Message::ToggleFullscreen);
                 } else {
                     self.modals.menu = true;
                     self.titlebar.show_dropdown_menu = false;

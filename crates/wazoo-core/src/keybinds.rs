@@ -52,6 +52,7 @@ pub enum KeyAction {
     ToggleCrt,
     ToggleCube,
     ToggleCubeOverlay,
+    ToggleFullscreen,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -99,6 +100,7 @@ pub struct KeybindSettings {
     pub toggle_crt: String,
     pub toggle_cube: String,
     pub toggle_cube_overlay: String,
+    pub toggle_fullscreen: String,
 }
 
 impl Default for KeybindSettings {
@@ -146,6 +148,7 @@ impl Default for KeybindSettings {
             toggle_crt: "7".to_string(),
             toggle_cube: "8".to_string(),
             toggle_cube_overlay: "9".to_string(),
+            toggle_fullscreen: "F11".to_string(),
         }
     }
 }
@@ -194,6 +197,7 @@ impl KeybindSettings {
         "toggle_crt",
         "toggle_cube",
         "toggle_cube_overlay",
+        "toggle_fullscreen",
     ];
 
     /// Validates if a JSON value contains the complete dictionary of non-empty key bindings.
@@ -339,6 +343,9 @@ impl KeybindSettings {
         if self.toggle_cube_overlay.trim().is_empty() {
             self.toggle_cube_overlay = def.toggle_cube_overlay;
         }
+        if self.toggle_fullscreen.trim().is_empty() {
+            self.toggle_fullscreen = def.toggle_fullscreen;
+        }
     }
 
     /// Formats a keybinding into a clean uppercase hint suitable for menu labels.
@@ -474,6 +481,10 @@ impl KeybindSettings {
             (
                 self.toggle_cube_overlay.clone(),
                 t("help.shortcuts.toggle_cube_overlay"),
+            ),
+            (
+                self.toggle_fullscreen.clone(),
+                t("help.shortcuts.toggle_fullscreen"),
             ),
         ]
     }
@@ -671,6 +682,10 @@ impl KeybindSettings {
                     HelpShortcut {
                         key: KeyDisplay::Combo(vec!["Alt".to_string(), "Drag".to_string()]),
                         description: t("help.shortcuts.move_window"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.toggle_fullscreen.to_uppercase()),
+                        description: t("help.shortcuts.toggle_fullscreen"),
                     },
                     HelpShortcut {
                         key: KeyDisplay::Combo(close_keys),

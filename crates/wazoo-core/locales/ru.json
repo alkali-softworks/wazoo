@@ -19,7 +19,9 @@
     "loop": "Цикл",
     "start": "Начало",
     "end": "Конец",
-    "crt_filter": "CRT-фильтр"
+    "crt_filter": "CRT-фильтр",
+    "fullscreen": "Полноэкранный режим",
+    "exit_fullscreen": "Выйти из полноэкранного режима"
   },
   "app": {
     "drag_to_move": "Перетащите для перемещения",
@@ -156,7 +158,8 @@
       "mark_out": "Установить точку выхода",
       "clear_marks": "Очистить петлю входа / выхода",
       "toggle_cube": "Переключить 3D-куб",
-      "toggle_cube_overlay": "Переключить режим наложения куба"
+      "toggle_cube_overlay": "Переключить режим наложения куба",
+      "toggle_fullscreen": "Переключить полноэкранный режим"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "3D-куб удален (осталось: {count})",
     "cube_all_removed": "Все 3D-кубы удалены",
     "cube_overlay_disabled": "Режим наложения куба выключен",
-    "cube_playing": "3D-куб: {title}"
+    "cube_playing": "3D-куб: {title}",
+    "fullscreen_enabled": "Полноэкранный режим включен (Нажмите F11 или Esc для выхода)",
+    "fullscreen_disabled": "Полноэкранный режим выключен"
   }
 }

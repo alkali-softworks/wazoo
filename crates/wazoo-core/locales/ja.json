@@ -19,7 +19,9 @@
     "loop": "ループ",
     "start": "開始",
     "end": "終了",
-    "crt_filter": "CRTフィルター"
+    "crt_filter": "CRTフィルター",
+    "fullscreen": "フルスクリーン",
+    "exit_fullscreen": "フルスクリーンを終了"
   },
   "app": {
     "drag_to_move": "ドラッグして移動",
@@ -156,7 +158,8 @@
       "mark_out": "アウト点を設定",
       "clear_marks": "イン/アウト点のループを解除",
       "toggle_cube": "3Dキューブを切り替え",
-      "toggle_cube_overlay": "キューブオーバーレイモードを切り替え"
+      "toggle_cube_overlay": "キューブオーバーレイモードを切り替え",
+      "toggle_fullscreen": "全画面表示の切り替え"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "3Dキューブを削除しました（残り {count} 個）",
     "cube_all_removed": "すべての3Dキューブを削除しました",
     "cube_overlay_disabled": "キューブオーバーレイモードが無効になりました",
-    "cube_playing": "3Dキューブ: {title}"
+    "cube_playing": "3Dキューブ: {title}",
+    "fullscreen_enabled": "全画面表示が有効化されました (F11またはEscで終了)",
+    "fullscreen_disabled": "全画面表示が無効化されました"
   }
 }

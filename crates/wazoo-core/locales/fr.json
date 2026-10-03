@@ -19,7 +19,9 @@
     "loop": "Boucle",
     "start": "Début",
     "end": "Fin",
-    "crt_filter": "Filtre CRT"
+    "crt_filter": "Filtre CRT",
+    "fullscreen": "Plein écran",
+    "exit_fullscreen": "Quitter le plein écran"
   },
   "app": {
     "drag_to_move": "Faites glisser pour déplacer",
@@ -156,7 +158,8 @@
       "mark_out": "Définir le point de sortie",
       "clear_marks": "Effacer la boucle d'entrée / sortie",
       "toggle_cube": "Basculer le Cube 3D",
-      "toggle_cube_overlay": "Basculer le mode superposition de cube"
+      "toggle_cube_overlay": "Basculer le mode superposition de cube",
+      "toggle_fullscreen": "Activer/désactiver le plein écran"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "Cube 3D supprimé ({count} restant(s))",
     "cube_all_removed": "Tous les cubes 3D supprimés",
     "cube_overlay_disabled": "Mode superposition de cube désactivé",
-    "cube_playing": "Cube 3D : {title}"
+    "cube_playing": "Cube 3D : {title}",
+    "fullscreen_enabled": "Plein écran activé (Appuyez sur F11 ou Échap pour quitter)",
+    "fullscreen_disabled": "Plein écran désactivé"
   }
 }
