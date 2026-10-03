@@ -656,5 +656,113 @@ fn test_mode_9_toast_auto_hides_in_few_seconds() {
     );
 }
 
+#[test]
+fn test_cube_present_hijacks_bookmark_keys_for_add_remove_cube() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    // 1. Initially cubes are NOT present
+    assert!(!app.cube.is_present());
+    assert_eq!(app.cube.cubes.len(), 0);
+
+    // 2. Spawn 3D cube (press 8)
+    let _ = app.update(wazoo_app::message::Message::ToggleCubeScreensaver);
+    assert!(app.cube.is_present());
+    assert_eq!(app.cube.cubes.len(), 1);
+
+    // 3. Pressing "+" should hijack bookmark key to spawn a 2nd cube
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Character("+".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert_eq!(app.cube.cubes.len(), 2);
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("Added 3D Cube #2! (Press [8] to toggle)")
+    );
+
+    // 4. Pressing "=" should also spawn a 3rd cube
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Character("=".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert_eq!(app.cube.cubes.len(), 3);
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("Added 3D Cube #3! (Press [8] to toggle)")
+    );
+
+    // 5. Pressing "-" should remove a cube (from 3 to 2)
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Character("-".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert_eq!(app.cube.cubes.len(), 2);
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("3D Cube Removed (2 Remaining)")
+    );
+
+    // 6. Pressing "-" removes another cube (from 2 to 1)
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Character("-".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert_eq!(app.cube.cubes.len(), 1);
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("3D Cube Removed (1 Remaining)")
+    );
+
+    // 7. Pressing "-" removes the last cube and exits cube screensaver
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Character("-".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert_eq!(app.cube.cubes.len(), 0);
+    assert!(!app.cube.is_present());
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("3D Cube Removed")
+    );
+
+    // 8. With cubes now dismissed, pressing "+" no longer adds a cube (reverts to bookmark action)
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Character("+".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert_eq!(app.cube.cubes.len(), 0);
+    assert!(!app.cube.is_present());
+
+    // 9. Verify same hijacking works in Mode 9 Desktop Screensaver
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+    assert!(app.cube.is_present());
+    assert_eq!(app.cube.cubes.len(), 1);
+
+    // Press "+" in Mode 9 -> spawns 2nd cube
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Character("+".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert_eq!(app.cube.cubes.len(), 2);
+
+    // Press "-" in Mode 9 -> removes 1 cube
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Character("-".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert_eq!(app.cube.cubes.len(), 1);
+
+    // Press "-" again in Mode 9 -> removes last cube and exits Mode 9!
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Character("-".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert_eq!(app.cube.cubes.len(), 0);
+    assert!(!app.cube.is_present());
+    assert!(!app.cube.desktop_overlay);
+}
+
+
 
 

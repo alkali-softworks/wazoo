@@ -400,14 +400,26 @@ impl WazooApp {
                         if let Some(pos) = self.players.player_index(pid) {
                             let mut p = self.players.remove(pos);
                             p.stop();
+                            if self.focused_idx >= self.players.len() && !self.players.is_empty() {
+                                self.focused_idx = self.players.len() - 1;
+                            }
                         }
                     }
                 }
                 if self.cube.cubes.is_empty() {
+                    let was_desktop = self.cube.desktop_overlay;
                     let exit_task = self.exit_desktop_cube_overlay();
                     self.cube.clear();
                     self.cleanup_cube_players();
+                    if !was_desktop {
+                        self.overlay.show_toast("3D Cube Removed");
+                    }
                     return exit_task;
+                } else {
+                    self.overlay.show_toast(format!(
+                        "3D Cube Removed ({} Remaining)",
+                        self.cube.cubes.len()
+                    ));
                 }
                 Task::none()
             }
