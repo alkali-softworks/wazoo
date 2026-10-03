@@ -98,7 +98,7 @@ impl WazooApp {
                     if p.is_cube {
                         let (primary, _) = format::format_title_lines(&path_clone);
                         self.overlay
-                            .show_toast(format!("🧊 3D Cube: {}", primary));
+                            .show_toast(format!("3D Cube: {}", primary));
                     }
                 }
                 loaded = true;
@@ -138,7 +138,7 @@ impl WazooApp {
                             if p.is_cube {
                                 let (primary, _) = format::format_title_lines(&path_clone);
                                 self.overlay.show_toast(format!(
-                                    "🧊 3D Cube: {}",
+                                    "3D Cube: {}",
                                     primary
                                 ));
                             }
@@ -215,7 +215,7 @@ impl WazooApp {
                     if p.is_cube {
                         let (primary, _) = format::format_title_lines(&path_clone);
                         self.overlay
-                            .show_toast(format!("🧊 3D Cube: {}", primary));
+                            .show_toast(format!("3D Cube: {}", primary));
                     }
                 }
                 loaded = true;
@@ -245,7 +245,7 @@ impl WazooApp {
                             if p.is_cube {
                                 let (primary, _) = format::format_title_lines(&path_clone);
                                 self.overlay.show_toast(format!(
-                                    "🧊 3D Cube: {}",
+                                    "3D Cube: {}",
                                     primary
                                 ));
                             }

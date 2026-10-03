@@ -149,12 +149,13 @@ impl CubeState {
         self.enabled = true;
     }
 
-    pub fn remove_cube(&mut self) {
-        self.cubes.pop();
+    pub fn remove_cube(&mut self) -> Option<BouncingCube> {
+        let removed = self.cubes.pop();
         if self.cubes.is_empty() {
             self.enabled = false;
             self.desktop_overlay = false;
         }
+        removed
     }
 
     pub fn clear(&mut self) {
@@ -175,7 +176,7 @@ impl CubeState {
         player_idx: usize,
         player_id: Option<wazoo_media::PlayerId>,
     ) -> bool {
-        if self.enabled && !self.cubes.is_empty() {
+        if self.is_present() {
             self.clear();
             false
         } else {
@@ -185,7 +186,7 @@ impl CubeState {
     }
 
     pub fn tick(&mut self, window_w: f32, window_h: f32) {
-        if !self.enabled || self.cubes.is_empty() {
+        if !self.is_present() {
             return;
         }
 

@@ -15,7 +15,7 @@ use iced::{
 };
 
 pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
-    let cube_active = app.cube.enabled && !app.cube.cubes.is_empty();
+    let cube_active = app.cube.is_present();
     let cube_count = app.cube.cubes.len();
 
     // 1. Header / Status banner
