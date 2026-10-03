@@ -52,6 +52,21 @@ impl WazooApp {
                         self.restore_grid_players_to_target(self.settings.player_count);
                     }
 
+                    // Exit fullscreen mode if active so Mode 9 desktop overlay runs in windowed mode
+                    let exit_fullscreen_task = if self.window.is_fullscreen {
+                        self.titlebar.last_click = None;
+                        self.titlebar.drag_pending = false;
+                        self.titlebar.press_origin = None;
+                        self.window.is_fullscreen = false;
+                        if let Some(id) = self.window.id {
+                            iced::window::set_mode(id, iced::window::Mode::Windowed)
+                        } else {
+                            Task::none()
+                        }
+                    } else {
+                        Task::none()
+                    };
+
                     // Track whether the cube was already active before entering Mode 9
                     let was_active = self.cube.is_present();
                     self.cube.spawned_for_desktop = !was_active;
@@ -79,9 +94,9 @@ impl WazooApp {
                         let level_task =
                             iced::window::set_level(id, iced::window::Level::AlwaysOnTop);
                         let passthrough_task = iced::window::enable_mouse_passthrough(id);
-                        Task::batch([level_task, passthrough_task])
+                        Task::batch([exit_fullscreen_task, level_task, passthrough_task])
                     } else {
-                        Task::none()
+                        exit_fullscreen_task
                     }
                 }
             }

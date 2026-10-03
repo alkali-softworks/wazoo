@@ -861,3 +861,13 @@ fn test_mode_9_remove_single_cube_exits_mode_9_and_unpauses_player() {
     );
 }
 
+#[test]
+fn test_entering_mode_9_exits_fullscreen_mode() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+    app.window.is_fullscreen = true;
+
+    // Enter Mode 9 (Desktop Cube Screensaver)
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay, "Must enter Mode 9");
+    assert!(!app.window.is_fullscreen, "Entering Mode 9 must exit fullscreen mode");
+}
