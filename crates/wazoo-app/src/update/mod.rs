@@ -294,7 +294,7 @@ impl WazooApp {
                 self.titlebar.show_dropdown_menu = false;
                 if self.cube.is_present() {
                     let exit_task = self.dismiss_all_cubes();
-                    self.overlay.show_toast("3D Cube Removed");
+                    self.overlay.show_toast(self.t("toast.cube_removed"));
                     return exit_task;
                 } else {
                     if self.settings.playback_mode == PlaybackMode::Scroll {
@@ -306,7 +306,7 @@ impl WazooApp {
                     self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
                     let key = self.settings.keybinds.menu_hint(&self.settings.keybinds.toggle_cube);
                     self.overlay
-                        .show_toast(format!("3D Cube Added! (Press [{key}] to toggle)"));
+                        .show_toast(self.t_with("toast.cube_added", &[("key", &key)]));
                 }
                 Task::none()
             }
@@ -346,7 +346,7 @@ impl WazooApp {
 
                     let key = self.settings.keybinds.menu_hint(&self.settings.keybinds.toggle_cube_overlay);
                     self.overlay
-                        .show_toast(format!("Cube Overlay Mode (Press [{key}] to exit)"));
+                        .show_toast(self.t_with("toast.cube_overlay_enabled", &[("key", &key)]));
 
                     if let Some(id) = self.window.id {
                         let level_task =
@@ -364,9 +364,10 @@ impl WazooApp {
                 self.spawn_new_cube();
                 self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
                 let key = self.settings.keybinds.menu_hint(&self.settings.keybinds.toggle_cube);
-                self.overlay.show_toast(format!(
-                    "Added 3D Cube #{}! (Press [{key}] to toggle)",
-                    self.cube.cubes.len()
+                let count_str = self.cube.cubes.len().to_string();
+                self.overlay.show_toast(self.t_with(
+                    "toast.cube_added_num",
+                    &[("count", &count_str), ("key", &key)],
                 ));
                 Task::none()
             }
@@ -386,13 +387,14 @@ impl WazooApp {
                     let was_desktop = self.cube.desktop_overlay;
                     let exit_task = self.dismiss_all_cubes();
                     if !was_desktop {
-                        self.overlay.show_toast("3D Cube Removed");
+                        self.overlay.show_toast(self.t("toast.cube_removed"));
                     }
                     return exit_task;
                 } else {
-                    self.overlay.show_toast(format!(
-                        "3D Cube Removed ({} Remaining)",
-                        self.cube.cubes.len()
+                    let count_str = self.cube.cubes.len().to_string();
+                    self.overlay.show_toast(self.t_with(
+                        "toast.cube_removed_remaining",
+                        &[("count", &count_str)],
                     ));
                 }
                 Task::none()
@@ -401,7 +403,7 @@ impl WazooApp {
                 self.modals.menu = false;
                 self.titlebar.show_dropdown_menu = false;
                 let exit_task = self.dismiss_all_cubes();
-                self.overlay.show_toast("All 3D Cubes Removed");
+                self.overlay.show_toast(self.t("toast.cube_all_removed"));
                 exit_task
             }
             Message::SetCubeSpeed(speed) => {
@@ -557,7 +559,7 @@ impl WazooApp {
             }
         }
 
-        self.overlay.show_toast("Cube Overlay Mode Disabled");
+        self.overlay.show_toast(self.t("toast.cube_overlay_disabled"));
 
         if let Some(id) = self.window.id {
             let level = if self.settings.is_always_on_top {

@@ -215,5 +215,15 @@
     "clear": "Wyczyść historię",
     "item_hint": "Kliknij, aby odtworzyć w aktywnym odtwarzaczu",
     "search_placeholder": "Szukaj w historii..."
+  },
+  "toast": {
+    "cube_removed": "Kostka 3D usunięta",
+    "cube_added": "Dodano kostkę 3D! (Naciśnij [{key}], aby przełączyć)",
+    "cube_overlay_enabled": "Tryb nakładki kostki (Naciśnij [{key}], aby wyjść)",
+    "cube_added_num": "Dodano kostkę 3D #{count}! (Naciśnij [{key}], aby przełączyć)",
+    "cube_removed_remaining": "Kostka 3D usunięta (Pozostało: {count})",
+    "cube_all_removed": "Wszystkie kostki 3D usunięte",
+    "cube_overlay_disabled": "Tryb nakładki kostki wyłączony",
+    "cube_playing": "Kostka 3D: {title}"
   }
 }

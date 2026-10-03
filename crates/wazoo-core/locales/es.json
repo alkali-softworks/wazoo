@@ -215,5 +215,15 @@
     "clear": "Borrar historial",
     "item_hint": "Haga clic para reproducir en el reproductor activo",
     "search_placeholder": "Buscar en el historial..."
+  },
+  "toast": {
+    "cube_removed": "Cubo 3D eliminado",
+    "cube_added": "¡Cubo 3D añadido! (Presione [{key}] para alternar)",
+    "cube_overlay_enabled": "Modo Cubo Superpuesto (Presione [{key}] para salir)",
+    "cube_added_num": "¡Añadido Cubo 3D #{count}! (Presione [{key}] para alternar)",
+    "cube_removed_remaining": "Cubo 3D eliminado ({count} restantes)",
+    "cube_all_removed": "Todos los cubos 3D eliminados",
+    "cube_overlay_disabled": "Modo Cubo Superpuesto desactivado",
+    "cube_playing": "Cubo 3D: {title}"
   }
 }

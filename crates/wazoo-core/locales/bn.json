@@ -215,5 +215,15 @@
     "clear": "ইতিহাস মুছুন",
     "item_hint": "সক্রিয় প্লেয়ারে চালাতে ক্লিক করুন",
     "search_placeholder": "ইতিহাস অনুসন্ধান..."
+  },
+  "toast": {
+    "cube_removed": "3D কিউব সরানো হয়েছে",
+    "cube_added": "3D কিউব যোগ করা হয়েছে! (টগল করতে [{key}] চাপুন)",
+    "cube_overlay_enabled": "কিউব ওভারলে মোড (প্রস্থান করতে [{key}] চাপুন)",
+    "cube_added_num": "3D কিউব #{count} যোগ করা হয়েছে! (টগল করতে [{key}] চাপুন)",
+    "cube_removed_remaining": "3D কিউব সরানো হয়েছে ({count}টি বাকি)",
+    "cube_all_removed": "সমস্ত 3D কিউব সরানো হয়েছে",
+    "cube_overlay_disabled": "কিউব ওভারলে মোড নিষ্ক্রিয় করা হয়েছে",
+    "cube_playing": "3D কিউব: {title}"
   }
 }
