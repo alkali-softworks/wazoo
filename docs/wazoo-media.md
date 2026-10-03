@@ -8,9 +8,10 @@ The [`wazoo-media`] crate is the media playback and presentation engine of Wazoo
 
 ```
 crates/wazoo-media/src/
+├── cube.rs           # 3D bouncing video cube pipeline, projection math, and sheen shaders
 ├── lib.rs            # Crate root and high-level re-exports
 ├── mpv_ffi.rs        # Low-level C FFI bindings & dynamic loader for libmpv
-├── pipeline.rs       # Custom WGPU shader pipeline and texture cache
+├── pipeline.rs       # Custom WGPU multi-shader pipeline (CRT, Wavy, Fog) and texture cache
 ├── player/           # High-level video playback handles & track controls
 │   ├── handle.rs     # VideoHandle implementation (libmpv lifecycle, frames, playback)
 │   ├── mod.rs        # Player module root
@@ -55,15 +56,31 @@ graph LR
     mpv["libmpv Render Context"] -->|BGR0 / BGRA32| FrameBuf["FrameData<br/>(Arc<Mutex<FrameData>>)"]
     FrameBuf -->|queue.write_texture| Texture["wgpu::Texture"]
     Texture --> BindGroup["wgpu::BindGroup"]
-    Uniforms["Scale & Opacity Uniforms"] --> BindGroup
-    BindGroup --> Shader["WGSL Shader Pipeline"]
+    Uniforms["Scale, Opacity, Time & Filter Uniforms"] --> BindGroup
+    BindGroup --> Shader["WGSL Multi-Shader Pipeline<br/>(CRT, Wavy, Fog)"]
     Shader --> Framebuffer["Iced Viewport Quad"]
 ```
 
-### Advantages of Shader-Based Rendering:
-1. **Multi-Player Scalability**: Can render 1 to 12 simultaneous video players within a single native window without multiple X11/Wayland sub-windows.
+### Advanced GPU Shader Pipeline Features:
+1. **Multi-Player Scalability**: Renders 1 to 12 simultaneous video players within a single native window without multiple X11/Wayland sub-windows.
 2. **Dynamic Window Opacity**: Opacity transitions and transparency are applied directly in the fragment shader without OS compositor glitches.
-3. **Zero-Copy Video Swapchains**: Only textures that received a new frame on the tick are updated on the GPU.
+3. **Zero-Copy Video Swapchains**: Only textures that received a new frame on the tick are updated on the GPU via `queue.write_texture`.
+4. **Procedural CRT Emulation**: Fragment shader simulates spherical tube curvature distortion, phosphorescent bloom glow, RGB subpixel chromatic aberration, scanlines, analog RF noise, and radial vignette falloff.
+5. **Wavy Fluid Displacement**: Real-time sinusoidal UV coordinates distortion producing animated liquid surface waves.
+6. **Volumetric Fog**: Multi-octave fractional Brownian motion (fBm) noise drifting procedurally across the screen.
+7. **Pillarbox/Letterbox UV Clamping**: Automatically detects content aspect ratio and clamps UV coordinates to valid active frame boundaries, eliminating edge-smear artifacts when playing non-16:9 videos.
+8. **Shader-Filtered TV Static**: Dynamic noise frame buffers generated during buffering are routed through the same WGPU shader pipeline (`0x8000_0000 | player_id`), ensuring all post-processing effects apply authentically to loading screens.
+
+---
+
+## 🎲 3D Video Cube Pipeline (`cube.rs`)
+
+The [`cube.rs`] module provides real-time 3D projected video cube rendering inside Iced:
+
+- **6-Face UV Texture Mapping**: Projects live decoded video frames across all six cube faces with directional lighting.
+- **Dynamic Specular Sheen**: GPU fragment shader sweeps a glowing light sheen across the cube surfaces based on configurable speed, width, intensity, and angle.
+- **Interactive Focus & Collision Physics**: Each cube simulates 3D Euler angle rotation, linear velocity, boundary bounce elasticity, and flashes an emerald primary glow border when focused.
+- **Dual Presentation Modes**: Supports in-app 3D canvas rendering (Mode 8) and transparent borderless desktop overlay screensavers (Mode 9).
 
 ---
 
