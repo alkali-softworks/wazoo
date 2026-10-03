@@ -337,6 +337,7 @@ impl WazooApp {
     /// Advances HUD overlays, spinner rotations, and file picker search debouncing.
     fn tick_overlay_animations(&mut self) {
         self.overlay.spinner_ticks = self.overlay.spinner_ticks.wrapping_add(1);
+        self.update_static_frame();
 
         if self.open_audio_menu_id.is_some() {
             self.overlay.ticks = PLAYER_OVERLAY_HIDE_TICKS;
@@ -406,6 +407,39 @@ impl WazooApp {
             }
             if heights_changed {
                 self.scroll_engine.recalculate_positions();
+            }
+        }
+    }
+
+    /// Advances the animated TV static noise texture if any active player is currently loading.
+    fn update_static_frame(&mut self) {
+        if self.raw_static_frames.is_empty() {
+            return;
+        }
+
+        let is_needed = self.settings.loading_indicator == wazoo_core::LoadingIndicator::TvStatic
+            && self.players.iter().any(|p| p.is_loading);
+
+        if !is_needed {
+            return;
+        }
+
+        let frame_idx = self
+            .overlay
+            .color_static_frame_index(self.raw_static_frames.len());
+
+        if frame_idx != self.last_static_frame_idx {
+            self.last_static_frame_idx = frame_idx;
+            let raw = &self.raw_static_frames[frame_idx];
+            if let Ok(mut guard) = self.static_frame.lock() {
+                guard.width = raw.width;
+                guard.height = raw.height;
+                if guard.pixels.len() != raw.pixels.len() {
+                    guard.pixels.resize(raw.pixels.len(), 0);
+                }
+                guard.pixels.copy_from_slice(&raw.pixels);
+                guard.new_frame = true;
+                guard.frame_seq = guard.frame_seq.wrapping_add(1);
             }
         }
     }

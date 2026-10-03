@@ -10,8 +10,18 @@
 pub static APP_ICON_BYTES: &[u8] = include_bytes!("../resources/icon.png");
 pub static COLOR_STATIC_GIF_BYTES: &[u8] = include_bytes!("../resources/color-static.gif");
 
-/// Decodes all animated frames of `color-static.gif` into cached Iced image handles.
-pub fn load_color_static_frames() -> Vec<iced::widget::image::Handle> {
+use std::sync::Arc;
+
+/// Raw decoded RGBA frame from `color-static.gif` for GPU pipeline shader rendering
+#[derive(Clone, Debug)]
+pub struct RawStaticFrame {
+    pub width: u32,
+    pub height: u32,
+    pub pixels: Arc<[u8]>,
+}
+
+/// Decodes all animated frames of `color-static.gif` into cached raw RGBA frame buffers.
+pub fn load_raw_color_static_frames() -> Vec<RawStaticFrame> {
     use image::AnimationDecoder;
     use image::codecs::gif::GifDecoder;
     use std::io::Cursor;
@@ -32,7 +42,21 @@ pub fn load_color_static_frames() -> Vec<iced::widget::image::Handle> {
             let buffer = frame.into_buffer();
             let width = buffer.width();
             let height = buffer.height();
-            iced::widget::image::Handle::from_rgba(width, height, buffer.into_raw())
+            RawStaticFrame {
+                width,
+                height,
+                pixels: Arc::from(buffer.into_raw()),
+            }
+        })
+        .collect()
+}
+
+/// Decodes all animated frames of `color-static.gif` into cached Iced image handles.
+pub fn load_color_static_frames() -> Vec<iced::widget::image::Handle> {
+    load_raw_color_static_frames()
+        .into_iter()
+        .map(|frame| {
+            iced::widget::image::Handle::from_rgba(frame.width, frame.height, frame.pixels.to_vec())
         })
         .collect()
 }

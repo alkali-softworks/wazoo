@@ -14,6 +14,7 @@ use crate::message::Message;
 use crate::state::{AppPlayer, PlayerList};
 use iced::{Point, Subscription, Task, Theme};
 use std::collections::HashSet;
+use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use wazoo_core::{ConfigManager, Database, PlaybackMode, VideoRecord, VideoSession, WazooSettings};
@@ -103,6 +104,10 @@ pub struct WazooApp {
     pub window: crate::state::WindowState,
     pub app_icon_handle: iced::widget::image::Handle,
     pub color_static_frames: Vec<iced::widget::image::Handle>,
+    pub raw_static_frames: Vec<crate::assets::RawStaticFrame>,
+    pub static_frame: Arc<Mutex<wazoo_media::pipeline::FrameData>>,
+    pub static_frame_alive: Arc<AtomicBool>,
+    pub last_static_frame_idx: usize,
     pub last_total_videos: usize,
     pub next_player_id: PlayerId,
     pub scanner: crate::state::ScannerState,
@@ -336,7 +341,21 @@ impl WazooApp {
         scroll_engine.scroll_mode_muted = settings.scroll_mode_muted;
 
         let icon_handle = iced::widget::image::Handle::from_bytes(APP_ICON_BYTES);
+        let raw_static_frames = crate::assets::load_raw_color_static_frames();
         let color_static_frames = crate::assets::load_color_static_frames();
+        let (init_w, init_h, init_pix) = if let Some(first) = raw_static_frames.first() {
+            (first.width, first.height, first.pixels.to_vec())
+        } else {
+            (0, 0, Vec::new())
+        };
+        let static_frame = Arc::new(Mutex::new(wazoo_media::pipeline::FrameData {
+            width: init_w,
+            height: init_h,
+            pixels: init_pix,
+            new_frame: true,
+            frame_seq: 1,
+        }));
+        let static_frame_alive = Arc::new(AtomicBool::new(true));
         let total_videos = videos.len();
         let (toast_message, toast_time_remaining) =
             build_initial_toast(search.is_cli, &settings.language, total_videos);
@@ -374,6 +393,10 @@ impl WazooApp {
             window: crate::state::WindowState::default(),
             app_icon_handle: icon_handle,
             color_static_frames,
+            raw_static_frames,
+            static_frame,
+            static_frame_alive,
+            last_static_frame_idx: 0,
             last_total_videos: total_videos,
             next_player_id: 1,
             scanner: crate::state::ScannerState::default(),

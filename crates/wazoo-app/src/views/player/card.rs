@@ -37,27 +37,29 @@ impl WazooApp {
         let opacity = self.current_opacity();
         let mut stack_children: Vec<Element<'a, Message>> = Vec::new();
 
+        let crt = self.settings.filters_enabled && self.settings.filter_crt;
+        let wavy = self.settings.filters_enabled && self.settings.filter_wavy;
+        let fog = self.settings.filters_enabled && self.settings.filter_fog;
+
         if is_loading {
             let use_tv_static = self.settings.loading_indicator
                 == wazoo_core::LoadingIndicator::TvStatic
-                && !self.color_static_frames.is_empty();
+                && !self.raw_static_frames.is_empty();
 
             if use_tv_static {
-                let frame_idx = self
-                    .overlay
-                    .color_static_frame_index(self.color_static_frames.len());
-                let handle = self.color_static_frames[frame_idx].clone();
-                let static_img = iced::widget::image(handle)
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .content_fit(iced::ContentFit::Cover);
-
-                let static_view = container(static_img)
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .clip(true)
-                    .style(theme::player_container_style(opacity));
-                stack_children.push(Element::from(static_view));
+                let static_id = 0x8000_0000_0000_0000u64 | (player_id as u64);
+                let program = wazoo_media::pipeline::VideoProgram::new_full(
+                    static_id,
+                    std::sync::Arc::clone(&self.static_frame),
+                    std::sync::Arc::clone(&self.static_frame_alive),
+                    opacity,
+                    true,
+                    crt,
+                    wavy,
+                    fog,
+                );
+                let static_view = Element::new(wazoo_media::pipeline::video_shader(program));
+                stack_children.push(static_view);
             } else {
                 let loading_backdrop =
                     container(Space::new().width(Length::Fill).height(Length::Fill))
@@ -68,9 +70,6 @@ impl WazooApp {
                 stack_children.push(self.view_loading_spinner());
             }
         } else {
-            let crt = self.settings.filters_enabled && self.settings.filter_crt;
-            let wavy = self.settings.filters_enabled && self.settings.filter_wavy;
-            let fog = self.settings.filters_enabled && self.settings.filter_fog;
             let video_widget = p.view_full(opacity, is_scroll_mode, crt, wavy, fog);
             stack_children.push(video_widget);
         }
