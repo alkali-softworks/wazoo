@@ -215,5 +215,15 @@
     "clear": "נקה היסטוריה",
     "item_hint": "לחץ להפעלה בנגן הפעיל",
     "search_placeholder": "חיפוש בהיסטוריה..."
+  },
+  "toast": {
+    "cube_removed": "קובייה תלת-ממדית הוסרה",
+    "cube_added": "קובייה תלת-ממדית נוספה! (הקש [{key}] להפעלה/השבתה)",
+    "cube_overlay_enabled": "מצב שכבת קובייה (הקש [{key}] ליציאה)",
+    "cube_added_num": "קובייה תלת-ממדית #{count} נוספה! (הקש [{key}] להפעלה/השבתה)",
+    "cube_removed_remaining": "קובייה תלת-ממדית הוסרה ({count} נותרו)",
+    "cube_all_removed": "כל הקוביות התלת-ממדיות הוסרו",
+    "cube_overlay_disabled": "מצב שכבת קובייה הושבת",
+    "cube_playing": "קובייה תלת-ממדית: {title}"
   }
 }

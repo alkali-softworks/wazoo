@@ -215,5 +215,15 @@
     "clear": "Geschiedenis wissen",
     "item_hint": "Klik om af te spelen in actieve speler",
     "search_placeholder": "Geschiedenis doorzoeken..."
+  },
+  "toast": {
+    "cube_removed": "3D-kubus verwijderd",
+    "cube_added": "3D-kubus toegevoegd! (Druk op [{key}] om te schakelen)",
+    "cube_overlay_enabled": "Kubus-overlaymodus (Druk op [{key}] om af te sluiten)",
+    "cube_added_num": "3D-kubus #{count} toegevoegd! (Druk op [{key}] om te schakelen)",
+    "cube_removed_remaining": "3D-kubus verwijderd ({count} resterend)",
+    "cube_all_removed": "Alle 3D-kubussen verwijderd",
+    "cube_overlay_disabled": "Kubus-overlaymodus uitgeschakeld",
+    "cube_playing": "3D-kubus: {title}"
   }
 }

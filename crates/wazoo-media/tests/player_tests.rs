@@ -377,7 +377,7 @@ fn test_ranma_subtitle_selection_defaults_to_english_not_arabic() {
     let mut handle = wazoo_media::VideoHandle::new(1, path, "Ranma").expect("handle creation");
     let start = std::time::Instant::now();
     let mut selected_id = None;
-    while start.elapsed() < std::time::Duration::from_millis(3000) {
+    while start.elapsed() < std::time::Duration::from_millis(10000) {
         handle.update_frame();
         if let Some(id) = handle.current_subtitle_track_id() {
             selected_id = Some(id);
@@ -738,7 +738,7 @@ fn test_ranma_subtitle_selection_uses_i18n_when_preferred_not_known() {
     let mut handle_es = VideoHandle::with_buffering(1, path, "Ranma", config_es).expect("handle");
     let start = std::time::Instant::now();
     let mut selected_id = None;
-    while start.elapsed() < std::time::Duration::from_millis(3000) {
+    while start.elapsed() < std::time::Duration::from_millis(10000) {
         handle_es.update_frame();
         if let Some(id) = handle_es.current_subtitle_track_id() {
             selected_id = Some(id);

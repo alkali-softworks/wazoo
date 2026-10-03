@@ -215,5 +215,15 @@
     "clear": "기록 지우기",
     "item_hint": "활성 플레이어에서 재생하려면 클릭",
     "search_placeholder": "기록 검색..."
+  },
+  "toast": {
+    "cube_removed": "3D 큐브 제거됨",
+    "cube_added": "3D 큐브 추가됨! ([{key}]를 눌러 전환)",
+    "cube_overlay_enabled": "큐브 오버레이 모드 ([{key}]를 눌러 종료)",
+    "cube_added_num": "3D 큐브 #{count} 추가됨! ([{key}]를 눌러 전환)",
+    "cube_removed_remaining": "3D 큐브 제거됨 ({count}개 남음)",
+    "cube_all_removed": "모든 3D 큐브 제거됨",
+    "cube_overlay_disabled": "큐브 오버레이 모드 비활성화됨",
+    "cube_playing": "3D 큐브: {title}"
   }
 }
