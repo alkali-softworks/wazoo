@@ -19,7 +19,9 @@
     "loop": "Smyčka",
     "start": "Začátek",
     "end": "Konec",
-    "crt_filter": "CRT filtr"
+    "crt_filter": "CRT filtr",
+    "fullscreen": "Celá obrazovka",
+    "exit_fullscreen": "Ukončit celou obrazovku"
   },
   "app": {
     "drag_to_move": "Přetažením přesuňte",
@@ -156,7 +158,8 @@
       "mark_out": "Nastavit koncový bod (Out)",
       "clear_marks": "Vymazat smyčku In / Out",
       "toggle_cube": "Přepnout 3D kostku",
-      "toggle_cube_overlay": "Přepnout režim překrytí kostky"
+      "toggle_cube_overlay": "Přepnout režim překrytí kostky",
+      "toggle_fullscreen": "Přepnout celou obrazovku"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "3D krychle odebrána ({count} zbývá)",
     "cube_all_removed": "Všechny 3D krychle odebrány",
     "cube_overlay_disabled": "Režim překrytí kostky deaktivován",
-    "cube_playing": "3D krychle: {title}"
+    "cube_playing": "3D krychle: {title}",
+    "fullscreen_enabled": "Celá obrazovka povolena (Stiskněte F11 nebo Esc pro ukončení)",
+    "fullscreen_disabled": "Celá obrazovka zakázána"
   }
 }

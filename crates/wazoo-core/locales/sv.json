@@ -19,7 +19,9 @@
     "loop": "Slinga",
     "start": "Start",
     "end": "Slut",
-    "crt_filter": "CRT-filter"
+    "crt_filter": "CRT-filter",
+    "fullscreen": "Helskärm",
+    "exit_fullscreen": "Avsluta helskärm"
   },
   "app": {
     "drag_to_move": "Dra för att flytta",
@@ -156,7 +158,8 @@
       "mark_out": "Ställ in slutpunkt (Out)",
       "clear_marks": "Rensa slinga",
       "toggle_cube": "Växla 3D-kub",
-      "toggle_cube_overlay": "Växla kuböverläggsläge"
+      "toggle_cube_overlay": "Växla kuböverläggsläge",
+      "toggle_fullscreen": "Växla helskärm"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "3D-kub borttagen ({count} återstår)",
     "cube_all_removed": "Alla 3D-kuber borttagna",
     "cube_overlay_disabled": "Kuböverläggsläge inaktiverat",
-    "cube_playing": "3D-kub: {title}"
+    "cube_playing": "3D-kub: {title}",
+    "fullscreen_enabled": "Helskärm aktiverad (Tryck på F11 eller Esc för att avsluta)",
+    "fullscreen_disabled": "Helskärm inaktiverad"
   }
 }

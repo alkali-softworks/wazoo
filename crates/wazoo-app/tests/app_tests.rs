@@ -1419,6 +1419,43 @@ fn test_playback_settings_sliders_debounced() {
     assert_eq!(app.settings.brightness, 15.0);
 }
 
+#[test]
+fn test_fullscreen_toggle_and_escape() {
+    let (mut app, _) = new_test_app();
+    assert!(!app.window.is_fullscreen);
+
+    // 1. Toggle fullscreen ON via Message
+    let _ = app.update(Message::ToggleFullscreen);
+    assert!(app.window.is_fullscreen);
+    assert!(app.overlay.toast_message.is_some());
+    assert!(app.overlay.toast_message.as_ref().unwrap().contains("Fullscreen Enabled"));
+
+    // 2. Escape exits fullscreen when no modals/drawers are open
+    let _ = app.update(Message::EscapePressed);
+    assert!(!app.window.is_fullscreen);
+    assert!(app.overlay.toast_message.as_ref().unwrap().contains("Fullscreen Disabled"));
+
+    // 3. F11 key input toggles fullscreen
+    use iced::keyboard::key::Named;
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Named(Named::F11),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.window.is_fullscreen);
+
+    // 4. Opening a drawer or modal while in fullscreen, then pressing Escape closes drawer first without exiting fullscreen
+    let _ = app.update(Message::ToggleFilePicker);
+    assert!(app.drawers.show_file_picker);
+    let _ = app.update(Message::EscapePressed);
+    assert!(!app.drawers.show_file_picker);
+    assert!(app.window.is_fullscreen, "Closing drawer should not exit fullscreen");
+
+    // 5. Subsequent Escape exits fullscreen
+    let _ = app.update(Message::EscapePressed);
+    assert!(!app.window.is_fullscreen);
+}
+
+
 
 
 

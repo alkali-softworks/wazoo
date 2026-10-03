@@ -19,7 +19,9 @@
     "loop": "Lặp đoạn",
     "start": "Bắt đầu",
     "end": "Kết thúc",
-    "crt_filter": "Bộ lọc CRT"
+    "crt_filter": "Bộ lọc CRT",
+    "fullscreen": "Toàn màn hình",
+    "exit_fullscreen": "Thoát toàn màn hình"
   },
   "app": {
     "drag_to_move": "Kéo để di chuyển",
@@ -156,7 +158,8 @@
       "mark_out": "Đặt điểm kết thúc (Out)",
       "clear_marks": "Xóa đoạn lặp In / Out",
       "toggle_cube": "Bật/tắt khối 3D",
-      "toggle_cube_overlay": "Bật/tắt chế độ lớp phủ khối"
+      "toggle_cube_overlay": "Bật/tắt chế độ lớp phủ khối",
+      "toggle_fullscreen": "Bật/tắt toàn màn hình"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "Đã xóa khối 3D (Còn lại {count})",
     "cube_all_removed": "Đã xóa tất cả các khối 3D",
     "cube_overlay_disabled": "Đã tắt chế độ lớp phủ khối",
-    "cube_playing": "Khối 3D: {title}"
+    "cube_playing": "Khối 3D: {title}",
+    "fullscreen_enabled": "Đã bật toàn màn hình (Nhấn F11 hoặc Esc để thoát)",
+    "fullscreen_disabled": "Đã tắt toàn màn hình"
   }
 }

@@ -19,7 +19,9 @@
     "loop": "تكرار",
     "start": "البداية",
     "end": "النهاية",
-    "crt_filter": "مرشح CRT"
+    "crt_filter": "مرشح CRT",
+    "fullscreen": "ملء الشاشة",
+    "exit_fullscreen": "الخروج من ملء الشاشة"
   },
   "app": {
     "drag_to_move": "اسحب للتحريك",
@@ -156,7 +158,8 @@
       "mark_out": "تعيين نقطة النهاية",
       "clear_marks": "مسح تكرار البداية / النهاية",
       "toggle_cube": "تبديل المكعب ثلاثي الأبعاد",
-      "toggle_cube_overlay": "تبديل وضع تراكب المكعب"
+      "toggle_cube_overlay": "تبديل وضع تراكب المكعب",
+      "toggle_fullscreen": "تبديل ملء الشاشة"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "تمت إزالة المكعب ثلاثي الأبعاد (متبقي {count})",
     "cube_all_removed": "تمت إزالة جميع المكعبات ثلاثية الأبعاد",
     "cube_overlay_disabled": "تم تعطيل وضع تراكب المكعب",
-    "cube_playing": "مكعب ثلاثي الأبعاد: {title}"
+    "cube_playing": "مكعب ثلاثي الأبعاد: {title}",
+    "fullscreen_enabled": "تم تمكين ملء الشاشة (اضغط على F11 أو Esc للخروج)",
+    "fullscreen_disabled": "تم تعطيل ملء الشاشة"
   }
 }

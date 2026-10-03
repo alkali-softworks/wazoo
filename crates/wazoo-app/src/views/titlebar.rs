@@ -246,6 +246,16 @@ impl WazooApp {
                 padding,
             ),
             Self::menu_item(
+                if self.window.is_fullscreen {
+                    self.t("common.exit_fullscreen")
+                } else {
+                    self.t("common.fullscreen")
+                },
+                Some(kb.menu_hint(&kb.toggle_fullscreen)),
+                Message::ToggleFullscreen,
+                padding,
+            ),
+            Self::menu_item(
                 self.t("common.settings"),
                 Some(kb.menu_hint(&kb.open_settings)),
                 Message::OpenSettingsModal,

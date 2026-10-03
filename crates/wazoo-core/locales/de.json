@@ -19,7 +19,9 @@
     "loop": "Schleife",
     "start": "Start",
     "end": "Ende",
-    "crt_filter": "CRT-Filter"
+    "crt_filter": "CRT-Filter",
+    "fullscreen": "Vollbild",
+    "exit_fullscreen": "Vollbild beenden"
   },
   "app": {
     "drag_to_move": "Zum Verschieben ziehen",
@@ -156,7 +158,8 @@
       "mark_out": "Endmarke setzen",
       "clear_marks": "Start-/Endmarken-Schleife löschen",
       "toggle_cube": "3D-Würfel umschalten",
-      "toggle_cube_overlay": "Würfel-Overlay-Modus umschalten"
+      "toggle_cube_overlay": "Würfel-Overlay-Modus umschalten",
+      "toggle_fullscreen": "Vollbild umschalten"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "3D-Würfel entfernt ({count} verbleibend)",
     "cube_all_removed": "Alle 3D-Würfel entfernt",
     "cube_overlay_disabled": "Würfel-Overlay-Modus deaktiviert",
-    "cube_playing": "3D-Würfel: {title}"
+    "cube_playing": "3D-Würfel: {title}",
+    "fullscreen_enabled": "Vollbild aktiviert (F11 oder Esc zum Beenden drücken)",
+    "fullscreen_disabled": "Vollbild deaktiviert"
   }
 }

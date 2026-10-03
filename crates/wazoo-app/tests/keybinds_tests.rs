@@ -126,6 +126,10 @@ fn test_find_key_action_defaults() {
         find_key_action(&kb, &Key::Character("9".into()), false),
         Some(KeyAction::ToggleCubeOverlay)
     );
+    assert_eq!(
+        find_key_action(&kb, &Key::Named(Named::F11), false),
+        Some(KeyAction::ToggleFullscreen)
+    );
     assert_eq!(find_key_action(&kb, &Key::Named(Named::F7), false), None);
     // Ordinary keys when Alt is pressed should NOT match
     assert_eq!(

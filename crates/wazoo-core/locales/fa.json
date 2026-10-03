@@ -19,7 +19,9 @@
     "loop": "تکرار",
     "start": "شروع",
     "end": "پایان",
-    "crt_filter": "فیلتر CRT"
+    "crt_filter": "فیلتر CRT",
+    "fullscreen": "تمام صفحه",
+    "exit_fullscreen": "خروج از تمام صفحه"
   },
   "app": {
     "drag_to_move": "برای جابجایی بکشید",
@@ -156,7 +158,8 @@
       "mark_out": "تنظیم نقطه پایان (Out)",
       "clear_marks": "پاک کردن محدوده تکرار",
       "toggle_cube": "تغییر وضعیت مکعب سه‌بعدی",
-      "toggle_cube_overlay": "تغییر وضعیت حالت هم‌پوشانی مکعب"
+      "toggle_cube_overlay": "تغییر وضعیت حالت هم‌پوشانی مکعب",
+      "toggle_fullscreen": "تغییر حالت تمام صفحه"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "مکعب سه‌بعدی حذف شد ({count} مورد باقی‌مانده)",
     "cube_all_removed": "همه مکعب‌های سه‌بعدی حذف شدند",
     "cube_overlay_disabled": "حالت هم‌پوشانی مکعب غیرفعال شد",
-    "cube_playing": "مکعب سه‌بعدی: {title}"
+    "cube_playing": "مکعب سه‌بعدی: {title}",
+    "fullscreen_enabled": "تمام صفحه فعال شد (برای خروج F11 یا Esc را فشار دهید)",
+    "fullscreen_disabled": "تمام صفحه غیرفعال شد"
   }
 }

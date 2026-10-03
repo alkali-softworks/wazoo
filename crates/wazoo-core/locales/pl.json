@@ -19,7 +19,9 @@
     "loop": "Pętla",
     "start": "Początek",
     "end": "Koniec",
-    "crt_filter": "Filtr CRT"
+    "crt_filter": "Filtr CRT",
+    "fullscreen": "Pełny ekran",
+    "exit_fullscreen": "Wyjdź z pełnego ekranu"
   },
   "app": {
     "drag_to_move": "Przeciągnij, aby przesunąć",
@@ -156,7 +158,8 @@
       "mark_out": "Ustaw punkt końcowy (Out)",
       "clear_marks": "Wyczyść pętlę punktów In / Out",
       "toggle_cube": "Przełącz kostkę 3D",
-      "toggle_cube_overlay": "Przełącz tryb nakładki kostki"
+      "toggle_cube_overlay": "Przełącz tryb nakładki kostki",
+      "toggle_fullscreen": "Przełącz pełny ekran"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "Kostka 3D usunięta (Pozostało: {count})",
     "cube_all_removed": "Wszystkie kostki 3D usunięte",
     "cube_overlay_disabled": "Tryb nakładki kostki wyłączony",
-    "cube_playing": "Kostka 3D: {title}"
+    "cube_playing": "Kostka 3D: {title}",
+    "fullscreen_enabled": "Pełny ekran włączony (Naciśnij F11 lub Esc, aby wyjść)",
+    "fullscreen_disabled": "Pełny ekran wyłączony"
   }
 }

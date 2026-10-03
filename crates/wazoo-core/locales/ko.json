@@ -19,7 +19,9 @@
     "loop": "반복",
     "start": "시작",
     "end": "끝",
-    "crt_filter": "CRT 필터"
+    "crt_filter": "CRT 필터",
+    "fullscreen": "전체 화면",
+    "exit_fullscreen": "전체 화면 종료"
   },
   "app": {
     "drag_to_move": "드래그하여 이동",
@@ -156,7 +158,8 @@
       "mark_out": "종료점(Out) 설정",
       "clear_marks": "구간 반복 해제",
       "toggle_cube": "3D 큐브 전환",
-      "toggle_cube_overlay": "큐브 오버레이 모드 전환"
+      "toggle_cube_overlay": "큐브 오버레이 모드 전환",
+      "toggle_fullscreen": "전체 화면 전환"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "3D 큐브 제거됨 ({count}개 남음)",
     "cube_all_removed": "모든 3D 큐브 제거됨",
     "cube_overlay_disabled": "큐브 오버레이 모드 비활성화됨",
-    "cube_playing": "3D 큐브: {title}"
+    "cube_playing": "3D 큐브: {title}",
+    "fullscreen_enabled": "전체 화면 활성화됨 (종료하려면 F11 또는 Esc 누름)",
+    "fullscreen_disabled": "전체 화면 비활성화됨"
   }
 }

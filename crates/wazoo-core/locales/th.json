@@ -19,7 +19,9 @@
     "loop": "วนซ้ำ",
     "start": "เริ่มต้น",
     "end": "สิ้นสุด",
-    "crt_filter": "ฟิลเตอร์ CRT"
+    "crt_filter": "ฟิลเตอร์ CRT",
+    "fullscreen": "เต็มหน้าจอ",
+    "exit_fullscreen": "ออกจากเต็มหน้าจอ"
   },
   "app": {
     "drag_to_move": "ลากเพื่อย้าย",
@@ -156,7 +158,8 @@
       "mark_out": "กำหนดจุดสิ้นสุด (Out)",
       "clear_marks": "ล้างการวนซ้ำจุดเข้า/ออก",
       "toggle_cube": "สลับลูกบาศก์ 3 มิติ",
-      "toggle_cube_overlay": "สลับโหมดโอเวอร์เลย์ลูกบาศก์"
+      "toggle_cube_overlay": "สลับโหมดโอเวอร์เลย์ลูกบาศก์",
+      "toggle_fullscreen": "สลับเต็มหน้าจอ"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "ลบลูกบาศก์ 3D แล้ว (เหลือ {count})",
     "cube_all_removed": "ลบลูกบาศก์ 3D ทั้งหมดแล้ว",
     "cube_overlay_disabled": "ปิดใช้งานโหมดโอเวอร์เลย์ลูกบาศก์แล้ว",
-    "cube_playing": "ลูกบาศก์ 3D: {title}"
+    "cube_playing": "ลูกบาศก์ 3D: {title}",
+    "fullscreen_enabled": "เปิดใช้งานเต็มหน้าจอแล้ว (กด F11 หรือ Esc เพื่อออก)",
+    "fullscreen_disabled": "ปิดใช้งานเต็มหน้าจอแล้ว"
   }
 }

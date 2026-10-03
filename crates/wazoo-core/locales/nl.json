@@ -19,7 +19,9 @@
     "loop": "Herhaling",
     "start": "Start",
     "end": "Einde",
-    "crt_filter": "CRT-filter"
+    "crt_filter": "CRT-filter",
+    "fullscreen": "Volledig scherm",
+    "exit_fullscreen": "Volledig scherm sluiten"
   },
   "app": {
     "drag_to_move": "Slepen om te verplaatsen",
@@ -156,7 +158,8 @@
       "mark_out": "Eindpunt (Out) instellen",
       "clear_marks": "Herhalingspunten wissen",
       "toggle_cube": "3D-kubus in-/uitschakelen",
-      "toggle_cube_overlay": "Kubus-overlaymodus in-/uitschakelen"
+      "toggle_cube_overlay": "Kubus-overlaymodus in-/uitschakelen",
+      "toggle_fullscreen": "Volledig scherm in-/uitschakelen"
     }
   },
   "file_picker": {
@@ -224,6 +227,8 @@
     "cube_removed_remaining": "3D-kubus verwijderd ({count} resterend)",
     "cube_all_removed": "Alle 3D-kubussen verwijderd",
     "cube_overlay_disabled": "Kubus-overlaymodus uitgeschakeld",
-    "cube_playing": "3D-kubus: {title}"
+    "cube_playing": "3D-kubus: {title}",
+    "fullscreen_enabled": "Volledig scherm ingeschakeld (Druk op F11 of Esc om af te sluiten)",
+    "fullscreen_disabled": "Volledig scherm uitgeschakeld"
   }
 }

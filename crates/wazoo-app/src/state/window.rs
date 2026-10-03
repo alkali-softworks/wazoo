@@ -30,6 +30,8 @@ pub struct WindowState {
     pub is_alt_pressed: bool,
     /// Timestamp of the most recent window resize event.
     pub last_resize_time: Option<Instant>,
+    /// Whether the application window is currently in fullscreen display mode.
+    pub is_fullscreen: bool,
 }
 
 impl WindowState {
@@ -65,6 +67,7 @@ impl Default for WindowState {
             ghost_passthrough_active: false,
             is_alt_pressed: false,
             last_resize_time: None,
+            is_fullscreen: false,
         }
     }
 }
