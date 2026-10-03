@@ -240,27 +240,14 @@ fn fbm_fog(uv: vec2<f32>, time: f32) -> f32 {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    var uv = in.uv;
-
-    // 1. Wavy fluid displacement
-    if (uniforms.wavy_enabled > 0.5) {
-        let speed = 0.7;
-        let freq = 16.0;
-        let amp = 0.003;
-        var wave_x = sin(uv.y * freq + uniforms.time * speed) * amp;
-        var wave_y = cos(uv.x * freq + uniforms.time * speed * 0.8) * amp;
-        wave_x += sin(uv.x * (freq * 0.5) - uniforms.time * (speed * 0.6)) * (amp * 0.4);
-        wave_y += cos(uv.y * (freq * 0.5) + uniforms.time * (speed * 0.7)) * (amp * 0.4);
-        uv = clamp(uv + vec2<f32>(wave_x, wave_y), vec2<f32>(0.0), vec2<f32>(1.0));
-    }
-
     var base_color: vec4<f32>;
     var rgb: vec3<f32>;
 
-    // 2. CRT filter (curvature, tracking distortion, chromatic aberration, scanlines)
+    // 1. CRT filter (curvature, tracking distortion, chromatic aberration, scanlines)
     if (uniforms.crt_enabled > 0.5) {
-        let curved_uv = curve(uv, 3.2);
+        let curved_uv = curve(in.uv, 3.2);
 
+        // Strict letterbox / pillarbox check for CRT mode
         if curved_uv.x < 0.0 || curved_uv.x > 1.0 || curved_uv.y < 0.0 || curved_uv.y > 1.0 {
             return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
         }
@@ -270,6 +257,19 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         let corner_dist = pow(corner_box.x, 10.0) + pow(corner_box.y, 10.0);
         if corner_dist > 1.05 {
             return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
+        }
+
+        // Apply wavy fluid displacement within the curved CRT tube
+        var screen_uv = curved_uv;
+        if (uniforms.wavy_enabled > 0.5) {
+            let speed = 0.7;
+            let freq = 16.0;
+            let amp = 0.004;
+            var wave_x = sin(curved_uv.y * freq + uniforms.time * speed) * amp;
+            var wave_y = cos(curved_uv.x * freq + uniforms.time * speed * 0.8) * amp;
+            wave_x += sin(curved_uv.x * (freq * 0.5) - uniforms.time * (speed * 0.6)) * (amp * 0.4);
+            wave_y += cos(curved_uv.y * (freq * 0.5) + uniforms.time * (speed * 0.7)) * (amp * 0.4);
+            screen_uv = clamp(curved_uv + vec2<f32>(wave_x, wave_y), vec2<f32>(0.0), vec2<f32>(1.0));
         }
 
         // Signal glitches / VHS tracking distortion
@@ -283,20 +283,20 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
             let band_start = hash(vec2<f32>(time_step, 42.0));
             let band_end = band_start + 0.02 + hash(vec2<f32>(time_step, 99.0)) * 0.08;
 
-            if curved_uv.y >= band_start && curved_uv.y <= band_end {
-                glitch_offset = (hash(vec2<f32>(time_step, floor(curved_uv.y * 50.0))) - 0.5) * 0.004;
+            if screen_uv.y >= band_start && screen_uv.y <= band_end {
+                glitch_offset = (hash(vec2<f32>(time_step, floor(screen_uv.y * 50.0))) - 0.5) * 0.004;
                 shift += 0.0045 * hash(vec2<f32>(time_step, 88.0));
             }
 
             let roll = fract(uniforms.time * 0.2);
-            let roll_dist = abs(curved_uv.y - roll);
+            let roll_dist = abs(screen_uv.y - roll);
             if roll_dist < 0.04 {
-                glitch_offset += sin((curved_uv.y - roll) * 50.0) * 0.0015;
+                glitch_offset += sin((screen_uv.y - roll) * 50.0) * 0.0015;
                 shift += 0.0025;
             }
         }
 
-        let warped_uv = clamp(vec2<f32>(curved_uv.x + glitch_offset, curved_uv.y), vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0));
+        let warped_uv = clamp(vec2<f32>(screen_uv.x + glitch_offset, screen_uv.y), vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0));
 
         // Radial chromatic aberration
         let center_dir = warped_uv - vec2<f32>(0.5, 0.5);
@@ -327,16 +327,34 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         let vig_factor = clamp(pow(16.0 * vignette, 0.28), 0.0, 1.0);
         rgb *= vig_factor;
     } else {
-        base_color = textureSampleLevel(tex, s, uv, 0.0);
+        // CRT is disabled: ensure pillarbox/letterbox black bars are preserved and never smeared
+        if in.uv.x < 0.0 || in.uv.x > 1.0 || in.uv.y < 0.0 || in.uv.y > 1.0 {
+            return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
+        }
+
+        // Apply wavy fluid displacement strictly inside the video frame
+        var screen_uv = in.uv;
+        if (uniforms.wavy_enabled > 0.5) {
+            let speed = 0.7;
+            let freq = 16.0;
+            let amp = 0.004;
+            var wave_x = sin(in.uv.y * freq + uniforms.time * speed) * amp;
+            var wave_y = cos(in.uv.x * freq + uniforms.time * speed * 0.8) * amp;
+            wave_x += sin(in.uv.x * (freq * 0.5) - uniforms.time * (speed * 0.6)) * (amp * 0.4);
+            wave_y += cos(in.uv.y * (freq * 0.5) + uniforms.time * (speed * 0.7)) * (amp * 0.4);
+            screen_uv = clamp(in.uv + vec2<f32>(wave_x, wave_y), vec2<f32>(0.0), vec2<f32>(1.0));
+        }
+
+        base_color = textureSampleLevel(tex, s, screen_uv, 0.0);
         rgb = base_color.rgb;
     }
 
-    // 3. Volumetric Fog filter
+    // 3. Volumetric Fog filter (atmospheric rolling mist with transparent clearings)
     if (uniforms.fog_enabled > 0.5) {
-        let fog_uv = in.uv * (uniforms.resolution / 700.0);
+        let fog_uv = in.uv * (uniforms.resolution / 750.0);
         let shadow_color = vec3<f32>(0.24, 0.28, 0.35);
-        let light_color = vec3<f32>(0.70, 0.74, 0.80);
-        let fog_intensity = 0.55;
+        let light_color = vec3<f32>(0.72, 0.76, 0.82);
+        let fog_intensity = 0.28;
 
         var q = vec2<f32>(
             fbm_fog(fog_uv * 1.8 + vec2<f32>(uniforms.time * 0.08, uniforms.time * 0.05), uniforms.time),
@@ -351,7 +369,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         var f = fbm_fog(fog_uv * 2.0 + r * 2.2, uniforms.time);
         var ridged_fog = 1.0 - abs(f - 0.5) * 2.0;
         var combined = mix(f, ridged_fog, 0.30);
-        var density = smoothstep(0.30, 0.70, combined);
+        var density = smoothstep(0.42, 0.82, combined);
 
         var eps = 0.018;
         var f_offset = fbm_fog((fog_uv + vec2<f32>(eps, eps)) * 2.0 + r * 2.2, uniforms.time);
@@ -359,7 +377,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
         var fog_color = mix(shadow_color, light_color, density);
         var edge_highlight = smoothstep(0.1, 0.5, density) * (1.0 - smoothstep(0.4, 0.8, density));
-        edge_highlight *= diff * 5.0;
+        edge_highlight *= diff * 3.5;
         fog_color += vec3<f32>(0.35, 0.42, 0.52) * edge_highlight;
 
         var final_fog = density * fog_intensity;
@@ -632,9 +650,8 @@ impl Primitive for VideoPrimitive {
 
         let entry = pipeline.videos.get_mut(&self.player_id).unwrap();
 
-        let is_new_frame = just_created
-            || frame_guard.new_frame
-            || entry.last_frame_seq != frame_guard.frame_seq;
+        let is_new_frame =
+            just_created || frame_guard.new_frame || entry.last_frame_seq != frame_guard.frame_seq;
 
         if is_new_frame && !frame_guard.pixels.is_empty() {
             queue.write_texture(
@@ -743,7 +760,9 @@ impl VideoProgram {
         opacity: f32,
         fit_cover: bool,
     ) -> Self {
-        Self::new_full(player_id, frame, alive, opacity, fit_cover, false, false, false)
+        Self::new_full(
+            player_id, frame, alive, opacity, fit_cover, false, false, false,
+        )
     }
 
     pub fn new_full(
