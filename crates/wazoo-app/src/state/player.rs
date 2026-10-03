@@ -26,7 +26,7 @@ pub struct AppPlayer {
     pub loading_ticks: usize,
     /// Per-player flip mode runtime countdown state
     pub flip: crate::state::FlipState,
-    /// Whether this player is an independent 3D cube screensaver player
+    /// Whether this player is an independent 3D cube player
     pub is_cube: bool,
     /// Whether this player was paused before entering desktop overlay mode
     pub was_paused_before_desktop: bool,
@@ -49,7 +49,7 @@ impl AppPlayer {
         }
     }
 
-    /// Creates a new `AppPlayer` for the independent 3D screensaver cube.
+    /// Creates a new `AppPlayer` for the independent 3D cube.
     pub fn new_cube(handle: VideoHandle, shuffle: bool) -> Self {
         Self {
             handle,

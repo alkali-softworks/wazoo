@@ -763,6 +763,23 @@ fn test_cube_present_hijacks_bookmark_keys_for_add_remove_cube() {
     assert!(!app.cube.desktop_overlay);
 }
 
+#[test]
+fn test_cube_sheen_toggle_and_persistence() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+    assert!(!app.settings.cube_sheen, "Cube sheen should default to false (disabled)");
 
+    // Toggle sheen ON
+    let _ = app.update(wazoo_app::message::Message::ToggleCubeSheen);
+    assert!(app.settings.cube_sheen);
 
+    // Verify it is saved to disk
+    let reloaded = app.config_mgr.load_settings();
+    assert!(reloaded.cube_sheen);
 
+    // Toggle sheen back OFF
+    let _ = app.update(wazoo_app::message::Message::ToggleCubeSheen);
+    assert!(!app.settings.cube_sheen);
+
+    let reloaded2 = app.config_mgr.load_settings();
+    assert!(!reloaded2.cube_sheen);
+}

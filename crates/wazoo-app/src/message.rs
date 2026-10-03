@@ -171,9 +171,10 @@ pub enum Message {
     DismissToast,
     ModalCardClicked,
 
-    // 3D Video Cube Screensaver (Experimental)
+    // 3D Video Cube
     ToggleCubeScreensaver,
     ToggleDesktopCubeScreensaver,
+    ToggleCubeSheen,
     SpawnCube,
     RemoveCube,
     ClearCubes,

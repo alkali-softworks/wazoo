@@ -1,7 +1,7 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
  *
- * Settings Modal - 3D Video Cube Screensaver Tab
+ * Settings Modal - 3D Cube Tab
  */
 
 use super::badge::badge_with_reset;
@@ -18,120 +18,7 @@ pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     let cube_active = app.cube.is_present();
     let cube_count = app.cube.cubes.len();
 
-    // 1. Header / Status banner
-    let status_indicator = if cube_active {
-        let active_text = if cube_count == 1 {
-            app.t("settings.cube_active_single")
-        } else {
-            app.t_with(
-                "settings.cube_active_multiple",
-                &[("count", &cube_count.to_string())],
-            )
-        };
-        container(
-            row![
-                text("●").size(10).color(theme::COLOR_PRIMARY),
-                text(active_text)
-                    .size(11)
-                    .font(theme::FONT_BOLD)
-                    .color(theme::COLOR_PRIMARY),
-            ]
-            .spacing(5)
-            .align_y(Alignment::Center),
-        )
-        .padding([4, 10])
-        .style(|_theme: &Theme| container::Style {
-            background: Some(iced::Background::Color(iced::Color::from_rgba(
-                0.26, 0.72, 0.51, 0.15,
-            ))),
-            border: iced::Border {
-                radius: 12.0.into(),
-                width: 1.0,
-                color: iced::Color::from_rgba(0.26, 0.72, 0.51, 0.4),
-            },
-            ..Default::default()
-        })
-    } else {
-        container(
-            row![
-                text("●").size(10).color(theme::COLOR_TEXT_MUTED),
-                text(app.t("settings.cube_inactive"))
-                    .size(11)
-                    .color(theme::COLOR_TEXT_MUTED),
-            ]
-            .spacing(5)
-            .align_y(Alignment::Center),
-        )
-        .padding([4, 10])
-        .style(|_theme: &Theme| container::Style {
-            background: Some(iced::Background::Color(iced::Color::from_rgba(
-                0.2, 0.2, 0.22, 0.4,
-            ))),
-            border: iced::Border {
-                radius: 12.0.into(),
-                width: 1.0,
-                color: theme::COLOR_BORDER,
-            },
-            ..Default::default()
-        })
-    };
-
-    let header_card = container(
-        column![
-            row![
-                text("🧊").size(22),
-                column![
-                    row![
-                        text(app.t("settings.cube_title"))
-                            .size(15)
-                            .font(theme::FONT_BOLD)
-                            .color(iced::Color::WHITE),
-                        container(
-                            text(app.t("settings.cube_experimental"))
-                                .size(9)
-                                .font(theme::FONT_BOLD)
-                                .color(iced::Color::from_rgb(0.0, 0.9, 1.0))
-                        )
-                        .padding([2, 6])
-                        .style(|_theme: &Theme| container::Style {
-                            background: Some(iced::Background::Color(iced::Color::from_rgba(
-                                0.0, 0.9, 1.0, 0.12,
-                            ))),
-                            border: iced::Border {
-                                radius: 4.0.into(),
-                                width: 1.0,
-                                color: iced::Color::from_rgba(0.0, 0.9, 1.0, 0.35),
-                            },
-                            ..Default::default()
-                        }),
-                    ]
-                    .spacing(8)
-                    .align_y(Alignment::Center),
-                    text(app.t("settings.cube_desc"))
-                        .size(12)
-                        .color(theme::COLOR_TEXT_MUTED),
-                ]
-                .spacing(3),
-                Space::new().width(Length::Fill),
-                status_indicator,
-            ]
-            .spacing(12)
-            .align_y(Alignment::Center),
-        ]
-        .spacing(8),
-    )
-    .padding(14)
-    .style(|_theme: &Theme| container::Style {
-        background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
-        border: iced::Border {
-            radius: 8.0.into(),
-            width: 1.0,
-            color: theme::COLOR_BORDER,
-        },
-        ..Default::default()
-    });
-
-    // 2. Master Toggle Button
+    // 1. 3D Cube Toggle (Mode 8)
     let toggle_button = cursor::PointerCursor::new(
         button(
             row![
@@ -206,7 +93,7 @@ pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         .width(Length::Fill),
     );
 
-    // 2b. Desktop Screensaver Mode Toggle (Click-Passthrough)
+    // 2. Cube Overlay Mode Toggle (Mode 9)
     let desktop_active = app.cube.desktop_overlay;
     let desktop_button = cursor::PointerCursor::new(
         button(
@@ -279,7 +166,76 @@ pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         .width(Length::Fill),
     );
 
-    // 3. Physics & Dynamics Controls (Speed & Size)
+    // 3. 3D Light & Sheen Toggle
+    let sheen_active = app.settings.cube_sheen;
+    let sheen_button = cursor::PointerCursor::new(
+        button(
+            row![
+                text(if sheen_active { "✨" } else { "💡" }).size(16),
+                column![
+                    text(app.t("settings.cube_sheen"))
+                        .size(13)
+                        .font(theme::FONT_BOLD)
+                        .color(if sheen_active {
+                            theme::COLOR_PRIMARY
+                        } else {
+                            iced::Color::WHITE
+                        }),
+                    text(app.t("settings.cube_sheen_desc"))
+                        .size(11)
+                        .color(theme::COLOR_TEXT_MUTED),
+                ]
+                .spacing(2),
+                Space::new().width(Length::Fill),
+                badge_with_reset(
+                    if sheen_active {
+                        "ON".to_string()
+                    } else {
+                        "OFF".to_string()
+                    },
+                    sheen_active,
+                    Message::ToggleCubeSheen,
+                ),
+            ]
+            .spacing(12)
+            .align_y(Alignment::Center),
+        )
+        .style(move |_theme: &iced::Theme, status| {
+            let bg = if sheen_active {
+                match status {
+                    button::Status::Hovered => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.22),
+                    button::Status::Pressed => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.3),
+                    _ => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.12),
+                }
+            } else {
+                match status {
+                    button::Status::Hovered => theme::COLOR_BTN_HOVER,
+                    button::Status::Pressed => iced::Color::from_rgb(0.15, 0.15, 0.15),
+                    _ => theme::COLOR_BTN_BG,
+                }
+            };
+            button::Style {
+                background: Some(iced::Background::Color(bg)),
+                text_color: iced::Color::WHITE,
+                border: iced::Border {
+                    radius: 8.0.into(),
+                    width: 1.0,
+                    color: if sheen_active {
+                        theme::COLOR_PRIMARY
+                    } else {
+                        iced::Color::from_rgb(0.25, 0.25, 0.28)
+                    },
+                },
+                shadow: iced::Shadow::default(),
+                ..Default::default()
+            }
+        })
+        .on_press(Message::ToggleCubeSheen)
+        .padding([12, 16])
+        .width(Length::Fill),
+    );
+
+    // 4. Movement & Size Controls (Speed & Size)
     let speed_val = app.cube.speed_multiplier;
     let speed_label = format!("{:.1}x", speed_val);
     let speed_slider = column![
@@ -340,7 +296,7 @@ pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     ]
     .spacing(6);
 
-    // 4. Fleet Management (Spawn / Dismiss)
+    // 5. Cube Controls (Add / Remove)
     let spawn_more_btn = cursor::PointerCursor::new(
         button(
             row![text("+").size(14), text(app.t("settings.cube_spawn")).size(12)]
@@ -363,6 +319,11 @@ pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         .padding([8, 14]),
     );
 
+    let mut actions_row = row![spawn_more_btn].spacing(10);
+    if cube_active {
+        actions_row = actions_row.push(dismiss_all_btn);
+    }
+
     let dynamics_card = container(
         column![
             text(app.t("settings.cube_physics_scale"))
@@ -371,7 +332,7 @@ pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 .color(iced::Color::WHITE),
             speed_slider,
             size_slider,
-            row![spawn_more_btn, dismiss_all_btn].spacing(10),
+            actions_row,
         ]
         .spacing(14),
     )
@@ -386,11 +347,7 @@ pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         ..Default::default()
     });
 
-    let mut content = column![header_card, toggle_button, desktop_button].spacing(14);
-
-    if cube_active {
-        content = content.push(dynamics_card);
-    }
-
-    content.spacing(14).into()
+    column![toggle_button, desktop_button, sheen_button, dynamics_card]
+        .spacing(14)
+        .into()
 }

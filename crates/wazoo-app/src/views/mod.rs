@@ -28,7 +28,7 @@ use wazoo_scanner::ScanStage;
 
 impl WazooApp {
     pub fn view(&self) -> Element<'_, Message> {
-        // Desktop Cube Screensaver Mode: hide all normal chrome and UI,
+        // Cube Overlay Mode: hide all normal chrome and UI,
         // displaying only the 3D bouncing video cube directly over the transparent desktop
         if self.cube.desktop_overlay {
             let mut overlay_stack: Vec<Element<'_, Message>> = vec![
@@ -263,7 +263,7 @@ impl WazooApp {
                 ));
             }
 
-            // 6. 3D Bouncing Video Cube (Screensaver overlay on top of everything)
+            // 6. 3D Bouncing Video Cube (Overlay on top of everything)
             if self.cube.is_present() {
                 root_stack_children.push(self.view_cube_overlay());
             }

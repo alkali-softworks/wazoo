@@ -488,20 +488,24 @@ fn test_cube_settings_serialization_and_clamping() {
     let default_settings = WazooSettings::default();
     assert_eq!(default_settings.cube_speed, 1.0);
     assert_eq!(default_settings.cube_size, 1.0);
+    assert!(!default_settings.cube_sheen);
 
     let mut settings = WazooSettings::default();
     settings.cube_speed = 2.4;
     settings.cube_size = 1.6;
+    settings.cube_sheen = true;
 
     let json = serde_json::to_string(&settings).unwrap();
     let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.cube_speed, 2.4);
     assert_eq!(deserialized.cube_size, 1.6);
+    assert!(deserialized.cube_sheen);
 
     // Fallback default on empty/missing JSON
     let loaded: WazooSettings = serde_json::from_str("{}").unwrap();
     assert_eq!(loaded.cube_speed, 1.0);
     assert_eq!(loaded.cube_size, 1.0);
+    assert!(!loaded.cube_sheen);
 
     // Verify clamping via ConfigManager
     let temp_dir = std::env::temp_dir().join(format!(

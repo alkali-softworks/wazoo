@@ -162,6 +162,11 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
             }
+            Message::ToggleCubeSheen => {
+                self.settings.cube_sheen = !self.settings.cube_sheen;
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
             Message::SetLoadingIndicator(indicator) => {
                 self.settings.loading_indicator = indicator;
                 let _ = self.config_mgr.save_settings(&self.settings);
