@@ -270,6 +270,7 @@ impl WazooApp {
             | Message::SetPlaybackSpeed(_)
             | Message::ToggleCrtFilter
             | Message::SetCrtFilter(_)
+            | Message::ToggleCubeSheen
             | Message::SetLoadingIndicator(_)
             | Message::SetBufferDuration(_)
             | Message::SetBufferSize(_)
@@ -286,7 +287,7 @@ impl WazooApp {
             | Message::ModalCardClicked => self.update_modals(message),
 
             // =========================================================================
-            // 3D Video Cube Screensaver (Experimental)
+            // 3D Video Cube
             // =========================================================================
             Message::ToggleCubeScreensaver => {
                 self.modals.menu = false;
@@ -531,9 +532,9 @@ impl WazooApp {
         exit_task
     }
 
-    /// Disables Desktop Cube Screensaver Mode (Mode 9), restoring normal window level,
+    /// Disables Cube Overlay Mode (Mode 9), restoring normal window level,
     /// turning off click-passthrough, unpausing regular players, and dismissing the cube
-    /// if it was spawned exclusively for the desktop screensaver.
+    /// if it was spawned exclusively for Cube Overlay Mode.
     pub(crate) fn exit_desktop_cube_overlay(&mut self) -> Task<Message> {
         if !self.cube.desktop_overlay {
             return Task::none();

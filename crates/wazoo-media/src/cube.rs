@@ -1,7 +1,7 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
  *
- * 3D Video Cube Screensaver Pipeline
+ * 3D Video Cube Pipeline
  *
  * Renders 3D bouncing cubes with live video textures mapped to all six faces,
  * directional lighting, specular highlights, and glowing neon edges.
@@ -35,7 +35,8 @@ pub struct CubeUniforms {
     pub edge_color: [f32; 4],
     pub opacity: f32,
     pub crt_enabled: f32,
-    pub _pad1: [f32; 2],
+    pub sheen_enabled: f32,
+    pub _pad1: f32,
 }
 
 struct CubeGpuEntry {
@@ -75,7 +76,8 @@ struct CubeUniforms {
     edge_color: vec4<f32>,
     opacity: f32,
     crt_enabled: f32,
-    _pad1: vec2<f32>,
+    sheen_enabled: f32,
+    _pad1: f32,
 }
 
 @group(0) @binding(0)
@@ -261,16 +263,20 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         col = vec4<f32>(base, 1.0);
     }
 
-    // 3D Directional Lighting + Ambient
-    let light_dir = normalize(vec3<f32>(0.4, 0.7, 0.9));
-    let diff = max(dot(in.normal, light_dir), 0.0);
-    let lighting = diff * 0.35 + 0.75;
-    var final_rgb = col.rgb * lighting;
+    var final_rgb = col.rgb;
 
-    // Specular highlight
-    let half_vec = normalize(light_dir + view_dir);
-    let spec = pow(max(dot(in.normal, half_vec), 0.0), 16.0) * 0.25;
-    final_rgb += vec3<f32>(spec);
+    // 3D Directional Lighting + Specular Sheen (toggleable)
+    if (uniforms.sheen_enabled > 0.5) {
+        let light_dir = normalize(vec3<f32>(0.4, 0.7, 0.9));
+        let diff = max(dot(in.normal, light_dir), 0.0);
+        let lighting = diff * 0.35 + 0.75;
+        final_rgb = final_rgb * lighting;
+
+        // Specular highlight / sheen
+        let half_vec = normalize(light_dir + view_dir);
+        let spec = pow(max(dot(in.normal, half_vec), 0.0), 16.0) * 0.25;
+        final_rgb += vec3<f32>(spec);
+    }
 
     // CRT scanline effect on the cube if enabled
     if (uniforms.crt_enabled > 0.5) {
@@ -518,6 +524,7 @@ pub struct CubeInstance {
     pub frame: Arc<Mutex<FrameData>>,
     pub alive: Arc<AtomicBool>,
     pub crt_enabled: bool,
+    pub sheen_enabled: bool,
     pub opacity: f32,
 }
 
@@ -612,7 +619,8 @@ impl Primitive for CubePrimitive {
                 edge_color: inst.edge_color,
                 opacity: inst.opacity.clamp(0.0, 1.0),
                 crt_enabled: if inst.crt_enabled { 1.0 } else { 0.0 },
-                _pad1: [0.0, 0.0],
+                sheen_enabled: if inst.sheen_enabled { 1.0 } else { 0.0 },
+                _pad1: 0.0,
             };
 
             queue.write_buffer(&entry.uniform_buffer, 0, bytemuck::bytes_of(&uniforms));

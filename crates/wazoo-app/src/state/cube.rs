@@ -1,7 +1,7 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
  *
- * 3D Bouncing Video Cube Screensaver State
+ * 3D Bouncing Video Cube State
  *
  * Manages the physics, multi-axis 3D rotations, edge collision detection,
  * and neon palette cycling for interactive floating video cubes.
@@ -84,7 +84,7 @@ impl CubeState {
         Self::default()
     }
 
-    /// Returns true if the 3D cube screensaver or overlay is active and at least one cube exists.
+    /// Returns true if the 3D cube or overlay is active and at least one cube exists.
     pub fn is_present(&self) -> bool {
         self.enabled && !self.cubes.is_empty()
     }
@@ -110,7 +110,7 @@ impl CubeState {
         let center_x = (w * 0.5 + offset_x).clamp(100.0, w - 100.0);
         let center_y = (h * 0.5 + offset_y).clamp(100.0, h - 100.0);
 
-        // Screensaver velocity trajectory
+        // Initial velocity trajectory
         let dir_x = if count % 2 == 0 { 1.0 } else { -1.0 };
         let dir_y = if (count / 2) % 2 == 0 { 1.0 } else { -1.0 };
         let vx = (2.8 + (count as f32 * 0.4) % 1.5) * dir_x;

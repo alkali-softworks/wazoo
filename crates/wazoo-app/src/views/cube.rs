@@ -1,7 +1,7 @@
 /*!
  * ALKALI SOFTWORKS - Wazoo
  *
- * 3D Video Cube Screensaver View
+ * 3D Video Cube View
  *
  * Renders the floating 3D rotating bouncing cubes over the application layer.
  */
@@ -77,6 +77,7 @@ impl WazooApp {
                 frame,
                 alive,
                 crt_enabled: self.settings.crt_enabled,
+                sheen_enabled: self.settings.cube_sheen,
                 opacity: 1.0,
             });
         }

@@ -55,6 +55,7 @@ async fn test_cube_pipeline_creation_and_render() {
         frame,
         alive,
         crt_enabled: false,
+        sheen_enabled: false,
         opacity: 1.0,
     };
 

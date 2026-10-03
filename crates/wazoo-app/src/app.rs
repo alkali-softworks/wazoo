@@ -937,7 +937,7 @@ impl WazooApp {
         None
     }
 
-    /// Spawns an independent video player dedicated to the 3D screensaver cube.
+    /// Spawns an independent video player dedicated to the 3D cube.
     pub(crate) fn spawn_cube_player(&mut self) -> Option<PlayerId> {
         let id = self.next_player_id;
         self.next_player_id += 1;

@@ -199,6 +199,8 @@ pub struct WazooSettings {
     pub cube_speed: f32,
     #[serde(default = "default_cube_size")]
     pub cube_size: f32,
+    #[serde(default)]
+    pub cube_sheen: bool,
 }
 
 fn default_playback_speed() -> f32 {
@@ -250,6 +252,7 @@ impl Default for WazooSettings {
             loading_indicator: LoadingIndicator::Spinner,
             cube_speed: 1.0,
             cube_size: 1.0,
+            cube_sheen: false,
         }
     }
 }
