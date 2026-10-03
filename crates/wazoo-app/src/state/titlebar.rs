@@ -8,6 +8,7 @@ use crate::app::{DROPDOWN_MENU_SLIDE_TICKS, TITLEBAR_FADE_TICKS, TITLEBAR_SLIDE_
 use iced::Point;
 use std::time::Instant;
 
+/// Manages auto-hiding titlebar animations, dropdown menu slide transitions, and window drag gestures.
 #[derive(Debug, Clone, Default)]
 pub struct TitlebarState {
     pub show: bool,
@@ -22,6 +23,7 @@ pub struct TitlebarState {
 }
 
 impl TitlebarState {
+    /// Computes the slide-down progress [0.0..1.0] for the animated top titlebar.
     pub fn slide_progress(&self) -> f32 {
         if self.show {
             (self.slide_ticks as f32 / TITLEBAR_SLIDE_TICKS as f32).min(1.0)
@@ -32,6 +34,7 @@ impl TitlebarState {
         }
     }
 
+    /// Computes the slide-down progress [0.0..1.0] for the top navigation dropdown menu.
     pub fn dropdown_menu_slide_progress(&self) -> f32 {
         if self.show_dropdown_menu {
             (self.dropdown_menu_slide_ticks as f32 / DROPDOWN_MENU_SLIDE_TICKS as f32).min(1.0)
@@ -40,6 +43,7 @@ impl TitlebarState {
         }
     }
 
+    /// Computes the opacity [0.0..1.0] for fading out the titlebar upon cursor departure.
     pub fn alpha(&self) -> f32 {
         if self.show {
             1.0

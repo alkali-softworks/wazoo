@@ -499,6 +499,7 @@ impl WazooApp {
         self.is_any_modal_open() || self.titlebar.show_dropdown_menu
     }
 
+    /// Tests whether the given point falls within the draggable top titlebar zone (height = 35px).
     pub fn is_point_in_titlebar(&self, pos: Point) -> bool {
         let width = if self.settings.window_bounds.width > 0 {
             self.settings.window_bounds.width as f32
@@ -508,6 +509,7 @@ impl WazooApp {
         pos.x >= 0.0 && pos.x <= width && pos.y >= 0.0 && pos.y < 35.0
     }
 
+    /// Computes the rendered opacity [0.0..1.0] of the auto-hiding top titlebar.
     pub fn titlebar_alpha(&self) -> f32 {
         if !self.titlebar.show {
             0.0
@@ -523,6 +525,7 @@ impl WazooApp {
         }
     }
 
+    /// Computes the slide-down progress [0.0..1.0] of the top titlebar.
     pub fn titlebar_slide_progress(&self) -> f32 {
         if !self.titlebar.show {
             0.0
@@ -540,6 +543,7 @@ impl WazooApp {
         }
     }
 
+    /// Computes the slide-down progress [0.0..1.0] of the top dropdown navigation menu.
     pub fn dropdown_menu_slide_progress(&self) -> f32 {
         if !self.titlebar.show_dropdown_menu {
             0.0
@@ -551,14 +555,17 @@ impl WazooApp {
         }
     }
 
+    /// Shows or resets the auto-hide countdown for the floating HUD controls overlay.
     pub fn trigger_player_overlay(&mut self) {
         self.overlay.trigger();
     }
 
+    /// Computes the rendered opacity [0.0..1.0] of the floating HUD controls overlay.
     pub fn player_overlay_alpha(&self) -> f32 {
         self.overlay.alpha()
     }
 
+    /// Determines whether the mouse cursor should be auto-hidden during undisturbed video playback.
     pub fn should_hide_cursor(&self) -> bool {
         !self.players.is_empty()
             && self.overlay.ticks == 0
@@ -568,6 +575,7 @@ impl WazooApp {
             && !self.is_modal_or_menu_open()
     }
 
+    /// Returns the `PlayerId` of the currently focused video player, if any player exists.
     pub fn focused_player_id(&self) -> Option<PlayerId> {
         if self.players.is_empty() {
             None
@@ -577,6 +585,7 @@ impl WazooApp {
         }
     }
 
+    /// Returns an immutable reference to the currently focused `AppPlayer`, if any player exists.
     pub(crate) fn focused_player(&self) -> Option<&AppPlayer> {
         if self.players.is_empty() {
             None
@@ -586,6 +595,7 @@ impl WazooApp {
         }
     }
 
+    /// Returns a mutable reference to the currently focused `AppPlayer`, if any player exists.
     pub(crate) fn focused_player_mut(&mut self) -> Option<&mut AppPlayer> {
         if self.players.is_empty() {
             None

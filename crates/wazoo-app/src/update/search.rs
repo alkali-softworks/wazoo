@@ -10,6 +10,8 @@ use crate::message::Message;
 use iced::Task;
 
 impl WazooApp {
+    /// Handles messages for full-text search input, tag filtering, folder selection/toggling,
+    /// and video database query re-evaluation.
     pub(crate) fn update_search(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::SelectSearchFolder(folder) => {

@@ -17,6 +17,8 @@ use wazoo_core::PlaybackMode;
 use wazoo_media::{PlayerId, StartTime, VideoHandle};
 
 impl WazooApp {
+    /// Focuses the specified player, triggers the green outline flash, activates loading state,
+    /// and logs the current playback playhead to the player's navigation history stack.
     pub(crate) fn focus_player_for_navigation(&mut self, id: PlayerId, request_focus: bool) {
         if request_focus {
             if let Some(pos) = self.players.player_index(id) {
@@ -34,6 +36,8 @@ impl WazooApp {
         self.record_current_player_nav_position(id);
     }
 
+    /// Replaces a player's underlying video handle with a newly initialized one while preserving
+    /// user audio preferences (volume and mute status) and global subtitle visibility.
     pub(crate) fn apply_playback_state_and_replace(
         &mut self,
         id: PlayerId,
@@ -52,6 +56,8 @@ impl WazooApp {
         }
     }
 
+    /// Advances a player to the next video, checking the forward navigation history stack before
+    /// generating a sequential or shuffled video from the library with automated load retries.
     pub(crate) fn advance_player_to_next_video(
         &mut self,
         id: PlayerId,
@@ -155,6 +161,8 @@ impl WazooApp {
         Task::none()
     }
 
+    /// Steps a player back to the previously played video, popping from the back navigation history
+    /// stack and preserving the forward stack for subsequent redo navigation.
     pub(crate) fn advance_player_to_prev_video(
         &mut self,
         id: PlayerId,

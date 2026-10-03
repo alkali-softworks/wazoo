@@ -6,6 +6,7 @@
 
 use crate::app::SettingsTab;
 
+/// Tracks the visibility state of centered modal dialog overlays.
 #[derive(Debug, Clone, Default)]
 pub struct ModalState {
     pub search: bool,
@@ -18,10 +19,14 @@ pub struct ModalState {
 }
 
 impl ModalState {
+    /// Returns true if any modal dialog overlay is currently visible.
+    #[inline]
     pub fn is_any_open(&self) -> bool {
         self.search || self.settings || self.help || self.bookmarks || self.menu
     }
 
+    /// Closes all active modal dialog overlays.
+    #[inline]
     pub fn close_all(&mut self) {
         self.search = false;
         self.settings = false;

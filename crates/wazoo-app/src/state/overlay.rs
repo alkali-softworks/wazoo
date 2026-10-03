@@ -6,6 +6,7 @@
 
 use crate::app::{DEFAULT_TOAST_SECS, PLAYER_OVERLAY_FADE_TICKS, PLAYER_OVERLAY_HIDE_TICKS};
 
+/// Manages HUD fade animations, focus outlines, toast notifications, and loading spinner angles.
 #[derive(Debug, Clone, Default)]
 pub struct OverlayState {
     pub ticks: usize,
@@ -18,6 +19,8 @@ pub struct OverlayState {
 }
 
 impl OverlayState {
+    /// Computes the continuous rotation angle (in degrees) for the loading spinner.
+    #[inline]
     pub fn spinner_angle(&self) -> f32 {
         ((self.spinner_ticks * 12) % 360) as f32
     }
@@ -31,6 +34,8 @@ impl OverlayState {
             (self.spinner_ticks as usize / 2) % total_frames
         }
     }
+
+    /// Triggers or resets the HUD overlay auto-hide countdown, handling smooth fade-in resumption.
     pub fn trigger(&mut self) {
         if self.ticks == 0 {
             self.fade_in_ticks = 0;
@@ -40,6 +45,7 @@ impl OverlayState {
         self.ticks = PLAYER_OVERLAY_HIDE_TICKS;
     }
 
+    /// Calculates the instantaneous composite opacity [0.0..1.0] combining fade-in and fade-out progress.
     pub fn alpha(&self) -> f32 {
         let fade_in = if self.fade_in_ticks < PLAYER_OVERLAY_FADE_TICKS {
             self.fade_in_ticks as f32 / PLAYER_OVERLAY_FADE_TICKS as f32
@@ -64,6 +70,7 @@ impl OverlayState {
         self.toast_time_remaining = DEFAULT_TOAST_SECS;
     }
 
+    /// Immediately clears any currently visible toast notification.
     pub fn clear_toast(&mut self) {
         self.toast_message = None;
         self.toast_time_remaining = 0;

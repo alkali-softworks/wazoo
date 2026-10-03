@@ -15,6 +15,8 @@ use std::time::{Duration, Instant};
 use wazoo_core::PlaybackMode;
 
 impl WazooApp {
+    /// Handles messages for window management, borderless drag-resizing, cursor tracking,
+    /// titlebar auto-hiding, hardware keyboard key events, and mouse interactions.
     pub(crate) fn update_window(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::WindowIdReceived(id) => {

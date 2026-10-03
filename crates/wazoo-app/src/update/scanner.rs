@@ -12,6 +12,8 @@ use iced::futures::SinkExt;
 use wazoo_scanner::Scanner;
 
 impl WazooApp {
+    /// Handles messages for folder picker dialogs, library indexing progress,
+    /// scan completion reconciliation, and media directory configuration.
     pub(crate) fn update_scanner(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::PickFolders => {
