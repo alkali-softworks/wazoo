@@ -83,6 +83,7 @@ pub enum SettingsTab {
     #[default]
     General,
     Playback,
+    Filters,
     System,
     Cube,
 }
