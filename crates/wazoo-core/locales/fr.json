@@ -95,7 +95,7 @@
     "cube_desc": "Cube 3D flottant avec lecture vidéo en direct sur toutes les surfaces.",
     "cube_enable": "Activer le Cube 3D",
     "cube_disable": "Désactiver le Cube 3D",
-    "cube_shortcut_hint": "Raccourci : appuyez sur 8 pour basculer",
+    "cube_shortcut_hint": "Raccourci : appuyez sur {key} pour basculer",
     "cube_badge_on": "ON ({count})",
     "cube_badge_off": "OFF",
     "cube_physics_scale": "Mouvement et taille",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "Supprimer tous les cubes",
     "cube_desktop_enable": "Activer le mode superposition de cube",
     "cube_desktop_disable": "Désactiver le mode superposition de cube",
-    "cube_desktop_shortcut_hint": "Raccourci : appuyez sur 9 pour basculer",
+    "cube_desktop_shortcut_hint": "Raccourci : appuyez sur {key} pour basculer",
     "cube_badge_desktop_on": "SUPERPOSITION",
     "cube_sheen": "Lumière et reflet 3D",
     "cube_sheen_desc": "Éclairage directionnel et reflets spéculaires sur les surfaces"
@@ -154,7 +154,9 @@
       "toggle_pin": "Basculer toujours au premier plan",
       "mark_in": "Définir le point d'entrée",
       "mark_out": "Définir le point de sortie",
-      "clear_marks": "Effacer la boucle d'entrée / sortie"
+      "clear_marks": "Effacer la boucle d'entrée / sortie",
+      "toggle_cube": "Basculer le Cube 3D",
+      "toggle_cube_overlay": "Basculer le mode superposition de cube"
     }
   },
   "file_picker": {

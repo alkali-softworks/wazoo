@@ -95,7 +95,7 @@
     "cube_desc": "모든 면에서 라이브 비디오가 재생되는 3D 큐브.",
     "cube_enable": "3D 큐브 활성화",
     "cube_disable": "3D 큐브 비활성화",
-    "cube_shortcut_hint": "단축키: 8을 눌러 전환",
+    "cube_shortcut_hint": "단축키: {key}를 눌러 전환",
     "cube_badge_on": "켜짐 ({count})",
     "cube_badge_off": "꺼짐",
     "cube_physics_scale": "움직임 및 크기",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "모든 큐브 제거",
     "cube_desktop_enable": "큐브 오버레이 모드 활성화",
     "cube_desktop_disable": "큐브 오버레이 모드 비활성화",
-    "cube_desktop_shortcut_hint": "단축키: 9를 눌러 전환",
+    "cube_desktop_shortcut_hint": "단축키: {key}를 눌러 전환",
     "cube_badge_desktop_on": "오버레이",
     "cube_sheen": "3D 조명 및 광택",
     "cube_sheen_desc": "큐브 표면의 방향성 조명 및 반사 광택"
@@ -154,7 +154,9 @@
       "toggle_pin": "항상 위에 고정 전환",
       "mark_in": "시작점(In) 설정",
       "mark_out": "종료점(Out) 설정",
-      "clear_marks": "구간 반복 해제"
+      "clear_marks": "구간 반복 해제",
+      "toggle_cube": "3D 큐브 전환",
+      "toggle_cube_overlay": "큐브 오버레이 모드 전환"
     }
   },
   "file_picker": {

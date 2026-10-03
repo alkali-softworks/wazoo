@@ -95,7 +95,7 @@
     "cube_desc": "3D-куб із відтворенням відео на всіх гранях.",
     "cube_enable": "Увімкнути 3D-куб",
     "cube_disable": "Вимкнути 3D-куб",
-    "cube_shortcut_hint": "Гаряча клавіша: натисніть 8 для перемикання",
+    "cube_shortcut_hint": "Гаряча клавіша: натисніть {key} для перемикання",
     "cube_badge_on": "УВІМК ({count})",
     "cube_badge_off": "ВИМК",
     "cube_physics_scale": "Рух і розмір",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "Видалити всі куби",
     "cube_desktop_enable": "Увімкнути режим накладення куба",
     "cube_desktop_disable": "Вимкнути режим накладення куба",
-    "cube_desktop_shortcut_hint": "Гаряча клавіша: натисніть 9 для перемикання",
+    "cube_desktop_shortcut_hint": "Гаряча клавіша: натисніть {key} для перемикання",
     "cube_badge_desktop_on": "НАКЛАДЕННЯ",
     "cube_sheen": "3D-світло та блиск",
     "cube_sheen_desc": "Спрямоване світло та дзеркальні відблиски на гранях"
@@ -154,7 +154,9 @@
       "toggle_pin": "Закріпити/відкріпити поверх усіх вікон",
       "mark_in": "Встановити точку входу (In)",
       "mark_out": "Встановити точку виходу (Out)",
-      "clear_marks": "Очистити петлю точок In / Out"
+      "clear_marks": "Очистити петлю точок In / Out",
+      "toggle_cube": "Перемкнути 3D-куб",
+      "toggle_cube_overlay": "Перемкнути режим накладення куба"
     }
   },
   "file_picker": {

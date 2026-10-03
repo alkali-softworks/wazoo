@@ -95,7 +95,7 @@
     "cube_desc": "Khối 3D lơ lửng phát video trực tiếp trên tất cả các mặt.",
     "cube_enable": "Bật khối 3D",
     "cube_disable": "Tắt khối 3D",
-    "cube_shortcut_hint": "Phím tắt: Nhấn 8 để bật/tắt",
+    "cube_shortcut_hint": "Phím tắt: Nhấn {key} để bật/tắt",
     "cube_badge_on": "BẬT ({count})",
     "cube_badge_off": "TẮT",
     "cube_physics_scale": "Chuyển động & kích thước",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "Xóa tất cả các khối",
     "cube_desktop_enable": "Bật chế độ lớp phủ khối",
     "cube_desktop_disable": "Tắt chế độ lớp phủ khối",
-    "cube_desktop_shortcut_hint": "Phím tắt: Nhấn 9 để bật/tắt",
+    "cube_desktop_shortcut_hint": "Phím tắt: Nhấn {key} để bật/tắt",
     "cube_badge_desktop_on": "LỚP PHỦ",
     "cube_sheen": "Ánh sáng & độ bóng 3D",
     "cube_sheen_desc": "Ánh sáng định hướng và phản xạ trên các bề mặt khối"
@@ -154,7 +154,9 @@
       "toggle_pin": "Bật/tắt luôn ở trên cùng",
       "mark_in": "Đặt điểm bắt đầu (In)",
       "mark_out": "Đặt điểm kết thúc (Out)",
-      "clear_marks": "Xóa đoạn lặp In / Out"
+      "clear_marks": "Xóa đoạn lặp In / Out",
+      "toggle_cube": "Bật/tắt khối 3D",
+      "toggle_cube_overlay": "Bật/tắt chế độ lớp phủ khối"
     }
   },
   "file_picker": {

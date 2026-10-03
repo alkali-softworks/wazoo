@@ -95,7 +95,7 @@
     "cube_desc": "सभी सतहों पर लाइव वीडियो प्लेबैक के साथ फ्लोटिंग 3D क्यूब।",
     "cube_enable": "3D क्यूब सक्षम करें",
     "cube_disable": "3D क्यूब अक्षम करें",
-    "cube_shortcut_hint": "शॉर्टकट: टॉगल करने के लिए 8 दबाएं",
+    "cube_shortcut_hint": "शॉर्टकट: टॉगल करने के लिए {key} दबाएं",
     "cube_badge_on": "चालू ({count})",
     "cube_badge_off": "बंद",
     "cube_physics_scale": "गति और आकार",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "सभी क्यूब्स हटाएं",
     "cube_desktop_enable": "क्यूब ओवरले मोड सक्षम करें",
     "cube_desktop_disable": "क्यूब ओवरले मोड अक्षम करें",
-    "cube_desktop_shortcut_hint": "शॉर्टकट: टॉगल करने के लिए 9 दबाएं",
+    "cube_desktop_shortcut_hint": "शॉर्टकट: टॉगल करने के लिए {key} दबाएं",
     "cube_badge_desktop_on": "ओवरले",
     "cube_sheen": "3D लाइट और चमक",
     "cube_sheen_desc": "क्यूब की सतहों पर दिशात्मक प्रकाश और प्रतिबिंब"
@@ -154,7 +154,9 @@
       "toggle_pin": "हमेशा शीर्ष पर टॉगल करें",
       "mark_in": "मार्क इन सेट करें",
       "mark_out": "मार्क आउट सेट करें",
-      "clear_marks": "मार्क इन/आउट लूप साफ़ करें"
+      "clear_marks": "मार्क इन/आउट लूप साफ़ करें",
+      "toggle_cube": "3D क्यूब टॉगल करें",
+      "toggle_cube_overlay": "क्यूब ओवरले मोड टॉगल करें"
     }
   },
   "file_picker": {

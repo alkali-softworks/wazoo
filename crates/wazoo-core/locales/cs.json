@@ -95,7 +95,7 @@
     "cube_desc": "Plovoucí 3D kostka s přehráváním videa na všech stěnách.",
     "cube_enable": "Aktivovat 3D kostku",
     "cube_disable": "Deaktivovat 3D kostku",
-    "cube_shortcut_hint": "Zkratka: stiskněte 8 pro přepnutí",
+    "cube_shortcut_hint": "Zkratka: stiskněte {key} pro přepnutí",
     "cube_badge_on": "ZAP ({count})",
     "cube_badge_off": "VYP",
     "cube_physics_scale": "Pohyb a velikost",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "Odebrat všechny kostky",
     "cube_desktop_enable": "Aktivovat režim překrytí kostky",
     "cube_desktop_disable": "Deaktivovat režim překrytí kostky",
-    "cube_desktop_shortcut_hint": "Zkratka: stiskněte 9 pro přepnutí",
+    "cube_desktop_shortcut_hint": "Zkratka: stiskněte {key} pro přepnutí",
     "cube_badge_desktop_on": "PŘEKRYTÍ",
     "cube_sheen": "3D světlo a lesk",
     "cube_sheen_desc": "Směrové osvětlení a zrcadlové odlesky na povrchu kostky"
@@ -154,7 +154,9 @@
       "toggle_pin": "Přepnout Vždy navrchu",
       "mark_in": "Nastavit počáteční bod (In)",
       "mark_out": "Nastavit koncový bod (Out)",
-      "clear_marks": "Vymazat smyčku In / Out"
+      "clear_marks": "Vymazat smyčku In / Out",
+      "toggle_cube": "Přepnout 3D kostku",
+      "toggle_cube_overlay": "Přepnout režim překrytí kostky"
     }
   },
   "file_picker": {

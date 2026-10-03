@@ -95,7 +95,7 @@
     "cube_desc": "Schwebender 3D-Würfel mit unabhängiger Videowiedergabe auf allen Oberflächen.",
     "cube_enable": "3D-Würfel aktivieren",
     "cube_disable": "3D-Würfel deaktivieren",
-    "cube_shortcut_hint": "Tastenkürzel: Drücken Sie 8 zum Umschalten",
+    "cube_shortcut_hint": "Tastenkürzel: Drücken Sie {key} zum Umschalten",
     "cube_badge_on": "EIN ({count})",
     "cube_badge_off": "AUS",
     "cube_physics_scale": "Bewegung & Größe",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "Alle Würfel entfernen",
     "cube_desktop_enable": "Würfel-Overlay-Modus aktivieren",
     "cube_desktop_disable": "Würfel-Overlay-Modus deaktivieren",
-    "cube_desktop_shortcut_hint": "Tastenkürzel: Drücken Sie 9 zum Umschalten",
+    "cube_desktop_shortcut_hint": "Tastenkürzel: Drücken Sie {key} zum Umschalten",
     "cube_badge_desktop_on": "OVERLAY",
     "cube_sheen": "3D-Licht & Glanz",
     "cube_sheen_desc": "Direktes Licht und Glanzreflexionen auf den Würfelflächen"
@@ -154,7 +154,9 @@
       "toggle_pin": "Immer im Vordergrund umschalten",
       "mark_in": "Startmarke setzen",
       "mark_out": "Endmarke setzen",
-      "clear_marks": "Start-/Endmarken-Schleife löschen"
+      "clear_marks": "Start-/Endmarken-Schleife löschen",
+      "toggle_cube": "3D-Würfel umschalten",
+      "toggle_cube_overlay": "Würfel-Overlay-Modus umschalten"
     }
   },
   "file_picker": {

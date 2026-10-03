@@ -16,13 +16,15 @@ fn test_menu_hint() {
     assert_eq!(kb.menu_hint(&kb.open_help), "F1");
     assert_eq!(kb.menu_hint(&kb.open_settings), "F2");
     assert_eq!(kb.menu_hint(&kb.toggle_crt), "7");
+    assert_eq!(kb.menu_hint(&kb.toggle_cube), "8");
+    assert_eq!(kb.menu_hint(&kb.toggle_cube_overlay), "9");
 }
 
 #[test]
 fn test_help_shortcuts_generation() {
     let kb = KeybindSettings::default();
     let shortcuts = kb.help_shortcuts_with_descriptions(|key| key.to_string());
-    assert_eq!(shortcuts.len(), 26);
+    assert_eq!(shortcuts.len(), 28);
     assert_eq!(
         shortcuts[0],
         (

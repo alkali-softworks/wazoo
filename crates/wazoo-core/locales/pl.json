@@ -95,7 +95,7 @@
     "cube_desc": "Pływająca kostka 3D z odtwarzaniem wideo na wszystkich ściankach.",
     "cube_enable": "Włącz kostkę 3D",
     "cube_disable": "Wyłącz kostkę 3D",
-    "cube_shortcut_hint": "Skrót: naciśnij 8, aby przełączyć",
+    "cube_shortcut_hint": "Skrót: naciśnij {key}, aby przełączyć",
     "cube_badge_on": "WŁ ({count})",
     "cube_badge_off": "WYŁ",
     "cube_physics_scale": "Ruch i rozmiar",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "Usuń wszystkie kostki",
     "cube_desktop_enable": "Włącz tryb nakładki kostki",
     "cube_desktop_disable": "Wyłącz tryb nakładki kostki",
-    "cube_desktop_shortcut_hint": "Skrót: naciśnij 9, aby przełączyć",
+    "cube_desktop_shortcut_hint": "Skrót: naciśnij {key}, aby przełączyć",
     "cube_badge_desktop_on": "NAKŁADKA",
     "cube_sheen": "Światło i połysk 3D",
     "cube_sheen_desc": "Kierunkowe oświetlenie i odblaski na powierzchniach kostki"
@@ -154,7 +154,9 @@
       "toggle_pin": "Przełącz Zawsze na wierzchu",
       "mark_in": "Ustaw punkt początkowy (In)",
       "mark_out": "Ustaw punkt końcowy (Out)",
-      "clear_marks": "Wyczyść pętlę punktów In / Out"
+      "clear_marks": "Wyczyść pętlę punktów In / Out",
+      "toggle_cube": "Przełącz kostkę 3D",
+      "toggle_cube_overlay": "Przełącz tryb nakładki kostki"
     }
   },
   "file_picker": {

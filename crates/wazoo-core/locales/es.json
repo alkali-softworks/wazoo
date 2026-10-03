@@ -95,7 +95,7 @@
     "cube_desc": "Cubo 3D flotante con reproducción de video en vivo en todas las superficies.",
     "cube_enable": "Activar Cubo 3D",
     "cube_disable": "Desactivar Cubo 3D",
-    "cube_shortcut_hint": "Atajo: Presione 8 para alternar",
+    "cube_shortcut_hint": "Atajo: Presione {key} para alternar",
     "cube_badge_on": "ACT ({count})",
     "cube_badge_off": "DES",
     "cube_physics_scale": "Movimiento y Tamaño",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "Eliminar Todos los Cubos",
     "cube_desktop_enable": "Activar Modo Cubo Superpuesto",
     "cube_desktop_disable": "Desactivar Modo Cubo Superpuesto",
-    "cube_desktop_shortcut_hint": "Atajo: Presione 9 para alternar",
+    "cube_desktop_shortcut_hint": "Atajo: Presione {key} para alternar",
     "cube_badge_desktop_on": "SUPERPOSICIÓN",
     "cube_sheen": "Luz y Brillo 3D",
     "cube_sheen_desc": "Iluminación direccional y reflejos especulares en las superficies"
@@ -154,7 +154,9 @@
       "toggle_pin": "Alternar siempre visible",
       "mark_in": "Definir punto de entrada",
       "mark_out": "Definir punto de salida",
-      "clear_marks": "Borrar bucle de entrada / salida"
+      "clear_marks": "Borrar bucle de entrada / salida",
+      "toggle_cube": "Alternar Cubo 3D",
+      "toggle_cube_overlay": "Alternar Modo Cubo Superpuesto"
     }
   },
   "file_picker": {

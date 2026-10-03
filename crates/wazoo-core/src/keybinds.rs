@@ -50,6 +50,8 @@ pub enum KeyAction {
     OpenHelp,
     OpenSettings,
     ToggleCrt,
+    ToggleCube,
+    ToggleCubeOverlay,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -95,6 +97,8 @@ pub struct KeybindSettings {
     pub open_help: String,
     pub open_settings: String,
     pub toggle_crt: String,
+    pub toggle_cube: String,
+    pub toggle_cube_overlay: String,
 }
 
 impl Default for KeybindSettings {
@@ -140,6 +144,8 @@ impl Default for KeybindSettings {
             open_help: "F1".to_string(),
             open_settings: "F2".to_string(),
             toggle_crt: "7".to_string(),
+            toggle_cube: "8".to_string(),
+            toggle_cube_overlay: "9".to_string(),
         }
     }
 }
@@ -186,6 +192,8 @@ impl KeybindSettings {
         "open_help",
         "open_settings",
         "toggle_crt",
+        "toggle_cube",
+        "toggle_cube_overlay",
     ];
 
     /// Validates if a JSON value contains the complete dictionary of non-empty key bindings.
@@ -325,6 +333,12 @@ impl KeybindSettings {
         if self.toggle_crt.trim().is_empty() {
             self.toggle_crt = def.toggle_crt;
         }
+        if self.toggle_cube.trim().is_empty() {
+            self.toggle_cube = def.toggle_cube;
+        }
+        if self.toggle_cube_overlay.trim().is_empty() {
+            self.toggle_cube_overlay = def.toggle_cube_overlay;
+        }
     }
 
     /// Formats a keybinding into a clean uppercase hint suitable for menu labels.
@@ -453,6 +467,14 @@ impl KeybindSettings {
             ("P / Alt+P".to_string(), t("help.shortcuts.toggle_pin")),
             (close_display, t("help.shortcuts.close_app")),
             ("Alt + Drag".to_string(), t("help.shortcuts.move_window")),
+            (
+                self.toggle_cube.clone(),
+                t("help.shortcuts.toggle_cube"),
+            ),
+            (
+                self.toggle_cube_overlay.clone(),
+                t("help.shortcuts.toggle_cube_overlay"),
+            ),
         ]
     }
 
@@ -601,6 +623,14 @@ impl KeybindSettings {
                     HelpShortcut {
                         key: KeyDisplay::Single(self.toggle_flip.to_uppercase()),
                         description: t("help.shortcuts.toggle_flip"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.toggle_cube.to_uppercase()),
+                        description: t("help.shortcuts.toggle_cube"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.toggle_cube_overlay.to_uppercase()),
+                        description: t("help.shortcuts.toggle_cube_overlay"),
                     },
                 ],
             },

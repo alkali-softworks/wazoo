@@ -783,3 +783,33 @@ fn test_cube_sheen_toggle_and_persistence() {
     let reloaded2 = app.config_mgr.load_settings();
     assert!(!reloaded2.cube_sheen);
 }
+
+#[test]
+fn test_custom_cube_keybinds() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+    // Remap toggle_cube to "F8" and toggle_cube_overlay to "F9"
+    app.settings.keybinds.toggle_cube = "F8".to_string();
+    app.settings.keybinds.toggle_cube_overlay = "F9".to_string();
+
+    // Key "8" should no longer trigger Mode 8
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Character("8".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(!app.cube.is_present());
+
+    // Key "F8" should now trigger Mode 8
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Named(iced::keyboard::key::Named::F8),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.cube.is_present());
+
+    // Key "F9" should now trigger Mode 9
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Named(iced::keyboard::key::Named::F9),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.cube.desktop_overlay);
+}
+

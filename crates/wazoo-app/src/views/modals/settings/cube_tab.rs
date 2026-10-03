@@ -36,9 +36,12 @@ pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                     } else {
                         iced::Color::WHITE
                     }),
-                    text(app.t("settings.cube_shortcut_hint"))
-                        .size(11)
-                        .color(theme::COLOR_TEXT_MUTED),
+                    text(app.t_with(
+                        "settings.cube_shortcut_hint",
+                        &[("key", &app.settings.keybinds.menu_hint(&app.settings.keybinds.toggle_cube))],
+                    ))
+                    .size(11)
+                    .color(theme::COLOR_TEXT_MUTED),
                 ]
                 .spacing(2),
                 Space::new().width(Length::Fill),
@@ -112,9 +115,12 @@ pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                     } else {
                         iced::Color::WHITE
                     }),
-                    text(app.t("settings.cube_desktop_shortcut_hint"))
-                        .size(11)
-                        .color(theme::COLOR_TEXT_MUTED),
+                    text(app.t_with(
+                        "settings.cube_desktop_shortcut_hint",
+                        &[("key", &app.settings.keybinds.menu_hint(&app.settings.keybinds.toggle_cube_overlay))],
+                    ))
+                    .size(11)
+                    .color(theme::COLOR_TEXT_MUTED),
                 ]
                 .spacing(2),
                 Space::new().width(Length::Fill),

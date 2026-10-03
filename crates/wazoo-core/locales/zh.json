@@ -95,7 +95,7 @@
     "cube_desc": "六个表面独立实时播放视频的浮动 3D 立方体。",
     "cube_enable": "启用 3D 立方体",
     "cube_disable": "禁用 3D 立方体",
-    "cube_shortcut_hint": "快捷键：按 8 切换",
+    "cube_shortcut_hint": "快捷键：按 {key} 切换",
     "cube_badge_on": "开 ({count})",
     "cube_badge_off": "关",
     "cube_physics_scale": "移动与大小",
@@ -107,7 +107,7 @@
     "cube_dismiss_all": "移除所有立方体",
     "cube_desktop_enable": "启用立方体覆盖模式",
     "cube_desktop_disable": "禁用立方体覆盖模式",
-    "cube_desktop_shortcut_hint": "快捷键：按 9 切换",
+    "cube_desktop_shortcut_hint": "快捷键：按 {key} 切换",
     "cube_badge_desktop_on": "覆盖模式",
     "cube_sheen": "3D 光照与光泽",
     "cube_sheen_desc": "立方体表面的定向光照与高光反射"
@@ -154,7 +154,9 @@
       "toggle_pin": "切换窗口置顶",
       "mark_in": "设置入点",
       "mark_out": "设置出点",
-      "clear_marks": "清除出入点循环"
+      "clear_marks": "清除出入点循环",
+      "toggle_cube": "切换 3D 立方体",
+      "toggle_cube_overlay": "切换立方体覆盖模式"
     }
   },
   "file_picker": {
