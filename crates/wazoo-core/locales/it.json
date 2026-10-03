@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "Scorciatoia: premi {key} per attivare/disattivare",
     "cube_badge_desktop_on": "OVERLAY",
     "cube_sheen": "Luce e riflesso 3D",
-    "cube_sheen_desc": "Illuminazione direzionale e riflessi speculari sulle superfici"
+    "cube_sheen_desc": "Illuminazione direzionale e riflessi speculari sulle superfici",
+    "wavy_filter": "Filtro ondulato",
+    "wavy_filter_desc": "Effetto shader di spostamento delle onde fluide e ondulate",
+    "fog_filter": "Filtro nebbia",
+    "fog_filter_desc": "Simulazione atmosferica di nebbia volumetrica e nuvole",
+    "master_filters": "Filtri shader",
+    "master_filters_desc": "Abilita o disabilita tutti gli shader di post-elaborazione visiva attivi"
   },
   "search": {
     "folder": "Cartella:",
@@ -160,7 +166,8 @@
       "clear_marks": "Cancella loop inizio / fine",
       "toggle_cube": "Attiva/disattiva Cubo 3D",
       "toggle_cube_overlay": "Attiva/disattiva Modalità Sovrapposizione Cubo",
-      "toggle_fullscreen": "Attiva/disattiva schermo intero"
+      "toggle_fullscreen": "Attiva/disattiva schermo intero",
+      "toggle_filters": "Attiva/disattiva filtri shader"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "Modalità Sovrapposizione Cubo disattivata",
     "cube_playing": "Cubo 3D: {title}",
     "fullscreen_enabled": "Schermo intero attivato (Premi [{key}] o Esc per uscire)",
-    "fullscreen_disabled": "Schermo intero disattivato"
+    "fullscreen_disabled": "Schermo intero disattivato",
+    "filters_enabled": "Filtri shader attivati (Premi [{key}] per alternare)",
+    "filters_disabled": "Filtri shader disattivati"
   }
 }

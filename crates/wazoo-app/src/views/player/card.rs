@@ -68,7 +68,10 @@ impl WazooApp {
                 stack_children.push(self.view_loading_spinner());
             }
         } else {
-            let video_widget = p.view_full(opacity, is_scroll_mode, self.settings.crt_enabled);
+            let crt = self.settings.filters_enabled && self.settings.filter_crt;
+            let wavy = self.settings.filters_enabled && self.settings.filter_wavy;
+            let fog = self.settings.filters_enabled && self.settings.filter_fog;
+            let video_widget = p.view_full(opacity, is_scroll_mode, crt, wavy, fog);
             stack_children.push(video_widget);
         }
 

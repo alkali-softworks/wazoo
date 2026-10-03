@@ -15,7 +15,7 @@ fn test_menu_hint() {
     assert_eq!(kb.menu_hint(&kb.toggle_pin), "P");
     assert_eq!(kb.menu_hint(&kb.open_help), "F1");
     assert_eq!(kb.menu_hint(&kb.open_settings), "F2");
-    assert_eq!(kb.menu_hint(&kb.toggle_crt), "7");
+    assert_eq!(kb.menu_hint(&kb.toggle_filters), "7");
     assert_eq!(kb.menu_hint(&kb.toggle_cube), "8");
     assert_eq!(kb.menu_hint(&kb.toggle_cube_overlay), "9");
     assert_eq!(kb.menu_hint(&kb.toggle_fullscreen), "F11");
@@ -25,7 +25,7 @@ fn test_menu_hint() {
 fn test_help_shortcuts_generation() {
     let kb = KeybindSettings::default();
     let shortcuts = kb.help_shortcuts_with_descriptions(|key| key.to_string());
-    assert_eq!(shortcuts.len(), 29);
+    assert_eq!(shortcuts.len(), 30);
     assert_eq!(
         shortcuts[0],
         (
@@ -124,14 +124,14 @@ fn test_is_complete_json_and_reconcile_with_defaults() {
         add_player: "  ".to_string(),
         open_help: "".to_string(),
         open_settings: "".to_string(),
-        toggle_crt: "  ".to_string(),
+        toggle_filters: "  ".to_string(),
         ..Default::default()
     };
     kb.reconcile_with_defaults();
     assert_eq!(kb.add_player, "n");
     assert_eq!(kb.open_help, "F1");
     assert_eq!(kb.open_settings, "F2");
-    assert_eq!(kb.toggle_crt, "7");
+    assert_eq!(kb.toggle_filters, "7");
 
     // Complete json with non-empty values
     let complete_json = serde_json::to_value(WazooSettings::default()).unwrap();

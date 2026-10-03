@@ -47,6 +47,8 @@ pub struct VideoHandle {
     saturation: f64,
     speed: f64,
     pub crt_enabled: bool,
+    pub wavy_enabled: bool,
+    pub fog_enabled: bool,
 }
 
 unsafe impl Send for VideoHandle {}
@@ -379,6 +381,8 @@ impl VideoHandle {
                 saturation: config.saturation,
                 speed: config.playback_speed,
                 crt_enabled: config.crt_enabled,
+                wavy_enabled: config.wavy_enabled,
+                fog_enabled: config.fog_enabled,
             };
 
             handle.set_volume(1.0);
@@ -666,15 +670,23 @@ impl VideoHandle {
         opacity: f32,
         fit_cover: bool,
     ) -> iced::Element<'a, Message> {
-        self.view_full(opacity, fit_cover, self.crt_enabled)
+        self.view_full(
+            opacity,
+            fit_cover,
+            self.crt_enabled,
+            self.wavy_enabled,
+            self.fog_enabled,
+        )
     }
 
-    /// Render video frame with custom fit and explicit CRT filter setting
+    /// Render video frame with custom fit and explicit GPU shader filter settings
     pub fn view_full<'a, Message: 'a>(
         &'a self,
         opacity: f32,
         fit_cover: bool,
         crt_enabled: bool,
+        wavy_enabled: bool,
+        fog_enabled: bool,
     ) -> iced::Element<'a, Message> {
         let program = crate::pipeline::VideoProgram::new_full(
             self.id as u64,
@@ -683,6 +695,8 @@ impl VideoHandle {
             opacity,
             fit_cover,
             crt_enabled,
+            wavy_enabled,
+            fog_enabled,
         );
         iced::Element::new(crate::pipeline::video_shader(program))
     }
@@ -693,6 +707,28 @@ impl VideoHandle {
 
     pub fn crt_enabled(&self) -> bool {
         self.crt_enabled
+    }
+
+    pub fn set_wavy_enabled(&mut self, enabled: bool) {
+        self.wavy_enabled = enabled;
+    }
+
+    pub fn wavy_enabled(&self) -> bool {
+        self.wavy_enabled
+    }
+
+    pub fn set_fog_enabled(&mut self, enabled: bool) {
+        self.fog_enabled = enabled;
+    }
+
+    pub fn fog_enabled(&self) -> bool {
+        self.fog_enabled
+    }
+
+    pub fn set_filters(&mut self, crt: bool, wavy: bool, fog: bool) {
+        self.crt_enabled = crt;
+        self.wavy_enabled = wavy;
+        self.fog_enabled = fog;
     }
 
     pub fn set_volume(&mut self, volume: f64) {

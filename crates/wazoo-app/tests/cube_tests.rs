@@ -523,14 +523,15 @@ fn test_mode_9_mixes_fine_with_modes_6_and_7() {
     assert!(app.cube.desktop_overlay);
     assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Normal);
 
-    // Mode 7 (CRT Filter) toggles without exiting Mode 9
-    let _ = app.update(wazoo_app::message::Message::ToggleCrtFilter);
+    // Mode 7 (Shader Filters) toggles without exiting Mode 9
+    let _ = app.update(wazoo_app::message::Message::ToggleFilters);
     assert!(app.cube.desktop_overlay, "Mode 7 must not exit Mode 9");
+    assert!(app.settings.filters_enabled);
     assert!(app.settings.crt_enabled);
 
-    let _ = app.update(wazoo_app::message::Message::ToggleCrtFilter);
+    let _ = app.update(wazoo_app::message::Message::ToggleFilters);
     assert!(app.cube.desktop_overlay);
-    assert!(!app.settings.crt_enabled);
+    assert!(!app.settings.filters_enabled);
 }
 
 #[test]

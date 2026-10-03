@@ -115,7 +115,7 @@ impl WazooApp {
                 KeyAction::ClearMarkOut => return self.update(Message::ClearMarkOutFocused),
                 KeyAction::OpenHelp => return self.update(Message::OpenHelpModal),
                 KeyAction::OpenSettings => return self.update(Message::OpenSettingsModal),
-                KeyAction::ToggleCrt => return self.update(Message::ToggleCrtFilter),
+                KeyAction::ToggleFilters => return self.update(Message::ToggleFilters),
                 KeyAction::ToggleCube => return self.update(Message::ToggleCubeScreensaver),
                 KeyAction::ToggleCubeOverlay => return self.update(Message::ToggleDesktopCubeScreensaver),
                 KeyAction::ToggleFullscreen => return self.update(Message::ToggleFullscreen),

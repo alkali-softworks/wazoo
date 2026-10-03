@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "ショートカット: {key}キーで切り替え",
     "cube_badge_desktop_on": "オーバーレイ",
     "cube_sheen": "3Dライティングと光沢",
-    "cube_sheen_desc": "キューブ表面のディレクショナルライトと鏡面反射"
+    "cube_sheen_desc": "キューブ表面のディレクショナルライトと鏡面反射",
+    "wavy_filter": "波状フィルター",
+    "wavy_filter_desc": "流体的な波状変位シェーダー効果",
+    "fog_filter": "フォグフィルター",
+    "fog_filter_desc": "大気中を漂う立体的な霧と雲のシミュレーション",
+    "master_filters": "シェーダーフィルター",
+    "master_filters_desc": "アクティブなすべての視覚的ポストプロセスシェーダーを有効または無効にします"
   },
   "search": {
     "folder": "フォルダー:",
@@ -160,7 +166,8 @@
       "clear_marks": "イン/アウト点のループを解除",
       "toggle_cube": "3Dキューブを切り替え",
       "toggle_cube_overlay": "キューブオーバーレイモードを切り替え",
-      "toggle_fullscreen": "全画面表示の切り替え"
+      "toggle_fullscreen": "全画面表示の切り替え",
+      "toggle_filters": "シェーダーフィルター切り替え"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "キューブオーバーレイモードが無効になりました",
     "cube_playing": "3Dキューブ: {title}",
     "fullscreen_enabled": "全画面表示が有効化されました ([{key}]またはEscで終了)",
-    "fullscreen_disabled": "全画面表示が無効化されました"
+    "fullscreen_disabled": "全画面表示が無効化されました",
+    "filters_enabled": "シェーダーフィルターが有効化されました ([{key}]で切り替え)",
+    "filters_disabled": "シェーダーフィルターが無効化されました"
   }
 }

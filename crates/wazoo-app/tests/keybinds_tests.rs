@@ -116,7 +116,7 @@ fn test_find_key_action_defaults() {
     );
     assert_eq!(
         find_key_action(&kb, &Key::Character("7".into()), false),
-        Some(KeyAction::ToggleCrt)
+        Some(KeyAction::ToggleFilters)
     );
     assert_eq!(
         find_key_action(&kb, &Key::Character("8".into()), false),

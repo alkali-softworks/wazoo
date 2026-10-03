@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "Raccourci : appuyez sur {key} pour basculer",
     "cube_badge_desktop_on": "SUPERPOSITION",
     "cube_sheen": "Lumière et reflet 3D",
-    "cube_sheen_desc": "Éclairage directionnel et reflets spéculaires sur les surfaces"
+    "cube_sheen_desc": "Éclairage directionnel et reflets spéculaires sur les surfaces",
+    "wavy_filter": "Filtre ondulé",
+    "wavy_filter_desc": "Effet de shader de déplacement d'ondes fluides et ondulantes",
+    "fog_filter": "Filtre de brouillard",
+    "fog_filter_desc": "Simulation atmosphérique de brume volumétrique et de nuages",
+    "master_filters": "Filtres de shaders",
+    "master_filters_desc": "Activer ou désactiver tous les shaders de post-traitement visuel actifs"
   },
   "search": {
     "folder": "Dossier :",
@@ -160,7 +166,8 @@
       "clear_marks": "Effacer la boucle d'entrée / sortie",
       "toggle_cube": "Basculer le Cube 3D",
       "toggle_cube_overlay": "Basculer le mode superposition de cube",
-      "toggle_fullscreen": "Activer/désactiver le plein écran"
+      "toggle_fullscreen": "Activer/désactiver le plein écran",
+      "toggle_filters": "Basculer les filtres de shaders"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "Mode superposition de cube désactivé",
     "cube_playing": "Cube 3D : {title}",
     "fullscreen_enabled": "Plein écran activé (Appuyez sur [{key}] ou Échap pour quitter)",
-    "fullscreen_disabled": "Plein écran désactivé"
+    "fullscreen_disabled": "Plein écran désactivé",
+    "filters_enabled": "Filtres de shaders activés (Appuyez sur [{key}] pour basculer)",
+    "filters_disabled": "Filtres de shaders désactivés"
   }
 }

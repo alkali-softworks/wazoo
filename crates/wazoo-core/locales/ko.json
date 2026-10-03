@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "단축키: {key}를 눌러 전환",
     "cube_badge_desktop_on": "오버레이",
     "cube_sheen": "3D 조명 및 광택",
-    "cube_sheen_desc": "큐브 표면의 방향성 조명 및 반사 광택"
+    "cube_sheen_desc": "큐브 표면의 방향성 조명 및 반사 광택",
+    "wavy_filter": "웨이브 필터",
+    "wavy_filter_desc": "유체 물결 변위 셰이더 효과",
+    "fog_filter": "안개 필터",
+    "fog_filter_desc": "대기 롤링 볼류메트릭 안개 및 구름 시뮬레이션",
+    "master_filters": "셰이더 필터",
+    "master_filters_desc": "모든 활성 시각적 후처리 셰이더를 활성화 또는 비활성화합니다"
   },
   "search": {
     "folder": "폴더:",
@@ -160,7 +166,8 @@
       "clear_marks": "구간 반복 해제",
       "toggle_cube": "3D 큐브 전환",
       "toggle_cube_overlay": "큐브 오버레이 모드 전환",
-      "toggle_fullscreen": "전체 화면 전환"
+      "toggle_fullscreen": "전체 화면 전환",
+      "toggle_filters": "셰이더 필터 전환"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "큐브 오버레이 모드 비활성화됨",
     "cube_playing": "3D 큐브: {title}",
     "fullscreen_enabled": "전체 화면 활성화됨 (종료하려면 [{key}] 또는 Esc 누름)",
-    "fullscreen_disabled": "전체 화면 비활성화됨"
+    "fullscreen_disabled": "전체 화면 비활성화됨",
+    "filters_enabled": "셰이더 필터 활성화됨 ([{key}]를 눌러 전환)",
+    "filters_disabled": "셰이더 필터 비활성화됨"
   }
 }

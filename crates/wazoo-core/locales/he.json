@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "קיצור דרך: הקש {key} להפעלה/השבתה",
     "cube_badge_desktop_on": "שכבה",
     "cube_sheen": "תאורה וברק תלת-ממדי",
-    "cube_sheen_desc": "תאורה כיוונית והשתקפויות על משטחי הקובייה"
+    "cube_sheen_desc": "תאורה כיוונית והשתקפויות על משטחי הקובייה",
+    "wavy_filter": "מסנן גלי",
+    "wavy_filter_desc": "אפקט הצללה של תזוזת גלים נוזליים",
+    "fog_filter": "מסנן ערפל",
+    "fog_filter_desc": "הדמיית ערפל נפחי ועננים מתגלגלים אטמוספריים",
+    "master_filters": "מסנני הצללה",
+    "master_filters_desc": "הפעל או השבת את כל הצללות הפוסט-עיבוד הוויזואליות הפעילות"
   },
   "search": {
     "folder": "תיקייה:",
@@ -160,7 +166,8 @@
       "clear_marks": "נקה לולאת התחלה / סיום",
       "toggle_cube": "הפעל/השבת קובייה תלת-ממדית",
       "toggle_cube_overlay": "הפעל/השבת מצב שכבת קובייה",
-      "toggle_fullscreen": "מעבר למסך מלא"
+      "toggle_fullscreen": "מעבר למסך מלא",
+      "toggle_filters": "החלף מסנני הצללה"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "מצב שכבת קובייה הושבת",
     "cube_playing": "קובייה תלת-ממדית: {title}",
     "fullscreen_enabled": "מסך מלא הופעל (לחץ על [{key}] או Esc כדי לצאת)",
-    "fullscreen_disabled": "מסך מלא הושבת"
+    "fullscreen_disabled": "מסך מלא הושבת",
+    "filters_enabled": "מסנני הצללה הופעלו (לחץ על [{key}] כדי להחליף)",
+    "filters_disabled": "מסנני הצללה הושבתו"
   }
 }

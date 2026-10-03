@@ -29,8 +29,9 @@ struct Uniforms {
     resolution: [f32; 2],
     video_res: [f32; 2],
     time: f32,
+    wavy_enabled: f32,
+    fog_enabled: f32,
     _pad: f32,
-    _pad2: [f32; 2],
 }
 
 pub struct FrameData {
@@ -85,8 +86,9 @@ struct Uniforms {
     resolution: vec2<f32>,
     video_res: vec2<f32>,
     time: f32,
+    wavy_enabled: f32,
+    fog_enabled: f32,
     _pad: f32,
-    _pad2: vec2<f32>,
 }
 
 @group(0) @binding(0)
@@ -147,8 +149,9 @@ struct Uniforms {
     resolution: vec2<f32>,
     video_res: vec2<f32>,
     time: f32,
+    wavy_enabled: f32,
+    fog_enabled: f32,
     _pad: f32,
-    _pad2: vec2<f32>,
 }
 
 @group(0) @binding(0)
@@ -197,76 +200,171 @@ fn hash(p: vec2<f32>) -> f32 {
     return fract(sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.5453123);
 }
 
+fn hash_fog(p_in: vec2<f32>) -> f32 {
+    var p = fract(p_in * vec2<f32>(5.3983, 5.4427));
+    p += vec2<f32>(dot(p.yx, p + vec2<f32>(19.19, 19.19)));
+    return fract(p.x * p.y);
+}
+
+fn noise2d_fog(p_in: vec2<f32>) -> f32 {
+    var p = p_in + vec2<f32>(8192.0, 8192.0);
+    var i = floor(p);
+    var f = fract(p);
+    var u = f * f * (3.0 - 2.0 * f);
+
+    var a = hash_fog(i);
+    var b = hash_fog(i + vec2<f32>(1.0, 0.0));
+    var c = hash_fog(i + vec2<f32>(0.0, 1.0));
+    var d = hash_fog(i + vec2<f32>(1.0, 1.0));
+
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+fn fbm_fog(uv: vec2<f32>, time: f32) -> f32 {
+    var value = 0.0;
+    var amplitude = 0.5;
+    var frequency = 1.0;
+    var drift1 = vec2<f32>(time * 0.04, time * 0.02);
+    var drift2 = vec2<f32>(-time * 0.03, time * 0.05);
+    var drift3 = vec2<f32>(time * 0.06, -time * 0.04);
+
+    value += amplitude * noise2d_fog(uv * frequency + drift1);
+    frequency *= 2.0;
+    amplitude *= 0.5;
+    value += amplitude * noise2d_fog(uv * frequency + drift2);
+    frequency *= 2.0;
+    amplitude *= 0.5;
+    value += amplitude * noise2d_fog(uv * frequency + drift3);
+    return value;
+}
+
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    // Classic curved CRT bulb tube (curvature = 3.2 for a more pronounced rounded picture)
-    let curved_uv = curve(in.uv, 3.2);
+    var uv = in.uv;
 
-    if curved_uv.x < 0.0 || curved_uv.x > 1.0 || curved_uv.y < 0.0 || curved_uv.y > 1.0 {
-        return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
+    // 1. Wavy fluid displacement
+    if (uniforms.wavy_enabled > 0.5) {
+        let speed = 0.7;
+        let freq = 16.0;
+        let amp = 0.003;
+        var wave_x = sin(uv.y * freq + uniforms.time * speed) * amp;
+        var wave_y = cos(uv.x * freq + uniforms.time * speed * 0.8) * amp;
+        wave_x += sin(uv.x * (freq * 0.5) - uniforms.time * (speed * 0.6)) * (amp * 0.4);
+        wave_y += cos(uv.y * (freq * 0.5) + uniforms.time * (speed * 0.7)) * (amp * 0.4);
+        uv = clamp(uv + vec2<f32>(wave_x, wave_y), vec2<f32>(0.0), vec2<f32>(1.0));
     }
 
-    // Smooth rounded CRT glass envelope corners
-    let corner_box = abs(curved_uv - vec2<f32>(0.5, 0.5)) * 2.0;
-    let corner_dist = pow(corner_box.x, 10.0) + pow(corner_box.y, 10.0);
-    if corner_dist > 1.05 {
-        return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
-    }
+    var base_color: vec4<f32>;
+    var rgb: vec3<f32>;
 
-    // Signal glitches / VHS tracking distortion
-    let time_step = floor(uniforms.time * 6.0);
-    let glitch_chance = hash(vec2<f32>(time_step, 17.0));
+    // 2. CRT filter (curvature, tracking distortion, chromatic aberration, scanlines)
+    if (uniforms.crt_enabled > 0.5) {
+        let curved_uv = curve(uv, 3.2);
 
-    var glitch_offset = 0.0;
-    var shift = 0.0018;
-
-    if glitch_chance > 0.84 {
-        let band_start = hash(vec2<f32>(time_step, 42.0));
-        let band_end = band_start + 0.02 + hash(vec2<f32>(time_step, 99.0)) * 0.08;
-
-        if curved_uv.y >= band_start && curved_uv.y <= band_end {
-            glitch_offset = (hash(vec2<f32>(time_step, floor(curved_uv.y * 50.0))) - 0.5) * 0.004;
-            shift += 0.0045 * hash(vec2<f32>(time_step, 88.0));
+        if curved_uv.x < 0.0 || curved_uv.x > 1.0 || curved_uv.y < 0.0 || curved_uv.y > 1.0 {
+            return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
         }
 
-        let roll = fract(uniforms.time * 0.2);
-        let roll_dist = abs(curved_uv.y - roll);
-        if roll_dist < 0.04 {
-            glitch_offset += sin((curved_uv.y - roll) * 50.0) * 0.0015;
-            shift += 0.0025;
+        // Smooth rounded CRT glass envelope corners
+        let corner_box = abs(curved_uv - vec2<f32>(0.5, 0.5)) * 2.0;
+        let corner_dist = pow(corner_box.x, 10.0) + pow(corner_box.y, 10.0);
+        if corner_dist > 1.05 {
+            return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
         }
+
+        // Signal glitches / VHS tracking distortion
+        let time_step = floor(uniforms.time * 6.0);
+        let glitch_chance = hash(vec2<f32>(time_step, 17.0));
+
+        var glitch_offset = 0.0;
+        var shift = 0.0018;
+
+        if glitch_chance > 0.84 {
+            let band_start = hash(vec2<f32>(time_step, 42.0));
+            let band_end = band_start + 0.02 + hash(vec2<f32>(time_step, 99.0)) * 0.08;
+
+            if curved_uv.y >= band_start && curved_uv.y <= band_end {
+                glitch_offset = (hash(vec2<f32>(time_step, floor(curved_uv.y * 50.0))) - 0.5) * 0.004;
+                shift += 0.0045 * hash(vec2<f32>(time_step, 88.0));
+            }
+
+            let roll = fract(uniforms.time * 0.2);
+            let roll_dist = abs(curved_uv.y - roll);
+            if roll_dist < 0.04 {
+                glitch_offset += sin((curved_uv.y - roll) * 50.0) * 0.0015;
+                shift += 0.0025;
+            }
+        }
+
+        let warped_uv = clamp(vec2<f32>(curved_uv.x + glitch_offset, curved_uv.y), vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0));
+
+        // Radial chromatic aberration
+        let center_dir = warped_uv - vec2<f32>(0.5, 0.5);
+        let dist_sq = dot(center_dir, center_dir);
+        let ca_radial = center_dir * (dist_sq * 0.045);
+        let ca_offset = ca_radial + vec2<f32>(shift, 0.0);
+
+        let uv_r = clamp(warped_uv + ca_offset, vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0));
+        let uv_g = warped_uv;
+        let uv_b = clamp(warped_uv - ca_offset, vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0));
+
+        let r = textureSampleLevel(tex, s, uv_r, 0.0).r;
+        let g = textureSampleLevel(tex, s, uv_g, 0.0).g;
+        let b = textureSampleLevel(tex, s, uv_b, 0.0).b;
+        let a = textureSampleLevel(tex, s, warped_uv, 0.0).a;
+        base_color = vec4<f32>(r, g, b, a);
+
+        // Active rolling cathode scanlines
+        let scanline = sin(curved_uv.y * 600.0 + uniforms.time * 5.0) * 0.5 + 0.5;
+        rgb = base_color.rgb - scanline * 0.20;
+
+        // Animated RF static noise
+        let noise = (hash(curved_uv + vec2<f32>(uniforms.time, uniforms.time)) - 0.5) * 0.016;
+        rgb += vec3<f32>(noise, noise, noise);
+
+        // CRT bezel falloff vignette
+        let vignette = curved_uv.x * curved_uv.y * (1.0 - curved_uv.x) * (1.0 - curved_uv.y);
+        let vig_factor = clamp(pow(16.0 * vignette, 0.28), 0.0, 1.0);
+        rgb *= vig_factor;
+    } else {
+        base_color = textureSampleLevel(tex, s, uv, 0.0);
+        rgb = base_color.rgb;
     }
 
-    let warped_uv = clamp(vec2<f32>(curved_uv.x + glitch_offset, curved_uv.y), vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0));
+    // 3. Volumetric Fog filter
+    if (uniforms.fog_enabled > 0.5) {
+        let fog_uv = in.uv * (uniforms.resolution / 700.0);
+        let shadow_color = vec3<f32>(0.24, 0.28, 0.35);
+        let light_color = vec3<f32>(0.70, 0.74, 0.80);
+        let fog_intensity = 0.55;
 
-    // Funky radial chromatic aberration: magnetic yoke beam divergence flaring towards the curved edges
-    let center_dir = warped_uv - vec2<f32>(0.5, 0.5);
-    let dist_sq = dot(center_dir, center_dir);
-    let ca_radial = center_dir * (dist_sq * 0.045);
-    let ca_offset = ca_radial + vec2<f32>(shift, 0.0);
+        var q = vec2<f32>(
+            fbm_fog(fog_uv * 1.8 + vec2<f32>(uniforms.time * 0.08, uniforms.time * 0.05), uniforms.time),
+            fbm_fog(fog_uv * 1.8 + vec2<f32>(-uniforms.time * 0.06, uniforms.time * 0.10), uniforms.time)
+        );
 
-    let uv_r = clamp(warped_uv + ca_offset, vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0));
-    let uv_g = warped_uv;
-    let uv_b = clamp(warped_uv - ca_offset, vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0));
+        var r = vec2<f32>(
+            fbm_fog(fog_uv * 2.5 + q * 1.8 + vec2<f32>(uniforms.time * 0.07, -uniforms.time * 0.05), uniforms.time),
+            fbm_fog(fog_uv * 2.5 + q * 2.2 + vec2<f32>(-uniforms.time * 0.08, uniforms.time * 0.09), uniforms.time)
+        );
 
-    let r = textureSampleLevel(tex, s, uv_r, 0.0).r;
-    let g = textureSampleLevel(tex, s, uv_g, 0.0).g;
-    let b = textureSampleLevel(tex, s, uv_b, 0.0).b;
-    let a = textureSampleLevel(tex, s, warped_uv, 0.0).a;
-    var base_color = vec4<f32>(r, g, b, a);
+        var f = fbm_fog(fog_uv * 2.0 + r * 2.2, uniforms.time);
+        var ridged_fog = 1.0 - abs(f - 0.5) * 2.0;
+        var combined = mix(f, ridged_fog, 0.30);
+        var density = smoothstep(0.30, 0.70, combined);
 
-    // Active rolling cathode scanlines
-    let scanline = sin(curved_uv.y * 600.0 + uniforms.time * 5.0) * 0.5 + 0.5;
-    var rgb = base_color.rgb - scanline * 0.20;
+        var eps = 0.018;
+        var f_offset = fbm_fog((fog_uv + vec2<f32>(eps, eps)) * 2.0 + r * 2.2, uniforms.time);
+        var diff = clamp(f - f_offset, 0.0, 1.0);
 
-    // Animated RF static noise
-    let noise = (hash(curved_uv + vec2<f32>(uniforms.time, uniforms.time)) - 0.5) * 0.016;
-    rgb += vec3<f32>(noise, noise, noise);
+        var fog_color = mix(shadow_color, light_color, density);
+        var edge_highlight = smoothstep(0.1, 0.5, density) * (1.0 - smoothstep(0.4, 0.8, density));
+        edge_highlight *= diff * 5.0;
+        fog_color += vec3<f32>(0.35, 0.42, 0.52) * edge_highlight;
 
-    // CRT bezel falloff vignette
-    let vignette = curved_uv.x * curved_uv.y * (1.0 - curved_uv.x) * (1.0 - curved_uv.y);
-    let vig_factor = clamp(pow(16.0 * vignette, 0.28), 0.0, 1.0);
-    rgb *= vig_factor;
+        var final_fog = density * fog_intensity;
+        rgb = mix(rgb, fog_color, final_fog);
+    }
 
     return vec4<f32>(clamp(rgb, vec3<f32>(0.0), vec3<f32>(1.0)), base_color.a * uniforms.opacity);
 }
@@ -494,6 +592,8 @@ pub struct VideoPrimitive {
     opacity: f32,
     fit_cover: bool,
     crt_enabled: bool,
+    wavy_enabled: bool,
+    fog_enabled: bool,
 }
 
 impl Primitive for VideoPrimitive {
@@ -592,15 +692,16 @@ impl Primitive for VideoPrimitive {
             resolution: [bw.max(1.0), bh.max(1.0)],
             video_res: [vw.max(1.0), vh.max(1.0)],
             time: time_secs,
+            wavy_enabled: if self.wavy_enabled { 1.0 } else { 0.0 },
+            fog_enabled: if self.fog_enabled { 1.0 } else { 0.0 },
             _pad: 0.0,
-            _pad2: [0.0, 0.0],
         };
         queue.write_buffer(&entry.uniform_buffer, 0, bytemuck::bytes_of(&uniforms));
     }
 
     fn draw(&self, pipeline: &Self::Pipeline, render_pass: &mut wgpu::RenderPass<'_>) -> bool {
         if let Some(entry) = pipeline.videos.get(&self.player_id) {
-            let active_pipeline = if self.crt_enabled {
+            let active_pipeline = if self.crt_enabled || self.wavy_enabled || self.fog_enabled {
                 &pipeline.crt_pipeline
             } else {
                 &pipeline.default_pipeline
@@ -621,6 +722,8 @@ pub struct VideoProgram {
     opacity: f32,
     fit_cover: bool,
     crt_enabled: bool,
+    wavy_enabled: bool,
+    fog_enabled: bool,
 }
 
 impl VideoProgram {
@@ -640,7 +743,7 @@ impl VideoProgram {
         opacity: f32,
         fit_cover: bool,
     ) -> Self {
-        Self::new_full(player_id, frame, alive, opacity, fit_cover, false)
+        Self::new_full(player_id, frame, alive, opacity, fit_cover, false, false, false)
     }
 
     pub fn new_full(
@@ -650,6 +753,8 @@ impl VideoProgram {
         opacity: f32,
         fit_cover: bool,
         crt_enabled: bool,
+        wavy_enabled: bool,
+        fog_enabled: bool,
     ) -> Self {
         Self {
             player_id,
@@ -658,6 +763,8 @@ impl VideoProgram {
             opacity,
             fit_cover,
             crt_enabled,
+            wavy_enabled,
+            fog_enabled,
         }
     }
 }
@@ -679,6 +786,8 @@ impl<Message> Program<Message> for VideoProgram {
             opacity: self.opacity,
             fit_cover: self.fit_cover,
             crt_enabled: self.crt_enabled,
+            wavy_enabled: self.wavy_enabled,
+            fog_enabled: self.fog_enabled,
         }
     }
 }

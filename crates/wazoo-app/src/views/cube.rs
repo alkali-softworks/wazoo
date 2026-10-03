@@ -76,7 +76,7 @@ impl WazooApp {
                 player_id,
                 frame,
                 alive,
-                crt_enabled: self.settings.crt_enabled,
+                crt_enabled: self.settings.filters_enabled && self.settings.filter_crt,
                 sheen_enabled: self.settings.cube_sheen,
                 opacity: 1.0,
             });

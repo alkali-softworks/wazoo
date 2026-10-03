@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "शॉर्टकट: टॉगल करने के लिए {key} दबाएं",
     "cube_badge_desktop_on": "ओवरले",
     "cube_sheen": "3D लाइट और चमक",
-    "cube_sheen_desc": "क्यूब की सतहों पर दिशात्मक प्रकाश और प्रतिबिंब"
+    "cube_sheen_desc": "क्यूब की सतहों पर दिशात्मक प्रकाश और प्रतिबिंब",
+    "wavy_filter": "लहरदार फ़िल्टर",
+    "wavy_filter_desc": "तरल तरंग विस्थापन शेडर प्रभाव",
+    "fog_filter": "कोहरा फ़िल्टर",
+    "fog_filter_desc": "वायुमंडलीय रोलिंग वॉल्यूमेट्रिक धुंध और बादल सिमुलेशन",
+    "master_filters": "शेडर फ़िल्टर",
+    "master_filters_desc": "सभी सक्रिय दृश्य पोस्ट-प्रोसेसिंग शेडर्स को सक्षम या अक्षम करें"
   },
   "search": {
     "folder": "फ़ोल्डर:",
@@ -160,7 +166,8 @@
       "clear_marks": "मार्क इन/आउट लूप साफ़ करें",
       "toggle_cube": "3D क्यूब टॉगल करें",
       "toggle_cube_overlay": "क्यूब ओवरले मोड टॉगल करें",
-      "toggle_fullscreen": "पूर्ण स्क्रीन टॉगल करें"
+      "toggle_fullscreen": "पूर्ण स्क्रीन टॉगल करें",
+      "toggle_filters": "शेडर फ़िल्टर टॉगल करें"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "क्यूब ओवरले मोड अक्षम किया गया",
     "cube_playing": "3D क्यूब: {title}",
     "fullscreen_enabled": "पूर्ण स्क्रीन सक्षम (बाहर निकलने के लिए [{key}] या Esc दबाएं)",
-    "fullscreen_disabled": "पूर्ण स्क्रीन अक्षम"
+    "fullscreen_disabled": "पूर्ण स्क्रीन अक्षम",
+    "filters_enabled": "शेडर फ़िल्टर सक्षम ([{key}] दबाएं टॉगल करने के लिए)",
+    "filters_disabled": "शेडर फ़िल्टर अक्षम"
   }
 }

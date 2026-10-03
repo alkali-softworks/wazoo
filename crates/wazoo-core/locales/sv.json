@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "Genväg: tryck på {key} för att växla",
     "cube_badge_desktop_on": "ÖVERLÄGG",
     "cube_sheen": "3D-ljus & glans",
-    "cube_sheen_desc": "Riktat ljus och speglande reflektioner på kubytorna"
+    "cube_sheen_desc": "Riktat ljus och speglande reflektioner på kubytorna",
+    "wavy_filter": "Vågfilter",
+    "wavy_filter_desc": "Flytande vågförskjutningsshadereffekt",
+    "fog_filter": "Dimfilter",
+    "fog_filter_desc": "Atmosfärisk rullande volymetrisk dimma och molnsimulering",
+    "master_filters": "Shaderfilter",
+    "master_filters_desc": "Aktivera eller inaktivera alla aktiva visuella efterbehandlingsshaders"
   },
   "search": {
     "folder": "Mapp:",
@@ -160,7 +166,8 @@
       "clear_marks": "Rensa slinga",
       "toggle_cube": "Växla 3D-kub",
       "toggle_cube_overlay": "Växla kuböverläggsläge",
-      "toggle_fullscreen": "Växla helskärm"
+      "toggle_fullscreen": "Växla helskärm",
+      "toggle_filters": "Växla shaderfilter"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "Kuböverläggsläge inaktiverat",
     "cube_playing": "3D-kub: {title}",
     "fullscreen_enabled": "Helskärm aktiverad (Tryck på [{key}] eller Esc för att avsluta)",
-    "fullscreen_disabled": "Helskärm inaktiverad"
+    "fullscreen_disabled": "Helskärm inaktiverad",
+    "filters_enabled": "Shaderfilter aktiverade (Tryck på [{key}] för att växla)",
+    "filters_disabled": "Shaderfilter inaktiverade"
   }
 }

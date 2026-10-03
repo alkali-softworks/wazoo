@@ -257,8 +257,8 @@ pub fn find_key_action(
     if key_matches_binding(&keybinds.open_settings, key, false) {
         return Some(KeyAction::OpenSettings);
     }
-    if key_matches_binding(&keybinds.toggle_crt, key, false) {
-        return Some(KeyAction::ToggleCrt);
+    if key_matches_binding(&keybinds.toggle_filters, key, false) {
+        return Some(KeyAction::ToggleFilters);
     }
     if key_matches_binding(&keybinds.toggle_cube, key, false) {
         return Some(KeyAction::ToggleCube);

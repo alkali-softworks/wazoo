@@ -64,6 +64,8 @@ pub struct BufferConfig {
     pub saturation: f64,
     pub playback_speed: f64,
     pub crt_enabled: bool,
+    pub wavy_enabled: bool,
+    pub fog_enabled: bool,
 }
 
 impl BufferConfig {
@@ -93,6 +95,8 @@ impl Default for BufferConfig {
             saturation: 0.0,
             playback_speed: 1.0,
             crt_enabled: false,
+            wavy_enabled: false,
+            fog_enabled: false,
         }
     }
 }

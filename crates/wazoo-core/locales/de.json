@@ -113,7 +113,13 @@
     "cube_desktop_shortcut_hint": "Tastenkürzel: Drücken Sie {key} zum Umschalten",
     "cube_badge_desktop_on": "OVERLAY",
     "cube_sheen": "3D-Licht & Glanz",
-    "cube_sheen_desc": "Direktes Licht und Glanzreflexionen auf den Würfelflächen"
+    "cube_sheen_desc": "Direktes Licht und Glanzreflexionen auf den Würfelflächen",
+    "wavy_filter": "Wellen-Filter",
+    "wavy_filter_desc": "Flüssiger Wellenverschiebungseffekt",
+    "fog_filter": "Nebel-Filter",
+    "fog_filter_desc": "Atmosphärische volumetrische Nebel- und Wolkensimulation",
+    "master_filters": "Shader-Filter",
+    "master_filters_desc": "Aktivieren oder Deaktivieren aller aktiven visuellen Nachbearbeitungs-Shader"
   },
   "search": {
     "folder": "Ordner:",
@@ -160,7 +166,8 @@
       "clear_marks": "Start-/Endmarken-Schleife löschen",
       "toggle_cube": "3D-Würfel umschalten",
       "toggle_cube_overlay": "Würfel-Overlay-Modus umschalten",
-      "toggle_fullscreen": "Vollbild umschalten"
+      "toggle_fullscreen": "Vollbild umschalten",
+      "toggle_filters": "Shader-Filter umschalten"
     }
   },
   "file_picker": {
@@ -230,6 +237,8 @@
     "cube_overlay_disabled": "Würfel-Overlay-Modus deaktiviert",
     "cube_playing": "3D-Würfel: {title}",
     "fullscreen_enabled": "Vollbild aktiviert ([{key}] oder Esc zum Beenden drücken)",
-    "fullscreen_disabled": "Vollbild deaktiviert"
+    "fullscreen_disabled": "Vollbild deaktiviert",
+    "filters_enabled": "Shader-Filter aktiviert ([{key}] zum Umschalten drücken)",
+    "filters_disabled": "Shader-Filter deaktiviert"
   }
 }
