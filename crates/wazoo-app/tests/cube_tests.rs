@@ -761,6 +761,10 @@ fn test_cube_present_hijacks_bookmark_keys_for_add_remove_cube() {
     assert_eq!(app.cube.cubes.len(), 0);
     assert!(!app.cube.is_present());
     assert!(!app.cube.desktop_overlay);
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("Cube Overlay Mode Disabled")
+    );
 }
 
 #[test]
@@ -811,5 +815,56 @@ fn test_custom_cube_keybinds() {
         iced::event::Status::Ignored,
     ));
     assert!(app.cube.desktop_overlay);
+}
+
+#[test]
+fn test_mode_9_remove_single_cube_exits_mode_9_and_unpauses_player() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    let tmp = std::env::temp_dir().join(format!(
+        "wazoo_mode9_rm_single_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&tmp);
+    let f1 = tmp.join("test_v1.mp4");
+    let _ = std::fs::File::create(&f1);
+
+    app.available_videos = vec![wazoo_core::VideoRecord::new(1, "Test1", f1.to_string_lossy())];
+    let _ = app.update(wazoo_app::message::Message::AddNewPlayer);
+    assert_eq!(app.players.iter().filter(|p| !p.is_cube).count(), 1);
+    assert!(app.players[0].is_playing(), "Regular player starts playing");
+
+    // Enter Mode 9 directly (single cube overlay)
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay, "Must be in Mode 9");
+    assert_eq!(app.cube.cubes.len(), 1, "Must have exactly 1 cube in Mode 9");
+    assert!(!app.players[0].is_playing(), "Regular player must be paused during Mode 9");
+
+    // Press "-" key (KeyAction::SpeedOrBookmarkDown)
+    let _ = app.update(wazoo_app::message::Message::KeyPressed(
+        iced::keyboard::Key::Character("-".into()),
+        iced::event::Status::Ignored,
+    ));
+
+    // Must cleanly exit Mode 9
+    assert!(!app.cube.desktop_overlay, "Mode 9 must be exited");
+    assert!(!app.cube.is_present(), "Cube must be dismissed");
+    assert_eq!(app.cube.cubes.len(), 0);
+
+    // Regular player must resume playing (not frozen!)
+    assert_eq!(app.players.iter().filter(|p| !p.is_cube).count(), 1);
+    assert!(app.players[0].is_playing(), "Regular player must be unpaused and playing");
+
+    // Ghost passthrough must be disabled
+    assert!(!app.window.ghost_passthrough_active, "Ghost passthrough must be false");
+
+    // Toast message must report overlay disabled
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("Cube Overlay Mode Disabled")
+    );
 }
 

@@ -372,6 +372,11 @@ impl WazooApp {
                 Task::none()
             }
             Message::RemoveCube => {
+                if self.cube.desktop_overlay && self.cube.cubes.len() <= 1 {
+                    self.cube.spawned_for_desktop = true;
+                    return self.exit_desktop_cube_overlay();
+                }
+
                 if let Some(removed) = self.cube.remove_cube() {
                     if let Some(pid) = removed.player_id {
                         if let Some(pos) = self.players.player_index(pid) {
@@ -568,11 +573,8 @@ impl WazooApp {
                 iced::window::Level::Normal
             };
             let level_task = iced::window::set_level(id, level);
-            let passthrough_task = if self.settings.is_always_on_top && !self.window.is_focused {
-                iced::window::enable_mouse_passthrough(id)
-            } else {
-                iced::window::disable_mouse_passthrough(id)
-            };
+            self.window.ghost_passthrough_active = false;
+            let passthrough_task = iced::window::disable_mouse_passthrough(id);
             Task::batch([level_task, passthrough_task])
         } else {
             Task::none()
