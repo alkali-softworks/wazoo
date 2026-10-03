@@ -13,6 +13,7 @@ use iced::Task;
 use wazoo_core::PlaybackMode;
 
 impl WazooApp {
+    /// Handles message dispatch, settings changes, and state transitions for 3D cubes and Cube Overlay Mode.
     pub(crate) fn update_cube(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::ToggleCubeScreensaver => {
