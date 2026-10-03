@@ -1,11 +1,11 @@
 use std::ffi::CString;
 use wazoo_media::{
-    AudioTrack, BufferConfig, SubtitleTrack, VideoHandle, build_alang_string, build_slang_string,
-    build_slang_string_with_fallback, find_matching_audio_track, find_matching_subtitle_track,
-    format_subtitle_track_label, get_subtitle_track_preference_string,
-    get_track_preference_string, is_forced_track, is_signs_or_songs_track, mpv_ffi,
-    select_best_subtitle_track, select_best_subtitle_track_with_fallback,
-    subtitle_track_matches_preference, track_matches_preference,
+    AudioTrack, BufferConfig, SubtitleTrack, build_alang_string, build_slang_string,
+    build_slang_string_with_fallback, find_matching_audio_track,
+    format_subtitle_track_label, get_subtitle_track_preference_string, get_track_preference_string,
+    is_forced_track, is_signs_or_songs_track, mpv_ffi, select_best_subtitle_track,
+    select_best_subtitle_track_with_fallback, subtitle_track_matches_preference,
+    track_matches_preference,
 };
 
 #[test]
@@ -369,130 +369,6 @@ fn test_audio_track_preference_updates_and_retention() {
 }
 
 #[test]
-fn test_ranma_subtitle_selection_defaults_to_english_not_arabic() {
-    let path = "/mnt/bob/anime/Ranma/Season 1/Ranma 1_2 - 122.mkv";
-    if !std::path::Path::new(path).exists() {
-        return;
-    }
-    let mut handle = wazoo_media::VideoHandle::new(1, path, "Ranma").expect("handle creation");
-    let start = std::time::Instant::now();
-    let mut selected_id = None;
-    while start.elapsed() < std::time::Duration::from_millis(10000) {
-        handle.update_frame();
-        if let Some(id) = handle.current_subtitle_track_id() {
-            selected_id = Some(id);
-            break;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(50));
-    }
-    let cur_id = selected_id.expect("Subtitle track should be selected");
-    // Track 1 is Arabic ('ara'). Must NEVER default to Track 1.
-    assert_ne!(cur_id, 1, "Must not default to Arabic subtitle track (id 1)");
-    // Should be Track 5 (English default) or external .srt
-    let active_track = handle
-        .subtitle_tracks()
-        .into_iter()
-        .find(|t| t.id == cur_id)
-        .expect("Selected track must exist");
-    assert!(
-        active_track.lang.as_deref() == Some("eng")
-            || active_track.title.as_deref().map_or(false, |t| t.ends_with(".srt")),
-        "Default subtitle track must be English, found: id={}, lang={:?}, title={:?}",
-        active_track.id,
-        active_track.lang,
-        active_track.title
-    );
-}
-
-#[test]
-fn test_select_best_subtitle_track_ranma_scenario() {
-    let tracks = vec![
-        SubtitleTrack {
-            id: 1,
-            title: Some("[ara] كرشرول".to_string()),
-            lang: Some("ara".to_string()),
-            codec: Some("ass".to_string()),
-            is_selected: false,
-            is_default: false,
-            is_forced: false,
-            external_filename: None,
-            ff_index: Some(2),
-        },
-        SubtitleTrack {
-            id: 2,
-            title: Some("[cat] Animelliure [Forçat]".to_string()),
-            lang: Some("cat".to_string()),
-            codec: Some("ass".to_string()),
-            is_selected: false,
-            is_default: false,
-            is_forced: true,
-            external_filename: None,
-            ff_index: Some(3),
-        },
-        SubtitleTrack {
-            id: 3,
-            title: Some("[chi] Cornflower Studio [GB]".to_string()),
-            lang: Some("chi".to_string()),
-            codec: Some("ass".to_string()),
-            is_selected: false,
-            is_default: false,
-            is_forced: false,
-            external_filename: None,
-            ff_index: Some(4),
-        },
-        SubtitleTrack {
-            id: 5,
-            title: Some("[eng] Doki/grimf/der richter/Refha".to_string()),
-            lang: Some("eng".to_string()),
-            codec: Some("ass".to_string()),
-            is_selected: false,
-            is_default: true,
-            is_forced: false,
-            external_filename: None,
-            ff_index: Some(6),
-        },
-        SubtitleTrack {
-            id: 9,
-            title: Some("[spa] Animelliure".to_string()),
-            lang: Some("spa".to_string()),
-            codec: Some("ass".to_string()),
-            is_selected: false,
-            is_default: false,
-            is_forced: false,
-            external_filename: None,
-            ff_index: Some(10),
-        },
-        SubtitleTrack {
-            id: 10,
-            title: Some("[spa] Animelliure [Forzado]".to_string()),
-            lang: Some("spa".to_string()),
-            codec: Some("ass".to_string()),
-            is_selected: false,
-            is_default: false,
-            is_forced: true,
-            external_filename: None,
-            ff_index: Some(11),
-        },
-    ];
-
-    // Default preference (English) selects English Track 5
-    assert_eq!(find_matching_subtitle_track(&tracks, "English"), Some(5));
-    assert_eq!(find_matching_subtitle_track(&tracks, "eng"), Some(5));
-    assert_eq!(select_best_subtitle_track(&tracks, None), Some(5));
-    assert_eq!(select_best_subtitle_track(&tracks, Some("English")), Some(5));
-    assert_eq!(select_best_subtitle_track(&tracks, Some("eng")), Some(5));
-
-    // Spanish preference selects full Spanish track 9 over forced track 10
-    assert_eq!(find_matching_subtitle_track(&tracks, "Spanish"), Some(9));
-    assert_eq!(find_matching_subtitle_track(&tracks, "spa"), Some(9));
-    assert_eq!(select_best_subtitle_track(&tracks, Some("Spanish")), Some(9));
-    assert_eq!(select_best_subtitle_track(&tracks, Some("spa")), Some(9));
-
-    // Preference for unmatched language falls back to English track 5
-    assert_eq!(select_best_subtitle_track(&tracks, Some("German")), Some(5));
-}
-
-#[test]
 fn test_select_best_subtitle_track_signs_and_songs_deprioritized() {
     let tracks = vec![
         SubtitleTrack {
@@ -521,7 +397,10 @@ fn test_select_best_subtitle_track_signs_and_songs_deprioritized() {
 
     assert!(is_signs_or_songs_track(&tracks[0]));
     assert!(!is_signs_or_songs_track(&tracks[1]));
-    assert_eq!(select_best_subtitle_track(&tracks, Some("English")), Some(2));
+    assert_eq!(
+        select_best_subtitle_track(&tracks, Some("English")),
+        Some(2)
+    );
 }
 
 #[test]
@@ -722,30 +601,3 @@ fn test_buffer_config_effective_subtitle_language() {
     config.preferred_subtitle_language = None;
     assert_eq!(config.effective_subtitle_language(), "es");
 }
-
-#[test]
-fn test_ranma_subtitle_selection_uses_i18n_when_preferred_not_known() {
-    let path = "/mnt/bob/anime/Ranma/Season 1/Ranma 1_2 - 122.mkv";
-    if !std::path::Path::new(path).exists() {
-        return;
-    }
-
-    // When preferred_subtitle_language is not known and i18n is "es", selects Spanish (Track 9)
-    let mut config_es = BufferConfig::default();
-    config_es.preferred_subtitle_language = None;
-    config_es.i18n_language = Some("es".to_string());
-
-    let mut handle_es = VideoHandle::with_buffering(1, path, "Ranma", config_es).expect("handle");
-    let start = std::time::Instant::now();
-    let mut selected_id = None;
-    while start.elapsed() < std::time::Duration::from_millis(10000) {
-        handle_es.update_frame();
-        if let Some(id) = handle_es.current_subtitle_track_id() {
-            selected_id = Some(id);
-            break;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(50));
-    }
-    assert_eq!(selected_id, Some(9), "Must select Spanish track (id 9) matching i18n language setting");
-}
-

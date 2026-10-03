@@ -117,23 +117,22 @@ impl WazooApp {
                     let _ = self.config_mgr.save_settings(&self.settings);
                 }
 
-                // Watchdog safety: auto-clear loading state if it exceeds 10 seconds (~10 watchdog ticks)
-                // to prevent an indefinite spinning loading indicator if a decoder hangs.
-                for p in &mut self.players {
-                    if p.is_loading {
-                        p.loading_ticks += 1;
-                        if p.loading_ticks >= 10 {
-                            p.stop_loading();
-                        }
-                    }
-                }
-
-                // Detect completed streams and frozen playback pipelines
+                // Detect completed streams, unplayable files, and frozen playback pipelines
                 let mut finished_ids = Vec::new();
                 let mut stuck_ids = Vec::new();
 
                 for p in &mut self.players {
+                    if p.is_failed() {
+                        p.stop_loading();
+                        stuck_ids.push(p.id);
+                        continue;
+                    }
                     if p.is_loading {
+                        p.loading_ticks += 1;
+                        if p.loading_ticks >= 10 {
+                            p.stop_loading();
+                            stuck_ids.push(p.id);
+                        }
                         continue;
                     }
                     if p.is_finished() {
@@ -149,10 +148,10 @@ impl WazooApp {
                     let _ = self.update(Message::AutoAdvanceVideo(id));
                 }
 
-                // Skip stalled pipelines that have stopped producing frames past the threshold
+                // Skip stalled pipelines or failed videos that refuse to play
                 for id in stuck_ids {
                     log::warn!(
-                        "Player {id} playback stuck for {}s, skipping to next video",
+                        "Player {id} playback stuck (>={}s) or failed to play, skipping to next video",
                         VideoHandle::STUCK_THRESHOLD_SECONDS
                     );
                     let _ = self.update(Message::AutoAdvanceVideo(id));
@@ -378,8 +377,12 @@ impl WazooApp {
     fn update_player_frames(&mut self) {
         if self.cube.desktop_overlay {
             for p in &mut self.players {
-                if p.is_cube && p.update_frame() {
-                    p.stop_loading();
+                if p.is_cube {
+                    if p.update_frame() {
+                        p.stop_loading();
+                    } else if p.is_failed() {
+                        p.stop_loading();
+                    }
                 }
             }
             return;
@@ -387,6 +390,8 @@ impl WazooApp {
 
         for p in &mut self.players {
             if p.update_frame() {
+                p.stop_loading();
+            } else if p.is_failed() {
                 p.stop_loading();
             }
         }

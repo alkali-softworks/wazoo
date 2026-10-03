@@ -34,6 +34,7 @@ pub struct VideoHandle {
     frame: Arc<Mutex<FrameData>>,
     alive: Arc<AtomicBool>,
     is_eos: bool,
+    is_failed: bool,
     last_seek_time: Option<Instant>,
     pending_seek: Option<Duration>,
     pending_seek_random: bool,
@@ -368,6 +369,7 @@ impl VideoHandle {
                 frame,
                 alive,
                 is_eos: false,
+                is_failed: false,
                 last_seek_time,
                 pending_seek,
                 pending_seek_random: false,
@@ -483,6 +485,7 @@ impl VideoHandle {
             self.state.position = Duration::ZERO;
             self.state.is_playing = true;
             self.is_eos = false;
+            self.is_failed = false;
             self.tracks_loaded = false;
             self.state.audio_tracks.clear();
             self.state.subtitle_tracks.clear();
@@ -523,14 +526,21 @@ impl VideoHandle {
                 }
                 if (*event).event_id == mpv_ffi::MPV_EVENT_START_FILE {
                     self.is_eos = false;
+                    self.is_failed = false;
                 }
                 if (*event).event_id == mpv_ffi::MPV_EVENT_END_FILE {
                     if !(*event).data.is_null() {
                         let end_data = &*((*event).data as *const mpv_ffi::MpvEventEndFile);
-                        if end_data.reason == mpv_ffi::MPV_END_FILE_REASON_EOF
-                            || end_data.reason == mpv_ffi::MPV_END_FILE_REASON_ERROR
+                        if end_data.reason == mpv_ffi::MPV_END_FILE_REASON_ERROR
+                            || end_data.error != 0
                         {
+                            self.is_failed = true;
                             self.is_eos = true;
+                        } else if end_data.reason == mpv_ffi::MPV_END_FILE_REASON_EOF {
+                            self.is_eos = true;
+                            if !self.tracks_loaded && self.duration() == Duration::ZERO {
+                                self.is_failed = true;
+                            }
                         }
                     } else {
                         self.is_eos = true;
@@ -538,12 +548,14 @@ impl VideoHandle {
                 }
                 if (*event).event_id == mpv_ffi::MPV_EVENT_FILE_LOADED {
                     self.is_eos = false;
+                    self.is_failed = false;
                     needs_refresh_tracks = true;
                 } else if (*event).event_id == mpv_ffi::MPV_EVENT_TRACKS_CHANGED
                     || (*event).event_id == mpv_ffi::MPV_EVENT_PLAYBACK_RESTART
                     || (*event).event_id == mpv_ffi::MPV_EVENT_VIDEO_RECONFIG
                 {
                     self.is_eos = false;
+                    self.is_failed = false;
                     needs_refresh_tracks = true;
                 }
             }
@@ -1251,19 +1263,32 @@ impl VideoHandle {
         false
     }
 
+    /// Returns true if video playback encountered an unrecoverable decoding, demuxing, or format error.
+    pub fn is_failed(&self) -> bool {
+        self.is_failed
+    }
+
+    /// Returns true if video reached end of stream (EOS).
+    pub fn is_eos(&self) -> bool {
+        self.is_eos
+    }
+
     pub fn is_finished(&self) -> bool {
-        if !self.tracks_loaded {
-            return false;
-        }
-        let dur = self.duration();
-        if dur < Duration::from_millis(500) {
-            return false;
+        if self.is_failed {
+            return true;
         }
         if self.has_loop() {
             return false;
         }
         if self.is_eos {
             return true;
+        }
+        if !self.tracks_loaded {
+            return false;
+        }
+        let dur = self.duration();
+        if dur < Duration::from_millis(500) {
+            return false;
         }
         unsafe {
             if !self.mpv.is_null() {
@@ -1295,6 +1320,10 @@ impl VideoHandle {
 
     /// Check if video playback is stuck (same position for too long while marked playing)
     pub fn check_stuck(&mut self) -> bool {
+        if self.is_failed {
+            return true;
+        }
+
         if !self.state.is_playing {
             self.state.stuck_count = 0;
             return false;
@@ -1314,7 +1343,7 @@ impl VideoHandle {
         }
 
         let current_pos = self.position();
-        if current_pos == self.state.last_checked_pos && self.duration() > Duration::ZERO {
+        if current_pos == self.state.last_checked_pos {
             self.state.stuck_count += 1;
             if self.state.stuck_count >= Self::STUCK_THRESHOLD_SECONDS {
                 return true;
