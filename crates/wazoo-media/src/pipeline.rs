@@ -314,6 +314,15 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         let a = textureSampleLevel(tex, s, warped_uv, 0.0).a;
         base_color = vec4<f32>(r, g, b, a);
 
+        // CRT phosphor luminescence & gamma compensation:
+        // Automatically compensates for the light loss introduced by scanlines
+        //let clamped_rgb = clamp(base_color.rgb, vec3<f32>(0.00001), vec3<f32>(1.0));
+        //let phosphor_bright = pow(clamped_rgb, vec3<f32>(0.90)) * 1.10;
+        // Active rolling cathode scanlines (multiplicative modulation avoids shadow crush)
+        //let scanline = sin(curved_uv.y * 600.0 + uniforms.time * 5.0) * 0.5 + 0.5;
+        //let scanline_factor = 1.0 - scanline * 0.16;
+        //rgb = phosphor_bright * scanline_factor;
+
         // Active rolling cathode scanlines
         let scanline = sin(curved_uv.y * 600.0 + uniforms.time * 5.0) * 0.5 + 0.5;
         rgb = base_color.rgb - scanline * 0.20;
