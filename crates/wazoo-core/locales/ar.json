@@ -21,7 +21,8 @@
     "end": "النهاية",
     "crt_filter": "مرشح CRT",
     "fullscreen": "ملء الشاشة",
-    "exit_fullscreen": "الخروج من ملء الشاشة"
+    "exit_fullscreen": "الخروج من ملء الشاشة",
+    "fit_window": "ملاءمة النافذة"
   },
   "app": {
     "drag_to_move": "اسحب للتحريك",
@@ -167,7 +168,8 @@
       "toggle_cube": "تبديل المكعب ثلاثي الأبعاد",
       "toggle_cube_overlay": "تبديل وضع تراكب المكعب",
       "toggle_fullscreen": "تبديل ملء الشاشة",
-      "toggle_filters": "تبديل فلاتر التظليل"
+      "toggle_filters": "تبديل فلاتر التظليل",
+      "fit_window": "ملاءمة النافذة للفيديو"
     }
   },
   "file_picker": {

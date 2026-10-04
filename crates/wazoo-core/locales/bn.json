@@ -21,7 +21,8 @@
     "end": "শেষ",
     "crt_filter": "সিআরটি ফিল্টার",
     "fullscreen": "ফুলস্ক্রিন",
-    "exit_fullscreen": "ফুলস্ক্রিন থেকে বের হন"
+    "exit_fullscreen": "ফুলস্ক্রিন থেকে বের হন",
+    "fit_window": "উইন্ডো ফিট করুন"
   },
   "app": {
     "drag_to_move": "সরানোর জন্য টেনে আনুন",
@@ -167,7 +168,8 @@
       "toggle_cube": "3D কিউব টগল করুন",
       "toggle_cube_overlay": "কিউব ওভারলে মোড টগল করুন",
       "toggle_fullscreen": "ফুলস্ক্রিন টগল করুন",
-      "toggle_filters": "শেডার ফিল্টার টগল করুন"
+      "toggle_filters": "শেডার ফিল্টার টগল করুন",
+      "fit_window": "ভিডিও অনুযায়ী উইন্ডো ফিট করুন"
     }
   },
   "file_picker": {

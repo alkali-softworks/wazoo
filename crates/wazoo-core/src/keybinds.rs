@@ -53,6 +53,7 @@ pub enum KeyAction {
     ToggleCube,
     ToggleCubeOverlay,
     ToggleFullscreen,
+    FitWindow,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -102,6 +103,8 @@ pub struct KeybindSettings {
     pub toggle_cube: String,
     pub toggle_cube_overlay: String,
     pub toggle_fullscreen: String,
+    #[serde(alias = "resize_to_fit")]
+    pub fit_window: String,
 }
 
 impl Default for KeybindSettings {
@@ -150,6 +153,7 @@ impl Default for KeybindSettings {
             toggle_cube: "8".to_string(),
             toggle_cube_overlay: "9".to_string(),
             toggle_fullscreen: "F11".to_string(),
+            fit_window: "w".to_string(),
         }
     }
 }
@@ -199,6 +203,7 @@ impl KeybindSettings {
         "toggle_cube",
         "toggle_cube_overlay",
         "toggle_fullscreen",
+        "fit_window",
     ];
 
     /// Validates if a JSON value contains the complete dictionary of non-empty key bindings.
@@ -347,6 +352,9 @@ impl KeybindSettings {
         if self.toggle_fullscreen.trim().is_empty() {
             self.toggle_fullscreen = def.toggle_fullscreen;
         }
+        if self.fit_window.trim().is_empty() {
+            self.fit_window = def.fit_window;
+        }
     }
 
     /// Formats a keybinding into a clean uppercase hint suitable for menu labels.
@@ -490,6 +498,10 @@ impl KeybindSettings {
             (
                 self.toggle_fullscreen.clone(),
                 t("help.shortcuts.toggle_fullscreen"),
+            ),
+            (
+                self.fit_window.clone(),
+                t("help.shortcuts.fit_window"),
             ),
         ]
     }
@@ -691,6 +703,10 @@ impl KeybindSettings {
                     HelpShortcut {
                         key: KeyDisplay::Combo(vec!["Alt".to_string(), "Drag".to_string()]),
                         description: t("help.shortcuts.move_window"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::Single(self.fit_window.to_uppercase()),
+                        description: t("help.shortcuts.fit_window"),
                     },
                     HelpShortcut {
                         key: KeyDisplay::Single(self.toggle_fullscreen.to_uppercase()),

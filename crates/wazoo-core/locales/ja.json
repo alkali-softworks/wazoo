@@ -21,7 +21,8 @@
     "end": "終了",
     "crt_filter": "CRTフィルター",
     "fullscreen": "フルスクリーン",
-    "exit_fullscreen": "フルスクリーンを終了"
+    "exit_fullscreen": "フルスクリーンを終了",
+    "fit_window": "ウィンドウを合わせる"
   },
   "app": {
     "drag_to_move": "ドラッグして移動",
@@ -167,7 +168,8 @@
       "toggle_cube": "3Dキューブを切り替え",
       "toggle_cube_overlay": "キューブオーバーレイモードを切り替え",
       "toggle_fullscreen": "全画面表示の切り替え",
-      "toggle_filters": "シェーダーフィルター切り替え"
+      "toggle_filters": "シェーダーフィルター切り替え",
+      "fit_window": "動画に合わせてウィンドウを調整"
     }
   },
   "file_picker": {

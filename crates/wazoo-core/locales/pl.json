@@ -21,7 +21,8 @@
     "end": "Koniec",
     "crt_filter": "Filtr CRT",
     "fullscreen": "Pełny ekran",
-    "exit_fullscreen": "Wyjdź z pełnego ekranu"
+    "exit_fullscreen": "Wyjdź z pełnego ekranu",
+    "fit_window": "Dopasuj okno"
   },
   "app": {
     "drag_to_move": "Przeciągnij, aby przesunąć",
@@ -167,7 +168,8 @@
       "toggle_cube": "Przełącz kostkę 3D",
       "toggle_cube_overlay": "Przełącz tryb nakładki kostki",
       "toggle_fullscreen": "Przełącz pełny ekran",
-      "toggle_filters": "Przełącz filtry cieniowania"
+      "toggle_filters": "Przełącz filtry cieniowania",
+      "fit_window": "Dopasuj okno do wideo"
     }
   },
   "file_picker": {

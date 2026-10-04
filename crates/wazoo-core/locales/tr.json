@@ -21,7 +21,8 @@
     "end": "Bitiş",
     "crt_filter": "CRT Filtresi",
     "fullscreen": "Tam Ekran",
-    "exit_fullscreen": "Tam Ekrandan Çık"
+    "exit_fullscreen": "Tam Ekrandan Çık",
+    "fit_window": "Pencereyi Uydur"
   },
   "app": {
     "drag_to_move": "Taşımak için Sürükleyin",
@@ -167,7 +168,8 @@
       "toggle_cube": "3D Küpü Değiştir",
       "toggle_cube_overlay": "Küp Yerleşimi Modunu Değiştir",
       "toggle_fullscreen": "Tam Ekranı Aç/Kapat",
-      "toggle_filters": "Gölgelendirici Filtrelerini Aç/Kapat"
+      "toggle_filters": "Gölgelendirici Filtrelerini Aç/Kapat",
+      "fit_window": "Pencereyi Videoya Uydur"
     }
   },
   "file_picker": {

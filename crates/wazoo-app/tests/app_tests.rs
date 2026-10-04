@@ -322,6 +322,7 @@ fn test_boot_persists_default_keybinds() {
     assert_eq!(app.settings.keybinds.open_help, "F1");
     assert_eq!(app.settings.keybinds.open_settings, "F2");
     assert_eq!(app.settings.keybinds.toggle_filters, "7");
+    assert_eq!(app.settings.keybinds.fit_window, "w");
 
     // Every key in ALL_KEYS must be present in settings.json
     for key in wazoo_core::KeybindSettings::ALL_KEYS {
@@ -364,6 +365,7 @@ fn test_boot_reconciles_and_persists_incomplete_keybinds() {
     assert_eq!(app.settings.keybinds.open_help, "F1");
     assert_eq!(app.settings.keybinds.open_settings, "F2");
     assert_eq!(app.settings.keybinds.toggle_filters, "7");
+    assert_eq!(app.settings.keybinds.fit_window, "w");
 
     // Boot should have written the complete list to settings.json
     assert!(app.config_mgr.has_complete_keybinds_in_settings());
@@ -1486,6 +1488,156 @@ fn test_fullscreen_toggle_and_escape() {
     // 6. Subsequent Escape exits fullscreen
     let _ = app.update(Message::EscapePressed);
     assert!(!app.window.is_fullscreen);
+}
+
+#[test]
+fn test_fit_window_keybind_and_resizing() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "wazoo_fit_window_test_{}_{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
+    let db = Database::open_in_memory().expect("in-memory db");
+    let (mut app, _) = WazooApp::new_with_backend(None, config_mgr, db);
+
+    let f1 = temp_dir.join("test_video.mp4");
+    let _ = std::fs::File::create(&f1);
+    let path1 = f1.to_string_lossy().to_string();
+
+    app.available_videos = vec![VideoRecord::new(1, "Test Video", &path1)];
+    app.default_shuffle_mode = false;
+
+    // Start 1 player
+    let _ = app.update(Message::SetPlayerCount(1));
+    assert_eq!(app.players.len(), 1);
+
+    // Set 16:9 frame dimensions on player (e.g. 1920x1080)
+    {
+        let frame_arc = app.players[0].frame();
+        let mut guard = frame_arc.lock().unwrap();
+        guard.width = 1920;
+        guard.height = 1080;
+    }
+    assert_eq!(app.players[0].aspect_ratio(), Some(1920.0 / 1080.0));
+
+    // Case 1: Pillarbox (window is too wide, e.g. 2560x1080 as in user photo)
+    app.settings.window_bounds.width = 2560;
+    app.settings.window_bounds.height = 1080;
+
+    // Press 'w' key
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("w".into()),
+        iced::event::Status::Ignored,
+    ));
+
+    // Window width shrinks to 1920 to eliminate horizontal black bars, height remains 1080
+    assert_eq!(app.settings.window_bounds.width, 1920);
+    assert_eq!(app.settings.window_bounds.height, 1080);
+
+    // Case 2: Letterbox (window is too tall, e.g. 1920x1500)
+    app.settings.window_bounds.width = 1920;
+    app.settings.window_bounds.height = 1500;
+
+    // Press 'W' key (uppercase)
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("W".into()),
+        iced::event::Status::Ignored,
+    ));
+
+    // Window height shrinks to 1080 to eliminate vertical black bars, width remains 1920
+    assert_eq!(app.settings.window_bounds.width, 1920);
+    assert_eq!(app.settings.window_bounds.height, 1080);
+
+    // Case 3: With drawer open (e.g. file picker drawer 420px wide)
+    app.drawers.show_file_picker = true;
+    app.settings.window_bounds.width = 3000;
+    app.settings.window_bounds.height = 1080;
+
+    let _ = app.update(Message::FitWindow);
+
+    // Total width = player width (1920) + drawer width (420) = 2340
+    assert_eq!(app.settings.window_bounds.width, 2340);
+    assert_eq!(app.settings.window_bounds.height, 1080);
+
+    app.drawers.show_file_picker = false;
+
+    // Case 4: Fullscreen guard (does not resize in fullscreen mode)
+    app.window.is_fullscreen = true;
+    app.settings.window_bounds.width = 2560;
+    app.settings.window_bounds.height = 1080;
+    let _ = app.update(Message::FitWindow);
+    assert_eq!(app.settings.window_bounds.width, 2560);
+    app.window.is_fullscreen = false;
+
+    // Clean up
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
+
+#[test]
+fn test_fit_window_multi_player_layouts() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "wazoo_fit_multi_test_{}_{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
+    let db = Database::open_in_memory().expect("in-memory db");
+    let (mut app, _) = WazooApp::new_with_backend(None, config_mgr, db);
+
+    let f1 = temp_dir.join("v1.mp4");
+    let f2 = temp_dir.join("v2.mp4");
+    let _ = std::fs::File::create(&f1);
+    let _ = std::fs::File::create(&f2);
+
+    app.available_videos = vec![
+        VideoRecord::new(1, "V1", f1.to_string_lossy().to_string()),
+        VideoRecord::new(2, "V2", f2.to_string_lossy().to_string()),
+    ];
+    app.default_shuffle_mode = false;
+
+    // Start 2 players
+    let _ = app.update(Message::SetPlayerCount(2));
+    assert_eq!(app.players.len(), 2);
+
+    for p in &mut app.players {
+        let frame_arc = p.frame();
+        let mut guard = frame_arc.lock().unwrap();
+        guard.width = 1920;
+        guard.height = 1080;
+    }
+
+    // Row layout: 2 side-by-side tiles -> target window aspect ratio = 2 * (16/9) = 32/9
+    app.settings.layout = wazoo_core::LayoutMode::Row;
+    app.settings.window_bounds.width = 4000;
+    app.settings.window_bounds.height = 1000;
+    let _ = app.update(Message::FitWindow);
+    // target_ar = (16.0 / 9.0) * 2.0 = 32.0 / 9.0 ≈ 3.5555
+    // current_ar = 4000 / 1000 = 4.0 > 3.5555
+    // new_width = 1000 * (32/9) ≈ 3556
+    assert_eq!(app.settings.window_bounds.width, 3556);
+    assert_eq!(app.settings.window_bounds.height, 1000);
+
+    // Column layout: 2 stacked tiles -> target window aspect ratio = (16/9) / 2 = 8/9
+    app.settings.layout = wazoo_core::LayoutMode::Column;
+    app.settings.window_bounds.width = 1600;
+    app.settings.window_bounds.height = 2000;
+    let _ = app.update(Message::FitWindow);
+    // target_ar = (16.0 / 9.0) / 2.0 = 8.0 / 9.0 ≈ 0.8888
+    // current_ar = 1600 / 2000 = 0.8 < 0.8888 (too tall)
+    // new_height = 1600 / (8/9) = 1800
+    assert_eq!(app.settings.window_bounds.width, 1600);
+    assert_eq!(app.settings.window_bounds.height, 1800);
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
 }
 
 

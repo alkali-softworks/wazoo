@@ -21,7 +21,8 @@
     "end": "End",
     "crt_filter": "CRT Filter",
     "fullscreen": "Fullscreen",
-    "exit_fullscreen": "Exit Fullscreen"
+    "exit_fullscreen": "Exit Fullscreen",
+    "fit_window": "Fit Window"
   },
   "app": {
     "drag_to_move": "Drag to Move",
@@ -167,7 +168,8 @@
       "toggle_cube": "Toggle 3D Cube",
       "toggle_cube_overlay": "Toggle Cube Overlay Mode",
       "toggle_fullscreen": "Toggle Fullscreen",
-      "toggle_filters": "Toggle Shader Filters"
+      "toggle_filters": "Toggle Shader Filters",
+      "fit_window": "Fit Window to Video"
     }
   },
   "file_picker": {

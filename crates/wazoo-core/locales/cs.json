@@ -21,7 +21,8 @@
     "end": "Konec",
     "crt_filter": "CRT filtr",
     "fullscreen": "Celá obrazovka",
-    "exit_fullscreen": "Ukončit celou obrazovku"
+    "exit_fullscreen": "Ukončit celou obrazovku",
+    "fit_window": "Přizpůsobit okno"
   },
   "app": {
     "drag_to_move": "Přetažením přesuňte",
@@ -167,7 +168,8 @@
       "toggle_cube": "Přepnout 3D kostku",
       "toggle_cube_overlay": "Přepnout režim překrytí kostky",
       "toggle_fullscreen": "Přepnout celou obrazovku",
-      "toggle_filters": "Přepnout shadery filtrů"
+      "toggle_filters": "Přepnout shadery filtrů",
+      "fit_window": "Přizpůsobit okno videu"
     }
   },
   "file_picker": {

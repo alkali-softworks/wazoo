@@ -21,7 +21,8 @@
     "end": "Einde",
     "crt_filter": "CRT-filter",
     "fullscreen": "Volledig scherm",
-    "exit_fullscreen": "Volledig scherm sluiten"
+    "exit_fullscreen": "Volledig scherm sluiten",
+    "fit_window": "Venster passend maken"
   },
   "app": {
     "drag_to_move": "Slepen om te verplaatsen",
@@ -167,7 +168,8 @@
       "toggle_cube": "3D-kubus in-/uitschakelen",
       "toggle_cube_overlay": "Kubus-overlaymodus in-/uitschakelen",
       "toggle_fullscreen": "Volledig scherm in-/uitschakelen",
-      "toggle_filters": "Schakel shaderfilters in/uit"
+      "toggle_filters": "Schakel shaderfilters in/uit",
+      "fit_window": "Venster aanpassen aan video"
     }
   },
   "file_picker": {

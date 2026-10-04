@@ -269,6 +269,9 @@ pub fn find_key_action(
     if key_matches_binding(&keybinds.toggle_fullscreen, key, false) {
         return Some(KeyAction::ToggleFullscreen);
     }
+    if key_matches_binding(&keybinds.fit_window, key, false) {
+        return Some(KeyAction::FitWindow);
+    }
 
     None
 }

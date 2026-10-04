@@ -197,6 +197,125 @@ impl WazooApp {
                     Task::none()
                 }
             }
+            Message::FitWindow => {
+                if self.window.is_fullscreen {
+                    return Task::none();
+                }
+
+                let grid_players: Vec<&AppPlayer> =
+                    self.players.iter().filter(|p| !p.is_cube).collect();
+                if grid_players.is_empty() {
+                    return Task::none();
+                }
+
+                let player_aspect = self
+                    .focused_player()
+                    .filter(|p| !p.is_cube)
+                    .and_then(|p| p.aspect_ratio())
+                    .or_else(|| grid_players.iter().find_map(|p| p.aspect_ratio()));
+
+                let Some(tile_ar) = player_aspect else {
+                    return Task::none();
+                };
+
+                if tile_ar <= 0.05 {
+                    return Task::none();
+                }
+
+                let (cols, rows) = match self.settings.playback_mode {
+                    PlaybackMode::Scroll => (1, 1),
+                    _ => match self.settings.layout {
+                        wazoo_core::LayoutMode::Row => (grid_players.len().max(1), 1),
+                        wazoo_core::LayoutMode::Column => (1, grid_players.len().max(1)),
+                        wazoo_core::LayoutMode::Grid => {
+                            let count = grid_players.len();
+                            if count <= 1 {
+                                (1, 1)
+                            } else if count == 2 {
+                                (2, 1)
+                            } else if count == 3 {
+                                (1, 1)
+                            } else {
+                                let cols = if count <= 4 {
+                                    2
+                                } else if count <= 9 {
+                                    3
+                                } else {
+                                    4
+                                };
+                                let rows = count.div_ceil(cols);
+                                (cols, rows)
+                            }
+                        }
+                    },
+                };
+
+                let target_player_ar = tile_ar * (cols as f32 / rows as f32);
+                if target_player_ar <= 0.05 {
+                    return Task::none();
+                }
+
+                let drawer_width = if self.drawers.show_file_picker || self.drawers.show_history_drawer {
+                    420.0
+                } else if self.drawers.show_transcript {
+                    440.0
+                } else {
+                    0.0
+                };
+
+                let current_total_w = self.settings.window_bounds.width as f32;
+                let current_total_h = self.settings.window_bounds.height as f32;
+
+                let current_player_w = (current_total_w - drawer_width).max(50.0);
+                let current_player_h = current_total_h.max(50.0);
+                let current_ar = current_player_w / current_player_h;
+
+                let (new_player_w, new_player_h) = if current_ar > target_player_ar {
+                    // Pillarbox: extra space on left & right.
+                    // Shrink width to fit video height without altering vertical scale.
+                    (current_player_h * target_player_ar, current_player_h)
+                } else {
+                    // Letterbox: extra space on top & bottom.
+                    // Shrink height to fit video width without altering horizontal scale.
+                    (current_player_w, current_player_w / target_player_ar)
+                };
+
+                let mut final_total_w = (new_player_w + drawer_width).round();
+                let mut final_total_h = new_player_h.round();
+
+                if final_total_w < 200.0 {
+                    final_total_w = 200.0;
+                    let p_w = (final_total_w - drawer_width).max(50.0);
+                    final_total_h = (p_w / target_player_ar).round();
+                }
+                if final_total_h < 150.0 {
+                    final_total_h = 150.0;
+                    let p_h = final_total_h;
+                    final_total_w = (p_h * target_player_ar + drawer_width).round();
+                }
+
+                let clamped_w = (final_total_w as u32).clamp(200, 7680);
+                let clamped_h = (final_total_h as u32).clamp(150, 4320);
+
+                self.settings.window_bounds.width = clamped_w;
+                self.settings.window_bounds.height = clamped_h;
+                self.window.bounds_dirty = true;
+                self.window.mark_resized();
+                self.scroll_engine.set_window_size(clamped_w as f32, clamped_h as f32);
+
+                let resize_size = iced::Size::new(clamped_w as f32, clamped_h as f32);
+                if let Some(id) = self.window.id {
+                    iced::window::resize(id, resize_size)
+                } else {
+                    iced::window::oldest().then(move |maybe_id| {
+                        if let Some(id) = maybe_id {
+                            iced::window::resize(id, resize_size)
+                        } else {
+                            Task::none()
+                        }
+                    })
+                }
+            }
             Message::DragWindow => {
                 if let Some(id) = self.window.id {
                     self.window.is_dragging = true;

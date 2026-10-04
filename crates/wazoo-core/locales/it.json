@@ -21,7 +21,8 @@
     "end": "Fine",
     "crt_filter": "Filtro CRT",
     "fullscreen": "Schermo intero",
-    "exit_fullscreen": "Esci da schermo intero"
+    "exit_fullscreen": "Esci da schermo intero",
+    "fit_window": "Adatta finestra"
   },
   "app": {
     "drag_to_move": "Trascina per spostare",
@@ -167,7 +168,8 @@
       "toggle_cube": "Attiva/disattiva Cubo 3D",
       "toggle_cube_overlay": "Attiva/disattiva Modalità Sovrapposizione Cubo",
       "toggle_fullscreen": "Attiva/disattiva schermo intero",
-      "toggle_filters": "Attiva/disattiva filtri shader"
+      "toggle_filters": "Attiva/disattiva filtri shader",
+      "fit_window": "Adatta finestra al video"
     }
   },
   "file_picker": {

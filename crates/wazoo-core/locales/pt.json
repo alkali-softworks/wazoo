@@ -21,7 +21,8 @@
     "end": "Fim",
     "crt_filter": "Filtro CRT",
     "fullscreen": "Tela cheia",
-    "exit_fullscreen": "Sair da tela cheia"
+    "exit_fullscreen": "Sair da tela cheia",
+    "fit_window": "Ajustar janela"
   },
   "app": {
     "drag_to_move": "Arraste para mover",
@@ -167,7 +168,8 @@
       "toggle_cube": "Alternar Cubo 3D",
       "toggle_cube_overlay": "Alternar Modo de Sobreposição do Cubo",
       "toggle_fullscreen": "Alternar tela cheia",
-      "toggle_filters": "Alternar filtros de sombreador"
+      "toggle_filters": "Alternar filtros de sombreador",
+      "fit_window": "Ajustar janela ao vídeo"
     }
   },
   "file_picker": {

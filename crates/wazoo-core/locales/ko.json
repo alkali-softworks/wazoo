@@ -21,7 +21,8 @@
     "end": "끝",
     "crt_filter": "CRT 필터",
     "fullscreen": "전체 화면",
-    "exit_fullscreen": "전체 화면 종료"
+    "exit_fullscreen": "전체 화면 종료",
+    "fit_window": "창 맞추기"
   },
   "app": {
     "drag_to_move": "드래그하여 이동",
@@ -167,7 +168,8 @@
       "toggle_cube": "3D 큐브 전환",
       "toggle_cube_overlay": "큐브 오버레이 모드 전환",
       "toggle_fullscreen": "전체 화면 전환",
-      "toggle_filters": "셰이더 필터 전환"
+      "toggle_filters": "셰이더 필터 전환",
+      "fit_window": "비디오에 맞춰 창 크기 조절"
     }
   },
   "file_picker": {
