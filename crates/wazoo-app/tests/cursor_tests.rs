@@ -108,3 +108,42 @@ fn test_direction_to_interaction_mappings() {
         mouse::Interaction::ResizingDiagonallyUp
     );
 }
+
+#[cfg(target_os = "linux")]
+#[test]
+fn test_desktop_cursor_detection() {
+    // If running in an environment with Cinnamon/GNOME/etc., detect_desktop_cursor_theme should find a theme.
+    if let Some(theme) = wazoo_app::platform::detect_desktop_cursor_theme() {
+        assert!(!theme.trim().is_empty());
+    }
+
+    if let Some(size) = wazoo_app::platform::detect_desktop_cursor_size() {
+        assert!(size > 0);
+    }
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn test_init_linux_cursor_env_custom_override() {
+    unsafe {
+        std::env::set_var("WAZOO_CURSOR_THEME", "TestCustomCursorTheme");
+        std::env::set_var("WAZOO_CURSOR_SIZE", "42");
+    }
+
+    wazoo_app::platform::init_linux_cursor_env(false);
+
+    assert_eq!(
+        std::env::var("XCURSOR_THEME").unwrap_or_default(),
+        "TestCustomCursorTheme"
+    );
+    assert_eq!(
+        std::env::var("XCURSOR_SIZE").unwrap_or_default(),
+        "42"
+    );
+
+    // Clean up test environment variables
+    unsafe {
+        std::env::remove_var("WAZOO_CURSOR_THEME");
+        std::env::remove_var("WAZOO_CURSOR_SIZE");
+    }
+}

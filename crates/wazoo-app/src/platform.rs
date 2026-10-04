@@ -8,59 +8,172 @@
  */
 
 #[cfg(target_os = "linux")]
+pub fn detect_desktop_cursor_theme() -> Option<String> {
+    let desktop = std::env::var("XDG_CURRENT_DESKTOP")
+        .or_else(|_| std::env::var("DESKTOP_SESSION"))
+        .unwrap_or_default()
+        .to_lowercase();
+
+    let schemas: &[&str] = if desktop.contains("cinnamon") {
+        &["org.cinnamon.desktop.interface", "org.gnome.desktop.interface", "org.mate.interface"]
+    } else if desktop.contains("mate") {
+        &["org.mate.interface", "org.cinnamon.desktop.interface", "org.gnome.desktop.interface"]
+    } else {
+        &["org.gnome.desktop.interface", "org.cinnamon.desktop.interface", "org.mate.interface"]
+    };
+
+    for &schema in schemas {
+        if let Ok(out) = std::process::Command::new("gsettings")
+            .args(["get", schema, "cursor-theme"])
+            .output()
+        {
+            if out.status.success() {
+                let s = String::from_utf8_lossy(&out.stdout)
+                    .trim()
+                    .trim_matches('\'')
+                    .trim_matches('"')
+                    .to_string();
+                if !s.is_empty() {
+                    return Some(s);
+                }
+            }
+        }
+    }
+
+    // Fallback: XFCE
+    if let Ok(out) = std::process::Command::new("xfconf-query")
+        .args(["-c", "xsettings", "-p", "/Gtk/CursorThemeName"])
+        .output()
+    {
+        if out.status.success() {
+            let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            if !s.is_empty() {
+                return Some(s);
+            }
+        }
+    }
+
+    // Fallback: KDE Plasma
+    for cmd in &["kreadconfig6", "kreadconfig5"] {
+        if let Ok(out) = std::process::Command::new(cmd)
+            .args(["--group", "Mouse", "--key", "cursorTheme"])
+            .output()
+        {
+            if out.status.success() {
+                let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if !s.is_empty() {
+                    return Some(s);
+                }
+            }
+        }
+    }
+
+    None
+}
+
+#[cfg(target_os = "linux")]
+pub fn detect_desktop_cursor_size() -> Option<u32> {
+    let desktop = std::env::var("XDG_CURRENT_DESKTOP")
+        .or_else(|_| std::env::var("DESKTOP_SESSION"))
+        .unwrap_or_default()
+        .to_lowercase();
+
+    let schemas: &[&str] = if desktop.contains("cinnamon") {
+        &["org.cinnamon.desktop.interface", "org.gnome.desktop.interface", "org.mate.interface"]
+    } else if desktop.contains("mate") {
+        &["org.mate.interface", "org.cinnamon.desktop.interface", "org.gnome.desktop.interface"]
+    } else {
+        &["org.gnome.desktop.interface", "org.cinnamon.desktop.interface", "org.mate.interface"]
+    };
+
+    for &schema in schemas {
+        if let Ok(out) = std::process::Command::new("gsettings")
+            .args(["get", schema, "cursor-size"])
+            .output()
+        {
+            if out.status.success() {
+                let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if let Ok(sz) = s.parse::<u32>() {
+                    if sz > 0 {
+                        return Some(sz);
+                    }
+                }
+            }
+        }
+    }
+
+    // Fallback: XFCE
+    if let Ok(out) = std::process::Command::new("xfconf-query")
+        .args(["-c", "xsettings", "-p", "/Gtk/CursorThemeSize"])
+        .output()
+    {
+        if out.status.success() {
+            let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+            if let Ok(sz) = s.parse::<u32>() {
+                if sz > 0 {
+                    return Some(sz);
+                }
+            }
+        }
+    }
+
+    // Fallback: KDE Plasma
+    for cmd in &["kreadconfig6", "kreadconfig5"] {
+        if let Ok(out) = std::process::Command::new(cmd)
+            .args(["--group", "Mouse", "--key", "cursorSize"])
+            .output()
+        {
+            if out.status.success() {
+                let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if let Ok(sz) = s.parse::<u32>() {
+                    if sz > 0 {
+                        return Some(sz);
+                    }
+                }
+            }
+        }
+    }
+
+    None
+}
+
+#[cfg(target_os = "linux")]
 pub fn init_linux_cursor_env(is_default_player: bool) {
     init_linux_desktop_entry(is_default_player);
     if is_default_player {
         let _ = set_as_default_video_player();
     }
 
-    if std::env::var_os("XCURSOR_SIZE").is_none() {
-        let size = std::process::Command::new("gsettings")
-            .args(["get", "org.gnome.desktop.interface", "cursor-size"])
-            .output()
-            .or_else(|_| {
-                std::process::Command::new("gsettings")
-                    .args(["get", "org.cinnamon.desktop.interface", "cursor-size"])
-                    .output()
-            })
-            .ok()
-            .and_then(|out| {
-                let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
-                s.parse::<u32>().ok()
-            });
+    // 1. Determine cursor theme:
+    // Respect explicit override WAZOO_CURSOR_THEME if set.
+    // Otherwise, detect from active desktop environment (Cinnamon, GNOME, KDE, MATE, XFCE).
+    // If detected, apply it to XCURSOR_THEME so winit/libXcursor matches the desktop UI.
+    let theme = std::env::var("WAZOO_CURSOR_THEME")
+        .ok()
+        .filter(|t| !t.trim().is_empty())
+        .or_else(detect_desktop_cursor_theme);
 
-        if let Some(sz) = size {
-            if sz > 0 {
-                // SAFETY: Setting environment variables at startup before background worker threads run.
-                unsafe {
-                    std::env::set_var("XCURSOR_SIZE", sz.to_string());
-                }
-            }
+    if let Some(th) = theme {
+        // SAFETY: Setting environment variables at startup before background worker threads run.
+        unsafe {
+            std::env::set_var("XCURSOR_THEME", th);
         }
     }
 
-    if std::env::var_os("XCURSOR_THEME").is_none() {
-        let theme = std::process::Command::new("gsettings")
-            .args(["get", "org.gnome.desktop.interface", "cursor-theme"])
-            .output()
-            .or_else(|_| {
-                std::process::Command::new("gsettings")
-                    .args(["get", "org.cinnamon.desktop.interface", "cursor-theme"])
-                    .output()
-            })
-            .ok()
-            .and_then(|out| {
-                let s = String::from_utf8_lossy(&out.stdout)
-                    .trim()
-                    .trim_matches('\'')
-                    .to_string();
-                if s.is_empty() { None } else { Some(s) }
-            });
+    // 2. Determine cursor size:
+    // Respect explicit override WAZOO_CURSOR_SIZE if set.
+    // Otherwise, detect from active desktop environment.
+    let size = std::env::var("WAZOO_CURSOR_SIZE")
+        .ok()
+        .and_then(|s| s.parse::<u32>().ok())
+        .filter(|&sz| sz > 0)
+        .or_else(detect_desktop_cursor_size);
 
-        if let Some(th) = theme {
+    if let Some(sz) = size {
+        if sz > 0 {
             // SAFETY: Setting environment variables at startup before background worker threads run.
             unsafe {
-                std::env::set_var("XCURSOR_THEME", th);
+                std::env::set_var("XCURSOR_SIZE", sz.to_string());
             }
         }
     }
