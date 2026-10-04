@@ -9,7 +9,27 @@
 
 use crate::app::PlayerNavHistory;
 use std::ops::{Deref, DerefMut};
+use std::time::Duration;
 use wazoo_media::{PlayerId, VideoHandle};
+
+/// Tracks debounced keyboard-driven relative seeking state.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SeekDebounce {
+    /// Starting playback position in seconds before this debounce sequence began
+    pub start_secs: f64,
+    /// The target playback position in seconds
+    pub target_secs: f64,
+    /// Number of ticks remaining before flushing the seek command to the media backend
+    pub ticks_remaining: usize,
+}
+
+impl SeekDebounce {
+    /// Returns the net accumulated seek offset in seconds from the starting position.
+    #[inline]
+    pub fn accumulated_secs(&self) -> f64 {
+        self.target_secs - self.start_secs
+    }
+}
 
 /// Encapsulates all state pertaining to a single active player in the application.
 #[derive(Debug)]
@@ -30,6 +50,8 @@ pub struct AppPlayer {
     pub is_cube: bool,
     /// Whether this player was paused before entering desktop overlay mode
     pub was_paused_before_desktop: bool,
+    /// Debounced relative seek state (accumulated delta and target position)
+    pub seek_debounce: Option<SeekDebounce>,
 }
 
 pub type Player = AppPlayer;
@@ -46,6 +68,7 @@ impl AppPlayer {
             flip: crate::state::FlipState::new(wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS),
             is_cube: false,
             was_paused_before_desktop: false,
+            seek_debounce: None,
         }
     }
 
@@ -60,6 +83,7 @@ impl AppPlayer {
             flip: crate::state::FlipState::new(wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS),
             is_cube: true,
             was_paused_before_desktop: false,
+            seek_debounce: None,
         }
     }
 
@@ -82,6 +106,43 @@ impl AppPlayer {
     #[inline]
     pub fn is_loading(&self) -> bool {
         self.is_loading
+    }
+
+    /// Returns the current playback position, taking any pending debounced seek target into account.
+    #[inline]
+    pub fn position(&self) -> Duration {
+        if let Some(ref deb) = self.seek_debounce {
+            Duration::from_secs_f64(deb.target_secs)
+        } else {
+            self.handle.position()
+        }
+    }
+
+    /// Advances seek debounce countdown by 1 tick and flushes if expired.
+    pub fn tick_seek_debounce(&mut self) {
+        if let Some(mut deb) = self.seek_debounce {
+            if deb.ticks_remaining > 0 {
+                deb.ticks_remaining -= 1;
+                if deb.ticks_remaining == 0 {
+                    self.seek_debounce = None;
+                    self.handle.seek(Duration::from_secs_f64(deb.target_secs));
+                } else {
+                    self.seek_debounce = Some(deb);
+                }
+            }
+        }
+    }
+
+    /// Flushes any pending debounced seek to the underlying media handle.
+    pub fn flush_seek_debounce(&mut self) {
+        if let Some(deb) = self.seek_debounce.take() {
+            self.handle.seek(Duration::from_secs_f64(deb.target_secs));
+        }
+    }
+
+    /// Cancels any pending debounced seek without applying it.
+    pub fn cancel_seek_debounce(&mut self) {
+        self.seek_debounce = None;
     }
 }
 

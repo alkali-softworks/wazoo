@@ -45,6 +45,8 @@ pub const DROPDOWN_MENU_SLIDE_TICKS: usize = 9;
 pub const FILE_PICKER_DEBOUNCE_TICKS: usize = 12;
 /// Playback settings (equalizer/speed) slider debounce delay: ~200ms at 60 FPS (12 ticks)
 pub const PLAYBACK_SETTINGS_DEBOUNCE_TICKS: usize = 12;
+/// Keyboard relative seek debounce delay: ~200ms at 60 FPS (12 ticks)
+pub const SEEK_DEBOUNCE_TICKS: usize = 12;
 /// Maximum number of videos retained in the session play history drawer
 pub const MAX_PLAY_HISTORY_ENTRIES: usize = 1000;
 /// Maximum number of navigation entries retained per player

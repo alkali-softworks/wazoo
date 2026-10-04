@@ -373,6 +373,10 @@ impl WazooApp {
                 self.apply_playback_settings();
             }
         }
+
+        for p in &mut self.players {
+            p.tick_seek_debounce();
+        }
     }
 
     /// Renders new video frames on active player handles, clearing loading state upon completion.
