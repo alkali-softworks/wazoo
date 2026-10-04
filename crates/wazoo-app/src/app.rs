@@ -1448,6 +1448,9 @@ impl WazooApp {
                 iced::Event::Mouse(iced::mouse::Event::ButtonReleased(
                     iced::mouse::Button::Left,
                 )) => Some(Message::LeftClickReleased),
+                iced::Event::Mouse(iced::mouse::Event::ButtonReleased(
+                    iced::mouse::Button::Right,
+                )) => Some(Message::RightClickReleased),
                 iced::Event::Window(iced::window::Event::Resized(size)) => {
                     Some(Message::WindowResized(window_id, size))
                 }

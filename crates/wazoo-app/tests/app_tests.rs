@@ -1759,6 +1759,95 @@ fn test_fit_window_multi_player_layouts() {
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
 
+#[test]
+fn test_calculate_alt_resize_direction_all_zones() {
+    let (mut app, _) = new_test_app();
+    app.settings.window_bounds.width = 900;
+    app.settings.window_bounds.height = 600;
+
+    // Top row (row = 0)
+    app.window.cursor_position = iced::Point::new(100.0, 100.0);
+    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::NorthWest));
+
+    app.window.cursor_position = iced::Point::new(450.0, 100.0);
+    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::North));
+
+    app.window.cursor_position = iced::Point::new(800.0, 100.0);
+    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::NorthEast));
+
+    // Middle row (row = 1) - Outer edges
+    app.window.cursor_position = iced::Point::new(100.0, 300.0);
+    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::West));
+
+    app.window.cursor_position = iced::Point::new(800.0, 300.0);
+    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::East));
+
+    // Bottom row (row = 2)
+    app.window.cursor_position = iced::Point::new(100.0, 500.0);
+    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::SouthWest));
+
+    app.window.cursor_position = iced::Point::new(450.0, 500.0);
+    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::South));
+
+    app.window.cursor_position = iced::Point::new(800.0, 500.0);
+    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::SouthEast));
+
+    // Center zone (row = 1, col = 1) delegates to nearest quadrant
+    // Top-left of center: x < 450, y < 300 -> NorthWest
+    app.window.cursor_position = iced::Point::new(350.0, 250.0);
+    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::NorthWest));
+
+    // Top-right of center: x >= 450, y < 300 -> NorthEast
+    app.window.cursor_position = iced::Point::new(550.0, 250.0);
+    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::NorthEast));
+
+    // Bottom-left of center: x < 450, y >= 300 -> SouthWest
+    app.window.cursor_position = iced::Point::new(350.0, 350.0);
+    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::SouthWest));
+
+    // Bottom-right of center: x >= 450, y >= 300 -> SouthEast
+    app.window.cursor_position = iced::Point::new(550.0, 350.0);
+    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::SouthEast));
+}
+
+#[test]
+fn test_alt_drag_resize_and_right_click_interception() {
+    let (mut app, _) = new_test_app();
+    let win_id = iced::window::Id::unique();
+
+    // 1. Regular right-click without Alt opens context menu modal
+    app.window.is_alt_pressed = false;
+    assert!(!app.modals.menu);
+    let _ = app.update(Message::RightClickPressed(win_id));
+    assert!(app.modals.menu);
+    assert_eq!(app.window.id, Some(win_id));
+
+    // Close menu modal
+    app.modals.menu = false;
+
+    // 2. Alt + Right-click intercepts menu, triggers AltDragResize instead
+    app.window.is_alt_pressed = true;
+    app.settings.window_bounds.width = 900;
+    app.settings.window_bounds.height = 600;
+    app.window.cursor_position = iced::Point::new(800.0, 500.0); // SouthEast corner
+
+    let _ = app.update(Message::RightClickPressed(win_id));
+    assert!(!app.modals.menu, "Context menu modal should NOT be opened when Alt is pressed");
+    assert!(app.window.is_resizing(), "Alt + Right-click should mark window as resizing");
+    assert!(app.window.last_resize_time.is_some());
+
+    // 3. RightClickReleased resets resize state immediately
+    let _ = app.update(Message::RightClickReleased);
+    assert!(!app.window.is_resizing(), "RightClickReleased should reset is_resizing immediately");
+    assert!(app.window.last_resize_time.is_none());
+
+    // 4. AltDragResize in fullscreen mode is suppressed
+    app.window.is_fullscreen = true;
+    let _ = app.update(Message::AltDragResize);
+    assert!(!app.window.is_resizing(), "Resize should not trigger when in fullscreen mode");
+}
+
+
 
 
 

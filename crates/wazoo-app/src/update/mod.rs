@@ -157,6 +157,7 @@ impl WazooApp {
             | Message::FitWindow
             | Message::DragWindow
             | Message::DragResize(_)
+            | Message::AltDragResize
             | Message::CloseApp
             | Message::ModifiersChanged(_)
             | Message::KeyPressed(_, _)
@@ -165,6 +166,7 @@ impl WazooApp {
             | Message::CursorLeft
             | Message::TitleBarPressed
             | Message::LeftClickReleased
+            | Message::RightClickReleased
             | Message::RightClickPressed(_)
             | Message::ToggleDropdownMenu
             | Message::CloseDropdownMenu

@@ -328,12 +328,22 @@ impl WazooApp {
                 }
             }
             Message::DragResize(direction) => {
+                if self.window.is_fullscreen {
+                    return Task::none();
+                }
                 self.window.mark_resized();
                 if let Some(id) = self.window.id {
                     iced::window::drag_resize(id, direction)
                 } else {
                     Task::none()
                 }
+            }
+            Message::AltDragResize => {
+                if self.window.is_fullscreen {
+                    return Task::none();
+                }
+                let direction = self.calculate_alt_resize_direction();
+                self.update(Message::DragResize(direction))
             }
             Message::CloseApp => {
                 self.save_session_state();
@@ -438,11 +448,27 @@ impl WazooApp {
             }
             Message::RightClickPressed(win_id) => {
                 self.window.id = Some(win_id);
+                if self.window.is_alt_pressed {
+                    return self.update(Message::AltDragResize);
+                }
                 self.modals.menu = true;
                 self.titlebar.show_dropdown_menu = false;
                 self.hovered_player_id = None;
                 self.overlay.ticks = 0;
                 self.overlay.fade_in_ticks = 0;
+                Task::none()
+            }
+            Message::RightClickReleased => {
+                let was_resizing = self.window.is_resizing();
+                self.window.last_resize_time = None;
+                if was_resizing {
+                    self.update_player_frames();
+                    self.sync_scroll_item_heights();
+                }
+                if self.window.bounds_dirty {
+                    self.window.bounds_dirty = false;
+                    let _ = self.config_mgr.save_settings(&self.settings);
+                }
                 Task::none()
             }
             Message::ToggleDropdownMenu => {
@@ -592,6 +618,56 @@ impl WazooApp {
                     self.titlebar.slide_ticks = 0;
                 }
             }
+        }
+    }
+
+    /// Calculates the drag-resize direction based on cursor position within the window.
+    /// Divides the window into a 3x3 grid (9 zones) matching Cinnamon / Linux window manager conventions:
+    /// - Corners resize diagonally (NorthWest, NorthEast, SouthWest, SouthEast).
+    /// - Outer edges resize cardinally (North, South, East, West).
+    /// - Center zone delegates to the nearest quadrant diagonal.
+    pub fn calculate_alt_resize_direction(&self) -> iced::window::Direction {
+        let w = (self.settings.window_bounds.width as f32).max(1.0);
+        let h = (self.settings.window_bounds.height as f32).max(1.0);
+        let pos = self.window.cursor_position;
+
+        let col = if pos.x < w / 3.0 {
+            0 // Left
+        } else if pos.x < 2.0 * w / 3.0 {
+            1 // Center
+        } else {
+            2 // Right
+        };
+
+        let row = if pos.y < h / 3.0 {
+            0 // Top
+        } else if pos.y < 2.0 * h / 3.0 {
+            1 // Middle
+        } else {
+            2 // Bottom
+        };
+
+        match (row, col) {
+            (0, 0) => iced::window::Direction::NorthWest,
+            (0, 1) => iced::window::Direction::North,
+            (0, 2) => iced::window::Direction::NorthEast,
+            (1, 0) => iced::window::Direction::West,
+            (1, 2) => iced::window::Direction::East,
+            (2, 0) => iced::window::Direction::SouthWest,
+            (2, 1) => iced::window::Direction::South,
+            (2, 2) => iced::window::Direction::SouthEast,
+            (1, 1) => {
+                // In the center 1/9th, pick the quadrant of the window the cursor is in
+                let is_left = pos.x < w / 2.0;
+                let is_top = pos.y < h / 2.0;
+                match (is_top, is_left) {
+                    (true, true) => iced::window::Direction::NorthWest,
+                    (true, false) => iced::window::Direction::NorthEast,
+                    (false, true) => iced::window::Direction::SouthWest,
+                    (false, false) => iced::window::Direction::SouthEast,
+                }
+            }
+            _ => iced::window::Direction::SouthEast,
         }
     }
 }
