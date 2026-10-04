@@ -100,6 +100,8 @@ fn test_cube_screensaver_bounce_physics() {
         player_index: 0,
         player_id: None,
         bounce_count: 0,
+        is_ready: true,
+        ready_ticks: 0,
     };
 
     state.cubes.push(right_cube);
@@ -232,21 +234,46 @@ fn test_cube_scale_and_velocity_persist_to_settings() {
 fn test_cube_focus_green_outline_flash() {
     let (mut app, _) = wazoo_app::app::new_test_app();
 
+    let tmp = std::env::temp_dir().join(format!(
+        "wazoo_cube_focus_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&tmp);
+    let f1 = tmp.join("v1.mp4");
+    let f2 = tmp.join("v2.mp4");
+    let _ = std::fs::File::create(&f1);
+    let _ = std::fs::File::create(&f2);
+
+    app.available_videos = vec![
+        wazoo_core::VideoRecord::new(1, "S1", f1.to_string_lossy()),
+        wazoo_core::VideoRecord::new(2, "S2", f2.to_string_lossy()),
+    ];
+
+    let _ = app.update(wazoo_app::message::Message::AddNewPlayer);
+
     // Toggle cube screensaver
     let _ = app.update(wazoo_app::message::Message::ToggleCubeScreensaver);
     assert!(app.cube.enabled);
     assert_eq!(app.cube.cubes.len(), 1);
+    // Spawning must not trigger jarring green focus border flash
+    assert_eq!(app.overlay.focus_border_ticks, 0);
+
+    // Verify rendering cube overlay cleanly without green outline on spawn
+    {
+        let _view_clean = app.view_cube_overlay();
+    }
+
+    // Cycle focus through players using Tab -> flashes green focus outline
+    let _ = app.update(wazoo_app::message::Message::CycleFocusedPlayer);
     assert!(app.overlay.focus_border_ticks > 0);
 
     // Verify rendering cube overlay while flashing focus
     {
         let _view_flashing = app.view_cube_overlay();
     }
-
-    // Cycle focus through players using Tab
-    let _ = app.update(wazoo_app::message::Message::CycleFocusedPlayer);
-    let _ = app.update(wazoo_app::message::Message::CycleFocusedPlayer);
-    assert!(app.overlay.focus_border_ticks > 0);
 
     // Simulate overlay ticks fading out focus border
     for _ in 0..30 {
@@ -902,5 +929,46 @@ fn test_entering_mode_9_maximizes_window_and_restores_on_exit() {
     assert!(!app.window.is_maximized, "Window must unmaximize when exiting Mode 9");
     assert_eq!(app.settings.window_bounds.width, 960, "Pre-desktop window width restored");
     assert_eq!(app.settings.window_bounds.height, 540, "Pre-desktop window height restored");
+}
+
+#[test]
+fn test_cube_avoids_spawning_until_video_feed_is_ready() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    // Spawn a cube with a mock player ID that has not yet decoded a frame
+    let w = 1920.0;
+    let h = 1080.0;
+    app.cube.spawn_cube_with_player(w, h, 0, Some(999));
+    assert!(app.cube.enabled);
+    assert_eq!(app.cube.cubes.len(), 1);
+
+    // Initial state: cube is not ready yet because video frame has not been decoded
+    assert!(!app.cube.cubes[0].is_ready);
+
+    let initial_x = app.cube.cubes[0].x;
+    let initial_y = app.cube.cubes[0].y;
+
+    // Physics tick should NOT advance the cube while it's waiting for its video feed
+    app.cube.tick(w, h);
+    assert_eq!(app.cube.cubes[0].x, initial_x, "Cube position should not advance before ready");
+    assert_eq!(app.cube.cubes[0].y, initial_y, "Cube position should not advance before ready");
+
+    // Overlay view should NOT output instances for unready cubes (avoiding 128x128 GPU allocation hitch)
+    {
+        let _view = app.view_cube_overlay();
+    }
+
+    // Simulate ticks until readiness timeout or decoded frame
+    for _ in 0..65 {
+        let _ = app.update(wazoo_app::message::Message::Tick);
+    }
+
+    // Now cube is ready to go!
+    assert!(app.cube.cubes[0].is_ready, "Cube must become ready once video is ready or after timeout");
+    assert_eq!(app.overlay.focus_border_ticks, 0, "Spawning must not flash focus border");
+
+    // Physics tick now advances the cube smoothly
+    app.cube.tick(w, h);
+    assert_ne!(app.cube.cubes[0].x, initial_x, "Cube advances position once ready");
 }
 

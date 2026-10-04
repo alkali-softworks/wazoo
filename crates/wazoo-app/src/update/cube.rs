@@ -30,7 +30,6 @@ impl WazooApp {
                         self.restore_grid_players_to_target(self.settings.player_count);
                     }
                     self.spawn_new_cube();
-                    self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
                     let key = self.settings.keybinds.menu_hint(&self.settings.keybinds.toggle_cube);
                     self.overlay
                         .show_toast(self.t_with("toast.cube_added", &[("key", &key)]));
@@ -116,7 +115,6 @@ impl WazooApp {
                 self.modals.menu = false;
                 self.titlebar.show_dropdown_menu = false;
                 self.spawn_new_cube();
-                self.overlay.focus_border_ticks = crate::app::FOCUS_BORDER_TICKS;
                 let key = self.settings.keybinds.menu_hint(&self.settings.keybinds.toggle_cube);
                 let count_str = self.cube.cubes.len().to_string();
                 self.overlay.show_toast(self.t_with(
@@ -188,6 +186,27 @@ impl WazooApp {
         if self.cube.is_present() {
             let w = self.settings.window_bounds.width as f32;
             let h = self.settings.window_bounds.height as f32;
+
+            // Activate pending cubes only once their initial video frame has decoded
+            for cube in &mut self.cube.cubes {
+                if !cube.is_ready {
+                    cube.ready_ticks += 1;
+                    let ready = if let Some(pid) = cube.player_id {
+                        if let Some(p) = self.players.player(pid) {
+                            p.handle.has_decoded_frame()
+                        } else {
+                            false
+                        }
+                    } else {
+                        true
+                    };
+
+                    if ready || cube.ready_ticks >= 60 {
+                        cube.is_ready = true;
+                    }
+                }
+            }
+
             self.cube.tick(w, h);
         }
     }
@@ -203,7 +222,16 @@ impl WazooApp {
             if let Some(pos) = self.players.player_index(pid) {
                 self.focused_idx = pos;
             }
+            if let Some(p) = self.players.player(pid) {
+                if p.handle.has_decoded_frame() {
+                    if let Some(cube) = self.cube.cubes.last_mut() {
+                        cube.is_ready = true;
+                    }
+                }
+            }
         }
+        // Do not flash the green focus outline when spawning a cube
+        self.overlay.focus_border_ticks = 0;
     }
 
     /// Completely dismisses all 3D cubes, cleans up their players, and exits Mode 9 if active.
