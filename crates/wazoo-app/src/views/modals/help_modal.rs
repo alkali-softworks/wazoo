@@ -11,32 +11,92 @@ use crate::message::Message;
 use crate::theme;
 use iced::{
     Alignment, Element, Length, Theme,
-    widget::{Space, button, column, container, row, scrollable, text},
+    widget::{Space, Stack, button, column, container, row, scrollable, text, text_input},
 };
-use wazoo_core::{HelpCategory, KeyDisplay};
+use wazoo_core::{HelpCategory, HelpShortcut, KeyDisplay};
 
 impl WazooApp {
     pub fn view_help_modal(&self) -> Element<'_, Message> {
         let or_text = self.t("common.or");
         let categories = self.settings.keybinds.help_categories(|k| self.t(k));
+        let query = self.modals.help_search.trim().to_lowercase();
+        let search_is_empty = query.is_empty();
 
-        let mut left_col = column![].spacing(12).width(Length::FillPortion(1));
-        let mut right_col = column![].spacing(12).width(Length::FillPortion(1));
+        // Filter categories according to the search query
+        let mut matching_categories: Vec<HelpCategory> = Vec::new();
+        for cat in &categories {
+            let filtered_shortcuts: Vec<HelpShortcut> = cat
+                .shortcuts
+                .iter()
+                .filter(|item| shortcut_matches(item, &cat.title, &query, &or_text))
+                .cloned()
+                .collect();
 
-        // Distribute categories systematically:
-        // Left Column: Playback & Navigation, Grid & Multi-Player
-        // Right Column: Panels & Drawers, Audio & Display, System & Window
-        for (idx, cat) in categories.iter().enumerate() {
-            if idx == 0 || idx == 2 {
-                left_col = left_col.push(render_category_card(cat, &or_text));
-            } else {
-                right_col = right_col.push(render_category_card(cat, &or_text));
+            if !filtered_shortcuts.is_empty() {
+                matching_categories.push(HelpCategory {
+                    title: cat.title.clone(),
+                    icon: cat.icon,
+                    shortcuts: filtered_shortcuts,
+                });
             }
         }
 
-        let columns_row = row![left_col, right_col].spacing(12);
+        let content_el: Element<'_, Message> = if matching_categories.is_empty() {
+            container(
+                column![
+                    text("🔍").size(26),
+                    text(format!(
+                        "No shortcuts matching \"{}\"",
+                        self.modals.help_search.trim()
+                    ))
+                    .size(13)
+                    .color(theme::COLOR_TEXT_MUTED),
+                    button(text(self.t("search.clear_search")).size(12))
+                        .style(theme::folder_chip_style(false))
+                        .on_press(Message::ClearHelpSearch)
+                        .padding([4, 12]),
+                ]
+                .spacing(10)
+                .align_x(Alignment::Center),
+            )
+            .width(Length::Fill)
+            .height(Length::Fixed(300.0))
+            .center_x(Length::Fill)
+            .center_y(Length::Fill)
+            .into()
+        } else if matching_categories.len() == 1 {
+            // When only a single category matches, display it full width
+            column![render_category_card(&matching_categories[0], &or_text)]
+                .width(Length::Fill)
+                .into()
+        } else {
+            let mut left_col = column![].spacing(12).width(Length::FillPortion(1));
+            let mut right_col = column![].spacing(12).width(Length::FillPortion(1));
 
-        let scrollable_content = container(columns_row)
+            if search_is_empty {
+                // Default systemic 2-column layout (Playback + Layout on Left; Drawers + Audio + System on Right)
+                for (idx, cat) in categories.iter().enumerate() {
+                    if idx == 0 || idx == 2 {
+                        left_col = left_col.push(render_category_card(cat, &or_text));
+                    } else {
+                        right_col = right_col.push(render_category_card(cat, &or_text));
+                    }
+                }
+            } else {
+                // Filtered results: distribute evenly across columns
+                for (idx, cat) in matching_categories.iter().enumerate() {
+                    if idx % 2 == 0 {
+                        left_col = left_col.push(render_category_card(cat, &or_text));
+                    } else {
+                        right_col = right_col.push(render_category_card(cat, &or_text));
+                    }
+                }
+            }
+
+            row![left_col, right_col].spacing(12).into()
+        };
+
+        let scrollable_content = container(content_el)
             .padding(iced::Padding {
                 top: 0.0,
                 right: 16.0,
@@ -44,6 +104,44 @@ impl WazooApp {
                 left: 2.0,
             })
             .width(Length::Fill);
+
+        // Compact search input in header
+        let search_has_text = !self.modals.help_search.is_empty();
+        let search_input = text_input(&self.t("search.placeholder"), &self.modals.help_search)
+            .id("help_search_input")
+            .on_input(Message::HelpSearchChanged)
+            .style(theme::dark_input_style)
+            .size(12)
+            .padding(iced::Padding {
+                top: 5.0,
+                right: if search_has_text { 24.0 } else { 8.0 },
+                bottom: 5.0,
+                left: 8.0,
+            })
+            .width(Length::Fixed(180.0));
+
+        let mut search_stack_children: Vec<Element<'_, Message>> = vec![search_input.into()];
+
+        if search_has_text {
+            let clear_btn = button(text("✕").size(9))
+                .style(theme::search_clear_button_style)
+                .on_press(Message::ClearHelpSearch)
+                .padding([1, 4]);
+
+            let btn_container = container(clear_btn)
+                .width(Length::Fixed(180.0))
+                .height(Length::Fill)
+                .align_x(iced::alignment::Horizontal::Right)
+                .align_y(Alignment::Center)
+                .padding(iced::Padding {
+                    right: 4.0,
+                    ..Default::default()
+                });
+
+            search_stack_children.push(btn_container.into());
+        }
+
+        let search_bar = Stack::with_children(search_stack_children);
 
         let header_row = row![
             row![
@@ -74,9 +172,14 @@ impl WazooApp {
             .spacing(10)
             .align_y(Alignment::Center),
             Space::new().width(Length::Fill),
-            button(text("✕").size(14))
-                .style(theme::window_control_button_style)
-                .on_press(Message::CloseHelpModal),
+            row![
+                search_bar,
+                Space::new().width(Length::Fixed(8.0)),
+                button(text("✕").size(14))
+                    .style(theme::window_control_button_style)
+                    .on_press(Message::CloseHelpModal),
+            ]
+            .align_y(Alignment::Center),
         ]
         .align_y(Alignment::Center);
 
@@ -95,6 +198,67 @@ impl WazooApp {
 
         Self::wrap_modal_with_backdrop(card, Message::CloseHelpModal)
     }
+}
+
+fn shortcut_matches(
+    item: &HelpShortcut,
+    cat_title: &str,
+    query: &str,
+    or_text: &str,
+) -> bool {
+    if query.is_empty() {
+        return true;
+    }
+
+    // 1. Description contains query (e.g. "mute", "volume", "fullscreen")
+    if item.description.to_lowercase().contains(query) {
+        return true;
+    }
+
+    // 2. Exact or substring key match
+    match &item.key {
+        KeyDisplay::Single(k) => {
+            if k.to_lowercase() == query || k.to_lowercase().contains(query) {
+                return true;
+            }
+        }
+        KeyDisplay::Pair(k1, k2) => {
+            if k1.to_lowercase() == query
+                || k2.to_lowercase() == query
+                || format!("{} {}", k1, k2).to_lowercase().contains(query)
+            {
+                return true;
+            }
+        }
+        KeyDisplay::Alternatives(keys) => {
+            if keys
+                .iter()
+                .any(|k| k.to_lowercase() == query || k.to_lowercase().contains(query))
+            {
+                return true;
+            }
+        }
+        KeyDisplay::Combo(keys) => {
+            if keys
+                .iter()
+                .any(|k| k.to_lowercase() == query || k.to_lowercase().contains(query))
+                || item
+                    .key
+                    .to_display_string(or_text)
+                    .to_lowercase()
+                    .contains(query)
+            {
+                return true;
+            }
+        }
+    }
+
+    // 3. Category title match (for queries >= 3 chars to avoid single-letter false positives)
+    if query.len() >= 3 && cat_title.to_lowercase().contains(query) {
+        return true;
+    }
+
+    false
 }
 
 fn view_keycap(key_str: &str) -> Element<'static, Message> {

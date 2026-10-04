@@ -13,6 +13,7 @@ pub struct ModalState {
     pub settings: bool,
     pub settings_tab: SettingsTab,
     pub help: bool,
+    pub help_search: String,
     pub menu: bool,
     pub bookmarks: bool,
     pub playback_settings_debounce_ticks: usize,
@@ -31,6 +32,7 @@ impl ModalState {
         self.search = false;
         self.settings = false;
         self.help = false;
+        self.help_search.clear();
         self.bookmarks = false;
         self.menu = false;
     }

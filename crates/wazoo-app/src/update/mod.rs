@@ -307,6 +307,8 @@ impl WazooApp {
             | Message::OpenAlkaliWebsite
             | Message::OpenHelpModal
             | Message::CloseHelpModal
+            | Message::HelpSearchChanged(_)
+            | Message::ClearHelpSearch
             | Message::ToggleBookmarksModal
             | Message::CloseBookmarksModal
             | Message::EscapePressed
