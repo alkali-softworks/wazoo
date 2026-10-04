@@ -10,8 +10,8 @@ use crate::cursor;
 use crate::message::Message;
 use crate::theme;
 use iced::{
-    Alignment, Element, Length, Theme,
-    widget::{Space, button, column, container, row, slider, text},
+    Alignment, Element, Length,
+    widget::{Space, button, column, row, slider, text},
 };
 
 pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
@@ -95,135 +95,30 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     ]
     .spacing(6);
 
-    let default_player_toggle = {
-        let is_default = app.settings.is_default_player;
-        let icon = if is_default { "✓ " } else { "" };
-        let label = format!("{}{}", icon, app.t("settings.default_player"));
-        button(text(label).size(12).font(if is_default {
-            theme::FONT_BOLD
-        } else {
-            Default::default()
-        }))
-        .style(theme::folder_chip_style(is_default))
-        .on_press(Message::ToggleDefaultPlayer)
-        .padding([6, 14])
+    let is_pinned = app.settings.is_always_on_top;
+    let always_on_top_group = system_toggle_button(
+        app,
+        if is_pinned { "📌" } else { "📍" },
+        app.t("settings.always_on_top"),
+        app.t("settings.always_on_top_desc"),
+        is_pinned,
+        Message::ToggleAlwaysOnTop,
+    );
+
+    let is_default = app.settings.is_default_player;
+    let default_player_desc = if is_default {
+        app.t("settings.default_player_desc_active")
+    } else {
+        app.t("settings.default_player_desc")
     };
-
-    let default_player_group = container(
-        row![
-            column![
-                text(app.t("settings.default_player"))
-                    .size(14)
-                    .color(iced::Color::WHITE),
-                text(if app.settings.is_default_player {
-                    "Associated as default system player for media files"
-                } else {
-                    "Set as default system player for media files"
-                })
-                .size(12)
-                .color(theme::COLOR_TEXT_MUTED),
-            ]
-            .spacing(2)
-            .width(Length::Fill),
-            Space::new().width(Length::Fixed(16.0)),
-            default_player_toggle,
-        ]
-        .align_y(Alignment::Center),
-    )
-    .padding([12, 14])
-    .style(|_theme: &Theme| container::Style {
-        background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
-        border: iced::Border {
-            radius: 6.0.into(),
-            width: 1.0,
-            color: theme::COLOR_BORDER,
-        },
-        ..Default::default()
-    });
-
-    let always_on_top_toggle = {
-        let is_pinned = app.settings.is_always_on_top;
-        let icon = if is_pinned { "✓ " } else { "" };
-        let label = format!("{}{}", icon, app.t("settings.always_on_top"));
-        button(text(label).size(12).font(if is_pinned {
-            theme::FONT_BOLD
-        } else {
-            Default::default()
-        }))
-        .style(theme::folder_chip_style(is_pinned))
-        .on_press(Message::ToggleAlwaysOnTop)
-        .padding([6, 14])
-    };
-
-    let always_on_top_group = container(
-        row![
-            column![
-                text(app.t("settings.always_on_top"))
-                    .size(14)
-                    .color(iced::Color::WHITE),
-                text(app.t("settings.always_on_top_desc"))
-                    .size(12)
-                    .color(theme::COLOR_TEXT_MUTED),
-            ]
-            .spacing(2)
-            .width(Length::Fill),
-            Space::new().width(Length::Fixed(16.0)),
-            always_on_top_toggle,
-        ]
-        .align_y(Alignment::Center),
-    )
-    .padding([12, 14])
-    .style(|_theme: &Theme| container::Style {
-        background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
-        border: iced::Border {
-            radius: 6.0.into(),
-            width: 1.0,
-            color: theme::COLOR_BORDER,
-        },
-        ..Default::default()
-    });
-
-    let standby_player_toggle = {
-        let is_enabled = app.settings.use_standby_player;
-        let icon = if is_enabled { "✓ " } else { "" };
-        let label = format!("{}{}", icon, app.t("settings.standby_player"));
-        button(text(label).size(12).font(if is_enabled {
-            theme::FONT_BOLD
-        } else {
-            Default::default()
-        }))
-        .style(theme::folder_chip_style(is_enabled))
-        .on_press(Message::ToggleStandbyPlayer)
-        .padding([6, 14])
-    };
-
-    let standby_player_group = container(
-        row![
-            column![
-                text(app.t("settings.standby_player"))
-                    .size(14)
-                    .color(iced::Color::WHITE),
-                text(app.t("settings.standby_player_desc"))
-                    .size(12)
-                    .color(theme::COLOR_TEXT_MUTED),
-            ]
-            .spacing(2)
-            .width(Length::Fill),
-            Space::new().width(Length::Fixed(16.0)),
-            standby_player_toggle,
-        ]
-        .align_y(Alignment::Center),
-    )
-    .padding([12, 14])
-    .style(|_theme: &Theme| container::Style {
-        background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
-        border: iced::Border {
-            radius: 6.0.into(),
-            width: 1.0,
-            color: theme::COLOR_BORDER,
-        },
-        ..Default::default()
-    });
+    let default_player_group = system_toggle_button(
+        app,
+        if is_default { "🎬" } else { "🎞️" },
+        app.t("settings.default_player"),
+        default_player_desc,
+        is_default,
+        Message::ToggleDefaultPlayer,
+    );
 
     let flip_interval_str = format!("{}s", app.settings.flip_interval_secs);
     let flip_interval_active =
@@ -254,6 +149,16 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     ]
     .spacing(6);
 
+    let is_standby = app.settings.use_standby_player;
+    let standby_player_group = system_toggle_button(
+        app,
+        if is_standby { "⚡" } else { "💤" },
+        app.t("settings.standby_player"),
+        app.t("settings.standby_player_desc"),
+        is_standby,
+        Message::ToggleStandbyPlayer,
+    );
+
     column![
         always_on_top_group,
         opacity_group,
@@ -264,5 +169,82 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         standby_player_group,
     ]
     .spacing(16)
+    .into()
+}
+
+fn system_toggle_button<'a>(
+    app: &'a WazooApp,
+    icon: &'static str,
+    title: String,
+    desc: String,
+    is_active: bool,
+    toggle_msg: Message,
+) -> Element<'a, Message> {
+    let badge_text = if is_active {
+        app.t("settings.badge_on")
+    } else {
+        app.t("settings.badge_off")
+    };
+
+    cursor::PointerCursor::new(
+        button(
+            row![
+                text(icon).size(16),
+                column![
+                    text(title)
+                        .size(13)
+                        .font(theme::FONT_BOLD)
+                        .color(if is_active {
+                            theme::COLOR_PRIMARY
+                        } else {
+                            iced::Color::WHITE
+                        }),
+                    text(desc).size(11).color(theme::COLOR_TEXT_MUTED),
+                ]
+                .spacing(2),
+                Space::new().width(Length::Fill),
+                badge_with_reset(
+                    badge_text,
+                    is_active,
+                    toggle_msg.clone(),
+                ),
+            ]
+            .spacing(12)
+            .align_y(Alignment::Center),
+        )
+        .style(move |_theme: &iced::Theme, status| {
+            let bg = if is_active {
+                match status {
+                    button::Status::Hovered => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.22),
+                    button::Status::Pressed => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.3),
+                    _ => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.12),
+                }
+            } else {
+                match status {
+                    button::Status::Hovered => theme::COLOR_BTN_HOVER,
+                    button::Status::Pressed => iced::Color::from_rgb(0.15, 0.15, 0.15),
+                    _ => theme::COLOR_BTN_BG,
+                }
+            };
+            button::Style {
+                background: Some(iced::Background::Color(bg)),
+                text_color: iced::Color::WHITE,
+                border: iced::Border {
+                    radius: 8.0.into(),
+                    width: 1.0,
+                    color: if is_active {
+                        theme::COLOR_PRIMARY
+                    } else {
+                        iced::Color::from_rgb(0.25, 0.25, 0.28)
+                    },
+                },
+                shadow: iced::Shadow::default(),
+                ..Default::default()
+            }
+        })
+        .on_press(toggle_msg)
+        .padding([12, 16])
+        .width(Length::Fill),
+    )
     .into()
 }

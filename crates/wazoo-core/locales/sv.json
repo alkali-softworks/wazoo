@@ -122,7 +122,11 @@
     "fog_filter": "Dimfilter",
     "fog_filter_desc": "Atmosfärisk rullande volymetrisk dimma och molnsimulering",
     "master_filters": "Shaderfilter",
-    "master_filters_desc": "Aktivera eller inaktivera alla aktiva visuella efterbehandlingsshaders"
+    "master_filters_desc": "Aktivera eller inaktivera alla aktiva visuella efterbehandlingsshaders",
+    "default_player_desc": "Ange som standardsystemspelare för mediefiler",
+    "default_player_desc_active": "Associerad som standardsystemspelare för mediefiler",
+    "badge_on": "PÅ",
+    "badge_off": "AV"
   },
   "search": {
     "folder": "Mapp:",

@@ -122,7 +122,11 @@
     "fog_filter": "フォグフィルター",
     "fog_filter_desc": "大気中を漂う立体的な霧と雲のシミュレーション",
     "master_filters": "シェーダーフィルター",
-    "master_filters_desc": "アクティブなすべての視覚的ポストプロセスシェーダーを有効または無効にします"
+    "master_filters_desc": "アクティブなすべての視覚的ポストプロセスシェーダーを有効または無効にします",
+    "default_player_desc": "メディアファイルの既定のシステムプレーヤーとして設定",
+    "default_player_desc_active": "メディアファイルの既定のシステムプレーヤーとして関連付け済み",
+    "badge_on": "オン",
+    "badge_off": "オフ"
   },
   "search": {
     "folder": "フォルダー:",

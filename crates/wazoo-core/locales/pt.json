@@ -122,7 +122,11 @@
     "fog_filter": "Filtro de névoa",
     "fog_filter_desc": "Simulação atmosférica de névoa volumétrica e nuvens",
     "master_filters": "Filtros de sombreador",
-    "master_filters_desc": "Ativar ou desativar todos os sombreadores de pós-processamento visual ativos"
+    "master_filters_desc": "Ativar ou desativar todos os sombreadores de pós-processamento visual ativos",
+    "default_player_desc": "Definir como reprodutor padrão do sistema para arquivos de mídia",
+    "default_player_desc_active": "Associado como reprodutor padrão do sistema para arquivos de mídia",
+    "badge_on": "LIG",
+    "badge_off": "DESL"
   },
   "search": {
     "folder": "Pasta:",

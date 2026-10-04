@@ -122,7 +122,11 @@
     "fog_filter": "Fog Filter",
     "fog_filter_desc": "Atmospheric rolling volumetric mist and cloud simulation",
     "master_filters": "Shader Filters",
-    "master_filters_desc": "Enable or disable all active visual post-processing shaders"
+    "master_filters_desc": "Enable or disable all active visual post-processing shaders",
+    "default_player_desc": "Set as default system player for media files",
+    "default_player_desc_active": "Associated as default system player for media files",
+    "badge_on": "ON",
+    "badge_off": "OFF"
   },
   "search": {
     "folder": "Folder:",

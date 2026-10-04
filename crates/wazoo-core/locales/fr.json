@@ -122,7 +122,11 @@
     "fog_filter": "Filtre de brouillard",
     "fog_filter_desc": "Simulation atmosphérique de brume volumétrique et de nuages",
     "master_filters": "Filtres de shaders",
-    "master_filters_desc": "Activer ou désactiver tous les shaders de post-traitement visuel actifs"
+    "master_filters_desc": "Activer ou désactiver tous les shaders de post-traitement visuel actifs",
+    "default_player_desc": "Définir comme lecteur système par défaut pour les fichiers multimédias",
+    "default_player_desc_active": "Associé comme lecteur système par défaut pour les fichiers multimédias",
+    "badge_on": "ON",
+    "badge_off": "OFF"
   },
   "search": {
     "folder": "Dossier :",

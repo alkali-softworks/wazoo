@@ -122,7 +122,11 @@
     "fog_filter": "迷雾滤镜",
     "fog_filter_desc": "大气翻滚体积迷雾与云层模拟",
     "master_filters": "着色器滤镜",
-    "master_filters_desc": "启用或禁用所有处于活动状态的视觉后期处理着色器"
+    "master_filters_desc": "启用或禁用所有处于活动状态的视觉后期处理着色器",
+    "default_player_desc": "设置为媒体文件的系统默认播放器",
+    "default_player_desc_active": "已关联为媒体文件的系统默认播放器",
+    "badge_on": "开",
+    "badge_off": "关"
   },
   "search": {
     "folder": "文件夹:",

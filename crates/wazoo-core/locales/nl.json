@@ -122,7 +122,11 @@
     "fog_filter": "Mistfilter",
     "fog_filter_desc": "Atmosferische rollende volumetrische mist- en wolkensimulatie",
     "master_filters": "Shaderfilters",
-    "master_filters_desc": "Schakel alle actieve visuele nabewerkingsshaders in of uit"
+    "master_filters_desc": "Schakel alle actieve visuele nabewerkingsshaders in of uit",
+    "default_player_desc": "Instellen als standaardmediaspeler van het systeem",
+    "default_player_desc_active": "Gekoppeld als standaardmediaspeler van het systeem",
+    "badge_on": "AAN",
+    "badge_off": "UIT"
   },
   "search": {
     "folder": "Map:",

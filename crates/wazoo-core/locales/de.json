@@ -122,7 +122,11 @@
     "fog_filter": "Nebel-Filter",
     "fog_filter_desc": "Atmosphärische volumetrische Nebel- und Wolkensimulation",
     "master_filters": "Shader-Filter",
-    "master_filters_desc": "Aktivieren oder Deaktivieren aller aktiven visuellen Nachbearbeitungs-Shader"
+    "master_filters_desc": "Aktivieren oder Deaktivieren aller aktiven visuellen Nachbearbeitungs-Shader",
+    "default_player_desc": "Als Standard-Player für Mediendateien im System festlegen",
+    "default_player_desc_active": "Als Standard-Player für Mediendateien im System verknüpft",
+    "badge_on": "EIN",
+    "badge_off": "AUS"
   },
   "search": {
     "folder": "Ordner:",

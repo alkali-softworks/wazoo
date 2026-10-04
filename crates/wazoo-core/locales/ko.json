@@ -122,7 +122,11 @@
     "fog_filter": "안개 필터",
     "fog_filter_desc": "대기 롤링 볼류메트릭 안개 및 구름 시뮬레이션",
     "master_filters": "셰이더 필터",
-    "master_filters_desc": "모든 활성 시각적 후처리 셰이더를 활성화 또는 비활성화합니다"
+    "master_filters_desc": "모든 활성 시각적 후처리 셰이더를 활성화 또는 비활성화합니다",
+    "default_player_desc": "미디어 파일의 기본 시스템 플레이어로 설정",
+    "default_player_desc_active": "미디어 파일의 기본 시스템 플레이어로 연결됨",
+    "badge_on": "켜짐",
+    "badge_off": "꺼짐"
   },
   "search": {
     "folder": "폴더:",

@@ -122,7 +122,11 @@
     "fog_filter": "Bộ lọc sương mù",
     "fog_filter_desc": "Mô phỏng sương mù và mây thể tích trong khí quyển",
     "master_filters": "Bộ lọc đổ bóng",
-    "master_filters_desc": "Bật hoặc tắt tất cả các bộ đổ bóng xử lý hậu kỳ hình ảnh đang hoạt động"
+    "master_filters_desc": "Bật hoặc tắt tất cả các bộ đổ bóng xử lý hậu kỳ hình ảnh đang hoạt động",
+    "default_player_desc": "Đặt làm trình phát mặc địnhของ hệ thống cho các tệp đa phương tiện",
+    "default_player_desc_active": "Đã liên kết làm trình phát mặc địnhของ hệ thống cho các tệp đa phương tiện",
+    "badge_on": "BẬT",
+    "badge_off": "TẮT"
   },
   "search": {
     "folder": "Thư mục:",
