@@ -51,7 +51,7 @@ impl WazooApp {
                 let program = wazoo_media::pipeline::VideoProgram::new_full(
                     static_id,
                     std::sync::Arc::clone(&self.static_frame),
-                    std::sync::Arc::clone(&self.static_frame_alive),
+                    std::sync::Arc::clone(&p.loading_alive),
                     opacity,
                     true,
                     crt,

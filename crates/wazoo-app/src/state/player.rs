@@ -9,6 +9,8 @@
 
 use crate::app::PlayerNavHistory;
 use std::ops::{Deref, DerefMut};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 use wazoo_media::{PlayerId, VideoHandle};
 
@@ -42,6 +44,8 @@ pub struct AppPlayer {
     pub nav_history: PlayerNavHistory,
     /// Whether this player is currently buffering or loading a new video
     pub is_loading: bool,
+    /// Alive flag for loading/buffering shader texture resources (cleared on stop_loading)
+    pub loading_alive: Arc<AtomicBool>,
     /// Ticks elapsed while loading (used to auto-dismiss stuck loading states)
     pub loading_ticks: usize,
     /// Per-player flip mode runtime countdown state
@@ -64,6 +68,7 @@ impl AppPlayer {
             shuffle,
             nav_history: PlayerNavHistory::default(),
             is_loading: false,
+            loading_alive: Arc::new(AtomicBool::new(false)),
             loading_ticks: 0,
             flip: crate::state::FlipState::new(wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS),
             is_cube: false,
@@ -79,6 +84,7 @@ impl AppPlayer {
             shuffle,
             nav_history: PlayerNavHistory::default(),
             is_loading: false,
+            loading_alive: Arc::new(AtomicBool::new(false)),
             loading_ticks: 0,
             flip: crate::state::FlipState::new(wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS),
             is_cube: true,
@@ -91,6 +97,7 @@ impl AppPlayer {
     #[inline]
     pub fn start_loading(&mut self) {
         self.is_loading = true;
+        self.loading_alive.store(true, Ordering::SeqCst);
         self.loading_ticks = 0;
         self.clear_frame_black();
     }
@@ -99,6 +106,7 @@ impl AppPlayer {
     #[inline]
     pub fn stop_loading(&mut self) {
         self.is_loading = false;
+        self.loading_alive.store(false, Ordering::SeqCst);
         self.loading_ticks = 0;
     }
 

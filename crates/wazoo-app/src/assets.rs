@@ -51,15 +51,6 @@ pub fn load_raw_color_static_frames() -> Vec<RawStaticFrame> {
         .collect()
 }
 
-/// Decodes all animated frames of `color-static.gif` into cached Iced image handles.
-pub fn load_color_static_frames() -> Vec<iced::widget::image::Handle> {
-    load_raw_color_static_frames()
-        .into_iter()
-        .map(|frame| {
-            iced::widget::image::Handle::from_rgba(frame.width, frame.height, frame.pixels.to_vec())
-        })
-        .collect()
-}
 
 // Crisp vector SVGs for window controls matching modern desktop apps
 pub static SVG_WINDOW_MINIMIZE: &[u8] = br##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><line x1="0" y1="5" x2="10" y2="5" stroke="#cccccc" stroke-width="1.2"/></svg>"##;
