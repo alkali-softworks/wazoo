@@ -51,6 +51,7 @@ impl WazooApp {
         }
         new_handle.set_subtitles_visible(self.subtitles_enabled);
         if let Some(p) = self.players.player_mut(id) {
+            p.cancel_seek_debounce();
             p.handle = new_handle;
             p.start_loading();
         }

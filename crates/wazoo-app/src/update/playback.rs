@@ -10,11 +10,11 @@
 
 use crate::app::{
     DEFAULT_TOAST_SECS, FOCUS_BORDER_TICKS, LONG_TOAST_SECS, PLAYER_OVERLAY_FADE_TICKS,
-    SHORT_TOAST_SECS, WazooApp,
+    SEEK_DEBOUNCE_TICKS, SHORT_TOAST_SECS, WazooApp,
 };
 use crate::format;
 use crate::message::Message;
-use crate::state::AppPlayer;
+use crate::state::{AppPlayer, SeekDebounce};
 use iced::Task;
 use std::time::Duration;
 use wazoo_core::{Bookmark, LayoutMode, PlaybackMode};
@@ -52,6 +52,7 @@ impl WazooApp {
                     }
                 }
                 if let Some(p) = self.players.player_mut(id) {
+                    p.flush_seek_debounce();
                     p.toggle_play();
                 }
                 self.trigger_player_overlay();
@@ -202,6 +203,7 @@ impl WazooApp {
                     }
                 }
                 if let Some(p) = self.players.player_mut(id) {
+                    p.cancel_seek_debounce();
                     p.seek(pos);
                 }
                 self.trigger_player_overlay();
@@ -216,6 +218,7 @@ impl WazooApp {
                     }
                 }
                 if let Some(p) = self.players.player_mut(id) {
+                    p.cancel_seek_debounce();
                     let dur = p.duration();
                     if dur > Duration::ZERO {
                         let target_secs = dur.as_secs_f64() * (ratio.clamp(0.0, 1.0) as f64);
@@ -267,13 +270,31 @@ impl WazooApp {
                 self.trigger_player_overlay();
                 if let Some(id) = self.focused_player_id() {
                     if let Some(p) = self.players.player_mut(id) {
-                        p.seek_relative(secs);
-                        let pos = p.position();
                         let dur = p.duration();
-                        let sign = if secs > 0.0 { "+" } else { "" };
-                        let pos_str = format::format_time_str(pos.as_secs_f64());
-                        let dur_str = format::format_time_str(dur.as_secs_f64());
-                        let secs_str = format!("{:.0}", secs);
+                        let dur_secs = dur.as_secs_f64();
+                        let max_target = if dur_secs > 0.5 { dur_secs - 0.1 } else { f64::MAX };
+
+                        let (accumulated, target) = if let Some(ref mut deb) = p.seek_debounce {
+                            deb.target_secs = (deb.target_secs + secs).clamp(0.0, max_target);
+                            deb.ticks_remaining = SEEK_DEBOUNCE_TICKS;
+                            (deb.accumulated_secs(), deb.target_secs)
+                        } else {
+                            let current = p.handle.position().as_secs_f64();
+                            let target = (current + secs).clamp(0.0, max_target);
+                            let deb = SeekDebounce {
+                                start_secs: current,
+                                target_secs: target,
+                                ticks_remaining: SEEK_DEBOUNCE_TICKS,
+                            };
+                            let accumulated = deb.accumulated_secs();
+                            p.seek_debounce = Some(deb);
+                            (accumulated, target)
+                        };
+
+                        let sign = if accumulated > 0.0 { "+" } else { "" };
+                        let pos_str = format::format_time_str(target);
+                        let dur_str = format::format_time_str(dur_secs);
+                        let secs_str = format!("{:.0}", accumulated);
                         self.overlay.toast_message = Some(self.t_with(
                             "player.seek_relative",
                             &[
@@ -291,6 +312,7 @@ impl WazooApp {
             Message::StepFrameForwardFocused => {
                 self.trigger_player_overlay();
                 if let Some(p) = self.focused_player_mut() {
+                    p.flush_seek_debounce();
                     p.step_frame_forward();
                 }
                 Task::none()
@@ -298,6 +320,7 @@ impl WazooApp {
             Message::StepFrameBackwardFocused => {
                 self.trigger_player_overlay();
                 if let Some(p) = self.focused_player_mut() {
+                    p.flush_seek_debounce();
                     p.step_frame_backward();
                 }
                 Task::none()
@@ -1009,6 +1032,7 @@ impl WazooApp {
                 self.trigger_player_overlay();
                 if let Some(id) = self.focused_player_id() {
                     if let Some(p) = self.players.player_mut(id) {
+                        p.cancel_seek_debounce();
                         p.seek_random();
                         let pos = p.position();
                         let dur = p.duration();

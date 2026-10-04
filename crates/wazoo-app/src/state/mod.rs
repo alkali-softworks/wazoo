@@ -20,7 +20,7 @@ pub use drawers::DrawerState;
 pub use flip::FlipState;
 pub use modals::ModalState;
 pub use overlay::OverlayState;
-pub use player::{AppPlayer, Player, PlayerList};
+pub use player::{AppPlayer, Player, PlayerList, SeekDebounce};
 pub use scanner::ScannerState;
 pub use search::SearchState;
 pub use titlebar::TitlebarState;

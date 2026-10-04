@@ -1445,6 +1445,90 @@ fn test_playback_settings_sliders_debounced() {
 }
 
 #[test]
+fn test_seek_relative_debounced_and_accumulated() {
+    let (mut app, _) = new_test_app();
+    let temp_dir = std::env::temp_dir().join(format!(
+        "wazoo_test_seek_debounce_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let f1 = temp_dir.join("v1.mp4");
+    let _ = std::fs::File::create(&f1);
+
+    app.available_videos = vec![VideoRecord::new(1, "V1", f1.to_string_lossy())];
+    let _ = app.update(Message::SetPlayerCount(1));
+    assert_eq!(app.players.len(), 1);
+    let p_id = app.players[0].id;
+    app.focused_idx = 0;
+
+    // Initially, no seek is debouncing
+    assert!(app.players[0].seek_debounce.is_none());
+
+    // 1. First seek forward: creates seek debounce state
+    let _ = app.update(Message::SeekRelativeFocused(5.0));
+    assert!(app.players[0].seek_debounce.is_some());
+    let deb = app.players[0].seek_debounce.unwrap();
+    assert_eq!(deb.ticks_remaining, wazoo_app::app::SEEK_DEBOUNCE_TICKS);
+    assert_eq!(deb.accumulated_secs(), 5.0);
+    assert_eq!(deb.target_secs, 5.0);
+    assert_eq!(app.players[0].position().as_secs_f64(), 5.0);
+
+    // Toast message is formatted with +5
+    let toast = app.overlay.toast_message.as_ref().unwrap();
+    assert!(toast.contains("+5"));
+
+    // 2. Repeated keystrokes accumulate delta and target position
+    let _ = app.update(Message::SeekRelativeFocused(5.0));
+    let deb = app.players[0].seek_debounce.unwrap();
+    assert_eq!(deb.ticks_remaining, wazoo_app::app::SEEK_DEBOUNCE_TICKS);
+    assert_eq!(deb.accumulated_secs(), 10.0);
+    assert_eq!(deb.target_secs, 10.0);
+    assert_eq!(app.players[0].position().as_secs_f64(), 10.0);
+
+    let toast = app.overlay.toast_message.as_ref().unwrap();
+    assert!(toast.contains("+10"));
+
+    // A third keystroke
+    let _ = app.update(Message::SeekRelativeFocused(5.0));
+    let deb = app.players[0].seek_debounce.unwrap();
+    assert_eq!(deb.accumulated_secs(), 15.0);
+    assert_eq!(deb.target_secs, 15.0);
+    assert_eq!(app.players[0].position().as_secs_f64(), 15.0);
+
+    // Opposing keystroke (Seek backward) reduces accumulated and target
+    let _ = app.update(Message::SeekRelativeFocused(-5.0));
+    let deb = app.players[0].seek_debounce.unwrap();
+    assert_eq!(deb.accumulated_secs(), 10.0);
+    assert_eq!(deb.target_secs, 10.0);
+
+    // 3. Advancing VideoFrameTick decrements debounce countdown
+    let _ = app.update(Message::VideoFrameTick);
+    let deb = app.players[0].seek_debounce.unwrap();
+    assert_eq!(deb.ticks_remaining, wazoo_app::app::SEEK_DEBOUNCE_TICKS - 1);
+
+    // 4. Advancing all remaining ticks flushes the seek debounce
+    while app.players[0].seek_debounce.is_some() {
+        let _ = app.update(Message::VideoFrameTick);
+    }
+    assert!(app.players[0].seek_debounce.is_none());
+
+    // 5. Explicit seek cancels any active debounce
+    let _ = app.update(Message::SeekRelativeFocused(5.0));
+    assert!(app.players[0].seek_debounce.is_some());
+    let _ = app.update(Message::Seek(p_id, std::time::Duration::from_secs(30)));
+    assert!(app.players[0].seek_debounce.is_none());
+
+    // 6. TogglePlay flushes any active debounce
+    let _ = app.update(Message::SeekRelativeFocused(5.0));
+    assert!(app.players[0].seek_debounce.is_some());
+    let _ = app.update(Message::TogglePlay(p_id));
+    assert!(app.players[0].seek_debounce.is_none());
+}
+
+#[test]
 fn test_fullscreen_toggle_and_escape() {
     let (mut app, _) = new_test_app();
     assert!(!app.window.is_fullscreen);
