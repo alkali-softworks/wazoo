@@ -22,7 +22,8 @@
     "crt_filter": "CRT 滤镜",
     "fullscreen": "全屏",
     "exit_fullscreen": "退出全屏",
-    "fit_window": "适应窗口"
+    "fit_window": "适应窗口",
+    "click_through": "穿透点击"
   },
   "app": {
     "drag_to_move": "拖动以移动",

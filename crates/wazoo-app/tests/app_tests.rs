@@ -1026,13 +1026,13 @@ fn test_pin_keybind_dispatch() {
     let _ = app.update(Message::WindowUnfocused);
     assert!(!app.window.clickthru);
 
-    // 2nd press 'p': Always on top + 50% opacity (clickthru when unfocused)
+    // 2nd press 'p': Always on top + 40% opacity (clickthru when unfocused)
     let _ = app.update(Message::KeyPressed(
         iced::keyboard::Key::Character("p".into()),
         iced::event::Status::Ignored,
     ));
     assert!(app.settings.is_always_on_top);
-    assert_eq!(app.settings.window_opacity, 0.50);
+    assert_eq!(app.settings.window_opacity, 0.40);
     let _ = app.update(Message::WindowUnfocused);
     assert!(app.window.clickthru);
     let _ = app.update(Message::WindowFocused);

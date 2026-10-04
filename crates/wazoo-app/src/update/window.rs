@@ -523,17 +523,18 @@ impl WazooApp {
             Message::CyclePinMode => {
                 // 4-stage cycle:
                 // 1st press: Always on top + 100% opacity (no clickthru)
-                // 2nd press: Always on top + 50% opacity + clickthru
+                // 2nd press: Always on top + 40% opacity + clickthru
                 // 3rd press: Always on top + 15% opacity + clickthru
                 // 4th press: Toggle back to normal
+                let click_through = self.t("common.click_through");
                 let (next_pinned, next_opacity, clickthru, label) = if !self.settings.is_always_on_top {
-                    (true, 1.0f32, false, "100%")
-                } else if self.settings.window_opacity > 0.70 {
-                    (true, 0.50f32, true, "50% • Click-Through")
-                } else if self.settings.window_opacity > 0.30 {
-                    (true, 0.15f32, true, "15% • Click-Through")
+                    (true, 1.0f32, false, "100%".to_string())
+                } else if self.settings.window_opacity > 0.60 {
+                    (true, 0.40f32, true, format!("40% • {click_through}"))
+                } else if self.settings.window_opacity > 0.25 {
+                    (true, 0.15f32, true, format!("15% • {click_through}"))
                 } else {
-                    (false, 1.0f32, false, "")
+                    (false, 1.0f32, false, String::new())
                 };
 
                 self.settings.is_always_on_top = next_pinned;
@@ -544,7 +545,7 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
 
                 self.overlay.toast_message = Some(if next_pinned {
-                    format!("{} ({})", self.t("wazoo.always_on_top_enabled"), label)
+                    format!("{} ({label})", self.t("wazoo.always_on_top_enabled"))
                 } else {
                     self.t("wazoo.always_on_top_disabled")
                 });
@@ -585,9 +586,10 @@ impl WazooApp {
                 self.overlay.toast_message = Some(if is_pinned {
                     if has_clickthru {
                         format!(
-                            "{} ({}% • Click-Through)",
+                            "{} ({}% • {})",
                             self.t("wazoo.always_on_top_enabled"),
-                            (self.settings.window_opacity * 100.0).round() as u32
+                            (self.settings.window_opacity * 100.0).round() as u32,
+                            self.t("common.click_through")
                         )
                     } else {
                         format!("{} (100%)", self.t("wazoo.always_on_top_enabled"))

@@ -76,7 +76,7 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 ### 📌 Always on Top & Click-Through (<kbd>P</kbd>)
 Press <kbd>P</kbd> to cycle through 4 overlay modes:
 1. **Always on Top (100% Opacity)**: Classic Picture-in-Picture (PiP) without click-through.
-2. **Click-Through (50% Opacity)**: Semi-transparent floating video with click-through passthrough when unfocused.
+2. **Click-Through (40% Opacity)**: Semi-transparent floating video with click-through passthrough when unfocused.
 3. **Click-Through (15% Opacity)**: Subtle background reference overlay with click-through passthrough.
 4. **Normal Window**: Returns to standard window behavior and 100% opacity.
 - **Escape Hatch**: Focusing Wazoo on your OS taskbar disables click-through.
@@ -188,7 +188,7 @@ scoop install ffmpeg
 | <kbd>J</kbd> / <kbd>/</kbd> | Open **Find / Search** modal |
 | <kbd>H</kbd> / <kbd>F</kbd> | Toggle **File Browser** drawer |
 | <kbd>S</kbd> | Toggle **Shuffle** vs. **Sequential** playback |
-| <kbd>P</kbd> | Cycle **Pin Mode** (100% ➔ 50% ➔ 15% ➔ Off) |
+| <kbd>P</kbd> | Cycle **Pin Mode** (100% ➔ 40% ➔ 15% ➔ Off) |
 | <kbd>V</kbd> | Toggle **Interactive Subtitle Transcript** drawer |
 | <kbd>B</kbd> | Toggle **Bookmarks** modal |
 | <kbd>Y</kbd> | Toggle **Play History** drawer |

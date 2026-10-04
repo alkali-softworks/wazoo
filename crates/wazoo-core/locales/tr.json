@@ -22,7 +22,8 @@
     "crt_filter": "CRT Filtresi",
     "fullscreen": "Tam Ekran",
     "exit_fullscreen": "Tam Ekrandan Çık",
-    "fit_window": "Pencereyi Uydur"
+    "fit_window": "Pencereyi Uydur",
+    "click_through": "Tıklama Geçişi"
   },
   "app": {
     "drag_to_move": "Taşımak için Sürükleyin",

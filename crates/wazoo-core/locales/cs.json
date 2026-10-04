@@ -22,7 +22,8 @@
     "crt_filter": "CRT filtr",
     "fullscreen": "Celá obrazovka",
     "exit_fullscreen": "Ukončit celou obrazovku",
-    "fit_window": "Přizpůsobit okno"
+    "fit_window": "Přizpůsobit okno",
+    "click_through": "Prokliknutí"
   },
   "app": {
     "drag_to_move": "Přetažením přesuňte",
