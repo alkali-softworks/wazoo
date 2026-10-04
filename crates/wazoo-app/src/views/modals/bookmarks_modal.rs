@@ -151,7 +151,7 @@ impl WazooApp {
                 .width(Length::Fill);
 
             scrollable(scrollable_content)
-                .height(Length::Fixed(400.0))
+                .height(Length::Fixed(480.0))
                 .width(Length::Fill)
                 .into()
         };
@@ -159,7 +159,7 @@ impl WazooApp {
         let card = container(
             column![header_row, content_element,]
                 .spacing(16)
-                .width(Length::Fixed(560.0)),
+                .width(Length::Fixed(640.0)),
         )
         .padding(20)
         .style(theme::modal_card_style);
