@@ -267,6 +267,7 @@ impl WazooApp {
             Message::OpenHelpModal => {
                 self.modals.close_all();
                 self.modals.help = true;
+                self.modals.help_search.clear();
                 self.titlebar.show_dropdown_menu = false;
                 self.titlebar.show = false;
                 self.overlay.clear_toast();
@@ -277,6 +278,15 @@ impl WazooApp {
             }
             Message::CloseHelpModal => {
                 self.modals.help = false;
+                self.modals.help_search.clear();
+                Task::none()
+            }
+            Message::HelpSearchChanged(val) => {
+                self.modals.help_search = val;
+                Task::none()
+            }
+            Message::ClearHelpSearch => {
+                self.modals.help_search.clear();
                 Task::none()
             }
             Message::ToggleBookmarksModal => {

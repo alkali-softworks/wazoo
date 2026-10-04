@@ -175,3 +175,56 @@ fn test_find_key_action_custom() {
         Some(KeyAction::FitWindow)
     );
 }
+
+#[test]
+fn test_help_modal_search_flow() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    // 1. Open help modal
+    let _ = app.update(wazoo_app::message::Message::OpenHelpModal);
+    assert!(app.modals.help);
+    assert!(app.modals.help_search.is_empty());
+
+    // 2. Type search query
+    let _ = app.update(wazoo_app::message::Message::HelpSearchChanged("volume".to_string()));
+    assert_eq!(app.modals.help_search, "volume");
+
+    // 3. Clear search query
+    let _ = app.update(wazoo_app::message::Message::ClearHelpSearch);
+    assert!(app.modals.help_search.is_empty());
+
+    // 4. Type another search query and close modal
+    let _ = app.update(wazoo_app::message::Message::HelpSearchChanged("mute".to_string()));
+    assert_eq!(app.modals.help_search, "mute");
+
+    let _ = app.update(wazoo_app::message::Message::CloseHelpModal);
+    assert!(!app.modals.help);
+    assert!(
+        app.modals.help_search.is_empty(),
+        "Closing help modal must clear search query"
+    );
+}
+
+#[test]
+fn test_toggle_subtitles_toast() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    // Default subtitles_enabled is true
+    assert!(app.subtitles_enabled);
+
+    // Toggle off -> Subtitles disabled
+    let _ = app.update(wazoo_app::message::Message::ToggleSubtitles);
+    assert!(!app.subtitles_enabled);
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("Subtitles disabled")
+    );
+
+    // Toggle back on -> Subtitles enabled
+    let _ = app.update(wazoo_app::message::Message::ToggleSubtitles);
+    assert!(app.subtitles_enabled);
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("Subtitles enabled")
+    );
+}

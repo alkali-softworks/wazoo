@@ -143,6 +143,8 @@ pub enum Message {
     SetLanguage(String),
     OpenHelpModal,
     CloseHelpModal,
+    HelpSearchChanged(String),
+    ClearHelpSearch,
     FolderInputChanged(String),
     PickFolders,
     FoldersSelected(Vec<String>),

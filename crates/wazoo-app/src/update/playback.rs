@@ -1036,14 +1036,12 @@ impl WazooApp {
                 for p in &mut self.players {
                     p.set_subtitles_visible(self.subtitles_enabled);
                 }
-                let status = if self.subtitles_enabled {
-                    self.t("player.subtitles_on")
+                let msg = if self.subtitles_enabled {
+                    self.t("player.subtitles_enabled")
                 } else {
-                    self.t("player.subtitles_off")
+                    self.t("player.subtitles_disabled")
                 };
-                self.overlay.toast_message =
-                    Some(self.t_with("player.subtitles", &[("status", &status)]));
-                self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
+                self.overlay.show_toast(msg);
                 Task::none()
             }
             _ => Task::none(),
