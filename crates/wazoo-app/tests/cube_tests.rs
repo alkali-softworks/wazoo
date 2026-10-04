@@ -871,4 +871,36 @@ fn test_entering_mode_9_exits_fullscreen_mode() {
     let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
     assert!(app.cube.desktop_overlay, "Must enter Mode 9");
     assert!(!app.window.is_fullscreen, "Entering Mode 9 must exit fullscreen mode");
+    assert!(app.window.is_maximized, "Entering Mode 9 must maximize window");
 }
+
+#[test]
+fn test_entering_mode_9_maximizes_window_and_restores_on_exit() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+    app.settings.window_bounds.width = 960;
+    app.settings.window_bounds.height = 540;
+    app.window.is_maximized = false;
+
+    // Enter Mode 9
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(app.cube.desktop_overlay);
+    assert!(app.window.is_maximized, "Window must be maximized in Mode 9");
+    assert_eq!(app.cube.pre_desktop_bounds.as_ref().map(|b| (b.width, b.height)), Some((960, 540)));
+
+    // Simulate OS window resize to maximized screen resolution during Mode 9
+    let _ = app.update(wazoo_app::message::Message::WindowResized(
+        iced::window::Id::unique(),
+        iced::Size::new(1920.0, 1080.0),
+    ));
+    assert_eq!(app.settings.window_bounds.width, 1920);
+    assert_eq!(app.settings.window_bounds.height, 1080);
+    assert!(!app.window.bounds_dirty, "WindowResized during Mode 9 must not mark bounds dirty");
+
+    // Exit Mode 9
+    let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
+    assert!(!app.cube.desktop_overlay);
+    assert!(!app.window.is_maximized, "Window must unmaximize when exiting Mode 9");
+    assert_eq!(app.settings.window_bounds.width, 960, "Pre-desktop window width restored");
+    assert_eq!(app.settings.window_bounds.height, 540, "Pre-desktop window height restored");
+}
+

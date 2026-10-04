@@ -46,6 +46,8 @@ pub struct CubeState {
     pub enabled: bool,
     pub desktop_overlay: bool,
     pub spawned_for_desktop: bool,
+    pub was_maximized_before_desktop: bool,
+    pub pre_desktop_bounds: Option<wazoo_core::WindowBounds>,
     pub cubes: Vec<BouncingCube>,
     pub next_id: u64,
     pub speed_multiplier: f32,
@@ -58,6 +60,8 @@ impl Default for CubeState {
             enabled: false,
             desktop_overlay: false,
             spawned_for_desktop: false,
+            was_maximized_before_desktop: false,
+            pre_desktop_bounds: None,
             cubes: Vec::new(),
             next_id: 1,
             speed_multiplier: 1.0,
@@ -151,6 +155,8 @@ impl CubeState {
         self.enabled = false;
         self.desktop_overlay = false;
         self.spawned_for_desktop = false;
+        self.was_maximized_before_desktop = false;
+        self.pre_desktop_bounds = None;
     }
 
     /// Toggles the cube on or off, clearing all cubes if active or spawning an initial cube.

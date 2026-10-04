@@ -32,6 +32,8 @@ pub struct WindowState {
     pub last_resize_time: Option<Instant>,
     /// Whether the application window is currently in fullscreen display mode.
     pub is_fullscreen: bool,
+    /// Whether the application window is currently maximized.
+    pub is_maximized: bool,
 }
 
 impl WindowState {
@@ -68,6 +70,7 @@ impl Default for WindowState {
             is_alt_pressed: false,
             last_resize_time: None,
             is_fullscreen: false,
+            is_maximized: false,
         }
     }
 }

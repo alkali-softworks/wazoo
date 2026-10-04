@@ -123,7 +123,9 @@ impl WazooApp {
                 {
                     self.settings.window_bounds.width = new_w;
                     self.settings.window_bounds.height = new_h;
-                    self.window.bounds_dirty = true;
+                    if !self.cube.desktop_overlay {
+                        self.window.bounds_dirty = true;
+                    }
                 }
                 self.scroll_engine.set_window_size(size.width, size.height);
                 if self.settings.playback_mode == PlaybackMode::Scroll && !self.window.is_resizing() {
@@ -165,6 +167,7 @@ impl WazooApp {
                 self.titlebar.last_click = None;
                 self.titlebar.drag_pending = false;
                 self.titlebar.press_origin = None;
+                self.window.is_maximized = !self.window.is_maximized;
                 if let Some(id) = self.window.id {
                     iced::window::toggle_maximize(id)
                 } else {

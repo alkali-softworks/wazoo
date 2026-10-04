@@ -247,23 +247,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     if (uniforms.has_texture > 0.5) {
         col = textureSampleLevel(tex, s, in.uv, 0.0);
     } else {
-        // Procedural retro cyberpunk test pattern:
-        // Animated grid lines + gradient + color bars
-        let grid = step(vec2<f32>(0.92, 0.92), fract(in.uv * 8.0));
-        let grid_line = max(grid.x, grid.y);
-        let bar_idx = floor(in.uv.x * 7.0);
-        var bar_color = vec3<f32>(0.2, 0.2, 0.2);
-        if (bar_idx == 0.0) { bar_color = vec3<f32>(0.9, 0.9, 0.9); }
-        else if (bar_idx == 1.0) { bar_color = vec3<f32>(0.9, 0.8, 0.2); }
-        else if (bar_idx == 2.0) { bar_color = vec3<f32>(0.2, 0.8, 0.8); }
-        else if (bar_idx == 3.0) { bar_color = vec3<f32>(0.2, 0.8, 0.2); }
-        else if (bar_idx == 4.0) { bar_color = vec3<f32>(0.8, 0.2, 0.8); }
-        else if (bar_idx == 5.0) { bar_color = vec3<f32>(0.8, 0.2, 0.2); }
-        else { bar_color = vec3<f32>(0.2, 0.2, 0.8); }
-
-        let sweep = sin(uniforms.time * 3.0 + in.uv.y * 10.0) * 0.15;
-        let base = bar_color + sweep + grid_line * 0.3;
-        col = vec4<f32>(base, 1.0);
+        col = vec4<f32>(0.0, 0.0, 0.0, 1.0);
     }
 
     var final_rgb = col.rgb;
