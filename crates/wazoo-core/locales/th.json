@@ -21,7 +21,8 @@
     "end": "สิ้นสุด",
     "crt_filter": "ฟิลเตอร์ CRT",
     "fullscreen": "เต็มหน้าจอ",
-    "exit_fullscreen": "ออกจากเต็มหน้าจอ"
+    "exit_fullscreen": "ออกจากเต็มหน้าจอ",
+    "fit_window": "ปรับขนาดหน้าต่างให้พอดี"
   },
   "app": {
     "drag_to_move": "ลากเพื่อย้าย",
@@ -167,7 +168,8 @@
       "toggle_cube": "สลับลูกบาศก์ 3 มิติ",
       "toggle_cube_overlay": "สลับโหมดโอเวอร์เลย์ลูกบาศก์",
       "toggle_fullscreen": "สลับเต็มหน้าจอ",
-      "toggle_filters": "สลับฟิลเตอร์เฉดเดอร์"
+      "toggle_filters": "สลับฟิลเตอร์เฉดเดอร์",
+      "fit_window": "ปรับขนาดหน้าต่างให้พอดีกับวิดีโอ"
     }
   },
   "file_picker": {

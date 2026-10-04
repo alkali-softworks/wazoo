@@ -21,7 +21,8 @@
     "end": "Fin",
     "crt_filter": "Filtre CRT",
     "fullscreen": "Plein écran",
-    "exit_fullscreen": "Quitter le plein écran"
+    "exit_fullscreen": "Quitter le plein écran",
+    "fit_window": "Ajuster la fenêtre"
   },
   "app": {
     "drag_to_move": "Faites glisser pour déplacer",
@@ -167,7 +168,8 @@
       "toggle_cube": "Basculer le Cube 3D",
       "toggle_cube_overlay": "Basculer le mode superposition de cube",
       "toggle_fullscreen": "Activer/désactiver le plein écran",
-      "toggle_filters": "Basculer les filtres de shaders"
+      "toggle_filters": "Basculer les filtres de shaders",
+      "fit_window": "Ajuster la fenêtre à la vidéo"
     }
   },
   "file_picker": {

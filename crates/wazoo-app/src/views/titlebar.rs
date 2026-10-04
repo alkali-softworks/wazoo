@@ -246,6 +246,12 @@ impl WazooApp {
                 padding,
             ),
             Self::menu_item(
+                self.t("common.fit_window"),
+                Some(kb.menu_hint(&kb.fit_window)),
+                Message::FitWindow,
+                padding,
+            ),
+            Self::menu_item(
                 self.t("common.settings"),
                 Some(kb.menu_hint(&kb.open_settings)),
                 Message::OpenSettingsModal,

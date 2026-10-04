@@ -207,6 +207,7 @@ impl WazooApp {
             | Message::MinimizeWindow
             | Message::MaximizeWindow
             | Message::ToggleFullscreen
+            | Message::FitWindow
             | Message::DragWindow
             | Message::DragResize(_)
             | Message::CloseApp

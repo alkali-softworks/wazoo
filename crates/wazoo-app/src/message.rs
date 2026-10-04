@@ -33,6 +33,7 @@ pub enum Message {
     MinimizeWindow,
     MaximizeWindow,
     ToggleFullscreen,
+    FitWindow,
     CloseApp,
     DragWindow,
     DragResize(iced::window::Direction),

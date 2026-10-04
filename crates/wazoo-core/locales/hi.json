@@ -21,7 +21,8 @@
     "end": "अंत",
     "crt_filter": "सीआरटी फ़िल्टर",
     "fullscreen": "पूर्ण स्क्रीन",
-    "exit_fullscreen": "पूर्ण स्क्रीन से बाहर निकलें"
+    "exit_fullscreen": "पूर्ण स्क्रीन से बाहर निकलें",
+    "fit_window": "विंडो फिट करें"
   },
   "app": {
     "drag_to_move": "स्थानांतरित करने के लिए खींचें",
@@ -167,7 +168,8 @@
       "toggle_cube": "3D क्यूब टॉगल करें",
       "toggle_cube_overlay": "क्यूब ओवरले मोड टॉगल करें",
       "toggle_fullscreen": "पूर्ण स्क्रीन टॉगल करें",
-      "toggle_filters": "शेडर फ़िल्टर टॉगल करें"
+      "toggle_filters": "शेडर फ़िल्टर टॉगल करें",
+      "fit_window": "वीडियो के अनुसार विंडो फिट करें"
     }
   },
   "file_picker": {

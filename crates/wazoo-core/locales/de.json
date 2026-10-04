@@ -21,7 +21,8 @@
     "end": "Ende",
     "crt_filter": "CRT-Filter",
     "fullscreen": "Vollbild",
-    "exit_fullscreen": "Vollbild beenden"
+    "exit_fullscreen": "Vollbild beenden",
+    "fit_window": "Fenster anpassen"
   },
   "app": {
     "drag_to_move": "Zum Verschieben ziehen",
@@ -167,7 +168,8 @@
       "toggle_cube": "3D-Würfel umschalten",
       "toggle_cube_overlay": "Würfel-Overlay-Modus umschalten",
       "toggle_fullscreen": "Vollbild umschalten",
-      "toggle_filters": "Shader-Filter umschalten"
+      "toggle_filters": "Shader-Filter umschalten",
+      "fit_window": "Fenster an Video anpassen"
     }
   },
   "file_picker": {

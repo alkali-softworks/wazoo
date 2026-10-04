@@ -119,6 +119,7 @@ impl WazooApp {
                 KeyAction::ToggleCube => return self.update(Message::ToggleCubeScreensaver),
                 KeyAction::ToggleCubeOverlay => return self.update(Message::ToggleDesktopCubeScreensaver),
                 KeyAction::ToggleFullscreen => return self.update(Message::ToggleFullscreen),
+                KeyAction::FitWindow => return self.update(Message::FitWindow),
             }
         }
         Task::none()

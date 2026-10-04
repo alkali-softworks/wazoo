@@ -21,7 +21,8 @@
     "end": "پایان",
     "crt_filter": "فیلتر CRT",
     "fullscreen": "تمام صفحه",
-    "exit_fullscreen": "خروج از تمام صفحه"
+    "exit_fullscreen": "خروج از تمام صفحه",
+    "fit_window": "تنظیم اندازه پنجره"
   },
   "app": {
     "drag_to_move": "برای جابجایی بکشید",
@@ -167,7 +168,8 @@
       "toggle_cube": "تغییر وضعیت مکعب سه‌بعدی",
       "toggle_cube_overlay": "تغییر وضعیت حالت هم‌پوشانی مکعب",
       "toggle_fullscreen": "تغییر حالت تمام صفحه",
-      "toggle_filters": "تغییر وضعیت فیلترهای سایه‌زن"
+      "toggle_filters": "تغییر وضعیت فیلترهای سایه‌زن",
+      "fit_window": "تنظیم پنجره با اندازه ویدیو"
     }
   },
   "file_picker": {

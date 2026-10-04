@@ -130,10 +130,22 @@ fn test_find_key_action_defaults() {
         find_key_action(&kb, &Key::Named(Named::F11), false),
         Some(KeyAction::ToggleFullscreen)
     );
+    assert_eq!(
+        find_key_action(&kb, &Key::Character("w".into()), false),
+        Some(KeyAction::FitWindow)
+    );
+    assert_eq!(
+        find_key_action(&kb, &Key::Character("W".into()), false),
+        Some(KeyAction::FitWindow)
+    );
     assert_eq!(find_key_action(&kb, &Key::Named(Named::F7), false), None);
     // Ordinary keys when Alt is pressed should NOT match
     assert_eq!(
         find_key_action(&kb, &Key::Character("n".into()), true),
+        None
+    );
+    assert_eq!(
+        find_key_action(&kb, &Key::Character("w".into()), true),
         None
     );
 }
@@ -142,6 +154,7 @@ fn test_find_key_action_defaults() {
 fn test_find_key_action_custom() {
     let kb = KeybindSettings {
         add_player: "p".to_string(),
+        fit_window: "k".to_string(),
         ..Default::default()
     };
 
@@ -152,5 +165,13 @@ fn test_find_key_action_custom() {
     assert_eq!(
         find_key_action(&kb, &Key::Character("p".into()), false),
         Some(KeyAction::AddNewPlayer)
+    );
+    assert_eq!(
+        find_key_action(&kb, &Key::Character("w".into()), false),
+        None
+    );
+    assert_eq!(
+        find_key_action(&kb, &Key::Character("k".into()), false),
+        Some(KeyAction::FitWindow)
     );
 }

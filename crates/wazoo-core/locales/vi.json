@@ -21,7 +21,8 @@
     "end": "Kết thúc",
     "crt_filter": "Bộ lọc CRT",
     "fullscreen": "Toàn màn hình",
-    "exit_fullscreen": "Thoát toàn màn hình"
+    "exit_fullscreen": "Thoát toàn màn hình",
+    "fit_window": "Khớp cửa sổ"
   },
   "app": {
     "drag_to_move": "Kéo để di chuyển",
@@ -167,7 +168,8 @@
       "toggle_cube": "Bật/tắt khối 3D",
       "toggle_cube_overlay": "Bật/tắt chế độ lớp phủ khối",
       "toggle_fullscreen": "Bật/tắt toàn màn hình",
-      "toggle_filters": "Bật/Tắt bộ lọc đổ bóng"
+      "toggle_filters": "Bật/Tắt bộ lọc đổ bóng",
+      "fit_window": "Khớp cửa sổ theo video"
     }
   },
   "file_picker": {

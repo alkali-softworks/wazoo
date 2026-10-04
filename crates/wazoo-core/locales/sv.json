@@ -21,7 +21,8 @@
     "end": "Slut",
     "crt_filter": "CRT-filter",
     "fullscreen": "Helskärm",
-    "exit_fullscreen": "Avsluta helskärm"
+    "exit_fullscreen": "Avsluta helskärm",
+    "fit_window": "Anpassa fönster"
   },
   "app": {
     "drag_to_move": "Dra för att flytta",
@@ -167,7 +168,8 @@
       "toggle_cube": "Växla 3D-kub",
       "toggle_cube_overlay": "Växla kuböverläggsläge",
       "toggle_fullscreen": "Växla helskärm",
-      "toggle_filters": "Växla shaderfilter"
+      "toggle_filters": "Växla shaderfilter",
+      "fit_window": "Anpassa fönster efter video"
     }
   },
   "file_picker": {

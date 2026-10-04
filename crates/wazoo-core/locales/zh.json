@@ -21,7 +21,8 @@
     "end": "结束",
     "crt_filter": "CRT 滤镜",
     "fullscreen": "全屏",
-    "exit_fullscreen": "退出全屏"
+    "exit_fullscreen": "退出全屏",
+    "fit_window": "适应窗口"
   },
   "app": {
     "drag_to_move": "拖动以移动",
@@ -167,7 +168,8 @@
       "toggle_cube": "切换 3D 立方体",
       "toggle_cube_overlay": "切换立方体覆盖模式",
       "toggle_fullscreen": "切换全屏",
-      "toggle_filters": "切换着色器滤镜"
+      "toggle_filters": "切换着色器滤镜",
+      "fit_window": "调整窗口以适应视频"
     }
   },
   "file_picker": {
