@@ -48,7 +48,7 @@ graph TD
 To prevent a monolithic god object, application state in [`WazooApp`] is partitioned into focused child states:
 
 - **`players: PlayerList`**: Collection of [`AppPlayer`] handles, each wrapping a `VideoHandle` with per-tile shuffle mode, undo/redo history stacks, loading state, independent `FlipState`, and dedicated cube-rendering player flags (`is_cube`).
-- **`window: WindowState`**: Tracks cursor position, focus status, Alt-drag movement, window resize directions, mouse passthrough (ghost) mode, and native borderless **Fullscreen Mode** (`is_fullscreen`).
+- **`window: WindowState`**: Tracks cursor position, focus status, Alt-drag movement, window resize directions, mouse clickthrough mode, and native borderless **Fullscreen Mode** (`is_fullscreen`).
 - **`titlebar: TitlebarState`**: Controls sliding titlebar visibility, hover delays, hide timers, dropdown menu slide transitions, and auto-hide behavior during fullscreen mode.
 - **`overlay: OverlayState`**: Governs player HUD alpha fades, spinner rotation angles, toast alerts, title pill badges, and cube focus border flash timers (`focus_border_ticks`).
 - **`drawers: DrawerState`**: Holds visibility and search states for the File Browser, Subtitle Transcript, and Play History side drawers.

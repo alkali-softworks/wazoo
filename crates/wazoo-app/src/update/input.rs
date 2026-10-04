@@ -108,7 +108,7 @@ impl WazooApp {
                         return self.update(Message::AddBookmarkFocused);
                     }
                 }
-                KeyAction::ToggleAlwaysOnTop => return self.update(Message::ToggleAlwaysOnTop),
+                KeyAction::ToggleAlwaysOnTop => return self.update(Message::CyclePinMode),
                 KeyAction::MarkIn => return self.update(Message::MarkInFocused),
                 KeyAction::MarkOut => return self.update(Message::MarkOutFocused),
                 KeyAction::ClearMarkIn => return self.update(Message::ClearMarkInFocused),
