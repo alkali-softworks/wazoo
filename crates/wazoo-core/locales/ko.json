@@ -22,7 +22,8 @@
     "crt_filter": "CRT 필터",
     "fullscreen": "전체 화면",
     "exit_fullscreen": "전체 화면 종료",
-    "fit_window": "창 맞추기"
+    "fit_window": "창 맞추기",
+    "click_through": "클릭 관통"
   },
   "app": {
     "drag_to_move": "드래그하여 이동",

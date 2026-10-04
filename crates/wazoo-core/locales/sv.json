@@ -22,7 +22,8 @@
     "crt_filter": "CRT-filter",
     "fullscreen": "Helskärm",
     "exit_fullscreen": "Avsluta helskärm",
-    "fit_window": "Anpassa fönster"
+    "fit_window": "Anpassa fönster",
+    "click_through": "Klicka igenom"
   },
   "app": {
     "drag_to_move": "Dra för att flytta",

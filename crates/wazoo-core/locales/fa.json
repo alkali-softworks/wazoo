@@ -22,7 +22,8 @@
     "crt_filter": "فیلتر CRT",
     "fullscreen": "تمام صفحه",
     "exit_fullscreen": "خروج از تمام صفحه",
-    "fit_window": "تنظیم اندازه پنجره"
+    "fit_window": "تنظیم اندازه پنجره",
+    "click_through": "عبور کلیک"
   },
   "app": {
     "drag_to_move": "برای جابجایی بکشید",

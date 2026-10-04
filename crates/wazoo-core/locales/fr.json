@@ -22,7 +22,8 @@
     "crt_filter": "Filtre CRT",
     "fullscreen": "Plein écran",
     "exit_fullscreen": "Quitter le plein écran",
-    "fit_window": "Ajuster la fenêtre"
+    "fit_window": "Ajuster la fenêtre",
+    "click_through": "Clic traversant"
   },
   "app": {
     "drag_to_move": "Faites glisser pour déplacer",

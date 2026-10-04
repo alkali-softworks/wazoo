@@ -22,7 +22,8 @@
     "crt_filter": "CRTフィルター",
     "fullscreen": "フルスクリーン",
     "exit_fullscreen": "フルスクリーンを終了",
-    "fit_window": "ウィンドウを合わせる"
+    "fit_window": "ウィンドウを合わせる",
+    "click_through": "クリック透過"
   },
   "app": {
     "drag_to_move": "ドラッグして移動",

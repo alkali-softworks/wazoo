@@ -22,7 +22,8 @@
     "crt_filter": "מסנן CRT",
     "fullscreen": "מסך מלא",
     "exit_fullscreen": "יציאה ממסך מלא",
-    "fit_window": "התאם חלון"
+    "fit_window": "התאם חלון",
+    "click_through": "מעבר לחיצות"
   },
   "app": {
     "drag_to_move": "גרור להזזה",
