@@ -1061,7 +1061,13 @@ impl WazooApp {
         self.settings.cube_size = self.cube.size_multiplier;
         self.settings.last_query = self.search.active_query.clone();
         self.settings.last_folders = self.search.active_folders.clone();
-        let _ = self.config_mgr.save_settings(&self.settings);
+        let mut settings_to_save = self.settings.clone();
+        if self.cube.desktop_overlay {
+            if let Some(ref prev) = self.cube.pre_desktop_bounds {
+                settings_to_save.window_bounds = prev.clone();
+            }
+        }
+        let _ = self.config_mgr.save_settings(&settings_to_save);
         self.window.bounds_dirty = false;
     }
 

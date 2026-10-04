@@ -52,7 +52,11 @@ impl WazooApp {
                         self.restore_grid_players_to_target(self.settings.player_count);
                     }
 
-                    // Exit fullscreen mode if active so Mode 9 desktop overlay runs in windowed mode
+                    // Save pre-desktop window bounds and maximized state so we can restore them upon exit
+                    self.cube.pre_desktop_bounds = Some(self.settings.window_bounds.clone());
+                    self.cube.was_maximized_before_desktop = self.window.is_maximized;
+
+                    // Exit fullscreen mode if active so Mode 9 desktop overlay runs in windowed/maximized mode
                     let exit_fullscreen_task = if self.window.is_fullscreen {
                         self.titlebar.last_click = None;
                         self.titlebar.drag_pending = false;
@@ -66,6 +70,8 @@ impl WazooApp {
                     } else {
                         Task::none()
                     };
+
+                    self.window.is_maximized = true;
 
                     // Track whether the cube was already active before entering Mode 9
                     let was_active = self.cube.is_present();
@@ -94,7 +100,8 @@ impl WazooApp {
                         let level_task =
                             iced::window::set_level(id, iced::window::Level::AlwaysOnTop);
                         let passthrough_task = iced::window::enable_mouse_passthrough(id);
-                        Task::batch([exit_fullscreen_task, level_task, passthrough_task])
+                        let maximize_task = iced::window::maximize(id, true);
+                        Task::batch([exit_fullscreen_task, level_task, passthrough_task, maximize_task])
                     } else {
                         exit_fullscreen_task
                     }
@@ -216,6 +223,9 @@ impl WazooApp {
         }
         self.cube.desktop_overlay = false;
 
+        let was_maximized = self.cube.was_maximized_before_desktop;
+        let pre_bounds = self.cube.pre_desktop_bounds.take();
+
         // If the cube was spawned solely for Mode 9, dismiss it completely
         if self.cube.spawned_for_desktop {
             self.cube.clear();
@@ -240,8 +250,31 @@ impl WazooApp {
             let level_task = iced::window::set_level(id, level);
             self.window.ghost_passthrough_active = false;
             let passthrough_task = iced::window::disable_mouse_passthrough(id);
-            Task::batch([level_task, passthrough_task])
+
+            let restore_task = if !was_maximized {
+                self.window.is_maximized = false;
+                let unmaximize_task = iced::window::maximize(id, false);
+                let geometry_task = if let Some(prev) = pre_bounds {
+                    self.settings.window_bounds = prev.clone();
+                    let resize_task = iced::window::resize(id, iced::Size::new(prev.width as f32, prev.height as f32));
+                    let move_task = iced::window::move_to(id, iced::Point::new(prev.x as f32, prev.y as f32));
+                    Task::batch([resize_task, move_task])
+                } else {
+                    Task::none()
+                };
+                Task::batch([unmaximize_task, geometry_task])
+            } else {
+                Task::none()
+            };
+
+            Task::batch([level_task, passthrough_task, restore_task])
         } else {
+            if !was_maximized {
+                self.window.is_maximized = false;
+                if let Some(prev) = pre_bounds {
+                    self.settings.window_bounds = prev;
+                }
+            }
             Task::none()
         }
     }
