@@ -326,20 +326,16 @@ impl VideoHandle {
             mpv_ffi::mpv_command(mpv, args.as_mut_ptr());
 
             let initial_duration = Duration::ZERO;
-            let render_width = 1280u32;
-            let render_height = 720u32;
-            let buffer_size = (render_width * render_height * 4) as usize;
-            let mut pixel_buffer = vec![0u8; buffer_size];
-            for chunk in pixel_buffer.chunks_exact_mut(4) {
-                chunk[3] = 255;
-            }
+            let render_width = 0u32;
+            let render_height = 0u32;
+            let pixel_buffer = Vec::new();
             let alive = Arc::new(AtomicBool::new(true));
             let frame = Arc::new(Mutex::new(FrameData {
-                width: render_width,
-                height: render_height,
-                pixels: pixel_buffer.clone(),
-                new_frame: true,
-                frame_seq: 1,
+                width: 0,
+                height: 0,
+                pixels: Vec::new(),
+                new_frame: false,
+                frame_seq: 0,
             }));
 
             let mut state = PlayerState::new(id, file_path.to_string(), name.to_string());
@@ -607,10 +603,18 @@ impl VideoHandle {
 
             let flags = mpv_ffi::mpv_render_context_update(self.render_ctx);
             if (flags & mpv_ffi::MPV_RENDER_UPDATE_FRAME) != 0 {
+                if self.render_width == 0 || self.render_height == 0 {
+                    return false;
+                }
+
                 let mut size = [self.render_width as i32, self.render_height as i32];
                 let format = c"rgb0";
                 let mut stride = (self.render_width * 4) as usize;
                 let mut block_target_time: c_int = 0;
+                let buf_size = (self.render_width * self.render_height * 4) as usize;
+                if self.pixel_buffer.len() != buf_size {
+                    self.pixel_buffer.resize(buf_size, 0);
+                }
                 let mut render_params = [
                     mpv_ffi::MpvRenderParam {
                         type_: mpv_ffi::MPV_RENDER_PARAM_SW_SIZE,
@@ -643,18 +647,11 @@ impl VideoHandle {
                 if err == 0 {
                     mpv_ffi::mpv_render_context_report_swap(self.render_ctx);
 
-                    for chunk in self.pixel_buffer.chunks_exact_mut(4) {
-                        chunk[3] = 0xFF;
-                    }
-
                     {
                         let mut frame_guard = self.frame.lock().unwrap();
                         frame_guard.width = self.render_width;
                         frame_guard.height = self.render_height;
-                        if frame_guard.pixels.len() != self.pixel_buffer.len() {
-                            frame_guard.pixels.resize(self.pixel_buffer.len(), 0);
-                        }
-                        frame_guard.pixels.copy_from_slice(&self.pixel_buffer);
+                        std::mem::swap(&mut frame_guard.pixels, &mut self.pixel_buffer);
                         frame_guard.new_frame = true;
                         frame_guard.frame_seq = frame_guard.frame_seq.wrapping_add(1);
                     }
@@ -803,20 +800,10 @@ impl VideoHandle {
     /// Overwrite pixel and frame buffers with solid black so no previous frame is visible
     pub fn clear_frame_black(&mut self) {
         if let Ok(mut frame) = self.frame.lock() {
-            for chunk in frame.pixels.chunks_exact_mut(4) {
-                chunk[0] = 0;
-                chunk[1] = 0;
-                chunk[2] = 0;
-                chunk[3] = 255;
-            }
+            frame.pixels.fill(0);
             frame.new_frame = true;
         }
-        for chunk in self.pixel_buffer.chunks_exact_mut(4) {
-            chunk[0] = 0;
-            chunk[1] = 0;
-            chunk[2] = 0;
-            chunk[3] = 255;
-        }
+        self.pixel_buffer.fill(0);
     }
 
     pub fn set_paused(&mut self, paused: bool) {
@@ -1825,11 +1812,9 @@ impl VideoHandle {
                 }
             }
         }
-        if self.has_decoded_frame() {
-            if let Ok(guard) = self.frame.lock() {
-                if guard.width > 0 && guard.height > 0 {
-                    return Some(guard.width as f32 / guard.height as f32);
-                }
+        if let Ok(guard) = self.frame.lock() {
+            if guard.width > 0 && guard.height > 0 {
+                return Some(guard.width as f32 / guard.height as f32);
             }
         }
         None
@@ -1847,9 +1832,6 @@ impl VideoHandle {
                     self.render_height = target_h;
                     let buf_size = (target_w * target_h * 4) as usize;
                     self.pixel_buffer.resize(buf_size, 0);
-                    for chunk in self.pixel_buffer.chunks_exact_mut(4) {
-                        chunk[3] = 255;
-                    }
                 }
             }
         }

@@ -298,7 +298,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         }
     }
 
-    return vec4<f32>(clamp(final_rgb, vec3<f32>(0.0), vec3<f32>(1.0)), col.a * uniforms.opacity);
+    return vec4<f32>(clamp(final_rgb, vec3<f32>(0.0), vec3<f32>(1.0)), uniforms.opacity);
 }
 "#;
 
@@ -306,7 +306,6 @@ impl CubePipeline {
     fn create_entry(
         &self,
         device: &wgpu::Device,
-        queue: &wgpu::Queue,
         width: u32,
         height: u32,
         alive: Arc<AtomicBool>,
@@ -327,28 +326,6 @@ impl CubePipeline {
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
             view_formats: &[],
         });
-
-        // Initialize with default pixels
-        let init_pixels = vec![30u8; (w * h * 4) as usize];
-        queue.write_texture(
-            wgpu::TexelCopyTextureInfo {
-                texture: &texture,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            &init_pixels,
-            wgpu::TexelCopyBufferLayout {
-                offset: 0,
-                bytes_per_row: Some(w * 4),
-                rows_per_image: Some(h),
-            },
-            wgpu::Extent3d {
-                width: w,
-                height: h,
-                depth_or_array_layers: 1,
-            },
-        );
 
         let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
 
@@ -574,7 +551,6 @@ impl Primitive for CubePrimitive {
             if needs_recreate {
                 let new_entry = pipeline.create_entry(
                     device,
-                    queue,
                     width,
                     height,
                     Arc::clone(&inst.alive),

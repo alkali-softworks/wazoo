@@ -132,7 +132,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
     }
     var col = textureSampleLevel(tex, s, in.uv, 0.0);
-    return vec4<f32>(col.rgb, col.a * uniforms.opacity);
+    return vec4<f32>(col.rgb, uniforms.opacity);
 }
 "#;
 
@@ -393,7 +393,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         rgb = mix(rgb, fog_color, final_fog);
     }
 
-    return vec4<f32>(clamp(rgb, vec3<f32>(0.0), vec3<f32>(1.0)), base_color.a * uniforms.opacity);
+    return vec4<f32>(clamp(rgb, vec3<f32>(0.0), vec3<f32>(1.0)), uniforms.opacity);
 }
 "#;
 
