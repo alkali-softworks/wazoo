@@ -1030,7 +1030,7 @@ impl WazooApp {
 
         // Cube player starts muted by default so it doesn't clash with existing audio
         let initial_muted = true;
-        let start_time = StartTime::Beginning;
+        let start_time = StartTime::Random;
 
         for _ in 0..MAX_VIDEO_LOAD_RETRIES {
             if let Some(video_rec) = self.get_next_video_rec(None) {
