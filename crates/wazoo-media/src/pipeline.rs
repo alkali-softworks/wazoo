@@ -634,7 +634,7 @@ impl Primitive for VideoPrimitive {
         bounds: &Rectangle,
         _viewport: &Viewport,
     ) {
-        let frame_guard = self.frame.lock().unwrap();
+        let mut frame_guard = self.frame.lock().unwrap();
         let width = frame_guard.width;
         let height = frame_guard.height;
 
@@ -660,7 +660,7 @@ impl Primitive for VideoPrimitive {
         let entry = pipeline.videos.get_mut(&self.player_id).unwrap();
 
         let is_new_frame =
-            just_created || frame_guard.new_frame || entry.last_frame_seq != frame_guard.frame_seq;
+            just_created || entry.last_frame_seq != frame_guard.frame_seq;
 
         if is_new_frame && !frame_guard.pixels.is_empty() {
             queue.write_texture(
@@ -683,6 +683,7 @@ impl Primitive for VideoPrimitive {
                 },
             );
             entry.last_frame_seq = frame_guard.frame_seq;
+            frame_guard.new_frame = false;
         }
 
         let (vw, vh) = (width as f32, height as f32);

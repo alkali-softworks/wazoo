@@ -35,9 +35,31 @@ pub fn run() -> iced::Result {
     let config_mgr = wazoo_core::ConfigManager::new();
     let initial_settings = config_mgr.load_settings();
 
+    // Configure display presentation mode (VSync) to eliminate screen tearing.
+    // By default, iced_wgpu maps vsync to wgpu::PresentMode::AutoVsync, which prioritizes
+    // FifoRelaxed (Adaptive VSync) over strict Fifo. On Vulkan/X11, FifoRelaxed drops
+    // synchronization and allows horizontal tearing whenever frame rendering or video decoding
+    // takes slightly longer than one refresh interval. Setting ICED_PRESENT_MODE="fifo"
+    // enforces true tear-free swapchain presentation on all platforms unless explicitly
+    // overridden via environment variable.
+    if std::env::var("ICED_PRESENT_MODE").is_err() {
+        // SAFETY: Setting environment variable at startup before worker threads run.
+        unsafe {
+            std::env::set_var("ICED_PRESENT_MODE", "fifo");
+        }
+    }
+
     #[cfg(target_os = "linux")]
     {
         crate::platform::init_linux_cursor_env(initial_settings.is_default_player);
+
+        // Ensure NVIDIA driver synchronizes display buffer swaps to VBlank on X11
+        if std::env::var("__GL_SYNC_TO_VBLANK").is_err() {
+            // SAFETY: Setting environment variables at startup before background worker threads run.
+            unsafe {
+                std::env::set_var("__GL_SYNC_TO_VBLANK", "1");
+            }
+        }
 
         // On Linux hybrid graphics laptops (e.g. Intel iGPU + NVIDIA dGPU), defaulting to
         // the integrated GPU avoids cross-GPU DRI3 PRIME swapchain presentation failure /
