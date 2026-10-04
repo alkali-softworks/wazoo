@@ -263,7 +263,9 @@ impl WazooApp {
                     });
 
                 root_stack_children.push(Element::from(
-                    mouse_area(alt_overlay).on_press(Message::DragWindow),
+                    mouse_area(alt_overlay)
+                        .on_press(Message::DragWindow)
+                        .interaction(mouse::Interaction::Move),
                 ));
             }
 
