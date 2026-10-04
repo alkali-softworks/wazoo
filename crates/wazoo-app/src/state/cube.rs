@@ -24,6 +24,8 @@ pub struct BouncingCube {
     pub player_index: usize,
     pub player_id: Option<wazoo_media::PlayerId>,
     pub bounce_count: u32,
+    pub is_ready: bool,
+    pub ready_ticks: usize,
 }
 
 impl BouncingCube {
@@ -133,6 +135,8 @@ impl CubeState {
             player_index: player_idx,
             player_id,
             bounce_count: 0,
+            is_ready: player_id.is_none(),
+            ready_ticks: 0,
         };
 
         self.next_id = self.next_id.wrapping_add(1);
@@ -193,6 +197,9 @@ impl CubeState {
         let szm = self.size_multiplier.clamp(0.4, 3.0);
 
         for cube in &mut self.cubes {
+            if !cube.is_ready {
+                continue;
+            }
             let r = (cube.size * szm).max(20.0);
 
             cube.x += cube.vx * sm;

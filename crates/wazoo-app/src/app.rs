@@ -988,9 +988,28 @@ impl WazooApp {
                     Ok(mut handle) => {
                         handle.set_muted(initial_muted);
                         handle.set_subtitles_visible(self.subtitles_enabled);
+
+                        // If this is a real non-empty video file, attempt to decode the initial
+                        // presentation frame right away so the cube is ready to go immediately
+                        if !video_rec.path.is_empty() {
+                            let file_len = std::fs::metadata(&video_rec.path)
+                                .map(|m| m.len())
+                                .unwrap_or(0);
+                            if file_len > 0 {
+                                let start = std::time::Instant::now();
+                                while !handle.has_decoded_frame()
+                                    && start.elapsed() < Duration::from_millis(30)
+                                {
+                                    if handle.update_frame() {
+                                        break;
+                                    }
+                                    std::thread::sleep(Duration::from_millis(2));
+                                }
+                            }
+                        }
+
                         let mut player = AppPlayer::new_cube(handle, self.default_shuffle_mode);
                         player.flip.reset(self.settings.flip_interval_secs);
-                        player.start_loading();
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
                         self.players.push(player);
                         return Some(id);

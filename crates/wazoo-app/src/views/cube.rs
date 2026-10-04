@@ -30,6 +30,9 @@ impl WazooApp {
         let is_flashing_focus = self.overlay.focus_border_ticks > 0;
 
         for cube in &self.cube.cubes {
+            if !cube.is_ready {
+                continue;
+            }
             let (frame, alive, player_id) = if let Some(pid) = cube.player_id {
                 if let Some(p) = self.players.player(pid) {
                     (p.frame(), p.alive(), p.id as u64)
