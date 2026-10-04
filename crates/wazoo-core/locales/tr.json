@@ -122,7 +122,11 @@
     "fog_filter": "Sis Filtresi",
     "fog_filter_desc": "Atmosferik yuvarlanan hacimsel sis ve bulut simülasyonu",
     "master_filters": "Gölgelendirici Filtreleri",
-    "master_filters_desc": "Tüm etkin görsel son işleme gölgelendiricilerini etkinleştirin veya devre dışı bırakın"
+    "master_filters_desc": "Tüm etkin görsel son işleme gölgelendiricilerini etkinleştirin veya devre dışı bırakın",
+    "default_player_desc": "Medya dosyaları için varsayılan sistem oynatıcısı olarak ayarla",
+    "default_player_desc_active": "Medya dosyaları için varsayılan sistem oynatıcısı olarak ilişkilendirildi",
+    "badge_on": "AÇIK",
+    "badge_off": "KAPALI"
   },
   "search": {
     "folder": "Klasör:",

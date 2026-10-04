@@ -122,7 +122,11 @@
     "fog_filter": "Mlohový filtr",
     "fog_filter_desc": "Atmosférická simulace objemové mlhy a mraků",
     "master_filters": "Shadery filtrů",
-    "master_filters_desc": "Povolit nebo zakázat všechny aktivní shadery vizuálního následného zpracování"
+    "master_filters_desc": "Povolit nebo zakázat všechny aktivní shadery vizuálního následného zpracování",
+    "default_player_desc": "Nastavit jako výchozí systémový přehrávač multimediálních souborů",
+    "default_player_desc_active": "Přidruženo jako výchozí systémový přehrávač multimediálních souborů",
+    "badge_on": "ZAP",
+    "badge_off": "VYP"
   },
   "search": {
     "folder": "Složka:",

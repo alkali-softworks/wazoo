@@ -122,7 +122,11 @@
     "fog_filter": "Filtro de niebla",
     "fog_filter_desc": "Simulación atmosférica de niebla y nubes volumétricas rodantes",
     "master_filters": "Filtros de sombreado",
-    "master_filters_desc": "Activar o desactivar todos los sombreadores de postprocesamiento visual activos"
+    "master_filters_desc": "Activar o desactivar todos los sombreadores de postprocesamiento visual activos",
+    "default_player_desc": "Establecer como reproductor predeterminado para archivos multimedia",
+    "default_player_desc_active": "Asociado como reproductor predeterminado para archivos multimedia",
+    "badge_on": "ACT",
+    "badge_off": "DES"
   },
   "search": {
     "folder": "Carpeta:",

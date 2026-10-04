@@ -195,9 +195,9 @@ pub fn view_cube_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 Space::new().width(Length::Fill),
                 badge_with_reset(
                     if sheen_active {
-                        "ON".to_string()
+                        app.t("settings.badge_on")
                     } else {
-                        "OFF".to_string()
+                        app.t("settings.badge_off")
                     },
                     sheen_active,
                     Message::ToggleCubeSheen,

@@ -122,7 +122,11 @@
     "fog_filter": "Filtro nebbia",
     "fog_filter_desc": "Simulazione atmosferica di nebbia volumetrica e nuvole",
     "master_filters": "Filtri shader",
-    "master_filters_desc": "Abilita o disabilita tutti gli shader di post-elaborazione visiva attivi"
+    "master_filters_desc": "Abilita o disabilita tutti gli shader di post-elaborazione visiva attivi",
+    "default_player_desc": "Imposta come lettore di sistema predefinito per i file multimediali",
+    "default_player_desc_active": "Associato come lettore di sistema predefinito per i file multimediali",
+    "badge_on": "ON",
+    "badge_off": "OFF"
   },
   "search": {
     "folder": "Cartella:",

@@ -122,7 +122,11 @@
     "fog_filter": "Filtr mgły",
     "fog_filter_desc": "Atmosferyczna symulacja objętościowej mgły i chmur",
     "master_filters": "Filtry cieniowania",
-    "master_filters_desc": "Włącz lub wyłącz wszystkie aktywne shadery postprocessingu wizualnego"
+    "master_filters_desc": "Włącz lub wyłącz wszystkie aktywne shadery postprocessingu wizualnego",
+    "default_player_desc": "Ustaw jako domyślny odtwarzacz systemowy dla plików multimedialnych",
+    "default_player_desc_active": "Skojarzono jako domyślny odtwarzacz systemowy dla plików multimedialnych",
+    "badge_on": "WŁ",
+    "badge_off": "WYŁ"
   },
   "search": {
     "folder": "Folder:",
