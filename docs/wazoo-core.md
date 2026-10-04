@@ -10,7 +10,7 @@ The [`wazoo-core`] crate serves as the foundation for the Wazoo ecosystem. It en
 crates/wazoo-core/src/
 ├── config.rs    # Persistent configuration manager (atomic JSON writes & validation)
 ├── db.rs        # SQLite database operations, schema migrations, and search query builder
-├── i18n.rs      # Internationalization engine (16 languages, interpolation, RTL support)
+├── i18n.rs      # Internationalization engine (23 languages, interpolation, RTL support)
 ├── keybinds.rs  # Keyboard action mappings, custom keybindings, and help categories
 ├── lib.rs       # Crate root and public re-exports
 └── models.rs    # Canonical domain types and data transfer objects
@@ -88,9 +88,14 @@ To prevent corrupted settings if the app or OS terminates abruptly, `save_settin
 All incoming values are clamped to safe ranges on load and save:
 - `flip_interval_secs`: `1..=3600` (default: `45`s)
 - `buffer_duration_secs`: `2..=300` (default: `10`s)
-- `buffer_size_mb`: `16..=4096` (default: `32` MB)
+- `buffer_size_mb`: `8..=4096` (default: `32` MB)
 - `window_opacity`: `0.05..=1.0` (default: `1.0`)
-- `window_bounds`: minimum `200x150`, maximum `7680x4320`
+- `window_bounds`: width `200..=7680`, height `150..=4320`
+- `gamma`, `contrast`, `brightness`, `saturation`: `-100.0..=100.0` (default: `0.0`)
+- `playback_speed`: `0.25..=4.0` (default: `1.0`)
+- `cube_speed`: `0.2..=4.0` (default: `1.0`)
+- `cube_size`: `0.4..=3.0` (default: `1.0`)
+- `keybinds`: Automatically reconciles with complete defaults via `reconcile_with_defaults()` if keys are missing from older config versions.
 
 ---
 

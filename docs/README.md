@@ -16,20 +16,23 @@ graph TD
     Core["crates/wazoo-core<br/>(Models, SQLite DB, Config, i18n, Keybinds)"]
     Media["crates/wazoo-media<br/>(libmpv FFI, WGPU Pipeline, Scroll Engine, Subtitles)"]
     Scanner["crates/wazoo-scanner<br/>(Directory Traversal, Name Sanitization, Ingestion)"]
+    Tutorial["crates/wazoo-tutorial<br/>(Interactive Rust & TEA Learning Application)"]
     App --> Core
     App --> Media
     App --> Scanner
     Scanner --> Core
+    Tutorial -.-> Core
 ```
 
 ### Crate Roles & Summaries
 
 | Crate | Primary Role | Key Dependencies | Documentation |
 | :--- | :--- | :--- | :--- |
-| [**`wazoo-core`**] | Domain models, SQLite database management, settings persistence, localization, and keybinding configuration. | `rusqlite`, `serde`, `directories`, `regex` | [Core Architecture] |
-| [**`wazoo-media`**] | High-level media playback (`VideoHandle`), low-level C FFI bindings to `libmpv`, custom WGPU shader rendering pipeline, continuous scroll physics engine, and subtitle transcript parsing. | `iced_wgpu`, `wgpu`, `bytemuck`, `tokio`, `rand` | [Media Architecture] |
-| [**`wazoo-scanner`**] | Asynchronous directory scanner, media file validation, filename sanitization, and streaming database batching. | `walkdir`, `tokio`, `regex`, `wazoo-core` | [Scanner Architecture] |
-| [**`wazoo-app`**] | Main desktop application entry point, TEA state machine, modular update reducers, UI components, multi-tile layout engines, drawers, and modal dialogs. | `iced`, `wazoo-core`, `wazoo-media`, `wazoo-scanner` | [App Architecture] |
+| **`wazoo-core`** | Domain models, SQLite database management, settings persistence, localization, and keybinding configuration. | `rusqlite`, `serde`, `directories`, `regex` | [Core Architecture](wazoo-core.md) |
+| **`wazoo-media`** | High-level media playback (`VideoHandle`), low-level C FFI bindings to `libmpv`, custom WGPU shader rendering pipeline, continuous scroll physics engine, and subtitle transcript parsing. | `iced_wgpu`, `wgpu`, `bytemuck`, `tokio`, `rand` | [Media Architecture](wazoo-media.md) |
+| **`wazoo-scanner`** | Asynchronous directory scanner, media file validation, filename sanitization, and streaming database batching. | `walkdir`, `tokio`, `regex`, `wazoo-core` | [Scanner Architecture](wazoo-scanner.md) |
+| **`wazoo-app`** | Main desktop application entry point, TEA state machine, modular update reducers, UI components, multi-tile layout engines, drawers, and modal dialogs. | `iced`, `wazoo-core`, `wazoo-media`, `wazoo-scanner` | [App Architecture](wazoo-app.md) |
+| **`wazoo-tutorial`** | Interactive learning sandbox and companion GUI demonstrating Rust syntax, Elm Architecture (TEA), SQLite persistence, and custom widgets. | `iced`, `rusqlite`, `tokio` | [App Code](../crates/wazoo-tutorial/src/main.rs) |
 
 ---
 
@@ -51,20 +54,23 @@ sequenceDiagram
     User->>CLI: Launch binary (optional flags, paths, search query)
     CLI->>Platform: detach_from_console() (if not --foreground)
     CLI->>Config: load_settings() (settings.json)
+    Platform->>Platform: Set ICED_PRESENT_MODE="fifo" (tear-free VSync)
     Platform->>Platform: Check hybrid GPU (WGPU_POWER_PREF=low on Linux)
     Platform->>Platform: Init custom frameless cursor environment
     App->>DB: Database::open(wazoo.db)
-    App->>DB: Query session videos / restored search
+    App->>DB: Query session videos / restored search / CLI targets
     App->>App: Initialize active players (1..12 or CLI targets)
-    App->>Iced: Run event loop (update, view, subscription)
+    App->>App: Pre-warm standby player (instant transition cache)
+    App->>Iced: Run event loop (update, view, 60 FPS Message::Tick)
 ```
 
 1. **CLI Parsing**: Reads optional media folders, direct video files, search queries, or flags.
 2. **Platform Setup**:
-   - Detaches from console on Windows/Linux GUI launches.
+   - Detaches from console on Windows/Linux GUI launches (unless `--foreground` is specified).
+   - Enforces `ICED_PRESENT_MODE="fifo"` and `__GL_SYNC_TO_VBLANK=1` for tear-free display swaps.
    - Detects Linux dual-GPU hybrid laptops to prevent PRIME DRI3 swapchain deadlocks by selecting the low-power GPU.
-3. **Configuration & DB**: Opens SQLite database with WAL mode and indices, restores `settings.json`, and loads persisted window geometry and volume levels.
-4. **Player Initialization**: Spawns initial [`VideoHandle`] instances with staggered random offsets or saved session timestamps.
+3. **Configuration & DB**: Opens SQLite database with WAL mode and indices, restores `settings.json`, and loads persisted window geometry and volume levels. Reconciles complete default keybinds if missing.
+4. **Player Initialization**: Spawns initial [`VideoHandle`] instances with staggered random offsets or saved session timestamps, and pre-warms a standby player in the background for zero-latency video switching.
 
 ---
 
@@ -104,20 +110,20 @@ sequenceDiagram
     autonumber
     participant Engine as libmpv (mpv_ffi)
     participant Handle as VideoHandle (wazoo-media)
-    participant App as WazooApp::update (60 FPS tick)
+    participant App as WazooApp::update (60 FPS Message::Tick)
     participant Pipeline as VideoPipeline (WGPU shader)
     participant Screen as Window Presentation
 
     Engine->>Handle: mpv_render_context_render (software BGR0/BGRA32)
     App->>Handle: update_frame() -> new_frame flag set
     App->>Pipeline: Upload pixels via queue.write_texture
-    Pipeline->>Pipeline: WGSL fragment shader (scale UV, apply opacity)
+    Pipeline->>Pipeline: WGSL fragment shader (scale UV, apply opacity, CRT/wavy/fog shaders)
     Pipeline->>Screen: Render into Iced view widget quad
 ```
 
 - **Decoupled Playback**: `libmpv` runs its own internal demuxer and decoding threads without blocking the GUI event loop.
 - **Software Presentation**: `libmpv` renders frames into an internal BGRA32 pixel buffer via `mpv_render_context`.
-- **WGPU Shader Pipeline**: `VideoPipeline` uploads updated frames to GPU textures on the 60 FPS animation tick, supporting seamless multi-tile rendering without window handle limitations.
+- **WGPU Shader Pipeline**: `VideoPipeline` uploads updated frames to GPU textures on the 60 FPS `Message::Tick`, supporting multi-tile rendering with real-time post-processing shaders (CRT, Wavy Fluid, Volumetric Fog).
 
 ---
 
@@ -147,7 +153,7 @@ graph LR
 
 ```mermaid
 graph TD
-    Tick["60 FPS AnimationTick"] --> Scroll["ScrollEngine::tick()"]
+    Tick["Unified 60 FPS Message::Tick"] --> Scroll["ScrollEngine::tick()"]
     Scroll --> Move["Advance Y positions by scroll_speed"]
     Scroll --> Despawn["Identify offscreen items (> 1.5x screen height)"]
     Despawn --> DropThread["Drop offscreen VideoHandles on background thread"]
@@ -174,4 +180,4 @@ Dive deeper into specific subsystem implementations:
 3. [**`wazoo-scanner` Architecture**](wazoo-scanner.md)
    - Media discovery, directory recursion, filename normalization, and streaming channels.
 4. [**`wazoo-app` Architecture**](wazoo-app.md)
-   - TEA application state, modular message reducers, multi-tile layout engines, slide drawers, frameless titlebar, and subscriptions.
+   - TEA application state, modular message reducers, multi-tile layout engines, slide drawers, frameless titlebar, and unified 60 FPS engine subscriptions.

@@ -45,7 +45,7 @@ fn is_media_file(path: &Path) -> bool {
 // STEP 1: THE DATA SHAPE (`struct`)
 // ==============================================================================
 // RUST CONCEPT: Rust has NO `class` keyword!
-// In PHP/JS, classes bundle data and functions together.
+// In JS, classes bundle data and functions together.
 // In Rust, we define the DATA separately in a `struct` (like a database schema or interface),
 // and then attach methods to it later inside an `impl` block below.
 //
@@ -89,7 +89,7 @@ pub struct TutorialApp {
 //
 // Notice the difference:
 // - `Self` (capital S): Refers to the TYPE (`TutorialApp`).
-// - `self` (lowercase s): Refers to the INSTANCE (like `$this` in PHP or `this` in JS).
+// - `self` (lowercase s): Refers to the INSTANCE (like `this` in JS).
 impl TutorialApp {
     /// Constructs the initial application state.
     ///
@@ -130,9 +130,8 @@ impl TutorialApp {
         //    Writing `Self { ... }` is 100% IDENTICAL to writing `TutorialApp { ... }`.
         // 3. NO `new` KEYWORD: Rust has no `new` operator. You instantiate structs using
         //    the "Struct Literal" syntax: `StructName { field1: val1, field2: val2 }`.
-        // 4. PHP/JS EQUIVALENT:
-        //    - PHP: `public static function create(): array { $app = new self(); ... return [$app, null]; }`
-        //    - JS:  `static create() { const app = new TutorialApp(); ... return [app, null]; }`
+        // 4. JS EQUIVALENT:
+        //    `static create() { const app = new TutorialApp(); ... return [app, null]; }`
         //
         // We build the instance here, store it in the local variable `app`, and return it below!
         let app = Self {
@@ -185,7 +184,7 @@ impl TutorialApp {
     ///
     /// RUST CONCEPT: Closures `|_|` and `.map()`
     /// - `time::every(...)` emits a timestamp (`Instant`) every 1 second.
-    /// - `|_|` is an anonymous closure (like `(_) => ...` in JS or `fn($_) => ...` in PHP).
+    /// - `|_|` is an anonymous closure (like `(_) => ...` in JS).
     ///   The pipes `| |` enclose the parameters.
     /// - `_` means: "Ignore this timestamp argument; we don't need it."
     /// - `.map(...)` transforms the stream from `Subscription<Instant>` into `Subscription<Message>`!
