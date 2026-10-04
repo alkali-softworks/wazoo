@@ -84,6 +84,8 @@
     "tab_system": "Hệ thống",
     "always_on_top": "Luôn ở trên cùng",
     "always_on_top_desc": "Giữ Wazoo luôn hiển thị phía trên các cửa sổ khác",
+    "standby_player": "Trình phát ở chế độ chờ",
+    "standby_player_desc": "Tải trước video tiếp theo để phát ngay tức thì (~50 MB RAM)",
     "crt_filter": "Bộ lọc CRT",
     "crt_filter_desc": "Mô phỏng màn hình CRT cổ điển với đường quét, độ cong và ánh lân quang",
     "loading_indicator": "Chỉ báo tải",

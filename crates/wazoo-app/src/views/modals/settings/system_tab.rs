@@ -123,8 +123,9 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 .size(12)
                 .color(theme::COLOR_TEXT_MUTED),
             ]
-            .spacing(2),
-            Space::new().width(Length::Fill),
+            .spacing(2)
+            .width(Length::Fill),
+            Space::new().width(Length::Fixed(16.0)),
             default_player_toggle,
         ]
         .align_y(Alignment::Center),
@@ -164,9 +165,52 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                     .size(12)
                     .color(theme::COLOR_TEXT_MUTED),
             ]
-            .spacing(2),
-            Space::new().width(Length::Fill),
+            .spacing(2)
+            .width(Length::Fill),
+            Space::new().width(Length::Fixed(16.0)),
             always_on_top_toggle,
+        ]
+        .align_y(Alignment::Center),
+    )
+    .padding([12, 14])
+    .style(|_theme: &Theme| container::Style {
+        background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
+        border: iced::Border {
+            radius: 6.0.into(),
+            width: 1.0,
+            color: theme::COLOR_BORDER,
+        },
+        ..Default::default()
+    });
+
+    let standby_player_toggle = {
+        let is_enabled = app.settings.use_standby_player;
+        let icon = if is_enabled { "✓ " } else { "" };
+        let label = format!("{}{}", icon, app.t("settings.standby_player"));
+        button(text(label).size(12).font(if is_enabled {
+            theme::FONT_BOLD
+        } else {
+            Default::default()
+        }))
+        .style(theme::folder_chip_style(is_enabled))
+        .on_press(Message::ToggleStandbyPlayer)
+        .padding([6, 14])
+    };
+
+    let standby_player_group = container(
+        row![
+            column![
+                text(app.t("settings.standby_player"))
+                    .size(14)
+                    .color(iced::Color::WHITE),
+                text(app.t("settings.standby_player_desc"))
+                    .size(12)
+                    .color(theme::COLOR_TEXT_MUTED),
+            ]
+            .spacing(2)
+            .width(Length::Fill),
+            Space::new().width(Length::Fixed(16.0)),
+            standby_player_toggle,
         ]
         .align_y(Alignment::Center),
     )
@@ -217,6 +261,7 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         flip_interval_group,
         buffer_dur_group,
         buffer_size_group,
+        standby_player_group,
     ]
     .spacing(16)
     .into()

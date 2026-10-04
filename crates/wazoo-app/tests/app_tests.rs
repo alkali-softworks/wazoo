@@ -697,6 +697,16 @@ fn test_settings_modal_tabs_and_playback_options() {
     let _ = app.update(Message::ToggleDefaultPlayer);
     assert!(!app.settings.is_default_player);
 
+    // Toggle standby player on System tab
+    assert!(!app.settings.use_standby_player);
+    let _ = app.update(Message::ToggleStandbyPlayer);
+    assert!(app.settings.use_standby_player);
+    {
+        let _view_system_standby_on = app.view_settings_modal();
+    }
+    let _ = app.update(Message::ToggleStandbyPlayer);
+    assert!(!app.settings.use_standby_player);
+
     // Adjust flip interval on System tab
     assert_eq!(app.settings.flip_interval_secs, 45);
     let _ = app.update(Message::SetFlipInterval(90));

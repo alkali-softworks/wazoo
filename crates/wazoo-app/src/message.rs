@@ -141,6 +141,7 @@ pub enum Message {
     SetFlipInterval(u64),
     ResetPlaybackOptions,
     ToggleDefaultPlayer,
+    ToggleStandbyPlayer,
     OpenAlkaliWebsite,
     SetLanguage(String),
     OpenHelpModal,

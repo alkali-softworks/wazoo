@@ -253,6 +253,7 @@ impl WazooApp {
             | Message::SetFlipInterval(_)
             | Message::ResetPlaybackOptions
             | Message::ToggleDefaultPlayer
+            | Message::ToggleStandbyPlayer
             | Message::OpenAlkaliWebsite
             | Message::OpenHelpModal
             | Message::CloseHelpModal

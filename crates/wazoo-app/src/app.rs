@@ -86,8 +86,8 @@ pub enum SettingsTab {
     General,
     Playback,
     Filters,
-    System,
     Cube,
+    System,
 }
 
 pub struct WazooApp {
@@ -947,6 +947,10 @@ impl WazooApp {
     /// presentation frame already decoded off-thread, so the next player or 3D cube added attaches
     /// in microseconds without freezing the UI thread or hitching active video playback/animations.
     pub(crate) fn replenish_standby_player(&self) {
+        if !self.settings.use_standby_player {
+            return;
+        }
+
         let expected_start = if self.settings.playback_mode == PlaybackMode::Scroll
             || self.settings.playback_mode == PlaybackMode::Flip
         {

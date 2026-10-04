@@ -84,6 +84,8 @@
     "tab_system": "시스템",
     "always_on_top": "항상 위에 고정",
     "always_on_top_desc": "Wazoo를 다른 모든 창 위에 고정합니다",
+    "standby_player": "대기 플레이어",
+    "standby_player_desc": "즉각적인 재생을 위해 다음 비디오 미리 로드 (~50 MB RAM)",
     "crt_filter": "CRT 필터",
     "crt_filter_desc": "스캔라인, 곡률 및 형광체 발광을 갖춘 레트로 아날로그 브라운관 시뮬레이션",
     "loading_indicator": "로딩 표시기",

@@ -84,6 +84,8 @@
     "tab_system": "System",
     "always_on_top": "Alltid överst",
     "always_on_top_desc": "Håll Wazoo fäst över alla andra fönster",
+    "standby_player": "Standby-spelare",
+    "standby_player_desc": "Förladda nästa video för omedelbar uppspelning (~50 MB RAM)",
     "crt_filter": "CRT-filter",
     "crt_filter_desc": "Retro analog katodstrålerörssimulering med sveplinjer, krökning och fosforglöd",
     "loading_indicator": "Laddningsindikator",

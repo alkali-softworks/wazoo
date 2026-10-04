@@ -209,6 +209,8 @@ pub struct WazooSettings {
     pub cube_size: f32,
     #[serde(default)]
     pub cube_sheen: bool,
+    #[serde(default)]
+    pub use_standby_player: bool,
 }
 
 fn default_playback_speed() -> f32 {
@@ -269,6 +271,7 @@ impl Default for WazooSettings {
             cube_speed: 1.0,
             cube_size: 1.0,
             cube_sheen: false,
+            use_standby_player: false,
         }
     }
 }

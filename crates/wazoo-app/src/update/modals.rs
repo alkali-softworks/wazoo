@@ -260,6 +260,20 @@ impl WazooApp {
                 }
                 Task::none()
             }
+            Message::ToggleStandbyPlayer => {
+                self.settings.use_standby_player = !self.settings.use_standby_player;
+                let _ = self.config_mgr.save_settings(&self.settings);
+                if !self.settings.use_standby_player {
+                    if let Ok(mut guard) = self.standby_player.lock() {
+                        if let Some(handle) = guard.take() {
+                            std::thread::spawn(move || drop(handle));
+                        }
+                    }
+                } else {
+                    self.replenish_standby_player();
+                }
+                Task::none()
+            }
             Message::OpenAlkaliWebsite => {
                 crate::platform::open_url("https://alkalisoftworks.com/");
                 Task::none()

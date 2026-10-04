@@ -84,6 +84,8 @@
     "tab_system": "Système",
     "always_on_top": "Toujours au premier plan",
     "always_on_top_desc": "Garder Wazoo épinglé au-dessus des autres fenêtres",
+    "standby_player": "Lecteur en attente",
+    "standby_player_desc": "Précharger la vidéo suivante pour une lecture instantanée (~50 Mo de RAM)",
     "crt_filter": "Filtre CRT",
     "crt_filter_desc": "Simulation de tube cathodique analogique rétro avec lignes de balayage, courbure et lueur de phosphore",
     "loading_indicator": "Indicateur de chargement",

@@ -84,6 +84,8 @@
     "tab_system": "System",
     "always_on_top": "Always on Top",
     "always_on_top_desc": "Keep Wazoo pinned above all other windows",
+    "standby_player": "Standby Player",
+    "standby_player_desc": "Preload next video for instant playback (~50 MB RAM)",
     "crt_filter": "CRT Filter",
     "crt_filter_desc": "Retro analog cathode ray tube simulation with scanlines, curvature, and phosphor glow",
     "loading_indicator": "Loading Indicator",
