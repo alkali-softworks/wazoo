@@ -233,8 +233,6 @@
     "cube_removed": "3D-kub borttagen",
     "cube_added": "3D-kub tillagd! (Tryck på [{key}] för att växla)",
     "cube_overlay_enabled": "Kuböverläggsläge (Tryck på [{key}] för att avsluta)",
-    "cube_added_num": "3D-kub #{count} tillagd! (Tryck på [{key}] för att växla)",
-    "cube_removed_remaining": "3D-kub borttagen ({count} återstår)",
     "cube_all_removed": "Alla 3D-kuber borttagna",
     "cube_overlay_disabled": "Kuböverläggsläge inaktiverat",
     "cube_playing": "3D-kub: {title}",

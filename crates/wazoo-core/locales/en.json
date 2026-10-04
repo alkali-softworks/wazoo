@@ -233,8 +233,6 @@
     "cube_removed": "3D Cube Removed",
     "cube_added": "3D Cube Added! (Press [{key}] to toggle)",
     "cube_overlay_enabled": "Cube Overlay Mode (Press [{key}] to exit)",
-    "cube_added_num": "Added 3D Cube #{count}! (Press [{key}] to toggle)",
-    "cube_removed_remaining": "3D Cube Removed ({count} Remaining)",
     "cube_all_removed": "All 3D Cubes Removed",
     "cube_overlay_disabled": "Cube Overlay Mode Disabled",
     "cube_playing": "3D Cube: {title}",

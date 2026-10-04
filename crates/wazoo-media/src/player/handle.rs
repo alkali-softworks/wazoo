@@ -50,6 +50,8 @@ pub struct VideoHandle {
     pub crt_enabled: bool,
     pub wavy_enabled: bool,
     pub fog_enabled: bool,
+    pub is_seeking: bool,
+    seek_restart_received: bool,
 }
 
 unsafe impl Send for VideoHandle {}
@@ -389,6 +391,8 @@ impl VideoHandle {
                 crt_enabled: config.crt_enabled,
                 wavy_enabled: config.wavy_enabled,
                 fog_enabled: config.fog_enabled,
+                is_seeking: false,
+                seek_restart_received: false,
             };
 
             handle.set_volume(1.0);
@@ -455,6 +459,7 @@ impl VideoHandle {
                     chunk[3] = 255;
                 }
                 frame.new_frame = true;
+                frame.frame_seq = 0;
             }
             for chunk in self.pixel_buffer.chunks_exact_mut(4) {
                 chunk[0] = 0;
@@ -505,7 +510,9 @@ impl VideoHandle {
             };
             self.pending_seek = pending_seek;
             self.last_seek_time = last_seek_time;
-            self.pending_seek_random = matches!(start_time, StartTime::Random);
+            self.pending_seek_random = false;
+            self.is_seeking = false;
+            self.seek_restart_received = false;
 
             Ok(())
         }
@@ -526,6 +533,10 @@ impl VideoHandle {
                 if (*event).event_id == mpv_ffi::MPV_EVENT_START_FILE {
                     self.is_eos = false;
                     self.is_failed = false;
+                }
+                if (*event).event_id == mpv_ffi::MPV_EVENT_SEEK {
+                    self.is_seeking = true;
+                    self.seek_restart_received = false;
                 }
                 if (*event).event_id == mpv_ffi::MPV_EVENT_END_FILE {
                     if !(*event).data.is_null() {
@@ -550,12 +561,30 @@ impl VideoHandle {
                     self.is_failed = false;
                     needs_refresh_tracks = true;
                 } else if (*event).event_id == mpv_ffi::MPV_EVENT_TRACKS_CHANGED
-                    || (*event).event_id == mpv_ffi::MPV_EVENT_PLAYBACK_RESTART
                     || (*event).event_id == mpv_ffi::MPV_EVENT_VIDEO_RECONFIG
                 {
                     self.is_eos = false;
                     self.is_failed = false;
                     needs_refresh_tracks = true;
+                } else if (*event).event_id == mpv_ffi::MPV_EVENT_PLAYBACK_RESTART {
+                    self.is_eos = false;
+                    self.is_failed = false;
+                    needs_refresh_tracks = true;
+                    if self.is_seeking {
+                        self.seek_restart_received = true;
+                        if let Ok(mut frame) = self.frame.lock() {
+                            frame.frame_seq = 0;
+                        }
+                    }
+                }
+            }
+
+            if self.is_seeking {
+                if let Some(t) = self.last_seek_time {
+                    if t.elapsed() > Duration::from_millis(2000) {
+                        self.is_seeking = false;
+                        self.seek_restart_received = false;
+                    }
                 }
             }
 
@@ -572,6 +601,9 @@ impl VideoHandle {
                 if self.duration() > Duration::ZERO {
                     self.pending_seek = None;
                     self.last_seek_time = Some(Instant::now());
+                    self.is_seeking = true;
+                    self.seek_restart_received = false;
+                    self.clear_frame_black();
                     let cmd = format!("no-osd seek {:.3} absolute+exact", target.as_secs_f64());
                     if let Ok(c_cmd) = CString::new(cmd) {
                         mpv_ffi::mpv_command_string(self.mpv, c_cmd.as_ptr());
@@ -657,6 +689,11 @@ impl VideoHandle {
                         std::mem::swap(&mut frame_guard.pixels, &mut self.pixel_buffer);
                         frame_guard.new_frame = true;
                         frame_guard.frame_seq = frame_guard.frame_seq.wrapping_add(1);
+                    }
+
+                    if self.seek_restart_received {
+                        self.is_seeking = false;
+                        self.seek_restart_received = false;
                     }
 
                     self.state.position = self.position();
@@ -804,6 +841,7 @@ impl VideoHandle {
     pub fn clear_frame_black(&mut self) {
         if let Ok(mut frame) = self.frame.lock() {
             frame.pixels.fill(0);
+            frame.frame_seq = 0;
             frame.new_frame = true;
         }
         self.pixel_buffer.fill(0);
@@ -998,12 +1036,42 @@ impl VideoHandle {
         self.speed
     }
 
+    pub fn is_seeking(&self) -> bool {
+        self.is_seeking || self.pending_seek_random || self.pending_seek.is_some()
+    }
+
     pub fn has_decoded_frame(&self) -> bool {
+        if self.is_seeking() {
+            return false;
+        }
         if let Ok(guard) = self.frame.lock() {
-            !guard.pixels.is_empty() && guard.width > 0 && guard.height > 0
+            if guard.frame_seq == 0 || guard.pixels.is_empty() || guard.width == 0 || guard.height == 0 {
+                return false;
+            }
+            if guard.frame_seq >= 5 {
+                return true;
+            }
+            Self::has_visual_content(&guard.pixels)
         } else {
             false
         }
+    }
+
+    /// Fast scan of a sample of pixels to verify that the buffer contains actual decoded video imagery
+    /// rather than solid black [0, 0, 0, 255] or zeroed memory from initialization/loading.
+    pub fn has_visual_content(pixels: &[u8]) -> bool {
+        if pixels.is_empty() {
+            return false;
+        }
+        let sample_stride = (pixels.len() / (128 * 4)).max(1) * 4;
+        for i in (0..pixels.len()).step_by(sample_stride) {
+            if i + 2 < pixels.len() {
+                if pixels[i] > 2 || pixels[i + 1] > 2 || pixels[i + 2] > 2 {
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     pub fn frame_snapshot(&self) -> Option<Vec<u8>> {
@@ -1027,10 +1095,19 @@ impl VideoHandle {
     }
 
     pub fn seek_random(&mut self) {
+        self.is_seeking = true;
+        self.seek_restart_received = false;
+        self.clear_frame_black();
         let duration = self.duration();
         if duration > Duration::from_secs(2) {
             let max_secs = duration.as_secs_f64();
-            let rand_secs = rand::thread_rng().gen_range(0.0..max_secs);
+            let min_secs = (max_secs * 0.05).min(5.0);
+            let max_bound = (max_secs * 0.85).max(min_secs);
+            let rand_secs = if max_bound > min_secs {
+                rand::thread_rng().gen_range(min_secs..max_bound)
+            } else {
+                0.0
+            };
             self.pending_seek_random = false;
             self.seek_fast(Duration::from_secs_f64(rand_secs));
         } else {
@@ -1079,6 +1156,9 @@ impl VideoHandle {
     }
 
     fn seek_internal(&mut self, val: f64, relative: bool, accurate: bool) {
+        self.is_seeking = true;
+        self.seek_restart_received = false;
+        self.clear_frame_black();
         self.pending_seek_random = false;
         self.last_seek_time = Some(Instant::now());
         self.is_eos = false;

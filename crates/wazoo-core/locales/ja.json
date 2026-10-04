@@ -233,8 +233,6 @@
     "cube_removed": "3Dキューブを削除しました",
     "cube_added": "3Dキューブを追加しました！（[{key}]キーで切り替え）",
     "cube_overlay_enabled": "キューブオーバーレイモード（[{key}]キーで終了）",
-    "cube_added_num": "3Dキューブ #{count} を追加しました！（[{key}]キーで切り替え）",
-    "cube_removed_remaining": "3Dキューブを削除しました（残り {count} 個）",
     "cube_all_removed": "すべての3Dキューブを削除しました",
     "cube_overlay_disabled": "キューブオーバーレイモードが無効になりました",
     "cube_playing": "3Dキューブ: {title}",

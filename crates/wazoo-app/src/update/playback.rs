@@ -272,7 +272,11 @@ impl WazooApp {
                     if let Some(p) = self.players.player_mut(id) {
                         let dur = p.duration();
                         let dur_secs = dur.as_secs_f64();
-                        let max_target = if dur_secs > 0.5 { dur_secs - 0.1 } else { f64::MAX };
+                        let max_target = if dur_secs > 0.5 {
+                            dur_secs - 0.1
+                        } else {
+                            f64::MAX
+                        };
 
                         let (accumulated, target) = if let Some(ref mut deb) = p.seek_debounce {
                             deb.target_secs = (deb.target_secs + secs).clamp(0.0, max_target);
@@ -758,23 +762,28 @@ impl WazooApp {
                 Task::none()
             }
             Message::AddNewPlayer => {
-                let prev_len = self.players.len();
-                let new_count = (prev_len + 1).min(12);
                 self.titlebar.show_dropdown_menu = false;
                 self.modals.menu = false;
+                let prev_grid_count = self.players.iter().filter(|p| !p.is_cube).count();
+                if prev_grid_count >= 12 {
+                    return Task::none();
+                }
+                let new_count = prev_grid_count + 1;
                 let task = self.update(Message::SetPlayerCount(new_count));
-                if self.players.len() > prev_len {
-                    let new_idx = self.players.len() - 1;
-                    let focus_task = self.update(Message::SetFocusedPlayer(new_idx));
-                    self.overlay.focus_border_ticks = 0;
-                    return Task::batch([task, focus_task]);
+                let new_grid_count = self.players.iter().filter(|p| !p.is_cube).count();
+                if new_grid_count > prev_grid_count {
+                    if let Some(new_idx) = self.players.iter().rposition(|p| !p.is_cube) {
+                        let focus_task = self.update(Message::SetFocusedPlayer(new_idx));
+                        self.overlay.focus_border_ticks = 0;
+                        return Task::batch([task, focus_task]);
+                    }
                 }
                 task
             }
             Message::RemoveFocusedPlayer => {
                 if let Some(player) = self.focused_player() {
                     if player.is_cube {
-                        return self.update(Message::ClearCubes);
+                        return self.update(Message::RemoveCube);
                     }
                 }
                 if self.settings.playback_mode == PlaybackMode::Scroll {
@@ -821,18 +830,8 @@ impl WazooApp {
                         self.overlay.focus_border_ticks = FOCUS_BORDER_TICKS;
                     }
                     self.focused_idx = next_idx;
-                    let target_player = &self.players[self.focused_idx];
-                    let toast = if target_player.is_cube {
-                        "Focused: 3D Video Cube".to_string()
-                    } else {
-                        let grid_idx = self
-                            .players
-                            .iter()
-                            .take(self.focused_idx + 1)
-                            .filter(|p| !p.is_cube)
-                            .count();
-                        self.t_with("player.focused_player", &[("index", &grid_idx.to_string())])
-                    };
+                    let idx_str = (self.focused_idx + 1).to_string();
+                    let toast = self.t_with("player.focused_player", &[("index", &idx_str)]);
                     self.overlay.toast_message = Some(toast);
                     self.overlay.toast_time_remaining = SHORT_TOAST_SECS;
                     if self.drawers.show_transcript {

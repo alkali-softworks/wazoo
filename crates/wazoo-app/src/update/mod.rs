@@ -43,7 +43,7 @@ impl WazooApp {
                 self.tick_overlay_animations();
                 self.tick_titlebar_animation();
                 self.sync_scroll_item_heights();
-                self.tick_cube_screensaver();
+                let cube_task = self.tick_cube_screensaver();
 
                 let scroll_task = self.tick_scroll_mode();
 
@@ -53,7 +53,7 @@ impl WazooApp {
                     self.update_player_frames();
                 }
 
-                scroll_task
+                Task::batch([scroll_task, cube_task])
             }
 
             Message::WatchdogTick => {

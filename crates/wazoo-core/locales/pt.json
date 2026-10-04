@@ -233,8 +233,6 @@
     "cube_removed": "Cubo 3D removido",
     "cube_added": "Cubo 3D adicionado! (Pressione [{key}] para alternar)",
     "cube_overlay_enabled": "Modo de Sobreposição do Cubo (Pressione [{key}] para sair)",
-    "cube_added_num": "Adicionado Cubo 3D #{count}! (Pressione [{key}] para alternar)",
-    "cube_removed_remaining": "Cubo 3D removido ({count} restantes)",
     "cube_all_removed": "Todos os cubos 3D removidos",
     "cube_overlay_disabled": "Modo de Sobreposição do Cubo desativado",
     "cube_playing": "Cubo 3D: {title}",
