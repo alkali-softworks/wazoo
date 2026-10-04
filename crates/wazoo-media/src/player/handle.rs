@@ -172,6 +172,12 @@ impl VideoHandle {
         Self::with_buffering_and_start(id, file_path, name, config, None)
     }
 
+    /// Creates an idle, pre-warmed VideoHandle with libmpv and render context initialized,
+    /// ready to load a media file instantly via `load_file()` without blocking the UI thread.
+    pub fn new_idle(config: BufferConfig) -> Result<Self, String> {
+        Self::with_buffering_and_start(0, "", "", config, StartTime::Beginning)
+    }
+
     pub fn with_buffering_and_start(
         id: PlayerId,
         file_path: &str,
@@ -305,25 +311,27 @@ impl VideoHandle {
                 return Err(format!("Failed to create mpv render context (code {res})"));
             }
 
-            // Load media file (normalize Windows backslashes so mpv command string doesn't treat them as escape characters)
-            let clean_path = if let Some(stripped) = file_path.strip_prefix("file://") {
-                stripped
-            } else {
-                file_path
-            };
-            if !clean_path.starts_with("http://")
-                && !clean_path.starts_with("https://")
-                && !std::path::Path::new(clean_path).exists()
-            {
-                mpv_ffi::mpv_render_context_free(render_ctx);
-                mpv_ffi::mpv_terminate_destroy(mpv);
-                return Err(format!("Media file does not exist: {clean_path}"));
+            if !file_path.is_empty() {
+                // Load media file (normalize Windows backslashes so mpv command string doesn't treat them as escape characters)
+                let clean_path = if let Some(stripped) = file_path.strip_prefix("file://") {
+                    stripped
+                } else {
+                    file_path
+                };
+                if !clean_path.starts_with("http://")
+                    && !clean_path.starts_with("https://")
+                    && !std::path::Path::new(clean_path).exists()
+                {
+                    mpv_ffi::mpv_render_context_free(render_ctx);
+                    mpv_ffi::mpv_terminate_destroy(mpv);
+                    return Err(format!("Media file does not exist: {clean_path}"));
+                }
+                let cmd_loadfile = CString::new("loadfile").map_err(|e| e.to_string())?;
+                let path_arg = CString::new(clean_path).map_err(|e| e.to_string())?;
+                let mut args: [*const std::ffi::c_char; 3] =
+                    [cmd_loadfile.as_ptr(), path_arg.as_ptr(), std::ptr::null()];
+                mpv_ffi::mpv_command(mpv, args.as_mut_ptr());
             }
-            let cmd_loadfile = CString::new("loadfile").map_err(|e| e.to_string())?;
-            let path_arg = CString::new(clean_path).map_err(|e| e.to_string())?;
-            let mut args: [*const std::ffi::c_char; 3] =
-                [cmd_loadfile.as_ptr(), path_arg.as_ptr(), std::ptr::null()];
-            mpv_ffi::mpv_command(mpv, args.as_mut_ptr());
 
             let initial_duration = Duration::ZERO;
             let render_width = 0u32;
@@ -437,11 +445,6 @@ impl VideoHandle {
                 }
             }
 
-            // Immediately stop prior playback and audio so no previous audio bleeds
-            if let Ok(cmd_stop) = CString::new("stop") {
-                let mut stop_args = [cmd_stop.as_ptr(), std::ptr::null()];
-                mpv_ffi::mpv_command_async(self.mpv, 0, stop_args.as_mut_ptr());
-            }
 
             // Immediately clear frame to solid black so no frozen frame of prior video is visible
             if let Ok(mut frame) = self.frame.lock() {

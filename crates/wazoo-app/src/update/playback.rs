@@ -586,7 +586,6 @@ impl WazooApp {
                     ],
                 ));
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
-                let _ = self.config_mgr.save_settings(&self.settings);
                 self.save_session_state();
                 exit_task
             }

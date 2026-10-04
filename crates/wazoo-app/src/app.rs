@@ -117,6 +117,7 @@ pub struct WazooApp {
     pub default_shuffle_mode: bool,
     pub preloaded_player: Option<VideoHandle>,
     pub is_preloading: bool,
+    pub standby_player: Arc<Mutex<Option<VideoHandle>>>,
     pub cube: crate::state::CubeState,
 }
 
@@ -310,6 +311,7 @@ impl WazooApp {
         let mut app = Self::build_initial_app(config_mgr, db, settings, search, videos);
 
         app.init_initial_players(file_to_play.as_deref(), is_cli);
+        app.replenish_standby_player();
         app.apply_file_picker_search();
 
         if app.settings.playback_mode == PlaybackMode::Flip {
@@ -402,6 +404,7 @@ impl WazooApp {
             default_shuffle_mode: true,
             preloaded_player: None,
             is_preloading: false,
+            standby_player: Arc::new(Mutex::new(None)),
             cube: crate::state::CubeState {
                 speed_multiplier: settings.cube_speed,
                 size_multiplier: settings.cube_size,
@@ -904,7 +907,59 @@ impl WazooApp {
         name: &str,
         start_time: impl Into<StartTime>,
     ) -> Result<VideoHandle, String> {
-        VideoHandle::with_buffering_and_start(id, path, name, self.buffer_config(), start_time)
+        let start_time = start_time.into();
+        let standby = self.standby_player.lock().ok().and_then(|mut g| g.take());
+        let handle = if let Some(mut h) = standby {
+            h.id = id;
+            h.state.id = id;
+            if !path.is_empty() {
+                if let Err(e) = h.load_file(path, name, start_time) {
+                    log::warn!(
+                        "Failed to bind standby player to {path}: {e}, falling back to direct creation"
+                    );
+                    VideoHandle::with_buffering_and_start(
+                        id,
+                        path,
+                        name,
+                        self.buffer_config(),
+                        start_time,
+                    )?
+                } else {
+                    h
+                }
+            } else {
+                h
+            }
+        } else {
+            VideoHandle::with_buffering_and_start(id, path, name, self.buffer_config(), start_time)?
+        };
+
+        self.replenish_standby_player();
+        Ok(handle)
+    }
+
+    /// Pre-warms an idle standby player in a background worker thread so the next player
+    /// added to the grid or as a 3D cube loads in microseconds without freezing the UI thread.
+    pub(crate) fn replenish_standby_player(&self) {
+        let standby = Arc::clone(&self.standby_player);
+        let config = self.buffer_config();
+        std::thread::Builder::new()
+            .name("wazoo-prewarm-player".into())
+            .spawn(move || {
+                if let Ok(guard) = standby.lock() {
+                    if guard.is_some() {
+                        return;
+                    }
+                }
+                if let Ok(handle) = VideoHandle::new_idle(config) {
+                    if let Ok(mut guard) = standby.lock() {
+                        if guard.is_none() {
+                            *guard = Some(handle);
+                        }
+                    }
+                }
+            })
+            .ok();
     }
 
     pub fn current_opacity(&self) -> f32 {
@@ -988,26 +1043,6 @@ impl WazooApp {
                     Ok(mut handle) => {
                         handle.set_muted(initial_muted);
                         handle.set_subtitles_visible(self.subtitles_enabled);
-
-                        // If this is a real non-empty video file, attempt to decode the initial
-                        // presentation frame right away so the cube is ready to go immediately
-                        if !video_rec.path.is_empty() {
-                            let file_len = std::fs::metadata(&video_rec.path)
-                                .map(|m| m.len())
-                                .unwrap_or(0);
-                            if file_len > 0 {
-                                let start = std::time::Instant::now();
-                                while !handle.has_decoded_frame()
-                                    && start.elapsed() < Duration::from_millis(30)
-                                {
-                                    if handle.update_frame() {
-                                        break;
-                                    }
-                                    std::thread::sleep(Duration::from_millis(2));
-                                }
-                            }
-                        }
-
                         let mut player = AppPlayer::new_cube(handle, self.default_shuffle_mode);
                         player.flip.reset(self.settings.flip_interval_secs);
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
