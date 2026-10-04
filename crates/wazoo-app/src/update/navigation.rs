@@ -116,6 +116,7 @@ impl WazooApp {
         if !loaded {
             let start_time = if self.settings.playback_mode == PlaybackMode::Scroll
                 || self.settings.playback_mode == PlaybackMode::Flip
+                || self.players.player(id).map(|p| p.is_cube).unwrap_or(false)
             {
                 StartTime::Random
             } else {
