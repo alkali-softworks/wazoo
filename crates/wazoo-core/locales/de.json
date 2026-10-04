@@ -84,6 +84,8 @@
     "tab_system": "System",
     "always_on_top": "Immer im Vordergrund",
     "always_on_top_desc": "Wazoo über allen anderen Fenstern halten",
+    "standby_player": "Standby-Player",
+    "standby_player_desc": "Nächstes Video für sofortige Wiedergabe vorladen (~50 MB RAM)",
     "crt_filter": "CRT-Filter",
     "crt_filter_desc": "Retro-analoge Kathodenstrahlröhren-Simulation mit Scanlines, Krümmung und Phosphorleuchten",
     "loading_indicator": "Ladeanzeige",

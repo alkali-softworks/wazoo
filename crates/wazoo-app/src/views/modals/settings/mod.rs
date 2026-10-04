@@ -26,8 +26,8 @@ impl WazooApp {
         let is_general = self.modals.settings_tab == SettingsTab::General;
         let is_playback = self.modals.settings_tab == SettingsTab::Playback;
         let is_filters = self.modals.settings_tab == SettingsTab::Filters;
-        let is_system = self.modals.settings_tab == SettingsTab::System;
         let is_cube = self.modals.settings_tab == SettingsTab::Cube;
+        let is_system = self.modals.settings_tab == SettingsTab::System;
 
         let tabs_bar = row![
             button(
@@ -65,17 +65,6 @@ impl WazooApp {
             .padding([7, 16]),
             button(
                 row![
-                    text("💻").size(14),
-                    text(self.t("settings.tab_system")).size(13),
-                ]
-                .spacing(6)
-                .align_y(Alignment::Center),
-            )
-            .style(theme::settings_tab_button_style(is_system))
-            .on_press(Message::SetSettingsTab(SettingsTab::System))
-            .padding([7, 16]),
-            button(
-                row![
                     text("🧊").size(14),
                     text(self.t("settings.tab_cube")).size(13),
                 ]
@@ -84,6 +73,17 @@ impl WazooApp {
             )
             .style(theme::settings_tab_button_style(is_cube))
             .on_press(Message::SetSettingsTab(SettingsTab::Cube))
+            .padding([7, 16]),
+            button(
+                row![
+                    text("💻").size(14),
+                    text(self.t("settings.tab_system")).size(13),
+                ]
+                .spacing(6)
+                .align_y(Alignment::Center),
+            )
+            .style(theme::settings_tab_button_style(is_system))
+            .on_press(Message::SetSettingsTab(SettingsTab::System))
             .padding([7, 16]),
         ]
         .spacing(10)
@@ -104,8 +104,8 @@ impl WazooApp {
             SettingsTab::General => general_tab::view_general_tab(self),
             SettingsTab::Playback => playback_tab::view_playback_tab(self),
             SettingsTab::Filters => filters_tab::view_filters_tab(self),
-            SettingsTab::System => system_tab::view_system_tab(self),
             SettingsTab::Cube => cube_tab::view_cube_tab(self),
+            SettingsTab::System => system_tab::view_system_tab(self),
         };
 
         let scrollable_content = container(active_tab_content)

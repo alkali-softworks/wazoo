@@ -84,6 +84,8 @@
     "tab_system": "Sistema",
     "always_on_top": "Sempre in primo piano",
     "always_on_top_desc": "Mantieni Wazoo in primo piano rispetto alle altre finestre",
+    "standby_player": "Lettore in standby",
+    "standby_player_desc": "Precarica il prossimo video per la riproduzione istantanea (~50 MB di RAM)",
     "crt_filter": "Filtro CRT",
     "crt_filter_desc": "Simulazione di tubo a raggi catodici analogico retrò con linee di scansione, curvatura e bagliore di fosfori",
     "loading_indicator": "Indicatore di caricamento",

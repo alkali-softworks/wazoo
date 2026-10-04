@@ -84,6 +84,8 @@
     "tab_system": "Systeem",
     "always_on_top": "Altijd op voorgrond",
     "always_on_top_desc": "Houd Wazoo vastgepind boven alle andere vensters",
+    "standby_player": "Standby-speler",
+    "standby_player_desc": "Volgende video voorladen voor direct afspelen (~50 MB RAM)",
     "crt_filter": "CRT-filter",
     "crt_filter_desc": "Retro analoge beeldbuissimulatie met scanlijnen, kromming en fosforgloed",
     "loading_indicator": "Laadindicator",

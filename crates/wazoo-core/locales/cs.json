@@ -84,6 +84,8 @@
     "tab_system": "Systém",
     "always_on_top": "Vždy navrchu",
     "always_on_top_desc": "Ponechat Wazoo připnuté nad všemi ostatními okny",
+    "standby_player": "Pohotovostní přehrávač",
+    "standby_player_desc": "Přednačíst další video pro okamžité přehrávání (~50 MB RAM)",
     "crt_filter": "CRT filtr",
     "crt_filter_desc": "Retro analogová simulace obrazovky CRT s řádky, zakřivením a dosvitem luminoforu",
     "loading_indicator": "Indikátor načítání",

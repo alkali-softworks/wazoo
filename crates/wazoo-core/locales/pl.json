@@ -84,6 +84,8 @@
     "tab_system": "System",
     "always_on_top": "Zawsze na wierzchu",
     "always_on_top_desc": "Utrzymuj Wazoo przypięte nad wszystkimi innymi oknami",
+    "standby_player": "Odtwarzacz w trybie gotowości",
+    "standby_player_desc": "Wstępne ładowanie następnego wideo do natychmiastowego odtwarzania (~50 MB RAM)",
     "crt_filter": "Filtr CRT",
     "crt_filter_desc": "Symulacja kineskopu CRT w stylu retro z liniami skanowania, krzywizną i poświatą luminoforu",
     "loading_indicator": "Wskaźnik ładowania",

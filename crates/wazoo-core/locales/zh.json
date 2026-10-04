@@ -84,6 +84,8 @@
     "tab_system": "系统",
     "always_on_top": "窗口置顶",
     "always_on_top_desc": "保持 Wazoo 始终置顶于其他窗口之上",
+    "standby_player": "备用播放器",
+    "standby_player_desc": "预加载下一个视频以实现即时播放（约 50 MB 内存）",
     "crt_filter": "CRT 滤镜",
     "crt_filter_desc": "复古模拟阴极射线管仿真，具有扫描线、曲面和荧光粉发光效果",
     "loading_indicator": "加载指示器",

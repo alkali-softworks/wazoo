@@ -534,3 +534,20 @@ fn test_cube_settings_serialization_and_clamping() {
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_standby_player_setting_serialization() {
+    let default_settings = WazooSettings::default();
+    assert!(!default_settings.use_standby_player);
+
+    let mut settings = WazooSettings::default();
+    settings.use_standby_player = true;
+
+    let json = serde_json::to_string(&settings).unwrap();
+    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
+    assert!(deserialized.use_standby_player);
+
+    // Default to false on empty JSON
+    let loaded: WazooSettings = serde_json::from_str("{}").unwrap();
+    assert!(!loaded.use_standby_player);
+}

@@ -84,6 +84,8 @@
     "tab_system": "מערכת",
     "always_on_top": "תמיד עליון",
     "always_on_top_desc": "השאר את Wazoo מוצמד מעל כל שאר החלונות",
+    "standby_player": "נגן במצב המתנה",
+    "standby_player_desc": "טעינה מראש של הווידאו הבא להפעלה מיידית (~50 מ״ב זיכרון)",
     "crt_filter": "מסנן CRT",
     "crt_filter_desc": "הדמיית שפופרת קרן קתודית אנלוגית רטרו עם קווי סריקה, עקמומיות וזוהר זרחן",
     "loading_indicator": "מחוון טעינה",

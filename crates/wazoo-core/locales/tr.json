@@ -84,6 +84,8 @@
     "tab_system": "Sistem",
     "always_on_top": "Her Zaman Üstte",
     "always_on_top_desc": "Wazoo'yu diğer tüm pencerelerin üzerinde sabit tutun",
+    "standby_player": "Bekleme Oynatıcısı",
+    "standby_player_desc": "Anında oynatma için sonraki videoyu önceden yükle (~50 MB RAM)",
     "crt_filter": "CRT Filtresi",
     "crt_filter_desc": "Tarama çizgileri, eğrilik ve fosfor parlaması ile retro analog katot ışınlı tüp simülasyonu",
     "loading_indicator": "Yükleme Göstergesi",
