@@ -235,7 +235,7 @@ impl WazooApp {
 
             // 5. Alt Drag Overlay (Matches Electron Alt overlay)
             if self.window.is_alt_pressed {
-                let alt_overlay = container(
+                let drag_card = container(
                     column![
                         text(self.t("app.drag_to_move"))
                             .size(22)
@@ -247,16 +247,20 @@ impl WazooApp {
                     .spacing(8)
                     .align_x(Alignment::Center),
                 )
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .center_x(Length::Fill)
-                .center_y(Length::Fill)
-                .style(|_theme: &Theme| container::Style {
-                    background: Some(iced::Background::Color(iced::Color::from_rgba(
-                        0.0, 0.0, 0.0, 0.5,
-                    ))),
-                    ..Default::default()
-                });
+                .padding([20, 36])
+                .style(theme::drag_overlay_card_style);
+
+                let alt_overlay = container(drag_card)
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .center_x(Length::Fill)
+                    .center_y(Length::Fill)
+                    .style(|_theme: &Theme| container::Style {
+                        background: Some(iced::Background::Color(iced::Color::from_rgba(
+                            0.0, 0.0, 0.0, 0.5,
+                        ))),
+                        ..Default::default()
+                    });
 
                 root_stack_children.push(Element::from(
                     mouse_area(alt_overlay).on_press(Message::DragWindow),
