@@ -250,7 +250,7 @@ fn test_cube_focus_green_outline_flash() {
 
     // Simulate overlay ticks fading out focus border
     for _ in 0..30 {
-        let _ = app.update(wazoo_app::message::Message::VideoFrameTick);
+        let _ = app.update(wazoo_app::message::Message::Tick);
     }
     assert_eq!(app.overlay.focus_border_ticks, 0);
 

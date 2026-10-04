@@ -175,8 +175,7 @@ pub enum Message {
     JumpToBookmark(Bookmark),
 
     // Timers & Ticks
-    AnimationTick,
-    VideoFrameTick,
+    Tick,
     WatchdogTick,
     DismissToast,
     ModalCardClicked,
