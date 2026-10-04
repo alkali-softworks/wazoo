@@ -35,7 +35,7 @@ Wazoo follows strict unidirectional data flow:
 
 ```mermaid
 graph TD
-    Sub["Subscriptions<br/>(60 FPS FrameTick, WatchdogTick, Input)"] -->|Dispatches Message| Update["Update Reducer<br/>(WazooApp::update)"]
+    Sub["Subscriptions<br/>(60 FPS Tick, WatchdogTick, Input)"] -->|Dispatches Message| Update["Update Reducer<br/>(WazooApp::update)"]
     User["User Interactions<br/>(Clicks, Drags, Hotkeys)"] -->|Produces Message| Update
     Update -->|Mutates State| State["Application State<br/>(WazooApp)"]
     Update -->|Emits Async Task| Task["iced::Task<Message>"]
@@ -66,7 +66,7 @@ Incoming [`Message`] events are dispatched through domain-specific reducers in [
 
 | Module | Responsibility |
 | :--- | :--- |
-| [**`mod.rs`**] | Primary match dispatcher, `AnimationTick`, `VideoFrameTick`, and `WatchdogTick` orchestrators. |
+| [**`mod.rs`**] | Primary match dispatcher, unified 60 FPS `Tick`, and `WatchdogTick` orchestrators. |
 | [**`window.rs`**] | Window focus, resize, move, Alt-drag, dropdown menu, click-through pinning, titlebar animations, and Fullscreen Mode (`F11`) with mutual exclusion against Mode 9. |
 | [**`playback.rs`**] | Multi-tile playback commands, volume, mute, seek, A-B loop, speed, layout cycling, audio tracks, and master shader filter toggling (`toggle_filters` / key `7`). |
 | [**`navigation.rs`**] | Next/prev video, bi-directional navigation history stacks, and video auto-advancement. |
@@ -81,38 +81,35 @@ Incoming [`Message`] events are dispatched through domain-specific reducers in [
 
 ## ⏱️ Engine Ticks & Subscriptions
 
-Wazoo maintains three distinct subscription timers:
+Wazoo maintains a unified high-performance subscription architecture:
 
 ```mermaid
 graph TD
     subgraph Subscriptions
-        VFT["VideoFrameTick<br/>(60 FPS / ~16ms)"]
-        AT["AnimationTick<br/>(60 FPS, Scroll Mode only)"]
-        WT["WatchdogTick<br/>(1 Hz / 1 second)"]
+        Tick["Message::Tick<br/>(60 FPS / ~16ms)"]
+        WT["Message::WatchdogTick<br/>(1 Hz / 1 second)"]
         WinEvents["Window & Input Events<br/>(Resize, Focus, Keys, Mouse)"]
     end
 
-    VFT --> Throttle{"Window focused?"}
-    Throttle -->|No| HalfRate["Throttle to ~30 FPS<br/>(Skip every 2nd tick)"]
-    Throttle -->|Yes| Mode9Check{"Mode 9 Desktop Overlay Active?"}
-    Mode9Check -->|Yes| OverlayMode["Advance Cube Physics & Sheen<br/>Pump Only Cube Player Frame<br/>(Skip Background Tiles - 0% CPU)"]
-    Mode9Check -->|No| NormalTicks["Tick Overlays, Titlebar & TV Static<br/>Advance 3D Cube Physics<br/>Pump VideoHandle Frames<br/>Sync Scroll Layout Heights"]
+    Tick --> Resizing{"Window actively resizing?"}
+    Resizing -->|Yes| ResizeMode["Debounce Interval (200ms)<br/>Update Video Frame Only<br/>(Bypass UI Layout & Physics)"]
+    Resizing -->|No| Full60["60 FPS Unified Engine Loop<br/>• Overlay HUD Fades & Spinners<br/>• Sliding Titlebar Transitions<br/>• 3D Cube Physics & Sheen (Mode 8 & 9)<br/>• Scroll Mode Physics & Audio Proximity<br/>• Dynamic Scroll Height Recalculation"]
 
-    AT --> ScrollPhysics["Advance Scroll Positions<br/>Despawn Offscreen Players<br/>Preload Next Video<br/>Modulate Proximity Audio"]
+    Full60 --> Throttle{"Window focused or Mode 9?"}
+    Throttle -->|Yes| FullFrames["Pump Video Frames @ 60 FPS<br/>(VideoHandle::update_frame)"]
+    Throttle -->|No| HalfFrames["Throttle Decoding to ~30 FPS<br/>(Skip every 2nd frame pump)"]
 
-    WT --> Watchdog["Recover Stuck Players<br/>Advance Finished Videos<br/>Advance Flip Mode Timers<br/>Persist Bounds & Session"]
+    WT --> Watchdog["Recover Stuck Players<br/>Advance Finished Videos<br/>Advance Flip Mode Timers<br/>Persist Bounds & Settings to Disk"]
 ```
 
-### Video Frame Tick Optimizations
+### Unified 60 FPS Engine Tick (`Message::Tick`)
 
-Inside [`Message::VideoFrameTick`]:
-1. **Unfocused Throttling**: When the window is unfocused or occluded, frame ticks drop to ~30 FPS to reduce GPU swapchain pressure while keeping background movie playback smooth.
-2. **Overlay & TV Static Ticks**: Ticks spinner angles, hud fades, file picker search debouncing, and advances real-time TV static noise generator frames (`static_frame`).
-3. **3D Cube Physics Simulation**: Advances Euler angles, velocities, boundary collision bounces, and specular sheen angles for all floating cubes in Mode 8 & Mode 9.
-4. **Desktop Overlay Power Conservation**: When Desktop Overlay Mode (Mode 9) is active, background player frame pumps are bypassed; only the active 3D cube player texture is refreshed, eliminating redundant decoding CPU cycles while the transparent screensaver is running.
-5. **Titlebar Animation Machine**: Runs titlebar slide transitions, drag detection timeouts, and dropdown menu animations.
-6. **Frame Rendering**: Pumps `VideoHandle::update_frame()` across all active tiles.
-7. **Scroll Layout Sync**: Adjusts scroll item heights dynamically when aspect ratios change.
+Inside [`Message::Tick`]:
+1. **Always 60 FPS UI & Physics**: Overlay animations (spinner rotations, HUD alpha fades, toast countdowns), titlebar slide transitions, 3D cube velocity/collision physics, and vertical scroll kinematics always run at a rock-solid 60 FPS (~16ms).
+2. **Selective Video Frame Throttling**: Rather than throttling the entire event loop, Wazoo selectively drops heavy video decoding (`update_player_frames()`) to ~30 FPS (every 2nd tick) when the window is unfocused and not in Mode 9 desktop overlay. This significantly reduces GPU swapchain load and power consumption while keeping background playback smooth and UI hotkeys/animations fully responsive.
+3. **Resize Debounce Guard**: When the user actively drags window borders, the subscription tick interval temporarily relaxes to `RESIZE_DEBOUNCE_DURATION` (200ms) and tick processing skips layout/physics updates to eliminate stutter and visual tearing during resize IPC transactions.
+4. **Desktop Overlay Power Conservation**: When Desktop Overlay Mode (Mode 9) is active, background player frame pumping is suspended (0% CPU decoding overhead), refreshing only the active 3D cube player texture for seamless desktop screensaver performance.
+5. **Scroll Engine Kinematics**: Computes real-time aspect ratio heights, despawns offscreen video tiles, pre-warms adjacent video tracks, and modulates audio volume based on tile viewport proximity.
 
 ---
 
