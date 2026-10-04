@@ -73,20 +73,23 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - **Alt + Drag** to reposition the window anywhere on screen.
 - Configurable **Window Opacity** (in System Settings).
 
-### 📌 Always on Top (Click-Through Overlay)
-- Pinning engages click-through mouse passthrough when Wazoo is unfocused, allowing you to interact with applications underneath.
-- Pair Pin Mode with **Window Opacity** (in System Settings) to turn Wazoo into a semi-transparent, floating reference board. 
-- **Escape Hatch**: Focusing Wazoo on your OS taskbar instantly disengages mouse passthrough and enables controls.
+### 📌 Always on Top & Click-Through (<kbd>P</kbd>)
+Press <kbd>P</kbd> to cycle through 4 overlay modes:
+1. **Always on Top (100% Opacity)**: Classic Picture-in-Picture (PiP) without click-through.
+2. **Click-Through (50% Opacity)**: Semi-transparent floating video with click-through passthrough when unfocused.
+3. **Click-Through (15% Opacity)**: Subtle background reference overlay with click-through passthrough.
+4. **Normal Window**: Returns to standard window behavior and 100% opacity.
+- **Escape Hatch**: Focusing Wazoo on your OS taskbar disables click-through.
 
-### 📺 Analog CRT Filter
-- Toggle an analog CRT monitor simulation complete with scanlines, subtle barrel curvature, vignette, and phosphor bloom (<kbd>7</kbd> or via Playback Settings).
-- **GPU Accelerated**: Implemented directly in the WGPU shader pipeline with zero decoding overhead or frame latency.
+### ✨ GPU Shader Effects
+- **Analog CRT Simulation**: Cozy retro tube simulation: scanlines, barrel curvature, and phosphor glow.
+- **Wavy Fluid Distortion**: Real-time undulating fluid wave UV displacement shader.
+- **Volumetric Fog**: Atmospheric rolling mist and cloud simulation using fractional Brownian motion (FBM).
 
 ### 🧊 3D Cube & Cube Overlay Mode
-- **3D Cube**: Spawn floating 3D cubes that rotate and bounce around the screen (<kbd>8</kbd> or via 3D Cube Settings).
-- **Cube Overlay Mode**: Float 3D cubes seamlessly on top of your desktop with click-passthrough (<kbd>9</kbd>).
-- Maps live playing video directly onto every face of the cube.
-- **Customizable**: Adjust movement speed, cube size, 3D light & sheen toggle, and spawn multiple cubes with independent video streams.
+- **3D Cube**: Spawn floating 3D video cubes that bounce around the screen (<kbd>8</kbd> or via 3D Cube Settings).
+- **Cube Overlay Mode**: Float 3D cubes seamlessly on top of your desktop with click-through (<kbd>9</kbd>).
+- **Customizable**: Adjust movement speed, cube size, 3D light toggle, and spawn multiple cubes with independent video streams.
 
 ### 🌐 Internationalization & Localization
 - **23 Supported Languages**: Complete UI translations for English (`en`), Dutch (`nl`), Spanish (`es`), French (`fr`), Italian (`it`), Portuguese (`pt`), German (`de`), Czech (`cs`), Polish (`pl`), Ukrainian (`uk`), Russian (`ru`), Swedish (`sv`), Turkish (`tr`), Arabic (`ar`), Hebrew (`he`), Persian (`fa`), Hindi (`hi`), Bengali (`bn`), Thai (`th`), Vietnamese (`vi`), Simplified Chinese (`zh`), Japanese (`ja`), and Korean (`ko`).
@@ -185,7 +188,7 @@ scoop install ffmpeg
 | <kbd>J</kbd> / <kbd>/</kbd> | Open **Find / Search** modal |
 | <kbd>H</kbd> / <kbd>F</kbd> | Toggle **File Browser** drawer |
 | <kbd>S</kbd> | Toggle **Shuffle** vs. **Sequential** playback |
-| <kbd>P</kbd> | Toggle **Pin Mode** (Always on Top) |
+| <kbd>P</kbd> | Cycle **Pin Mode** (100% ➔ 50% ➔ 15% ➔ Off) |
 | <kbd>V</kbd> | Toggle **Interactive Subtitle Transcript** drawer |
 | <kbd>B</kbd> | Toggle **Bookmarks** modal |
 | <kbd>Y</kbd> | Toggle **Play History** drawer |
@@ -197,7 +200,7 @@ scoop install ffmpeg
 | <kbd>1</kbd> – <kbd>4</kbd> | Set active player count (1 to 4) |
 | <kbd>5</kbd> | Toggle **Scroll Mode** (vertical feed) |
 | <kbd>6</kbd> | Toggle **Flip Mode** (staggered auto-shuffle) |
-| <kbd>7</kbd> | Toggle **Analog CRT Filter** |
+| <kbd>7</kbd> | Toggle **Shader Filters** (Master switch) |
 | <kbd>+</kbd> / <kbd>=</kbd> | Add Bookmark (or increase Scroll Speed in Scroll Mode) |
 | <kbd>-</kbd> | Remove Bookmark (or decrease Scroll Speed in Scroll Mode) |
 | <kbd>I</kbd> / <kbd>O</kbd> — Set **Mark In** / **Mark Out** (A-B loop) |

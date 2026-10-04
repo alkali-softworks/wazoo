@@ -50,8 +50,8 @@ impl WazooApp {
                     if let Some(id) = self.window.id {
                         return iced::window::enable_mouse_passthrough(id);
                     }
-                } else if self.settings.is_always_on_top && self.window.ghost_passthrough_active {
-                    self.window.ghost_passthrough_active = false;
+                } else if self.window.clickthru {
+                    self.window.clickthru = false;
                     self.titlebar.show = true;
                     self.titlebar.hide_ticks = TITLEBAR_HIDE_TICKS;
                     if let Some(id) = self.window.id {
@@ -83,10 +83,11 @@ impl WazooApp {
                         return iced::window::enable_mouse_passthrough(id);
                     }
                 } else if self.settings.is_always_on_top
-                    && !self.window.ghost_passthrough_active
+                    && self.settings.window_opacity < 0.99
+                    && !self.window.clickthru
                     && !self.is_modal_or_menu_open()
                 {
-                    self.window.ghost_passthrough_active = true;
+                    self.window.clickthru = true;
                     if let Some(id) = self.window.id {
                         return iced::window::enable_mouse_passthrough(id);
                     }
@@ -502,37 +503,116 @@ impl WazooApp {
             Message::SetWindowOpacity(opacity) => {
                 self.settings.window_opacity = opacity.clamp(0.05, 1.0);
                 let _ = self.config_mgr.save_settings(&self.settings);
+
+                if let Some(id) = self.window.id {
+                    if self.settings.is_always_on_top
+                        && !self.window.is_focused
+                        && !self.is_modal_or_menu_open()
+                    {
+                        if self.settings.window_opacity < 0.99 {
+                            self.window.clickthru = true;
+                            return iced::window::enable_mouse_passthrough(id);
+                        } else if self.window.clickthru {
+                            self.window.clickthru = false;
+                            return iced::window::disable_mouse_passthrough(id);
+                        }
+                    }
+                }
                 Task::none()
             }
-            Message::ToggleAlwaysOnTop => {
-                self.settings.is_always_on_top = !self.settings.is_always_on_top;
-                if !self.settings.is_always_on_top {
-                    self.window.ghost_passthrough_active = false;
+            Message::CyclePinMode => {
+                // 4-stage cycle:
+                // 1st press: Always on top + 100% opacity (no clickthru)
+                // 2nd press: Always on top + 50% opacity + clickthru
+                // 3rd press: Always on top + 15% opacity + clickthru
+                // 4th press: Toggle back to normal
+                let (next_pinned, next_opacity, clickthru, label) = if !self.settings.is_always_on_top {
+                    (true, 1.0f32, false, "100%")
+                } else if self.settings.window_opacity > 0.70 {
+                    (true, 0.50f32, true, "50% • Click-Through")
+                } else if self.settings.window_opacity > 0.30 {
+                    (true, 0.15f32, true, "15% • Click-Through")
+                } else {
+                    (false, 1.0f32, false, "")
+                };
+
+                self.settings.is_always_on_top = next_pinned;
+                self.settings.window_opacity = next_opacity;
+                if !next_pinned || !clickthru {
+                    self.window.clickthru = false;
                 }
                 let _ = self.config_mgr.save_settings(&self.settings);
 
-                self.overlay.toast_message = Some(if self.settings.is_always_on_top {
-                    self.t("wazoo.always_on_top_enabled")
+                self.overlay.toast_message = Some(if next_pinned {
+                    format!("{} ({})", self.t("wazoo.always_on_top_enabled"), label)
                 } else {
                     self.t("wazoo.always_on_top_disabled")
                 });
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
 
                 if let Some(id) = self.window.id {
-                    let level = if self.settings.is_always_on_top {
+                    let level = if next_pinned {
                         iced::window::Level::AlwaysOnTop
                     } else {
                         iced::window::Level::Normal
                     };
                     let level_task = iced::window::set_level(id, level);
-                    let passthrough_task = if self.settings.is_always_on_top {
+                    let passthrough_task = if next_pinned && clickthru {
                         if !self.window.is_focused && !self.is_modal_or_menu_open() {
-                            self.window.ghost_passthrough_active = true;
+                            self.window.clickthru = true;
                             iced::window::enable_mouse_passthrough(id)
                         } else {
                             Task::none()
                         }
                     } else {
+                        iced::window::disable_mouse_passthrough(id)
+                    };
+                    return Task::batch([level_task, passthrough_task]);
+                }
+                Task::none()
+            }
+            Message::ToggleAlwaysOnTop => {
+                self.settings.is_always_on_top = !self.settings.is_always_on_top;
+                if !self.settings.is_always_on_top {
+                    self.window.clickthru = false;
+                    self.settings.window_opacity = 1.0;
+                }
+                let _ = self.config_mgr.save_settings(&self.settings);
+
+                let is_pinned = self.settings.is_always_on_top;
+                let has_clickthru = is_pinned && self.settings.window_opacity < 0.99;
+
+                self.overlay.toast_message = Some(if is_pinned {
+                    if has_clickthru {
+                        format!(
+                            "{} ({}% • Click-Through)",
+                            self.t("wazoo.always_on_top_enabled"),
+                            (self.settings.window_opacity * 100.0).round() as u32
+                        )
+                    } else {
+                        format!("{} (100%)", self.t("wazoo.always_on_top_enabled"))
+                    }
+                } else {
+                    self.t("wazoo.always_on_top_disabled")
+                });
+                self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
+
+                if let Some(id) = self.window.id {
+                    let level = if is_pinned {
+                        iced::window::Level::AlwaysOnTop
+                    } else {
+                        iced::window::Level::Normal
+                    };
+                    let level_task = iced::window::set_level(id, level);
+                    let passthrough_task = if has_clickthru {
+                        if !self.window.is_focused && !self.is_modal_or_menu_open() {
+                            self.window.clickthru = true;
+                            iced::window::enable_mouse_passthrough(id)
+                        } else {
+                            Task::none()
+                        }
+                    } else {
+                        self.window.clickthru = false;
                         iced::window::disable_mouse_passthrough(id)
                     };
                     return Task::batch([level_task, passthrough_task]);

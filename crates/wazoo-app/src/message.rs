@@ -103,6 +103,7 @@ pub enum Message {
     ToggleScrollMode,
     ToggleFlipMode,
     ToggleAlwaysOnTop,
+    CyclePinMode,
     SetScrollSpeed(f32),
     AdjustScrollSpeed(f32),
     AddNewPlayer,

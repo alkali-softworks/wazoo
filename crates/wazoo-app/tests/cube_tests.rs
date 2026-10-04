@@ -924,10 +924,10 @@ fn test_mode_9_remove_single_cube_exits_mode_9_and_unpauses_player() {
         "Regular player must be unpaused and playing"
     );
 
-    // Ghost passthrough must be disabled
+    // Clickthru must be disabled
     assert!(
-        !app.window.ghost_passthrough_active,
-        "Ghost passthrough must be false"
+        !app.window.clickthru,
+        "Clickthru must be false"
     );
 
     // Toast message must report overlay disabled

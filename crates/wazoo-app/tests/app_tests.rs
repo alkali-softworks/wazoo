@@ -1014,20 +1014,48 @@ fn test_prev_next_frame_keybind_dispatch() {
 fn test_pin_keybind_dispatch() {
     let (mut app, _) = new_test_app();
     assert!(!app.settings.is_always_on_top);
+    assert_eq!(app.settings.window_opacity, 1.0);
 
-    // Press 'p'
+    // 1st press 'p': Always on top + 100% opacity (no clickthru even when unfocused)
     let _ = app.update(Message::KeyPressed(
         iced::keyboard::Key::Character("p".into()),
         iced::event::Status::Ignored,
     ));
     assert!(app.settings.is_always_on_top);
+    assert_eq!(app.settings.window_opacity, 1.0);
+    let _ = app.update(Message::WindowUnfocused);
+    assert!(!app.window.clickthru);
 
-    // Press 'p' again to toggle off
+    // 2nd press 'p': Always on top + 50% opacity (clickthru when unfocused)
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.settings.is_always_on_top);
+    assert_eq!(app.settings.window_opacity, 0.50);
+    let _ = app.update(Message::WindowUnfocused);
+    assert!(app.window.clickthru);
+    let _ = app.update(Message::WindowFocused);
+    assert!(!app.window.clickthru);
+
+    // 3rd press 'p': Always on top + 15% opacity (clickthru when unfocused)
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.settings.is_always_on_top);
+    assert_eq!(app.settings.window_opacity, 0.15);
+    let _ = app.update(Message::WindowUnfocused);
+    assert!(app.window.clickthru);
+
+    // 4th press 'p': Toggle back to normal
     let _ = app.update(Message::KeyPressed(
         iced::keyboard::Key::Character("p".into()),
         iced::event::Status::Ignored,
     ));
     assert!(!app.settings.is_always_on_top);
+    assert_eq!(app.settings.window_opacity, 1.0);
+    assert!(!app.window.clickthru);
 }
 
 #[test]

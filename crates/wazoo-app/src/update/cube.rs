@@ -286,7 +286,7 @@ impl WazooApp {
                 iced::window::Level::Normal
             };
             let level_task = iced::window::set_level(id, level);
-            self.window.ghost_passthrough_active = false;
+            self.window.clickthru = false;
             let passthrough_task = iced::window::disable_mouse_passthrough(id);
 
             let restore_task = if !was_maximized {

@@ -242,7 +242,7 @@ impl WazooApp {
                     self.t("common.pin_window")
                 },
                 Some(kb.menu_hint(&kb.toggle_pin)),
-                Message::ToggleAlwaysOnTop,
+                Message::CyclePinMode,
                 padding,
             ),
             Self::menu_item(

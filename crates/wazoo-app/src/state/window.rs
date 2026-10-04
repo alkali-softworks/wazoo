@@ -25,7 +25,7 @@ pub struct WindowState {
     /// Set when window size or position changes; debounces saving bounds to disk.
     pub bounds_dirty: bool,
     /// When true, mouse clicks pass through the window directly to the underlying OS desktop.
-    pub ghost_passthrough_active: bool,
+    pub clickthru: bool,
     /// Whether the Alt modifier key is currently held down.
     pub is_alt_pressed: bool,
     /// Timestamp of the most recent window resize event.
@@ -66,7 +66,7 @@ impl Default for WindowState {
             is_focused: true,
             unfocused_frame_ticks: 0,
             bounds_dirty: false,
-            ghost_passthrough_active: false,
+            clickthru: false,
             is_alt_pressed: false,
             last_resize_time: None,
             is_fullscreen: false,

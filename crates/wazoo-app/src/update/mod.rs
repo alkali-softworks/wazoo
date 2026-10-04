@@ -171,7 +171,8 @@ impl WazooApp {
             | Message::ToggleDropdownMenu
             | Message::CloseDropdownMenu
             | Message::SetWindowOpacity(_)
-            | Message::ToggleAlwaysOnTop => self.update_window(message),
+            | Message::ToggleAlwaysOnTop
+            | Message::CyclePinMode => self.update_window(message),
 
             // =========================================================================
             // Drawers (File Picker, Transcript, History)
