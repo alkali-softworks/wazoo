@@ -553,7 +553,7 @@ impl Primitive for CubePrimitive {
         let time_secs = (START_TIME.elapsed().as_secs_f64() % 3600.0) as f32;
 
         for inst in &self.instances {
-            let frame_guard = inst.frame.lock().unwrap();
+            let mut frame_guard = inst.frame.lock().unwrap();
             let raw_width = frame_guard.width;
             let raw_height = frame_guard.height;
             let expected_len = (raw_width as usize) * (raw_height as usize) * 4;
@@ -588,7 +588,6 @@ impl Primitive for CubePrimitive {
             let entry = pipeline.entries.get_mut(&inst.cube_id).unwrap();
 
             let is_new_frame = just_created
-                || frame_guard.new_frame
                 || entry.last_frame_seq != frame_guard.frame_seq;
 
             if is_new_frame && has_valid_pixels {
@@ -612,6 +611,7 @@ impl Primitive for CubePrimitive {
                     },
                 );
                 entry.last_frame_seq = frame_guard.frame_seq;
+                frame_guard.new_frame = false;
             }
 
             let uniforms = CubeUniforms {
