@@ -1426,7 +1426,7 @@ impl WazooApp {
         };
 
         let mut subs = vec![
-            iced::time::every(frame_interval).map(|_| Message::VideoFrameTick),
+            iced::time::every(frame_interval).map(|_| Message::Tick),
             iced::time::every(Duration::from_secs(1)).map(|_| Message::WatchdogTick),
             iced::event::listen_with(|event, status, window_id| match event {
                 iced::Event::Window(iced::window::Event::Opened { .. }) => {
@@ -1465,10 +1465,6 @@ impl WazooApp {
                 _ => None,
             }),
         ];
-
-        if self.settings.playback_mode == PlaybackMode::Scroll {
-            subs.push(iced::time::every(Duration::from_millis(16)).map(|_| Message::AnimationTick));
-        }
 
         Subscription::batch(subs)
     }

@@ -804,7 +804,7 @@ fn test_top_menu_slide_down_animation() {
 
     // Tick through hover delay (8 ticks)
     for _ in 0..TITLEBAR_SHOW_DELAY_TICKS {
-        let _ = app.update(Message::VideoFrameTick);
+        let _ = app.update(Message::Tick);
     }
 
     // After hover delay passes, titlebar begins showing and starts sliding down from 0.0
@@ -820,7 +820,7 @@ fn test_top_menu_slide_down_animation() {
     // Animate ticks and verify slide down progress increases monotonically to 1.0
     let mut prev_progress = app.titlebar_slide_progress();
     for _ in 1..=TITLEBAR_SLIDE_TICKS {
-        let _ = app.update(Message::VideoFrameTick);
+        let _ = app.update(Message::Tick);
         let cur_progress = app.titlebar_slide_progress();
         assert!(
             cur_progress >= prev_progress,
@@ -842,7 +842,7 @@ fn test_top_menu_slide_down_animation() {
 
     // While fading out and sliding back up, progress smoothly decreases to 0.0
     for _ in 0..TITLEBAR_FADE_TICKS {
-        let _ = app.update(Message::VideoFrameTick);
+        let _ = app.update(Message::Tick);
     }
 
     // Dismissal complete
@@ -877,7 +877,7 @@ fn test_dropdown_menu_slide_down_animation() {
     // Animate frames through DROPDOWN_MENU_SLIDE_TICKS
     let mut prev_progress = app.dropdown_menu_slide_progress();
     for _ in 1..=DROPDOWN_MENU_SLIDE_TICKS {
-        let _ = app.update(Message::VideoFrameTick);
+        let _ = app.update(Message::Tick);
         let cur_progress = app.dropdown_menu_slide_progress();
         assert!(
             cur_progress >= prev_progress,
@@ -923,7 +923,7 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
     // Over PLAYER_OVERLAY_FADE_TICKS (12 ticks), alpha monotonically fades in to 1.0
     let mut prev_alpha = app.player_overlay_alpha();
     for _ in 1..=PLAYER_OVERLAY_FADE_TICKS {
-        let _ = app.update(Message::VideoFrameTick);
+        let _ = app.update(Message::Tick);
         let cur_alpha = app.player_overlay_alpha();
         assert!(
             cur_alpha >= prev_alpha,
@@ -943,7 +943,7 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
     // Over PLAYER_OVERLAY_FADE_TICKS frames, alpha monotonically fades out from 1.0 to 0.0
     let mut prev_alpha = app.player_overlay_alpha();
     for _ in 1..=PLAYER_OVERLAY_FADE_TICKS {
-        let _ = app.update(Message::VideoFrameTick);
+        let _ = app.update(Message::Tick);
         let cur_alpha = app.player_overlay_alpha();
         assert!(
             cur_alpha <= prev_alpha,
@@ -962,7 +962,7 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
     // Test interrupted entrance: unhovering while still fading in does not jump
     let _ = app.update(Message::PlayerHovered(1));
     for _ in 0..4 {
-        let _ = app.update(Message::VideoFrameTick);
+        let _ = app.update(Message::Tick);
     }
     let mid_alpha = app.player_overlay_alpha();
     assert!((mid_alpha - (4.0 / PLAYER_OVERLAY_FADE_TICKS as f32)).abs() < 1e-4);
@@ -972,7 +972,7 @@ fn test_player_osd_fade_in_and_fade_out_animation() {
     assert!(app.overlay.ticks <= 4);
 
     for _ in 0..4 {
-        let _ = app.update(Message::VideoFrameTick);
+        let _ = app.update(Message::Tick);
     }
     assert_eq!(app.overlay.ticks, 0);
     assert_eq!(app.player_overlay_alpha(), 0.0);
@@ -1150,8 +1150,8 @@ fn test_scroll_mode_m_key_toggles_global_mute_and_spawns_with_preference() {
         assert!(!preloaded.state.is_muted);
     }
 
-    // Trigger video frame tick to attach preloaded player if ready -> must spawn unmuted
-    let _ = app.update(Message::VideoFrameTick);
+    // Trigger frame tick to attach preloaded player if ready -> must spawn unmuted
+    let _ = app.update(Message::Tick);
     for p in &app.players {
         assert!(!p.state.is_muted);
     }
@@ -1245,8 +1245,8 @@ fn test_window_resize_suspends_frame_rendering_and_debounces() {
     assert!(app.window.is_resizing());
     assert!(app.window.last_resize_time.is_some());
 
-    // VideoFrameTick runs cleanly while resizing (skipping video frames and scroll sync)
-    let _ = app.update(Message::VideoFrameTick);
+    // Tick runs cleanly while resizing (skipping video frames and scroll sync)
+    let _ = app.update(Message::Tick);
     assert!(app.window.is_resizing());
 
     // LeftClickReleased resets resize state immediately
@@ -1423,8 +1423,8 @@ fn test_playback_settings_sliders_debounced() {
         wazoo_app::app::PLAYBACK_SETTINGS_DEBOUNCE_TICKS
     );
 
-    // 2. Debounce ticks count down with VideoFrameTick
-    let _ = app.update(Message::VideoFrameTick);
+    // 2. Debounce ticks count down with Tick
+    let _ = app.update(Message::Tick);
     assert_eq!(
         app.modals.playback_settings_debounce_ticks,
         wazoo_app::app::PLAYBACK_SETTINGS_DEBOUNCE_TICKS - 1
@@ -1432,7 +1432,7 @@ fn test_playback_settings_sliders_debounced() {
 
     // 3. Advancing all remaining ticks flushes the debounce
     while app.modals.playback_settings_debounce_ticks > 0 {
-        let _ = app.update(Message::VideoFrameTick);
+        let _ = app.update(Message::Tick);
     }
     assert_eq!(app.modals.playback_settings_debounce_ticks, 0);
 
@@ -1504,14 +1504,14 @@ fn test_seek_relative_debounced_and_accumulated() {
     assert_eq!(deb.accumulated_secs(), 10.0);
     assert_eq!(deb.target_secs, 10.0);
 
-    // 3. Advancing VideoFrameTick decrements debounce countdown
-    let _ = app.update(Message::VideoFrameTick);
+    // 3. Advancing Tick decrements debounce countdown
+    let _ = app.update(Message::Tick);
     let deb = app.players[0].seek_debounce.unwrap();
     assert_eq!(deb.ticks_remaining, wazoo_app::app::SEEK_DEBOUNCE_TICKS - 1);
 
     // 4. Advancing all remaining ticks flushes the seek debounce
     while app.players[0].seek_debounce.is_some() {
-        let _ = app.update(Message::VideoFrameTick);
+        let _ = app.update(Message::Tick);
     }
     assert!(app.players[0].seek_debounce.is_none());
 
@@ -1526,6 +1526,41 @@ fn test_seek_relative_debounced_and_accumulated() {
     assert!(app.players[0].seek_debounce.is_some());
     let _ = app.update(Message::TogglePlay(p_id));
     assert!(app.players[0].seek_debounce.is_none());
+}
+
+#[test]
+fn test_unfocused_window_ticks_cube_and_animations_at_full_speed() {
+    let (mut app, _) = new_test_app();
+    app.settings.window_bounds.width = 800;
+    app.settings.window_bounds.height = 600;
+
+    // Spawn a 3D cube
+    app.cube.spawn_cube(800.0, 600.0, 0);
+    assert!(app.cube.is_present());
+    let initial_x = app.cube.cubes[0].x;
+    let initial_ry = app.cube.cubes[0].ry;
+
+    // Window is unfocused
+    app.window.is_focused = false;
+
+    // Tick 1: cube advances position and rotation
+    let _ = app.update(Message::Tick);
+    let x1 = app.cube.cubes[0].x;
+    let ry1 = app.cube.cubes[0].ry;
+    assert_ne!(x1, initial_x);
+    assert_ne!(ry1, initial_ry);
+
+    // Tick 2: unfocused video frames would be throttled, BUT cube still advances!
+    let _ = app.update(Message::Tick);
+    let x2 = app.cube.cubes[0].x;
+    let ry2 = app.cube.cubes[0].ry;
+    assert_ne!(x2, x1);
+    assert_ne!(ry2, ry1);
+
+    // The displacement in tick 2 matches tick 1 (runs at consistent 60 Hz, not half-speed!)
+    let delta1 = (x1 - initial_x).abs();
+    let delta2 = (x2 - x1).abs();
+    assert!((delta1 - delta2).abs() < 1e-4);
 }
 
 #[test]

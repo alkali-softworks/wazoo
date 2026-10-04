@@ -32,67 +32,7 @@ impl WazooApp {
             // =========================================================================
             // Engine Ticks & Frame Updates
             // =========================================================================
-            Message::AnimationTick => {
-                if self.settings.playback_mode == PlaybackMode::Scroll {
-                    // Advance scroll physics and collect player IDs that have moved entirely off-screen
-                    let offscreen = self.scroll_engine.tick();
-                    if !offscreen.is_empty() {
-                        let (keep, despawned): (Vec<_>, Vec<_>) = self
-                            .players
-                            .drain(..)
-                            .partition(|p| !offscreen.contains(&p.id));
-                        self.players = PlayerList(keep);
-                        // Offload pipeline teardown to a background thread to prevent deallocation
-                        // and driver teardown latency (20-50ms) from causing UI frame drops during fast scrolling.
-                        if !despawned.is_empty() {
-                            std::thread::spawn(move || drop(despawned));
-                        }
-                    }
-
-                    let margin = self.scroll_engine.default_item_height() * 1.5;
-                    let mut needs_preload = false;
-
-                    // Non-blocking spawn: attach preloaded player seamlessly into the feed if ready
-                    while let Some(spawn_y) =
-                        self.scroll_engine.needs_new_player_with_margin(margin)
-                    {
-                        if let Some(mut handle) = self.preloaded_player.take() {
-                            handle.set_muted(self.settings.scroll_mode_muted);
-                            handle.set_paused(false);
-                            let item_h = self.calculate_player_scroll_height(&handle);
-                            self.scroll_engine.add_item(handle.id, spawn_y, item_h);
-                            let vol = self.scroll_engine.calculate_player_volume(handle.id);
-                            handle.set_volume(vol);
-                            self.record_play_history(&handle.state.path);
-                            self.players
-                                .push(AppPlayer::new(handle, self.default_shuffle_mode));
-                            needs_preload = true;
-                        } else {
-                            // Preloaded player is still decoding in the background; do not block UI thread
-                            break;
-                        }
-                    }
-
-                    // Dynamically update audio volume falloff based on vertical proximity to viewport center
-                    for p in &mut self.players {
-                        let vol = self.scroll_engine.calculate_player_volume(p.id);
-                        p.set_volume(vol);
-                    }
-
-                    // Trigger next background pre-warm task if the pipeline buffer is empty
-                    if needs_preload || (self.preloaded_player.is_none() && !self.is_preloading) {
-                        return self.trigger_preload_task();
-                    }
-                }
-                Task::none()
-            }
-
-            Message::VideoFrameTick => {
-                // Drop non-essential frame processing when window is unfocused to conserve battery/CPU
-                if self.should_throttle_unfocused_frame() {
-                    return Task::none();
-                }
-
+            Message::Tick => {
                 // Suspend all tick animations, layout recalculations, and physics
                 // while the window is actively being resized to eliminate visual tearing and IPC lag.
                 if self.window.is_resizing() {
@@ -102,11 +42,18 @@ impl WazooApp {
 
                 self.tick_overlay_animations();
                 self.tick_titlebar_animation();
-                self.update_player_frames();
                 self.sync_scroll_item_heights();
                 self.tick_cube_screensaver();
 
-                Task::none()
+                let scroll_task = self.tick_scroll_mode();
+
+                // Selective frame throttling: drop heavy video frame decoding to 30 FPS when
+                // unfocused to conserve battery/GPU, while keeping animations, debounces, and physics at 60 Hz.
+                if !self.should_throttle_unfocused_frame() {
+                    self.update_player_frames();
+                }
+
+                scroll_task
             }
 
             Message::WatchdogTick => {
@@ -377,6 +324,63 @@ impl WazooApp {
         for p in &mut self.players {
             p.tick_seek_debounce();
         }
+    }
+
+    /// Advances scroll feed physics and handles off-screen player despawns/spawns in Scroll Mode.
+    fn tick_scroll_mode(&mut self) -> Task<Message> {
+        if self.settings.playback_mode != PlaybackMode::Scroll {
+            return Task::none();
+        }
+
+        // Advance scroll physics and collect player IDs that have moved entirely off-screen
+        let offscreen = self.scroll_engine.tick();
+        if !offscreen.is_empty() {
+            let (keep, despawned): (Vec<_>, Vec<_>) = self
+                .players
+                .drain(..)
+                .partition(|p| !offscreen.contains(&p.id));
+            self.players = PlayerList(keep);
+            // Offload pipeline teardown to a background thread to prevent deallocation
+            // and driver teardown latency (20-50ms) from causing UI frame drops during fast scrolling.
+            if !despawned.is_empty() {
+                std::thread::spawn(move || drop(despawned));
+            }
+        }
+
+        let margin = self.scroll_engine.default_item_height() * 1.5;
+        let mut needs_preload = false;
+
+        // Non-blocking spawn: attach preloaded player seamlessly into the feed if ready
+        while let Some(spawn_y) = self.scroll_engine.needs_new_player_with_margin(margin) {
+            if let Some(mut handle) = self.preloaded_player.take() {
+                handle.set_muted(self.settings.scroll_mode_muted);
+                handle.set_paused(false);
+                let item_h = self.calculate_player_scroll_height(&handle);
+                self.scroll_engine.add_item(handle.id, spawn_y, item_h);
+                let vol = self.scroll_engine.calculate_player_volume(handle.id);
+                handle.set_volume(vol);
+                self.record_play_history(&handle.state.path);
+                self.players
+                    .push(AppPlayer::new(handle, self.default_shuffle_mode));
+                needs_preload = true;
+            } else {
+                // Preloaded player is still decoding in the background; do not block UI thread
+                break;
+            }
+        }
+
+        // Dynamically update audio volume falloff based on vertical proximity to viewport center
+        for p in &mut self.players {
+            let vol = self.scroll_engine.calculate_player_volume(p.id);
+            p.set_volume(vol);
+        }
+
+        // Trigger next background pre-warm task if the pipeline buffer is empty
+        if needs_preload || (self.preloaded_player.is_none() && !self.is_preloading) {
+            return self.trigger_preload_task();
+        }
+
+        Task::none()
     }
 
     /// Renders new video frames on active player handles, clearing loading state upon completion.
