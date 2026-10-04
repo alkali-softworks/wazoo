@@ -144,6 +144,23 @@ impl CubeState {
         self.enabled = true;
     }
 
+    /// Removes the specific cube associated with the given player ID, or the most recent cube if not matched.
+    pub fn remove_cube_by_player_id(
+        &mut self,
+        player_id: Option<wazoo_media::PlayerId>,
+    ) -> Option<BouncingCube> {
+        if let Some(pid) = player_id {
+            if let Some(pos) = self.cubes.iter().position(|c| c.player_id == Some(pid)) {
+                let removed = self.cubes.remove(pos);
+                if self.cubes.is_empty() {
+                    self.enabled = false;
+                }
+                return Some(removed);
+            }
+        }
+        self.remove_cube()
+    }
+
     /// Removes the most recently spawned cube, disabling cube mode if no cubes remain.
     pub fn remove_cube(&mut self) -> Option<BouncingCube> {
         let removed = self.cubes.pop();

@@ -471,9 +471,15 @@ fn test_mode_9_mutually_exclusive_with_player_modes_1_to_4() {
     // Press Mode 1 (SetPlayerCount(1)) - MUST exit Mode 9
     let _ = app.update(wazoo_app::message::Message::SetPlayerCount(1));
     assert!(!app.cube.desktop_overlay, "Pressing 1 must exit Mode 9");
-    assert!(!app.cube.enabled, "Cube must be dismissed when exiting Mode 9 via player modes");
+    assert!(
+        !app.cube.enabled,
+        "Cube must be dismissed when exiting Mode 9 via player modes"
+    );
     assert_eq!(app.players.iter().filter(|p| !p.is_cube).count(), 1);
-    assert!(app.players[0].is_playing(), "Regular player must be unpaused");
+    assert!(
+        app.players[0].is_playing(),
+        "Regular player must be unpaused"
+    );
 
     // Enter Mode 9 again
     let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
@@ -510,12 +516,19 @@ fn test_mode_9_mutually_exclusive_with_scroll_mode_5() {
     let _ = app.update(wazoo_app::message::Message::ToggleScrollMode);
     assert!(!app.cube.desktop_overlay, "Pressing 5 must exit Mode 9");
     assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Scroll);
-    assert!(!app.cube.enabled, "Cube must be dismissed when entering Scroll Mode");
+    assert!(
+        !app.cube.enabled,
+        "Cube must be dismissed when entering Scroll Mode"
+    );
 
     // 2. While in Scroll Mode, press 9 (ToggleDesktopCubeScreensaver) -> must clean up Scroll Mode
     let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
     assert!(app.cube.desktop_overlay);
-    assert_ne!(app.settings.playback_mode, wazoo_core::PlaybackMode::Scroll, "Entering Mode 9 cleans up Scroll Mode");
+    assert_ne!(
+        app.settings.playback_mode,
+        wazoo_core::PlaybackMode::Scroll,
+        "Entering Mode 9 cleans up Scroll Mode"
+    );
     assert_eq!(app.settings.playback_mode, wazoo_core::PlaybackMode::Normal);
 }
 
@@ -598,12 +611,18 @@ fn test_mode_9_and_mode_8_clean_transitions() {
     // Switch from Mode 8 to Mode 9
     let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
     assert!(app.cube.desktop_overlay);
-    assert!(!app.cube.spawned_for_desktop, "Cube was already active before Mode 9");
+    assert!(
+        !app.cube.spawned_for_desktop,
+        "Cube was already active before Mode 9"
+    );
 
     // Exit Mode 9 by pressing 9 -> returns to Mode 8!
     let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
     assert!(!app.cube.desktop_overlay);
-    assert!(app.cube.enabled, "Cube returns to Mode 8 in-app screensaver");
+    assert!(
+        app.cube.enabled,
+        "Cube returns to Mode 8 in-app screensaver"
+    );
 
     // Dismiss Mode 8
     let _ = app.update(wazoo_app::message::Message::ToggleCubeScreensaver);
@@ -618,7 +637,10 @@ fn test_mode_9_exits_on_modal_or_drawer_open() {
     let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
     assert!(app.cube.desktop_overlay);
     let _ = app.update(wazoo_app::message::Message::OpenSettingsModal);
-    assert!(!app.cube.desktop_overlay, "Opening settings modal must exit Mode 9");
+    assert!(
+        !app.cube.desktop_overlay,
+        "Opening settings modal must exit Mode 9"
+    );
     assert!(app.modals.settings);
 
     // Close settings modal
@@ -628,7 +650,10 @@ fn test_mode_9_exits_on_modal_or_drawer_open() {
     let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
     assert!(app.cube.desktop_overlay);
     let _ = app.update(wazoo_app::message::Message::OpenHelpModal);
-    assert!(!app.cube.desktop_overlay, "Opening help modal must exit Mode 9");
+    assert!(
+        !app.cube.desktop_overlay,
+        "Opening help modal must exit Mode 9"
+    );
     assert!(app.modals.help);
 
     // Close help modal
@@ -638,7 +663,10 @@ fn test_mode_9_exits_on_modal_or_drawer_open() {
     let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
     assert!(app.cube.desktop_overlay);
     let _ = app.update(wazoo_app::message::Message::ToggleFilePicker);
-    assert!(!app.cube.desktop_overlay, "Opening file picker must exit Mode 9");
+    assert!(
+        !app.cube.desktop_overlay,
+        "Opening file picker must exit Mode 9"
+    );
     assert!(app.drawers.show_file_picker);
 }
 
@@ -698,7 +726,7 @@ fn test_cube_present_hijacks_bookmark_keys_for_add_remove_cube() {
     assert_eq!(app.cube.cubes.len(), 2);
     assert_eq!(
         app.overlay.toast_message.as_deref(),
-        Some("Added 3D Cube #2! (Press [8] to toggle)")
+        Some("3D Cube Added! (Press [8] to toggle)")
     );
 
     // 4. Pressing "=" should also spawn a 3rd cube
@@ -709,7 +737,7 @@ fn test_cube_present_hijacks_bookmark_keys_for_add_remove_cube() {
     assert_eq!(app.cube.cubes.len(), 3);
     assert_eq!(
         app.overlay.toast_message.as_deref(),
-        Some("Added 3D Cube #3! (Press [8] to toggle)")
+        Some("3D Cube Added! (Press [8] to toggle)")
     );
 
     // 5. Pressing "-" should remove a cube (from 3 to 2)
@@ -720,7 +748,7 @@ fn test_cube_present_hijacks_bookmark_keys_for_add_remove_cube() {
     assert_eq!(app.cube.cubes.len(), 2);
     assert_eq!(
         app.overlay.toast_message.as_deref(),
-        Some("3D Cube Removed (2 Remaining)")
+        Some("3D Cube Removed")
     );
 
     // 6. Pressing "-" removes another cube (from 2 to 1)
@@ -731,7 +759,7 @@ fn test_cube_present_hijacks_bookmark_keys_for_add_remove_cube() {
     assert_eq!(app.cube.cubes.len(), 1);
     assert_eq!(
         app.overlay.toast_message.as_deref(),
-        Some("3D Cube Removed (1 Remaining)")
+        Some("3D Cube Removed")
     );
 
     // 7. Pressing "-" removes the last cube and exits cube screensaver
@@ -791,7 +819,10 @@ fn test_cube_present_hijacks_bookmark_keys_for_add_remove_cube() {
 #[test]
 fn test_cube_sheen_toggle_and_persistence() {
     let (mut app, _) = wazoo_app::app::new_test_app();
-    assert!(!app.settings.cube_sheen, "Cube sheen should default to false (disabled)");
+    assert!(
+        !app.settings.cube_sheen,
+        "Cube sheen should default to false (disabled)"
+    );
 
     // Toggle sheen ON
     let _ = app.update(wazoo_app::message::Message::ToggleCubeSheen);
@@ -853,7 +884,11 @@ fn test_mode_9_remove_single_cube_exits_mode_9_and_unpauses_player() {
     let f1 = tmp.join("test_v1.mp4");
     let _ = std::fs::File::create(&f1);
 
-    app.available_videos = vec![wazoo_core::VideoRecord::new(1, "Test1", f1.to_string_lossy())];
+    app.available_videos = vec![wazoo_core::VideoRecord::new(
+        1,
+        "Test1",
+        f1.to_string_lossy(),
+    )];
     let _ = app.update(wazoo_app::message::Message::AddNewPlayer);
     assert_eq!(app.players.iter().filter(|p| !p.is_cube).count(), 1);
     assert!(app.players[0].is_playing(), "Regular player starts playing");
@@ -861,8 +896,15 @@ fn test_mode_9_remove_single_cube_exits_mode_9_and_unpauses_player() {
     // Enter Mode 9 directly (single cube overlay)
     let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
     assert!(app.cube.desktop_overlay, "Must be in Mode 9");
-    assert_eq!(app.cube.cubes.len(), 1, "Must have exactly 1 cube in Mode 9");
-    assert!(!app.players[0].is_playing(), "Regular player must be paused during Mode 9");
+    assert_eq!(
+        app.cube.cubes.len(),
+        1,
+        "Must have exactly 1 cube in Mode 9"
+    );
+    assert!(
+        !app.players[0].is_playing(),
+        "Regular player must be paused during Mode 9"
+    );
 
     // Press "-" key (KeyAction::SpeedOrBookmarkDown)
     let _ = app.update(wazoo_app::message::Message::KeyPressed(
@@ -877,10 +919,16 @@ fn test_mode_9_remove_single_cube_exits_mode_9_and_unpauses_player() {
 
     // Regular player must resume playing (not frozen!)
     assert_eq!(app.players.iter().filter(|p| !p.is_cube).count(), 1);
-    assert!(app.players[0].is_playing(), "Regular player must be unpaused and playing");
+    assert!(
+        app.players[0].is_playing(),
+        "Regular player must be unpaused and playing"
+    );
 
     // Ghost passthrough must be disabled
-    assert!(!app.window.ghost_passthrough_active, "Ghost passthrough must be false");
+    assert!(
+        !app.window.ghost_passthrough_active,
+        "Ghost passthrough must be false"
+    );
 
     // Toast message must report overlay disabled
     assert_eq!(
@@ -897,8 +945,14 @@ fn test_entering_mode_9_exits_fullscreen_mode() {
     // Enter Mode 9 (Desktop Cube Screensaver)
     let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
     assert!(app.cube.desktop_overlay, "Must enter Mode 9");
-    assert!(!app.window.is_fullscreen, "Entering Mode 9 must exit fullscreen mode");
-    assert!(app.window.is_maximized, "Entering Mode 9 must maximize window");
+    assert!(
+        !app.window.is_fullscreen,
+        "Entering Mode 9 must exit fullscreen mode"
+    );
+    assert!(
+        app.window.is_maximized,
+        "Entering Mode 9 must maximize window"
+    );
 }
 
 #[test]
@@ -911,8 +965,17 @@ fn test_entering_mode_9_maximizes_window_and_restores_on_exit() {
     // Enter Mode 9
     let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
     assert!(app.cube.desktop_overlay);
-    assert!(app.window.is_maximized, "Window must be maximized in Mode 9");
-    assert_eq!(app.cube.pre_desktop_bounds.as_ref().map(|b| (b.width, b.height)), Some((960, 540)));
+    assert!(
+        app.window.is_maximized,
+        "Window must be maximized in Mode 9"
+    );
+    assert_eq!(
+        app.cube
+            .pre_desktop_bounds
+            .as_ref()
+            .map(|b| (b.width, b.height)),
+        Some((960, 540))
+    );
 
     // Simulate OS window resize to maximized screen resolution during Mode 9
     let _ = app.update(wazoo_app::message::Message::WindowResized(
@@ -921,14 +984,26 @@ fn test_entering_mode_9_maximizes_window_and_restores_on_exit() {
     ));
     assert_eq!(app.settings.window_bounds.width, 1920);
     assert_eq!(app.settings.window_bounds.height, 1080);
-    assert!(!app.window.bounds_dirty, "WindowResized during Mode 9 must not mark bounds dirty");
+    assert!(
+        !app.window.bounds_dirty,
+        "WindowResized during Mode 9 must not mark bounds dirty"
+    );
 
     // Exit Mode 9
     let _ = app.update(wazoo_app::message::Message::ToggleDesktopCubeScreensaver);
     assert!(!app.cube.desktop_overlay);
-    assert!(!app.window.is_maximized, "Window must unmaximize when exiting Mode 9");
-    assert_eq!(app.settings.window_bounds.width, 960, "Pre-desktop window width restored");
-    assert_eq!(app.settings.window_bounds.height, 540, "Pre-desktop window height restored");
+    assert!(
+        !app.window.is_maximized,
+        "Window must unmaximize when exiting Mode 9"
+    );
+    assert_eq!(
+        app.settings.window_bounds.width, 960,
+        "Pre-desktop window width restored"
+    );
+    assert_eq!(
+        app.settings.window_bounds.height, 540,
+        "Pre-desktop window height restored"
+    );
 }
 
 #[test]
@@ -950,8 +1025,14 @@ fn test_cube_avoids_spawning_until_video_feed_is_ready() {
 
     // Physics tick should NOT advance the cube while it's waiting for its video feed
     app.cube.tick(w, h);
-    assert_eq!(app.cube.cubes[0].x, initial_x, "Cube position should not advance before ready");
-    assert_eq!(app.cube.cubes[0].y, initial_y, "Cube position should not advance before ready");
+    assert_eq!(
+        app.cube.cubes[0].x, initial_x,
+        "Cube position should not advance before ready"
+    );
+    assert_eq!(
+        app.cube.cubes[0].y, initial_y,
+        "Cube position should not advance before ready"
+    );
 
     // Overlay view should NOT output instances for unready cubes (avoiding 128x128 GPU allocation hitch)
     {
@@ -964,11 +1045,110 @@ fn test_cube_avoids_spawning_until_video_feed_is_ready() {
     }
 
     // Now cube is ready to go!
-    assert!(app.cube.cubes[0].is_ready, "Cube must become ready once video is ready or after timeout");
-    assert_eq!(app.overlay.focus_border_ticks, 0, "Spawning must not flash focus border");
+    assert!(
+        app.cube.cubes[0].is_ready,
+        "Cube must become ready once video is ready or after timeout"
+    );
+    assert_eq!(
+        app.overlay.focus_border_ticks, 0,
+        "Spawning must not flash focus border"
+    );
 
     // Physics tick now advances the cube smoothly
     app.cube.tick(w, h);
-    assert_ne!(app.cube.cubes[0].x, initial_x, "Cube advances position once ready");
+    assert_ne!(
+        app.cube.cubes[0].x, initial_x,
+        "Cube advances position once ready"
+    );
 }
 
+#[test]
+fn test_shared_standby_cube_lifecycle() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    let tmp = std::env::temp_dir().join(format!(
+        "wazoo_cube_standby_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&tmp);
+    let f1 = tmp.join("v1.mp4");
+    let f2 = tmp.join("v2.mp4");
+    let _ = std::fs::File::create(&f1);
+    let _ = std::fs::File::create(&f2);
+
+    app.available_videos = vec![
+        wazoo_core::VideoRecord::new(1, "S1", f1.to_string_lossy()),
+        wazoo_core::VideoRecord::new(2, "S2", f2.to_string_lossy()),
+    ];
+
+    // Mock pre-warmed standby player in memory
+    let config = wazoo_media::player::BufferConfig::default();
+    if let Ok(handle) = wazoo_media::player::VideoHandle::with_buffering_and_start(
+        0,
+        &f1.to_string_lossy(),
+        "S1",
+        config,
+        wazoo_media::player::StartTime::Beginning,
+    ) {
+        *app.standby_player.lock().unwrap() = Some(handle);
+    }
+
+    // Toggle Mode 8 -> Spawns first cube by adopting standby player
+    let _ = app.update(wazoo_app::message::Message::ToggleCubeScreensaver);
+    assert!(app.cube.enabled);
+    assert_eq!(app.cube.cubes.len(), 1);
+
+    // Verify cube player was created
+    let cube_player = app.players.iter().find(|p| p.is_cube);
+    assert!(cube_player.is_some(), "Cube player must be spawned");
+
+    // Spawn 2nd cube
+    let _ = app.update(wazoo_app::message::Message::SpawnCube);
+    assert_eq!(app.cube.cubes.len(), 2);
+
+    // Dismissing all cubes cleans up to 0 cubes
+    let _ = app.update(wazoo_app::message::Message::ClearCubes);
+    assert!(!app.cube.enabled);
+    assert_eq!(app.cube.cubes.len(), 0);
+    assert_eq!(app.players.iter().filter(|p| p.is_cube).count(), 0);
+}
+
+#[test]
+fn test_first_spawned_cube_is_unpaused_and_playing() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+
+    let tmp = std::env::temp_dir().join(format!(
+        "wazoo_first_cube_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&tmp);
+    let f1 = tmp.join("v1.mp4");
+    let f2 = tmp.join("v2.mp4");
+    let _ = std::fs::File::create(&f1);
+    let _ = std::fs::File::create(&f2);
+
+    app.available_videos = vec![
+        wazoo_core::VideoRecord::new(1, "S1", f1.to_string_lossy()),
+        wazoo_core::VideoRecord::new(2, "S2", f2.to_string_lossy()),
+    ];
+
+    // Regular grid player
+    let _ = app.update(wazoo_app::message::Message::AddNewPlayer);
+
+    // Spawn 1st cube (Mode 8)
+    let _ = app.update(wazoo_app::message::Message::ToggleCubeScreensaver);
+    assert!(app.cube.enabled);
+    assert_eq!(app.cube.cubes.len(), 1);
+
+    let cube_idx = app.players.iter().position(|p| p.is_cube).unwrap();
+    assert!(
+        app.players[cube_idx].is_playing(),
+        "First spawned cube player must be unpaused and playing, not paused/black"
+    );
+}

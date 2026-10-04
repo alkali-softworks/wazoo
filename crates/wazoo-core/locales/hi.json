@@ -233,8 +233,6 @@
     "cube_removed": "3D क्यूब हटाया गया",
     "cube_added": "3D क्यूब जोड़ा गया! (टॉगल करने के लिए [{key}] दबाएं)",
     "cube_overlay_enabled": "क्यूब ओवरले मोड (बाहर निकलने के लिए [{key}] दबाएं)",
-    "cube_added_num": "3D क्यूब #{count} जोड़ा गया! (टॉगल करने के लिए [{key}] दबाएं)",
-    "cube_removed_remaining": "3D क्यूब हटाया गया ({count} शेष)",
     "cube_all_removed": "सभी 3D क्यूब हटाए गए",
     "cube_overlay_disabled": "क्यूब ओवरले मोड अक्षम किया गया",
     "cube_playing": "3D क्यूब: {title}",

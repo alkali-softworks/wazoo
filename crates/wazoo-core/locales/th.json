@@ -233,8 +233,6 @@
     "cube_removed": "ลบลูกบาศก์ 3D แล้ว",
     "cube_added": "เพิ่มลูกบาศก์ 3D แล้ว! (กด [{key}] เพื่อสลับ)",
     "cube_overlay_enabled": "โหมดโอเวอร์เลย์ลูกบาศก์ (กด [{key}] เพื่อออก)",
-    "cube_added_num": "เพิ่มลูกบาศก์ 3D #{count} แล้ว! (กด [{key}] เพื่อสลับ)",
-    "cube_removed_remaining": "ลบลูกบาศก์ 3D แล้ว (เหลือ {count})",
     "cube_all_removed": "ลบลูกบาศก์ 3D ทั้งหมดแล้ว",
     "cube_overlay_disabled": "ปิดใช้งานโหมดโอเวอร์เลย์ลูกบาศก์แล้ว",
     "cube_playing": "ลูกบาศก์ 3D: {title}",

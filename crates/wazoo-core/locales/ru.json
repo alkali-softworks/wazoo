@@ -233,8 +233,6 @@
     "cube_removed": "3D-куб удален",
     "cube_added": "3D-куб добавлен! (Нажмите [{key}] для переключения)",
     "cube_overlay_enabled": "Режим наложения куба (Нажмите [{key}] для выхода)",
-    "cube_added_num": "Добавлен 3D-куб #{count}! (Нажмите [{key}] для переключения)",
-    "cube_removed_remaining": "3D-куб удален (осталось: {count})",
     "cube_all_removed": "Все 3D-кубы удалены",
     "cube_overlay_disabled": "Режим наложения куба выключен",
     "cube_playing": "3D-куб: {title}",

@@ -233,8 +233,6 @@
     "cube_removed": "Đã xóa khối 3D",
     "cube_added": "Đã thêm khối 3D! (Nhấn [{key}] để bật/tắt)",
     "cube_overlay_enabled": "Chế độ lớp phủ khối (Nhấn [{key}] để thoát)",
-    "cube_added_num": "Đã thêm khối 3D #{count}! (Nhấn [{key}] để bật/tắt)",
-    "cube_removed_remaining": "Đã xóa khối 3D (Còn lại {count})",
     "cube_all_removed": "Đã xóa tất cả các khối 3D",
     "cube_overlay_disabled": "Đã tắt chế độ lớp phủ khối",
     "cube_playing": "Khối 3D: {title}",

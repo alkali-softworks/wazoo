@@ -233,8 +233,6 @@
     "cube_removed": "3D Küp Kaldırıldı",
     "cube_added": "3D Küp Eklendi! (Geçiş için [{key}]'e basın)",
     "cube_overlay_enabled": "Küp Yerleşimi Modu (Çıkmak için [{key}]'e basın)",
-    "cube_added_num": "3D Küp #{count} Eklendi! (Geçiş için [{key}]'e basın)",
-    "cube_removed_remaining": "3D Küp Kaldırıldı ({count} Kaldı)",
     "cube_all_removed": "Tüm 3D Küpler Kaldırıldı",
     "cube_overlay_disabled": "Küp Yerleşimi Modu Devre Dışı Bırakıldı",
     "cube_playing": "3D Küp: {title}",
