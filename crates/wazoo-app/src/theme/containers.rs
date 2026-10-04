@@ -177,6 +177,24 @@ pub fn controls_overlay_style_with_alpha(alpha: f32) -> impl Fn(&Theme) -> conta
     }
 }
 
+// Drag to Move Overlay Card Style (Alt Drag Overlay)
+pub fn drag_overlay_card_style(_theme: &Theme) -> container::Style {
+    container::Style {
+        background: Some(Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.80))),
+        border: Border {
+            radius: 14.0.into(),
+            width: 0.0,
+            color: Color::TRANSPARENT,
+        },
+        shadow: Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.55),
+            offset: Vector::new(0.0, 4.0),
+            blur_radius: 18.0,
+        },
+        ..Default::default()
+    }
+}
+
 // Center Floating Notice Style
 pub fn notice_pill_style(_theme: &Theme) -> container::Style {
     container::Style {
