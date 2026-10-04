@@ -165,8 +165,8 @@ pub fn controls_overlay_style_with_alpha(alpha: f32) -> impl Fn(&Theme) -> conta
         ))),
         border: Border {
             radius: 14.0.into(),
-            width: 1.0,
-            color: Color::from_rgba(1.0, 1.0, 1.0, 0.12 * alpha),
+            width: 0.0,
+            color: Color::TRANSPARENT,
         },
         shadow: Shadow {
             color: Color::from_rgba(0.0, 0.0, 0.0, 0.55 * alpha),
