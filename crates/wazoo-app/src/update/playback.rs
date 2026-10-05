@@ -465,7 +465,7 @@ impl WazooApp {
                     p.set_muted(self.settings.scroll_mode_muted);
                     if self.settings.playback_mode == PlaybackMode::Scroll {
                         let vol = self.scroll_engine.calculate_player_volume(p.id);
-                        p.set_volume(vol);
+                        p.set_crossfade_volume(vol);
                     }
                 }
                 if let Some(ref mut preloaded) = self.preloaded_player {
@@ -487,7 +487,7 @@ impl WazooApp {
                     p.set_muted(false);
                     if self.settings.playback_mode == PlaybackMode::Scroll {
                         let vol = self.scroll_engine.calculate_player_volume(p.id);
-                        p.set_volume(vol);
+                        p.set_crossfade_volume(vol);
                     }
                 }
                 if let Some(ref mut preloaded) = self.preloaded_player {
@@ -602,6 +602,7 @@ impl WazooApp {
                     Task::none()
                 };
                 if self.settings.playback_mode != PlaybackMode::Scroll {
+                    self.save_session_state();
                     self.settings.playback_mode = PlaybackMode::Scroll;
                     self.scroll_engine.scroll_mode_muted = self.settings.scroll_mode_muted;
                     let window_w = self.settings.window_bounds.width as f32;
@@ -670,7 +671,7 @@ impl WazooApp {
                         if !p.is_cube {
                             p.set_muted(self.settings.scroll_mode_muted);
                             let vol = self.scroll_engine.calculate_player_volume(p.id);
-                            p.set_volume(vol);
+                            p.set_crossfade_volume(vol);
                         }
                     }
 
@@ -745,7 +746,7 @@ impl WazooApp {
                         {
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
-                            handle.set_volume(vol);
+                            handle.set_crossfade_volume(vol);
                             handle.set_paused(false);
                             self.record_play_history(&handle.state.path);
                             self.players
