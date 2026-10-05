@@ -908,46 +908,41 @@ impl WazooApp {
         start_time: impl Into<StartTime>,
     ) -> Result<VideoHandle, String> {
         let start_time = start_time.into();
-        let standby = self.standby_player.lock().ok().and_then(|mut g| {
-            if let Some(ref h) = *g {
-                if h.state.path.is_empty() || h.state.path == path {
-                    return g.take();
-                }
-            }
-            None
-        });
-        let handle = if let Some(mut h) = standby {
-            h.id = id;
-            h.state.id = id;
-            if !path.is_empty() {
-                if h.state.path == path {
-                    if start_time == StartTime::Random {
-                        h.seek_random();
-                    }
-                    h
-                } else if let Err(e) = h.load_file(path, name, start_time) {
-                    log::warn!(
-                        "Failed to bind standby player to {path}: {e}, falling back to direct creation"
-                    );
-                    VideoHandle::with_buffering_and_start(
-                        id,
-                        path,
-                        name,
-                        self.buffer_config(),
-                        start_time,
-                    )?
-                } else {
-                    h
-                }
-            } else {
-                h
-            }
+        let standby = if !path.is_empty() {
+            self.take_standby_player_if(|h| h.state.path == path)
         } else {
-            VideoHandle::with_buffering_and_start(id, path, name, self.buffer_config(), start_time)?
+            let handle = self.standby_player.lock().ok().and_then(|mut g| {
+                if let Some(ref h) = *g {
+                    if h.state.path.is_empty() {
+                        return g.take();
+                    }
+                }
+                None
+            });
+            if handle.is_some() {
+                self.replenish_standby_player();
+            }
+            handle
         };
 
-        self.replenish_standby_player();
-        Ok(handle)
+        if let Some(mut h) = standby {
+            h.id = id;
+            h.state.id = id;
+            if start_time == StartTime::Random {
+                h.seek_random();
+            }
+            Ok(h)
+        } else {
+            let handle = VideoHandle::with_buffering_and_start(
+                id,
+                path,
+                name,
+                self.buffer_config(),
+                start_time,
+            )?;
+            self.replenish_standby_player();
+            Ok(handle)
+        }
     }
 
     /// Pre-warms a standby player in a background worker thread with the next video and its initial
@@ -1032,6 +1027,32 @@ impl WazooApp {
             .ok();
     }
 
+    /// Extracts a pre-warmed standby player handle from memory if available and fully initialized with
+    /// a video stream and decoded presentation frame, automatically triggering a background replenishment.
+    pub(crate) fn take_ready_standby_player(&self) -> Option<VideoHandle> {
+        self.take_standby_player_if(|_| true)
+    }
+
+    /// Extracts a pre-warmed standby player handle satisfying a custom predicate (e.g. not matching
+    /// the currently playing video, or passing file-picker search filters), automatically triggering replenishment.
+    pub(crate) fn take_standby_player_if(
+        &self,
+        predicate: impl FnOnce(&VideoHandle) -> bool,
+    ) -> Option<VideoHandle> {
+        if !self.settings.use_standby_player {
+            return None;
+        }
+        let handle = self.standby_player.lock().ok().and_then(|mut g| {
+            if let Some(ref h) = *g {
+                if !h.state.path.is_empty() && predicate(h) {
+                    return g.take();
+                }
+            }
+            None
+        })?;
+        self.replenish_standby_player();
+        Some(handle)
+    }
 
     pub fn current_opacity(&self) -> f32 {
         if self.window.is_alt_pressed {
@@ -1064,22 +1085,18 @@ impl WazooApp {
         };
 
         // If standby player is pre-warmed with a video and decoded off-thread, attach it instantly
-        let standby = self.standby_player.lock().ok().and_then(|mut g| g.take());
-        if let Some(mut handle) = standby {
-            if !handle.state.path.is_empty() {
-                handle.id = id;
-                handle.state.id = id;
-                handle.set_muted(initial_muted);
-                handle.set_subtitles_visible(self.subtitles_enabled);
-                handle.set_paused(false);
-                let path = handle.state.path.clone();
-                let mut player = AppPlayer::new(handle, self.default_shuffle_mode);
-                player.flip.reset(self.settings.flip_interval_secs);
-                self.push_player_nav_entry(id, path, None);
-                self.players.push(player);
-                self.replenish_standby_player();
-                return Some(id);
-            }
+        if let Some(mut handle) = self.take_ready_standby_player() {
+            handle.id = id;
+            handle.state.id = id;
+            handle.set_muted(initial_muted);
+            handle.set_subtitles_visible(self.subtitles_enabled);
+            handle.set_paused(false);
+            let path = handle.state.path.clone();
+            let mut player = AppPlayer::new(handle, self.default_shuffle_mode);
+            player.flip.reset(self.settings.flip_interval_secs);
+            self.push_player_nav_entry(id, path, None);
+            self.players.push(player);
+            return Some(id);
         }
 
         for _ in 0..MAX_VIDEO_LOAD_RETRIES {
@@ -1123,22 +1140,19 @@ impl WazooApp {
         let start_time = StartTime::Random;
 
         // 1. If standby player is pre-warmed in memory, adopt it immediately and seek to random
-        if let Some(mut handle) = self.standby_player.lock().ok().and_then(|mut g| g.take()) {
-            if !handle.state.path.is_empty() {
-                handle.id = id;
-                handle.state.id = id;
-                handle.set_muted(initial_muted);
-                handle.set_subtitles_visible(self.subtitles_enabled);
-                handle.set_paused(false);
-                handle.seek_random();
-                let path = handle.state.path.clone();
-                let mut player = AppPlayer::new_cube(handle, self.default_shuffle_mode);
-                player.flip.reset(self.settings.flip_interval_secs);
-                self.push_player_nav_entry(id, path, None);
-                self.players.push(player);
-                self.replenish_standby_player();
-                return Some(id);
-            }
+        if let Some(mut handle) = self.take_ready_standby_player() {
+            handle.id = id;
+            handle.state.id = id;
+            handle.set_muted(initial_muted);
+            handle.set_subtitles_visible(self.subtitles_enabled);
+            handle.set_paused(false);
+            handle.seek_random();
+            let path = handle.state.path.clone();
+            let mut player = AppPlayer::new_cube(handle, self.default_shuffle_mode);
+            player.flip.reset(self.settings.flip_interval_secs);
+            self.push_player_nav_entry(id, path, None);
+            self.players.push(player);
+            return Some(id);
         }
 
         for _ in 0..MAX_VIDEO_LOAD_RETRIES {
