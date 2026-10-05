@@ -23,7 +23,8 @@
     "fullscreen": "Tela cheia",
     "exit_fullscreen": "Sair da tela cheia",
     "fit_window": "Ajustar janela",
-    "click_through": "Clique através"
+    "click_through": "Clique através",
+    "opacity": "Opacidade"
   },
   "app": {
     "drag_to_move": "Arraste para mover",

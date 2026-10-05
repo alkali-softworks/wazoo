@@ -23,7 +23,8 @@
     "fullscreen": "ملء الشاشة",
     "exit_fullscreen": "الخروج من ملء الشاشة",
     "fit_window": "ملاءمة النافذة",
-    "click_through": "النقر عبر النافذة"
+    "click_through": "النقر عبر النافذة",
+    "opacity": "الشفافية"
   },
   "app": {
     "drag_to_move": "اسحب للتحريك",

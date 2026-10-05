@@ -23,7 +23,8 @@
     "fullscreen": "Celá obrazovka",
     "exit_fullscreen": "Ukončit celou obrazovku",
     "fit_window": "Přizpůsobit okno",
-    "click_through": "Prokliknutí"
+    "click_through": "Prokliknutí",
+    "opacity": "Průhlednost"
   },
   "app": {
     "drag_to_move": "Přetažením přesuňte",

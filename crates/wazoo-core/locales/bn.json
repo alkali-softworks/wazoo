@@ -23,7 +23,8 @@
     "fullscreen": "ফুলস্ক্রিন",
     "exit_fullscreen": "ফুলস্ক্রিন থেকে বের হন",
     "fit_window": "উইন্ডো ফিট করুন",
-    "click_through": "ক্লিক-থ্রু"
+    "click_through": "ক্লিক-থ্রু",
+    "opacity": "অস্বচ্ছতা"
   },
   "app": {
     "drag_to_move": "সরানোর জন্য টেনে আনুন",

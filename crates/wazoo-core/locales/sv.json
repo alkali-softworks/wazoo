@@ -23,7 +23,8 @@
     "fullscreen": "Helskärm",
     "exit_fullscreen": "Avsluta helskärm",
     "fit_window": "Anpassa fönster",
-    "click_through": "Klicka igenom"
+    "click_through": "Klicka igenom",
+    "opacity": "Opacitet"
   },
   "app": {
     "drag_to_move": "Dra för att flytta",

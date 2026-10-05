@@ -23,7 +23,8 @@
     "fullscreen": "Volledig scherm",
     "exit_fullscreen": "Volledig scherm sluiten",
     "fit_window": "Venster passend maken",
-    "click_through": "Doorklikken"
+    "click_through": "Doorklikken",
+    "opacity": "Dekking"
   },
   "app": {
     "drag_to_move": "Slepen om te verplaatsen",

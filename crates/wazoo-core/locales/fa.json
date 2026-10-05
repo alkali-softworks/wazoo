@@ -23,7 +23,8 @@
     "fullscreen": "تمام صفحه",
     "exit_fullscreen": "خروج از تمام صفحه",
     "fit_window": "تنظیم اندازه پنجره",
-    "click_through": "عبور کلیک"
+    "click_through": "عبور کلیک",
+    "opacity": "شفافیت"
   },
   "app": {
     "drag_to_move": "برای جابجایی بکشید",

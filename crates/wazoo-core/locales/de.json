@@ -23,7 +23,8 @@
     "fullscreen": "Vollbild",
     "exit_fullscreen": "Vollbild beenden",
     "fit_window": "Fenster anpassen",
-    "click_through": "Durchklicken"
+    "click_through": "Durchklicken",
+    "opacity": "Deckkraft"
   },
   "app": {
     "drag_to_move": "Zum Verschieben ziehen",

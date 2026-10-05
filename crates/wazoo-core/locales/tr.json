@@ -23,7 +23,8 @@
     "fullscreen": "Tam Ekran",
     "exit_fullscreen": "Tam Ekrandan Çık",
     "fit_window": "Pencereyi Uydur",
-    "click_through": "Tıklama Geçişi"
+    "click_through": "Tıklama Geçişi",
+    "opacity": "Saydamlık"
   },
   "app": {
     "drag_to_move": "Taşımak için Sürükleyin",

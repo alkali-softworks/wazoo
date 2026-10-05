@@ -23,7 +23,8 @@
     "fullscreen": "Pełny ekran",
     "exit_fullscreen": "Wyjdź z pełnego ekranu",
     "fit_window": "Dopasuj okno",
-    "click_through": "Przenikanie kliknięć"
+    "click_through": "Przenikanie kliknięć",
+    "opacity": "Przezroczystość"
   },
   "app": {
     "drag_to_move": "Przeciągnij, aby przesunąć",
