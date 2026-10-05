@@ -23,7 +23,8 @@
     "fullscreen": "Schermo intero",
     "exit_fullscreen": "Esci da schermo intero",
     "fit_window": "Adatta finestra",
-    "click_through": "Clic attraverso"
+    "click_through": "Clic attraverso",
+    "opacity": "Opacità"
   },
   "app": {
     "drag_to_move": "Trascina per spostare",

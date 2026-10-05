@@ -1023,6 +1023,10 @@ fn test_pin_keybind_dispatch() {
     ));
     assert!(app.settings.is_always_on_top);
     assert_eq!(app.settings.window_opacity, 1.0);
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("Always on top enabled")
+    );
     let _ = app.update(Message::WindowUnfocused);
     assert!(!app.window.clickthru);
 
@@ -1033,6 +1037,10 @@ fn test_pin_keybind_dispatch() {
     ));
     assert!(app.settings.is_always_on_top);
     assert_eq!(app.settings.window_opacity, 0.40);
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("Always on top enabled (40% Opacity)")
+    );
     let _ = app.update(Message::WindowUnfocused);
     assert!(app.window.clickthru);
     let _ = app.update(Message::WindowFocused);
@@ -1045,6 +1053,10 @@ fn test_pin_keybind_dispatch() {
     ));
     assert!(app.settings.is_always_on_top);
     assert_eq!(app.settings.window_opacity, 0.15);
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("Always on top enabled (15% Opacity)")
+    );
     let _ = app.update(Message::WindowUnfocused);
     assert!(app.window.clickthru);
 
@@ -1055,6 +1067,10 @@ fn test_pin_keybind_dispatch() {
     ));
     assert!(!app.settings.is_always_on_top);
     assert_eq!(app.settings.window_opacity, 1.0);
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("Always on top disabled")
+    );
     assert!(!app.window.clickthru);
 }
 
@@ -1279,7 +1295,10 @@ fn test_window_resize_suspends_frame_rendering_and_debounces() {
     assert!(app.window.last_resize_time.is_none());
 
     // WindowResized marks window as resizing
-    let _ = app.update(Message::WindowResized(win_id, iced::Size::new(960.0, 540.0)));
+    let _ = app.update(Message::WindowResized(
+        win_id,
+        iced::Size::new(960.0, 540.0),
+    ));
     assert!(app.window.is_resizing());
     assert!(app.window.last_resize_time.is_some());
 
@@ -1316,7 +1335,10 @@ fn test_video_tile_layout_engine_pauses_during_resize() {
     assert!(!app.window.is_resizing());
 
     // WindowResized marks window as resizing
-    let _ = app.update(Message::WindowResized(win_id, iced::Size::new(1280.0, 720.0)));
+    let _ = app.update(Message::WindowResized(
+        win_id,
+        iced::Size::new(1280.0, 720.0),
+    ));
     assert!(app.window.is_resizing());
 
     // Cursor movement during resize is ignored to prevent titlebar/hover thrashing
@@ -1610,19 +1632,43 @@ fn test_fullscreen_toggle_and_escape() {
     let _ = app.update(Message::ToggleFullscreen);
     assert!(app.window.is_fullscreen);
     assert!(app.overlay.toast_message.is_some());
-    assert!(app.overlay.toast_message.as_ref().unwrap().contains("Fullscreen Enabled"));
-    assert!(app.overlay.toast_message.as_ref().unwrap().contains("[F11]"));
+    assert!(
+        app.overlay
+            .toast_message
+            .as_ref()
+            .unwrap()
+            .contains("Fullscreen Enabled")
+    );
+    assert!(
+        app.overlay
+            .toast_message
+            .as_ref()
+            .unwrap()
+            .contains("[F11]")
+    );
 
     // 2. Escape exits fullscreen when no modals/drawers are open
     let _ = app.update(Message::EscapePressed);
     assert!(!app.window.is_fullscreen);
-    assert!(app.overlay.toast_message.as_ref().unwrap().contains("Fullscreen Disabled"));
+    assert!(
+        app.overlay
+            .toast_message
+            .as_ref()
+            .unwrap()
+            .contains("Fullscreen Disabled")
+    );
 
     // 3. Rebind toggle_fullscreen and verify toast reflects the new key
     app.settings.keybinds.toggle_fullscreen = "f12".to_string();
     let _ = app.update(Message::ToggleFullscreen);
     assert!(app.window.is_fullscreen);
-    assert!(app.overlay.toast_message.as_ref().unwrap().contains("[F12]"));
+    assert!(
+        app.overlay
+            .toast_message
+            .as_ref()
+            .unwrap()
+            .contains("[F12]")
+    );
     let _ = app.update(Message::ToggleFullscreen);
     assert!(!app.window.is_fullscreen);
     app.settings.keybinds.toggle_fullscreen = "F11".to_string();
@@ -1640,7 +1686,10 @@ fn test_fullscreen_toggle_and_escape() {
     assert!(app.drawers.show_file_picker);
     let _ = app.update(Message::EscapePressed);
     assert!(!app.drawers.show_file_picker);
-    assert!(app.window.is_fullscreen, "Closing drawer should not exit fullscreen");
+    assert!(
+        app.window.is_fullscreen,
+        "Closing drawer should not exit fullscreen"
+    );
 
     // 6. Subsequent Escape exits fullscreen
     let _ = app.update(Message::EscapePressed);
@@ -1805,47 +1854,83 @@ fn test_calculate_alt_resize_direction_all_zones() {
 
     // Top row (row = 0)
     app.window.cursor_position = iced::Point::new(100.0, 100.0);
-    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::NorthWest));
+    assert!(matches!(
+        app.calculate_alt_resize_direction(),
+        iced::window::Direction::NorthWest
+    ));
 
     app.window.cursor_position = iced::Point::new(450.0, 100.0);
-    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::North));
+    assert!(matches!(
+        app.calculate_alt_resize_direction(),
+        iced::window::Direction::North
+    ));
 
     app.window.cursor_position = iced::Point::new(800.0, 100.0);
-    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::NorthEast));
+    assert!(matches!(
+        app.calculate_alt_resize_direction(),
+        iced::window::Direction::NorthEast
+    ));
 
     // Middle row (row = 1) - Outer edges
     app.window.cursor_position = iced::Point::new(100.0, 300.0);
-    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::West));
+    assert!(matches!(
+        app.calculate_alt_resize_direction(),
+        iced::window::Direction::West
+    ));
 
     app.window.cursor_position = iced::Point::new(800.0, 300.0);
-    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::East));
+    assert!(matches!(
+        app.calculate_alt_resize_direction(),
+        iced::window::Direction::East
+    ));
 
     // Bottom row (row = 2)
     app.window.cursor_position = iced::Point::new(100.0, 500.0);
-    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::SouthWest));
+    assert!(matches!(
+        app.calculate_alt_resize_direction(),
+        iced::window::Direction::SouthWest
+    ));
 
     app.window.cursor_position = iced::Point::new(450.0, 500.0);
-    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::South));
+    assert!(matches!(
+        app.calculate_alt_resize_direction(),
+        iced::window::Direction::South
+    ));
 
     app.window.cursor_position = iced::Point::new(800.0, 500.0);
-    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::SouthEast));
+    assert!(matches!(
+        app.calculate_alt_resize_direction(),
+        iced::window::Direction::SouthEast
+    ));
 
     // Center zone (row = 1, col = 1) delegates to nearest quadrant
     // Top-left of center: x < 450, y < 300 -> NorthWest
     app.window.cursor_position = iced::Point::new(350.0, 250.0);
-    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::NorthWest));
+    assert!(matches!(
+        app.calculate_alt_resize_direction(),
+        iced::window::Direction::NorthWest
+    ));
 
     // Top-right of center: x >= 450, y < 300 -> NorthEast
     app.window.cursor_position = iced::Point::new(550.0, 250.0);
-    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::NorthEast));
+    assert!(matches!(
+        app.calculate_alt_resize_direction(),
+        iced::window::Direction::NorthEast
+    ));
 
     // Bottom-left of center: x < 450, y >= 300 -> SouthWest
     app.window.cursor_position = iced::Point::new(350.0, 350.0);
-    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::SouthWest));
+    assert!(matches!(
+        app.calculate_alt_resize_direction(),
+        iced::window::Direction::SouthWest
+    ));
 
     // Bottom-right of center: x >= 450, y >= 300 -> SouthEast
     app.window.cursor_position = iced::Point::new(550.0, 350.0);
-    assert!(matches!(app.calculate_alt_resize_direction(), iced::window::Direction::SouthEast));
+    assert!(matches!(
+        app.calculate_alt_resize_direction(),
+        iced::window::Direction::SouthEast
+    ));
 }
 
 #[test]
@@ -1870,24 +1955,29 @@ fn test_alt_drag_resize_and_right_click_interception() {
     app.window.cursor_position = iced::Point::new(800.0, 500.0); // SouthEast corner
 
     let _ = app.update(Message::RightClickPressed(win_id));
-    assert!(!app.modals.menu, "Context menu modal should NOT be opened when Alt is pressed");
-    assert!(app.window.is_resizing(), "Alt + Right-click should mark window as resizing");
+    assert!(
+        !app.modals.menu,
+        "Context menu modal should NOT be opened when Alt is pressed"
+    );
+    assert!(
+        app.window.is_resizing(),
+        "Alt + Right-click should mark window as resizing"
+    );
     assert!(app.window.last_resize_time.is_some());
 
     // 3. RightClickReleased resets resize state immediately
     let _ = app.update(Message::RightClickReleased);
-    assert!(!app.window.is_resizing(), "RightClickReleased should reset is_resizing immediately");
+    assert!(
+        !app.window.is_resizing(),
+        "RightClickReleased should reset is_resizing immediately"
+    );
     assert!(app.window.last_resize_time.is_none());
 
     // 4. AltDragResize in fullscreen mode is suppressed
     app.window.is_fullscreen = true;
     let _ = app.update(Message::AltDragResize);
-    assert!(!app.window.is_resizing(), "Resize should not trigger when in fullscreen mode");
+    assert!(
+        !app.window.is_resizing(),
+        "Resize should not trigger when in fullscreen mode"
+    );
 }
-
-
-
-
-
-
-

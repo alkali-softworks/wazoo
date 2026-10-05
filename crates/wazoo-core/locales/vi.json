@@ -23,7 +23,8 @@
     "fullscreen": "Toàn màn hình",
     "exit_fullscreen": "Thoát toàn màn hình",
     "fit_window": "Khớp cửa sổ",
-    "click_through": "Nhấp xuyên qua"
+    "click_through": "Nhấp xuyên qua",
+    "opacity": "Độ mờ"
   },
   "app": {
     "drag_to_move": "Kéo để di chuyển",

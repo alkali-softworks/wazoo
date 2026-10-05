@@ -23,7 +23,8 @@
     "fullscreen": "Fullscreen",
     "exit_fullscreen": "Exit Fullscreen",
     "fit_window": "Fit Window",
-    "click_through": "Click-Through"
+    "click_through": "Click-Through",
+    "opacity": "Opacity"
   },
   "app": {
     "drag_to_move": "Drag to Move",

@@ -23,7 +23,8 @@
     "fullscreen": "पूर्ण स्क्रीन",
     "exit_fullscreen": "पूर्ण स्क्रीन से बाहर निकलें",
     "fit_window": "विंडो फिट करें",
-    "click_through": "क्लिक-थ्रू"
+    "click_through": "क्लिक-थ्रू",
+    "opacity": "पारदर्शिता"
   },
   "app": {
     "drag_to_move": "स्थानांतरित करने के लिए खींचें",
