@@ -52,6 +52,7 @@ pub struct VideoHandle {
     pub fog_enabled: bool,
     pub is_seeking: bool,
     seek_restart_received: bool,
+    crossfade_volume: f64,
 }
 
 unsafe impl Send for VideoHandle {}
@@ -393,6 +394,7 @@ impl VideoHandle {
                 fog_enabled: config.fog_enabled,
                 is_seeking: false,
                 seek_restart_received: false,
+                crossfade_volume: 1.0,
             };
 
             handle.set_volume(1.0);
@@ -783,16 +785,50 @@ impl VideoHandle {
     pub fn set_volume(&mut self, volume: f64) {
         let clamped = volume.clamp(0.0, 1.0);
         self.state.volume = clamped;
-        let mpv_vol = clamped * 100.0;
+        let effective_vol = (clamped * self.crossfade_volume).clamp(0.0, 1.0);
+        let mpv_vol = effective_vol * 100.0;
         unsafe {
-            let prop = CString::new("volume").unwrap();
-            mpv_ffi::mpv_set_property(
-                self.mpv,
-                prop.as_ptr(),
-                mpv_ffi::MPV_FORMAT_DOUBLE,
-                &mpv_vol as *const _ as *mut _,
-            );
+            if !self.mpv.is_null() {
+                let prop = CString::new("volume").unwrap();
+                mpv_ffi::mpv_set_property(
+                    self.mpv,
+                    prop.as_ptr(),
+                    mpv_ffi::MPV_FORMAT_DOUBLE,
+                    &mpv_vol as *const _ as *mut _,
+                );
+            }
         }
+    }
+
+    /// Sets the dynamic crossfade attenuation multiplier (0.0 to 1.0) without altering
+    /// the player's underlying user volume setting (`self.state.volume`).
+    pub fn set_crossfade_volume(&mut self, factor: f64) {
+        let clamped = factor.clamp(0.0, 1.0);
+        self.crossfade_volume = clamped;
+        let effective_vol = (self.state.volume * clamped).clamp(0.0, 1.0);
+        let mpv_vol = effective_vol * 100.0;
+        unsafe {
+            if !self.mpv.is_null() {
+                let prop = CString::new("volume").unwrap();
+                mpv_ffi::mpv_set_property(
+                    self.mpv,
+                    prop.as_ptr(),
+                    mpv_ffi::MPV_FORMAT_DOUBLE,
+                    &mpv_vol as *const _ as *mut _,
+                );
+            }
+        }
+    }
+
+    /// Resets the dynamic crossfade attenuation multiplier back to 1.0 (full audio output),
+    /// restoring mpv playback volume to the player's configured `state.volume`.
+    pub fn reset_crossfade_volume(&mut self) {
+        self.set_crossfade_volume(1.0);
+    }
+
+    #[inline]
+    pub fn crossfade_volume(&self) -> f64 {
+        self.crossfade_volume
     }
 
     pub fn set_muted(&mut self, muted: bool) {

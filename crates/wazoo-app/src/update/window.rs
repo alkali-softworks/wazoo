@@ -145,7 +145,7 @@ impl WazooApp {
                             let item_h = self.calculate_player_scroll_height(&handle);
                             self.scroll_engine.add_item(handle.id, spawn_y, item_h);
                             let vol = self.scroll_engine.calculate_player_volume(handle.id);
-                            handle.set_volume(vol);
+                            handle.set_crossfade_volume(vol);
                             self.record_play_history(&handle.state.path);
                             self.players
                                 .push(AppPlayer::new(handle, self.default_shuffle_mode));

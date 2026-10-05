@@ -508,7 +508,7 @@ impl WazooApp {
         }
         for p in &mut self.players {
             let vol = self.scroll_engine.calculate_player_volume(p.id);
-            p.set_volume(vol);
+            p.set_crossfade_volume(vol);
         }
         self.trigger_preload_task()
     }
@@ -1192,19 +1192,23 @@ impl WazooApp {
 
     /// Persists the exact current playback session (file, timestamp, mute, volume, shuffle) to settings
     pub fn save_session_state(&mut self) {
-        let normal_players: Vec<&AppPlayer> = self.players.iter().filter(|p| !p.is_cube).collect();
-        if !normal_players.is_empty() {
-            let sessions: Vec<VideoSession> = normal_players
-                .into_iter()
-                .map(|p| VideoSession {
-                    path: p.state.path.clone(),
-                    position_secs: p.position().as_secs_f64(),
-                    is_muted: p.state.is_muted,
-                    volume: p.state.volume,
-                    is_shuffle: p.shuffle,
-                })
-                .collect();
-            self.settings.session_videos = sessions;
+        // Do NOT overwrite normal grid session_videos while running in Scroll Mode.
+        // Scroll mode dynamically spawns and despawns transient feed items.
+        if self.settings.playback_mode != PlaybackMode::Scroll {
+            let normal_players: Vec<&AppPlayer> = self.players.iter().filter(|p| !p.is_cube).collect();
+            if !normal_players.is_empty() {
+                let sessions: Vec<VideoSession> = normal_players
+                    .into_iter()
+                    .map(|p| VideoSession {
+                        path: p.state.path.clone(),
+                        position_secs: p.position().as_secs_f64(),
+                        is_muted: p.state.is_muted,
+                        volume: p.state.volume,
+                        is_shuffle: p.shuffle,
+                    })
+                    .collect();
+                self.settings.session_videos = sessions;
+            }
         }
         self.settings.cube_speed = self.cube.speed_multiplier;
         self.settings.cube_size = self.cube.size_multiplier;
@@ -1461,6 +1465,11 @@ impl WazooApp {
             std::thread::spawn(move || drop(handle));
         }
         self.is_preloading = false;
+        for p in &mut self.players {
+            if !p.is_cube {
+                p.reset_crossfade_volume();
+            }
+        }
         if self.settings.scroll_mode_muted {
             for p in &mut self.players {
                 if !p.is_cube {
@@ -1480,7 +1489,6 @@ impl WazooApp {
                         || (!has_focused_grid && !unmuted_one)
                     {
                         p.set_muted(false);
-                        p.set_volume(1.0);
                         unmuted_one = true;
                     } else {
                         p.set_muted(true);
