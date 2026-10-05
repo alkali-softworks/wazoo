@@ -513,7 +513,7 @@ impl VideoHandle {
             self.pending_seek = pending_seek;
             self.last_seek_time = last_seek_time;
             self.pending_seek_random = false;
-            self.is_seeking = false;
+            self.is_seeking = true;
             self.seek_restart_received = false;
 
             Ok(())

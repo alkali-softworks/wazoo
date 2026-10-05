@@ -122,6 +122,9 @@ impl WazooApp {
                         if player.flip.countdown > interval || player.flip.countdown == 0 {
                             player.flip.countdown = interval;
                         }
+                        if !player.is_playing() {
+                            continue;
+                        }
                         if player.flip.countdown > 1 {
                             player.flip.countdown -= 1;
                         } else {

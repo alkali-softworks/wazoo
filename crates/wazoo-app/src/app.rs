@@ -908,7 +908,14 @@ impl WazooApp {
         start_time: impl Into<StartTime>,
     ) -> Result<VideoHandle, String> {
         let start_time = start_time.into();
-        let standby = self.standby_player.lock().ok().and_then(|mut g| g.take());
+        let standby = self.standby_player.lock().ok().and_then(|mut g| {
+            if let Some(ref h) = *g {
+                if h.state.path.is_empty() || h.state.path == path {
+                    return g.take();
+                }
+            }
+            None
+        });
         let handle = if let Some(mut h) = standby {
             h.id = id;
             h.state.id = id;
@@ -968,7 +975,16 @@ impl WazooApp {
         }
         let standby = Arc::clone(&self.standby_player);
         let config = self.buffer_config();
-        let video_rec = self.get_next_video_rec(None);
+        let current_path = self
+            .focused_player_id()
+            .and_then(|id| self.players.player(id))
+            .or_else(|| self.players.first())
+            .map(|p| p.state.path.as_str());
+        let is_shuffle = self
+            .focused_player_id()
+            .map(|id| self.is_player_shuffle(id))
+            .unwrap_or(self.default_shuffle_mode);
+        let video_rec = self.get_next_video_rec_with_mode(current_path, is_shuffle);
         std::thread::Builder::new()
             .name("wazoo-prewarm-player".into())
             .spawn(move || {
