@@ -122,38 +122,88 @@ impl WazooApp {
             } else {
                 StartTime::Beginning
             };
-            let mut candidate_curr_path = curr_path;
-            for _ in 0..MAX_VIDEO_LOAD_RETRIES {
-                if let Some(video_rec) = self.get_next_video_rec_for_navigation(
-                    candidate_curr_path.as_deref(),
-                    self.is_player_shuffle(id),
-                ) {
-                    if let Ok(new_handle) = self.create_video_handle_with_start_time(
-                        id,
-                        &video_rec.path,
-                        &video_rec.name,
-                        start_time,
-                    ) {
-                        let path_clone = video_rec.path.clone();
-                        self.apply_playback_state_and_replace(
-                            id,
-                            new_handle,
-                            prev_muted,
-                            prev_volume,
-                        );
-                        self.push_player_nav_entry(id, path_clone.clone(), None);
-                        if let Some(p) = self.players.player(id) {
-                            if p.is_cube {
-                                let (primary, _) = format::format_title_lines(&path_clone);
-                                self.overlay.show_toast(self.t_with(
-                                    "toast.cube_playing",
-                                    &[("title", &primary)],
-                                ));
+            // If standby player is pre-warmed with a video and decoded off-thread, adopt it directly
+            if self.settings.use_standby_player {
+                let filtered = self.file_picker_filtered_videos();
+                let candidate = self.standby_player.lock().ok().and_then(|mut g| {
+                    if let Some(ref h) = *g {
+                        if !h.state.path.is_empty() {
+                            let is_same = curr_path.as_deref() == Some(&h.state.path);
+                            let allowed_by_filter = filtered
+                                .as_ref()
+                                .map(|f| f.iter().any(|v| v.path == h.state.path))
+                                .unwrap_or(true);
+                            if (!is_same || self.available_videos.len() <= 1) && allowed_by_filter {
+                                return g.take();
                             }
                         }
-                        break;
                     }
-                    candidate_curr_path = Some(video_rec.path);
+                    None
+                });
+
+                if let Some(mut handle) = candidate {
+                    handle.id = id;
+                    handle.state.id = id;
+                    handle.set_paused(false);
+                    let path_clone = handle.state.path.clone();
+                    self.apply_playback_state_and_replace(
+                        id,
+                        handle,
+                        prev_muted,
+                        prev_volume,
+                    );
+                    if let Some(p) = self.players.player_mut(id) {
+                        p.stop_loading();
+                    }
+                    self.push_player_nav_entry(id, path_clone.clone(), None);
+                    if let Some(p) = self.players.player(id) {
+                        if p.is_cube {
+                            let (primary, _) = format::format_title_lines(&path_clone);
+                            self.overlay.show_toast(self.t_with(
+                                "toast.cube_playing",
+                                &[("title", &primary)],
+                            ));
+                        }
+                    }
+                    self.replenish_standby_player();
+                    loaded = true;
+                }
+            }
+
+            if !loaded {
+                let mut candidate_curr_path = curr_path;
+                for _ in 0..MAX_VIDEO_LOAD_RETRIES {
+                    if let Some(video_rec) = self.get_next_video_rec_for_navigation(
+                        candidate_curr_path.as_deref(),
+                        self.is_player_shuffle(id),
+                    ) {
+                        if let Ok(new_handle) = self.create_video_handle_with_start_time(
+                            id,
+                            &video_rec.path,
+                            &video_rec.name,
+                            start_time,
+                        ) {
+                            let path_clone = video_rec.path.clone();
+                            self.apply_playback_state_and_replace(
+                                id,
+                                new_handle,
+                                prev_muted,
+                                prev_volume,
+                            );
+                            self.push_player_nav_entry(id, path_clone.clone(), None);
+                            if let Some(p) = self.players.player(id) {
+                                if p.is_cube {
+                                    let (primary, _) = format::format_title_lines(&path_clone);
+                                    self.overlay.show_toast(self.t_with(
+                                        "toast.cube_playing",
+                                        &[("title", &primary)],
+                                    ));
+                                }
+                            }
+                            break;
+                        }
+                        candidate_curr_path = Some(video_rec.path);
+                    }
                 }
             }
         }
