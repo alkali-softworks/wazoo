@@ -211,6 +211,14 @@ impl VideoHandle {
             // Allow override via WAZOO_HWDEC environment variable (e.g. "auto-copy") for specialized setups.
             let hwdec = std::env::var("WAZOO_HWDEC").unwrap_or_else(|_| "no".to_string());
             set_opt("hwdec", &hwdec);
+            // With BLOCK_FOR_TARGET_TIME=0, video-timing-offset must be set to 0.
+            // By default, libmpv schedules video rendering 50ms (0.05s) ahead of the audio clock,
+            // expecting mpv_render_context_render() to block until the target display time.
+            // When blocking is disabled (BLOCK_FOR_TARGET_TIME=0), leaving timing-offset at 50ms causes
+            // libmpv to perceive video as running ahead of audio, resulting in repeat frames,
+            // timing recalculation stalls, or dropped frames during smooth camera pans.
+            set_opt("video-timing-offset", "0");
+            set_opt("correct-pts", "yes");
             set_opt("cache", "yes");
             let demuxer_mb = config.size_mb.clamp(8, 256);
             set_opt("demuxer-max-bytes", &format!("{}M", demuxer_mb));
@@ -682,7 +690,17 @@ impl VideoHandle {
                 let err =
                     mpv_ffi::mpv_render_context_render(self.render_ctx, render_params.as_mut_ptr());
                 if err == 0 {
-                    mpv_ffi::mpv_render_context_report_swap(self.render_ctx);
+                    // Do NOT call mpv_render_context_report_swap() here.
+                    // In software rendering mode (MPV_RENDER_API_TYPE_SW), the decoded frame is rendered
+                    // directly into an in-memory pixel buffer rather than flipped to a hardware display
+                    // swapchain managed by libmpv. Calling report_swap informs libmpv that the host is
+                    // tracking hardware presentation timings, which activates vo_libmpv's 200ms
+                    // (MP_TIME_MS_TO_NS(200)) swap-wait loop in flip_page(). When called prematurely on CPU
+                    // (prior to WGPU texture upload and VSync presentation) or during timer drift, libmpv
+                    // encounters 200ms flip timeouts, stalls the video clock, and forces drop/repeat recovery,
+                    // producing a transient 1/4 second backward frame jump or motion hitch during panning shots.
+                    // When report_swap is omitted (flip_count == 0), vo_libmpv skips the swap-wait loop entirely,
+                    // delivering glitch-free, sequential frame delivery.
 
                     {
                         let mut frame_guard = self.frame.lock().unwrap();

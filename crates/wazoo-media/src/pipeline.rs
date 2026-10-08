@@ -662,7 +662,10 @@ impl Primitive for VideoPrimitive {
         let is_new_frame =
             just_created || entry.last_frame_seq != frame_guard.frame_seq;
 
-        if is_new_frame && !frame_guard.pixels.is_empty() {
+        let expected_len = (width as usize) * (height as usize) * 4;
+        let has_valid_pixels = frame_guard.pixels.len() == expected_len;
+
+        if is_new_frame && has_valid_pixels {
             queue.write_texture(
                 wgpu::TexelCopyTextureInfo {
                     texture: &entry.texture,
