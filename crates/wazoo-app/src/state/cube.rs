@@ -54,6 +54,7 @@ pub struct CubeState {
     pub next_id: u64,
     pub speed_multiplier: f32,
     pub size_multiplier: f32,
+    pub last_tick: Option<std::time::Instant>,
 }
 
 impl Default for CubeState {
@@ -68,6 +69,7 @@ impl Default for CubeState {
             next_id: 1,
             speed_multiplier: 1.0,
             size_multiplier: 1.0,
+            last_tick: None,
         }
     }
 }
@@ -154,6 +156,7 @@ impl CubeState {
                 let removed = self.cubes.remove(pos);
                 if self.cubes.is_empty() {
                     self.enabled = false;
+                    self.last_tick = None;
                 }
                 return Some(removed);
             }
@@ -166,6 +169,7 @@ impl CubeState {
         let removed = self.cubes.pop();
         if self.cubes.is_empty() {
             self.enabled = false;
+            self.last_tick = None;
         }
         removed
     }
@@ -178,6 +182,7 @@ impl CubeState {
         self.spawned_for_desktop = false;
         self.was_maximized_before_desktop = false;
         self.pre_desktop_bounds = None;
+        self.last_tick = None;
     }
 
     /// Toggles the cube on or off, clearing all cubes if active or spawning an initial cube.
@@ -202,15 +207,48 @@ impl CubeState {
         }
     }
 
-    /// Advances physics, multi-axis rotations, and window border collisions for all active cubes.
+    /// Advances physics, multi-axis rotations, and window border collisions by one nominal 60 Hz step.
     pub fn tick(&mut self, window_w: f32, window_h: f32) {
+        self.tick_dt(window_w, window_h, 1.0);
+    }
+
+    /// Advances physics using real wall-clock elapsed time since the previous frame tick,
+    /// deduplicating back-to-back ticks drained in the same event loop batch and smoothing
+    /// motion across VSync intervals.
+    pub fn tick_realtime(&mut self, window_w: f32, window_h: f32) {
+        if !self.is_present() || !self.cubes.iter().any(|c| c.is_ready) {
+            return;
+        }
+
+        let now = std::time::Instant::now();
+        let dt_scale = match self.last_tick {
+            Some(prev) => {
+                let elapsed = now.saturating_duration_since(prev);
+                if elapsed < std::time::Duration::from_millis(2) {
+                    return;
+                }
+                self.last_tick = Some(now);
+                (elapsed.as_secs_f32() * 60.0).clamp(0.2, 2.5)
+            }
+            None => {
+                self.last_tick = Some(now);
+                1.0
+            }
+        };
+
+        self.tick_dt(window_w, window_h, dt_scale);
+    }
+
+    /// Advances physics, multi-axis rotations, and window border collisions scaled by `dt_scale`
+    /// (where `1.0` equals one nominal 16.67ms frame at 60 Hz).
+    pub fn tick_dt(&mut self, window_w: f32, window_h: f32, dt_scale: f32) {
         if !self.is_present() {
             return;
         }
 
         let w = window_w.max(200.0);
         let h = window_h.max(150.0);
-        let sm = self.speed_multiplier.clamp(0.2, 4.0);
+        let sm = self.speed_multiplier.clamp(0.2, 4.0) * dt_scale;
         let szm = self.size_multiplier.clamp(0.4, 3.0);
 
         for cube in &mut self.cubes {

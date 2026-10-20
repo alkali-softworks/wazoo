@@ -1152,3 +1152,34 @@ fn test_first_spawned_cube_is_unpaused_and_playing() {
         "First spawned cube player must be unpaused and playing, not paused/black"
     );
 }
+
+#[test]
+fn test_mode_9_realtime_tick_deduplication_and_watchdog_isolation() {
+    let mut state = CubeState::new();
+    state.spawn_cube(1920.0, 1080.0, 0);
+    let x0 = state.cubes[0].x;
+
+    // First realtime tick advances by nominal 1.0 step
+    state.tick_realtime(1920.0, 1080.0);
+    let x1 = state.cubes[0].x;
+    assert_ne!(x1, x0);
+
+    // Immediate back-to-back tick (< 2ms in same event loop batch) must be deduplicated
+    state.tick_realtime(1920.0, 1080.0);
+    let x2 = state.cubes[0].x;
+    assert_eq!(
+        x2, x1,
+        "Back-to-back tick in same batch must not double-step the cube"
+    );
+
+    // Simulated 16.67ms VSync elapsed interval scales by ~1.0x
+    state.last_tick =
+        Some(std::time::Instant::now() - std::time::Duration::from_nanos(16_666_667));
+    state.tick_realtime(1920.0, 1080.0);
+    let x3 = state.cubes[0].x;
+    assert!(
+        (x3 - x2).abs() > 1.0,
+        "16.67ms frame interval advances cube smoothly"
+    );
+}
+

@@ -493,6 +493,8 @@ impl VideoHandle {
             }
 
             self.set_property_string("pause", "no");
+            self.render_width = 0;
+            self.render_height = 0;
             self.state.path = file_path.to_string();
             self.state.name = name.to_string();
             self.state.duration = Duration::ZERO;
@@ -644,12 +646,17 @@ impl VideoHandle {
                 return false;
             }
 
-            self.check_update_render_dimensions();
+            if needs_refresh_tracks || self.render_width == 0 || self.render_height == 0 {
+                self.check_update_render_dimensions();
+            }
 
             let flags = mpv_ffi::mpv_render_context_update(self.render_ctx);
             if (flags & mpv_ffi::MPV_RENDER_UPDATE_FRAME) != 0 {
                 if self.render_width == 0 || self.render_height == 0 {
-                    return false;
+                    self.check_update_render_dimensions();
+                    if self.render_width == 0 || self.render_height == 0 {
+                        return false;
+                    }
                 }
 
                 let mut size = [self.render_width as i32, self.render_height as i32];

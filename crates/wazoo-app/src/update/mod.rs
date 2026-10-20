@@ -35,7 +35,7 @@ impl WazooApp {
             Message::Tick => {
                 // Suspend all tick animations, layout recalculations, and physics
                 // while the window is actively being resized to eliminate visual tearing and IPC lag.
-                if self.window.is_resizing() {
+                if !self.cube.desktop_overlay && self.window.is_resizing() {
                     self.update_player_frames();
                     return Task::none();
                 }
@@ -69,6 +69,9 @@ impl WazooApp {
                 let mut stuck_ids = Vec::new();
 
                 for p in &mut self.players {
+                    if self.cube.desktop_overlay && !p.is_cube {
+                        continue;
+                    }
                     if p.is_failed() {
                         p.stop_loading();
                         stuck_ids.push(p.id);
@@ -119,6 +122,9 @@ impl WazooApp {
                     let interval = self.settings.flip_interval_secs.max(1);
                     let mut to_flip = Vec::new();
                     for player in self.players.iter_mut() {
+                        if self.cube.desktop_overlay && !player.is_cube {
+                            continue;
+                        }
                         if player.flip.countdown > interval || player.flip.countdown == 0 {
                             player.flip.countdown = interval;
                         }
@@ -141,7 +147,9 @@ impl WazooApp {
                 }
 
                 // Persist active video paths and playhead positions periodically
-                self.save_session_state();
+                if !self.cube.desktop_overlay {
+                    self.save_session_state();
+                }
                 Task::none()
             }
 

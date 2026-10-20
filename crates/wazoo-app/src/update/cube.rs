@@ -84,6 +84,7 @@ impl WazooApp {
                     };
 
                     self.cube.desktop_overlay = true;
+                    self.cube.last_tick = None;
 
                     // Suspend background decoding and audio for all invisible regular players (0% CPU waste)
                     for p in &mut self.players {
@@ -215,7 +216,11 @@ impl WazooApp {
                 }
             }
 
-            self.cube.tick(w, h);
+            if self.cube.desktop_overlay {
+                self.cube.tick_realtime(w, h);
+            } else {
+                self.cube.tick(w, h);
+            }
         }
         Task::none()
     }
