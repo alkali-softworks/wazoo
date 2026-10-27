@@ -288,7 +288,7 @@ fn test_file_picker_highlights_playing_video() {
     }
 
     if let Some(p) = app.players.first_mut() {
-        p.state.path = "/media/anime/a1.mp4".to_string();
+        p.state.path = "/media/videos/clip1.mp4".to_string();
     }
     {
         let _view_playing = app.view_file_picker();
@@ -1372,7 +1372,7 @@ fn test_file_picker_search_clear_button() {
     let (mut app, _) = new_test_app();
     app.available_videos = vec![
         VideoRecord::new(1, "Space Odyssey", "/media/movies/space_odyssey.mp4"),
-        VideoRecord::new(2, "Anime 1", "/media/anime/a1.mp4"),
+        VideoRecord::new(2, "Nature Documentary", "/media/nature/doc1.mp4"),
     ];
 
     // Open file picker drawer
@@ -1395,9 +1395,9 @@ fn test_file_picker_search_clear_button() {
         let _view_with_query = app.view_file_picker();
     }
 
-    // Navigating with "space" active yields Space Odyssey even starting from Anime 1
+    // Navigating with "space" active yields Space Odyssey even starting from Nature Documentary
     let next_filtered = app
-        .get_next_video_rec_for_navigation(Some("/media/anime/a1.mp4"), false)
+        .get_next_video_rec_for_navigation(Some("/media/nature/doc1.mp4"), false)
         .unwrap();
     assert_eq!(next_filtered.name, "Space Odyssey");
 
@@ -1406,11 +1406,11 @@ fn test_file_picker_search_clear_button() {
     assert_eq!(app.drawers.file_picker_search, "");
     assert_eq!(app.drawers.file_picker_debounce_ticks, 0);
 
-    // Filter cleared: sequential navigation from Space Odyssey advances to Anime 1
+    // Filter cleared: sequential navigation from Space Odyssey advances to Nature Documentary
     let next_all = app
         .get_next_video_rec_for_navigation(Some("/media/movies/space_odyssey.mp4"), false)
         .unwrap();
-    assert_eq!(next_all.name, "Anime 1");
+    assert_eq!(next_all.name, "Nature Documentary");
 
     // View renders cleanly with empty search input (no clear button)
     {

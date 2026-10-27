@@ -1,6 +1,6 @@
-# 🦀 Rust for TypeScript Survivors: Baby Steps Guide 👶
+# 🦀 Rust for TypeScript Developers: Core Concepts Guide
 
-*A no-nonsense handbook for understanding Rust & Iced.*
+*A practical handbook for understanding Rust & Iced.*
 
 ---
 
@@ -415,7 +415,7 @@ Whenever you see:
 
 ---
 
-### 💡 "WTF is `let app = Self { ... }` in `app.rs`"
+### 💡 Understanding `let app = Self { ... }` in `app.rs`
 
 When you see:
 ```rust
@@ -650,7 +650,7 @@ This is the solution to what Tony Hoare (the inventor of `null`) famously called
 
 ---
 
-### 1. Why `null` and `undefined` Sucks in TypeScript
+### 1. The Challenges of `null` and `undefined` in TypeScript
 
 In TypeScript, when something might not exist, functions return `null` or `undefined` (like `VideoHandle | undefined`):
 ```ts
@@ -865,7 +865,7 @@ impl WazooApp {
 
 ### Why this is great:
 1. **`update()` stays a high-level Table of Contents**: Anyone opening the file can skim every event handled by the app in 30 seconds.
-2. **Kills Indentation Hell**: Resets deeply nested blocks back to line 1.
+2. **Eliminates Deep Nesting**: Resets deeply nested blocks back to line 1.
 3. **Easier to Test**: You can test `app.handle_key_pressed(key, status)` directly in unit tests without wrapping everything in messages.
 
 ---
