@@ -326,7 +326,7 @@ fn load_linux_mpv() -> Option<MpvApi> {
     // 1. Beside executable or in ./lib
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
-            for name in &["libmpv.so.2", "libmpv.so"] {
+            for name in &["libmpv.so.2", "libmpv.so.1", "libmpv.so"] {
                 let path = dir.join(name);
                 if path.exists() {
                     if let Ok(lib) = unsafe { Library::new(&path) } {
@@ -358,11 +358,16 @@ fn load_linux_mpv() -> Option<MpvApi> {
     // 2. Standard system locations
     let candidates = [
         "libmpv.so.2",
+        "libmpv.so.1",
         "libmpv.so",
         "/usr/lib/x86_64-linux-gnu/libmpv.so.2",
+        "/usr/lib/x86_64-linux-gnu/libmpv.so.1",
         "/usr/lib64/libmpv.so.2",
+        "/usr/lib64/libmpv.so.1",
         "/usr/lib/libmpv.so.2",
+        "/usr/lib/libmpv.so.1",
         "/usr/local/lib/libmpv.so.2",
+        "/usr/local/lib/libmpv.so.1",
         "/usr/lib/x86_64-linux-gnu/libmpv.so",
         "/usr/lib64/libmpv.so",
         "/usr/lib/libmpv.so",
@@ -454,7 +459,7 @@ fn load_mpv_api() -> Option<MpvApi> {
         }
     }
 
-    for fallback in &["libmpv.so.2", "libmpv.so", "mpv", "libmpv"] {
+    for fallback in &["libmpv.so.2", "libmpv.so.1", "libmpv.so", "mpv", "libmpv"] {
         if let Ok(lib) = unsafe { Library::new(fallback) } {
             if let Some(api) = unsafe { load_symbols(lib) } {
                 log::info!("Loaded libmpv via generic fallback: {}", fallback);
