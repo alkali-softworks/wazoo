@@ -95,18 +95,11 @@
     "loading_tv_static": "TV-Rauschen",
     "loading_spinner": "Spinner",
     "tab_cube": "3D-Würfel",
-    "cube_active_single": "1 aktiver Würfel",
-    "cube_active_multiple": "{count} aktive Würfel",
-    "cube_inactive": "Inaktiv",
-    "cube_title": "3D-Würfel",
-    "cube_experimental": "EXPERIMENTELL",
-    "cube_desc": "Schwebender 3D-Würfel mit unabhängiger Videowiedergabe auf allen Oberflächen.",
     "cube_enable": "3D-Würfel aktivieren",
     "cube_disable": "3D-Würfel deaktivieren",
     "cube_shortcut_hint": "Tastenkürzel: Drücken Sie {key} zum Umschalten",
     "cube_badge_on": "EIN ({count})",
     "cube_badge_off": "AUS",
-    "cube_physics_scale": "Bewegung & Größe",
     "cube_speed": "Bewegungsgeschwindigkeit",
     "cube_speed_desc": "Geschwindigkeit der schwebenden 3D-Würfel",
     "cube_size": "Würfelgröße",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "Würfel-Overlay-Modus umschalten",
       "toggle_fullscreen": "Vollbild umschalten",
       "toggle_filters": "Shader-Filter umschalten",
-      "fit_window": "Fenster an Video anpassen"
+      "fit_window": "Fenster an Video anpassen",
+      "toggle_quick_picker": "Schnellauswahl umschalten"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "Vollbild deaktiviert",
     "filters_enabled": "Shader-Filter aktiviert ([{key}] zum Umschalten drücken)",
     "filters_disabled": "Shader-Filter deaktiviert"
+  },
+  "quick_picker": {
+    "title": "Schnellauswahl",
+    "search_placeholder": "Ordnervideos durchsuchen..."
   }
 }

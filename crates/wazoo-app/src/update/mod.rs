@@ -273,6 +273,13 @@ impl WazooApp {
             | Message::ClearHelpSearch
             | Message::ToggleBookmarksModal
             | Message::CloseBookmarksModal
+            | Message::ToggleQuickPickerModal
+            | Message::OpenQuickPickerModal
+            | Message::CloseQuickPickerModal
+            | Message::QuickPickerSearchChanged(_)
+            | Message::ClearQuickPickerSearch
+            | Message::QuickPickerSubmit
+            | Message::PlayQuickPickerFile(_)
             | Message::EscapePressed
             | Message::DismissToast
             | Message::ModalCardClicked => self.update_modals(message),

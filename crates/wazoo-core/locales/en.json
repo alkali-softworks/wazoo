@@ -95,18 +95,11 @@
     "loading_tv_static": "TV Static",
     "loading_spinner": "Spinner",
     "tab_cube": "3D Cube",
-    "cube_active_single": "1 Active Cube",
-    "cube_active_multiple": "{count} Active Cubes",
-    "cube_inactive": "Inactive",
-    "cube_title": "3D Cube",
-    "cube_experimental": "EXPERIMENTAL",
-    "cube_desc": "Floating 3D cube with independent live video playback mapped onto all surfaces.",
     "cube_enable": "Enable 3D Cube",
     "cube_disable": "Disable 3D Cube",
     "cube_shortcut_hint": "Shortcut: Press {key} to toggle",
     "cube_badge_on": "ON ({count})",
     "cube_badge_off": "OFF",
-    "cube_physics_scale": "Movement & Size",
     "cube_speed": "Movement Speed",
     "cube_speed_desc": "Speed of floating 3D cubes",
     "cube_size": "Cube Size",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "Toggle Cube Overlay Mode",
       "toggle_fullscreen": "Toggle Fullscreen",
       "toggle_filters": "Toggle Shader Filters",
-      "fit_window": "Fit Window to Video"
+      "fit_window": "Fit Window to Video",
+      "toggle_quick_picker": "Quick Video Picker"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "Fullscreen Disabled",
     "filters_enabled": "Shader Filters Enabled (Press [{key}] to toggle)",
     "filters_disabled": "Shader Filters Disabled"
+  },
+  "quick_picker": {
+    "title": "Quick Picker",
+    "search_placeholder": "Search folder videos..."
   }
 }

@@ -95,18 +95,11 @@
     "loading_tv_static": "TV Paraziti",
     "loading_spinner": "Dönen Halka",
     "tab_cube": "3D Küp",
-    "cube_active_single": "1 Aktif Küp",
-    "cube_active_multiple": "{count} Aktif Küp",
-    "cube_inactive": "Devre Dışı",
-    "cube_title": "3D Küp",
-    "cube_experimental": "DENEYSEL",
-    "cube_desc": "Tüm yüzeylerinde canlı video oynatılan 3D küp.",
     "cube_enable": "3D Küpü Etkinleştir",
     "cube_disable": "3D Küpü Devre Dışı Bırak",
     "cube_shortcut_hint": "Kısayol: Geçiş yapmak için {key}'e basın",
     "cube_badge_on": "AÇIK ({count})",
     "cube_badge_off": "KAPALI",
-    "cube_physics_scale": "Hareket ve Boyut",
     "cube_speed": "Hareket Hızı",
     "cube_speed_desc": "Yüzen 3D küplerin hızı",
     "cube_size": "Küp Boyutu",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "Küp Yerleşimi Modunu Değiştir",
       "toggle_fullscreen": "Tam Ekranı Aç/Kapat",
       "toggle_filters": "Gölgelendirici Filtrelerini Aç/Kapat",
-      "fit_window": "Pencereyi Videoya Uydur"
+      "fit_window": "Pencereyi Videoya Uydur",
+      "toggle_quick_picker": "Hızlı Seçiciyi Değiştir"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "Tam Ekran Devre Dışı Bırakıldı",
     "filters_enabled": "Gölgelendirici Filtreleri Etkinleştirildi (Geçiş yapmak için [{key}] tuşuna basın)",
     "filters_disabled": "Gölgelendirici Filtreleri Devre Dışı Bırakıldı"
+  },
+  "quick_picker": {
+    "title": "Hızlı Seçici",
+    "search_placeholder": "Klasör videolarını ara..."
   }
 }

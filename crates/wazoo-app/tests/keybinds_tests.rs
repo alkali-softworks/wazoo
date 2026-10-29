@@ -59,6 +59,14 @@ fn test_find_key_action_defaults() {
         Some(KeyAction::ToggleFilePicker)
     );
     assert_eq!(
+        find_key_action(&kb, &Key::Character("k".into()), false),
+        Some(KeyAction::ToggleQuickPicker)
+    );
+    assert_eq!(
+        find_key_action(&kb, &Key::Character("K".into()), false),
+        Some(KeyAction::ToggleQuickPicker)
+    );
+    assert_eq!(
         find_key_action(&kb, &Key::Character(",".into()), false),
         Some(KeyAction::PrevFrame)
     );
@@ -154,7 +162,7 @@ fn test_find_key_action_defaults() {
 fn test_find_key_action_custom() {
     let kb = KeybindSettings {
         add_player: "p".to_string(),
-        fit_window: "k".to_string(),
+        fit_window: "z".to_string(),
         ..Default::default()
     };
 
@@ -171,7 +179,7 @@ fn test_find_key_action_custom() {
         None
     );
     assert_eq!(
-        find_key_action(&kb, &Key::Character("k".into()), false),
+        find_key_action(&kb, &Key::Character("z".into()), false),
         Some(KeyAction::FitWindow)
     );
 }

@@ -95,18 +95,11 @@
     "loading_tv_static": "تشويش التلفاز",
     "loading_spinner": "المؤشر الدوار",
     "tab_cube": "مكعب ثلاثي الأبعاد",
-    "cube_active_single": "مكعب نشط واحد",
-    "cube_active_multiple": "{count} مكعبات نشطة",
-    "cube_inactive": "غير نشط",
-    "cube_title": "مكعب ثلاثي الأبعاد",
-    "cube_experimental": "تجريبي",
-    "cube_desc": "مكعب عائم ثلاثي الأبعاد مع تشغيل فيديو حي على جميع الأسطح.",
     "cube_enable": "تفعيل المكعب ثلاثي الأبعاد",
     "cube_disable": "تعطيل المكعب ثلاثي الأبعاد",
     "cube_shortcut_hint": "اختصار: اضغط {key} للتبديل",
     "cube_badge_on": "تشغيل ({count})",
     "cube_badge_off": "إيقاف",
-    "cube_physics_scale": "الحركة والحجم",
     "cube_speed": "سرعة الحركة",
     "cube_speed_desc": "سرعة المكعبات العائمة",
     "cube_size": "حجم المكعب",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "تبديل وضع تراكب المكعب",
       "toggle_fullscreen": "تبديل ملء الشاشة",
       "toggle_filters": "تبديل فلاتر التظليل",
-      "fit_window": "ملاءمة النافذة للفيديو"
+      "fit_window": "ملاءمة النافذة للفيديو",
+      "toggle_quick_picker": "تبديل المنتقي السريع"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "تم تعطيل ملء الشاشة",
     "filters_enabled": "تم تمكين فلاتر التظليل (اضغط على [{key}] للتبديل)",
     "filters_disabled": "تم تعطيل فلاتر التظليل"
+  },
+  "quick_picker": {
+    "title": "منتقي سريع",
+    "search_placeholder": "البحث في مقاطع فيديو المجلد..."
   }
 }

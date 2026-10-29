@@ -182,6 +182,9 @@ pub fn find_key_action(
     if key_matches_binding(&keybinds.toggle_file_picker, key, false) {
         return Some(KeyAction::ToggleFilePicker);
     }
+    if key_matches_binding(&keybinds.toggle_quick_picker, key, false) {
+        return Some(KeyAction::ToggleQuickPicker);
+    }
     if key_matches_binding(&keybinds.toggle_transcript, key, false) {
         return Some(KeyAction::ToggleTranscript);
     }

@@ -95,18 +95,11 @@
     "loading_tv_static": "TV-ruis",
     "loading_spinner": "Spinner",
     "tab_cube": "3D-kubus",
-    "cube_active_single": "1 actieve kubus",
-    "cube_active_multiple": "{count} actieve kubussen",
-    "cube_inactive": "Inactief",
-    "cube_title": "3D-kubus",
-    "cube_experimental": "EXPERIMENTEEL",
-    "cube_desc": "Zwevende 3D-kubus met videoweergave op alle vlakken.",
     "cube_enable": "3D-kubus inschakelen",
     "cube_disable": "3D-kubus uitschakelen",
     "cube_shortcut_hint": "Sneltoets: druk op {key} om te schakelen",
     "cube_badge_on": "AAN ({count})",
     "cube_badge_off": "UIT",
-    "cube_physics_scale": "Beweging & grootte",
     "cube_speed": "Bewegingssnelheid",
     "cube_speed_desc": "Snelheid van zwevende 3D-kubussen",
     "cube_size": "Kubusgrootte",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "Kubus-overlaymodus in-/uitschakelen",
       "toggle_fullscreen": "Volledig scherm in-/uitschakelen",
       "toggle_filters": "Schakel shaderfilters in/uit",
-      "fit_window": "Venster aanpassen aan video"
+      "fit_window": "Venster aanpassen aan video",
+      "toggle_quick_picker": "Snelle kiezer in-/uitschakelen"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "Volledig scherm uitgeschakeld",
     "filters_enabled": "Shaderfilters ingeschakeld (Druk op [{key}] om te schakelen)",
     "filters_disabled": "Shaderfilters uitgeschakeld"
+  },
+  "quick_picker": {
+    "title": "Snelle Kiezer",
+    "search_placeholder": "Zoek mapvideo's..."
   }
 }

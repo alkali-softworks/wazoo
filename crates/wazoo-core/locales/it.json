@@ -95,18 +95,11 @@
     "loading_tv_static": "Effetto Neve TV",
     "loading_spinner": "Spinner",
     "tab_cube": "Cubo 3D",
-    "cube_active_single": "1 cubo attivo",
-    "cube_active_multiple": "{count} cubi attivi",
-    "cube_inactive": "Inattivo",
-    "cube_title": "Cubo 3D",
-    "cube_experimental": "SPERIMENTALE",
-    "cube_desc": "Cubo 3D fluttuante con riproduzione video su tutte le superfici.",
     "cube_enable": "Attiva Cubo 3D",
     "cube_disable": "Disattiva Cubo 3D",
     "cube_shortcut_hint": "Scorciatoia: premi {key} per attivare/disattivare",
     "cube_badge_on": "ON ({count})",
     "cube_badge_off": "OFF",
-    "cube_physics_scale": "Movimento e dimensioni",
     "cube_speed": "Velocità di movimento",
     "cube_speed_desc": "Velocità dei cubi 3D fluttuanti",
     "cube_size": "Dimensioni del cubo",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "Attiva/disattiva Modalità Sovrapposizione Cubo",
       "toggle_fullscreen": "Attiva/disattiva schermo intero",
       "toggle_filters": "Attiva/disattiva filtri shader",
-      "fit_window": "Adatta finestra al video"
+      "fit_window": "Adatta finestra al video",
+      "toggle_quick_picker": "Attiva/disattiva selezione rapida"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "Schermo intero disattivato",
     "filters_enabled": "Filtri shader attivati (Premi [{key}] per alternare)",
     "filters_disabled": "Filtri shader disattivati"
+  },
+  "quick_picker": {
+    "title": "Selezione Rapida",
+    "search_placeholder": "Cerca video nella cartella..."
   }
 }

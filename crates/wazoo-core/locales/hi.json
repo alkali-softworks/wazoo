@@ -95,18 +95,11 @@
     "loading_tv_static": "टीवी स्टैटिक",
     "loading_spinner": "स्पिनर",
     "tab_cube": "3D क्यूब",
-    "cube_active_single": "1 सक्रिय क्यूब",
-    "cube_active_multiple": "{count} सक्रिय क्यूब",
-    "cube_inactive": "निष्क्रिय",
-    "cube_title": "3D क्यूब",
-    "cube_experimental": "प्रायोगिक",
-    "cube_desc": "सभी सतहों पर लाइव वीडियो प्लेबैक के साथ फ्लोटिंग 3D क्यूब।",
     "cube_enable": "3D क्यूब सक्षम करें",
     "cube_disable": "3D क्यूब अक्षम करें",
     "cube_shortcut_hint": "शॉर्टकट: टॉगल करने के लिए {key} दबाएं",
     "cube_badge_on": "चालू ({count})",
     "cube_badge_off": "बंद",
-    "cube_physics_scale": "गति और आकार",
     "cube_speed": "गति की गति",
     "cube_speed_desc": "फ्लोटिंग 3D क्यूब्स की गति",
     "cube_size": "क्यूब का आकार",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "क्यूब ओवरले मोड टॉगल करें",
       "toggle_fullscreen": "पूर्ण स्क्रीन टॉगल करें",
       "toggle_filters": "शेडर फ़िल्टर टॉगल करें",
-      "fit_window": "वीडियो के अनुसार विंडो फिट करें"
+      "fit_window": "वीडियो के अनुसार विंडो फिट करें",
+      "toggle_quick_picker": "त्वरित चयनकर्ता चालू/बंद करें"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "पूर्ण स्क्रीन अक्षम",
     "filters_enabled": "शेडर फ़िल्टर सक्षम ([{key}] दबाएं टॉगल करने के लिए)",
     "filters_disabled": "शेडर फ़िल्टर अक्षम"
+  },
+  "quick_picker": {
+    "title": "त्वरित चयनकर्ता",
+    "search_placeholder": "फ़ोल्डर वीडियो खोजें..."
   }
 }

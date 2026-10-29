@@ -95,18 +95,11 @@
     "loading_tv_static": "টিভি স্ট্যাটিক",
     "loading_spinner": "স্পিনার",
     "tab_cube": "3D কিউব",
-    "cube_active_single": "১টি সক্রিয় কিউব",
-    "cube_active_multiple": "{count}টি সক্রিয় কিউব",
-    "cube_inactive": "নিষ্ক্রিয়",
-    "cube_title": "3D কিউব",
-    "cube_experimental": "পরীক্ষামূলক",
-    "cube_desc": "সব তলে লাইভ ভিডিও প্লেব্যাক সহ ভাসমান 3D কিউব।",
     "cube_enable": "3D কিউব সক্রিয় করুন",
     "cube_disable": "3D কিউব নিষ্ক্রিয় করুন",
     "cube_shortcut_hint": "শর্টকাট: টগল করতে {key} চাপুন",
     "cube_badge_on": "চালু ({count})",
     "cube_badge_off": "বন্ধ",
-    "cube_physics_scale": "গতি এবং আকার",
     "cube_speed": "চলাচলের গতি",
     "cube_speed_desc": "ভাসমান 3D কিউবের গতি",
     "cube_size": "কিউবের আকার",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "কিউব ওভারলে মোড টগল করুন",
       "toggle_fullscreen": "ফুলস্ক্রিন টগল করুন",
       "toggle_filters": "শেডার ফিল্টার টগল করুন",
-      "fit_window": "ভিডিও অনুযায়ী উইন্ডো ফিট করুন"
+      "fit_window": "ভিডিও অনুযায়ী উইন্ডো ফিট করুন",
+      "toggle_quick_picker": "দ্রুত চয়নকারী দেখান/লুকান"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "ফুলস্ক্রিন নিষ্ক্রিয়",
     "filters_enabled": "শেডার ফিল্টার সক্রিয় ([{key}] চাপুন টগল করতে)",
     "filters_disabled": "শেডার ফিল্টার নিষ্ক্রিয়"
+  },
+  "quick_picker": {
+    "title": "দ্রুত চয়নকারী",
+    "search_placeholder": "ফোল্ডার ভিডিও অনুসন্ধান করুন..."
   }
 }

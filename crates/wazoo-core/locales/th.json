@@ -95,18 +95,11 @@
     "loading_tv_static": "สัญญาณรบกวนทีวี",
     "loading_spinner": "วงล้อหมุน",
     "tab_cube": "ลูกบาศก์ 3D",
-    "cube_active_single": "ลูกบาศก์ที่ใช้งาน 1 ลูก",
-    "cube_active_multiple": "ลูกบาศก์ที่ใช้งาน {count} ลูก",
-    "cube_inactive": "ไม่ได้ใช้งาน",
-    "cube_title": "ลูกบาศก์ 3 มิติ",
-    "cube_experimental": "การทดลอง",
-    "cube_desc": "ลูกบาศก์ 3 มิติลอยได้พร้อมเล่นวิดีโอบนทุกพื้นผิว",
     "cube_enable": "เปิดใช้งานลูกบาศก์ 3 มิติ",
     "cube_disable": "ปิดใช้งานลูกบาศก์ 3 มิติ",
     "cube_shortcut_hint": "ทางลัด: กด {key} เพื่อสลับ",
     "cube_badge_on": "เปิด ({count})",
     "cube_badge_off": "ปิด",
-    "cube_physics_scale": "การเคลื่อนที่และขนาด",
     "cube_speed": "ความเร็วการเคลื่อนที่",
     "cube_speed_desc": "ความเร็วของลูกบาศก์ 3 มิติลอยได้",
     "cube_size": "ขนาดลูกบาศก์",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "สลับโหมดโอเวอร์เลย์ลูกบาศก์",
       "toggle_fullscreen": "สลับเต็มหน้าจอ",
       "toggle_filters": "สลับฟิลเตอร์เฉดเดอร์",
-      "fit_window": "ปรับขนาดหน้าต่างให้พอดีกับวิดีโอ"
+      "fit_window": "ปรับขนาดหน้าต่างให้พอดีกับวิดีโอ",
+      "toggle_quick_picker": "สลับตัวเลือกด่วน"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "ปิดใช้งานเต็มหน้าจอแล้ว",
     "filters_enabled": "เปิดใช้งานฟิลเตอร์เฉดเดอร์แล้ว (กด [{key}] เพื่อสลับ)",
     "filters_disabled": "ปิดใช้งานฟิลเตอร์เฉดเดอร์แล้ว"
+  },
+  "quick_picker": {
+    "title": "ตัวเลือกด่วน",
+    "search_placeholder": "ค้นหาวิดีโอในโฟลเดอร์..."
   }
 }

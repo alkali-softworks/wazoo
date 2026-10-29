@@ -95,18 +95,11 @@
     "loading_tv_static": "برفک تلویزیون",
     "loading_spinner": "چرخانک",
     "tab_cube": "مکعب سه‌بعدی",
-    "cube_active_single": "۱ مکعب فعال",
-    "cube_active_multiple": "{count} مکعب فعال",
-    "cube_inactive": "غیرفعال",
-    "cube_title": "مکعب سه‌بعدی",
-    "cube_experimental": "آزمایشی",
-    "cube_desc": "مکعب شناور سه‌بعدی با پخش ویدیو در تمام سطوح.",
     "cube_enable": "فعال‌سازی مکعب سه‌بعدی",
     "cube_disable": "غیرفعال‌سازی مکعب سه‌بعدی",
     "cube_shortcut_hint": "میانبر: کلید {key} را برای تغییر فشار دهید",
     "cube_badge_on": "روشن ({count})",
     "cube_badge_off": "خاموش",
-    "cube_physics_scale": "حرکت و اندازه",
     "cube_speed": "سرعت حرکت",
     "cube_speed_desc": "سرعت مکعب‌های شناور سه‌بعدی",
     "cube_size": "اندازه مکعب",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "تغییر وضعیت حالت هم‌پوشانی مکعب",
       "toggle_fullscreen": "تغییر حالت تمام صفحه",
       "toggle_filters": "تغییر وضعیت فیلترهای سایه‌زن",
-      "fit_window": "تنظیم پنجره با اندازه ویدیو"
+      "fit_window": "تنظیم پنجره با اندازه ویدیو",
+      "toggle_quick_picker": "تغییر انتخاب‌گر سریع"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "تمام صفحه غیرفعال شد",
     "filters_enabled": "فیلترهای سایه‌زن فعال شد (برای تغییر [{key}] را فشار دهید)",
     "filters_disabled": "فیلترهای سایه‌زن غیرفعال شد"
+  },
+  "quick_picker": {
+    "title": "انتخاب‌گر سریع",
+    "search_placeholder": "جستجوی ویدیوهای پوشه..."
   }
 }

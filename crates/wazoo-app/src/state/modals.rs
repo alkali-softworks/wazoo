@@ -16,6 +16,8 @@ pub struct ModalState {
     pub help_search: String,
     pub menu: bool,
     pub bookmarks: bool,
+    pub quick_picker: bool,
+    pub quick_picker_search: String,
     pub playback_settings_debounce_ticks: usize,
 }
 
@@ -23,7 +25,12 @@ impl ModalState {
     /// Returns true if any modal dialog overlay is currently visible.
     #[inline]
     pub fn is_any_open(&self) -> bool {
-        self.search || self.settings || self.help || self.bookmarks || self.menu
+        self.search
+            || self.settings
+            || self.help
+            || self.bookmarks
+            || self.menu
+            || self.quick_picker
     }
 
     /// Closes all active modal dialog overlays.
@@ -35,5 +42,7 @@ impl ModalState {
         self.help_search.clear();
         self.bookmarks = false;
         self.menu = false;
+        self.quick_picker = false;
+        self.quick_picker_search.clear();
     }
 }

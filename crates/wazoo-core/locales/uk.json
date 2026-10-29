@@ -95,18 +95,11 @@
     "loading_tv_static": "Білий шум ТВ",
     "loading_spinner": "Спінер",
     "tab_cube": "3D-куб",
-    "cube_active_single": "1 активний куб",
-    "cube_active_multiple": "Активних кубів: {count}",
-    "cube_inactive": "Неактивно",
-    "cube_title": "3D-куб",
-    "cube_experimental": "ЕКСПЕРИМЕНТАЛЬНО",
-    "cube_desc": "3D-куб із відтворенням відео на всіх гранях.",
     "cube_enable": "Увімкнути 3D-куб",
     "cube_disable": "Вимкнути 3D-куб",
     "cube_shortcut_hint": "Гаряча клавіша: натисніть {key} для перемикання",
     "cube_badge_on": "УВІМК ({count})",
     "cube_badge_off": "ВИМК",
-    "cube_physics_scale": "Рух і розмір",
     "cube_speed": "Швидкість руху",
     "cube_speed_desc": "Швидкість 3D-кубів",
     "cube_size": "Розмір куба",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "Перемкнути режим накладення куба",
       "toggle_fullscreen": "Перемкнути повноекранний режим",
       "toggle_filters": "Перемкнути шейдерні фільтри",
-      "fit_window": "Підігнати вікно під відео"
+      "fit_window": "Підігнати вікно під відео",
+      "toggle_quick_picker": "Швидкий вибір відео"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "Повноекранний режим вимкнено",
     "filters_enabled": "Шейдерні фільтри увімкнено (Натисніть [{key}] для перемикання)",
     "filters_disabled": "Шейдерні фільтри вимкнено"
+  },
+  "quick_picker": {
+    "title": "Швидкий вибір",
+    "search_placeholder": "Пошук відео в папці..."
   }
 }

@@ -95,18 +95,11 @@
     "loading_tv_static": "Szum telewizyjny",
     "loading_spinner": "Kołowrotek",
     "tab_cube": "Kostka 3D",
-    "cube_active_single": "1 aktywna kostka",
-    "cube_active_multiple": "Aktywne kostki: {count}",
-    "cube_inactive": "Nieaktywne",
-    "cube_title": "Kostka 3D",
-    "cube_experimental": "EKSPERYMENTALNE",
-    "cube_desc": "Pływająca kostka 3D z odtwarzaniem wideo na wszystkich ściankach.",
     "cube_enable": "Włącz kostkę 3D",
     "cube_disable": "Wyłącz kostkę 3D",
     "cube_shortcut_hint": "Skrót: naciśnij {key}, aby przełączyć",
     "cube_badge_on": "WŁ ({count})",
     "cube_badge_off": "WYŁ",
-    "cube_physics_scale": "Ruch i rozmiar",
     "cube_speed": "Prędkość ruchu",
     "cube_speed_desc": "Prędkość pływających kostek 3D",
     "cube_size": "Rozmiar kostki",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "Przełącz tryb nakładki kostki",
       "toggle_fullscreen": "Przełącz pełny ekran",
       "toggle_filters": "Przełącz filtry cieniowania",
-      "fit_window": "Dopasuj okno do wideo"
+      "fit_window": "Dopasuj okno do wideo",
+      "toggle_quick_picker": "Przełącz szybki wybór"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "Pełny ekran wyłączony",
     "filters_enabled": "Filtry cieniowania włączone (Naciśnij [{key}], aby przełączyć)",
     "filters_disabled": "Filtry cieniowania wyłączone"
+  },
+  "quick_picker": {
+    "title": "Szybki Wybór",
+    "search_placeholder": "Szukaj filmów w folderze..."
   }
 }

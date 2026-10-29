@@ -95,18 +95,11 @@
     "loading_tv_static": "Šum TV",
     "loading_spinner": "Spinner",
     "tab_cube": "3D krychle",
-    "cube_active_single": "1 aktivní krychle",
-    "cube_active_multiple": "{count} aktivních krychlí",
-    "cube_inactive": "Neaktivní",
-    "cube_title": "3D kostka",
-    "cube_experimental": "EXPERIMENTÁLNÍ",
-    "cube_desc": "Plovoucí 3D kostka s přehráváním videa na všech stěnách.",
     "cube_enable": "Aktivovat 3D kostku",
     "cube_disable": "Deaktivovat 3D kostku",
     "cube_shortcut_hint": "Zkratka: stiskněte {key} pro přepnutí",
     "cube_badge_on": "ZAP ({count})",
     "cube_badge_off": "VYP",
-    "cube_physics_scale": "Pohyb a velikost",
     "cube_speed": "Rychlost pohybu",
     "cube_speed_desc": "Rychlost plovoucích 3D kostek",
     "cube_size": "Velikost kostky",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "Přepnout režim překrytí kostky",
       "toggle_fullscreen": "Přepnout celou obrazovku",
       "toggle_filters": "Přepnout shadery filtrů",
-      "fit_window": "Přizpůsobit okno videu"
+      "fit_window": "Přizpůsobit okno videu",
+      "toggle_quick_picker": "Přepnout rychlý výběr"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "Celá obrazovka zakázána",
     "filters_enabled": "Shadery filtrů povoleny (Stiskněte [{key}] pro přepnutí)",
     "filters_disabled": "Shadery filtrů zakázány"
+  },
+  "quick_picker": {
+    "title": "Rychlý Výběr",
+    "search_placeholder": "Hledat videa ve složce..."
   }
 }

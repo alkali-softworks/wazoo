@@ -95,18 +95,11 @@
     "loading_tv_static": "Nhiễu TV",
     "loading_spinner": "Vòng xoay",
     "tab_cube": "Khối 3D",
-    "cube_active_single": "1 khối đang hoạt động",
-    "cube_active_multiple": "{count} khối đang hoạt động",
-    "cube_inactive": "Không hoạt động",
-    "cube_title": "Khối 3D",
-    "cube_experimental": "THỬ NGHIỆM",
-    "cube_desc": "Khối 3D lơ lửng phát video trực tiếp trên tất cả các mặt.",
     "cube_enable": "Bật khối 3D",
     "cube_disable": "Tắt khối 3D",
     "cube_shortcut_hint": "Phím tắt: Nhấn {key} để bật/tắt",
     "cube_badge_on": "BẬT ({count})",
     "cube_badge_off": "TẮT",
-    "cube_physics_scale": "Chuyển động & kích thước",
     "cube_speed": "Tốc độ di chuyển",
     "cube_speed_desc": "Tốc độ của khối 3D lơ lửng",
     "cube_size": "Kích thước khối",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "Bật/tắt chế độ lớp phủ khối",
       "toggle_fullscreen": "Bật/tắt toàn màn hình",
       "toggle_filters": "Bật/Tắt bộ lọc đổ bóng",
-      "fit_window": "Khớp cửa sổ theo video"
+      "fit_window": "Khớp cửa sổ theo video",
+      "toggle_quick_picker": "Bật/tắt bộ chọn nhanh"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "Đã tắt toàn màn hình",
     "filters_enabled": "Đã bật bộ lọc đổ bóng (Nhấn [{key}] để chuyển đổi)",
     "filters_disabled": "Đã tắt bộ lọc đổ bóng"
+  },
+  "quick_picker": {
+    "title": "Bộ Chọn Nhanh",
+    "search_placeholder": "Tìm kiếm video trong thư mục..."
   }
 }

@@ -95,18 +95,11 @@
     "loading_tv_static": "TV 노이즈",
     "loading_spinner": "스피너",
     "tab_cube": "3D 큐브",
-    "cube_active_single": "1개 활성 큐브",
-    "cube_active_multiple": "{count}개 활성 큐브",
-    "cube_inactive": "비활성",
-    "cube_title": "3D 큐브",
-    "cube_experimental": "실험적",
-    "cube_desc": "모든 면에서 라이브 비디오가 재생되는 3D 큐브.",
     "cube_enable": "3D 큐브 활성화",
     "cube_disable": "3D 큐브 비활성화",
     "cube_shortcut_hint": "단축키: {key}를 눌러 전환",
     "cube_badge_on": "켜짐 ({count})",
     "cube_badge_off": "꺼짐",
-    "cube_physics_scale": "움직임 및 크기",
     "cube_speed": "이동 속도",
     "cube_speed_desc": "떠다니는 3D 큐브의 속도",
     "cube_size": "큐브 크기",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "큐브 오버레이 모드 전환",
       "toggle_fullscreen": "전체 화면 전환",
       "toggle_filters": "셰이더 필터 전환",
-      "fit_window": "비디오에 맞춰 창 크기 조절"
+      "fit_window": "비디오에 맞춰 창 크기 조절",
+      "toggle_quick_picker": "빠른 선택기 토글"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "전체 화면 비활성화됨",
     "filters_enabled": "셰이더 필터 활성화됨 ([{key}]를 눌러 전환)",
     "filters_disabled": "셰이더 필터 비활성화됨"
+  },
+  "quick_picker": {
+    "title": "빠른 선택기",
+    "search_placeholder": "폴더 동영상 검색..."
   }
 }

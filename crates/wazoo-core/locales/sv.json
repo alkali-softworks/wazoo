@@ -95,18 +95,11 @@
     "loading_tv_static": "TV-brus",
     "loading_spinner": "Snurra",
     "tab_cube": "3D-kub",
-    "cube_active_single": "1 aktiv kub",
-    "cube_active_multiple": "{count} aktiva kuber",
-    "cube_inactive": "Inaktiv",
-    "cube_title": "3D-kub",
-    "cube_experimental": "EXPERIMENTELL",
-    "cube_desc": "Svävande 3D-kub med videouppspelning på alla ytor.",
     "cube_enable": "Aktivera 3D-kub",
     "cube_disable": "Inaktivera 3D-kub",
     "cube_shortcut_hint": "Genväg: tryck på {key} för att växla",
     "cube_badge_on": "PÅ ({count})",
     "cube_badge_off": "AV",
-    "cube_physics_scale": "Rörelse & storlek",
     "cube_speed": "Rörelsehastighet",
     "cube_speed_desc": "Hastighet för svävande 3D-kuber",
     "cube_size": "Kubstorlek",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "Växla kuböverläggsläge",
       "toggle_fullscreen": "Växla helskärm",
       "toggle_filters": "Växla shaderfilter",
-      "fit_window": "Anpassa fönster efter video"
+      "fit_window": "Anpassa fönster efter video",
+      "toggle_quick_picker": "Växla snabbväljare"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "Helskärm inaktiverad",
     "filters_enabled": "Shaderfilter aktiverade (Tryck på [{key}] för att växla)",
     "filters_disabled": "Shaderfilter inaktiverade"
+  },
+  "quick_picker": {
+    "title": "Snabbväljare",
+    "search_placeholder": "Sök mappvideor..."
   }
 }

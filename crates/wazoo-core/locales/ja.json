@@ -95,18 +95,11 @@
     "loading_tv_static": "TV砂嵐",
     "loading_spinner": "スピナー",
     "tab_cube": "3Dキューブ",
-    "cube_active_single": "1個のアクティブなキューブ",
-    "cube_active_multiple": "{count}個のアクティブなキューブ",
-    "cube_inactive": "無効",
-    "cube_title": "3Dキューブ",
-    "cube_experimental": "実験的",
-    "cube_desc": "すべての面にリアルタイム動画が再生される3Dキューブ。",
     "cube_enable": "3Dキューブを有効化",
     "cube_disable": "3Dキューブを無効化",
     "cube_shortcut_hint": "ショートカット: {key}キーで切り替え",
     "cube_badge_on": "オン ({count})",
     "cube_badge_off": "オフ",
-    "cube_physics_scale": "動きとサイズ",
     "cube_speed": "移動速度",
     "cube_speed_desc": "浮遊する3Dキューブの速度",
     "cube_size": "キューブサイズ",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "キューブオーバーレイモードを切り替え",
       "toggle_fullscreen": "全画面表示の切り替え",
       "toggle_filters": "シェーダーフィルター切り替え",
-      "fit_window": "動画に合わせてウィンドウを調整"
+      "fit_window": "動画に合わせてウィンドウを調整",
+      "toggle_quick_picker": "クイックピッカーの切り替え"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "全画面表示が無効化されました",
     "filters_enabled": "シェーダーフィルターが有効化されました ([{key}]で切り替え)",
     "filters_disabled": "シェーダーフィルターが無効化されました"
+  },
+  "quick_picker": {
+    "title": "クイックピッカー",
+    "search_placeholder": "フォルダー内の動画を検索..."
   }
 }

@@ -178,6 +178,15 @@ pub enum Message {
     RemoveBookmark(usize),
     JumpToBookmark(Bookmark),
 
+    // Quick Picker
+    ToggleQuickPickerModal,
+    OpenQuickPickerModal,
+    CloseQuickPickerModal,
+    QuickPickerSearchChanged(String),
+    ClearQuickPickerSearch,
+    QuickPickerSubmit,
+    PlayQuickPickerFile(String),
+
     // Timers & Ticks
     Tick,
     WatchdogTick,

@@ -95,18 +95,11 @@
     "loading_tv_static": "Neige TV",
     "loading_spinner": "Spinner",
     "tab_cube": "Cube 3D",
-    "cube_active_single": "1 cube actif",
-    "cube_active_multiple": "{count} cubes actifs",
-    "cube_inactive": "Inactif",
-    "cube_title": "Cube 3D",
-    "cube_experimental": "EXPÉRIMENTAL",
-    "cube_desc": "Cube 3D flottant avec lecture vidéo en direct sur toutes les surfaces.",
     "cube_enable": "Activer le Cube 3D",
     "cube_disable": "Désactiver le Cube 3D",
     "cube_shortcut_hint": "Raccourci : appuyez sur {key} pour basculer",
     "cube_badge_on": "ON ({count})",
     "cube_badge_off": "OFF",
-    "cube_physics_scale": "Mouvement et taille",
     "cube_speed": "Vitesse de déplacement",
     "cube_speed_desc": "Vitesse des cubes 3D flottants",
     "cube_size": "Taille du cube",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "Basculer le mode superposition de cube",
       "toggle_fullscreen": "Activer/désactiver le plein écran",
       "toggle_filters": "Basculer les filtres de shaders",
-      "fit_window": "Ajuster la fenêtre à la vidéo"
+      "fit_window": "Ajuster la fenêtre à la vidéo",
+      "toggle_quick_picker": "Afficher/Masquer le sélecteur rapide"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "Plein écran désactivé",
     "filters_enabled": "Filtres de shaders activés (Appuyez sur [{key}] pour basculer)",
     "filters_disabled": "Filtres de shaders désactivés"
+  },
+  "quick_picker": {
+    "title": "Sélecteur Rapide",
+    "search_placeholder": "Rechercher des vidéos du dossier..."
   }
 }

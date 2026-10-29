@@ -230,12 +230,6 @@ impl WazooApp {
                 padding,
             ),
             Self::menu_item(
-                self.t("history.title"),
-                Some(kb.menu_hint(&kb.toggle_history)),
-                Message::ToggleHistoryDrawer,
-                padding,
-            ),
-            Self::menu_item(
                 if self.settings.is_always_on_top {
                     self.t("common.unpin_window")
                 } else {
@@ -243,12 +237,6 @@ impl WazooApp {
                 },
                 Some(kb.menu_hint(&kb.toggle_pin)),
                 Message::CyclePinMode,
-                padding,
-            ),
-            Self::menu_item(
-                self.t("common.fit_window"),
-                Some(kb.menu_hint(&kb.fit_window)),
-                Message::FitWindow,
                 padding,
             ),
             Self::menu_item(

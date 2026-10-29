@@ -128,6 +128,8 @@ impl WazooApp {
             Some(self.view_help_modal())
         } else if self.modals.bookmarks {
             Some(self.view_bookmarks_modal())
+        } else if self.modals.quick_picker {
+            Some(self.view_quick_picker_modal())
         } else if self.modals.menu {
             Some(self.view_menu_modal())
         } else {

@@ -95,18 +95,11 @@
     "loading_tv_static": "שלג בטלוויזיה",
     "loading_spinner": "סביבון",
     "tab_cube": "קובייה תלת-ממדית",
-    "cube_active_single": "קובייה פעילה אחת",
-    "cube_active_multiple": "{count} קוביות פעילות",
-    "cube_inactive": "לא פעיל",
-    "cube_title": "קובייה תלת-ממדית",
-    "cube_experimental": "ניסיוני",
-    "cube_desc": "קובייה תלת-ממדית מרחפת עם ניגון וידאו על כל המשטחים.",
     "cube_enable": "הפעל קובייה תלת-ממדית",
     "cube_disable": "השבת קובייה תלת-ממדית",
     "cube_shortcut_hint": "קיצור דרך: הקש {key} להפעלה/השבתה",
     "cube_badge_on": "פעיל ({count})",
     "cube_badge_off": "כבוי",
-    "cube_physics_scale": "תנועה וגודל",
     "cube_speed": "מהירות תנועה",
     "cube_speed_desc": "מהירות הקוביות המרחפות",
     "cube_size": "גודל קובייה",
@@ -177,7 +170,8 @@
       "toggle_cube_overlay": "הפעל/השבת מצב שכבת קובייה",
       "toggle_fullscreen": "מעבר למסך מלא",
       "toggle_filters": "החלף מסנני הצללה",
-      "fit_window": "התאם חלון לווידאו"
+      "fit_window": "התאם חלון לווידאו",
+      "toggle_quick_picker": "החלף בורר מהיר"
     }
   },
   "file_picker": {
@@ -248,5 +242,9 @@
     "fullscreen_disabled": "מסך מלא הושבת",
     "filters_enabled": "מסנני הצללה הופעלו (לחץ על [{key}] כדי להחליף)",
     "filters_disabled": "מסנני הצללה הושבתו"
+  },
+  "quick_picker": {
+    "title": "בורר מהיר",
+    "search_placeholder": "חפש סרטונים בתיקייה..."
   }
 }
