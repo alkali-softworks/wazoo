@@ -278,13 +278,13 @@ fn fbm_fog(p: vec2<f32>, time: f32, octaves: i32) -> f32 {
     for (var i = 0; i < octaves; i = i + 1) {
         var drift = vec2<f32>(0.0, 0.0);
         if (i == 0) {
-            drift = vec2<f32>(time * 0.040, time * 0.018);
+            drift = vec2<f32>(time * 0.050, time * 0.022);
         } else if (i == 1) {
-            drift = vec2<f32>(-time * 0.025, time * 0.038);
+            drift = vec2<f32>(-time * 0.032, time * 0.046);
         } else if (i == 2) {
-            drift = vec2<f32>(time * 0.050, -time * 0.022);
+            drift = vec2<f32>(time * 0.060, -time * 0.028);
         } else {
-            drift = vec2<f32>(-time * 0.035, -time * 0.030);
+            drift = vec2<f32>(-time * 0.042, -time * 0.038);
         }
 
         val += amp * noise2d_fog(pt + drift);
@@ -449,23 +449,23 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
         // Dynamic domain warp: evolving wind swirls that morph and roll the cloud banks
         let q = vec2<f32>(
-            fbm_fog(c * 1.1 + vec2<f32>(1.5, 2.8), uniforms.time * 0.8, 3),
-            fbm_fog(c * 1.1 + vec2<f32>(7.2, 4.9), uniforms.time * 0.8, 3)
+            fbm_fog(c * 1.1 + vec2<f32>(1.5, 2.8), uniforms.time, 3),
+            fbm_fog(c * 1.1 + vec2<f32>(7.2, 4.9), uniforms.time, 3)
         );
-        let warp_amt = 0.65;
+        let warp_amt = 0.60;
 
         // Main rolling cloud field: warped coordinates + multi-directional churning FBM
         let f = fbm_fog(c + q * warp_amt, uniforms.time, 4);
 
-        // Balanced clumpiness: smoothstep with generous clear areas and round puffy volumes
-        let density = smoothstep(-0.05, 0.40, f);
+        // Airy density threshold: preserves ~70% open view so video remains clean and uncluttered
+        let density = smoothstep(0.04, 0.44, f);
 
         // Realistic cloud shading: clean white mist with soft sky-scattering ambient shadow in dense cores
-        let shadow_color = vec3<f32>(0.62, 0.68, 0.76);
+        let shadow_color = vec3<f32>(0.65, 0.70, 0.78);
         let light_color = vec3<f32>(0.96, 0.98, 1.0);
-        let cloud_color = mix(shadow_color, light_color, density * 0.35 + 0.65);
+        let cloud_color = mix(shadow_color, light_color, density * 0.30 + 0.70);
 
-        let final_fog = density * 0.50;
+        let final_fog = density * 0.32;
         rgb = mix(rgb, cloud_color, final_fog);
     }
 
