@@ -112,3 +112,32 @@ async fn test_cube_pipeline_creation_and_render() {
     queue.submit(Some(encoder.finish()));
     println!("SUCCESSFULLY EXECUTED WGPU CUBE PIPELINE!");
 }
+
+#[tokio::test]
+async fn test_video_pipeline_creation() {
+    let instance = iced_wgpu::wgpu::Instance::default();
+    let adapter = instance
+        .request_adapter(&iced_wgpu::wgpu::RequestAdapterOptions {
+            power_preference: iced_wgpu::wgpu::PowerPreference::default(),
+            force_fallback_adapter: false,
+            compatible_surface: None,
+        })
+        .await;
+
+    let adapter = match adapter {
+        Ok(a) => a,
+        Err(e) => {
+            eprintln!("No adapter found ({:?}), skipping headless test", e);
+            return;
+        }
+    };
+
+    let (device, queue) = adapter
+        .request_device(&iced_wgpu::wgpu::DeviceDescriptor::default())
+        .await
+        .expect("Failed to create device");
+
+    let format = iced_wgpu::wgpu::TextureFormat::Bgra8UnormSrgb;
+    let _pipeline = wazoo_media::pipeline::VideoPipeline::new(&device, &queue, format);
+    println!("SUCCESSFULLY CREATED AND COMPILED WGPU VIDEO PIPELINES (DEFAULT & CRT/FOG)!");
+}
