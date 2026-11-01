@@ -211,6 +211,195 @@ pub struct WazooSettings {
     pub cube_sheen: bool,
     #[serde(default)]
     pub use_standby_player: bool,
+    #[serde(default)]
+    pub crt: CrtSettings,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct CrtSettings {
+    #[serde(default = "default_crt_scanline_darkness")]
+    pub scanline_darkness: f32,
+    #[serde(default = "default_crt_scanline_density")]
+    pub scanline_density: f32,
+    #[serde(default = "default_crt_scanline_speed")]
+    pub scanline_speed: f32,
+    #[serde(default = "default_crt_curvature")]
+    pub curvature: f32,
+    #[serde(default = "default_crt_gamma")]
+    pub gamma: f32,
+    #[serde(default = "default_crt_saturation")]
+    pub saturation: f32,
+    #[serde(default = "default_crt_brightness")]
+    pub brightness: f32,
+    #[serde(default = "default_crt_vignette")]
+    pub vignette: f32,
+    #[serde(default = "default_crt_chromatic_aberration")]
+    pub chromatic_aberration: f32,
+    #[serde(default = "default_crt_noise")]
+    pub noise: f32,
+    #[serde(default = "default_crt_corner_rounding")]
+    pub corner_rounding: f32,
+}
+
+pub fn default_crt_scanline_darkness() -> f32 {
+    0.20
+}
+
+pub fn default_crt_scanline_density() -> f32 {
+    600.0
+}
+
+pub fn default_crt_scanline_speed() -> f32 {
+    5.0
+}
+
+pub fn default_crt_curvature() -> f32 {
+    0.35
+}
+
+pub fn default_crt_gamma() -> f32 {
+    1.00
+}
+
+pub fn default_crt_saturation() -> f32 {
+    1.00
+}
+
+pub fn default_crt_brightness() -> f32 {
+    1.00
+}
+
+pub fn default_crt_vignette() -> f32 {
+    0.40
+}
+
+pub fn default_crt_chromatic_aberration() -> f32 {
+    0.20
+}
+
+pub fn default_crt_noise() -> f32 {
+    0.25
+}
+
+pub fn default_crt_corner_rounding() -> f32 {
+    0.50
+}
+
+impl Default for CrtSettings {
+    fn default() -> Self {
+        Self {
+            scanline_darkness: default_crt_scanline_darkness(),
+            scanline_density: default_crt_scanline_density(),
+            scanline_speed: default_crt_scanline_speed(),
+            curvature: default_crt_curvature(),
+            gamma: default_crt_gamma(),
+            saturation: default_crt_saturation(),
+            brightness: default_crt_brightness(),
+            vignette: default_crt_vignette(),
+            chromatic_aberration: default_crt_chromatic_aberration(),
+            noise: default_crt_noise(),
+            corner_rounding: default_crt_corner_rounding(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CrtPreset {
+    Default,
+    Subtle,
+    Arcade,
+    WarmPhosphor,
+    Monochrome,
+    Vhs,
+}
+
+impl CrtSettings {
+    pub fn clamp_all(&mut self) {
+        self.scanline_darkness = self.scanline_darkness.clamp(0.0, 1.0);
+        self.scanline_density = self.scanline_density.clamp(50.0, 2000.0);
+        self.scanline_speed = self.scanline_speed.clamp(0.0, 20.0);
+        self.curvature = self.curvature.clamp(0.0, 1.0);
+        self.gamma = self.gamma.clamp(0.2, 3.0);
+        self.saturation = self.saturation.clamp(0.0, 3.0);
+        self.brightness = self.brightness.clamp(0.2, 3.0);
+        self.vignette = self.vignette.clamp(0.0, 1.0);
+        self.chromatic_aberration = self.chromatic_aberration.clamp(0.0, 1.0);
+        self.noise = self.noise.clamp(0.0, 1.0);
+        self.corner_rounding = self.corner_rounding.clamp(0.0, 1.0);
+    }
+
+    pub fn apply_preset(&mut self, preset: CrtPreset) {
+        match preset {
+            CrtPreset::Default => {
+                *self = Self::default();
+            }
+            CrtPreset::Subtle => {
+                self.scanline_darkness = 0.08;
+                self.scanline_density = 720.0;
+                self.scanline_speed = 3.0;
+                self.curvature = 0.10;
+                self.gamma = 1.05;
+                self.saturation = 1.05;
+                self.brightness = 1.00;
+                self.vignette = 0.15;
+                self.chromatic_aberration = 0.05;
+                self.noise = 0.08;
+                self.corner_rounding = 0.20;
+            }
+            CrtPreset::Arcade => {
+                self.scanline_darkness = 0.35;
+                self.scanline_density = 480.0;
+                self.scanline_speed = 6.0;
+                self.curvature = 0.40;
+                self.gamma = 1.15;
+                self.saturation = 1.30;
+                self.brightness = 1.10;
+                self.vignette = 0.50;
+                self.chromatic_aberration = 0.25;
+                self.noise = 0.20;
+                self.corner_rounding = 0.55;
+            }
+            CrtPreset::WarmPhosphor => {
+                self.scanline_darkness = 0.15;
+                self.scanline_density = 600.0;
+                self.scanline_speed = 4.0;
+                self.curvature = 0.30;
+                self.gamma = 1.25;
+                self.saturation = 1.20;
+                self.brightness = 1.15;
+                self.vignette = 0.35;
+                self.chromatic_aberration = 0.15;
+                self.noise = 0.15;
+                self.corner_rounding = 0.45;
+            }
+            CrtPreset::Monochrome => {
+                self.scanline_darkness = 0.25;
+                self.scanline_density = 520.0;
+                self.scanline_speed = 4.0;
+                self.curvature = 0.45;
+                self.gamma = 1.10;
+                self.saturation = 0.00;
+                self.brightness = 1.05;
+                self.vignette = 0.55;
+                self.chromatic_aberration = 0.00;
+                self.noise = 0.35;
+                self.corner_rounding = 0.60;
+            }
+            CrtPreset::Vhs => {
+                self.scanline_darkness = 0.22;
+                self.scanline_density = 400.0;
+                self.scanline_speed = 7.0;
+                self.curvature = 0.25;
+                self.gamma = 1.15;
+                self.saturation = 1.10;
+                self.brightness = 1.05;
+                self.vignette = 0.40;
+                self.chromatic_aberration = 0.60;
+                self.noise = 0.55;
+                self.corner_rounding = 0.40;
+            }
+        }
+    }
 }
 
 fn default_playback_speed() -> f32 {
@@ -272,6 +461,7 @@ impl Default for WazooSettings {
             cube_size: 1.0,
             cube_sheen: false,
             use_standby_player: false,
+            crt: CrtSettings::default(),
         }
     }
 }

@@ -86,6 +86,7 @@ pub enum SettingsTab {
     General,
     Playback,
     Filters,
+    Crt,
     Cube,
     System,
 }
@@ -1017,6 +1018,7 @@ impl WazooApp {
             crt_enabled: self.settings.filters_enabled && self.settings.filter_crt,
             wavy_enabled: self.settings.filters_enabled && self.settings.filter_wavy,
             fog_enabled: self.settings.filters_enabled && self.settings.filter_fog,
+            crt_settings: self.settings.crt,
         }
     }
 

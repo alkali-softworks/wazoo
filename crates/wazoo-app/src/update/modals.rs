@@ -180,6 +180,84 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
             }
+            Message::SetCrtScanlineDarkness(val) => {
+                self.settings.crt.scanline_darkness = val.clamp(0.0, 1.0);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetCrtScanlineDensity(val) => {
+                self.settings.crt.scanline_density = val.clamp(50.0, 2000.0);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetCrtScanlineSpeed(val) => {
+                self.settings.crt.scanline_speed = val.clamp(0.0, 20.0);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetCrtCurvature(val) => {
+                self.settings.crt.curvature = val.clamp(0.0, 1.0);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetCrtGamma(val) => {
+                self.settings.crt.gamma = val.clamp(0.2, 3.0);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetCrtSaturation(val) => {
+                self.settings.crt.saturation = val.clamp(0.0, 3.0);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetCrtBrightness(val) => {
+                self.settings.crt.brightness = val.clamp(0.2, 3.0);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetCrtVignette(val) => {
+                self.settings.crt.vignette = val.clamp(0.0, 1.0);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetCrtChromaticAberration(val) => {
+                self.settings.crt.chromatic_aberration = val.clamp(0.0, 1.0);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetCrtNoise(val) => {
+                self.settings.crt.noise = val.clamp(0.0, 1.0);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetCrtCornerRounding(val) => {
+                self.settings.crt.corner_rounding = val.clamp(0.0, 1.0);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::ApplyCrtPreset(preset) => {
+                self.settings.crt.apply_preset(preset);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::ResetCrtSettings => {
+                self.settings.crt = wazoo_core::CrtSettings::default();
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
             Message::ToggleWavyFilter => {
                 let new_state = !self.settings.filter_wavy;
                 self.settings.filter_wavy = new_state;
@@ -448,6 +526,7 @@ impl WazooApp {
         self.settings.crt_enabled = crt;
         for player in &mut self.players {
             player.set_filters(crt, wavy, fog);
+            player.set_crt_settings(self.settings.crt);
         }
     }
 }

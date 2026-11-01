@@ -65,7 +65,7 @@ graph LR
 1. **Multi-Player Scalability**: Renders 1 to 12 simultaneous video players within a single native window without multiple X11/Wayland sub-windows.
 2. **Dynamic Window Opacity**: Opacity transitions and transparency are applied directly in the fragment shader without OS compositor glitches.
 3. **Zero-Copy Video Swapchains**: Only textures that received a new frame on the tick are updated on the GPU via `queue.write_texture`.
-4. **Procedural CRT Emulation**: Fragment shader simulates spherical tube curvature distortion, phosphorescent bloom glow, RGB subpixel chromatic aberration, scanlines, analog RF noise, and radial vignette falloff.
+4. **Procedural CRT Emulation**: Fragment shader simulates configurable spherical tube curvature distortion, phosphorescent bloom glow, RGB subpixel chromatic aberration, scanlines (darkness, density, speed), analog RF noise, radial vignette falloff, and post-shader gamma/saturation compensation.
 5. **Wavy Fluid Displacement**: Real-time sinusoidal UV coordinates distortion producing animated liquid surface waves.
 6. **Volumetric Fog**: Multi-octave fractional Brownian motion (fBm) noise drifting procedurally across the screen.
 7. **Pillarbox/Letterbox UV Clamping**: Automatically detects content aspect ratio and clamps UV coordinates to valid active frame boundaries, eliminating edge-smear artifacts when playing non-16:9 videos.

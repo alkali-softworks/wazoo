@@ -66,6 +66,7 @@ pub struct BufferConfig {
     pub crt_enabled: bool,
     pub wavy_enabled: bool,
     pub fog_enabled: bool,
+    pub crt_settings: wazoo_core::CrtSettings,
 }
 
 impl BufferConfig {
@@ -97,6 +98,7 @@ impl Default for BufferConfig {
             crt_enabled: false,
             wavy_enabled: false,
             fog_enabled: false,
+            crt_settings: wazoo_core::CrtSettings::default(),
         }
     }
 }

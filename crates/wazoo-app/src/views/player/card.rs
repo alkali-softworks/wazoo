@@ -57,6 +57,7 @@ impl WazooApp {
                     crt,
                     wavy,
                     fog,
+                    self.settings.crt,
                 );
                 let static_view = Element::new(wazoo_media::pipeline::video_shader(program));
                 stack_children.push(static_view);

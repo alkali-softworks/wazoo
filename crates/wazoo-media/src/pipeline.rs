@@ -31,7 +31,19 @@ struct Uniforms {
     time: f32,
     wavy_enabled: f32,
     fog_enabled: f32,
-    _pad: f32,
+    crt_scanline_darkness: f32,
+    crt_scanline_density: f32,
+    crt_scanline_speed: f32,
+    crt_curvature: f32,
+    crt_gamma: f32,
+    crt_saturation: f32,
+    crt_brightness: f32,
+    crt_vignette: f32,
+    crt_chromatic_aberration: f32,
+    crt_noise: f32,
+    crt_corner_rounding: f32,
+    _pad1: f32,
+    _pad2: f32,
 }
 
 pub struct FrameData {
@@ -88,7 +100,19 @@ struct Uniforms {
     time: f32,
     wavy_enabled: f32,
     fog_enabled: f32,
-    _pad: f32,
+    crt_scanline_darkness: f32,
+    crt_scanline_density: f32,
+    crt_scanline_speed: f32,
+    crt_curvature: f32,
+    crt_gamma: f32,
+    crt_saturation: f32,
+    crt_brightness: f32,
+    crt_vignette: f32,
+    crt_chromatic_aberration: f32,
+    crt_noise: f32,
+    crt_corner_rounding: f32,
+    _pad1: f32,
+    _pad2: f32,
 }
 
 @group(0) @binding(0)
@@ -151,7 +175,19 @@ struct Uniforms {
     time: f32,
     wavy_enabled: f32,
     fog_enabled: f32,
-    _pad: f32,
+    crt_scanline_darkness: f32,
+    crt_scanline_density: f32,
+    crt_scanline_speed: f32,
+    crt_curvature: f32,
+    crt_gamma: f32,
+    crt_saturation: f32,
+    crt_brightness: f32,
+    crt_vignette: f32,
+    crt_chromatic_aberration: f32,
+    crt_noise: f32,
+    crt_corner_rounding: f32,
+    _pad1: f32,
+    _pad2: f32,
 }
 
 @group(0) @binding(0)
@@ -190,9 +226,13 @@ fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> VertexOutput {
 }
 
 fn curve(uv: vec2<f32>, curvature: f32) -> vec2<f32> {
+    if (curvature < 0.001) {
+        return uv;
+    }
     var u = (uv - 0.5) * 2.0;
-    u.x = u.x * (1.0 + pow(abs(u.y) / curvature, 2.0));
-    u.y = u.y * (1.0 + pow(abs(u.x) / curvature, 2.0));
+    let k = curvature * 0.28;
+    u.x = u.x * (1.0 + (u.y * u.y) * k);
+    u.y = u.y * (1.0 + (u.x * u.x) * k);
     return (u / 2.0) + 0.5;
 }
 
@@ -245,7 +285,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     // 1. CRT filter (curvature, tracking distortion, chromatic aberration, scanlines)
     if (uniforms.crt_enabled > 0.5) {
-        let curved_uv = curve(in.uv, 3.2);
+        let curved_uv = curve(in.uv, uniforms.crt_curvature);
 
         // Strict letterbox / pillarbox check for CRT mode
         if curved_uv.x < 0.0 || curved_uv.x > 1.0 || curved_uv.y < 0.0 || curved_uv.y > 1.0 {
@@ -253,10 +293,18 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         }
 
         // Smooth rounded CRT glass envelope corners
-        let corner_box = abs(curved_uv - vec2<f32>(0.5, 0.5)) * 2.0;
-        let corner_dist = pow(corner_box.x, 10.0) + pow(corner_box.y, 10.0);
-        if corner_dist > 1.05 {
-            return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
+        if (uniforms.crt_corner_rounding > 0.001) {
+            let corner_box = abs(curved_uv - vec2<f32>(0.5, 0.5)) * 2.0;
+            let corner_dist = pow(corner_box.x, 10.0) + pow(corner_box.y, 10.0);
+            var cutoff = 1.05;
+            if (uniforms.crt_corner_rounding < 0.5) {
+                cutoff = mix(2.0, 1.05, uniforms.crt_corner_rounding * 2.0);
+            } else {
+                cutoff = mix(1.05, 0.92, (uniforms.crt_corner_rounding - 0.5) * 2.0);
+            }
+            if corner_dist > cutoff {
+                return vec4<f32>(0.0, 0.0, 0.0, uniforms.opacity);
+            }
         }
 
         // Apply wavy fluid displacement within the curved CRT tube
@@ -301,8 +349,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         // Radial chromatic aberration
         let center_dir = warped_uv - vec2<f32>(0.5, 0.5);
         let dist_sq = dot(center_dir, center_dir);
-        let ca_radial = center_dir * (dist_sq * 0.045);
-        let ca_offset = ca_radial + vec2<f32>(shift, 0.0);
+        let ca_scale = uniforms.crt_chromatic_aberration * 5.0;
+        let ca_radial = center_dir * (dist_sq * 0.045 * ca_scale);
+        let ca_offset = ca_radial + vec2<f32>(shift * ca_scale, 0.0);
 
         let uv_r = clamp(warped_uv + ca_offset, vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0));
         let uv_g = warped_uv;
@@ -314,27 +363,42 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         let a = textureSampleLevel(tex, s, warped_uv, 0.0).a;
         base_color = vec4<f32>(r, g, b, a);
 
-        // CRT phosphor luminescence & gamma compensation:
-        // Automatically compensates for the light loss introduced by scanlines
-        //let clamped_rgb = clamp(base_color.rgb, vec3<f32>(0.00001), vec3<f32>(1.0));
-        //let phosphor_bright = pow(clamped_rgb, vec3<f32>(0.90)) * 1.10;
         // Active rolling cathode scanlines (multiplicative modulation avoids shadow crush)
-        //let scanline = sin(curved_uv.y * 600.0 + uniforms.time * 5.0) * 0.5 + 0.5;
-        //let scanline_factor = 1.0 - scanline * 0.16;
-        //rgb = phosphor_bright * scanline_factor;
+        let scanline = sin(curved_uv.y * uniforms.crt_scanline_density + uniforms.time * uniforms.crt_scanline_speed) * 0.5 + 0.5;
+        let scanline_factor = 1.0 - scanline * uniforms.crt_scanline_darkness;
+        rgb = base_color.rgb * scanline_factor;
 
-        // Active rolling cathode scanlines
-        let scanline = sin(curved_uv.y * 600.0 + uniforms.time * 5.0) * 0.5 + 0.5;
-        rgb = base_color.rgb - scanline * 0.20;
+        // CRT phosphor luminescence & gamma compensation:
+        if (uniforms.crt_gamma > 0.01 && abs(uniforms.crt_gamma - 1.0) > 0.005) {
+            let inv_gamma = 1.0 / uniforms.crt_gamma;
+            rgb = pow(clamp(rgb, vec3<f32>(0.00001), vec3<f32>(1.0)), vec3<f32>(inv_gamma));
+        }
+
+        // CRT phosphor saturation:
+        if (abs(uniforms.crt_saturation - 1.0) > 0.005) {
+            let luma = dot(rgb, vec3<f32>(0.2126, 0.7152, 0.0722));
+            rgb = mix(vec3<f32>(luma), rgb, uniforms.crt_saturation);
+        }
+
+        // CRT phosphor brightness:
+        if (abs(uniforms.crt_brightness - 1.0) > 0.005) {
+            rgb = rgb * uniforms.crt_brightness;
+        }
 
         // Animated RF static noise
-        let noise = (hash(curved_uv + vec2<f32>(uniforms.time, uniforms.time)) - 0.5) * 0.016;
-        rgb += vec3<f32>(noise, noise, noise);
+        if (uniforms.crt_noise > 0.001) {
+            let noise_scale = uniforms.crt_noise * 0.064;
+            let noise = (hash(curved_uv + vec2<f32>(uniforms.time, uniforms.time)) - 0.5) * noise_scale;
+            rgb += vec3<f32>(noise, noise, noise);
+        }
 
         // CRT bezel falloff vignette
-        let vignette = curved_uv.x * curved_uv.y * (1.0 - curved_uv.x) * (1.0 - curved_uv.y);
-        let vig_factor = clamp(pow(16.0 * vignette, 0.28), 0.0, 1.0);
-        rgb *= vig_factor;
+        if (uniforms.crt_vignette > 0.001) {
+            let vignette = curved_uv.x * curved_uv.y * (1.0 - curved_uv.x) * (1.0 - curved_uv.y);
+            let vig_power = mix(0.08, 0.55, uniforms.crt_vignette);
+            let vig_factor = clamp(pow(max(16.0 * vignette, 0.0001), vig_power), 0.0, 1.0);
+            rgb *= vig_factor;
+        }
     } else {
         // CRT is disabled: ensure pillarbox/letterbox black bars are preserved and never smeared
         if in.uv.x < 0.0 || in.uv.x > 1.0 || in.uv.y < 0.0 || in.uv.y > 1.0 {
@@ -621,6 +685,7 @@ pub struct VideoPrimitive {
     crt_enabled: bool,
     wavy_enabled: bool,
     fog_enabled: bool,
+    crt_settings: wazoo_core::CrtSettings,
 }
 
 impl Primitive for VideoPrimitive {
@@ -724,7 +789,19 @@ impl Primitive for VideoPrimitive {
             time: time_secs,
             wavy_enabled: if self.wavy_enabled { 1.0 } else { 0.0 },
             fog_enabled: if self.fog_enabled { 1.0 } else { 0.0 },
-            _pad: 0.0,
+            crt_scanline_darkness: self.crt_settings.scanline_darkness,
+            crt_scanline_density: self.crt_settings.scanline_density,
+            crt_scanline_speed: self.crt_settings.scanline_speed,
+            crt_curvature: self.crt_settings.curvature,
+            crt_gamma: self.crt_settings.gamma,
+            crt_saturation: self.crt_settings.saturation,
+            crt_brightness: self.crt_settings.brightness,
+            crt_vignette: self.crt_settings.vignette,
+            crt_chromatic_aberration: self.crt_settings.chromatic_aberration,
+            crt_noise: self.crt_settings.noise,
+            crt_corner_rounding: self.crt_settings.corner_rounding,
+            _pad1: 0.0,
+            _pad2: 0.0,
         };
         queue.write_buffer(&entry.uniform_buffer, 0, bytemuck::bytes_of(&uniforms));
     }
@@ -754,6 +831,7 @@ pub struct VideoProgram {
     crt_enabled: bool,
     wavy_enabled: bool,
     fog_enabled: bool,
+    crt_settings: wazoo_core::CrtSettings,
 }
 
 impl VideoProgram {
@@ -774,7 +852,15 @@ impl VideoProgram {
         fit_cover: bool,
     ) -> Self {
         Self::new_full(
-            player_id, frame, alive, opacity, fit_cover, false, false, false,
+            player_id,
+            frame,
+            alive,
+            opacity,
+            fit_cover,
+            false,
+            false,
+            false,
+            wazoo_core::CrtSettings::default(),
         )
     }
 
@@ -787,6 +873,7 @@ impl VideoProgram {
         crt_enabled: bool,
         wavy_enabled: bool,
         fog_enabled: bool,
+        crt_settings: wazoo_core::CrtSettings,
     ) -> Self {
         Self {
             player_id,
@@ -797,6 +884,7 @@ impl VideoProgram {
             crt_enabled,
             wavy_enabled,
             fog_enabled,
+            crt_settings,
         }
     }
 }
@@ -820,6 +908,7 @@ impl<Message> Program<Message> for VideoProgram {
             crt_enabled: self.crt_enabled,
             wavy_enabled: self.wavy_enabled,
             fog_enabled: self.fog_enabled,
+            crt_settings: self.crt_settings,
         }
     }
 }

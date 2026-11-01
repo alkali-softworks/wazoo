@@ -72,7 +72,7 @@ Incoming [`Message`] events are dispatched through domain-specific reducers in [
 | [**`navigation.rs`**] | Next/prev video, bi-directional navigation history stacks, and video auto-advancement. |
 | [**`cube.rs`**] | 3D Video Cube screensaver (Mode 8), Desktop Overlay Mode (Mode 9), cube spawning/clearing, speed/size/sheen adjustments, and fullscreen coordination. |
 | [**`drawers.rs`**] | File picker navigation, folder collapsing, transcript cues, and play history clearing. |
-| [**`modals.rs`**] | Settings tab switching (General, Playback, Filters, System, Cube), post-processing filter toggles (CRT, Wavy, Fog), audio language preferences, equalizer sliders, and bookmarks. |
+| [**`modals.rs`**] | Settings tab switching (General, Playback, Filters, CRT, Cube, System), post-processing filter toggles (CRT, Wavy, Fog), CRT shader parameter tuning, audio language preferences, equalizer sliders, and bookmarks. |
 | [**`search.rs`**] | Search input changes, folder tag toggling, and instant query execution. |
 | [**`scanner.rs`**] | Native folder pickers (`rfd`), scan progress updates, and library reloading. |
 | [**`input.rs`**] | Hardware keyboard and mouse events mapped to configurable `KeyAction` commands (`F11` fullscreen, `7` master filters, `8` cube screensaver, `9` desktop overlay). |

@@ -551,3 +551,60 @@ fn test_standby_player_setting_serialization() {
     let loaded: WazooSettings = serde_json::from_str("{}").unwrap();
     assert!(!loaded.use_standby_player);
 }
+
+#[test]
+fn test_crt_settings_serialization_and_clamping() {
+    let default_settings = WazooSettings::default();
+    assert_eq!(default_settings.crt.scanline_darkness, 0.20);
+    assert_eq!(default_settings.crt.scanline_density, 600.0);
+    assert_eq!(default_settings.crt.scanline_speed, 5.0);
+    assert_eq!(default_settings.crt.curvature, 0.35);
+    assert_eq!(default_settings.crt.gamma, 1.00);
+    assert_eq!(default_settings.crt.saturation, 1.00);
+    assert_eq!(default_settings.crt.brightness, 1.00);
+
+    let mut settings = WazooSettings::default();
+    settings.crt.scanline_darkness = 0.45;
+    settings.crt.gamma = 1.25;
+    settings.crt.saturation = 1.30;
+
+    let json = serde_json::to_string(&settings).unwrap();
+    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
+    assert_eq!(deserialized.crt.scanline_darkness, 0.45);
+    assert_eq!(deserialized.crt.gamma, 1.25);
+    assert_eq!(deserialized.crt.saturation, 1.30);
+
+    // Fallback default on empty/missing JSON
+    let loaded: WazooSettings = serde_json::from_str("{}").unwrap();
+    assert_eq!(loaded.crt.scanline_darkness, 0.20);
+    assert_eq!(loaded.crt.gamma, 1.00);
+
+    // Test clamping
+    let temp_dir = std::env::temp_dir().join(format!(
+        "wazoo_crt_clamp_test_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = fs::create_dir_all(&temp_dir);
+    let mgr = ConfigManager {
+        config_dir: temp_dir.clone(),
+        data_dir: temp_dir.clone(),
+    };
+
+    let mut extreme_crt = wazoo_core::CrtSettings::default();
+    extreme_crt.scanline_darkness = 99.0;
+    extreme_crt.gamma = -10.0;
+    let extreme_settings = WazooSettings {
+        crt: extreme_crt,
+        ..Default::default()
+    };
+    mgr.save_settings(&extreme_settings).unwrap();
+
+    let loaded = mgr.load_settings();
+    assert_eq!(loaded.crt.scanline_darkness, 1.0);
+    assert_eq!(loaded.crt.gamma, 0.2);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}

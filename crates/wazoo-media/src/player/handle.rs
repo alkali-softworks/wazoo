@@ -50,6 +50,7 @@ pub struct VideoHandle {
     pub crt_enabled: bool,
     pub wavy_enabled: bool,
     pub fog_enabled: bool,
+    pub crt_settings: wazoo_core::CrtSettings,
     pub is_seeking: bool,
     seek_restart_received: bool,
     crossfade_volume: f64,
@@ -400,6 +401,7 @@ impl VideoHandle {
                 crt_enabled: config.crt_enabled,
                 wavy_enabled: config.wavy_enabled,
                 fog_enabled: config.fog_enabled,
+                crt_settings: config.crt_settings,
                 is_seeking: false,
                 seek_restart_received: false,
                 crossfade_volume: 1.0,
@@ -773,8 +775,17 @@ impl VideoHandle {
             crt_enabled,
             wavy_enabled,
             fog_enabled,
+            self.crt_settings,
         );
         iced::Element::new(crate::pipeline::video_shader(program))
+    }
+
+    pub fn set_crt_settings(&mut self, settings: wazoo_core::CrtSettings) {
+        self.crt_settings = settings;
+    }
+
+    pub fn crt_settings(&self) -> wazoo_core::CrtSettings {
+        self.crt_settings
     }
 
     pub fn set_crt_enabled(&mut self, enabled: bool) {
