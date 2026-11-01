@@ -243,7 +243,10 @@ fn hash(p: vec2<f32>) -> f32 {
 fn hash2_fog(p: vec2<f32>) -> vec2<f32> {
     let x = sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.5453123;
     let y = sin(dot(p, vec2<f32>(269.5, 183.3))) * 43758.5453123;
-    return vec2<f32>(fract(x), fract(y)) * 2.0 - 1.0;
+    let rx = fract(x) * 2.0 - 1.0;
+    let ry = fract(y) * 2.0 - 1.0;
+    let inv_len = inverseSqrt(rx * rx + ry * ry + 0.00001);
+    return vec2<f32>(rx * inv_len, ry * inv_len);
 }
 
 fn noise2d_fog(p: vec2<f32>) -> f32 {
@@ -264,24 +267,32 @@ fn noise2d_fog(p: vec2<f32>) -> f32 {
 
     let a = v00 + (v10 - v00) * u.x;
     let b = v01 + (v11 - v01) * u.x;
-    return (a + (b - a) * u.y) * 0.5 + 0.5;
+    return (a + (b - a) * u.y) * 1.414;
 }
 
-fn fbm_fog(p: vec2<f32>, time: f32) -> f32 {
+fn fbm_fog(p: vec2<f32>, time: f32, octaves: i32) -> f32 {
     var val = 0.0;
-    var amp = 0.5;
+    var amp = 1.0;
+    var tot = 0.0;
     var pt = p;
-    for (var i = 0; i < 4; i = i + 1) {
-        let drift = vec2<f32>(
-            time * (0.04 + f32(i) * 0.01),
-            time * (0.03 - f32(i) * 0.008)
-        );
+    for (var i = 0; i < octaves; i = i + 1) {
+        var drift = vec2<f32>(0.0, 0.0);
+        if (i == 0) {
+            drift = vec2<f32>(time * 0.040, time * 0.018);
+        } else if (i == 1) {
+            drift = vec2<f32>(-time * 0.025, time * 0.038);
+        } else if (i == 2) {
+            drift = vec2<f32>(time * 0.050, -time * 0.022);
+        } else {
+            drift = vec2<f32>(-time * 0.035, -time * 0.030);
+        }
+
         val += amp * noise2d_fog(pt + drift);
-        // Rotate ~30 deg and scale by 2.02 to eliminate axis-aligned artifacts across octaves
-        pt = vec2<f32>(pt.x * 0.866 - pt.y * 0.5, pt.x * 0.5 + pt.y * 0.866) * 2.02 + vec2<f32>(10.5, 10.5);
+        tot += amp;
+        pt = vec2<f32>(pt.x * 0.866 - pt.y * 0.5, pt.x * 0.5 + pt.y * 0.866) * 2.02 + vec2<f32>(3.1, 7.3);
         amp *= 0.5;
     }
-    return val;
+    return val / tot;
 }
 
 @fragment
@@ -430,32 +441,32 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         rgb = base_color.rgb;
     }
 
-    // 3. Volumetric Fog filter (atmospheric rolling mist with transparent clearings)
+    // 3. Volumetric Rolling Fog filter (atmospheric billowing mist with transparent clearings)
     if (uniforms.fog_enabled > 0.5) {
-        let fog_uv = fog_base_uv * (uniforms.resolution / 550.0);
-        let shadow_color = vec3<f32>(0.24, 0.28, 0.35);
-        let light_color = vec3<f32>(0.75, 0.80, 0.86);
-        let fog_intensity = 0.35;
+        let aspect = max(uniforms.resolution.x / max(uniforms.resolution.y, 1.0), 0.1);
+        let cloud_scale = 2.4;
+        let c = vec2<f32>(fog_base_uv.x * cloud_scale, fog_base_uv.y * (cloud_scale / aspect));
 
-        // 2-step domain warp for organic swirling billows
+        // Dynamic domain warp: evolving wind swirls that morph and roll the cloud banks
         let q = vec2<f32>(
-            fbm_fog(fog_uv * 1.0 + vec2<f32>(uniforms.time * 0.05, uniforms.time * 0.03), uniforms.time),
-            fbm_fog(fog_uv * 1.0 + vec2<f32>(-uniforms.time * 0.04, uniforms.time * 0.06), uniforms.time)
+            fbm_fog(c * 1.1 + vec2<f32>(1.5, 2.8), uniforms.time * 0.8, 3),
+            fbm_fog(c * 1.1 + vec2<f32>(7.2, 4.9), uniforms.time * 0.8, 3)
         );
+        let warp_amt = 0.65;
 
-        let r = vec2<f32>(
-            fbm_fog(fog_uv * 1.2 + q * 1.2 + vec2<f32>(uniforms.time * 0.03, -uniforms.time * 0.04), uniforms.time),
-            fbm_fog(fog_uv * 1.2 + q * 1.2 + vec2<f32>(-uniforms.time * 0.05, uniforms.time * 0.03), uniforms.time)
-        );
+        // Main rolling cloud field: warped coordinates + multi-directional churning FBM
+        let f = fbm_fog(c + q * warp_amt, uniforms.time, 4);
 
-        let f = fbm_fog(fog_uv * 1.4 + r * 1.0, uniforms.time);
+        // Balanced clumpiness: smoothstep with generous clear areas and round puffy volumes
+        let density = smoothstep(-0.05, 0.40, f);
 
-        // Smooth density ramp for realistic volumetric falloff
-        let density = smoothstep(0.25, 0.75, f);
+        // Realistic cloud shading: clean white mist with soft sky-scattering ambient shadow in dense cores
+        let shadow_color = vec3<f32>(0.62, 0.68, 0.76);
+        let light_color = vec3<f32>(0.96, 0.98, 1.0);
+        let cloud_color = mix(shadow_color, light_color, density * 0.35 + 0.65);
 
-        let fog_color = mix(shadow_color, light_color, density);
-        let final_fog = density * fog_intensity;
-        rgb = mix(rgb, fog_color, final_fog);
+        let final_fog = density * 0.50;
+        rgb = mix(rgb, cloud_color, final_fog);
     }
 
     return vec4<f32>(clamp(rgb, vec3<f32>(0.0), vec3<f32>(1.0)), uniforms.opacity);
