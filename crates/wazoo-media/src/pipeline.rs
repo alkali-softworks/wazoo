@@ -240,52 +240,60 @@ fn hash(p: vec2<f32>) -> f32 {
     return fract(sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.5453123);
 }
 
-fn hash_fog(p_in: vec2<f32>) -> f32 {
-    var p = fract(p_in * vec2<f32>(5.3983, 5.4427));
-    p += vec2<f32>(dot(p.yx, p + vec2<f32>(19.19, 19.19)));
-    return fract(p.x * p.y);
+fn hash2_fog(p: vec2<f32>) -> vec2<f32> {
+    let x = sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.5453123;
+    let y = sin(dot(p, vec2<f32>(269.5, 183.3))) * 43758.5453123;
+    return vec2<f32>(fract(x), fract(y)) * 2.0 - 1.0;
 }
 
-fn noise2d_fog(p_in: vec2<f32>) -> f32 {
-    var p = p_in + vec2<f32>(8192.0, 8192.0);
-    var i = floor(p);
-    var f = fract(p);
-    var u = f * f * (3.0 - 2.0 * f);
+fn noise2d_fog(p: vec2<f32>) -> f32 {
+    let i = floor(p);
+    let f = fract(p);
+    // Quintic Hermite interpolation curve for seamless C2 continuity (eliminates grid seams and blockiness)
+    let u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
 
-    var a = hash_fog(i);
-    var b = hash_fog(i + vec2<f32>(1.0, 0.0));
-    var c = hash_fog(i + vec2<f32>(0.0, 1.0));
-    var d = hash_fog(i + vec2<f32>(1.0, 1.0));
+    let g00 = hash2_fog(i);
+    let g10 = hash2_fog(i + vec2<f32>(1.0, 0.0));
+    let g01 = hash2_fog(i + vec2<f32>(0.0, 1.0));
+    let g11 = hash2_fog(i + vec2<f32>(1.0, 1.0));
 
-    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+    let v00 = dot(g00, f);
+    let v10 = dot(g10, f - vec2<f32>(1.0, 0.0));
+    let v01 = dot(g01, f - vec2<f32>(0.0, 1.0));
+    let v11 = dot(g11, f - vec2<f32>(1.0, 1.0));
+
+    let a = v00 + (v10 - v00) * u.x;
+    let b = v01 + (v11 - v01) * u.x;
+    return (a + (b - a) * u.y) * 0.5 + 0.5;
 }
 
-fn fbm_fog(uv: vec2<f32>, time: f32) -> f32 {
-    var value = 0.0;
-    var amplitude = 0.5;
-    var frequency = 1.0;
-    var drift1 = vec2<f32>(time * 0.04, time * 0.02);
-    var drift2 = vec2<f32>(-time * 0.03, time * 0.05);
-    var drift3 = vec2<f32>(time * 0.06, -time * 0.04);
-
-    value += amplitude * noise2d_fog(uv * frequency + drift1);
-    frequency *= 2.0;
-    amplitude *= 0.5;
-    value += amplitude * noise2d_fog(uv * frequency + drift2);
-    frequency *= 2.0;
-    amplitude *= 0.5;
-    value += amplitude * noise2d_fog(uv * frequency + drift3);
-    return value;
+fn fbm_fog(p: vec2<f32>, time: f32) -> f32 {
+    var val = 0.0;
+    var amp = 0.5;
+    var pt = p;
+    for (var i = 0; i < 4; i = i + 1) {
+        let drift = vec2<f32>(
+            time * (0.04 + f32(i) * 0.01),
+            time * (0.03 - f32(i) * 0.008)
+        );
+        val += amp * noise2d_fog(pt + drift);
+        // Rotate ~30 deg and scale by 2.02 to eliminate axis-aligned artifacts across octaves
+        pt = vec2<f32>(pt.x * 0.866 - pt.y * 0.5, pt.x * 0.5 + pt.y * 0.866) * 2.02 + vec2<f32>(10.5, 10.5);
+        amp *= 0.5;
+    }
+    return val;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     var base_color: vec4<f32>;
     var rgb: vec3<f32>;
+    var fog_base_uv: vec2<f32> = in.uv;
 
     // 1. CRT filter (curvature, tracking distortion, chromatic aberration, scanlines)
     if (uniforms.crt_enabled > 0.5) {
         let curved_uv = curve(in.uv, uniforms.crt_curvature);
+        fog_base_uv = curved_uv;
 
         // Strict letterbox / pillarbox check for CRT mode
         if curved_uv.x < 0.0 || curved_uv.x > 1.0 || curved_uv.y < 0.0 || curved_uv.y > 1.0 {
@@ -424,36 +432,29 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     // 3. Volumetric Fog filter (atmospheric rolling mist with transparent clearings)
     if (uniforms.fog_enabled > 0.5) {
-        let fog_uv = in.uv * (uniforms.resolution / 750.0);
+        let fog_uv = fog_base_uv * (uniforms.resolution / 550.0);
         let shadow_color = vec3<f32>(0.24, 0.28, 0.35);
-        let light_color = vec3<f32>(0.72, 0.76, 0.82);
-        let fog_intensity = 0.28;
+        let light_color = vec3<f32>(0.75, 0.80, 0.86);
+        let fog_intensity = 0.35;
 
-        var q = vec2<f32>(
-            fbm_fog(fog_uv * 1.8 + vec2<f32>(uniforms.time * 0.08, uniforms.time * 0.05), uniforms.time),
-            fbm_fog(fog_uv * 1.8 + vec2<f32>(-uniforms.time * 0.06, uniforms.time * 0.10), uniforms.time)
+        // 2-step domain warp for organic swirling billows
+        let q = vec2<f32>(
+            fbm_fog(fog_uv * 1.0 + vec2<f32>(uniforms.time * 0.05, uniforms.time * 0.03), uniforms.time),
+            fbm_fog(fog_uv * 1.0 + vec2<f32>(-uniforms.time * 0.04, uniforms.time * 0.06), uniforms.time)
         );
 
-        var r = vec2<f32>(
-            fbm_fog(fog_uv * 2.5 + q * 1.8 + vec2<f32>(uniforms.time * 0.07, -uniforms.time * 0.05), uniforms.time),
-            fbm_fog(fog_uv * 2.5 + q * 2.2 + vec2<f32>(-uniforms.time * 0.08, uniforms.time * 0.09), uniforms.time)
+        let r = vec2<f32>(
+            fbm_fog(fog_uv * 1.2 + q * 1.2 + vec2<f32>(uniforms.time * 0.03, -uniforms.time * 0.04), uniforms.time),
+            fbm_fog(fog_uv * 1.2 + q * 1.2 + vec2<f32>(-uniforms.time * 0.05, uniforms.time * 0.03), uniforms.time)
         );
 
-        var f = fbm_fog(fog_uv * 2.0 + r * 2.2, uniforms.time);
-        var ridged_fog = 1.0 - abs(f - 0.5) * 2.0;
-        var combined = mix(f, ridged_fog, 0.30);
-        var density = smoothstep(0.42, 0.82, combined);
+        let f = fbm_fog(fog_uv * 1.4 + r * 1.0, uniforms.time);
 
-        var eps = 0.018;
-        var f_offset = fbm_fog((fog_uv + vec2<f32>(eps, eps)) * 2.0 + r * 2.2, uniforms.time);
-        var diff = clamp(f - f_offset, 0.0, 1.0);
+        // Smooth density ramp for realistic volumetric falloff
+        let density = smoothstep(0.25, 0.75, f);
 
-        var fog_color = mix(shadow_color, light_color, density);
-        var edge_highlight = smoothstep(0.1, 0.5, density) * (1.0 - smoothstep(0.4, 0.8, density));
-        edge_highlight *= diff * 3.5;
-        fog_color += vec3<f32>(0.35, 0.42, 0.52) * edge_highlight;
-
-        var final_fog = density * fog_intensity;
+        let fog_color = mix(shadow_color, light_color, density);
+        let final_fog = density * fog_intensity;
         rgb = mix(rgb, fog_color, final_fog);
     }
 
