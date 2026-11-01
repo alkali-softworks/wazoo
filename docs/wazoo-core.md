@@ -95,6 +95,7 @@ All incoming values are clamped to safe ranges on load and save:
 - `playback_speed`: `0.25..=4.0` (default: `1.0`)
 - `cube_speed`: `0.2..=4.0` (default: `1.0`)
 - `cube_size`: `0.4..=3.0` (default: `1.0`)
+- `crt`: `CrtSettings` with scanline darkness (`0.0..=1.0`), density (`50..=2000`), speed (`0.0..=20.0`), curvature (`0.0..=1.0`), gamma (`0.2..=3.0`), saturation (`0.0..=3.0`), brightness (`0.2..=3.0`), vignette (`0.0..=1.0`), chromatic aberration (`0.0..=1.0`), noise (`0.0..=1.0`), and corner rounding (`0.0..=1.0`).
 - `keybinds`: Automatically reconciles with complete defaults via `reconcile_with_defaults()` if keys are missing from older config versions.
 
 ---

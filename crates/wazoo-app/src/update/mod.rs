@@ -255,6 +255,19 @@ impl WazooApp {
             | Message::SetFiltersEnabled(_)
             | Message::ToggleCrtFilter
             | Message::SetCrtFilter(_)
+            | Message::SetCrtScanlineDarkness(_)
+            | Message::SetCrtScanlineDensity(_)
+            | Message::SetCrtScanlineSpeed(_)
+            | Message::SetCrtCurvature(_)
+            | Message::SetCrtGamma(_)
+            | Message::SetCrtSaturation(_)
+            | Message::SetCrtBrightness(_)
+            | Message::SetCrtVignette(_)
+            | Message::SetCrtChromaticAberration(_)
+            | Message::SetCrtNoise(_)
+            | Message::SetCrtCornerRounding(_)
+            | Message::ApplyCrtPreset(_)
+            | Message::ResetCrtSettings
             | Message::ToggleWavyFilter
             | Message::SetWavyFilter(_)
             | Message::ToggleFogFilter

@@ -677,6 +677,60 @@ fn test_settings_modal_tabs_and_playback_options() {
     assert!(!app.settings.filters_enabled);
     assert!(!app.settings.crt_enabled);
 
+    // Switch to CRT tab (Configurable CRT Shader Parameters)
+    let _ = app.update(Message::SetSettingsTab(SettingsTab::Crt));
+    assert_eq!(app.modals.settings_tab, SettingsTab::Crt);
+    {
+        let _view_crt = app.view_settings_modal();
+    }
+
+    // Configure CRT parameters
+    let _ = app.update(Message::SetCrtScanlineDarkness(0.40));
+    assert_eq!(app.settings.crt.scanline_darkness, 0.40);
+    let _ = app.update(Message::SetCrtScanlineDensity(750.0));
+    assert_eq!(app.settings.crt.scanline_density, 750.0);
+    let _ = app.update(Message::SetCrtScanlineSpeed(2.5));
+    assert_eq!(app.settings.crt.scanline_speed, 2.5);
+
+    // CRT Gamma & Saturation compensation
+    let _ = app.update(Message::SetCrtGamma(1.35));
+    assert_eq!(app.settings.crt.gamma, 1.35);
+    let _ = app.update(Message::SetCrtSaturation(1.40));
+    assert_eq!(app.settings.crt.saturation, 1.40);
+    let _ = app.update(Message::SetCrtBrightness(1.10));
+    assert_eq!(app.settings.crt.brightness, 1.10);
+
+    // Geometry & artifacts
+    let _ = app.update(Message::SetCrtCurvature(0.25));
+    assert_eq!(app.settings.crt.curvature, 0.25);
+    let _ = app.update(Message::SetCrtCornerRounding(0.60));
+    assert_eq!(app.settings.crt.corner_rounding, 0.60);
+    let _ = app.update(Message::SetCrtVignette(0.30));
+    assert_eq!(app.settings.crt.vignette, 0.30);
+    let _ = app.update(Message::SetCrtChromaticAberration(0.35));
+    assert_eq!(app.settings.crt.chromatic_aberration, 0.35);
+    let _ = app.update(Message::SetCrtNoise(0.15));
+    assert_eq!(app.settings.crt.noise, 0.15);
+
+    {
+        let _view_crt_configured = app.view_settings_modal();
+    }
+
+    // Apply preset
+    let _ = app.update(Message::ApplyCrtPreset(wazoo_core::CrtPreset::WarmPhosphor));
+    assert_eq!(app.settings.crt.gamma, 1.25);
+    assert_eq!(app.settings.crt.saturation, 1.20);
+    assert_eq!(app.settings.crt.scanline_darkness, 0.15);
+    {
+        let _view_crt_preset = app.view_settings_modal();
+    }
+
+    // Reset CRT settings
+    let _ = app.update(Message::ResetCrtSettings);
+    assert_eq!(app.settings.crt.scanline_darkness, 0.20);
+    assert_eq!(app.settings.crt.gamma, 1.00);
+    assert_eq!(app.settings.crt.saturation, 1.00);
+
     // Switch to System tab (Window Opacity & Default Player)
     let _ = app.update(Message::SetSettingsTab(SettingsTab::System));
     assert_eq!(app.modals.settings_tab, SettingsTab::System);
