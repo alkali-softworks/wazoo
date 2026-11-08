@@ -72,6 +72,7 @@ pub struct PlexSettings {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum PlexExplorerTab {
+    All,
     RecentlyAdded,
     OnDeck,
     TopRated,
@@ -82,7 +83,7 @@ pub enum PlexExplorerTab {
 
 impl Default for PlexExplorerTab {
     fn default() -> Self {
-        Self::RecentlyAdded
+        Self::All
     }
 }
 

@@ -64,6 +64,10 @@ impl WazooApp {
         // 2. Primary Preset Tabs Bar
         let tabs = [
             (
+                PlexExplorerTab::All,
+                "All",
+            ),
+            (
                 PlexExplorerTab::RecentlyAdded,
                 "Recently Added",
             ),
@@ -431,20 +435,20 @@ impl WazooApp {
                 .into()
         };
 
-        let card = container(
-            column![
-                header_row,
-                tab_row,
-                genre_row,
-                decade_row,
-                search_bar,
-                content_element
-            ]
-            .spacing(10)
-            .width(Length::Fixed(900.0)),
-        )
-        .padding(20)
-        .style(theme::modal_card_style);
+        let show_filters = !matches!(
+            active_tab,
+            PlexExplorerTab::RecentlyAdded | PlexExplorerTab::OnDeck
+        );
+
+        let mut card_col = column![header_row, tab_row].spacing(10);
+        if show_filters {
+            card_col = card_col.push(genre_row).push(decade_row);
+        }
+        card_col = card_col.push(search_bar).push(content_element);
+
+        let card = container(card_col.width(Length::Fixed(900.0)))
+            .padding(20)
+            .style(theme::modal_card_style);
 
         Self::wrap_modal_with_backdrop(card, Message::ClosePlexExplorerModal)
     }

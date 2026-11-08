@@ -2357,14 +2357,17 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     assert!(!app.modals.plex_explorer);
     assert!(!app.modals.is_any_open());
 
-    // 1. Press 'e' key to open Plex Explorer modal
+    // 1. Press 'e' key to open Plex Explorer modal (defaults to 'All')
     let _ = app.update(Message::KeyPressed(
         iced::keyboard::Key::Character("e".into()),
         iced::event::Status::Ignored,
     ));
     assert!(app.modals.plex_explorer);
     assert!(app.modals.is_any_open());
+    assert_eq!(app.modals.plex_explorer_tab, wazoo_core::PlexExplorerTab::All);
     assert_eq!(app.modals.plex_explorer_search, "");
+    let all_items = app.plex_explorer_items();
+    assert_eq!(all_items.len(), 3);
 
     // 2. Tab switching: Top Rated
     let _ = app.update(Message::PlexExplorerSelectTab(
@@ -2418,10 +2421,20 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     assert!(!app.modals.plex_explorer);
     assert_eq!(app.players[0].state.path, p3);
 
-    // 8. Verify view rendering with both Genre and Decade active
+    // 8. Verify view rendering across All, Recently Added, and On Deck
     app.modals.plex_explorer = true;
     app.modals.plex_explorer_genre = Some("Horror".to_string());
     app.modals.plex_explorer_decade = Some(1980);
+    app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::All;
+    {
+        let _el = app.view_plex_explorer_modal();
+    }
+    // On RecentlyAdded or OnDeck, genre/decade filters are omitted
+    app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::RecentlyAdded;
+    {
+        let _el = app.view_plex_explorer_modal();
+    }
+    app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::OnDeck;
     {
         let _el = app.view_plex_explorer_modal();
     }
