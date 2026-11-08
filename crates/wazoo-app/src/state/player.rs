@@ -91,26 +91,9 @@ impl AppPlayer {
 
     /// Creates a new `AppPlayer` for the independent 3D cube.
     pub fn new_cube(handle: VideoHandle, shuffle: bool) -> Self {
-        Self {
-            handle,
-            shuffle,
-            nav_history: PlayerNavHistory::default(),
-            is_loading: false,
-            loading_alive: Arc::new(AtomicBool::new(false)),
-            loading_ticks: 0,
-            flip: crate::state::FlipState::new(wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS),
-            is_cube: true,
-            was_paused_before_desktop: false,
-            seek_debounce: None,
-            last_aspect_ratio: None,
-            static_frame: Arc::new(std::sync::Mutex::new(wazoo_media::pipeline::FrameData {
-                width: 0,
-                height: 0,
-                pixels: Vec::new(),
-                new_frame: false,
-                frame_seq: 0,
-            })),
-        }
+        let mut player = Self::new(handle, shuffle);
+        player.is_cube = true;
+        player
     }
 
     /// Returns the aspect ratio of the active or most recently played video.
@@ -122,8 +105,10 @@ impl AppPlayer {
     /// Marks this player as loading and blanks its frame to solid black while preserving previous aspect ratio.
     #[inline]
     pub fn start_loading(&mut self) {
-        if let Some(ar) = self.handle.aspect_ratio() {
-            self.last_aspect_ratio = Some(ar);
+        if !self.is_cube {
+            if let Some(ar) = self.handle.aspect_ratio() {
+                self.last_aspect_ratio = Some(ar);
+            }
         }
         self.is_loading = true;
         self.loading_alive.store(true, Ordering::SeqCst);

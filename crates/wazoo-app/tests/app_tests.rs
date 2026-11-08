@@ -2688,6 +2688,33 @@ fn test_tv_static_crops_to_previous_video_aspect_ratio() {
     assert_eq!(p_frame.height, 281);
     let static_ar = p_frame.width as f32 / p_frame.height as f32;
     assert!((static_ar - (16.0 / 9.0)).abs() < 0.01);
+    drop(p_frame);
+
+    // 5. Verify multi-player independence (Player 0 is 16:9, Player 1 is 4:3)
+    let f2 = temp_dir.join("test2.mp4");
+    let _ = std::fs::File::create(&f2);
+    let p2 = f2.to_string_lossy().to_string();
+    let v2 = wazoo_core::VideoRecord::new(2, "test2", &p2);
+    app.available_videos.push(v2);
+
+    let _ = app.update(Message::SetPlayerCount(2));
+    assert_eq!(app.players.len(), 2);
+
+    app.players[0].last_aspect_ratio = Some(16.0 / 9.0);
+    app.players[0].start_loading();
+
+    app.players[1].last_aspect_ratio = Some(4.0 / 3.0);
+    app.players[1].start_loading();
+
+    app.update_static_frame();
+
+    let frame0 = app.players[0].static_frame.lock().unwrap();
+    assert_eq!(frame0.width, 500);
+    assert_eq!(frame0.height, 281);
+
+    let frame1 = app.players[1].static_frame.lock().unwrap();
+    assert_eq!(frame1.width, 500);
+    assert_eq!(frame1.height, 375);
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }

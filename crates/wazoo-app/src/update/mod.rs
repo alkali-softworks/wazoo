@@ -453,15 +453,8 @@ impl WazooApp {
                 if p.is_cube {
                     if p.update_frame() {
                         p.stop_loading();
-                        if let Some(ar) = p.handle.aspect_ratio() {
-                            p.last_aspect_ratio = Some(ar);
-                        }
                     } else if p.is_failed() {
                         p.stop_loading();
-                    } else if !p.is_loading {
-                        if let Some(ar) = p.handle.aspect_ratio() {
-                            p.last_aspect_ratio = Some(ar);
-                        }
                     }
                 }
             }
@@ -512,7 +505,7 @@ impl WazooApp {
         }
 
         let is_needed = self.settings.loading_indicator == wazoo_core::LoadingIndicator::TvStatic
-            && self.players.iter().any(|p| p.is_loading);
+            && self.players.iter().any(|p| !p.is_cube && p.is_loading);
 
         if !is_needed {
             return;
@@ -530,19 +523,19 @@ impl WazooApp {
         let raw = &self.raw_static_frames[frame_idx];
 
         for p in self.players.iter_mut() {
-            if p.is_loading {
+            if !p.is_cube && p.is_loading {
                 let target_aspect = p.aspect_ratio().unwrap_or(16.0 / 9.0);
                 if let Ok(mut guard) = p.static_frame.lock() {
-                    if is_new_gif_frame || guard.width == 0 {
+                    let current_aspect = if guard.height > 0 {
+                        guard.width as f32 / guard.height as f32
+                    } else {
+                        0.0
+                    };
+                    let aspect_diff = (current_aspect - target_aspect).abs();
+                    if is_new_gif_frame || guard.width == 0 || aspect_diff > 0.02 {
                         Self::crop_static_frame(raw, target_aspect, &mut guard);
                     }
                 }
-            }
-        }
-
-        if is_new_gif_frame {
-            if let Ok(mut guard) = self.static_frame.lock() {
-                Self::crop_static_frame(raw, 16.0 / 9.0, &mut guard);
             }
         }
     }
