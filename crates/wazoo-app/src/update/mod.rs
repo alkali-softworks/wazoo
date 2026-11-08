@@ -145,6 +145,7 @@ impl WazooApp {
                         }
                         let _ = self.advance_player_to_next_video(id, false);
                     }
+                    self.update_static_frame();
                 }
 
                 // Persist active video paths and playhead positions periodically
@@ -452,8 +453,15 @@ impl WazooApp {
                 if p.is_cube {
                     if p.update_frame() {
                         p.stop_loading();
+                        if let Some(ar) = p.handle.aspect_ratio() {
+                            p.last_aspect_ratio = Some(ar);
+                        }
                     } else if p.is_failed() {
                         p.stop_loading();
+                    } else if !p.is_loading {
+                        if let Some(ar) = p.handle.aspect_ratio() {
+                            p.last_aspect_ratio = Some(ar);
+                        }
                     }
                 }
             }
@@ -463,8 +471,15 @@ impl WazooApp {
         for p in &mut self.players {
             if p.update_frame() {
                 p.stop_loading();
+                if let Some(ar) = p.handle.aspect_ratio() {
+                    p.last_aspect_ratio = Some(ar);
+                }
             } else if p.is_failed() {
                 p.stop_loading();
+            } else if !p.is_loading {
+                if let Some(ar) = p.handle.aspect_ratio() {
+                    p.last_aspect_ratio = Some(ar);
+                }
             }
         }
     }
@@ -489,7 +504,9 @@ impl WazooApp {
     }
 
     /// Advances the animated TV static noise texture if any active player is currently loading.
-    fn update_static_frame(&mut self) {
+    /// Cropped to match the dimensions and aspect ratio of the player's previous video so
+    /// it displays seamlessly with identical letterboxing/pillarboxing and zero distortion.
+    pub fn update_static_frame(&mut self) {
         if self.raw_static_frames.is_empty() {
             return;
         }
@@ -505,19 +522,83 @@ impl WazooApp {
             .overlay
             .color_static_frame_index(self.raw_static_frames.len());
 
-        if frame_idx != self.last_static_frame_idx {
+        let is_new_gif_frame = frame_idx != self.last_static_frame_idx;
+        if is_new_gif_frame {
             self.last_static_frame_idx = frame_idx;
-            let raw = &self.raw_static_frames[frame_idx];
-            if let Ok(mut guard) = self.static_frame.lock() {
-                guard.width = raw.width;
-                guard.height = raw.height;
-                if guard.pixels.len() != raw.pixels.len() {
-                    guard.pixels.resize(raw.pixels.len(), 0);
+        }
+
+        let raw = &self.raw_static_frames[frame_idx];
+
+        for p in self.players.iter_mut() {
+            if p.is_loading {
+                let target_aspect = p.aspect_ratio().unwrap_or(16.0 / 9.0);
+                if let Ok(mut guard) = p.static_frame.lock() {
+                    if is_new_gif_frame || guard.width == 0 {
+                        Self::crop_static_frame(raw, target_aspect, &mut guard);
+                    }
                 }
-                guard.pixels.copy_from_slice(&raw.pixels);
-                guard.new_frame = true;
-                guard.frame_seq = guard.frame_seq.wrapping_add(1);
             }
         }
+
+        if is_new_gif_frame {
+            if let Ok(mut guard) = self.static_frame.lock() {
+                Self::crop_static_frame(raw, 16.0 / 9.0, &mut guard);
+            }
+        }
+    }
+
+    /// Crops the raw 4:3 static noise texture to match a target video aspect ratio.
+    /// Centered crop preserves texture pixel squareness without stretching or distortion.
+    pub fn crop_static_frame(
+        raw: &crate::assets::RawStaticFrame,
+        target_aspect: f32,
+        guard: &mut wazoo_media::pipeline::FrameData,
+    ) {
+        let w = raw.width;
+        let h = raw.height;
+        if w == 0 || h == 0 || raw.pixels.is_empty() {
+            return;
+        }
+
+        let raw_aspect = w as f32 / h as f32;
+        let (crop_w, crop_h, start_x, start_y) = if target_aspect >= raw_aspect {
+            // Target is wider than or equal to raw (e.g. 16:9 vs 4:3)
+            // Full width, crop top and bottom
+            let ch = ((w as f32 / target_aspect).round() as u32).clamp(2, h);
+            let sy = (h - ch) / 2;
+            (w, ch, 0, sy)
+        } else {
+            // Target is taller than raw (e.g. 1:1 or 9:16 vertical vs 4:3)
+            // Full height, crop left and right
+            let cw = ((h as f32 * target_aspect).round() as u32).clamp(2, w);
+            let sx = (w - cw) / 2;
+            (cw, h, sx, 0)
+        };
+
+        guard.width = crop_w;
+        guard.height = crop_h;
+
+        let total_bytes = (crop_w * crop_h * 4) as usize;
+        if guard.pixels.len() != total_bytes {
+            guard.pixels.resize(total_bytes, 0);
+        }
+
+        let src_stride = (w * 4) as usize;
+        let row_bytes = (crop_w * 4) as usize;
+        let src_start_offset = (start_y * w + start_x) as usize * 4;
+
+        for row in 0..crop_h as usize {
+            let src_start = src_start_offset + row * src_stride;
+            let src_end = src_start + row_bytes;
+            let dest_start = row * row_bytes;
+            let dest_end = dest_start + row_bytes;
+            if src_end <= raw.pixels.len() && dest_end <= guard.pixels.len() {
+                guard.pixels[dest_start..dest_end]
+                    .copy_from_slice(&raw.pixels[src_start..src_end]);
+            }
+        }
+
+        guard.new_frame = true;
+        guard.frame_seq = guard.frame_seq.wrapping_add(1);
     }
 }

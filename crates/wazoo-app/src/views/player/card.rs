@@ -50,10 +50,10 @@ impl WazooApp {
                 let static_id = 0x8000_0000_0000_0000u64 | (player_id as u64);
                 let program = wazoo_media::pipeline::VideoProgram::new_full(
                     static_id,
-                    std::sync::Arc::clone(&self.static_frame),
+                    std::sync::Arc::clone(&p.static_frame),
                     std::sync::Arc::clone(&p.loading_alive),
                     opacity,
-                    true,
+                    is_scroll_mode,
                     crt,
                     wavy,
                     fog,

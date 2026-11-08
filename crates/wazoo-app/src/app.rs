@@ -1802,6 +1802,7 @@ impl WazooApp {
                         player.start_loading();
                         self.push_player_nav_entry(id, video_rec.path.clone(), None);
                         self.players.push(player);
+                        self.update_static_frame();
                         return Some(id);
                     }
                     Err(err) => {
@@ -2011,6 +2012,7 @@ impl WazooApp {
                 if let Some(p) = self.players.player_mut(id) {
                     p.start_loading();
                 }
+                self.update_static_frame();
 
                 if let Ok(mut new_handle) = self.create_video_handle(id, &rec_path, &rec_name) {
                     new_handle.set_muted(prev_muted);

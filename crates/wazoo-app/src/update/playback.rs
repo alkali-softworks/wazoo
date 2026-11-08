@@ -962,6 +962,7 @@ impl WazooApp {
                         p.start_loading();
                         p.nav_history.forward_stack.clear();
                     }
+                    self.update_static_frame();
                     self.record_current_player_nav_position(id);
                     let title = format::format_video_title(&b.path);
                     let curr_player = self.players.player(id);

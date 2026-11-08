@@ -56,6 +56,10 @@ pub struct AppPlayer {
     pub was_paused_before_desktop: bool,
     /// Debounced relative seek state (accumulated delta and target position)
     pub seek_debounce: Option<SeekDebounce>,
+    /// Remembers the aspect ratio of the last successfully playing video so loaders/overlays preserve framing.
+    pub last_aspect_ratio: Option<f32>,
+    /// Player-specific frame buffer for animated loading indicators (e.g. TV static).
+    pub static_frame: Arc<std::sync::Mutex<wazoo_media::pipeline::FrameData>>,
 }
 
 pub type Player = AppPlayer;
@@ -74,6 +78,14 @@ impl AppPlayer {
             is_cube: false,
             was_paused_before_desktop: false,
             seek_debounce: None,
+            last_aspect_ratio: None,
+            static_frame: Arc::new(std::sync::Mutex::new(wazoo_media::pipeline::FrameData {
+                width: 0,
+                height: 0,
+                pixels: Vec::new(),
+                new_frame: false,
+                frame_seq: 0,
+            })),
         }
     }
 
@@ -90,12 +102,29 @@ impl AppPlayer {
             is_cube: true,
             was_paused_before_desktop: false,
             seek_debounce: None,
+            last_aspect_ratio: None,
+            static_frame: Arc::new(std::sync::Mutex::new(wazoo_media::pipeline::FrameData {
+                width: 0,
+                height: 0,
+                pixels: Vec::new(),
+                new_frame: false,
+                frame_seq: 0,
+            })),
         }
     }
 
-    /// Marks this player as loading and blanks its frame to solid black.
+    /// Returns the aspect ratio of the active or most recently played video.
+    #[inline]
+    pub fn aspect_ratio(&self) -> Option<f32> {
+        self.handle.aspect_ratio().or(self.last_aspect_ratio)
+    }
+
+    /// Marks this player as loading and blanks its frame to solid black while preserving previous aspect ratio.
     #[inline]
     pub fn start_loading(&mut self) {
+        if let Some(ar) = self.handle.aspect_ratio() {
+            self.last_aspect_ratio = Some(ar);
+        }
         self.is_loading = true;
         self.loading_alive.store(true, Ordering::SeqCst);
         self.loading_ticks = 0;
