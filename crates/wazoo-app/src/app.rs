@@ -1054,15 +1054,27 @@ impl WazooApp {
         }
     }
 
+    pub(crate) fn genre_matches(filter_genre: &str, item_genre: &str) -> bool {
+        let f = filter_genre.trim().to_lowercase();
+        let g = item_genre.trim().to_lowercase();
+        if f == "sci-fi" || f == "scifi" || f == "science fiction" {
+            g.contains("science fiction") || g.contains("sci-fi") || g.contains("scifi")
+        } else if f == "animation" || f == "anime" {
+            g.contains("animation") || g.contains("anime")
+        } else {
+            g.contains(&f)
+        }
+    }
+
     pub fn plex_explorer_items(&self) -> Vec<wazoo_core::PlexExplorerItem> {
-        let is_small_list_tab = matches!(
+        let is_filterable_tab = matches!(
             self.modals.plex_explorer_tab,
-            wazoo_core::PlexExplorerTab::RecentlyAdded | wazoo_core::PlexExplorerTab::OnDeck
+            wazoo_core::PlexExplorerTab::All
+                | wazoo_core::PlexExplorerTab::Decade(_)
+                | wazoo_core::PlexExplorerTab::Genre(_)
         );
 
-        let effective_decade = if is_small_list_tab {
-            None
-        } else {
+        let effective_decade = if is_filterable_tab {
             self.modals.plex_explorer_decade.or_else(|| {
                 if let wazoo_core::PlexExplorerTab::Decade(d) = self.modals.plex_explorer_tab {
                     Some(d)
@@ -1070,11 +1082,11 @@ impl WazooApp {
                     None
                 }
             })
+        } else {
+            None
         };
 
-        let effective_genre = if is_small_list_tab {
-            None
-        } else {
+        let effective_genre = if is_filterable_tab {
             self.modals.plex_explorer_genre.clone().or_else(|| {
                 if let wazoo_core::PlexExplorerTab::Genre(ref g) = self.modals.plex_explorer_tab {
                     Some(g.clone())
@@ -1082,6 +1094,8 @@ impl WazooApp {
                     None
                 }
             })
+        } else {
+            None
         };
 
         let raw_items = match &self.modals.plex_explorer_tab {
@@ -1139,11 +1153,10 @@ impl WazooApp {
                         }
 
                         if let Some(ref g) = effective_genre {
-                            let g_lower = g.to_lowercase();
                             if !meta
                                 .genres
                                 .iter()
-                                .any(|item_g| item_g.to_lowercase().contains(&g_lower))
+                                .any(|item_g| Self::genre_matches(g, item_g))
                             {
                                 return None;
                             }
@@ -1212,7 +1225,16 @@ impl WazooApp {
                     let summary = item.summary.as_deref().unwrap_or("").to_lowercase();
                     let directors = item.directors.join(" ").to_lowercase();
                     let actors = item.actors.join(" ").to_lowercase();
-                    let genres = item.genres.join(" ").to_lowercase();
+                    let genres = {
+                        let mut g_str = item.genres.join(" ").to_lowercase();
+                        if g_str.contains("science fiction") || g_str.contains("sci-fi") {
+                            g_str.push_str(" scifi sci-fi science fiction");
+                        }
+                        if g_str.contains("anime") || g_str.contains("animation") {
+                            g_str.push_str(" anime animation");
+                        }
+                        g_str
+                    };
                     let year_str = item.year.map(|y| y.to_string()).unwrap_or_default();
 
                     words.iter().all(|w| {
