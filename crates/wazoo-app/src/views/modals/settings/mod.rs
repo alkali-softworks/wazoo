@@ -34,85 +34,36 @@ impl WazooApp {
         let is_system = self.modals.settings_tab == SettingsTab::System;
 
         let tabs_bar = row![
-            button(
-                row![
-                    text("⚙").size(14),
-                    text(self.t("settings.tab_general")).size(13),
-                ]
-                .spacing(5)
-                .align_y(Alignment::Center),
-            )
-            .style(theme::settings_tab_button_style(is_general))
-            .on_press(Message::SetSettingsTab(SettingsTab::General))
-            .padding([7, 13]),
-            button(
-                row![
-                    text("▶").size(12),
-                    text(self.t("settings.tab_playback")).size(13),
-                ]
-                .spacing(5)
-                .align_y(Alignment::Center),
-            )
-            .style(theme::settings_tab_button_style(is_playback))
-            .on_press(Message::SetSettingsTab(SettingsTab::Playback))
-            .padding([7, 13]),
-            button(
-                row![
-                    text("✨").size(14),
-                    text(self.t("settings.tab_filters")).size(13),
-                ]
-                .spacing(5)
-                .align_y(Alignment::Center),
-            )
-            .style(theme::settings_tab_button_style(is_filters))
-            .on_press(Message::SetSettingsTab(SettingsTab::Filters))
-            .padding([7, 13]),
-            button(
-                row![
-                    text("📺").size(14),
-                    text(self.t("settings.tab_crt")).size(13),
-                ]
-                .spacing(5)
-                .align_y(Alignment::Center),
-            )
-            .style(theme::settings_tab_button_style(is_crt))
-            .on_press(Message::SetSettingsTab(SettingsTab::Crt))
-            .padding([7, 13]),
-            button(
-                row![
-                    text("🧊").size(14),
-                    text(self.t("settings.tab_cube")).size(13),
-                ]
-                .spacing(5)
-                .align_y(Alignment::Center),
-            )
-            .style(theme::settings_tab_button_style(is_cube))
-            .on_press(Message::SetSettingsTab(SettingsTab::Cube))
-            .padding([7, 13]),
-            button(
-                row![
-                    text("🍿").size(14),
-                    text(self.t("settings.tab_plex")).size(13),
-                ]
-                .spacing(5)
-                .align_y(Alignment::Center),
-            )
-            .style(theme::settings_tab_button_style(is_plex))
-            .on_press(Message::SetSettingsTab(SettingsTab::Plex))
-            .padding([7, 13]),
-            button(
-                row![
-                    text("💻").size(14),
-                    text(self.t("settings.tab_system")).size(13),
-                ]
-                .spacing(5)
-                .align_y(Alignment::Center),
-            )
-            .style(theme::settings_tab_button_style(is_system))
-            .on_press(Message::SetSettingsTab(SettingsTab::System))
-            .padding([7, 13]),
+            button(text(self.t("settings.tab_general")).size(13))
+                .style(theme::settings_tab_button_style(is_general))
+                .on_press(Message::SetSettingsTab(SettingsTab::General))
+                .padding([7, 12]),
+            button(text(self.t("settings.tab_playback")).size(13))
+                .style(theme::settings_tab_button_style(is_playback))
+                .on_press(Message::SetSettingsTab(SettingsTab::Playback))
+                .padding([7, 12]),
+            button(text(self.t("settings.tab_filters")).size(13))
+                .style(theme::settings_tab_button_style(is_filters))
+                .on_press(Message::SetSettingsTab(SettingsTab::Filters))
+                .padding([7, 12]),
+            button(text(self.t("settings.tab_crt")).size(13))
+                .style(theme::settings_tab_button_style(is_crt))
+                .on_press(Message::SetSettingsTab(SettingsTab::Crt))
+                .padding([7, 12]),
+            button(text(self.t("settings.tab_cube")).size(13))
+                .style(theme::settings_tab_button_style(is_cube))
+                .on_press(Message::SetSettingsTab(SettingsTab::Cube))
+                .padding([7, 12]),
+            button(text(self.t("settings.tab_plex")).size(13))
+                .style(theme::settings_tab_button_style(is_plex))
+                .on_press(Message::SetSettingsTab(SettingsTab::Plex))
+                .padding([7, 12]),
+            button(text(self.t("settings.tab_system")).size(13))
+                .style(theme::settings_tab_button_style(is_system))
+                .on_press(Message::SetSettingsTab(SettingsTab::System))
+                .padding([7, 12]),
         ]
-        .spacing(7)
+        .spacing(6)
         .align_y(Alignment::Center);
 
         let header = row![

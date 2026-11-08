@@ -24,7 +24,9 @@
     "exit_fullscreen": "خروج از تمام صفحه",
     "fit_window": "تنظیم اندازه پنجره",
     "click_through": "عبور کلیک",
-    "opacity": "شفافیت"
+    "opacity": "شفافیت",
+    "active": "فعال",
+    "off": "غیرفعال"
   },
   "app": {
     "drag_to_move": "برای جابجایی بکشید",

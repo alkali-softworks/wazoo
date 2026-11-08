@@ -24,7 +24,9 @@
     "exit_fullscreen": "Esci da schermo intero",
     "fit_window": "Adatta finestra",
     "click_through": "Clic attraverso",
-    "opacity": "Opacità"
+    "opacity": "Opacità",
+    "active": "Attivo",
+    "off": "Disattivo"
   },
   "app": {
     "drag_to_move": "Trascina per spostare",

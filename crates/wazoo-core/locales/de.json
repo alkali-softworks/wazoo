@@ -24,7 +24,9 @@
     "exit_fullscreen": "Vollbild beenden",
     "fit_window": "Fenster anpassen",
     "click_through": "Durchklicken",
-    "opacity": "Deckkraft"
+    "opacity": "Deckkraft",
+    "active": "Aktiv",
+    "off": "Aus"
   },
   "app": {
     "drag_to_move": "Zum Verschieben ziehen",
