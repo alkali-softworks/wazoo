@@ -1148,6 +1148,11 @@ impl WazooApp {
 
                         if let Some(dec) = effective_decade {
                             match meta.year {
+                                Some(y) if dec == 1920 => {
+                                    if y >= 1930 {
+                                        return None;
+                                    }
+                                }
                                 Some(y) if y >= dec && y < dec + 10 => {}
                                 _ => return None,
                             }
@@ -1242,7 +1247,14 @@ impl WazooApp {
                         }
                         g_str
                     };
-                    let year_str = item.year.map(|y| y.to_string()).unwrap_or_default();
+                    let year_str = match item.year {
+                        Some(y) => {
+                            let dec_full = format!("{}s", (y / 10) * 10);
+                            let dec_short = format!("{:02}s", ((y / 10) * 10) % 100);
+                            format!("{} {} {}", y, dec_full, dec_short)
+                        }
+                        None => String::new(),
+                    };
 
                     words.iter().all(|w| {
                         title.contains(w)

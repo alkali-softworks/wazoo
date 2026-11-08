@@ -278,9 +278,10 @@ A dedicated navigation button in the settings modal tabs bar: `[General] [Playba
   - `Surprise Me`: Curated random shuffle of films with metadata. Every click on the `Surprise Me` tab immediately re-rolls a fresh random batch of up to 60 titles across your library, while keeping the list stable during search and browsing.
 * **Simultaneous Genre & Decade Multi-Filtering (All Tab)**:
   - **Genres Row**: `[All] [Sci-Fi] [Horror] [Action] [Thriller] [Comedy] [Drama] [Crime] [Animation]`.
-  - **Decades Row**: Placed directly below Genres: `[All] [80s] [90s] [00s] [10s] [20s]`.
-  - Users can combine any genre and decade simultaneously on the `All` tab (e.g., **80s Horror**).
+  - **Decades Row**: Placed directly below Genres: `[All] [pre-30s] [30s] [40s] [50s] [60s] [70s] [80s] [90s] [00s] [10s] [20s]`.
+  - Users can combine any genre and decade simultaneously on the `All` tab (e.g., **70s Sci-Fi**, **80s Horror**, **60s Horror**).
   - Clicking an active filter toggles it off, or clicking `[All]` clears that filter. Toggling filters preserves the current tab without jumping.
+  - **Comprehensive Decades Reach**: Extends back through classic and modern cinema eras (`pre-30s` through `20s`). Live search queries also recognize decade tokens (e.g. typing `70s` or `1970s`).
   - **Robust Genre Normalization**: Standardizes Plex's `"Science Fiction"` category with `"Sci-Fi"` / `"scifi"` aliases across both filter buttons and live instant text search, correctly matching all cataloged films.
 * **Isolated Filter Scope**:
   - The `Genres:` and `Decades:` filter controls are isolated strictly to the **All** tab. Preset tabs (`Top Rated`, `Recently Added`, `On Deck`, and `Surprise Me`) remain uncluttered and focused on their specialized feeds.
