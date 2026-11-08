@@ -25,16 +25,58 @@ use wazoo_core::PlaybackMode;
 
 impl WazooApp {
     pub fn view_title_pill<'a>(&self, path: &str, alpha: f32) -> Element<'a, Message> {
-        let (primary, secondary) = format::format_title_lines(path);
-        let content: Element<'a, Message> = if let Some(sub) = secondary {
-            column![
-                text(primary.clone())
-                    .size(18)
-                    .font(iced::Font {
-                        weight: iced::font::Weight::Bold,
-                        ..Default::default()
-                    })
-                    .color(theme::with_alpha(iced::Color::WHITE, alpha)),
+        let meta = self.get_metadata_for_path(path);
+        let (primary, secondary, badges) = if let Some(m) = meta {
+            let p = if let Some(ref st) = m.series_title {
+                st.clone()
+            } else {
+                m.title.clone()
+            };
+
+            let s = if let (Some(sn), Some(en)) = (m.season_number, m.episode_number) {
+                Some(format!("S{:02}E{:02} - {}", sn, en, m.title))
+            } else if let Some(ref tag) = m.tagline {
+                Some(tag.clone())
+            } else {
+                let (_, raw_sec) = format::format_title_lines(path);
+                raw_sec
+            };
+
+            let mut b = Vec::new();
+            if let Some(y) = m.year {
+                b.push(y.to_string());
+            }
+            if let Some(ref cr) = m.content_rating {
+                if !cr.is_empty() {
+                    b.push(cr.clone());
+                }
+            }
+            for g in m.genres.iter().take(2) {
+                b.push(g.clone());
+            }
+            if let Some(r) = m.rating {
+                b.push(format!("★ {:.1}", r));
+            }
+
+            (p, s, b)
+        } else {
+            let (p, s) = format::format_title_lines(path);
+            (p, s, Vec::new())
+        };
+
+        let mut title_col = column![
+            text(primary.clone())
+                .size(18)
+                .font(iced::Font {
+                    weight: iced::font::Weight::Bold,
+                    ..Default::default()
+                })
+                .color(theme::with_alpha(iced::Color::WHITE, alpha))
+        ]
+        .spacing(4);
+
+        if let Some(sub) = secondary {
+            title_col = title_col.push(
                 text(sub)
                     .size(15)
                     .font(iced::Font {
@@ -43,21 +85,41 @@ impl WazooApp {
                     })
                     .color(theme::with_alpha(
                         iced::Color::from_rgb(0.90, 0.90, 0.94),
-                        alpha
+                        alpha,
                     )),
-            ]
-            .spacing(4)
-            .into()
-        } else {
-            text(primary.clone())
-                .size(18)
-                .font(iced::Font {
-                    weight: iced::font::Weight::Bold,
-                    ..Default::default()
-                })
-                .color(theme::with_alpha(iced::Color::WHITE, alpha))
-                .into()
-        };
+            );
+        }
+
+        if !badges.is_empty() {
+            let mut badge_row = row![].spacing(6).align_y(Alignment::Center);
+            for b in badges {
+                badge_row = badge_row.push(
+                    container(
+                        text(b)
+                            .size(10)
+                            .font(iced::Font {
+                                weight: iced::font::Weight::Medium,
+                                ..Default::default()
+                            })
+                            .color(theme::with_alpha(iced::Color::WHITE, alpha)),
+                    )
+                    .padding([2, 6])
+                    .style(move |_| container::Style {
+                        background: Some(iced::Background::Color(iced::Color::from_rgba(
+                            1.0, 1.0, 1.0, 0.12 * alpha,
+                        ))),
+                        border: iced::Border {
+                            radius: 4.0.into(),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    }),
+                );
+            }
+            title_col = title_col.push(badge_row);
+        }
+
+        let content: Element<'a, Message> = title_col.into();
 
         let query = primary.trim().to_string();
         let mut pill_btn = button(content)

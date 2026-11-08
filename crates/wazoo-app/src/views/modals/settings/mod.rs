@@ -12,6 +12,7 @@ pub mod cube_tab;
 pub mod filters_tab;
 pub mod general_tab;
 pub mod playback_tab;
+pub mod plex_tab;
 pub mod system_tab;
 
 use crate::app::{SettingsTab, WazooApp};
@@ -29,6 +30,7 @@ impl WazooApp {
         let is_filters = self.modals.settings_tab == SettingsTab::Filters;
         let is_crt = self.modals.settings_tab == SettingsTab::Crt;
         let is_cube = self.modals.settings_tab == SettingsTab::Cube;
+        let is_plex = self.modals.settings_tab == SettingsTab::Plex;
         let is_system = self.modals.settings_tab == SettingsTab::System;
 
         let tabs_bar = row![
@@ -89,6 +91,17 @@ impl WazooApp {
             .padding([7, 13]),
             button(
                 row![
+                    text("🍿").size(14),
+                    text(self.t("settings.tab_plex")).size(13),
+                ]
+                .spacing(5)
+                .align_y(Alignment::Center),
+            )
+            .style(theme::settings_tab_button_style(is_plex))
+            .on_press(Message::SetSettingsTab(SettingsTab::Plex))
+            .padding([7, 13]),
+            button(
+                row![
                     text("💻").size(14),
                     text(self.t("settings.tab_system")).size(13),
                 ]
@@ -119,6 +132,7 @@ impl WazooApp {
             SettingsTab::Filters => filters_tab::view_filters_tab(self),
             SettingsTab::Crt => crt_tab::view_crt_tab(self),
             SettingsTab::Cube => cube_tab::view_cube_tab(self),
+            SettingsTab::Plex => plex_tab::view_plex_tab(self),
             SettingsTab::System => system_tab::view_system_tab(self),
         };
 

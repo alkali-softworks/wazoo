@@ -7,8 +7,8 @@
  * and bulk upsert operations for indexed video files.
  */
 
-use crate::models::VideoRecord;
-use rusqlite::{Connection, Result, params};
+use crate::models::{MediaMetadata, VideoRecord};
+use rusqlite::{Connection, OptionalExtension, Result, params};
 use std::collections::HashSet;
 use std::path::Path;
 
@@ -55,6 +55,41 @@ impl Database {
 
         self.conn
             .execute("CREATE INDEX IF NOT EXISTS folder_idx ON Video(folder)", [])?;
+
+        self.conn.execute(
+            "CREATE TABLE IF NOT EXISTS VideoMetadata (
+                video_id INTEGER PRIMARY KEY,
+                plex_rating_key TEXT,
+                title TEXT NOT NULL,
+                series_title TEXT,
+                season_number INTEGER,
+                episode_number INTEGER,
+                year INTEGER,
+                tagline TEXT,
+                summary TEXT,
+                content_rating TEXT,
+                duration_ms INTEGER,
+                rating REAL,
+                studio TEXT,
+                genres TEXT,
+                directors TEXT,
+                actors TEXT,
+                thumb_url TEXT,
+                art_url TEXT,
+                updated_at INTEGER,
+                FOREIGN KEY (video_id) REFERENCES Video(id) ON DELETE CASCADE
+            )",
+            [],
+        )?;
+
+        self.conn
+            .execute("CREATE INDEX IF NOT EXISTS meta_year_idx ON VideoMetadata(year)", [])?;
+
+        self.conn
+            .execute("CREATE INDEX IF NOT EXISTS meta_title_idx ON VideoMetadata(title)", [])?;
+
+        self.conn
+            .execute("CREATE INDEX IF NOT EXISTS meta_series_idx ON VideoMetadata(series_title)", [])?;
 
         Ok(())
     }
@@ -271,6 +306,252 @@ impl Database {
         Ok(videos)
     }
 
+    pub fn upsert_metadata(&self, meta: &MediaMetadata) -> Result<()> {
+        let genres_json = serde_json::to_string(&meta.genres).unwrap_or_default();
+        let directors_json = serde_json::to_string(&meta.directors).unwrap_or_default();
+        let actors_json = serde_json::to_string(&meta.actors).unwrap_or_default();
+
+        self.conn.execute(
+            "INSERT INTO VideoMetadata (
+                video_id, plex_rating_key, title, series_title, season_number, episode_number,
+                year, tagline, summary, content_rating, duration_ms, rating, studio,
+                genres, directors, actors, thumb_url, art_url, updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19)
+            ON CONFLICT(video_id) DO UPDATE SET
+                plex_rating_key = excluded.plex_rating_key,
+                title = excluded.title,
+                series_title = excluded.series_title,
+                season_number = excluded.season_number,
+                episode_number = excluded.episode_number,
+                year = excluded.year,
+                tagline = excluded.tagline,
+                summary = excluded.summary,
+                content_rating = excluded.content_rating,
+                duration_ms = excluded.duration_ms,
+                rating = excluded.rating,
+                studio = excluded.studio,
+                genres = excluded.genres,
+                directors = excluded.directors,
+                actors = excluded.actors,
+                thumb_url = excluded.thumb_url,
+                art_url = excluded.art_url,
+                updated_at = excluded.updated_at",
+            params![
+                meta.video_id,
+                meta.plex_rating_key,
+                meta.title,
+                meta.series_title,
+                meta.season_number,
+                meta.episode_number,
+                meta.year,
+                meta.tagline,
+                meta.summary,
+                meta.content_rating,
+                meta.duration_ms,
+                meta.rating,
+                meta.studio,
+                genres_json,
+                directors_json,
+                actors_json,
+                meta.thumb_url,
+                meta.art_url,
+                meta.updated_at,
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn batch_upsert_metadata(&mut self, metas: &[MediaMetadata]) -> Result<usize> {
+        let tx = self.conn.transaction()?;
+        let mut count = 0;
+        {
+            let mut stmt = tx.prepare(
+                "INSERT INTO VideoMetadata (
+                    video_id, plex_rating_key, title, series_title, season_number, episode_number,
+                    year, tagline, summary, content_rating, duration_ms, rating, studio,
+                    genres, directors, actors, thumb_url, art_url, updated_at
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19)
+                ON CONFLICT(video_id) DO UPDATE SET
+                    plex_rating_key = excluded.plex_rating_key,
+                    title = excluded.title,
+                    series_title = excluded.series_title,
+                    season_number = excluded.season_number,
+                    episode_number = excluded.episode_number,
+                    year = excluded.year,
+                    tagline = excluded.tagline,
+                    summary = excluded.summary,
+                    content_rating = excluded.content_rating,
+                    duration_ms = excluded.duration_ms,
+                    rating = excluded.rating,
+                    studio = excluded.studio,
+                    genres = excluded.genres,
+                    directors = excluded.directors,
+                    actors = excluded.actors,
+                    thumb_url = excluded.thumb_url,
+                    art_url = excluded.art_url,
+                    updated_at = excluded.updated_at",
+            )?;
+
+            for meta in metas {
+                let genres_json = serde_json::to_string(&meta.genres).unwrap_or_default();
+                let directors_json = serde_json::to_string(&meta.directors).unwrap_or_default();
+                let actors_json = serde_json::to_string(&meta.actors).unwrap_or_default();
+
+                stmt.execute(params![
+                    meta.video_id,
+                    meta.plex_rating_key,
+                    meta.title,
+                    meta.series_title,
+                    meta.season_number,
+                    meta.episode_number,
+                    meta.year,
+                    meta.tagline,
+                    meta.summary,
+                    meta.content_rating,
+                    meta.duration_ms,
+                    meta.rating,
+                    meta.studio,
+                    genres_json,
+                    directors_json,
+                    actors_json,
+                    meta.thumb_url,
+                    meta.art_url,
+                    meta.updated_at,
+                ])?;
+                count += 1;
+            }
+        }
+        tx.commit()?;
+        Ok(count)
+    }
+
+    pub fn get_metadata_by_video_id(&self, video_id: i64) -> Result<Option<MediaMetadata>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT video_id, plex_rating_key, title, series_title, season_number, episode_number,
+                    year, tagline, summary, content_rating, duration_ms, rating, studio,
+                    genres, directors, actors, thumb_url, art_url, updated_at
+             FROM VideoMetadata WHERE video_id = ?1",
+        )?;
+
+        let mut rows = stmt.query(params![video_id])?;
+        if let Some(row) = rows.next()? {
+            let genres_str: Option<String> = row.get(13)?;
+            let directors_str: Option<String> = row.get(14)?;
+            let actors_str: Option<String> = row.get(15)?;
+
+            let genres: Vec<String> = genres_str
+                .and_then(|s| serde_json::from_str(&s).ok())
+                .unwrap_or_default();
+            let directors: Vec<String> = directors_str
+                .and_then(|s| serde_json::from_str(&s).ok())
+                .unwrap_or_default();
+            let actors: Vec<String> = actors_str
+                .and_then(|s| serde_json::from_str(&s).ok())
+                .unwrap_or_default();
+
+            Ok(Some(MediaMetadata {
+                video_id: row.get(0)?,
+                plex_rating_key: row.get(1)?,
+                title: row.get(2)?,
+                series_title: row.get(3)?,
+                season_number: row.get(4)?,
+                episode_number: row.get(5)?,
+                year: row.get(6)?,
+                tagline: row.get(7)?,
+                summary: row.get(8)?,
+                content_rating: row.get(9)?,
+                duration_ms: row.get(10)?,
+                rating: row.get(11)?,
+                studio: row.get(12)?,
+                genres,
+                directors,
+                actors,
+                thumb_url: row.get(16)?,
+                art_url: row.get(17)?,
+                updated_at: row.get(18)?,
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn get_metadata_by_path(&self, path: &str) -> Result<Option<MediaMetadata>> {
+        let video_id: Option<i64> = self
+            .conn
+            .query_row(
+                "SELECT id FROM Video WHERE path = ?1",
+                params![path],
+                |r| r.get(0),
+            )
+            .optional()?;
+
+        match video_id {
+            Some(id) => self.get_metadata_by_video_id(id),
+            None => Ok(None),
+        }
+    }
+
+    pub fn get_metadata_count(&self) -> Result<usize> {
+        let count: usize = self
+            .conn
+            .query_row("SELECT COUNT(*) FROM VideoMetadata", [], |row| row.get(0))?;
+        Ok(count)
+    }
+
+    pub fn get_all_metadata_map(&self) -> Result<std::collections::HashMap<i64, MediaMetadata>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT video_id, plex_rating_key, title, series_title, season_number, episode_number,
+                    year, tagline, summary, content_rating, duration_ms, rating, studio,
+                    genres, directors, actors, thumb_url, art_url, updated_at
+             FROM VideoMetadata",
+        )?;
+
+        let mut map = std::collections::HashMap::new();
+        let rows = stmt.query_map([], |row| {
+            let genres_str: Option<String> = row.get(13)?;
+            let directors_str: Option<String> = row.get(14)?;
+            let actors_str: Option<String> = row.get(15)?;
+
+            let genres: Vec<String> = genres_str
+                .and_then(|s| serde_json::from_str(&s).ok())
+                .unwrap_or_default();
+            let directors: Vec<String> = directors_str
+                .and_then(|s| serde_json::from_str(&s).ok())
+                .unwrap_or_default();
+            let actors: Vec<String> = actors_str
+                .and_then(|s| serde_json::from_str(&s).ok())
+                .unwrap_or_default();
+
+            Ok(MediaMetadata {
+                video_id: row.get(0)?,
+                plex_rating_key: row.get(1)?,
+                title: row.get(2)?,
+                series_title: row.get(3)?,
+                season_number: row.get(4)?,
+                episode_number: row.get(5)?,
+                year: row.get(6)?,
+                tagline: row.get(7)?,
+                summary: row.get(8)?,
+                content_rating: row.get(9)?,
+                duration_ms: row.get(10)?,
+                rating: row.get(11)?,
+                studio: row.get(12)?,
+                genres,
+                directors,
+                actors,
+                thumb_url: row.get(16)?,
+                art_url: row.get(17)?,
+                updated_at: row.get(18)?,
+            })
+        })?;
+
+        for r in rows {
+            let item = r?;
+            map.insert(item.video_id, item);
+        }
+        Ok(map)
+    }
+
     pub fn search_videos(&self, query_str: &str, folders: &[String]) -> Result<Vec<VideoRecord>> {
         let clauses: Vec<&str> = query_str
             .split(',')
@@ -350,9 +631,9 @@ impl Database {
                     param_values.push(pattern);
                     let p_idx = param_values.len();
                     if is_not {
-                        negative_conditions.push(format!("path NOT LIKE ?{p_idx} ESCAPE '\\'"));
+                        negative_conditions.push(format!("v.path NOT LIKE ?{p_idx} ESCAPE '\\'"));
                     } else {
-                        positive_conditions.push(format!("path LIKE ?{p_idx} ESCAPE '\\'"));
+                        positive_conditions.push(format!("v.path LIKE ?{p_idx} ESCAPE '\\'"));
                     }
                 } else {
                     match (has_start_anchor, has_end_anchor) {
@@ -367,11 +648,11 @@ impl Database {
 
                             if is_not {
                                 negative_conditions.push(format!(
-                                    "(name NOT LIKE ?{p1} ESCAPE '\\' AND path NOT LIKE ?{p2} ESCAPE '\\' AND path NOT LIKE ?{p3} ESCAPE '\\')"
+                                    "(v.name NOT LIKE ?{p1} ESCAPE '\\' AND v.path NOT LIKE ?{p2} ESCAPE '\\' AND v.path NOT LIKE ?{p3} ESCAPE '\\' AND (m.title IS NULL OR m.title NOT LIKE ?{p1} ESCAPE '\\'))"
                                 ));
                             } else {
                                 positive_conditions.push(format!(
-                                    "(name LIKE ?{p1} ESCAPE '\\' OR path LIKE ?{p2} ESCAPE '\\' OR path LIKE ?{p3} ESCAPE '\\')"
+                                    "(v.name LIKE ?{p1} ESCAPE '\\' OR v.path LIKE ?{p2} ESCAPE '\\' OR v.path LIKE ?{p3} ESCAPE '\\' OR m.title LIKE ?{p1} ESCAPE '\\')"
                                 ));
                             }
                         }
@@ -386,11 +667,11 @@ impl Database {
 
                             if is_not {
                                 negative_conditions.push(format!(
-                                    "(name NOT LIKE ?{p1} ESCAPE '\\' AND path NOT LIKE ?{p2} ESCAPE '\\' AND path NOT LIKE ?{p3} ESCAPE '\\')"
+                                    "(v.name NOT LIKE ?{p1} ESCAPE '\\' AND v.path NOT LIKE ?{p2} ESCAPE '\\' AND v.path NOT LIKE ?{p3} ESCAPE '\\' AND (m.title IS NULL OR m.title NOT LIKE ?{p1} ESCAPE '\\'))"
                                 ));
                             } else {
                                 positive_conditions.push(format!(
-                                    "(name LIKE ?{p1} ESCAPE '\\' OR path LIKE ?{p2} ESCAPE '\\' OR path LIKE ?{p3} ESCAPE '\\')"
+                                    "(v.name LIKE ?{p1} ESCAPE '\\' OR v.path LIKE ?{p2} ESCAPE '\\' OR v.path LIKE ?{p3} ESCAPE '\\' OR m.title LIKE ?{p1} ESCAPE '\\')"
                                 ));
                             }
                         }
@@ -403,25 +684,28 @@ impl Database {
 
                             if is_not {
                                 negative_conditions.push(format!(
-                                    "(name NOT LIKE ?{p1} ESCAPE '\\' AND path NOT LIKE ?{p2} ESCAPE '\\' AND path NOT LIKE ?{p1} ESCAPE '\\')"
+                                    "(v.name NOT LIKE ?{p1} ESCAPE '\\' AND v.path NOT LIKE ?{p2} ESCAPE '\\' AND v.path NOT LIKE ?{p1} ESCAPE '\\' AND (m.title IS NULL OR m.title NOT LIKE ?{p1} ESCAPE '\\'))"
                                 ));
                             } else {
                                 positive_conditions.push(format!(
-                                    "(name LIKE ?{p1} ESCAPE '\\' OR path LIKE ?{p2} ESCAPE '\\' OR path LIKE ?{p1} ESCAPE '\\')"
+                                    "(v.name LIKE ?{p1} ESCAPE '\\' OR v.path LIKE ?{p2} ESCAPE '\\' OR v.path LIKE ?{p1} ESCAPE '\\' OR m.title LIKE ?{p1} ESCAPE '\\')"
                                 ));
                             }
                         }
                         (false, false) => {
-                            // Standard unanchored search
+                            // Standard unanchored search matching path, name, and rich metadata
                             let wildcard = format!("%{words}%");
                             param_values.push(wildcard);
                             let p_idx = param_values.len();
 
                             if is_not {
-                                negative_conditions
-                                    .push(format!("path NOT LIKE ?{p_idx} ESCAPE '\\'"));
+                                negative_conditions.push(format!(
+                                    "(v.path NOT LIKE ?{p_idx} ESCAPE '\\' AND (m.genres IS NULL OR m.genres NOT LIKE ?{p_idx} ESCAPE '\\') AND (m.title IS NULL OR m.title NOT LIKE ?{p_idx} ESCAPE '\\') AND (m.series_title IS NULL OR m.series_title NOT LIKE ?{p_idx} ESCAPE '\\') AND (m.directors IS NULL OR m.directors NOT LIKE ?{p_idx} ESCAPE '\\'))"
+                                ));
                             } else {
-                                positive_conditions.push(format!("path LIKE ?{p_idx} ESCAPE '\\'"));
+                                positive_conditions.push(format!(
+                                    "(v.path LIKE ?{p_idx} ESCAPE '\\' OR v.name LIKE ?{p_idx} ESCAPE '\\' OR m.title LIKE ?{p_idx} ESCAPE '\\' OR m.series_title LIKE ?{p_idx} ESCAPE '\\' OR m.genres LIKE ?{p_idx} ESCAPE '\\' OR CAST(m.year AS TEXT) LIKE ?{p_idx} ESCAPE '\\' OR m.directors LIKE ?{p_idx} ESCAPE '\\' OR m.actors LIKE ?{p_idx} ESCAPE '\\' OR m.summary LIKE ?{p_idx} ESCAPE '\\')"
+                                ));
                             }
                         }
                     }
@@ -449,7 +733,7 @@ impl Database {
             let mut folder_conditions: Vec<String> = Vec::new();
             for folder in active_folders {
                 if folder == "Misc" {
-                    folder_conditions.push("folder = 'Misc'".to_string());
+                    folder_conditions.push("v.folder = 'Misc'".to_string());
                 } else {
                     let escaped_folder = folder
                         .replace('\\', "\\\\")
@@ -458,17 +742,17 @@ impl Database {
                     let folder_prefix = format!("{escaped_folder}%");
                     param_values.push(folder_prefix);
                     folder_conditions
-                        .push(format!("path LIKE ?{} ESCAPE '\\'", param_values.len()));
+                        .push(format!("v.path LIKE ?{} ESCAPE '\\'", param_values.len()));
                 }
             }
             where_conditions.push(format!("({})", folder_conditions.join(" OR ")));
         }
 
         let query = if where_conditions.is_empty() {
-            "SELECT id, name, path, folder FROM Video ORDER BY path ASC".to_string()
+            "SELECT DISTINCT v.id, v.name, v.path, v.folder FROM Video v LEFT JOIN VideoMetadata m ON v.id = m.video_id ORDER BY v.path ASC".to_string()
         } else {
             format!(
-                "SELECT id, name, path, folder FROM Video WHERE {} ORDER BY path ASC",
+                "SELECT DISTINCT v.id, v.name, v.path, v.folder FROM Video v LEFT JOIN VideoMetadata m ON v.id = m.video_id WHERE {} ORDER BY v.path ASC",
                 where_conditions.join(" AND ")
             )
         };

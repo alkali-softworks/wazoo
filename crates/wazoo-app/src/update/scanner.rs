@@ -303,6 +303,10 @@ impl WazooApp {
                             }
                             self.reconcile_players_with_available_videos(None);
                             self.save_session_state();
+
+                            if self.settings.plex.enabled && self.settings.plex.auto_sync_on_scan {
+                                return self.update(Message::StartPlexSync);
+                            }
                         }
                     }
                     Err(err) => {

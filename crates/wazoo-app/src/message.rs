@@ -158,6 +158,18 @@ pub enum Message {
     ToggleStandbyPlayer,
     OpenAlkaliWebsite,
     SetLanguage(String),
+
+    // Plex Integration
+    SetPlexEnabled(bool),
+    PlexServerUrlChanged(String),
+    PlexTokenChanged(String),
+    SetPlexAutoSync(bool),
+    TestPlexConnection,
+    PlexConnectionTested(Result<wazoo_core::PlexServerInfo, String>),
+    StartPlexSync,
+    PlexSyncProgressUpdate(wazoo_core::PlexSyncProgress),
+    PlexSyncFinished(Result<wazoo_core::PlexSyncSummary, String>),
+
     OpenHelpModal,
     CloseHelpModal,
     HelpSearchChanged(String),

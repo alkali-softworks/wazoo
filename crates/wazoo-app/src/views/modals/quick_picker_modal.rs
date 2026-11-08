@@ -137,23 +137,52 @@ impl WazooApp {
         } else {
             let mut list = column![].spacing(6);
             for (path, title) in filtered_videos {
-                let item_btn = button(
-                    row![
-                        text("▶")
-                            .size(11)
-                            .color(theme::COLOR_PRIMARY)
-                            .width(Length::Fixed(14.0)),
-                        text(title)
-                            .size(13)
-                            .color(iced::Color::WHITE),
-                    ]
-                    .spacing(8)
-                    .align_y(Alignment::Center),
-                )
-                .style(theme::bookmark_item_button_style)
-                .padding([8, 12])
-                .width(Length::Fill)
-                .on_press(Message::PlayQuickPickerFile(path));
+                let meta = self.get_metadata_for_path(&path);
+                let badge_label: Option<String> = if let Some(m) = meta {
+                    if let Some(y) = m.year {
+                        Some(y.to_string())
+                    } else {
+                        m.genres.first().cloned()
+                    }
+                } else {
+                    None
+                };
+
+                let mut row_items = row![
+                    text("▶")
+                        .size(11)
+                        .color(theme::COLOR_PRIMARY)
+                        .width(Length::Fixed(14.0)),
+                    text(title)
+                        .size(13)
+                        .color(iced::Color::WHITE),
+                ]
+                .spacing(8)
+                .align_y(Alignment::Center);
+
+                if let Some(b) = badge_label {
+                    row_items = row_items.push(Space::new().width(Length::Fill));
+                    row_items = row_items.push(
+                        container(text(b).size(10).color(theme::COLOR_TEXT_MUTED))
+                            .padding([2, 6])
+                            .style(|_| container::Style {
+                                background: Some(iced::Background::Color(iced::Color::from_rgba(
+                                    1.0, 1.0, 1.0, 0.08,
+                                ))),
+                                border: iced::Border {
+                                    radius: 4.0.into(),
+                                    ..Default::default()
+                                },
+                                ..Default::default()
+                            }),
+                    );
+                }
+
+                let item_btn = button(row_items)
+                    .style(theme::bookmark_item_button_style)
+                    .padding([8, 12])
+                    .width(Length::Fill)
+                    .on_press(Message::PlayQuickPickerFile(path));
 
                 list = list.push(item_btn);
             }
