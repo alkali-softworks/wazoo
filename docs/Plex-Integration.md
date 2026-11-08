@@ -246,21 +246,21 @@ pub struct PlexSettings {
 ## 7. User Interface Additions (`wazoo-app`)
 
 ### 1. Plex Tab in Settings Modal
-A new navigation button in the settings modal tabs bar: `[⚙ General] [▶ Playback] [✨ Filters] [📺 CRT] [🧊 3D Cube] [🍿 Plex] [💻 System]`.
+A dedicated navigation button in the settings modal tabs bar: `[General] [Playback] [Filters] [CRT] [3D Cube] [Plex] [System]`. Clean text labels without emojis are used for optimal cross-language layout parity.
 
 #### Controls within the Plex Tab:
-* **Toggle Integration**: Enable/disable Plex metadata enrichment.
+* **Toggle Integration**: Enable/disable Plex metadata enrichment with live localized status badge (`Active` / `Off`).
 * **Server URL Input**: Text input initialized to `http://192.168.1.100:32400`.
-* **Plex Token Input**: Masked password-style field with a quick paste button and a help link explaining how to retrieve the `X-Plex-Token`.
-* **Test Connection Button**: Sends a fast async request to `/identity`. Displays a green badge with the server version & machine name, or a red error badge with actionable feedback.
-* **Sync Now Button**: Triggers full library synchronization. Displays a progress bar, items processed counter, and elapsed time.
+* **Plex Token Input**: Unmasked text input allowing direct verification and editing of the token, paired with an inline **Copy** button and a contextual hint (`Found in Plex Web XML or account settings`).
+* **Test Connection Button**: Sends an asynchronous request to `/identity`. Displays server version, library name, and connection status.
+* **Sync Now Button**: Triggers full library synchronization. Displays live metadata count (e.g., `19932 videos have enriched metadata`).
 * **Auto-Sync Toggle**: "Sync Plex metadata automatically after folder scan".
 
 ### 2. Player Card HUD Enhancements
 * **Rich Title Pill**:
   * Line 1: `Movie Title` or `Series Name`
-  * Line 2: `S01E05 - Gray Matter (2008)`
-  * Badge Row: Subtle pills showing `[1999] [PG-13] [Sci-Fi] [Action]`
+  * Line 2: `S01E05 - Gray Matter` (for episodic series)
+  * Badge Row: Subtle pills showing `[1999] [PG-13] [★ 8.7] [Sci-Fi] [Action]`
 * **Plot Synopsis Tooltip**:
   * Hovering or clicking an info badge reveals a frosted backdrop card displaying the movie tagline, synopsis, director, and lead cast.
 
@@ -269,46 +269,45 @@ A new navigation button in the settings modal tabs bar: `[⚙ General] [▶ Play
 * Search syntax hints include examples: `anime, 1990s`, `sci-fi, not horror`, `nolan`.
 
 ### 4. Plex Explorer Modal (`E` Shortcut)
-* **Keybinding `E`**: Toggles the centered frosted-glass Plex Explorer modal from anywhere in the app.
+* **Keybinding `E`**: Toggles the 900px wide centered frosted-glass Plex Explorer modal from anywhere in the app.
 * **Query Presets**:
-  - `🍿 Recently Added`: Pulls the newest additions across your library (live from `/library/recentlyAdded` or cached).
-  - `⏳ On Deck`: Displays continue-watching and in-progress movies/episodes with resume timestamps and progress bars (live from `/library/onDeck`).
-  - `⭐ Top Rated`: Instant leaderboard of highest-rated films and shows (8.0+ rating sorted).
-  - `🎲 Surprise Me`: Curated random shuffle of films with metadata.
-* **Sub-Filters**:
-  - Decades: `80s`, `90s`, `00s`, `10s`, `20s`.
-  - Genres: `Sci-Fi`, `Horror`, `Action`, `Thriller`, `Comedy`, `Drama`, `Crime`, `Animation`.
-* **Live Search**: Integrated instant filter across titles, directors, actors, genres, years, and summaries.
+  - `All`: Full library exploration across all indexed media, equipped with multi-dimensional sub-filters.
+  - `Recently Added`: Pulls the newest additions across your library (live from `/library/recentlyAdded` or local cache).
+  - `On Deck`: Displays continue-watching and in-progress movies/episodes with resume timestamps and progress bars (live from `/library/onDeck`).
+  - `Top Rated`: Instant leaderboard of highest-rated films and shows (sorted by rating descending, then release year).
+  - `Surprise Me`: Curated random shuffle of films with metadata.
+* **Simultaneous Genre & Decade Multi-Filtering**:
+  - **Genres Row**: `[All] [Sci-Fi] [Horror] [Action] [Thriller] [Comedy] [Drama] [Crime] [Animation]`.
+  - **Decades Row**: Placed directly below Genres: `[All] [80s] [90s] [00s] [10s] [20s]`.
+  - Users can combine any genre and decade simultaneously (e.g., **80s Horror**).
+  - Clicking an active filter toggles it off, or clicking `[All]` clears that filter.
+* **Smart Filter Visibility**:
+  - For small targeted lists (`Recently Added` and `On Deck`), the `Genres:` and `Decades:` rows are automatically hidden to keep the view focused and clutter-free.
+  - The filters remain prominently available on `All`, `Top Rated`, and `Surprise Me`.
+* **Optimized Card Typography & Badges**:
+  - Movie titles occupy line 1 alongside right-aligned badges (`Year`, `Content Rating`, `★ Rating`, `Genres`). Badges are guaranteed natural width and never get clipped.
+  - TV episodes display season and episode designations (`S01E02 - Episode Name`) next to the series title.
+  - Taglines and plot summaries are displayed on line 2 with automatic deduplication.
+* **Live Instant Search**: Integrated filter input querying titles, subtitles, directors, actors, genres, years, and summaries.
 * **One-Click Play & Resume**: Clicking any item immediately begins playback in the focused player, automatically seeking to any saved `viewOffset` from Plex.
 
 ---
 
-## 8. Implementation Milestones
+## 8. Implementation Milestones & Status
 
 ```mermaid
-gantt
-    title Plex Metadata Integration Roadmap
-    dateFormat  YYYY-MM-DD
-    section Phase 1: Core Models & DB
-    Schema Migration & VideoMetadata Table     :p1_1, 2026-11-08, 1d
-    Database Query Methods & Search Upgrade   :p1_2, after p1_1, 1d
-    section Phase 2: Plex Client
-    Reqwest Client & Identity Check           :p2_1, after p1_2, 1d
-    Library Sections & Flat Episode Fetcher   :p2_2, after p2_1, 1d
-    Path Matcher & Suffix Normalizer Engine   :p2_3, after p2_2, 1d
-    section Phase 3: Settings UI
-    Plex Settings Tab & Form Controls         :p3_1, after p2_3, 1d
-    Test Connection & Sync Handlers (TEA)     :p3_2, after p3_1, 1d
-    section Phase 4: HUD & Search Polish
-    HUD Year & Genre Badges                   :p4_1, after p3_2, 1d
-    Synopsis Card Tooltip & Poster Caching    :p4_2, after p4_1, 1d
+flowchart TD
+    M1["Phase 1: Core Models & DB<br/>✓ MediaMetadata, VideoMetadata table, SQL multi-field search"] --> M2["Phase 2: Plex REST Client<br/>✓ Reqwest async client, /identity check, path matcher"]
+    M2 --> M3["Phase 3: Settings UI & Sync<br/>✓ Plex settings tab, unmasked token, copy button, 19k+ sync"]
+    M3 --> M4["Phase 4: Plex Explorer Modal<br/>✓ 'E' key shortcut, 900px modal, 'All' tab, 80s horror multi-filtering"]
+    M4 --> M5["Phase 5: i18n & Verification<br/>✓ All 23 languages translated, 139 workspace tests passing"]
 ```
 
-| Phase | Milestone | Deliverables |
-| :--- | :--- | :--- |
-| **Phase 1** | **Data Models & Schema** | Add `MediaMetadata` & `PlexSettings` models. Create `VideoMetadata` table in `wazoo-core/src/db.rs`. Extend `search_videos` to query metadata fields. |
-| **Phase 2** | **Plex Client & Sync Engine** | Implement `wazoo-core/src/plex.rs` with `reqwest`. Add `/identity`, `/library/sections`, and bulk `/all` ingestion. Implement the path suffix matcher. |
-| **Phase 3** | **UI Settings & Sync Flow** | Add `SettingsTab::Plex` in `wazoo-app`. Implement `TestConnection` and `SyncPlex` async TEA messages and status widgets. |
-| **Phase 4** | **Presentation & Search Integration** | Render metadata badges in `hud.rs` and search result rows. Add synopsis tooltip widget. |
-| **Phase 5** | **Verification & Offline Caching** | Test against live Plex server on `192.168.1.100`. Cache poster thumbnails to disk. |
+| Phase | Milestone | Deliverables | Status |
+| :--- | :--- | :--- | :--- |
+| **Phase 1** | **Data Models & Schema** | Add `MediaMetadata` & `PlexSettings` models. Create `VideoMetadata` table in `wazoo-core/src/db.rs`. Extend `search_videos` to query metadata fields. | **Completed** (`dcbc38e`) |
+| **Phase 2** | **Plex Client & Sync Engine** | Implement `wazoo-core/src/plex.rs` with `reqwest`. Add `/identity`, `/library/sections`, `/library/recentlyAdded`, `/library/onDeck`, and bulk `/all` ingestion. Implement path suffix matcher. | **Completed** (`dcbc38e`) |
+| **Phase 3** | **UI Settings & Sync Flow** | Add `SettingsTab::Plex` in `wazoo-app`. Implement unmasked token with Copy button, Test Connection, and live sync (19,932 items indexed in seconds). | **Completed** (`23189de`, `873f84e`) |
+| **Phase 4** | **Plex Explorer Modal (`E`)** | Implement 900px wide modal, `[All]` preset, simultaneous genre & decade filtering (e.g. 80s Horror), smart filter visibility on small lists, and one-click play/resume. | **Completed** (`927c15a`, `9b07b08`, `4ee4992`, `35b8005`) |
+| **Phase 5** | **i18n & Test Verification** | Translate all Plex keys across all 23 languages with 100% key parity. 139 tests passing across workspace. | **Completed** (`5724171`, `35b8005`) |
 
