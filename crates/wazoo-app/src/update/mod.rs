@@ -325,6 +325,7 @@ impl WazooApp {
             Message::SetPlexEnabled(_)
             | Message::PlexServerUrlChanged(_)
             | Message::PlexTokenChanged(_)
+            | Message::CopyPlexToken
             | Message::SetPlexAutoSync(_)
             | Message::TestPlexConnection
             | Message::PlexConnectionTested(_)

@@ -111,15 +111,30 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 .color(theme::COLOR_TEXT_MUTED),
         ]
         .align_y(Alignment::Center),
-        text_input(
-            "X-Plex-Token",
-            &app.settings.plex.token
-        )
-        .secure(true)
-        .on_input(Message::PlexTokenChanged)
-        .padding([8, 12])
-        .size(13)
-        .style(theme::dark_input_style),
+        row![
+            text_input(
+                "X-Plex-Token",
+                &app.settings.plex.token
+            )
+            .on_input(Message::PlexTokenChanged)
+            .padding([8, 12])
+            .size(13)
+            .style(theme::dark_input_style)
+            .width(Length::Fill),
+            button(
+                text(app.t("settings.plex_copy_token"))
+                    .size(13)
+                    .font(iced::Font {
+                        weight: iced::font::Weight::Medium,
+                        ..Default::default()
+                    })
+            )
+            .style(theme::action_button_style)
+            .padding([8, 16])
+            .on_press(Message::CopyPlexToken),
+        ]
+        .spacing(8)
+        .align_y(Alignment::Center),
     ]
     .spacing(6);
 

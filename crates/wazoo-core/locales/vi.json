@@ -156,7 +156,9 @@
     "plex_token_desc": "Found in Plex Web XML or account settings",
     "plex_test_connection": "Test Connection",
     "plex_sync_library": "Sync Library",
-    "plex_auto_sync": "Auto-sync with Plex"
+    "plex_auto_sync": "Auto-sync with Plex",
+    "plex_copy_token": "Sao chép",
+    "plex_token_copied": "Đã sao chép mã thông báo Plex vào khay nhớ tạm"
   },
   "search": {
     "folder": "Thư mục:",

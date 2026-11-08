@@ -156,7 +156,9 @@
     "plex_token_desc": "Found in Plex Web XML or account settings",
     "plex_test_connection": "Test Connection",
     "plex_sync_library": "Sync Library",
-    "plex_auto_sync": "Auto-sync with Plex"
+    "plex_auto_sync": "Auto-sync with Plex",
+    "plex_copy_token": "कॉपी करें",
+    "plex_token_copied": "Plex टोकन क्लिपबोर्ड पर कॉपी किया गया"
   },
   "search": {
     "folder": "फ़ोल्डर:",
