@@ -275,7 +275,7 @@ A dedicated navigation button in the settings modal tabs bar: `[General] [Playba
   - `Recently Added`: Pulls the newest additions across your library (live from `/library/recentlyAdded` or local cache).
   - `On Deck`: Displays continue-watching and in-progress movies/episodes with resume timestamps and progress bars (live from `/library/onDeck`).
   - `Top Rated`: Instant leaderboard of highest-rated films and shows (sorted by rating descending, then release year).
-  - `Surprise Me`: Curated random shuffle of films with metadata.
+  - `Surprise Me`: Curated random shuffle of films with metadata. Every click on the `Surprise Me` tab immediately re-rolls a fresh random batch of up to 60 titles across your library, while keeping the list stable during search and browsing.
 * **Simultaneous Genre & Decade Multi-Filtering (All Tab)**:
   - **Genres Row**: `[All] [Sci-Fi] [Horror] [Action] [Thriller] [Comedy] [Drama] [Crime] [Animation]`.
   - **Decades Row**: Placed directly below Genres: `[All] [80s] [90s] [00s] [10s] [20s]`.
