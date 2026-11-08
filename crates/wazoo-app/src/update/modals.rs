@@ -463,6 +463,8 @@ impl WazooApp {
                 if self.modals.plex_explorer {
                     self.modals.plex_explorer = false;
                     self.modals.plex_explorer_search.clear();
+                    self.modals.plex_explorer_genre = None;
+                    self.modals.plex_explorer_decade = None;
                     Task::none()
                 } else {
                     self.open_plex_explorer()
@@ -472,6 +474,8 @@ impl WazooApp {
             Message::ClosePlexExplorerModal => {
                 self.modals.plex_explorer = false;
                 self.modals.plex_explorer_search.clear();
+                self.modals.plex_explorer_genre = None;
+                self.modals.plex_explorer_decade = None;
                 Task::none()
             }
             Message::PlexExplorerSearchChanged(val) => {
@@ -483,8 +487,38 @@ impl WazooApp {
                 iced::widget::operation::focus("plex_explorer_search_input")
             }
             Message::PlexExplorerSelectTab(tab) => {
-                self.modals.plex_explorer_tab = tab.clone();
-                self.fetch_plex_live_items(tab)
+                match tab {
+                    wazoo_core::PlexExplorerTab::Decade(dec) => {
+                        self.modals.plex_explorer_decade = Some(dec);
+                        self.modals.plex_explorer_genre = None;
+                        Task::none()
+                    }
+                    wazoo_core::PlexExplorerTab::Genre(genre) => {
+                        self.modals.plex_explorer_genre = Some(genre);
+                        self.modals.plex_explorer_decade = None;
+                        Task::none()
+                    }
+                    _ => {
+                        self.modals.plex_explorer_tab = tab.clone();
+                        self.fetch_plex_live_items(tab)
+                    }
+                }
+            }
+            Message::PlexExplorerToggleGenre(genre) => {
+                if genre.is_none() || self.modals.plex_explorer_genre == genre {
+                    self.modals.plex_explorer_genre = None;
+                } else {
+                    self.modals.plex_explorer_genre = genre;
+                }
+                Task::none()
+            }
+            Message::PlexExplorerToggleDecade(decade) => {
+                if decade.is_none() || self.modals.plex_explorer_decade == decade {
+                    self.modals.plex_explorer_decade = None;
+                } else {
+                    self.modals.plex_explorer_decade = decade;
+                }
+                Task::none()
             }
             Message::PlexExplorerSubmit => {
                 let items = self.plex_explorer_items();
@@ -498,6 +532,8 @@ impl WazooApp {
             Message::PlayPlexExplorerItem(path, view_offset_ms) => {
                 self.modals.plex_explorer = false;
                 self.modals.plex_explorer_search.clear();
+                self.modals.plex_explorer_genre = None;
+                self.modals.plex_explorer_decade = None;
                 let play_task = self.update(Message::PlayFileInFocused(path));
                 if let (Some(offset_ms), Some(pid)) = (view_offset_ms, self.focused_player_id()) {
                     if offset_ms > 0 {

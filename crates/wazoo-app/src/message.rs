@@ -220,6 +220,8 @@ pub enum Message {
     PlexExplorerSearchChanged(String),
     ClearPlexExplorerSearch,
     PlexExplorerSelectTab(wazoo_core::PlexExplorerTab),
+    PlexExplorerToggleGenre(Option<String>),
+    PlexExplorerToggleDecade(Option<u32>),
     PlexExplorerSubmit,
     PlayPlexExplorerItem(String, Option<u64>),
     PlexExplorerLiveLoaded(wazoo_core::PlexExplorerTab, Vec<wazoo_core::PlexExplorerItem>),
