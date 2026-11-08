@@ -204,7 +204,8 @@
       "toggle_fullscreen": "Przełącz pełny ekran",
       "toggle_filters": "Przełącz filtry cieniowania",
       "fit_window": "Dopasuj okno do wideo",
-      "toggle_quick_picker": "Przełącz szybki wybór"
+      "toggle_quick_picker": "Przełącz szybki wybór",
+      "toggle_plex_explorer": "Eksplorator Plex"
     }
   },
   "file_picker": {

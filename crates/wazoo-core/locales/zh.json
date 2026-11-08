@@ -204,7 +204,8 @@
       "toggle_fullscreen": "切换全屏",
       "toggle_filters": "切换着色器滤镜",
       "fit_window": "调整窗口以适应视频",
-      "toggle_quick_picker": "切换快速选择器"
+      "toggle_quick_picker": "切换快速选择器",
+      "toggle_plex_explorer": "Plex 资源管理器"
     }
   },
   "file_picker": {

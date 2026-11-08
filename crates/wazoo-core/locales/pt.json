@@ -204,7 +204,8 @@
       "toggle_fullscreen": "Alternar tela cheia",
       "toggle_filters": "Alternar filtros de sombreador",
       "fit_window": "Ajustar janela ao vídeo",
-      "toggle_quick_picker": "Alternar seletor rápido"
+      "toggle_quick_picker": "Alternar seletor rápido",
+      "toggle_plex_explorer": "Explorador Plex"
     }
   },
   "file_picker": {

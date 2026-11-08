@@ -9,6 +9,7 @@ fn test_menu_hint() {
     assert_eq!(kb.menu_hint(&kb.toggle_layout), "L");
     assert_eq!(kb.menu_hint(&kb.toggle_file_picker), "H");
     assert_eq!(kb.menu_hint(&kb.toggle_quick_picker), "K");
+    assert_eq!(kb.menu_hint(&kb.toggle_plex_explorer), "E");
     assert_eq!(kb.menu_hint(&kb.toggle_transcript), "V");
     assert_eq!(kb.menu_hint(&kb.toggle_bookmarks), "B");
     assert_eq!(kb.menu_hint(&kb.toggle_history), "Y");
@@ -27,7 +28,7 @@ fn test_menu_hint() {
 fn test_help_shortcuts_generation() {
     let kb = KeybindSettings::default();
     let shortcuts = kb.help_shortcuts_with_descriptions(|key| key.to_string());
-    assert_eq!(shortcuts.len(), 34);
+    assert_eq!(shortcuts.len(), 35);
     assert_eq!(
         shortcuts[0],
         ("Space".to_string(), "help.shortcuts.play_pause".to_string())
@@ -56,43 +57,50 @@ fn test_help_shortcuts_generation() {
     assert_eq!(
         shortcuts[11],
         (
+            "E".to_string(),
+            "help.shortcuts.toggle_plex_explorer".to_string()
+        )
+    );
+    assert_eq!(
+        shortcuts[12],
+        (
             "J OR /".to_string(),
             "help.shortcuts.search_videos".to_string()
         )
     );
     assert_eq!(
-        shortcuts[13],
+        shortcuts[14],
         (
             "+ OR =".to_string(),
             "bookmarks.bookmark_current".to_string()
         )
     );
     assert_eq!(
-        shortcuts[16],
+        shortcuts[17],
         ("L".to_string(), "help.shortcuts.toggle_layout".to_string())
     );
     assert_eq!(
-        shortcuts[17],
+        shortcuts[18],
         ("N".to_string(), "help.shortcuts.add_player".to_string())
     );
     assert_eq!(
-        shortcuts[22],
+        shortcuts[23],
         ("7".to_string(), "help.shortcuts.toggle_filters".to_string())
     );
     assert_eq!(
-        shortcuts[25],
+        shortcuts[26],
         ("[ ]".to_string(), "help.shortcuts.adjust_volume".to_string())
     );
     assert_eq!(
-        shortcuts[29],
+        shortcuts[30],
         ("P".to_string(), "help.shortcuts.toggle_pin".to_string())
     );
     assert_eq!(
-        shortcuts[31],
+        shortcuts[32],
         ("W".to_string(), "help.shortcuts.fit_window".to_string())
     );
     assert_eq!(
-        shortcuts[33],
+        shortcuts[34],
         (
             "Alt + X".to_string(),
             "help.shortcuts.close_app".to_string()
@@ -124,9 +132,9 @@ fn test_help_categories_generation() {
         other => panic!("Expected Alternatives, got {:?}", other),
     }
 
-    // Category sizes: 9 (Playback) + 7 (Drawers) + 9 (Layout/Modes) + 4 (Audio/Display) + 5 (System) = 34
+    // Category sizes: 9 (Playback) + 8 (Drawers) + 9 (Layout/Modes) + 4 (Audio/Display) + 5 (System) = 35
     assert_eq!(categories[0].shortcuts.len(), 9);
-    assert_eq!(categories[1].shortcuts.len(), 7);
+    assert_eq!(categories[1].shortcuts.len(), 8);
     assert_eq!(categories[2].shortcuts.len(), 9);
     assert_eq!(categories[3].shortcuts.len(), 4);
     assert_eq!(categories[4].shortcuts.len(), 5);

@@ -51,6 +51,7 @@ pub struct PlexRawItem {
     pub thumb_url: Option<String>,
     pub art_url: Option<String>,
     pub file_paths: Vec<String>,
+    pub view_offset_ms: Option<u64>,
 }
 
 #[derive(Debug, Clone)]
@@ -270,6 +271,75 @@ impl PlexClient {
 
         Ok(items)
     }
+
+    /// Fetches recently added items directly from Plex across all libraries.
+    pub async fn fetch_recently_added(&self, limit: usize) -> Result<Vec<PlexRawItem>, String> {
+        let url = format!(
+            "{}/library/recentlyAdded?X-Plex-Container-Start=0&X-Plex-Container-Size={limit}",
+            self.server_url
+        );
+        let resp = self
+            .http
+            .get(&url)
+            .header("X-Plex-Token", &self.token)
+            .send()
+            .await
+            .map_err(|e| format!("Failed to fetch recently added: {e}"))?;
+
+        if !resp.status().is_success() {
+            return Err(format!("recentlyAdded returned HTTP {}", resp.status()));
+        }
+
+        let val: serde_json::Value = resp
+            .json()
+            .await
+            .map_err(|e| format!("Failed to parse recently added JSON: {e}"))?;
+
+        let mut items = Vec::new();
+        if let Some(meta_arr) = val["MediaContainer"]["Metadata"].as_array() {
+            for item in meta_arr {
+                let st = item["type"].as_str().unwrap_or("movie");
+                if let Some(raw) = parse_plex_metadata_item(item, st) {
+                    items.push(raw);
+                }
+            }
+        }
+
+        Ok(items)
+    }
+
+    /// Fetches continue watching / on-deck items directly from Plex.
+    pub async fn fetch_on_deck(&self) -> Result<Vec<PlexRawItem>, String> {
+        let url = format!("{}/library/onDeck", self.server_url);
+        let resp = self
+            .http
+            .get(&url)
+            .header("X-Plex-Token", &self.token)
+            .send()
+            .await
+            .map_err(|e| format!("Failed to fetch on-deck items: {e}"))?;
+
+        if !resp.status().is_success() {
+            return Err(format!("onDeck returned HTTP {}", resp.status()));
+        }
+
+        let val: serde_json::Value = resp
+            .json()
+            .await
+            .map_err(|e| format!("Failed to parse on-deck JSON: {e}"))?;
+
+        let mut items = Vec::new();
+        if let Some(meta_arr) = val["MediaContainer"]["Metadata"].as_array() {
+            for item in meta_arr {
+                let st = item["type"].as_str().unwrap_or("movie");
+                if let Some(raw) = parse_plex_metadata_item(item, st) {
+                    items.push(raw);
+                }
+            }
+        }
+
+        Ok(items)
+    }
 }
 
 /// Parses an individual JSON metadata entry from Plex into a `PlexRawItem`.
@@ -296,7 +366,9 @@ fn parse_plex_metadata_item(item: &serde_json::Value, section_type: &str) -> Opt
         return None;
     }
 
-    let is_episode = section_type == "show";
+    let is_episode = section_type == "show"
+        || section_type == "episode"
+        || item["type"].as_str() == Some("episode");
     let series_title = if is_episode {
         item["grandparentTitle"].as_str().map(|s| s.to_string())
     } else {
@@ -355,6 +427,7 @@ fn parse_plex_metadata_item(item: &serde_json::Value, section_type: &str) -> Opt
 
     let thumb_url = item["thumb"].as_str().map(|s| s.to_string());
     let art_url = item["art"].as_str().map(|s| s.to_string());
+    let view_offset_ms = item["viewOffset"].as_u64();
 
     Some(PlexRawItem {
         rating_key,
@@ -375,6 +448,7 @@ fn parse_plex_metadata_item(item: &serde_json::Value, section_type: &str) -> Opt
         thumb_url,
         art_url,
         file_paths,
+        view_offset_ms,
     })
 }
 

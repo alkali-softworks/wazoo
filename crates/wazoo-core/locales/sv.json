@@ -204,7 +204,8 @@
       "toggle_fullscreen": "Växla helskärm",
       "toggle_filters": "Växla shaderfilter",
       "fit_window": "Anpassa fönster efter video",
-      "toggle_quick_picker": "Växla snabbväljare"
+      "toggle_quick_picker": "Växla snabbväljare",
+      "toggle_plex_explorer": "Plex-utforskare"
     }
   },
   "file_picker": {

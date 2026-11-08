@@ -204,7 +204,8 @@
       "toggle_fullscreen": "Toggle Fullscreen",
       "toggle_filters": "Toggle Shader Filters",
       "fit_window": "Fit Window to Video",
-      "toggle_quick_picker": "Quick Video Picker"
+      "toggle_quick_picker": "Quick Video Picker",
+      "toggle_plex_explorer": "Plex Explorer"
     }
   },
   "file_picker": {

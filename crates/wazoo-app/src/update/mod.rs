@@ -294,6 +294,15 @@ impl WazooApp {
             | Message::ClearQuickPickerSearch
             | Message::QuickPickerSubmit
             | Message::PlayQuickPickerFile(_)
+            | Message::TogglePlexExplorerModal
+            | Message::OpenPlexExplorerModal
+            | Message::ClosePlexExplorerModal
+            | Message::PlexExplorerSearchChanged(_)
+            | Message::ClearPlexExplorerSearch
+            | Message::PlexExplorerSelectTab(_)
+            | Message::PlexExplorerSubmit
+            | Message::PlayPlexExplorerItem(_, _)
+            | Message::PlexExplorerLiveLoaded(_, _)
             | Message::EscapePressed
             | Message::DismissToast
             | Message::ModalCardClicked => self.update_modals(message),

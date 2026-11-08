@@ -204,7 +204,8 @@
       "toggle_fullscreen": "تبديل ملء الشاشة",
       "toggle_filters": "تبديل فلاتر التظليل",
       "fit_window": "ملاءمة النافذة للفيديو",
-      "toggle_quick_picker": "تبديل المنتقي السريع"
+      "toggle_quick_picker": "تبديل المنتقي السريع",
+      "toggle_plex_explorer": "مستكشف Plex"
     }
   },
   "file_picker": {

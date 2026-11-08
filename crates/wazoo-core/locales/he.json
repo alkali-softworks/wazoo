@@ -204,7 +204,8 @@
       "toggle_fullscreen": "מעבר למסך מלא",
       "toggle_filters": "החלף מסנני הצללה",
       "fit_window": "התאם חלון לווידאו",
-      "toggle_quick_picker": "החלף בורר מהיר"
+      "toggle_quick_picker": "החלף בורר מהיר",
+      "toggle_plex_explorer": "סייר Plex"
     }
   },
   "file_picker": {

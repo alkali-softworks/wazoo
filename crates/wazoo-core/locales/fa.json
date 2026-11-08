@@ -204,7 +204,8 @@
       "toggle_fullscreen": "تغییر حالت تمام صفحه",
       "toggle_filters": "تغییر وضعیت فیلترهای سایه‌زن",
       "fit_window": "تنظیم پنجره با اندازه ویدیو",
-      "toggle_quick_picker": "تغییر انتخاب‌گر سریع"
+      "toggle_quick_picker": "تغییر انتخاب‌گر سریع",
+      "toggle_plex_explorer": "کاوشگر Plex"
     }
   },
   "file_picker": {

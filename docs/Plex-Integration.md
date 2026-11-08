@@ -268,6 +268,19 @@ A new navigation button in the settings modal tabs bar: `[⚙ General] [▶ Play
 * Search result rows display the year and primary genre chip next to the title.
 * Search syntax hints include examples: `anime, 1990s`, `sci-fi, not horror`, `nolan`.
 
+### 4. Plex Explorer Modal (`E` Shortcut)
+* **Keybinding `E`**: Toggles the centered frosted-glass Plex Explorer modal from anywhere in the app.
+* **Query Presets**:
+  - `🍿 Recently Added`: Pulls the newest additions across your library (live from `/library/recentlyAdded` or cached).
+  - `⏳ On Deck`: Displays continue-watching and in-progress movies/episodes with resume timestamps and progress bars (live from `/library/onDeck`).
+  - `⭐ Top Rated`: Instant leaderboard of highest-rated films and shows (8.0+ rating sorted).
+  - `🎲 Surprise Me`: Curated random shuffle of films with metadata.
+* **Sub-Filters**:
+  - Decades: `80s`, `90s`, `00s`, `10s`, `20s`.
+  - Genres: `Sci-Fi`, `Horror`, `Action`, `Thriller`, `Comedy`, `Drama`, `Crime`, `Animation`.
+* **Live Search**: Integrated instant filter across titles, directors, actors, genres, years, and summaries.
+* **One-Click Play & Resume**: Clicking any item immediately begins playback in the focused player, automatically seeking to any saved `viewOffset` from Plex.
+
 ---
 
 ## 8. Implementation Milestones

@@ -58,6 +58,11 @@ impl WazooApp {
                     return self.update(Message::QuickPickerSubmit);
                 }
             }
+            if self.modals.plex_explorer {
+                if key == Key::Named(Named::Enter) {
+                    return self.update(Message::PlexExplorerSubmit);
+                }
+            }
             return Task::none();
         }
 
@@ -78,6 +83,7 @@ impl WazooApp {
                 KeyAction::CycleLayout => return self.update(Message::CycleLayout),
                 KeyAction::ToggleFilePicker => return self.update(Message::ToggleFilePicker),
                 KeyAction::ToggleQuickPicker => return self.update(Message::ToggleQuickPickerModal),
+                KeyAction::TogglePlexExplorer => return self.update(Message::TogglePlexExplorerModal),
                 KeyAction::ToggleTranscript => return self.update(Message::ToggleTranscript),
                 KeyAction::ToggleBookmarks => return self.update(Message::ToggleBookmarksModal),
                 KeyAction::ToggleHistory => return self.update(Message::ToggleHistoryDrawer),
