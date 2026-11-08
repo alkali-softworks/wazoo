@@ -47,14 +47,14 @@ graph TD
 
 To prevent a monolithic god object, application state in [`WazooApp`] is partitioned into focused child states:
 
-- **`players: PlayerList`**: Collection of [`AppPlayer`] handles, each wrapping a `VideoHandle` with per-tile shuffle mode, undo/redo history stacks, loading state, independent `FlipState`, and dedicated cube-rendering player flags (`is_cube`).
+- **`players: PlayerList`**: Collection of [`AppPlayer`] handles, each wrapping a `VideoHandle` with per-tile shuffle mode, undo/redo history stacks, loading state, independent `FlipState`, per-player video aspect ratio memory (`last_aspect_ratio`), dedicated animated static frame buffer (`static_frame`), and dedicated cube-rendering player flags (`is_cube`).
 - **`window: WindowState`**: Tracks cursor position, focus status, Alt-drag movement, window resize directions, mouse clickthrough mode, and native borderless **Fullscreen Mode** (`is_fullscreen`).
 - **`titlebar: TitlebarState`**: Controls sliding titlebar visibility, hover delays, hide timers, dropdown menu slide transitions, and auto-hide behavior during fullscreen mode.
 - **`overlay: OverlayState`**: Governs player HUD alpha fades, spinner rotation angles, toast alerts, title pill badges, and cube focus border flash timers (`focus_border_ticks`).
 - **`drawers: DrawerState`**: Holds visibility and search states for the File Browser, Subtitle Transcript, and Play History side drawers.
-- **`modals: ModalState`**: Manages modal dialog visibility (Find/Search, Settings, Bookmarks, Help, Menu) with tabbed settings (`General`, `Playback`, `Filters`, `System`, `Cube`).
-- **`cube: CubeState`**: Manages interactive 3D bouncing video cubes (`BouncingCube`), 3D Euler angles, velocities, bounce collision counters, speed/size multipliers, and transparent desktop screensaver overlay mode (Mode 9).
-- **`raw_static_frames: Vec<RawStaticFrame>` & `static_frame: Arc<Mutex<FrameData>>`**: Dynamic raw RGBA TV static noise frame buffers pumped through the WGPU shader pipeline for loading/buffering video quads so active shaders (CRT, Wavy, Fog) naturally apply to static.
+- **`modals: ModalState`**: Manages modal dialog visibility (Find/Search, Settings, Bookmarks, Help, Menu, Plex Explorer) with tabbed settings (`General`, `Playback`, `Filters`, `System`, `Cube`).
+- **`cube: CubeState`**: Manages interactive 3D bouncing video cubes (`BouncingCube`), 3D Euler angles, velocities, bounce collision counters, speed/size multipliers, and transparent desktop screensaver overlay mode (Mode 9). Independent cube players (`new_cube`) bypass 2D UI loading buffers and aspect-ratio transformations to run purely on the cube rendering pipeline.
+- **`raw_static_frames: Vec<RawStaticFrame>`**: Cached raw RGBA TV static noise frame buffers loaded from embedded GIF assets. Each active non-cube player dynamically center-crops from this library into its own `static_frame` to match the exact aspect ratio of the previously playing video without stretching or distortion.
 - **`settings: WazooSettings`**: Active configuration loaded from `wazoo-core`, including master and individual post-processing filter states (`filters_enabled`, `filter_crt`, `filter_wavy`, `filter_fog`), cube screensaver presets, and custom keybindings.
 - **`scroll_engine: ScrollEngine`**: Active layout and physics engine from `wazoo-media`.
 
@@ -133,8 +133,17 @@ Wazoo's user interface is fully custom and frameless:
     - **Wavy Fluid Displacement**: Procedural sinusoidal UV distortion creating liquid rippling effects.
     - **Volumetric Fog**: Multi-octave fractional Brownian motion (fBm) procedural noise generating ambient drifting smoke across the frame.
     - **Aspect-Ratio Border Protection**: Strict clamping against normalized content boundaries (`target_aspect`), preventing edge-smear artifacts when displaying non-16:9 aspect ratios.
-- **Shader-Processed TV Static Loading State ([`views/player/card.rs`]):**
-  - Instead of a flat GIF overlay, loading/buffering screens render raw static RGBA frames through the WGPU `VideoProgram` shader pipeline (`0x8000_0000 | player_id`), ensuring CRT curvature, scanlines, wavy ripples, and volumetric fog naturally affect the static noise.
+- **Shader-Processed TV Static Loading State with Aspect-Ratio Matching ([`views/player/card.rs`]):**
+  - Instead of a flat GIF overlay, loading/buffering screens render animated static RGBA noise frames through the WGPU `VideoProgram` shader pipeline (`0x8000_0000 | player_id`), ensuring CRT curvature, scanlines, wavy ripples, and volumetric fog naturally affect the static noise.
+  - **Dynamic Center-Cropping (Zero Distortion)**: Automatically crops the raw 4:3 static texture to the exact aspect ratio of the previously playing video (e.g. 16:9 widescreen, 4:3 fullscreen, 2.35:1 anamorphic, or vertical 9:16). Static noise pixels remain perfectly square without horizontal or vertical stretching.
+  - **Containment & HUD Alignment**: Uses contain fit in standard multi-tile grid mode (matching previous video pillarboxes/letterboxes) and cover in scroll mode. The player HUD and title badges dynamically track `p.aspect_ratio().or(last_aspect_ratio)`, preventing sudden layout jumps during video transitions.
+  - **Per-Player Isolation**: Each player tile in a multi-player grid (1 to 12 players) owns an independent static frame buffer and aspect ratio state, ensuring simultaneous loading tiles with different dimensions never overwrite or conflict with each other.
+- **Plex Semantic Media Explorer ([`views/modals/plex_modal.rs`]):**
+  - Fast, responsive browsing modal with keyboard-friendly navigation (`E` hotkey or dropdown menu) querying the active media pool (`available_videos`).
+  - **Metadata Inheritance**: Automatically inherits series-level genres, release year, audience rating, and series summary onto TV episodes during Plex library synchronization passes.
+  - **Persistent Multi-Category Filtering**: Instant filtering by genres and extended release decades (`pre-30s` through `20s`). Genre selections seamlessly persist across tab changes (All, Top Rated, Recently Added).
+  - **Dynamic "Surprise Me" Randomizer**: Generates an instant fresh random seed on every click for continuous discovery.
+  - **High-Capacity Listing**: Expands library view to display up to 250 matching media items with inline playhead status and instant one-click playback in the focused tile.
 - **Fullscreen Windowing Mode (F11):**
   - Borderless native fullscreen toggling with mutual exclusion against Mode 9 desktop overlay, dynamic keybind hints (`F11`), and graceful escape handling.
 - **Frameless Titlebar ([`views/titlebar.rs`]):**
