@@ -2297,19 +2297,23 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     let f1 = temp_dir.join("Frailty (2001).mp4");
     let f2 = temp_dir.join("The Matrix (1999).mkv");
     let f3 = temp_dir.join("The Shining (1980).mp4");
+    let f4 = temp_dir.join("Blade Runner (1982).mp4");
     let _ = std::fs::File::create(&f1);
     let _ = std::fs::File::create(&f2);
     let _ = std::fs::File::create(&f3);
+    let _ = std::fs::File::create(&f4);
 
     let p1 = f1.to_string_lossy().to_string();
     let p2 = f2.to_string_lossy().to_string();
     let p3 = f3.to_string_lossy().to_string();
+    let p4 = f4.to_string_lossy().to_string();
 
     let v1 = wazoo_core::VideoRecord::new(1, "Frailty (2001)", &p1);
     let v2 = wazoo_core::VideoRecord::new(2, "The Matrix (1999)", &p2);
     let v3 = wazoo_core::VideoRecord::new(3, "The Shining (1980)", &p3);
+    let v4 = wazoo_core::VideoRecord::new(4, "Blade Runner (1982)", &p4);
 
-    app.available_videos = vec![v1.clone(), v2.clone(), v3.clone()];
+    app.available_videos = vec![v1.clone(), v2.clone(), v3.clone(), v4.clone()];
     app.metadata_cache.insert(
         1,
         wazoo_core::MediaMetadata {
@@ -2352,6 +2356,20 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
             ..Default::default()
         },
     );
+    app.metadata_cache.insert(
+        4,
+        wazoo_core::MediaMetadata {
+            video_id: 4,
+            title: "Blade Runner".to_string(),
+            year: Some(1982),
+            rating: Some(8.1),
+            genres: vec!["Science Fiction".to_string(), "Thriller".to_string()],
+            directors: vec!["Ridley Scott".to_string()],
+            actors: vec!["Harrison Ford".to_string()],
+            tagline: Some("Man has made his match... now it's his problem.".to_string()),
+            ..Default::default()
+        },
+    );
 
     let _ = app.update(Message::SetPlayerCount(1));
     assert!(!app.modals.plex_explorer);
@@ -2367,7 +2385,7 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     assert_eq!(app.modals.plex_explorer_tab, wazoo_core::PlexExplorerTab::All);
     assert_eq!(app.modals.plex_explorer_search, "");
     let all_items = app.plex_explorer_items();
-    assert_eq!(all_items.len(), 3);
+    assert_eq!(all_items.len(), 4);
 
     // 2. Tab switching: Top Rated
     let _ = app.update(Message::PlexExplorerSelectTab(
@@ -2378,11 +2396,40 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
         wazoo_core::PlexExplorerTab::TopRated
     );
     let items = app.plex_explorer_items();
-    assert_eq!(items.len(), 3);
-    // Highest rated first: The Matrix (8.7), The Shining (8.4), then Frailty (7.6)
+    assert_eq!(items.len(), 4);
+    // Highest rated first: The Matrix (8.7), The Shining (8.4), Blade Runner (8.1), then Frailty (7.6)
     assert_eq!(items[0].title, "The Matrix");
     assert_eq!(items[1].title, "The Shining");
-    assert_eq!(items[2].title, "Frailty");
+    assert_eq!(items[2].title, "Blade Runner");
+    assert_eq!(items[3].title, "Frailty");
+
+    // 2b. Toggling genre or decade while in Top Rated must NOT jump to 'All'
+    let _ = app.update(Message::PlexExplorerToggleGenre(Some("Sci-Fi".to_string())));
+    assert_eq!(
+        app.modals.plex_explorer_tab,
+        wazoo_core::PlexExplorerTab::TopRated,
+        "Toggling genre should not change active tab from TopRated"
+    );
+    // Top Rated list remains unfiltered by genre
+    let tr_items = app.plex_explorer_items();
+    assert_eq!(tr_items.len(), 4);
+
+    // 2c. Switching back to 'All' tab applies the genre filter
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::All,
+    ));
+    assert_eq!(app.modals.plex_explorer_tab, wazoo_core::PlexExplorerTab::All);
+    // Genre "Sci-Fi" matches BOTH "Sci-Fi" (The Matrix) AND "Science Fiction" (Blade Runner)
+    let scifi_items = app.plex_explorer_items();
+    assert_eq!(scifi_items.len(), 2);
+    let scifi_titles: Vec<&str> = scifi_items.iter().map(|i| i.title.as_str()).collect();
+    assert!(scifi_titles.contains(&"The Matrix"));
+    assert!(scifi_titles.contains(&"Blade Runner"));
+
+    // Clear genre filter
+    let _ = app.update(Message::PlexExplorerToggleGenre(None));
+    assert!(app.modals.plex_explorer_genre.is_none());
+    assert_eq!(app.plex_explorer_items().len(), 4);
 
     // 3. Sub-filter by Decade: 1990s
     let _ = app.update(Message::PlexExplorerSelectTab(
@@ -2392,15 +2439,20 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     assert_eq!(items.len(), 1);
     assert_eq!(items[0].title, "The Matrix");
 
-    // 4. Sub-filter by Genre: Thriller
+    // 4. Sub-filter by Genre: Thriller (Frailty + Blade Runner)
     let _ = app.update(Message::PlexExplorerSelectTab(
         wazoo_core::PlexExplorerTab::Genre("Thriller".to_string()),
     ));
     let items = app.plex_explorer_items();
-    assert_eq!(items.len(), 1);
-    assert_eq!(items[0].title, "Frailty");
+    assert_eq!(items.len(), 2);
+    let thriller_titles: Vec<&str> = items.iter().map(|i| i.title.as_str()).collect();
+    assert!(thriller_titles.contains(&"Frailty"));
+    assert!(thriller_titles.contains(&"Blade Runner"));
 
-    // 5. Simultaneous multi-filtering: 80s Horror
+    // 5. Switch to All and test simultaneous multi-filtering: 80s Horror
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::All,
+    ));
     let _ = app.update(Message::PlexExplorerToggleGenre(Some("Horror".to_string())));
     let _ = app.update(Message::PlexExplorerToggleDecade(Some(1980)));
     assert_eq!(app.modals.plex_explorer_genre.as_deref(), Some("Horror"));
@@ -2416,12 +2468,25 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     assert_eq!(items.len(), 1);
     assert_eq!(items[0].title, "The Shining");
 
+    // 6b. Search filtering with "scifi" alias finds "Science Fiction"
+    let _ = app.update(Message::PlexExplorerToggleGenre(None));
+    let _ = app.update(Message::PlexExplorerToggleDecade(None));
+    let _ = app.update(Message::PlexExplorerSearchChanged("scifi".to_string()));
+    let search_items = app.plex_explorer_items();
+    assert_eq!(search_items.len(), 2);
+    let search_titles: Vec<&str> = search_items.iter().map(|i| i.title.as_str()).collect();
+    assert!(search_titles.contains(&"The Matrix"));
+    assert!(search_titles.contains(&"Blade Runner"));
+
+    // Reset search
+    let _ = app.update(Message::ClearPlexExplorerSearch);
+
     // 7. Submitting via Enter plays the first matching file and closes modal
     let _ = app.update(Message::PlexExplorerSubmit);
     assert!(!app.modals.plex_explorer);
-    assert_eq!(app.players[0].state.path, p3);
+    assert_eq!(app.players[0].state.path, p2);
 
-    // 8. Verify view rendering across All, Recently Added, and On Deck
+    // 8. Verify view rendering across All, TopRated, Recently Added, On Deck, and SurpriseMe
     app.modals.plex_explorer = true;
     app.modals.plex_explorer_genre = Some("Horror".to_string());
     app.modals.plex_explorer_decade = Some(1980);
@@ -2429,12 +2494,19 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     {
         let _el = app.view_plex_explorer_modal();
     }
-    // On RecentlyAdded or OnDeck, genre/decade filters are omitted
+    app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::TopRated;
+    {
+        let _el = app.view_plex_explorer_modal();
+    }
     app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::RecentlyAdded;
     {
         let _el = app.view_plex_explorer_modal();
     }
     app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::OnDeck;
+    {
+        let _el = app.view_plex_explorer_modal();
+    }
+    app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::Random;
     {
         let _el = app.view_plex_explorer_modal();
     }

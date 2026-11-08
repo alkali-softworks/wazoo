@@ -507,7 +507,6 @@ impl WazooApp {
                 }
             }
             Message::PlexExplorerToggleGenre(genre) => {
-                self.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::All;
                 if genre.is_none() || self.modals.plex_explorer_genre == genre {
                     self.modals.plex_explorer_genre = None;
                 } else {
@@ -516,7 +515,6 @@ impl WazooApp {
                 Task::none()
             }
             Message::PlexExplorerToggleDecade(decade) => {
-                self.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::All;
                 if decade.is_none() || self.modals.plex_explorer_decade == decade {
                     self.modals.plex_explorer_decade = None;
                 } else {

@@ -354,8 +354,13 @@ impl WazooApp {
                 }
 
                 for g in item.genres.into_iter().take(2) {
+                    let display_g = if g.eq_ignore_ascii_case("science fiction") {
+                        "Sci-Fi".to_string()
+                    } else {
+                        g
+                    };
                     chips_row = chips_row.push(
-                        container(text(g).size(10).color(theme::COLOR_TEXT_DIM))
+                        container(text(display_g).size(10).color(theme::COLOR_TEXT_DIM))
                             .padding([2, 5])
                             .style(|_| container::Style {
                                 background: Some(iced::Background::Color(iced::Color::from_rgba(
@@ -435,9 +440,9 @@ impl WazooApp {
                 .into()
         };
 
-        let show_filters = !matches!(
+        let show_filters = matches!(
             active_tab,
-            PlexExplorerTab::RecentlyAdded | PlexExplorerTab::OnDeck
+            PlexExplorerTab::All | PlexExplorerTab::Decade(_) | PlexExplorerTab::Genre(_)
         );
 
         let mut card_col = column![header_row, tab_row].spacing(10);
