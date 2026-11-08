@@ -205,6 +205,16 @@ fn test_help_modal_search_flow() {
     let _ = app.update(wazoo_app::message::Message::HelpSearchChanged("mute".to_string()));
     assert_eq!(app.modals.help_search, "mute");
 
+    // 5. Verify view rendering with taller adaptive height
+    app.modals.help = true;
+    {
+        let _el = app.view_help_modal();
+    }
+    app.settings.window_bounds.height = 1194;
+    {
+        let _el_tall = app.view_help_modal();
+    }
+
     let _ = app.update(wazoo_app::message::Message::CloseHelpModal);
     assert!(!app.modals.help);
     assert!(
