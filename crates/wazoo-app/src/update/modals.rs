@@ -366,7 +366,10 @@ impl WazooApp {
                 self.hovered_player_id = None;
                 self.overlay.ticks = 0;
                 self.overlay.fade_in_ticks = 0;
-                exit_task
+                Task::batch([
+                    exit_task,
+                    iced::widget::operation::focus("help_search_input"),
+                ])
             }
             Message::CloseHelpModal => {
                 self.modals.help = false;
@@ -379,7 +382,7 @@ impl WazooApp {
             }
             Message::ClearHelpSearch => {
                 self.modals.help_search.clear();
-                Task::none()
+                iced::widget::operation::focus("help_search_input")
             }
             Message::ToggleBookmarksModal => {
                 self.modals.bookmarks = !self.modals.bookmarks;
