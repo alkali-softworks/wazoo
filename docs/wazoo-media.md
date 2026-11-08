@@ -69,7 +69,7 @@ graph LR
 5. **Wavy Fluid Displacement**: Real-time sinusoidal UV coordinates distortion producing animated liquid surface waves.
 6. **Volumetric Fog**: Multi-octave fractional Brownian motion (fBm) noise drifting procedurally across the screen.
 7. **Pillarbox/Letterbox UV Clamping**: Automatically detects content aspect ratio and clamps UV coordinates to valid active frame boundaries, eliminating edge-smear artifacts when playing non-16:9 videos.
-8. **Shader-Filtered TV Static**: Dynamic noise frame buffers generated during buffering are routed through the same WGPU shader pipeline (`0x8000_0000 | player_id`), ensuring all post-processing effects apply authentically to loading screens.
+8. **Shader-Filtered TV Static with Dynamic Aspect Cropping**: Animated noise frame buffers generated during buffering are dynamically center-cropped to match the active player's previous video aspect ratio (e.g. 16:9, 4:3, 2.35:1, vertical 9:16) and routed through the WGPU shader pipeline (`0x8000_0000 | player_id`). This ensures the loading indicator preserves the exact framing, letterbox/pillarbox geometry, and CRT curvature of the previous video with zero stretching or pixel distortion.
 
 ---
 
