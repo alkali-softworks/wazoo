@@ -832,6 +832,440 @@ impl WazooApp {
         (Some(folder_name), candidate_videos)
     }
 
+    pub(crate) fn open_plex_explorer(&mut self) -> Task<Message> {
+        let exit_task = if self.cube.desktop_overlay {
+            self.exit_desktop_cube_overlay()
+        } else {
+            Task::none()
+        };
+        self.modals.close_all();
+        self.drawers.close_all();
+        self.titlebar.show_dropdown_menu = false;
+        self.titlebar.show = false;
+        self.overlay.clear_toast();
+        self.hovered_player_id = None;
+        self.overlay.ticks = 0;
+        self.overlay.fade_in_ticks = 0;
+        self.modals.plex_explorer = true;
+        self.modals.plex_explorer_search.clear();
+
+        let tab = self.modals.plex_explorer_tab.clone();
+        let fetch_task = self.fetch_plex_live_items(tab);
+
+        Task::batch([
+            exit_task,
+            fetch_task,
+            iced::widget::operation::focus("plex_explorer_search_input"),
+        ])
+    }
+
+    pub(crate) fn fetch_plex_live_items(
+        &self,
+        tab: wazoo_core::PlexExplorerTab,
+    ) -> Task<Message> {
+        if !self.settings.plex.enabled || self.settings.plex.token.trim().is_empty() {
+            return Task::none();
+        }
+
+        match tab {
+            wazoo_core::PlexExplorerTab::OnDeck => {
+                let client = wazoo_core::PlexClient::new(
+                    &self.settings.plex.server_url,
+                    &self.settings.plex.token,
+                );
+                let available_videos = self.available_videos.clone();
+                let meta_cache = self.metadata_cache.clone();
+
+                Task::perform(
+                    async move {
+                        let raw_items = client.fetch_on_deck().await.map_err(|e| e)?;
+                        let mut local_index = std::collections::HashMap::new();
+                        let mut norm_cache = Vec::with_capacity(available_videos.len());
+                        for v in &available_videos {
+                            local_index.insert(v.path.clone(), v.id);
+                            norm_cache.push((v.path.replace('\\', "/"), v.id));
+                        }
+
+                        let mut result = Vec::new();
+                        for raw in raw_items {
+                            let matched_id = raw.file_paths.iter().find_map(|p| {
+                                wazoo_core::match_plex_path(p, &local_index, &norm_cache)
+                            });
+
+                            if let Some(vid) = matched_id {
+                                if let Some(v) = available_videos.iter().find(|item| item.id == vid)
+                                {
+                                    let meta = meta_cache.get(&vid);
+                                    let title = raw
+                                        .series_title
+                                        .clone()
+                                        .unwrap_or_else(|| raw.title.clone());
+                                    let subtitle = if let (Some(sn), Some(en)) =
+                                        (raw.season_number, raw.episode_number)
+                                    {
+                                        Some(format!("S{:02}E{:02} - {}", sn, en, raw.title))
+                                    } else if let Some(ref tag) = raw.tagline {
+                                        Some(tag.clone())
+                                    } else {
+                                        meta.and_then(|m| m.tagline.clone())
+                                    };
+
+                                    result.push(wazoo_core::PlexExplorerItem {
+                                        video_id: vid,
+                                        path: v.path.clone(),
+                                        title,
+                                        subtitle,
+                                        year: raw.year.or_else(|| meta.and_then(|m| m.year)),
+                                        content_rating: raw.content_rating.or_else(|| {
+                                            meta.and_then(|m| m.content_rating.clone())
+                                        }),
+                                        rating: raw.rating.or_else(|| meta.and_then(|m| m.rating)),
+                                        genres: if !raw.genres.is_empty() {
+                                            raw.genres
+                                        } else {
+                                            meta.map(|m| m.genres.clone()).unwrap_or_default()
+                                        },
+                                        duration_ms: raw
+                                            .duration_ms
+                                            .or_else(|| meta.and_then(|m| m.duration_ms)),
+                                        view_offset_ms: raw.view_offset_ms,
+                                        tagline: raw
+                                            .tagline
+                                            .or_else(|| meta.and_then(|m| m.tagline.clone())),
+                                        summary: raw
+                                            .summary
+                                            .or_else(|| meta.and_then(|m| m.summary.clone())),
+                                        directors: if !raw.directors.is_empty() {
+                                            raw.directors
+                                        } else {
+                                            meta.map(|m| m.directors.clone()).unwrap_or_default()
+                                        },
+                                        actors: if !raw.actors.is_empty() {
+                                            raw.actors
+                                        } else {
+                                            meta.map(|m| m.actors.clone()).unwrap_or_default()
+                                        },
+                                    });
+                                }
+                            }
+                        }
+                        Ok::<Vec<wazoo_core::PlexExplorerItem>, String>(result)
+                    },
+                    |res| match res {
+                        Ok(items) => Message::PlexExplorerLiveLoaded(
+                            wazoo_core::PlexExplorerTab::OnDeck,
+                            items,
+                        ),
+                        Err(_) => Message::DismissToast,
+                    },
+                )
+            }
+            wazoo_core::PlexExplorerTab::RecentlyAdded => {
+                let client = wazoo_core::PlexClient::new(
+                    &self.settings.plex.server_url,
+                    &self.settings.plex.token,
+                );
+                let available_videos = self.available_videos.clone();
+                let meta_cache = self.metadata_cache.clone();
+
+                Task::perform(
+                    async move {
+                        let raw_items = client.fetch_recently_added(60).await.map_err(|e| e)?;
+                        let mut local_index = std::collections::HashMap::new();
+                        let mut norm_cache = Vec::with_capacity(available_videos.len());
+                        for v in &available_videos {
+                            local_index.insert(v.path.clone(), v.id);
+                            norm_cache.push((v.path.replace('\\', "/"), v.id));
+                        }
+
+                        let mut result = Vec::new();
+                        for raw in raw_items {
+                            let matched_id = raw.file_paths.iter().find_map(|p| {
+                                wazoo_core::match_plex_path(p, &local_index, &norm_cache)
+                            });
+
+                            if let Some(vid) = matched_id {
+                                if let Some(v) = available_videos.iter().find(|item| item.id == vid)
+                                {
+                                    let meta = meta_cache.get(&vid);
+                                    let title = raw
+                                        .series_title
+                                        .clone()
+                                        .unwrap_or_else(|| raw.title.clone());
+                                    let subtitle = if let (Some(sn), Some(en)) =
+                                        (raw.season_number, raw.episode_number)
+                                    {
+                                        Some(format!("S{:02}E{:02} - {}", sn, en, raw.title))
+                                    } else if let Some(ref tag) = raw.tagline {
+                                        Some(tag.clone())
+                                    } else {
+                                        meta.and_then(|m| m.tagline.clone())
+                                    };
+
+                                    result.push(wazoo_core::PlexExplorerItem {
+                                        video_id: vid,
+                                        path: v.path.clone(),
+                                        title,
+                                        subtitle,
+                                        year: raw.year.or_else(|| meta.and_then(|m| m.year)),
+                                        content_rating: raw.content_rating.or_else(|| {
+                                            meta.and_then(|m| m.content_rating.clone())
+                                        }),
+                                        rating: raw.rating.or_else(|| meta.and_then(|m| m.rating)),
+                                        genres: if !raw.genres.is_empty() {
+                                            raw.genres
+                                        } else {
+                                            meta.map(|m| m.genres.clone()).unwrap_or_default()
+                                        },
+                                        duration_ms: raw
+                                            .duration_ms
+                                            .or_else(|| meta.and_then(|m| m.duration_ms)),
+                                        view_offset_ms: raw.view_offset_ms,
+                                        tagline: raw
+                                            .tagline
+                                            .or_else(|| meta.and_then(|m| m.tagline.clone())),
+                                        summary: raw
+                                            .summary
+                                            .or_else(|| meta.and_then(|m| m.summary.clone())),
+                                        directors: if !raw.directors.is_empty() {
+                                            raw.directors
+                                        } else {
+                                            meta.map(|m| m.directors.clone()).unwrap_or_default()
+                                        },
+                                        actors: if !raw.actors.is_empty() {
+                                            raw.actors
+                                        } else {
+                                            meta.map(|m| m.actors.clone()).unwrap_or_default()
+                                        },
+                                    });
+                                }
+                            }
+                        }
+                        Ok::<Vec<wazoo_core::PlexExplorerItem>, String>(result)
+                    },
+                    |res| match res {
+                        Ok(items) => Message::PlexExplorerLiveLoaded(
+                            wazoo_core::PlexExplorerTab::RecentlyAdded,
+                            items,
+                        ),
+                        Err(_) => Message::DismissToast,
+                    },
+                )
+            }
+            _ => Task::none(),
+        }
+    }
+
+    pub fn plex_explorer_items(&self) -> Vec<wazoo_core::PlexExplorerItem> {
+        let raw_items = match &self.modals.plex_explorer_tab {
+            wazoo_core::PlexExplorerTab::OnDeck => {
+                if let Some(items) = self
+                    .plex
+                    .live_items
+                    .get(&wazoo_core::PlexExplorerTab::OnDeck)
+                {
+                    items.clone()
+                } else {
+                    Vec::new()
+                }
+            }
+            wazoo_core::PlexExplorerTab::RecentlyAdded => {
+                if let Some(items) = self
+                    .plex
+                    .live_items
+                    .get(&wazoo_core::PlexExplorerTab::RecentlyAdded)
+                {
+                    items.clone()
+                } else {
+                    let mut list: Vec<_> = self
+                        .available_videos
+                        .iter()
+                        .filter_map(|v| {
+                            let meta = self.metadata_cache.get(&v.id)?;
+                            Some((v, meta))
+                        })
+                        .collect();
+                    list.sort_by(|a, b| {
+                        b.1.updated_at
+                            .unwrap_or(0)
+                            .cmp(&a.1.updated_at.unwrap_or(0))
+                            .then_with(|| b.0.id.cmp(&a.0.id))
+                    });
+                    list.into_iter()
+                        .take(60)
+                        .map(|(v, m)| self.build_explorer_item_from_local(v, m))
+                        .collect()
+                }
+            }
+            wazoo_core::PlexExplorerTab::TopRated => {
+                let mut list: Vec<_> = self
+                    .available_videos
+                    .iter()
+                    .filter_map(|v| {
+                        let meta = self.metadata_cache.get(&v.id)?;
+                        if meta.rating.is_some() {
+                            Some((v, meta))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+                list.sort_by(|a, b| {
+                    let r_a = a.1.rating.unwrap_or(0.0);
+                    let r_b = b.1.rating.unwrap_or(0.0);
+                    r_b.partial_cmp(&r_a)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                        .then_with(|| b.1.year.cmp(&a.1.year))
+                });
+                list.into_iter()
+                    .take(60)
+                    .map(|(v, m)| self.build_explorer_item_from_local(v, m))
+                    .collect()
+            }
+            wazoo_core::PlexExplorerTab::Decade(decade) => {
+                let d = *decade;
+                let mut list: Vec<_> = self
+                    .available_videos
+                    .iter()
+                    .filter_map(|v| {
+                        let meta = self.metadata_cache.get(&v.id)?;
+                        if let Some(y) = meta.year {
+                            if y >= d && y < d + 10 {
+                                return Some((v, meta));
+                            }
+                        }
+                        None
+                    })
+                    .collect();
+                list.sort_by(|a, b| {
+                    let r_a = a.1.rating.unwrap_or(0.0);
+                    let r_b = b.1.rating.unwrap_or(0.0);
+                    r_b.partial_cmp(&r_a)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                        .then_with(|| b.1.year.cmp(&a.1.year))
+                });
+                list.into_iter()
+                    .take(60)
+                    .map(|(v, m)| self.build_explorer_item_from_local(v, m))
+                    .collect()
+            }
+            wazoo_core::PlexExplorerTab::Genre(genre) => {
+                let g_lower = genre.to_lowercase();
+                let mut list: Vec<_> = self
+                    .available_videos
+                    .iter()
+                    .filter_map(|v| {
+                        let meta = self.metadata_cache.get(&v.id)?;
+                        if meta
+                            .genres
+                            .iter()
+                            .any(|g| g.to_lowercase().contains(&g_lower))
+                        {
+                            Some((v, meta))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
+                list.sort_by(|a, b| {
+                    let r_a = a.1.rating.unwrap_or(0.0);
+                    let r_b = b.1.rating.unwrap_or(0.0);
+                    r_b.partial_cmp(&r_a)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                        .then_with(|| b.1.year.cmp(&a.1.year))
+                });
+                list.into_iter()
+                    .take(60)
+                    .map(|(v, m)| self.build_explorer_item_from_local(v, m))
+                    .collect()
+            }
+            wazoo_core::PlexExplorerTab::Random => {
+                let mut list: Vec<_> = self
+                    .available_videos
+                    .iter()
+                    .filter_map(|v| {
+                        let meta = self.metadata_cache.get(&v.id)?;
+                        Some((v, meta))
+                    })
+                    .collect();
+                if list.len() > 60 {
+                    let stride = list.len() / 60;
+                    list = list.into_iter().step_by(stride).take(60).collect();
+                }
+                list.into_iter()
+                    .map(|(v, m)| self.build_explorer_item_from_local(v, m))
+                    .collect()
+            }
+        };
+
+        let query = self.modals.plex_explorer_search.trim().to_lowercase();
+        if query.is_empty() {
+            raw_items
+        } else {
+            let clean = query.replace(['_', '-'], " ");
+            let words: Vec<&str> = clean.split_whitespace().collect();
+            raw_items
+                .into_iter()
+                .filter(|item| {
+                    let title = item.title.to_lowercase();
+                    let subtitle = item.subtitle.as_deref().unwrap_or("").to_lowercase();
+                    let summary = item.summary.as_deref().unwrap_or("").to_lowercase();
+                    let directors = item.directors.join(" ").to_lowercase();
+                    let actors = item.actors.join(" ").to_lowercase();
+                    let genres = item.genres.join(" ").to_lowercase();
+                    let year_str = item.year.map(|y| y.to_string()).unwrap_or_default();
+
+                    words.iter().all(|w| {
+                        title.contains(w)
+                            || subtitle.contains(w)
+                            || summary.contains(w)
+                            || directors.contains(w)
+                            || actors.contains(w)
+                            || genres.contains(w)
+                            || year_str.contains(w)
+                    })
+                })
+                .collect()
+        }
+    }
+
+    fn build_explorer_item_from_local(
+        &self,
+        video: &wazoo_core::VideoRecord,
+        meta: &wazoo_core::MediaMetadata,
+    ) -> wazoo_core::PlexExplorerItem {
+        let title = if let Some(ref st) = meta.series_title {
+            st.clone()
+        } else {
+            meta.title.clone()
+        };
+
+        let subtitle = if let (Some(sn), Some(en)) = (meta.season_number, meta.episode_number) {
+            Some(format!("S{:02}E{:02} - {}", sn, en, meta.title))
+        } else if let Some(ref tag) = meta.tagline {
+            Some(tag.clone())
+        } else {
+            None
+        };
+
+        wazoo_core::PlexExplorerItem {
+            video_id: video.id,
+            path: video.path.clone(),
+            title,
+            subtitle,
+            year: meta.year,
+            content_rating: meta.content_rating.clone(),
+            rating: meta.rating,
+            genres: meta.genres.clone(),
+            duration_ms: meta.duration_ms,
+            view_offset_ms: None,
+            tagline: meta.tagline.clone(),
+            summary: meta.summary.clone(),
+            directors: meta.directors.clone(),
+            actors: meta.actors.clone(),
+        }
+    }
+
     pub fn is_player_shuffle(&self, id: PlayerId) -> bool {
         self.players
             .player(id)

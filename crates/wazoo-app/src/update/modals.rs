@@ -459,6 +459,63 @@ impl WazooApp {
                 self.modals.quick_picker_search.clear();
                 self.update(Message::PlayFileInFocused(path))
             }
+            Message::TogglePlexExplorerModal => {
+                if self.modals.plex_explorer {
+                    self.modals.plex_explorer = false;
+                    self.modals.plex_explorer_search.clear();
+                    Task::none()
+                } else {
+                    self.open_plex_explorer()
+                }
+            }
+            Message::OpenPlexExplorerModal => self.open_plex_explorer(),
+            Message::ClosePlexExplorerModal => {
+                self.modals.plex_explorer = false;
+                self.modals.plex_explorer_search.clear();
+                Task::none()
+            }
+            Message::PlexExplorerSearchChanged(val) => {
+                self.modals.plex_explorer_search = val;
+                Task::none()
+            }
+            Message::ClearPlexExplorerSearch => {
+                self.modals.plex_explorer_search.clear();
+                iced::widget::operation::focus("plex_explorer_search_input")
+            }
+            Message::PlexExplorerSelectTab(tab) => {
+                self.modals.plex_explorer_tab = tab.clone();
+                self.fetch_plex_live_items(tab)
+            }
+            Message::PlexExplorerSubmit => {
+                let items = self.plex_explorer_items();
+                if let Some(first) = items.first() {
+                    let p = first.path.clone();
+                    let offset = first.view_offset_ms;
+                    return self.update(Message::PlayPlexExplorerItem(p, offset));
+                }
+                Task::none()
+            }
+            Message::PlayPlexExplorerItem(path, view_offset_ms) => {
+                self.modals.plex_explorer = false;
+                self.modals.plex_explorer_search.clear();
+                let play_task = self.update(Message::PlayFileInFocused(path));
+                if let (Some(offset_ms), Some(pid)) = (view_offset_ms, self.focused_player_id()) {
+                    if offset_ms > 0 {
+                        return Task::batch([
+                            play_task,
+                            self.update(Message::Seek(
+                                pid,
+                                std::time::Duration::from_millis(offset_ms),
+                            )),
+                        ]);
+                    }
+                }
+                play_task
+            }
+            Message::PlexExplorerLiveLoaded(tab, items) => {
+                self.plex.live_items.insert(tab, items);
+                Task::none()
+            }
             Message::EscapePressed => {
                 if self.cube.desktop_overlay {
                     return self.update(Message::ToggleDesktopCubeScreensaver);

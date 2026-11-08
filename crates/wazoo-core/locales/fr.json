@@ -204,7 +204,8 @@
       "toggle_fullscreen": "Activer/désactiver le plein écran",
       "toggle_filters": "Basculer les filtres de shaders",
       "fit_window": "Ajuster la fenêtre à la vidéo",
-      "toggle_quick_picker": "Afficher/Masquer le sélecteur rapide"
+      "toggle_quick_picker": "Afficher/Masquer le sélecteur rapide",
+      "toggle_plex_explorer": "Explorateur Plex"
     }
   },
   "file_picker": {

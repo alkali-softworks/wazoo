@@ -204,7 +204,8 @@
       "toggle_fullscreen": "Tam Ekranı Aç/Kapat",
       "toggle_filters": "Gölgelendirici Filtrelerini Aç/Kapat",
       "fit_window": "Pencereyi Videoya Uydur",
-      "toggle_quick_picker": "Hızlı Seçiciyi Değiştir"
+      "toggle_quick_picker": "Hızlı Seçiciyi Değiştir",
+      "toggle_plex_explorer": "Plex Gezgini"
     }
   },
   "file_picker": {

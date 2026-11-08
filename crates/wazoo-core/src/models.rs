@@ -70,6 +70,43 @@ pub struct PlexSettings {
     pub last_synced_at: Option<u64>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum PlexExplorerTab {
+    RecentlyAdded,
+    OnDeck,
+    TopRated,
+    Decade(u32),
+    Genre(String),
+    Random,
+}
+
+impl Default for PlexExplorerTab {
+    fn default() -> Self {
+        Self::RecentlyAdded
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct PlexExplorerItem {
+    pub video_id: i64,
+    pub path: String,
+    pub title: String,
+    pub subtitle: Option<String>,
+    pub year: Option<u32>,
+    pub content_rating: Option<String>,
+    pub rating: Option<f32>,
+    #[serde(default)]
+    pub genres: Vec<String>,
+    pub duration_ms: Option<u64>,
+    pub view_offset_ms: Option<u64>,
+    pub tagline: Option<String>,
+    pub summary: Option<String>,
+    #[serde(default)]
+    pub directors: Vec<String>,
+    #[serde(default)]
+    pub actors: Vec<String>,
+}
+
 fn default_plex_server_url() -> String {
     "http://192.168.1.100:32400".to_string()
 }

@@ -204,7 +204,8 @@
       "toggle_fullscreen": "สลับเต็มหน้าจอ",
       "toggle_filters": "สลับฟิลเตอร์เฉดเดอร์",
       "fit_window": "ปรับขนาดหน้าต่างให้พอดีกับวิดีโอ",
-      "toggle_quick_picker": "สลับตัวเลือกด่วน"
+      "toggle_quick_picker": "สลับตัวเลือกด่วน",
+      "toggle_plex_explorer": "ตัวสำรวจ Plex"
     }
   },
   "file_picker": {

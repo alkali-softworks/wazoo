@@ -212,6 +212,17 @@ pub enum Message {
     QuickPickerSubmit,
     PlayQuickPickerFile(String),
 
+    // Plex Explorer Modal
+    TogglePlexExplorerModal,
+    OpenPlexExplorerModal,
+    ClosePlexExplorerModal,
+    PlexExplorerSearchChanged(String),
+    ClearPlexExplorerSearch,
+    PlexExplorerSelectTab(wazoo_core::PlexExplorerTab),
+    PlexExplorerSubmit,
+    PlayPlexExplorerItem(String, Option<u64>),
+    PlexExplorerLiveLoaded(wazoo_core::PlexExplorerTab, Vec<wazoo_core::PlexExplorerItem>),
+
     // Timers & Ticks
     Tick,
     WatchdogTick,

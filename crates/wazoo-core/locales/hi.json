@@ -204,7 +204,8 @@
       "toggle_fullscreen": "पूर्ण स्क्रीन टॉगल करें",
       "toggle_filters": "शेडर फ़िल्टर टॉगल करें",
       "fit_window": "वीडियो के अनुसार विंडो फिट करें",
-      "toggle_quick_picker": "त्वरित चयनकर्ता चालू/बंद करें"
+      "toggle_quick_picker": "त्वरित चयनकर्ता चालू/बंद करें",
+      "toggle_plex_explorer": "Plex एक्सप्लोरर"
     }
   },
   "file_picker": {

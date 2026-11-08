@@ -204,7 +204,8 @@
       "toggle_fullscreen": "Vollbild umschalten",
       "toggle_filters": "Shader-Filter umschalten",
       "fit_window": "Fenster an Video anpassen",
-      "toggle_quick_picker": "Schnellauswahl umschalten"
+      "toggle_quick_picker": "Schnellauswahl umschalten",
+      "toggle_plex_explorer": "Plex-Explorer"
     }
   },
   "file_picker": {

@@ -204,7 +204,8 @@
       "toggle_fullscreen": "Переключить полноэкранный режим",
       "toggle_filters": "Переключить шейдерные фильтры",
       "fit_window": "Подогнать окно под видео",
-      "toggle_quick_picker": "Быстрый выбор видео"
+      "toggle_quick_picker": "Быстрый выбор видео",
+      "toggle_plex_explorer": "Проводник Plex"
     }
   },
   "file_picker": {

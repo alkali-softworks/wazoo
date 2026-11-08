@@ -204,7 +204,8 @@
       "toggle_fullscreen": "Alternar pantalla completa",
       "toggle_filters": "Alternar filtros de sombreado",
       "fit_window": "Ajustar ventana al video",
-      "toggle_quick_picker": "Alternar selector rápido"
+      "toggle_quick_picker": "Alternar selector rápido",
+      "toggle_plex_explorer": "Explorador de Plex"
     }
   },
   "file_picker": {

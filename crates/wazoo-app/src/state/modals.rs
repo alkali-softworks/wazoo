@@ -5,6 +5,7 @@
  */
 
 use crate::app::SettingsTab;
+use wazoo_core::PlexExplorerTab;
 
 /// Tracks the visibility state of centered modal dialog overlays.
 #[derive(Debug, Clone, Default)]
@@ -18,6 +19,9 @@ pub struct ModalState {
     pub bookmarks: bool,
     pub quick_picker: bool,
     pub quick_picker_search: String,
+    pub plex_explorer: bool,
+    pub plex_explorer_search: String,
+    pub plex_explorer_tab: PlexExplorerTab,
     pub playback_settings_debounce_ticks: usize,
 }
 
@@ -31,6 +35,7 @@ impl ModalState {
             || self.bookmarks
             || self.menu
             || self.quick_picker
+            || self.plex_explorer
     }
 
     /// Closes all active modal dialog overlays.
@@ -44,5 +49,7 @@ impl ModalState {
         self.menu = false;
         self.quick_picker = false;
         self.quick_picker_search.clear();
+        self.plex_explorer = false;
+        self.plex_explorer_search.clear();
     }
 }

@@ -2280,3 +2280,125 @@ fn test_quick_picker_modal_render() {
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_plex_explorer_modal_e_key_escape_and_actions() {
+    let (mut app, _) = new_test_app();
+    let temp_dir = std::env::temp_dir().join(format!(
+        "test_plex_explorer_{}_{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&temp_dir);
+
+    let f1 = temp_dir.join("Frailty (2001).mp4");
+    let f2 = temp_dir.join("The Matrix (1999).mkv");
+    let _ = std::fs::File::create(&f1);
+    let _ = std::fs::File::create(&f2);
+
+    let p1 = f1.to_string_lossy().to_string();
+    let p2 = f2.to_string_lossy().to_string();
+
+    let v1 = wazoo_core::VideoRecord::new(1, "Frailty (2001)", &p1);
+    let v2 = wazoo_core::VideoRecord::new(2, "The Matrix (1999)", &p2);
+
+    app.available_videos = vec![v1.clone(), v2.clone()];
+    app.metadata_cache.insert(
+        1,
+        wazoo_core::MediaMetadata {
+            video_id: 1,
+            title: "Frailty".to_string(),
+            year: Some(2001),
+            rating: Some(7.6),
+            genres: vec!["Drama".to_string(), "Thriller".to_string(), "Crime".to_string()],
+            directors: vec!["Bill Paxton".to_string()],
+            actors: vec!["Matthew McConaughey".to_string()],
+            tagline: Some("No soul is safe.".to_string()),
+            ..Default::default()
+        },
+    );
+    app.metadata_cache.insert(
+        2,
+        wazoo_core::MediaMetadata {
+            video_id: 2,
+            title: "The Matrix".to_string(),
+            year: Some(1999),
+            rating: Some(8.7),
+            genres: vec!["Action".to_string(), "Sci-Fi".to_string()],
+            directors: vec!["Wachowski".to_string()],
+            actors: vec!["Keanu Reeves".to_string()],
+            tagline: Some("Welcome to the Real World.".to_string()),
+            ..Default::default()
+        },
+    );
+
+    let _ = app.update(Message::SetPlayerCount(1));
+    assert!(!app.modals.plex_explorer);
+    assert!(!app.modals.is_any_open());
+
+    // 1. Press 'e' key to open Plex Explorer modal
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("e".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.modals.plex_explorer);
+    assert!(app.modals.is_any_open());
+    assert_eq!(app.modals.plex_explorer_search, "");
+
+    // 2. Tab switching: Top Rated
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::TopRated,
+    ));
+    assert_eq!(
+        app.modals.plex_explorer_tab,
+        wazoo_core::PlexExplorerTab::TopRated
+    );
+    let items = app.plex_explorer_items();
+    assert_eq!(items.len(), 2);
+    // Highest rated first: The Matrix (8.7) then Frailty (7.6)
+    assert_eq!(items[0].title, "The Matrix");
+    assert_eq!(items[1].title, "Frailty");
+
+    // 3. Sub-filter by Decade: 1990s
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::Decade(1990),
+    ));
+    let items = app.plex_explorer_items();
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0].title, "The Matrix");
+
+    // 4. Sub-filter by Genre: Thriller
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::Genre("Thriller".to_string()),
+    ));
+    let items = app.plex_explorer_items();
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0].title, "Frailty");
+
+    // 5. Search filtering within active tab
+    let _ = app.update(Message::PlexExplorerSearchChanged("Paxton".to_string()));
+    assert_eq!(app.modals.plex_explorer_search, "Paxton");
+    let items = app.plex_explorer_items();
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0].title, "Frailty");
+
+    // 6. Submitting via Enter plays the first matching file and closes modal
+    let _ = app.update(Message::PlexExplorerSubmit);
+    assert!(!app.modals.plex_explorer);
+    assert_eq!(app.players[0].state.path, p1);
+
+    // 7. Verify view rendering
+    app.modals.plex_explorer = true;
+    {
+        let _el = app.view_plex_explorer_modal();
+    }
+
+    // 8. Press Escape closes the modal
+    let _ = app.update(Message::EscapePressed);
+    assert!(!app.modals.plex_explorer);
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}

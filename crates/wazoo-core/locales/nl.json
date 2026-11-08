@@ -204,7 +204,8 @@
       "toggle_fullscreen": "Volledig scherm in-/uitschakelen",
       "toggle_filters": "Schakel shaderfilters in/uit",
       "fit_window": "Venster aanpassen aan video",
-      "toggle_quick_picker": "Snelle kiezer in-/uitschakelen"
+      "toggle_quick_picker": "Snelle kiezer in-/uitschakelen",
+      "toggle_plex_explorer": "Plex-verkenner"
     }
   },
   "file_picker": {

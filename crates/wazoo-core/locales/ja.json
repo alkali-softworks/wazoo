@@ -204,7 +204,8 @@
       "toggle_fullscreen": "全画面表示の切り替え",
       "toggle_filters": "シェーダーフィルター切り替え",
       "fit_window": "動画に合わせてウィンドウを調整",
-      "toggle_quick_picker": "クイックピッカーの切り替え"
+      "toggle_quick_picker": "クイックピッカーの切り替え",
+      "toggle_plex_explorer": "Plex エクスプローラー"
     }
   },
   "file_picker": {

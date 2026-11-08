@@ -185,6 +185,9 @@ pub fn find_key_action(
     if key_matches_binding(&keybinds.toggle_quick_picker, key, false) {
         return Some(KeyAction::ToggleQuickPicker);
     }
+    if key_matches_binding(&keybinds.toggle_plex_explorer, key, false) {
+        return Some(KeyAction::TogglePlexExplorer);
+    }
     if key_matches_binding(&keybinds.toggle_transcript, key, false) {
         return Some(KeyAction::ToggleTranscript);
     }

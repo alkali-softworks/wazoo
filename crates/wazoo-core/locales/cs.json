@@ -204,7 +204,8 @@
       "toggle_fullscreen": "Přepnout celou obrazovku",
       "toggle_filters": "Přepnout shadery filtrů",
       "fit_window": "Přizpůsobit okno videu",
-      "toggle_quick_picker": "Přepnout rychlý výběr"
+      "toggle_quick_picker": "Přepnout rychlý výběr",
+      "toggle_plex_explorer": "Průzkumník Plex"
     }
   },
   "file_picker": {

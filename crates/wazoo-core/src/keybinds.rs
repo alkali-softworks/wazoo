@@ -28,6 +28,7 @@ pub enum KeyAction {
     // --- 2. Panels & Drawers ---
     ToggleFilePicker,
     ToggleQuickPicker,
+    TogglePlexExplorer,
     SearchVideos,
     ToggleBookmarks,
     SpeedOrBookmarkUp,
@@ -89,6 +90,7 @@ pub struct KeybindSettings {
     // --- 2. Panels & Drawers ---
     pub toggle_file_picker: String,
     pub toggle_quick_picker: String,
+    pub toggle_plex_explorer: String,
     pub search_videos: String,
     pub toggle_bookmarks: String,
     pub speed_or_bookmark_up: String,
@@ -152,6 +154,7 @@ impl Default for KeybindSettings {
             // --- 2. Panels & Drawers ---
             toggle_file_picker: "h, f".to_string(),
             toggle_quick_picker: "k".to_string(),
+            toggle_plex_explorer: "e".to_string(),
             search_videos: "j, /".to_string(),
             toggle_bookmarks: "b".to_string(),
             speed_or_bookmark_up: "+, =".to_string(),
@@ -213,6 +216,7 @@ impl KeybindSettings {
         // 2. Panels & Drawers
         "toggle_file_picker",
         "toggle_quick_picker",
+        "toggle_plex_explorer",
         "search_videos",
         "toggle_bookmarks",
         "speed_or_bookmark_up",
@@ -314,6 +318,9 @@ impl KeybindSettings {
         }
         if self.toggle_quick_picker.trim().is_empty() {
             self.toggle_quick_picker = def.toggle_quick_picker;
+        }
+        if self.toggle_plex_explorer.trim().is_empty() {
+            self.toggle_plex_explorer = def.toggle_plex_explorer;
         }
         if self.search_videos.trim().is_empty() {
             self.search_videos = def.search_videos;
@@ -504,6 +511,10 @@ impl KeybindSettings {
                     HelpShortcut {
                         key: KeyDisplay::single(&self.toggle_quick_picker),
                         description: t("help.shortcuts.toggle_quick_picker"),
+                    },
+                    HelpShortcut {
+                        key: KeyDisplay::single(&self.toggle_plex_explorer),
+                        description: t("help.shortcuts.toggle_plex_explorer"),
                     },
                     HelpShortcut {
                         key: KeyDisplay::alternatives_from_binding(&self.search_videos),

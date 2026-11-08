@@ -4,7 +4,10 @@
  * Plex Integration State
  */
 
-use wazoo_core::{PlexServerInfo, PlexSyncProgress, PlexSyncSummary};
+use std::collections::HashMap;
+use wazoo_core::{
+    PlexExplorerItem, PlexExplorerTab, PlexServerInfo, PlexSyncProgress, PlexSyncSummary,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct PlexState {
@@ -14,5 +17,7 @@ pub struct PlexState {
     pub sync_progress: Option<PlexSyncProgress>,
     pub sync_result: Option<Result<PlexSyncSummary, String>>,
     pub current_sync_id: u64,
+    pub live_items: HashMap<PlexExplorerTab, Vec<PlexExplorerItem>>,
+    pub is_fetching_live: bool,
 }
 

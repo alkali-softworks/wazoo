@@ -204,7 +204,8 @@
       "toggle_fullscreen": "Bật/tắt toàn màn hình",
       "toggle_filters": "Bật/Tắt bộ lọc đổ bóng",
       "fit_window": "Khớp cửa sổ theo video",
-      "toggle_quick_picker": "Bật/tắt bộ chọn nhanh"
+      "toggle_quick_picker": "Bật/tắt bộ chọn nhanh",
+      "toggle_plex_explorer": "Trình khám phá Plex"
     }
   },
   "file_picker": {

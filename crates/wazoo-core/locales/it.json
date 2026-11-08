@@ -204,7 +204,8 @@
       "toggle_fullscreen": "Attiva/disattiva schermo intero",
       "toggle_filters": "Attiva/disattiva filtri shader",
       "fit_window": "Adatta finestra al video",
-      "toggle_quick_picker": "Attiva/disattiva selezione rapida"
+      "toggle_quick_picker": "Attiva/disattiva selezione rapida",
+      "toggle_plex_explorer": "Esplora Plex"
     }
   },
   "file_picker": {
