@@ -183,15 +183,18 @@ impl WazooApp {
         ]
         .align_y(Alignment::Center);
 
+        let win_h = (self.settings.window_bounds.height as f32).max(400.0);
+        let scrollable_h = (win_h - 160.0).clamp(520.0, 700.0);
+
         let card = container(
             column![
                 header_row,
                 scrollable(scrollable_content)
-                    .height(Length::Fixed(500.0))
+                    .height(Length::Fixed(scrollable_h))
                     .width(Length::Fill),
             ]
             .spacing(14)
-            .width(Length::Fixed(680.0)),
+            .width(Length::Fixed(700.0)),
         )
         .padding(20)
         .style(theme::modal_card_style);
