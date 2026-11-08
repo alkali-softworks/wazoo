@@ -230,6 +230,109 @@ impl PlexClient {
         section_key: &str,
         section_type: &str,
     ) -> Result<Vec<PlexRawItem>, String> {
+        self.fetch_section_items_with_title(section_key, section_type, None)
+            .await
+    }
+
+    /// Fetches all media items for a section with optional library title context.
+    ///
+    /// For TV show libraries (`section_type == "show"`), Plex stores genre classifications
+    /// at the series (grandparent) level rather than on individual episodes. This method
+    /// automatically fetches the series metadata list and inherits show genres, release year,
+    /// and audience rating onto each child episode so that genre filters and explorer tabs
+    /// work seamlessly across television libraries.
+    pub async fn fetch_section_items_with_title(
+        &self,
+        section_key: &str,
+        section_type: &str,
+        section_title: Option<&str>,
+    ) -> Result<Vec<PlexRawItem>, String> {
+        let is_anime_lib = section_title
+            .map(|t| t.to_lowercase().contains("anime"))
+            .unwrap_or(false);
+
+        let mut show_info_by_key: HashMap<String, PlexShowInfo> = HashMap::new();
+        let mut show_info_by_title: HashMap<String, PlexShowInfo> = HashMap::new();
+
+        if section_type == "show" {
+            // Fetch series list to collect series-level metadata (genres, year, rating)
+            let show_url = format!(
+                "{}/library/sections/{}/all?includeGuids=1",
+                self.server_url, section_key
+            );
+            if let Ok(show_resp) = self
+                .http
+                .get(&show_url)
+                .header("X-Plex-Token", &self.token)
+                .send()
+                .await
+            {
+                if show_resp.status().is_success() {
+                    if let Ok(show_val) = show_resp.json::<serde_json::Value>().await {
+                        if let Some(show_arr) = show_val["MediaContainer"]["Metadata"].as_array() {
+                            for show in show_arr {
+                                let mut genres = Vec::new();
+                                if let Some(genre_arr) = show["Genre"].as_array() {
+                                    for g in genre_arr {
+                                        if let Some(tag) = g["tag"].as_str() {
+                                            let trimmed = tag.trim();
+                                            if !trimmed.is_empty() {
+                                                genres.push(trimmed.to_string());
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if is_anime_lib {
+                                    if !genres.iter().any(|g| g.eq_ignore_ascii_case("animation")) {
+                                        genres.push("Animation".to_string());
+                                    }
+                                    if !genres.iter().any(|g| g.eq_ignore_ascii_case("anime")) {
+                                        genres.push("Anime".to_string());
+                                    }
+                                } else if genres.iter().any(|g| g.eq_ignore_ascii_case("anime")) {
+                                    if !genres.iter().any(|g| g.eq_ignore_ascii_case("animation")) {
+                                        genres.push("Animation".to_string());
+                                    }
+                                }
+
+                                let year = show["year"].as_u64().map(|y| y as u32).or_else(|| {
+                                    show["originallyAvailableAt"]
+                                        .as_str()
+                                        .and_then(|d| d.split('-').next())
+                                        .and_then(|y| y.parse::<u32>().ok())
+                                });
+
+                                let rating = show["rating"]
+                                    .as_f64()
+                                    .or_else(|| show["audienceRating"].as_f64())
+                                    .map(|r| r as f32);
+
+                                let info = PlexShowInfo {
+                                    genres,
+                                    year,
+                                    rating,
+                                };
+
+                                if let Some(rk) = show["ratingKey"].as_str() {
+                                    show_info_by_key.insert(rk.to_string(), info.clone());
+                                } else if let Some(rk_num) = show["ratingKey"].as_u64() {
+                                    show_info_by_key.insert(rk_num.to_string(), info.clone());
+                                }
+
+                                if let Some(title) = show["title"].as_str() {
+                                    let clean_title = title.trim().to_lowercase();
+                                    if !clean_title.is_empty() {
+                                        show_info_by_title.insert(clean_title, info);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         let url = if section_type == "show" {
             // type=4 retrieves all episodes across all seasons in a single flat call
             format!(
@@ -263,7 +366,13 @@ impl PlexClient {
         let mut items = Vec::new();
         if let Some(meta_arr) = val["MediaContainer"]["Metadata"].as_array() {
             for item in meta_arr {
-                if let Some(raw) = parse_plex_metadata_item(item, section_type) {
+                if let Some(raw) = parse_plex_metadata_item(
+                    item,
+                    section_type,
+                    Some(&show_info_by_key),
+                    Some(&show_info_by_title),
+                    is_anime_lib,
+                ) {
                     items.push(raw);
                 }
             }
@@ -299,7 +408,7 @@ impl PlexClient {
         if let Some(meta_arr) = val["MediaContainer"]["Metadata"].as_array() {
             for item in meta_arr {
                 let st = item["type"].as_str().unwrap_or("movie");
-                if let Some(raw) = parse_plex_metadata_item(item, st) {
+                if let Some(raw) = parse_plex_metadata_item(item, st, None, None, false) {
                     items.push(raw);
                 }
             }
@@ -332,7 +441,7 @@ impl PlexClient {
         if let Some(meta_arr) = val["MediaContainer"]["Metadata"].as_array() {
             for item in meta_arr {
                 let st = item["type"].as_str().unwrap_or("movie");
-                if let Some(raw) = parse_plex_metadata_item(item, st) {
+                if let Some(raw) = parse_plex_metadata_item(item, st, None, None, false) {
                     items.push(raw);
                 }
             }
@@ -342,8 +451,21 @@ impl PlexClient {
     }
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct PlexShowInfo {
+    pub genres: Vec<String>,
+    pub year: Option<u32>,
+    pub rating: Option<f32>,
+}
+
 /// Parses an individual JSON metadata entry from Plex into a `PlexRawItem`.
-fn parse_plex_metadata_item(item: &serde_json::Value, section_type: &str) -> Option<PlexRawItem> {
+fn parse_plex_metadata_item(
+    item: &serde_json::Value,
+    section_type: &str,
+    show_info_by_key: Option<&HashMap<String, PlexShowInfo>>,
+    show_info_by_title: Option<&HashMap<String, PlexShowInfo>>,
+    is_anime_lib: bool,
+) -> Option<PlexRawItem> {
     let rating_key = item["ratingKey"].as_str()?.to_string();
     let title = item["title"].as_str().unwrap_or("").to_string();
 
@@ -387,7 +509,46 @@ fn parse_plex_metadata_item(item: &serde_json::Value, section_type: &str) -> Opt
         None
     };
 
-    let year = item["year"].as_u64().map(|y| y as u32);
+    // Lookup matching show info if available
+    let parent_show_info = if is_episode {
+        let from_key = if let Some(by_key) = show_info_by_key {
+            if let Some(gp_key) = item["grandparentRatingKey"].as_str() {
+                by_key.get(gp_key)
+            } else if let Some(gp_key_num) = item["grandparentRatingKey"].as_u64() {
+                by_key.get(&gp_key_num.to_string())
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        from_key.or_else(|| {
+            if let Some(by_title) = show_info_by_title {
+                if let Some(ref st) = series_title {
+                    by_title.get(&st.trim().to_lowercase())
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        })
+    } else {
+        None
+    };
+
+    let year = item["year"]
+        .as_u64()
+        .map(|y| y as u32)
+        .or_else(|| {
+            item["originallyAvailableAt"]
+                .as_str()
+                .and_then(|d| d.split('-').next())
+                .and_then(|y| y.parse::<u32>().ok())
+        })
+        .or_else(|| parent_show_info.and_then(|s| s.year));
+
     let tagline = item["tagline"].as_str().map(|s| s.to_string());
     let summary = item["summary"].as_str().map(|s| s.to_string());
     let content_rating = item["contentRating"].as_str().map(|s| s.to_string());
@@ -395,15 +556,38 @@ fn parse_plex_metadata_item(item: &serde_json::Value, section_type: &str) -> Opt
     let rating = item["rating"]
         .as_f64()
         .or_else(|| item["audienceRating"].as_f64())
-        .map(|r| r as f32);
+        .map(|r| r as f32)
+        .or_else(|| parent_show_info.and_then(|s| s.rating));
     let studio = item["studio"].as_str().map(|s| s.to_string());
 
     let mut genres = Vec::new();
     if let Some(genre_arr) = item["Genre"].as_array() {
         for g in genre_arr {
             if let Some(tag) = g["tag"].as_str() {
-                genres.push(tag.to_string());
+                let trimmed = tag.trim();
+                if !trimmed.is_empty() {
+                    genres.push(trimmed.to_string());
+                }
             }
+        }
+    }
+
+    if genres.is_empty() {
+        if let Some(show_info) = parent_show_info {
+            genres = show_info.genres.clone();
+        }
+    }
+
+    if is_anime_lib {
+        if !genres.iter().any(|g| g.eq_ignore_ascii_case("animation")) {
+            genres.push("Animation".to_string());
+        }
+        if !genres.iter().any(|g| g.eq_ignore_ascii_case("anime")) {
+            genres.push("Anime".to_string());
+        }
+    } else if genres.iter().any(|g| g.eq_ignore_ascii_case("anime")) {
+        if !genres.iter().any(|g| g.eq_ignore_ascii_case("animation")) {
+            genres.push("Animation".to_string());
         }
     }
 
@@ -567,7 +751,7 @@ pub async fn sync_plex_library(
         }
 
         let items = client
-            .fetch_section_items(&sec.key, &sec.section_type)
+            .fetch_section_items_with_title(&sec.key, &sec.section_type, Some(&sec.title))
             .await?;
         summary.total_plex_items += items.len();
 
@@ -681,6 +865,87 @@ mod tests {
         let plex_path3 = "/pub/movies/Unknown.mkv";
         let matched3 = match_plex_path(plex_path3, &local_index, &norm_cache);
         assert_eq!(matched3, None);
+    }
+
+    #[test]
+    fn test_tv_episode_inherits_show_genres_year_and_rating() {
+        let mut show_by_key = HashMap::new();
+        show_by_key.insert(
+            "1001".to_string(),
+            PlexShowInfo {
+                genres: vec!["Animation".to_string(), "Action".to_string()],
+                year: Some(1964),
+                rating: Some(8.5),
+            },
+        );
+
+        let episode_json = serde_json::json!({
+            "ratingKey": "2001",
+            "grandparentRatingKey": "1001",
+            "grandparentTitle": "Jonny Quest",
+            "title": "The Mystery of the Lizard Men",
+            "type": "episode",
+            "parentIndex": 1,
+            "index": 1,
+            "Media": [{
+                "Part": [{
+                    "file": "/media/tv/Jonny Quest/S01E01.mkv"
+                }]
+            }]
+        });
+
+        let parsed = parse_plex_metadata_item(
+            &episode_json,
+            "show",
+            Some(&show_by_key),
+            None,
+            false,
+        )
+        .expect("parsed item");
+
+        assert_eq!(parsed.series_title.as_deref(), Some("Jonny Quest"));
+        assert_eq!(parsed.genres, vec!["Animation", "Action"]);
+        assert_eq!(parsed.year, Some(1964));
+        assert_eq!(parsed.rating, Some(8.5));
+    }
+
+    #[test]
+    fn test_anime_library_ensures_animation_and_anime_tags() {
+        let mut show_by_key = HashMap::new();
+        show_by_key.insert(
+            "1002".to_string(),
+            PlexShowInfo {
+                genres: vec!["Sci-Fi".to_string(), "Mecha".to_string()],
+                year: Some(1995),
+                rating: Some(9.0),
+            },
+        );
+
+        let episode_json = serde_json::json!({
+            "ratingKey": "2002",
+            "grandparentRatingKey": "1002",
+            "grandparentTitle": "Neon Genesis Evangelion",
+            "title": "Angel Attack",
+            "type": "episode",
+            "Media": [{
+                "Part": [{
+                    "file": "/media/anime/NGE/S01E01.mkv"
+                }]
+            }]
+        });
+
+        let parsed = parse_plex_metadata_item(
+            &episode_json,
+            "show",
+            Some(&show_by_key),
+            None,
+            true, // is_anime_lib
+        )
+        .expect("parsed item");
+
+        assert!(parsed.genres.contains(&"Animation".to_string()));
+        assert!(parsed.genres.contains(&"Anime".to_string()));
+        assert!(parsed.genres.contains(&"Sci-Fi".to_string()));
     }
 }
 
