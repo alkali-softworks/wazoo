@@ -1099,16 +1099,29 @@ impl WazooApp {
             None
         };
 
-        let raw_items = match &self.modals.plex_explorer_tab {
+        let query = self.modals.plex_explorer_search.trim().to_lowercase();
+        let query_words: Vec<String> = if query.is_empty() {
+            Vec::new()
+        } else {
+            let clean = query.replace(['_', '-'], " ");
+            clean.split_whitespace().map(|s| s.to_string()).collect()
+        };
+
+        match &self.modals.plex_explorer_tab {
             wazoo_core::PlexExplorerTab::OnDeck => {
-                if let Some(items) = self
+                let items = self
                     .plex
                     .live_items
                     .get(&wazoo_core::PlexExplorerTab::OnDeck)
-                {
-                    items.clone()
+                    .cloned()
+                    .unwrap_or_default();
+                if query_words.is_empty() {
+                    items
                 } else {
-                    Vec::new()
+                    items
+                        .into_iter()
+                        .filter(|item| Self::plex_explorer_item_matches_words(item, &query_words))
+                        .collect()
                 }
             }
             wazoo_core::PlexExplorerTab::RecentlyAdded => {
@@ -1117,13 +1130,26 @@ impl WazooApp {
                     .live_items
                     .get(&wazoo_core::PlexExplorerTab::RecentlyAdded)
                 {
-                    items.clone()
+                    if query_words.is_empty() {
+                        items.clone()
+                    } else {
+                        items
+                            .iter()
+                            .filter(|item| Self::plex_explorer_item_matches_words(item, &query_words))
+                            .cloned()
+                            .collect()
+                    }
                 } else {
                     let mut list: Vec<_> = self
                         .available_videos
                         .iter()
                         .filter_map(|v| {
                             let meta = self.metadata_cache.get(&v.id)?;
+                            if !query_words.is_empty()
+                                && !Self::plex_metadata_matches_words(meta, &query_words)
+                            {
+                                return None;
+                            }
                             Some((v, meta))
                         })
                         .collect();
@@ -1134,7 +1160,7 @@ impl WazooApp {
                             .then_with(|| b.0.id.cmp(&a.0.id))
                     });
                     list.into_iter()
-                        .take(60)
+                        .take(250)
                         .map(|(v, m)| self.build_explorer_item_from_local(v, m))
                         .collect()
                 }
@@ -1168,6 +1194,12 @@ impl WazooApp {
                             }
                         }
 
+                        if !query_words.is_empty()
+                            && !Self::plex_metadata_matches_words(meta, &query_words)
+                        {
+                            return None;
+                        }
+
                         Some((v, meta))
                     })
                     .collect();
@@ -1183,7 +1215,7 @@ impl WazooApp {
                                 .then_with(|| a.1.title.cmp(&b.1.title))
                         });
                         list.into_iter()
-                            .take(60)
+                            .take(250)
                             .map(|(v, m)| self.build_explorer_item_from_local(v, m))
                             .collect()
                     }
@@ -1198,7 +1230,7 @@ impl WazooApp {
                         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
                         list.shuffle(&mut rng);
                         list.into_iter()
-                            .take(60)
+                            .take(150)
                             .map(|(v, m)| self.build_explorer_item_from_local(v, m))
                             .collect()
                     }
@@ -1215,59 +1247,85 @@ impl WazooApp {
                         });
 
                         list.into_iter()
-                            .take(60)
+                            .take(250)
                             .map(|(v, m)| self.build_explorer_item_from_local(v, m))
                             .collect()
                     }
                 }
             }
+        }
+    }
+
+    fn plex_explorer_item_matches_words(
+        item: &wazoo_core::PlexExplorerItem,
+        words: &[String],
+    ) -> bool {
+        let title = item.title.to_lowercase();
+        let subtitle = item.subtitle.as_deref().unwrap_or("").to_lowercase();
+        let summary = item.summary.as_deref().unwrap_or("").to_lowercase();
+        let directors = item.directors.join(" ").to_lowercase();
+        let actors = item.actors.join(" ").to_lowercase();
+        let mut genres = item.genres.join(" ").to_lowercase();
+        if genres.contains("science fiction") || genres.contains("sci-fi") {
+            genres.push_str(" scifi sci-fi science fiction");
+        }
+        if genres.contains("anime") || genres.contains("animation") {
+            genres.push_str(" anime animation");
+        }
+        let year_str = match item.year {
+            Some(y) => {
+                let dec_full = format!("{}s", (y / 10) * 10);
+                let dec_short = format!("{:02}s", ((y / 10) * 10) % 100);
+                format!("{} {} {}", y, dec_full, dec_short)
+            }
+            None => String::new(),
         };
 
-        let query = self.modals.plex_explorer_search.trim().to_lowercase();
-        if query.is_empty() {
-            raw_items
-        } else {
-            let clean = query.replace(['_', '-'], " ");
-            let words: Vec<&str> = clean.split_whitespace().collect();
-            raw_items
-                .into_iter()
-                .filter(|item| {
-                    let title = item.title.to_lowercase();
-                    let subtitle = item.subtitle.as_deref().unwrap_or("").to_lowercase();
-                    let summary = item.summary.as_deref().unwrap_or("").to_lowercase();
-                    let directors = item.directors.join(" ").to_lowercase();
-                    let actors = item.actors.join(" ").to_lowercase();
-                    let genres = {
-                        let mut g_str = item.genres.join(" ").to_lowercase();
-                        if g_str.contains("science fiction") || g_str.contains("sci-fi") {
-                            g_str.push_str(" scifi sci-fi science fiction");
-                        }
-                        if g_str.contains("anime") || g_str.contains("animation") {
-                            g_str.push_str(" anime animation");
-                        }
-                        g_str
-                    };
-                    let year_str = match item.year {
-                        Some(y) => {
-                            let dec_full = format!("{}s", (y / 10) * 10);
-                            let dec_short = format!("{:02}s", ((y / 10) * 10) % 100);
-                            format!("{} {} {}", y, dec_full, dec_short)
-                        }
-                        None => String::new(),
-                    };
+        words.iter().all(|w| {
+            title.contains(w)
+                || subtitle.contains(w)
+                || summary.contains(w)
+                || directors.contains(w)
+                || actors.contains(w)
+                || genres.contains(w)
+                || year_str.contains(w)
+        })
+    }
 
-                    words.iter().all(|w| {
-                        title.contains(w)
-                            || subtitle.contains(w)
-                            || summary.contains(w)
-                            || directors.contains(w)
-                            || actors.contains(w)
-                            || genres.contains(w)
-                            || year_str.contains(w)
-                    })
-                })
-                .collect()
+    fn plex_metadata_matches_words(
+        meta: &wazoo_core::MediaMetadata,
+        words: &[String],
+    ) -> bool {
+        let title = meta.title.to_lowercase();
+        let series = meta.series_title.as_deref().unwrap_or("").to_lowercase();
+        let summary = meta.summary.as_deref().unwrap_or("").to_lowercase();
+        let directors = meta.directors.join(" ").to_lowercase();
+        let actors = meta.actors.join(" ").to_lowercase();
+        let mut genres = meta.genres.join(" ").to_lowercase();
+        if genres.contains("science fiction") || genres.contains("sci-fi") {
+            genres.push_str(" scifi sci-fi science fiction");
         }
+        if genres.contains("anime") || genres.contains("animation") {
+            genres.push_str(" anime animation");
+        }
+        let year_str = match meta.year {
+            Some(y) => {
+                let dec_full = format!("{}s", (y / 10) * 10);
+                let dec_short = format!("{:02}s", ((y / 10) * 10) % 100);
+                format!("{} {} {}", y, dec_full, dec_short)
+            }
+            None => String::new(),
+        };
+
+        words.iter().all(|w| {
+            title.contains(w)
+                || series.contains(w)
+                || summary.contains(w)
+                || directors.contains(w)
+                || actors.contains(w)
+                || genres.contains(w)
+                || year_str.contains(w)
+        })
     }
 
     fn build_explorer_item_from_local(

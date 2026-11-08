@@ -73,8 +73,8 @@ Accept: application/json
 | :--- | :--- | :--- |
 | `GET /identity` | Connectivity & Version Verification | Returns `machineIdentifier`, `version`, and `claimed` status without requiring elevated scopes. |
 | `GET /library/sections` | Discover Media Libraries | Returns list of library sections. Filtered for `type == "movie"` and `type == "show"`. Extracts library keys and server folder locations. |
-| `GET /library/sections/{key}/all?includeGuids=1` | Bulk Fetch Movie Metadata | Returns all movies in a single JSON payload: `title`, `year`, `tagline`, `summary`, `contentRating`, `duration`, `rating`, `Genre`, `Director`, `Role`, `thumb`, `art`, and `Media.Part.file`. |
-| `GET /library/sections/{key}/all?type=4` | Bulk Fetch TV Episodes | Setting `type=4` returns all episodes across all series in a single flat call: `grandparentTitle` (Show Name), `parentIndex` (Season), `index` (Episode), `title` (Episode Name), `year`, `summary`, `thumb`, and `Media.Part.file`. |
+| `GET /library/sections/{key}/all?includeGuids=1` | Bulk Fetch Show / Movie Metadata | In TV show libraries, fetches all series objects with their `Genre`, `rating`, `audienceRating`, and release `year`. In movie libraries, returns movie objects. |
+| `GET /library/sections/{key}/all?type=4&includeGuids=1` | Bulk Fetch TV Episodes | Setting `type=4` returns all episodes across all series in a single flat call: `grandparentTitle` (Show Name), `grandparentRatingKey`, `parentIndex` (Season), `index` (Episode), `title` (Episode Name), `year`, `summary`, `thumb`, and `Media.Part.file`. Episodes inherit series-level genres, release year, and audience rating from their parent show. |
 | `GET /library/metadata/{key}/thumb/{ts}` | High-Resolution Posters | On-demand poster thumbnail streaming, cached locally in `~/.cache/wazoo/posters/`. |
 
 ---
@@ -289,7 +289,13 @@ A dedicated navigation button in the settings modal tabs bar: `[General] [Playba
   - Movie titles occupy line 1 alongside right-aligned badges (`Year`, `Content Rating`, `★ Rating`, `Genres`). Badges are guaranteed natural width and never get clipped.
   - TV episodes display season and episode designations (`S01E02 - Episode Name`) next to the series title.
   - Taglines and plot summaries are displayed on line 2 with automatic deduplication.
-* **Live Instant Search**: Integrated filter input querying titles, subtitles, directors, actors, genres, years, and summaries.
+* **Series-to-Episode Metadata Inheritance**:
+  - Plex stores genre tags and audience ratings at the TV series (grandparent) level rather than repeating them on every episode.
+  - During synchronization, Wazoo queries section series definitions and inherits series genres, release year, and audience rating onto all child episodes.
+  - Ensures television episodes (e.g. 1960s classic animation, anime) are 100% discoverable within genre and decade filter views.
+* **Full-Library Instant Search & Higher Capacity**:
+  - Search queries are evaluated across the full library matching the active genre/decade criteria before result pagination, returning up to 250 matching items without premature truncation.
+  - Live instant search queries titles, subtitles, series names, directors, actors, genres, years, and summaries.
 * **One-Click Play & Resume**: Clicking any item immediately begins playback in the focused player, automatically seeking to any saved `viewOffset` from Plex.
 
 ---
