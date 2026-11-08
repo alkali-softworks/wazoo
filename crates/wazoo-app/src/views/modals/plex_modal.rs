@@ -145,6 +145,12 @@ impl WazooApp {
 
         // 4. Decades Filter Row (on the line below genres)
         let decades = [
+            (1920, "pre-30s"),
+            (1930, "30s"),
+            (1940, "40s"),
+            (1950, "50s"),
+            (1960, "60s"),
+            (1970, "70s"),
             (1980, "80s"),
             (1990, "90s"),
             (2000, "00s"),

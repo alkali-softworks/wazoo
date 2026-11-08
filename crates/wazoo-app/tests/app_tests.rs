@@ -2298,22 +2298,30 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     let f2 = temp_dir.join("The Matrix (1999).mkv");
     let f3 = temp_dir.join("The Shining (1980).mp4");
     let f4 = temp_dir.join("Blade Runner (1982).mp4");
+    let f5 = temp_dir.join("Dark Star (1974).mp4");
+    let f6 = temp_dir.join("Nosferatu (1922).mp4");
     let _ = std::fs::File::create(&f1);
     let _ = std::fs::File::create(&f2);
     let _ = std::fs::File::create(&f3);
     let _ = std::fs::File::create(&f4);
+    let _ = std::fs::File::create(&f5);
+    let _ = std::fs::File::create(&f6);
 
     let p1 = f1.to_string_lossy().to_string();
     let p2 = f2.to_string_lossy().to_string();
     let p3 = f3.to_string_lossy().to_string();
     let p4 = f4.to_string_lossy().to_string();
+    let p5 = f5.to_string_lossy().to_string();
+    let p6 = f6.to_string_lossy().to_string();
 
     let v1 = wazoo_core::VideoRecord::new(1, "Frailty (2001)", &p1);
     let v2 = wazoo_core::VideoRecord::new(2, "The Matrix (1999)", &p2);
     let v3 = wazoo_core::VideoRecord::new(3, "The Shining (1980)", &p3);
     let v4 = wazoo_core::VideoRecord::new(4, "Blade Runner (1982)", &p4);
+    let v5 = wazoo_core::VideoRecord::new(5, "Dark Star (1974)", &p5);
+    let v6 = wazoo_core::VideoRecord::new(6, "Nosferatu (1922)", &p6);
 
-    app.available_videos = vec![v1.clone(), v2.clone(), v3.clone(), v4.clone()];
+    app.available_videos = vec![v1.clone(), v2.clone(), v3.clone(), v4.clone(), v5.clone(), v6.clone()];
     app.metadata_cache.insert(
         1,
         wazoo_core::MediaMetadata {
@@ -2370,6 +2378,30 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
             ..Default::default()
         },
     );
+    app.metadata_cache.insert(
+        5,
+        wazoo_core::MediaMetadata {
+            video_id: 5,
+            title: "Dark Star".to_string(),
+            year: Some(1974),
+            rating: Some(7.4),
+            genres: vec!["Sci-Fi".to_string(), "Comedy".to_string()],
+            directors: vec!["John Carpenter".to_string()],
+            ..Default::default()
+        },
+    );
+    app.metadata_cache.insert(
+        6,
+        wazoo_core::MediaMetadata {
+            video_id: 6,
+            title: "Nosferatu".to_string(),
+            year: Some(1922),
+            rating: Some(7.9),
+            genres: vec!["Horror".to_string(), "Fantasy".to_string()],
+            directors: vec!["F.W. Murnau".to_string()],
+            ..Default::default()
+        },
+    );
 
     let _ = app.update(Message::SetPlayerCount(1));
     assert!(!app.modals.plex_explorer);
@@ -2385,7 +2417,7 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     assert_eq!(app.modals.plex_explorer_tab, wazoo_core::PlexExplorerTab::All);
     assert_eq!(app.modals.plex_explorer_search, "");
     let all_items = app.plex_explorer_items();
-    assert_eq!(all_items.len(), 4);
+    assert_eq!(all_items.len(), 6);
 
     // 2. Tab switching: Top Rated
     let _ = app.update(Message::PlexExplorerSelectTab(
@@ -2396,12 +2428,14 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
         wazoo_core::PlexExplorerTab::TopRated
     );
     let items = app.plex_explorer_items();
-    assert_eq!(items.len(), 4);
-    // Highest rated first: The Matrix (8.7), The Shining (8.4), Blade Runner (8.1), then Frailty (7.6)
+    assert_eq!(items.len(), 6);
+    // Highest rated first: The Matrix (8.7), The Shining (8.4), Blade Runner (8.1), Nosferatu (7.9), Frailty (7.6), Dark Star (7.4)
     assert_eq!(items[0].title, "The Matrix");
     assert_eq!(items[1].title, "The Shining");
     assert_eq!(items[2].title, "Blade Runner");
-    assert_eq!(items[3].title, "Frailty");
+    assert_eq!(items[3].title, "Nosferatu");
+    assert_eq!(items[4].title, "Frailty");
+    assert_eq!(items[5].title, "Dark Star");
 
     // 2b. Toggling genre or decade while in Top Rated must NOT jump to 'All'
     let _ = app.update(Message::PlexExplorerToggleGenre(Some("Sci-Fi".to_string())));
@@ -2412,24 +2446,25 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     );
     // Top Rated list remains unfiltered by genre
     let tr_items = app.plex_explorer_items();
-    assert_eq!(tr_items.len(), 4);
+    assert_eq!(tr_items.len(), 6);
 
     // 2c. Switching back to 'All' tab applies the genre filter
     let _ = app.update(Message::PlexExplorerSelectTab(
         wazoo_core::PlexExplorerTab::All,
     ));
     assert_eq!(app.modals.plex_explorer_tab, wazoo_core::PlexExplorerTab::All);
-    // Genre "Sci-Fi" matches BOTH "Sci-Fi" (The Matrix) AND "Science Fiction" (Blade Runner)
+    // Genre "Sci-Fi" matches "Sci-Fi" (The Matrix, Dark Star) AND "Science Fiction" (Blade Runner)
     let scifi_items = app.plex_explorer_items();
-    assert_eq!(scifi_items.len(), 2);
+    assert_eq!(scifi_items.len(), 3);
     let scifi_titles: Vec<&str> = scifi_items.iter().map(|i| i.title.as_str()).collect();
     assert!(scifi_titles.contains(&"The Matrix"));
     assert!(scifi_titles.contains(&"Blade Runner"));
+    assert!(scifi_titles.contains(&"Dark Star"));
 
     // Clear genre filter
     let _ = app.update(Message::PlexExplorerToggleGenre(None));
     assert!(app.modals.plex_explorer_genre.is_none());
-    assert_eq!(app.plex_explorer_items().len(), 4);
+    assert_eq!(app.plex_explorer_items().len(), 6);
 
     // 3. Sub-filter by Decade: 1990s
     let _ = app.update(Message::PlexExplorerSelectTab(
@@ -2438,6 +2473,22 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     let items = app.plex_explorer_items();
     assert_eq!(items.len(), 1);
     assert_eq!(items[0].title, "The Matrix");
+
+    // 3b. Sub-filter by Decade: 1970s (matches Dark Star 1974)
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::Decade(1970),
+    ));
+    let items = app.plex_explorer_items();
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0].title, "Dark Star");
+
+    // 3c. Sub-filter by pre-30s: 1920s (matches Nosferatu 1922)
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::Decade(1920),
+    ));
+    let items = app.plex_explorer_items();
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0].title, "Nosferatu");
 
     // 4. Sub-filter by Genre: Thriller (Frailty + Blade Runner)
     let _ = app.update(Message::PlexExplorerSelectTab(
@@ -2461,22 +2512,36 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     assert_eq!(items.len(), 1);
     assert_eq!(items[0].title, "The Shining");
 
-    // 6. Search filtering within active multi-filter
-    let _ = app.update(Message::PlexExplorerSearchChanged("Kubrick".to_string()));
-    assert_eq!(app.modals.plex_explorer_search, "Kubrick");
+    // 5b. Simultaneous multi-filtering: 70s Sci-Fi (Dark Star)
+    let _ = app.update(Message::PlexExplorerToggleGenre(Some("Sci-Fi".to_string())));
+    let _ = app.update(Message::PlexExplorerToggleDecade(Some(1970)));
     let items = app.plex_explorer_items();
     assert_eq!(items.len(), 1);
-    assert_eq!(items[0].title, "The Shining");
+    assert_eq!(items[0].title, "Dark Star");
 
-    // 6b. Search filtering with "scifi" alias finds "Science Fiction"
+    // 6. Search filtering within active multi-filter
+    let _ = app.update(Message::PlexExplorerSearchChanged("Carpenter".to_string()));
+    assert_eq!(app.modals.plex_explorer_search, "Carpenter");
+    let items = app.plex_explorer_items();
+    assert_eq!(items.len(), 1);
+    assert_eq!(items[0].title, "Dark Star");
+
+    // 6b. Search filtering with "scifi" alias finds "Science Fiction" and "Sci-Fi"
     let _ = app.update(Message::PlexExplorerToggleGenre(None));
     let _ = app.update(Message::PlexExplorerToggleDecade(None));
     let _ = app.update(Message::PlexExplorerSearchChanged("scifi".to_string()));
     let search_items = app.plex_explorer_items();
-    assert_eq!(search_items.len(), 2);
+    assert_eq!(search_items.len(), 3);
     let search_titles: Vec<&str> = search_items.iter().map(|i| i.title.as_str()).collect();
     assert!(search_titles.contains(&"The Matrix"));
     assert!(search_titles.contains(&"Blade Runner"));
+    assert!(search_titles.contains(&"Dark Star"));
+
+    // 6c. Search filtering with decade query like "70s"
+    let _ = app.update(Message::PlexExplorerSearchChanged("70s".to_string()));
+    let search_items = app.plex_explorer_items();
+    assert_eq!(search_items.len(), 1);
+    assert_eq!(search_items[0].title, "Dark Star");
 
     // Reset search
     let _ = app.update(Message::ClearPlexExplorerSearch);
@@ -2495,7 +2560,7 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     let seed1 = app.modals.plex_explorer_random_seed;
     assert_ne!(seed1, 0);
     let items_rand1 = app.plex_explorer_items();
-    assert_eq!(items_rand1.len(), 4);
+    assert_eq!(items_rand1.len(), 6);
     // Stable within same seed
     let items_rand1_repeat = app.plex_explorer_items();
     let titles1: Vec<&str> = items_rand1.iter().map(|i| i.title.as_str()).collect();
