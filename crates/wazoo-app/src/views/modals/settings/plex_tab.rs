@@ -21,14 +21,13 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     let enable_toggle = {
         let is_active = is_enabled;
         let badge_text = if is_active {
-            app.t("common.active")
+            app.t("settings.badge_on")
         } else {
-            app.t("common.off")
+            app.t("settings.badge_off")
         };
         cursor::PointerCursor::new(
             button(
                 row![
-                    text("🍿").size(18),
                     column![
                         text(app.t("settings.plex_enable"))
                             .size(13)
@@ -215,14 +214,13 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     // 6. Auto-sync toggle
     let is_auto_sync = app.settings.plex.auto_sync_on_scan;
     let auto_sync_badge = if is_auto_sync {
-        app.t("common.active")
+        app.t("settings.badge_on")
     } else {
-        app.t("common.off")
+        app.t("settings.badge_off")
     };
     let auto_sync_toggle = cursor::PointerCursor::new(
         button(
             row![
-                text("🔄").size(16),
                 column![
                     text(app.t("settings.plex_auto_sync"))
                         .size(13)

@@ -25,7 +25,6 @@ impl WazooApp {
 
         // 1. Header Row
         let header_row = row![
-            text("🍿").size(20),
             text(self.t("tab_plex"))
                 .size(18)
                 .font(iced::Font {
@@ -66,19 +65,19 @@ impl WazooApp {
         let tabs = [
             (
                 PlexExplorerTab::RecentlyAdded,
-                "🍿 Recently Added",
+                "Recently Added",
             ),
             (
                 PlexExplorerTab::OnDeck,
-                "⏳ On Deck",
+                "On Deck",
             ),
             (
                 PlexExplorerTab::TopRated,
-                "⭐ Top Rated",
+                "Top Rated",
             ),
             (
                 PlexExplorerTab::Random,
-                "🎲 Surprise Me",
+                "Surprise Me",
             ),
         ];
 

@@ -24,7 +24,9 @@
     "exit_fullscreen": "Avsluta helskärm",
     "fit_window": "Anpassa fönster",
     "click_through": "Klicka igenom",
-    "opacity": "Opacitet"
+    "opacity": "Opacitet",
+    "active": "Aktiv",
+    "off": "Av"
   },
   "app": {
     "drag_to_move": "Dra för att flytta",

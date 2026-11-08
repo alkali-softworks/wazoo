@@ -24,7 +24,9 @@
     "exit_fullscreen": "Tam Ekrandan Çık",
     "fit_window": "Pencereyi Uydur",
     "click_through": "Tıklama Geçişi",
-    "opacity": "Saydamlık"
+    "opacity": "Saydamlık",
+    "active": "Aktif",
+    "off": "Kapalı"
   },
   "app": {
     "drag_to_move": "Taşımak için Sürükleyin",
