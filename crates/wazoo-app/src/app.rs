@@ -850,6 +850,7 @@ impl WazooApp {
         self.modals.plex_explorer_search.clear();
         self.modals.plex_explorer_genre = None;
         self.modals.plex_explorer_decade = None;
+        self.modals.plex_explorer_random_seed = rand::random::<u64>();
 
         let tab = self.modals.plex_explorer_tab.clone();
         let fetch_task = self.fetch_plex_live_items(tab);
@@ -1182,11 +1183,17 @@ impl WazooApp {
                             .collect()
                     }
                     wazoo_core::PlexExplorerTab::Random => {
-                        if list.len() > 60 {
-                            let stride = list.len() / 60;
-                            list = list.into_iter().step_by(stride).take(60).collect();
-                        }
+                        use rand::seq::SliceRandom;
+                        use rand::SeedableRng;
+                        let seed = if self.modals.plex_explorer_random_seed == 0 {
+                            1337
+                        } else {
+                            self.modals.plex_explorer_random_seed
+                        };
+                        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+                        list.shuffle(&mut rng);
                         list.into_iter()
+                            .take(60)
                             .map(|(v, m)| self.build_explorer_item_from_local(v, m))
                             .collect()
                     }

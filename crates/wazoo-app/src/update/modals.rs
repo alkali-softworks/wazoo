@@ -500,6 +500,11 @@ impl WazooApp {
                         self.modals.plex_explorer_decade = None;
                         Task::none()
                     }
+                    wazoo_core::PlexExplorerTab::Random => {
+                        self.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::Random;
+                        self.modals.plex_explorer_random_seed = rand::random::<u64>();
+                        Task::none()
+                    }
                     _ => {
                         self.modals.plex_explorer_tab = tab.clone();
                         self.fetch_plex_live_items(tab)

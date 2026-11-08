@@ -2486,8 +2486,30 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     assert!(!app.modals.plex_explorer);
     assert_eq!(app.players[0].state.path, p2);
 
-    // 8. Verify view rendering across All, TopRated, Recently Added, On Deck, and SurpriseMe
+    // 8. Verify Surprise Me produces fresh randomized list on every tab selection
     app.modals.plex_explorer = true;
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::Random,
+    ));
+    assert_eq!(app.modals.plex_explorer_tab, wazoo_core::PlexExplorerTab::Random);
+    let seed1 = app.modals.plex_explorer_random_seed;
+    assert_ne!(seed1, 0);
+    let items_rand1 = app.plex_explorer_items();
+    assert_eq!(items_rand1.len(), 4);
+    // Stable within same seed
+    let items_rand1_repeat = app.plex_explorer_items();
+    let titles1: Vec<&str> = items_rand1.iter().map(|i| i.title.as_str()).collect();
+    let titles1_repeat: Vec<&str> = items_rand1_repeat.iter().map(|i| i.title.as_str()).collect();
+    assert_eq!(titles1, titles1_repeat);
+
+    // Clicking Surprise Me again updates seed to generate a fresh randomized list
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::Random,
+    ));
+    let seed2 = app.modals.plex_explorer_random_seed;
+    assert_ne!(seed1, seed2);
+
+    // 9. Verify view rendering across All, TopRated, Recently Added, On Deck, and SurpriseMe
     app.modals.plex_explorer_genre = Some("Horror".to_string());
     app.modals.plex_explorer_decade = Some(1980);
     app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::All;
@@ -2511,7 +2533,7 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
         let _el = app.view_plex_explorer_modal();
     }
 
-    // 9. Press Escape closes the modal and clears filters
+    // 10. Press Escape closes the modal and clears filters
     let _ = app.update(Message::EscapePressed);
     assert!(!app.modals.plex_explorer);
     assert!(app.modals.plex_explorer_genre.is_none());
