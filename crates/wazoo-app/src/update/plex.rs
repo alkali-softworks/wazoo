@@ -37,6 +37,16 @@ impl WazooApp {
                 Task::none()
             }
 
+            Message::CopyPlexToken => {
+                let token = self.settings.plex.token.clone();
+                if !token.is_empty() {
+                    self.overlay.show_toast(self.t("settings.plex_token_copied"));
+                    iced::clipboard::write(token)
+                } else {
+                    Task::none()
+                }
+            }
+
             Message::SetPlexAutoSync(auto_sync) => {
                 self.settings.plex.auto_sync_on_scan = auto_sync;
                 let _ = self.config_mgr.save_settings(&self.settings);

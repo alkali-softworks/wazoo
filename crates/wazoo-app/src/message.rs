@@ -163,6 +163,7 @@ pub enum Message {
     SetPlexEnabled(bool),
     PlexServerUrlChanged(String),
     PlexTokenChanged(String),
+    CopyPlexToken,
     SetPlexAutoSync(bool),
     TestPlexConnection,
     PlexConnectionTested(Result<wazoo_core::PlexServerInfo, String>),
