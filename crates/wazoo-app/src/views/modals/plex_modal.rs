@@ -25,7 +25,7 @@ impl WazooApp {
 
         // 1. Header Row
         let header_row = row![
-            text(self.t("tab_plex"))
+            text(self.t("settings.tab_plex"))
                 .size(18)
                 .font(iced::Font {
                     weight: iced::font::Weight::Bold,
@@ -103,44 +103,7 @@ impl WazooApp {
             tab_row = tab_row.push(tab_btn);
         }
 
-        // 3. Quick Sub-Filters: Decades & Top Genres
-        let decades = [
-            (1980, "80s"),
-            (1990, "90s"),
-            (2000, "00s"),
-            (2010, "10s"),
-            (2020, "20s"),
-        ];
-
-        let mut subfilter_row = row![
-            text("Decades:")
-                .size(11)
-                .color(theme::COLOR_TEXT_DIM),
-        ]
-        .spacing(6)
-        .align_y(Alignment::Center);
-
-        for (dec, label) in decades {
-            let tab = PlexExplorerTab::Decade(dec);
-            let is_active = *active_tab == tab;
-            let btn = button(text(label).size(11))
-                .style(theme::settings_tab_button_style(is_active))
-                .padding([3, 7])
-                .on_press(Message::PlexExplorerSelectTab(tab));
-            subfilter_row = subfilter_row.push(btn);
-        }
-
-        subfilter_row = subfilter_row.push(
-            text("•")
-                .size(11)
-                .color(theme::COLOR_TEXT_DIM),
-        );
-        subfilter_row = subfilter_row.push(
-            text("Genres:")
-                .size(11)
-                .color(theme::COLOR_TEXT_DIM),
-        );
-
+        // 3. Genres Filter Row
         let top_genres = [
             "Sci-Fi",
             "Horror",
@@ -152,14 +115,61 @@ impl WazooApp {
             "Animation",
         ];
 
+        let mut genre_row = row![
+            text("Genres:")
+                .size(11)
+                .color(theme::COLOR_TEXT_DIM),
+        ]
+        .spacing(6)
+        .align_y(Alignment::Center);
+
+        let all_genres_active = self.modals.plex_explorer_genre.is_none();
+        let all_genres_btn = button(text("All").size(11))
+            .style(theme::settings_tab_button_style(all_genres_active))
+            .padding([3, 7])
+            .on_press(Message::PlexExplorerToggleGenre(None));
+        genre_row = genre_row.push(all_genres_btn);
+
         for g in top_genres {
-            let tab = PlexExplorerTab::Genre(g.to_string());
-            let is_active = *active_tab == tab;
+            let is_active = self.modals.plex_explorer_genre.as_deref() == Some(g);
             let btn = button(text(g).size(11))
                 .style(theme::settings_tab_button_style(is_active))
                 .padding([3, 7])
-                .on_press(Message::PlexExplorerSelectTab(tab));
-            subfilter_row = subfilter_row.push(btn);
+                .on_press(Message::PlexExplorerToggleGenre(Some(g.to_string())));
+            genre_row = genre_row.push(btn);
+        }
+
+        // 4. Decades Filter Row (on the line below genres)
+        let decades = [
+            (1980, "80s"),
+            (1990, "90s"),
+            (2000, "00s"),
+            (2010, "10s"),
+            (2020, "20s"),
+        ];
+
+        let mut decade_row = row![
+            text("Decades:")
+                .size(11)
+                .color(theme::COLOR_TEXT_DIM),
+        ]
+        .spacing(6)
+        .align_y(Alignment::Center);
+
+        let all_decades_active = self.modals.plex_explorer_decade.is_none();
+        let all_decades_btn = button(text("All").size(11))
+            .style(theme::settings_tab_button_style(all_decades_active))
+            .padding([3, 7])
+            .on_press(Message::PlexExplorerToggleDecade(None));
+        decade_row = decade_row.push(all_decades_btn);
+
+        for (dec, label) in decades {
+            let is_active = self.modals.plex_explorer_decade == Some(dec);
+            let btn = button(text(label).size(11))
+                .style(theme::settings_tab_button_style(is_active))
+                .padding([3, 7])
+                .on_press(Message::PlexExplorerToggleDecade(Some(dec)));
+            decade_row = decade_row.push(btn);
         }
 
         // 4. Live Search & Filter Bar
@@ -407,9 +417,16 @@ impl WazooApp {
         };
 
         let card = container(
-            column![header_row, tab_row, subfilter_row, search_bar, content_element]
-                .spacing(12)
-                .width(Length::Fixed(720.0)),
+            column![
+                header_row,
+                tab_row,
+                genre_row,
+                decade_row,
+                search_bar,
+                content_element
+            ]
+            .spacing(10)
+            .width(Length::Fixed(720.0)),
         )
         .padding(20)
         .style(theme::modal_card_style);

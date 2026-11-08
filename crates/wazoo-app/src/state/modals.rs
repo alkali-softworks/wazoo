@@ -22,6 +22,8 @@ pub struct ModalState {
     pub plex_explorer: bool,
     pub plex_explorer_search: String,
     pub plex_explorer_tab: PlexExplorerTab,
+    pub plex_explorer_genre: Option<String>,
+    pub plex_explorer_decade: Option<u32>,
     pub playback_settings_debounce_ticks: usize,
 }
 
@@ -51,5 +53,7 @@ impl ModalState {
         self.quick_picker_search.clear();
         self.plex_explorer = false;
         self.plex_explorer_search.clear();
+        self.plex_explorer_genre = None;
+        self.plex_explorer_decade = None;
     }
 }

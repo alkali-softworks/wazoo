@@ -848,6 +848,8 @@ impl WazooApp {
         self.overlay.fade_in_ticks = 0;
         self.modals.plex_explorer = true;
         self.modals.plex_explorer_search.clear();
+        self.modals.plex_explorer_genre = None;
+        self.modals.plex_explorer_decade = None;
 
         let tab = self.modals.plex_explorer_tab.clone();
         let fetch_task = self.fetch_plex_live_items(tab);
@@ -1057,6 +1059,23 @@ impl WazooApp {
     }
 
     pub fn plex_explorer_items(&self) -> Vec<wazoo_core::PlexExplorerItem> {
+        let effective_decade = self.modals.plex_explorer_decade.or_else(|| {
+            if let wazoo_core::PlexExplorerTab::Decade(d) = self.modals.plex_explorer_tab {
+                Some(d)
+            } else {
+                None
+            }
+        });
+        let effective_genre = self.modals.plex_explorer_genre.clone().or_else(|| {
+            if let wazoo_core::PlexExplorerTab::Genre(ref g) = self.modals.plex_explorer_tab {
+                Some(g.clone())
+            } else {
+                None
+            }
+        });
+
+        let has_filter = effective_decade.is_some() || effective_genre.is_some();
+
         let raw_items = match &self.modals.plex_explorer_tab {
             wazoo_core::PlexExplorerTab::OnDeck => {
                 if let Some(items) = self
@@ -1069,7 +1088,7 @@ impl WazooApp {
                     Vec::new()
                 }
             }
-            wazoo_core::PlexExplorerTab::RecentlyAdded => {
+            wazoo_core::PlexExplorerTab::RecentlyAdded if !has_filter => {
                 if let Some(items) = self
                     .plex
                     .live_items
@@ -1097,114 +1116,134 @@ impl WazooApp {
                         .collect()
                 }
             }
-            wazoo_core::PlexExplorerTab::TopRated => {
+            _ => {
                 let mut list: Vec<_> = self
                     .available_videos
                     .iter()
                     .filter_map(|v| {
                         let meta = self.metadata_cache.get(&v.id)?;
-                        if meta.rating.is_some() {
-                            Some((v, meta))
-                        } else {
-                            None
-                        }
-                    })
-                    .collect();
-                list.sort_by(|a, b| {
-                    let r_a = a.1.rating.unwrap_or(0.0);
-                    let r_b = b.1.rating.unwrap_or(0.0);
-                    r_b.partial_cmp(&r_a)
-                        .unwrap_or(std::cmp::Ordering::Equal)
-                        .then_with(|| b.1.year.cmp(&a.1.year))
-                });
-                list.into_iter()
-                    .take(60)
-                    .map(|(v, m)| self.build_explorer_item_from_local(v, m))
-                    .collect()
-            }
-            wazoo_core::PlexExplorerTab::Decade(decade) => {
-                let d = *decade;
-                let mut list: Vec<_> = self
-                    .available_videos
-                    .iter()
-                    .filter_map(|v| {
-                        let meta = self.metadata_cache.get(&v.id)?;
-                        if let Some(y) = meta.year {
-                            if y >= d && y < d + 10 {
-                                return Some((v, meta));
+
+                        if let Some(dec) = effective_decade {
+                            match meta.year {
+                                Some(y) if y >= dec && y < dec + 10 => {}
+                                _ => return None,
                             }
                         }
-                        None
-                    })
-                    .collect();
-                list.sort_by(|a, b| {
-                    let r_a = a.1.rating.unwrap_or(0.0);
-                    let r_b = b.1.rating.unwrap_or(0.0);
-                    r_b.partial_cmp(&r_a)
-                        .unwrap_or(std::cmp::Ordering::Equal)
-                        .then_with(|| b.1.year.cmp(&a.1.year))
-                });
-                list.into_iter()
-                    .take(60)
-                    .map(|(v, m)| self.build_explorer_item_from_local(v, m))
-                    .collect()
-            }
-            wazoo_core::PlexExplorerTab::Genre(genre) => {
-                let g_lower = genre.to_lowercase();
-                let mut list: Vec<_> = self
-                    .available_videos
-                    .iter()
-                    .filter_map(|v| {
-                        let meta = self.metadata_cache.get(&v.id)?;
-                        if meta
-                            .genres
-                            .iter()
-                            .any(|g| g.to_lowercase().contains(&g_lower))
-                        {
-                            Some((v, meta))
-                        } else {
-                            None
+
+                        if let Some(ref g) = effective_genre {
+                            let g_lower = g.to_lowercase();
+                            if !meta
+                                .genres
+                                .iter()
+                                .any(|item_g| item_g.to_lowercase().contains(&g_lower))
+                            {
+                                return None;
+                            }
                         }
-                    })
-                    .collect();
-                list.sort_by(|a, b| {
-                    let r_a = a.1.rating.unwrap_or(0.0);
-                    let r_b = b.1.rating.unwrap_or(0.0);
-                    r_b.partial_cmp(&r_a)
-                        .unwrap_or(std::cmp::Ordering::Equal)
-                        .then_with(|| b.1.year.cmp(&a.1.year))
-                });
-                list.into_iter()
-                    .take(60)
-                    .map(|(v, m)| self.build_explorer_item_from_local(v, m))
-                    .collect()
-            }
-            wazoo_core::PlexExplorerTab::Random => {
-                let mut list: Vec<_> = self
-                    .available_videos
-                    .iter()
-                    .filter_map(|v| {
-                        let meta = self.metadata_cache.get(&v.id)?;
+
                         Some((v, meta))
                     })
                     .collect();
-                if list.len() > 60 {
-                    let stride = list.len() / 60;
-                    list = list.into_iter().step_by(stride).take(60).collect();
+
+                match &self.modals.plex_explorer_tab {
+                    wazoo_core::PlexExplorerTab::TopRated => {
+                        list.sort_by(|a, b| {
+                            let r_a = a.1.rating.unwrap_or(0.0);
+                            let r_b = b.1.rating.unwrap_or(0.0);
+                            r_b.partial_cmp(&r_a)
+                                .unwrap_or(std::cmp::Ordering::Equal)
+                                .then_with(|| b.1.year.cmp(&a.1.year))
+                        });
+                        list.into_iter()
+                            .take(60)
+                            .map(|(v, m)| self.build_explorer_item_from_local(v, m))
+                            .collect()
+                    }
+                    wazoo_core::PlexExplorerTab::Random => {
+                        if list.len() > 60 {
+                            let stride = list.len() / 60;
+                            list = list.into_iter().step_by(stride).take(60).collect();
+                        }
+                        list.into_iter()
+                            .map(|(v, m)| self.build_explorer_item_from_local(v, m))
+                            .collect()
+                    }
+                    _ => {
+                        let is_legacy_filter_tab = matches!(
+                            self.modals.plex_explorer_tab,
+                            wazoo_core::PlexExplorerTab::Decade(_)
+                                | wazoo_core::PlexExplorerTab::Genre(_)
+                        );
+
+                        if is_legacy_filter_tab {
+                            list.sort_by(|a, b| {
+                                let r_a = a.1.rating.unwrap_or(0.0);
+                                let r_b = b.1.rating.unwrap_or(0.0);
+                                r_b.partial_cmp(&r_a)
+                                    .unwrap_or(std::cmp::Ordering::Equal)
+                                    .then_with(|| b.1.year.cmp(&a.1.year))
+                            });
+                        } else {
+                            list.sort_by(|a, b| {
+                                b.1.updated_at
+                                    .unwrap_or(0)
+                                    .cmp(&a.1.updated_at.unwrap_or(0))
+                                    .then_with(|| {
+                                        let r_a = a.1.rating.unwrap_or(0.0);
+                                        let r_b = b.1.rating.unwrap_or(0.0);
+                                        r_b.partial_cmp(&r_a)
+                                            .unwrap_or(std::cmp::Ordering::Equal)
+                                    })
+                                    .then_with(|| b.0.id.cmp(&a.0.id))
+                            });
+                        }
+
+                        list.into_iter()
+                            .take(60)
+                            .map(|(v, m)| self.build_explorer_item_from_local(v, m))
+                            .collect()
+                    }
                 }
-                list.into_iter()
-                    .map(|(v, m)| self.build_explorer_item_from_local(v, m))
-                    .collect()
             }
+        };
+
+        let filtered_items = if self.modals.plex_explorer_tab
+            == wazoo_core::PlexExplorerTab::OnDeck
+            && has_filter
+        {
+            raw_items
+                .into_iter()
+                .filter(|item| {
+                    if let Some(dec) = effective_decade {
+                        match item.year {
+                            Some(y) if y >= dec && y < dec + 10 => {}
+                            _ => return false,
+                        }
+                    }
+                    if let Some(ref g) = effective_genre {
+                        let g_lower = g.to_lowercase();
+                        if !item
+                            .genres
+                            .iter()
+                            .any(|item_g| item_g.to_lowercase().contains(&g_lower))
+                        {
+                            return false;
+                        }
+                    }
+                    true
+                })
+                .collect()
+        } else {
+            raw_items
         };
 
         let query = self.modals.plex_explorer_search.trim().to_lowercase();
         if query.is_empty() {
-            raw_items
+            filtered_items
         } else {
             let clean = query.replace(['_', '-'], " ");
             let words: Vec<&str> = clean.split_whitespace().collect();
-            raw_items
+            filtered_items
                 .into_iter()
                 .filter(|item| {
                     let title = item.title.to_lowercase();

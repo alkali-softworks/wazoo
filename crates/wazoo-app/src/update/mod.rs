@@ -300,6 +300,8 @@ impl WazooApp {
             | Message::PlexExplorerSearchChanged(_)
             | Message::ClearPlexExplorerSearch
             | Message::PlexExplorerSelectTab(_)
+            | Message::PlexExplorerToggleGenre(_)
+            | Message::PlexExplorerToggleDecade(_)
             | Message::PlexExplorerSubmit
             | Message::PlayPlexExplorerItem(_, _)
             | Message::PlexExplorerLiveLoaded(_, _)
