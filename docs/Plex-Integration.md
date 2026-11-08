@@ -276,14 +276,14 @@ A dedicated navigation button in the settings modal tabs bar: `[General] [Playba
   - `On Deck`: Displays continue-watching and in-progress movies/episodes with resume timestamps and progress bars (live from `/library/onDeck`).
   - `Top Rated`: Instant leaderboard of highest-rated films and shows (sorted by rating descending, then release year).
   - `Surprise Me`: Curated random shuffle of films with metadata.
-* **Simultaneous Genre & Decade Multi-Filtering**:
+* **Simultaneous Genre & Decade Multi-Filtering (All Tab)**:
   - **Genres Row**: `[All] [Sci-Fi] [Horror] [Action] [Thriller] [Comedy] [Drama] [Crime] [Animation]`.
   - **Decades Row**: Placed directly below Genres: `[All] [80s] [90s] [00s] [10s] [20s]`.
-  - Users can combine any genre and decade simultaneously (e.g., **80s Horror**).
-  - Clicking an active filter toggles it off, or clicking `[All]` clears that filter.
-* **Smart Filter Visibility**:
-  - For small targeted lists (`Recently Added` and `On Deck`), the `Genres:` and `Decades:` rows are automatically hidden to keep the view focused and clutter-free.
-  - The filters remain prominently available on `All`, `Top Rated`, and `Surprise Me`.
+  - Users can combine any genre and decade simultaneously on the `All` tab (e.g., **80s Horror**).
+  - Clicking an active filter toggles it off, or clicking `[All]` clears that filter. Toggling filters preserves the current tab without jumping.
+  - **Robust Genre Normalization**: Standardizes Plex's `"Science Fiction"` category with `"Sci-Fi"` / `"scifi"` aliases across both filter buttons and live instant text search, correctly matching all cataloged films.
+* **Isolated Filter Scope**:
+  - The `Genres:` and `Decades:` filter controls are isolated strictly to the **All** tab. Preset tabs (`Top Rated`, `Recently Added`, `On Deck`, and `Surprise Me`) remain uncluttered and focused on their specialized feeds.
 * **Optimized Card Typography & Badges**:
   - Movie titles occupy line 1 alongside right-aligned badges (`Year`, `Content Rating`, `★ Rating`, `Genres`). Badges are guaranteed natural width and never get clipped.
   - TV episodes display season and episode designations (`S01E02 - Episode Name`) next to the series title.
@@ -308,6 +308,6 @@ flowchart TD
 | **Phase 1** | **Data Models & Schema** | Add `MediaMetadata` & `PlexSettings` models. Create `VideoMetadata` table in `wazoo-core/src/db.rs`. Extend `search_videos` to query metadata fields. | **Completed** (`dcbc38e`) |
 | **Phase 2** | **Plex Client & Sync Engine** | Implement `wazoo-core/src/plex.rs` with `reqwest`. Add `/identity`, `/library/sections`, `/library/recentlyAdded`, `/library/onDeck`, and bulk `/all` ingestion. Implement path suffix matcher. | **Completed** (`dcbc38e`) |
 | **Phase 3** | **UI Settings & Sync Flow** | Add `SettingsTab::Plex` in `wazoo-app`. Implement unmasked token with Copy button, Test Connection, and live sync (19,932 items indexed in seconds). | **Completed** (`23189de`, `873f84e`) |
-| **Phase 4** | **Plex Explorer Modal (`E`)** | Implement 900px wide modal, `[All]` preset, simultaneous genre & decade filtering (e.g. 80s Horror), smart filter visibility on small lists, and one-click play/resume. | **Completed** (`927c15a`, `9b07b08`, `4ee4992`, `35b8005`) |
-| **Phase 5** | **i18n & Test Verification** | Translate all Plex keys across all 23 languages with 100% key parity. 139 tests passing across workspace. | **Completed** (`5724171`, `35b8005`) |
+| **Phase 4** | **Plex Explorer Modal (`E`)** | Implement 900px wide modal, `[All]` preset, simultaneous genre & decade filtering (e.g. 80s Horror), Science Fiction / Sci-Fi normalization, filter isolation to All tab, and one-click play/resume. | **Completed** (`927c15a`, `9b07b08`, `4ee4992`, `35b8005`, `dcf4277`) |
+| **Phase 5** | **i18n & Test Verification** | Translate all Plex keys across all 23 languages with 100% key parity. 140 tests passing across workspace. | **Completed** (`5724171`, `35b8005`, `dcf4277`) |
 
