@@ -34,6 +34,58 @@ impl VideoRecord {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct MediaMetadata {
+    pub video_id: i64,
+    pub plex_rating_key: Option<String>,
+    pub title: String,
+    pub series_title: Option<String>,
+    pub season_number: Option<u32>,
+    pub episode_number: Option<u32>,
+    pub year: Option<u32>,
+    pub tagline: Option<String>,
+    pub summary: Option<String>,
+    pub content_rating: Option<String>,
+    pub duration_ms: Option<u64>,
+    pub rating: Option<f32>,
+    pub studio: Option<String>,
+    #[serde(default)]
+    pub genres: Vec<String>,
+    #[serde(default)]
+    pub directors: Vec<String>,
+    #[serde(default)]
+    pub actors: Vec<String>,
+    pub thumb_url: Option<String>,
+    pub art_url: Option<String>,
+    pub updated_at: Option<u64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct PlexSettings {
+    pub enabled: bool,
+    pub server_url: String,
+    pub token: String,
+    pub auto_sync_on_scan: bool,
+    pub last_synced_at: Option<u64>,
+}
+
+fn default_plex_server_url() -> String {
+    "http://192.168.1.100:32400".to_string()
+}
+
+impl Default for PlexSettings {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            server_url: default_plex_server_url(),
+            token: String::new(),
+            auto_sync_on_scan: false,
+            last_synced_at: None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LayoutMode {
@@ -213,6 +265,8 @@ pub struct WazooSettings {
     pub use_standby_player: bool,
     #[serde(default)]
     pub crt: CrtSettings,
+    #[serde(default)]
+    pub plex: PlexSettings,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -462,6 +516,7 @@ impl Default for WazooSettings {
             cube_sheen: false,
             use_standby_player: false,
             crt: CrtSettings::default(),
+            plex: PlexSettings::default(),
         }
     }
 }

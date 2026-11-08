@@ -88,6 +88,7 @@ pub enum SettingsTab {
     Filters,
     Crt,
     Cube,
+    Plex,
     System,
 }
 
@@ -98,6 +99,7 @@ pub struct WazooApp {
     pub players: PlayerList,
     pub scroll_engine: ScrollEngine,
     pub available_videos: Vec<VideoRecord>,
+    pub metadata_cache: std::collections::HashMap<i64, wazoo_core::MediaMetadata>,
     pub search: crate::state::SearchState,
     pub modals: crate::state::ModalState,
     pub drawers: crate::state::DrawerState,
@@ -111,6 +113,7 @@ pub struct WazooApp {
     pub last_total_videos: usize,
     pub next_player_id: PlayerId,
     pub scanner: crate::state::ScannerState,
+    pub plex: crate::state::PlexState,
     pub focused_idx: usize,
     pub hovered_player_id: Option<PlayerId>,
     pub open_audio_menu_id: Option<PlayerId>,
@@ -357,6 +360,7 @@ impl WazooApp {
             frame_seq: 1,
         }));
         let total_videos = videos.len();
+        let metadata_cache = db.get_all_metadata_map().unwrap_or_default();
         let (toast_message, toast_time_remaining) =
             build_initial_toast(search.is_cli, &settings.language, total_videos);
 
@@ -367,6 +371,7 @@ impl WazooApp {
             players: PlayerList::new(),
             scroll_engine,
             available_videos: videos,
+            metadata_cache,
             search: crate::state::SearchState {
                 active_query: search.active_query.clone(),
                 tags: search
@@ -398,6 +403,7 @@ impl WazooApp {
             last_total_videos: total_videos,
             next_player_id: 1,
             scanner: crate::state::ScannerState::default(),
+            plex: crate::state::PlexState::default(),
             focused_idx: 0,
             hovered_player_id: None,
             open_audio_menu_id: None,
@@ -412,6 +418,15 @@ impl WazooApp {
                 ..Default::default()
             },
         }
+    }
+
+    /// Retrieves cached Plex metadata for a given video file path.
+    pub fn get_metadata_for_path(&self, path: &str) -> Option<&wazoo_core::MediaMetadata> {
+        let norm_target = path.replace('\\', "/");
+        self.available_videos
+            .iter()
+            .find(|v| v.path == path || v.path.replace('\\', "/") == norm_target)
+            .and_then(|v| self.metadata_cache.get(&v.id))
     }
 
     fn init_initial_players(&mut self, file_to_play: Option<&str>, is_cli: bool) {

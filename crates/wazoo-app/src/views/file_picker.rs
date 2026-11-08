@@ -291,7 +291,7 @@ impl WazooApp {
                             }));
                     let p_clone = f.path.clone();
 
-                    let row_content = if is_playing {
+                    let mut row_content = if is_playing {
                         row![
                             text("▶")
                                 .size(9)
@@ -317,6 +317,15 @@ impl WazooApp {
                         .spacing(4)
                         .align_y(Alignment::Center)
                     };
+
+                    if let Some(y_str) = self.get_metadata_for_path(&f.path).and_then(|m| m.year) {
+                        row_content = row_content.push(Space::new().width(Length::Fill));
+                        row_content = row_content.push(
+                            text(y_str.to_string())
+                                .size(10)
+                                .color(theme::COLOR_TEXT_DIM),
+                        );
+                    }
 
                     files_list = files_list.push(
                         button(row_content)

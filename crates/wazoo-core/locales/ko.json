@@ -145,7 +145,16 @@
     "crt_section_artifacts": "아날로그 아티팩트",
     "crt_chromatic_aberration": "색수차",
     "crt_noise": "RF 정전기 노이즈",
-    "crt_reset_all": "모든 CRT 설정 재설정"
+    "crt_reset_all": "모든 CRT 설정 재설정",
+    "tab_plex": "Plex",
+    "plex_enable": "Enable Plex Integration",
+    "plex_enable_desc": "Enrich library with movie & TV metadata, genres, summaries, and release years",
+    "plex_server_url": "Plex Server URL",
+    "plex_token": "Plex Token (X-Plex-Token)",
+    "plex_token_desc": "Found in Plex Web XML or account settings",
+    "plex_test_connection": "Test Connection",
+    "plex_sync_library": "Sync Library",
+    "plex_auto_sync": "Auto-sync with Plex"
   },
   "search": {
     "folder": "폴더:",

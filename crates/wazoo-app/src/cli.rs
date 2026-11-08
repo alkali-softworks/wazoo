@@ -157,6 +157,50 @@ where
                     std::process::exit(1);
                 }
             }
+        } else if arg == "--sync-plex" {
+            let config_mgr = wazoo_core::ConfigManager::new();
+            let settings = config_mgr.load_settings();
+            let db_path = config_mgr.database_path();
+            if settings.plex.token.is_empty() {
+                eprintln!("Error: Plex token not configured. Set it in Wazoo Settings -> Plex tab or in settings.json.");
+                std::process::exit(1);
+            }
+            println!("Connecting to Plex server: {}", settings.plex.server_url);
+            let rt = tokio::runtime::Runtime::new().expect("create tokio runtime");
+            rt.block_on(async {
+                let client = wazoo_core::PlexClient::new(&settings.plex.server_url, &settings.plex.token);
+                match client.test_connection().await {
+                    Ok(info) => {
+                        let name_str = info.name.as_deref().unwrap_or("Plex Server");
+                        println!("Connected to {} (version {})", name_str, info.version);
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to connect to Plex: {e}");
+                        std::process::exit(1);
+                    }
+                }
+                println!("Syncing libraries from Plex...");
+                let db = match wazoo_core::Database::open(&db_path) {
+                    Ok(d) => std::sync::Arc::new(tokio::sync::Mutex::new(d)),
+                    Err(e) => {
+                        eprintln!("Failed to open database: {e}");
+                        std::process::exit(1);
+                    }
+                };
+                match wazoo_core::sync_plex_library(&client, db, None).await {
+                    Ok(summary) => {
+                        println!(
+                            "Plex sync complete! Scanned {} libraries, {} items fetched, {} matched and updated.",
+                            summary.libraries_scanned, summary.total_plex_items, summary.matched_and_updated
+                        );
+                        std::process::exit(0);
+                    }
+                    Err(e) => {
+                        eprintln!("Plex sync failed: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            });
         } else if arg == "-f" || arg == "--foreground" || arg == "--no-detach" {
             foreground = true;
         } else if arg == "-q" || arg == "--query" {
@@ -245,6 +289,7 @@ Options:
   -f, --foreground     Run in foreground (do not detach from console)
       --set-default    Register Wazoo as default video player
       --unset-default  Unregister Wazoo as default video player
+      --sync-plex      Sync metadata from Plex Media Server in headless mode
   -h, --help           Print help
   -V, --version        Print version"
     );

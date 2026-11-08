@@ -12,9 +12,14 @@ pub mod db;
 pub mod i18n;
 pub mod keybinds;
 pub mod models;
+pub mod plex;
 
 pub use config::ConfigManager;
 pub use db::Database;
 pub use i18n::{Language, t, t_with};
 pub use keybinds::{HelpCategory, HelpShortcut, KeyAction, KeyDisplay, KeybindSettings};
 pub use models::*;
+pub use plex::{
+    PlexClient, PlexRawItem, PlexSection, PlexServerInfo, PlexSyncProgress, PlexSyncSummary,
+    match_plex_path, sync_plex_library,
+};

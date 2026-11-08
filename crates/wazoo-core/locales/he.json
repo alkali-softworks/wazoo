@@ -145,7 +145,16 @@
     "crt_section_artifacts": "עיוותים אנלוגיים",
     "crt_chromatic_aberration": "עיוות צבעוני",
     "crt_noise": "רעש סטטי RF",
-    "crt_reset_all": "אפס את כל מאפייני ה-CRT"
+    "crt_reset_all": "אפס את כל מאפייני ה-CRT",
+    "tab_plex": "Plex",
+    "plex_enable": "Enable Plex Integration",
+    "plex_enable_desc": "Enrich library with movie & TV metadata, genres, summaries, and release years",
+    "plex_server_url": "Plex Server URL",
+    "plex_token": "Plex Token (X-Plex-Token)",
+    "plex_token_desc": "Found in Plex Web XML or account settings",
+    "plex_test_connection": "Test Connection",
+    "plex_sync_library": "Sync Library",
+    "plex_auto_sync": "Auto-sync with Plex"
   },
   "search": {
     "folder": "תיקייה:",

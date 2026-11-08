@@ -181,3 +181,5 @@ Dive deeper into specific subsystem implementations:
    - Media discovery, directory recursion, filename normalization, and streaming channels.
 4. [**`wazoo-app` Architecture**](wazoo-app.md)
    - TEA application state, modular message reducers, multi-tile layout engines, slide drawers, frameless titlebar, and unified 60 FPS engine subscriptions.
+5. [**Plex Media Server Integration**](Plex-Integration.md)
+   - REST protocol, zero-config NAS suffix path matching, `VideoMetadata` schema, multi-field semantic search, and player HUD badges.

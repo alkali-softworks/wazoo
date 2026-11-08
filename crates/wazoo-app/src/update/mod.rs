@@ -13,6 +13,7 @@ pub mod input;
 pub mod modals;
 pub mod navigation;
 pub mod playback;
+pub mod plex;
 pub mod scanner;
 pub mod search;
 pub mod window;
@@ -308,6 +309,19 @@ impl WazooApp {
             | Message::ClearCubes
             | Message::SetCubeSpeed(_)
             | Message::SetCubeSize(_) => self.update_cube(message),
+
+            // =========================================================================
+            // Plex Media Server Integration
+            // =========================================================================
+            Message::SetPlexEnabled(_)
+            | Message::PlexServerUrlChanged(_)
+            | Message::PlexTokenChanged(_)
+            | Message::SetPlexAutoSync(_)
+            | Message::TestPlexConnection
+            | Message::PlexConnectionTested(_)
+            | Message::StartPlexSync
+            | Message::PlexSyncProgressUpdate(_)
+            | Message::PlexSyncFinished(_) => self.update_plex(message),
 
             // =========================================================================
             // Playback, Layout & Multi-Player Navigation
