@@ -33,6 +33,7 @@ impl WazooApp {
         if let Some(p) = self.players.player_mut(id) {
             p.start_loading();
         }
+        self.update_static_frame();
         self.record_current_player_nav_position(id);
     }
 
@@ -55,6 +56,7 @@ impl WazooApp {
             p.handle = new_handle;
             p.start_loading();
         }
+        self.update_static_frame();
     }
 
     /// Advances a player to the next video, checking the forward navigation history stack before

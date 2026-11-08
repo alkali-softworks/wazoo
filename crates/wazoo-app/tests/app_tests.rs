@@ -2606,3 +2606,88 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_tv_static_crops_to_previous_video_aspect_ratio() {
+    // 1. Verify crop_static_frame calculations for 16:9
+    let raw_w = 500u32;
+    let raw_h = 375u32;
+    let raw_pixels = vec![255u8; (raw_w * raw_h * 4) as usize];
+    let raw = wazoo_app::assets::RawStaticFrame {
+        width: raw_w,
+        height: raw_h,
+        pixels: std::sync::Arc::from(raw_pixels),
+    };
+
+    let mut guard_16_9 = wazoo_media::pipeline::FrameData {
+        width: 0,
+        height: 0,
+        pixels: Vec::new(),
+        new_frame: false,
+        frame_seq: 0,
+    };
+    WazooApp::crop_static_frame(&raw, 16.0 / 9.0, &mut guard_16_9);
+    assert_eq!(guard_16_9.width, 500);
+    assert_eq!(guard_16_9.height, 281);
+    assert_eq!(guard_16_9.pixels.len(), (500 * 281 * 4) as usize);
+    let aspect_16_9 = guard_16_9.width as f32 / guard_16_9.height as f32;
+    assert!((aspect_16_9 - (16.0 / 9.0)).abs() < 0.01);
+
+    // 2. Verify crop_static_frame calculations for 4:3 (native)
+    let mut guard_4_3 = wazoo_media::pipeline::FrameData {
+        width: 0,
+        height: 0,
+        pixels: Vec::new(),
+        new_frame: false,
+        frame_seq: 0,
+    };
+    WazooApp::crop_static_frame(&raw, 4.0 / 3.0, &mut guard_4_3);
+    assert_eq!(guard_4_3.width, 500);
+    assert_eq!(guard_4_3.height, 375);
+    assert_eq!(guard_4_3.pixels.len(), (500 * 375 * 4) as usize);
+
+    // 3. Verify crop_static_frame calculations for 9:16 vertical video
+    let mut guard_9_16 = wazoo_media::pipeline::FrameData {
+        width: 0,
+        height: 0,
+        pixels: Vec::new(),
+        new_frame: false,
+        frame_seq: 0,
+    };
+    WazooApp::crop_static_frame(&raw, 9.0 / 16.0, &mut guard_9_16);
+    assert_eq!(guard_9_16.height, 375);
+    assert_eq!(guard_9_16.width, 211);
+    let aspect_9_16 = guard_9_16.width as f32 / guard_9_16.height as f32;
+    assert!((aspect_9_16 - (9.0 / 16.0)).abs() < 0.01);
+
+    // 4. Verify player aspect ratio retention across loading state
+    let (mut app, _) = new_test_app();
+    let temp_dir = std::env::temp_dir().join(format!("wazoo_test_static_{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let f1 = temp_dir.join("test.mp4");
+    let _ = std::fs::File::create(&f1);
+    let p1 = f1.to_string_lossy().to_string();
+    let v1 = wazoo_core::VideoRecord::new(1, "test", &p1);
+    app.available_videos = vec![v1];
+
+    let _ = app.update(Message::SetPlayerCount(1));
+    assert_eq!(app.players.len(), 1);
+
+    // Simulate 16:9 video aspect ratio on player 0
+    app.players[0].last_aspect_ratio = Some(16.0 / 9.0);
+    app.players[0].start_loading();
+    assert!(app.players[0].is_loading);
+    assert_eq!(app.players[0].aspect_ratio(), Some(16.0 / 9.0));
+
+    // Update static frames and verify player 0's static frame is cropped to 16:9
+    app.settings.loading_indicator = wazoo_core::LoadingIndicator::TvStatic;
+    app.update_static_frame();
+
+    let p_frame = app.players[0].static_frame.lock().unwrap();
+    assert_eq!(p_frame.width, 500);
+    assert_eq!(p_frame.height, 281);
+    let static_ar = p_frame.width as f32 / p_frame.height as f32;
+    assert!((static_ar - (16.0 / 9.0)).abs() < 0.01);
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}
