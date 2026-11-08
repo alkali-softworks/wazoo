@@ -232,7 +232,7 @@ impl WazooApp {
                 let path = item.path.clone();
                 let view_offset = item.view_offset_ms;
 
-                let mut title_row = row![
+                let mut title_left = row![
                     text("▶")
                         .size(11)
                         .color(theme::COLOR_PRIMARY)
@@ -249,14 +249,12 @@ impl WazooApp {
                 .align_y(Alignment::Center);
 
                 if let Some(sub) = item.subtitle {
-                    title_row = title_row.push(
+                    title_left = title_left.push(
                         text(format!("— {}", sub))
                             .size(12)
                             .color(theme::COLOR_TEXT_MUTED),
                     );
                 }
-
-                title_row = title_row.push(Space::new().width(Length::Fill));
 
                 // Metadata Chips: Year, Rating, Content Rating, Genres, Resume Offset
                 let mut chips_row = row![].spacing(5).align_y(Alignment::Center);
@@ -368,19 +366,36 @@ impl WazooApp {
                     );
                 }
 
-                title_row = title_row.push(chips_row);
+                let title_row = row![
+                    title_left.width(Length::Fill),
+                    chips_row.align_y(Alignment::Center),
+                ]
+                .spacing(12)
+                .align_y(Alignment::Center)
+                .width(Length::Fill);
 
                 let mut card_col = column![title_row].spacing(4);
 
                 // Brief Summary or Tagline Snippet
-                let snippet_text = item
-                    .tagline
-                    .or(item.summary);
+                let snippet_text = match (&item.tagline, &item.summary) {
+                    (Some(tag), Some(sum)) if !tag.is_empty() && !sum.is_empty() => {
+                        let t_trim = tag.trim();
+                        let s_trim = sum.trim();
+                        if s_trim.starts_with(t_trim) {
+                            Some(s_trim.to_string())
+                        } else {
+                            Some(format!("{} — {}", t_trim, s_trim))
+                        }
+                    }
+                    (Some(tag), _) if !tag.is_empty() => Some(tag.trim().to_string()),
+                    (_, Some(sum)) if !sum.is_empty() => Some(sum.trim().to_string()),
+                    _ => None,
+                };
 
                 if let Some(snip) = snippet_text {
                     let clean = snip.replace('\n', " ");
-                    let short_snip: String = if clean.chars().count() > 140 {
-                        clean.chars().take(137).collect::<String>() + "..."
+                    let short_snip: String = if clean.chars().count() > 180 {
+                        clean.chars().take(177).collect::<String>() + "..."
                     } else {
                         clean
                     };
@@ -411,7 +426,7 @@ impl WazooApp {
                 .width(Length::Fill);
 
             scrollable(scrollable_content)
-                .height(Length::Fixed(420.0))
+                .height(Length::Fixed(440.0))
                 .width(Length::Fill)
                 .into()
         };
@@ -426,7 +441,7 @@ impl WazooApp {
                 content_element
             ]
             .spacing(10)
-            .width(Length::Fixed(720.0)),
+            .width(Length::Fixed(900.0)),
         )
         .padding(20)
         .style(theme::modal_card_style);

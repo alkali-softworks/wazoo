@@ -906,10 +906,8 @@ impl WazooApp {
                                         (raw.season_number, raw.episode_number)
                                     {
                                         Some(format!("S{:02}E{:02} - {}", sn, en, raw.title))
-                                    } else if let Some(ref tag) = raw.tagline {
-                                        Some(tag.clone())
                                     } else {
-                                        meta.and_then(|m| m.tagline.clone())
+                                        None
                                     };
 
                                     result.push(wazoo_core::PlexExplorerItem {
@@ -998,10 +996,8 @@ impl WazooApp {
                                         (raw.season_number, raw.episode_number)
                                     {
                                         Some(format!("S{:02}E{:02} - {}", sn, en, raw.title))
-                                    } else if let Some(ref tag) = raw.tagline {
-                                        Some(tag.clone())
                                     } else {
-                                        meta.and_then(|m| m.tagline.clone())
+                                        None
                                     };
 
                                     result.push(wazoo_core::PlexExplorerItem {
@@ -1281,8 +1277,6 @@ impl WazooApp {
 
         let subtitle = if let (Some(sn), Some(en)) = (meta.season_number, meta.episode_number) {
             Some(format!("S{:02}E{:02} - {}", sn, en, meta.title))
-        } else if let Some(ref tag) = meta.tagline {
-            Some(tag.clone())
         } else {
             None
         };
