@@ -158,7 +158,14 @@
     "plex_sync_library": "Bibliothek synchronisieren",
     "plex_auto_sync": "Automatisch mit Plex synchronisieren",
     "plex_copy_token": "Kopieren",
-    "plex_token_copied": "Plex-Token in Zwischenablage kopiert"
+    "plex_token_copied": "Plex-Token in Zwischenablage kopiert",
+    "plex_auth_not_configured": "Plex-Authentifizierung ist nicht konfiguriert",
+    "plex_auth_not_configured_desc": "Geben Sie Ihr Plex-Token und die Server-URL in den Einstellungen ein, um Ihre Mediathek zu durchsuchen.",
+    "plex_disabled": "Plex-Integration ist deaktiviert",
+    "plex_disabled_desc": "Aktivieren Sie die Plex-Integration in den Einstellungen, um Ihre Mediathek zu durchsuchen.",
+    "plex_no_synced_items": "Keine synchronisierten Plex-Elemente gefunden",
+    "plex_no_synced_items_desc": "Synchronisieren Sie Ihre Mediathek in den Einstellungen, um Ihre Medien anzuzeigen.",
+    "plex_open_settings": "Plex-Einstellungen öffnen"
   },
   "search": {
     "folder": "Ordner:",

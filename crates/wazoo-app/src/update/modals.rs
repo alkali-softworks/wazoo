@@ -20,6 +20,7 @@ impl WazooApp {
             Message::OpenMenuModal
                 | Message::OpenSearchModal
                 | Message::OpenSettingsModal
+                | Message::OpenPlexSettingsModal
                 | Message::OpenHelpModal
                 | Message::ToggleBookmarksModal
         ) && self.cube.desktop_overlay
@@ -474,6 +475,21 @@ impl WazooApp {
                 }
             }
             Message::OpenPlexExplorerModal => self.open_plex_explorer(),
+            Message::OpenPlexSettingsModal => {
+                if self.modals.playback_settings_debounce_ticks > 0 {
+                    self.apply_playback_settings();
+                }
+                self.modals.close_all();
+                self.modals.settings = true;
+                self.modals.settings_tab = crate::app::SettingsTab::Plex;
+                self.titlebar.show_dropdown_menu = false;
+                self.titlebar.show = false;
+                self.overlay.clear_toast();
+                self.hovered_player_id = None;
+                self.overlay.ticks = 0;
+                self.overlay.fade_in_ticks = 0;
+                exit_task
+            }
             Message::ClosePlexExplorerModal => {
                 self.modals.plex_explorer = false;
                 self.modals.plex_explorer_search.clear();

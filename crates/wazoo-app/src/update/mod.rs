@@ -298,6 +298,7 @@ impl WazooApp {
             | Message::TogglePlexExplorerModal
             | Message::OpenPlexExplorerModal
             | Message::ClosePlexExplorerModal
+            | Message::OpenPlexSettingsModal
             | Message::PlexExplorerSearchChanged(_)
             | Message::ClearPlexExplorerSearch
             | Message::PlexExplorerSelectTab(_)

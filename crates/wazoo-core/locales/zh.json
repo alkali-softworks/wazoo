@@ -158,7 +158,14 @@
     "plex_sync_library": "同步媒体库",
     "plex_auto_sync": "与 Plex 自动同步",
     "plex_copy_token": "复制",
-    "plex_token_copied": "Plex 令牌已复制到剪贴板"
+    "plex_token_copied": "Plex 令牌已复制到剪贴板",
+    "plex_auth_not_configured": "Plex 身份验证未配置",
+    "plex_auth_not_configured_desc": "请在设置中输入您的 Plex 令牌和服务器 URL 以浏览和搜索您的媒体库。",
+    "plex_disabled": "Plex 集成已禁用",
+    "plex_disabled_desc": "请在设置中启用 Plex 集成以探索您的媒体库。",
+    "plex_no_synced_items": "未找到同步的 Plex 项目",
+    "plex_no_synced_items_desc": "请在设置中同步您的媒体库以浏览和搜索媒体。",
+    "plex_open_settings": "打开 Plex 设置"
   },
   "search": {
     "folder": "文件夹:",

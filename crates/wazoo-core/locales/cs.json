@@ -158,7 +158,14 @@
     "plex_sync_library": "Synchronizovat knihovnu",
     "plex_auto_sync": "Automatická synchronizace s Plex",
     "plex_copy_token": "Kopírovat",
-    "plex_token_copied": "Token Plex byl zkopírován do schránky"
+    "plex_token_copied": "Token Plex byl zkopírován do schránky",
+    "plex_auth_not_configured": "Ověření Plex není nakonfigurováno",
+    "plex_auth_not_configured_desc": "Chcete-li procházet knihovnu, zadejte v Nastavení svůj token Plex a URL serveru.",
+    "plex_disabled": "Integrace Plex je zakázána",
+    "plex_disabled_desc": "Povolte integraci Plex v Nastavení pro procházení knihovny médií.",
+    "plex_no_synced_items": "Nebyly nalezeny žádné synchronizované položky Plex",
+    "plex_no_synced_items_desc": "Synchronizujte knihovnu v Nastavení a procházejte svá média.",
+    "plex_open_settings": "Otevřít nastavení Plex"
   },
   "search": {
     "folder": "Složka:",

@@ -158,7 +158,14 @@
     "plex_sync_library": "ライブラリ同期",
     "plex_auto_sync": "Plexと自動同期",
     "plex_copy_token": "コピー",
-    "plex_token_copied": "Plex トークンをクリップボードにコピーしました"
+    "plex_token_copied": "Plex トークンをクリップボードにコピーしました",
+    "plex_auth_not_configured": "Plex認証が設定されていません",
+    "plex_auth_not_configured_desc": "ライブラリを探索するには、設定でPlexトークンとサーバーURLを入力してください。",
+    "plex_disabled": "Plex統合が無効になっています",
+    "plex_disabled_desc": "メディアライブラリを探索するには、設定でPlex統合を有効にしてください。",
+    "plex_no_synced_items": "同期されたPlexアイテムが見つかりません",
+    "plex_no_synced_items_desc": "メディアを閲覧・検索するには、設定でライブラリを同期してください。",
+    "plex_open_settings": "Plex設定を開く"
   },
   "search": {
     "folder": "フォルダー:",

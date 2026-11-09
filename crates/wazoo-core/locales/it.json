@@ -158,7 +158,14 @@
     "plex_sync_library": "Sincronizza libreria",
     "plex_auto_sync": "Sincronizzazione automatica con Plex",
     "plex_copy_token": "Copia",
-    "plex_token_copied": "Token Plex copiato negli appunti"
+    "plex_token_copied": "Token Plex copiato negli appunti",
+    "plex_auth_not_configured": "L'autenticazione Plex non è configurata",
+    "plex_auth_not_configured_desc": "Inserisci il token Plex e l'URL del server in Impostazioni per esplorare la tua libreria.",
+    "plex_disabled": "L'integrazione Plex è disabilitata",
+    "plex_disabled_desc": "Abilita l'integrazione Plex in Impostazioni per esplorare la tua libreria multimediale.",
+    "plex_no_synced_items": "Nessun elemento Plex sincronizzato trovato",
+    "plex_no_synced_items_desc": "Sincronizza la tua libreria in Impostazioni per sfogliare i tuoi contenuti multimediali.",
+    "plex_open_settings": "Apri impostazioni Plex"
   },
   "search": {
     "folder": "Cartella:",

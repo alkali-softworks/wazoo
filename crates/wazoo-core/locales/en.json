@@ -158,7 +158,14 @@
     "plex_sync_library": "Sync Library",
     "plex_auto_sync": "Auto-sync with Plex",
     "plex_copy_token": "Copy",
-    "plex_token_copied": "Plex token copied to clipboard"
+    "plex_token_copied": "Plex token copied to clipboard",
+    "plex_auth_not_configured": "Plex authentication is not configured",
+    "plex_auth_not_configured_desc": "Enter your Plex token and server URL in Settings to browse and search your library.",
+    "plex_disabled": "Plex integration is disabled",
+    "plex_disabled_desc": "Enable Plex integration in Settings to explore your media library.",
+    "plex_no_synced_items": "No synced Plex items found",
+    "plex_no_synced_items_desc": "Sync your library in Settings to browse and search your media.",
+    "plex_open_settings": "Open Plex Settings"
   },
   "search": {
     "folder": "Folder:",

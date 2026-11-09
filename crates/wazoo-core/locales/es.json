@@ -158,7 +158,14 @@
     "plex_sync_library": "Sincronizar biblioteca",
     "plex_auto_sync": "Sincronizar automáticamente con Plex",
     "plex_copy_token": "Copiar",
-    "plex_token_copied": "Token de Plex copiado al portapapeles"
+    "plex_token_copied": "Token de Plex copiado al portapapeles",
+    "plex_auth_not_configured": "La autenticación de Plex no está configurada",
+    "plex_auth_not_configured_desc": "Introduce tu token de Plex y la URL del servidor en Configuración para explorar tu biblioteca.",
+    "plex_disabled": "La integración con Plex está desactivada",
+    "plex_disabled_desc": "Activa la integración con Plex en Configuración para explorar tu biblioteca multimedia.",
+    "plex_no_synced_items": "No se encontraron elementos de Plex sincronizados",
+    "plex_no_synced_items_desc": "Sincroniza tu biblioteca en Configuración para explorar tus medios.",
+    "plex_open_settings": "Abrir configuración de Plex"
   },
   "search": {
     "folder": "Carpeta:",

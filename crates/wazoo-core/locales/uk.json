@@ -158,7 +158,14 @@
     "plex_sync_library": "Синхронізувати медіатеку",
     "plex_auto_sync": "Автосинхронізація з Plex",
     "plex_copy_token": "Копіювати",
-    "plex_token_copied": "Токен Plex скопійовано в буфер обміну"
+    "plex_token_copied": "Токен Plex скопійовано в буфер обміну",
+    "plex_auth_not_configured": "Автентифікація Plex не налаштована",
+    "plex_auth_not_configured_desc": "Введіть свій токен Plex та URL-адресу сервера в Налаштуваннях, щоб переглядати медіатеку.",
+    "plex_disabled": "Інтеграція з Plex вимкнена",
+    "plex_disabled_desc": "Увімкніть інтеграцію з Plex у Налаштуваннях, щоб досліджувати медіатеку.",
+    "plex_no_synced_items": "Синхронізованих елементів Plex не знайдено",
+    "plex_no_synced_items_desc": "Синхронізуйте медіатеку в Налаштуваннях для пошуку та перегляду медіа.",
+    "plex_open_settings": "Відкрити налаштування Plex"
   },
   "search": {
     "folder": "Папка:",
