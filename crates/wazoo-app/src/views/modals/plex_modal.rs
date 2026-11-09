@@ -603,7 +603,7 @@ impl WazooApp {
         }
         card_col = card_col.push(search_bar);
 
-        if !is_auth_setup && !items.is_empty() {
+        if !is_auth_setup && count > 0 {
             let banner = container(
                 row![
                     text("⚠")
