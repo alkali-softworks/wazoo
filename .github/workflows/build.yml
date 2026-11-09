@@ -66,14 +66,37 @@ jobs:
         uses: actions/cache@v4
         with:
           path: target/mpv-win64
-          key: mpv-win64-20260903
+          key: mpv-win64-20261109
 
       - name: Install System Dependencies (Windows)
         if: runner.os == 'Windows' && steps.cache-mpv-windows.outputs.cache-hit != 'true'
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p target/mpv-win64 target/debug/deps target/release/deps
-          curl -fSL --retry 3 -H "User-Agent: WazooBuild/1.0" -o target/mpv-win64/mpv-dev.7z "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260903/mpv-dev-x86_64-20260903-git-69e63f425a.7z"
+          MPV_URL=$(python3 -c "
+          import urllib.request, json, re, os
+          headers = {'User-Agent': 'WazooBuild/1.0'}
+          token = os.environ.get('GITHUB_TOKEN')
+          if token:
+              headers['Authorization'] = f'Bearer {token}'
+          try:
+              req = urllib.request.Request('https://api.github.com/repos/shinchiro/mpv-winbuild-cmake/releases/latest', headers=headers)
+              with urllib.request.urlopen(req, timeout=15) as resp:
+                  data = json.load(resp)
+              for a in data.get('assets', []):
+                  name = a.get('name', '')
+                  if re.match(r'^mpv-dev-x86_64-\d+.*\.7z$', name):
+                      print(a.get('browser_download_url'))
+                      exit(0)
+          except Exception:
+              pass
+          print('https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20261109/mpv-dev-x86_64-20261109-git-8bc468896e.7z')
+          ")
+          echo "Downloading MPV from $MPV_URL"
+          curl -fSL --retry 3 -H "User-Agent: WazooBuild/1.0" -o target/mpv-win64/mpv-dev.7z "$MPV_URL" || \
+          curl -fSL --retry 3 -H "User-Agent: WazooBuild/1.0" -o target/mpv-win64/mpv-dev.7z "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20261109/mpv-dev-x86_64-20261109-git-8bc468896e.7z"
           7z x target/mpv-win64/mpv-dev.7z -otarget/mpv-win64 -y
           cp target/mpv-win64/libmpv-2.dll .
           cp target/mpv-win64/libmpv-2.dll target/debug/
