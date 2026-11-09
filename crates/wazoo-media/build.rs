@@ -36,9 +36,9 @@ mod windows {
     use sha2::{Digest, Sha256};
     use std::io::Read;
 
-    const MPV_WIN_DOWNLOAD_URL: &str = "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20260903/mpv-dev-x86_64-20260903-git-69e63f425a.7z";
+    const MPV_WIN_DOWNLOAD_URL: &str = "https://github.com/shinchiro/mpv-winbuild-cmake/releases/download/20261109/mpv-dev-x86_64-20261109-git-8bc468896e.7z";
     const MPV_WIN_DOWNLOAD_SHA256: &str =
-        "fac135c68a35b7639e39d72c0c365104edbaebdea39a0dfdd8c36e8c8e80faef";
+        "4e888424015f7146893d03c4d40e2aaf9474d8d47e761bcc6a97489008a7e425";
 
     fn verify_sha256(path: &Path, expected_hex: &str) -> Result<(), String> {
         let mut file = std::fs::File::open(path)
