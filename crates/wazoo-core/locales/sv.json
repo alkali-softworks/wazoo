@@ -158,7 +158,14 @@
     "plex_sync_library": "Synkronisera bibliotek",
     "plex_auto_sync": "Synkronisera automatiskt med Plex",
     "plex_copy_token": "Kopiera",
-    "plex_token_copied": "Plex-token har kopierats till urklipp"
+    "plex_token_copied": "Plex-token har kopierats till urklipp",
+    "plex_auth_not_configured": "Plex-autentisering är inte konfigurerad",
+    "plex_auth_not_configured_desc": "Ange din Plex-token och server-URL i Inställningar för att bläddra i ditt bibliotek.",
+    "plex_disabled": "Plex-integration är inaktiverad",
+    "plex_disabled_desc": "Aktivera Plex-integration i Inställningar för att utforska ditt mediebibliotek.",
+    "plex_no_synced_items": "Inga synkroniserade Plex-objekt hittades",
+    "plex_no_synced_items_desc": "Synkronisera ditt bibliotek i Inställningar för att bläddra och söka bland dina medier.",
+    "plex_open_settings": "Öppna Plex-inställningar"
   },
   "search": {
     "folder": "Mapp:",

@@ -2608,6 +2608,54 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
 }
 
 #[test]
+fn test_plex_explorer_modal_unauthenticated_state() {
+    let (mut app, _) = new_test_app();
+    assert!(!app.settings.plex.enabled);
+    assert!(app.settings.plex.token.is_empty());
+
+    // 1. Open Plex Explorer when unauthenticated (default settings)
+    let _ = app.update(Message::OpenPlexExplorerModal);
+    assert!(app.modals.plex_explorer);
+    assert_eq!(app.plex_explorer_items().len(), 0);
+
+    // 2. Rendering modal in unauthenticated state succeeds
+    {
+        let _view = app.view_plex_explorer_modal();
+    }
+
+    // 3. Trigger OpenPlexSettingsModal (e.g. from the notice button or header warning pill)
+    let _ = app.update(Message::OpenPlexSettingsModal);
+    assert!(!app.modals.plex_explorer, "Plex Explorer modal should close");
+    assert!(app.modals.settings, "Settings modal should open");
+    assert_eq!(
+        app.modals.settings_tab,
+        SettingsTab::Plex,
+        "Settings should navigate to the Plex tab"
+    );
+
+    // 4. Test when token is set, but Plex is disabled
+    app.settings.plex.token = "my_sample_token".to_string();
+    app.settings.plex.enabled = false;
+    let _ = app.update(Message::OpenPlexExplorerModal);
+    assert!(app.modals.plex_explorer);
+    {
+        let _view_disabled = app.view_plex_explorer_modal();
+    }
+
+    // 5. Test when enabled with token, but no synced items in metadata cache
+    app.settings.plex.enabled = true;
+    {
+        let _view_no_items = app.view_plex_explorer_modal();
+    }
+
+    // 6. Test with a query that returns no matches
+    app.modals.plex_explorer_search = "xyz123nonexistent".to_string();
+    {
+        let _view_query = app.view_plex_explorer_modal();
+    }
+}
+
+#[test]
 fn test_tv_static_crops_to_previous_video_aspect_ratio() {
     // 1. Verify crop_static_frame calculations for 16:9
     let raw_w = 500u32;

@@ -158,7 +158,14 @@
     "plex_sync_library": "Kitaplığı Senkronize Et",
     "plex_auto_sync": "Plex ile Otomatik Senkronize Et",
     "plex_copy_token": "Kopyala",
-    "plex_token_copied": "Plex belirteci panoya kopyalandı"
+    "plex_token_copied": "Plex belirteci panoya kopyalandı",
+    "plex_auth_not_configured": "Plex kimlik doğrulaması yapılandırılmamış",
+    "plex_auth_not_configured_desc": "Kütüphanenize göz atmak için Ayarlar'da Plex belirtecinizi ve sunucu URL'nizi girin.",
+    "plex_disabled": "Plex entegrasyonu devre dışı",
+    "plex_disabled_desc": "Medya kütüphanenizi keşfetmek için Ayarlar'da Plex entegrasyonunu etkinleştirin.",
+    "plex_no_synced_items": "Senkronize edilmiş Plex öğesi bulunamadı",
+    "plex_no_synced_items_desc": "Medyalarınıza göz atmak ve aramak için Ayarlar'da kütüphanenizi senkronize edin.",
+    "plex_open_settings": "Plex Ayarlarını Aç"
   },
   "search": {
     "folder": "Klasör:",

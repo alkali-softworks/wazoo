@@ -23,8 +23,12 @@ impl WazooApp {
         let items = self.plex_explorer_items();
         let count = items.len();
 
+        let has_plex_token = !self.settings.plex.token.trim().is_empty();
+        let is_plex_enabled = self.settings.plex.enabled;
+        let is_auth_setup = has_plex_token && is_plex_enabled;
+
         // 1. Header Row
-        let header_row = row![
+        let mut header_row = row![
             text(self.t("settings.tab_plex"))
                 .size(18)
                 .font(iced::Font {
@@ -53,13 +57,56 @@ impl WazooApp {
                 },
                 ..Default::default()
             }),
-            Space::new().width(Length::Fill),
-            button(text("✕").size(14))
-                .style(theme::window_control_button_style)
-                .on_press(Message::ClosePlexExplorerModal),
         ]
         .spacing(10)
         .align_y(Alignment::Center);
+
+        if !is_auth_setup {
+            let auth_warning_pill = button(
+                row![
+                    text("⚠")
+                        .size(12)
+                        .color(iced::Color::from_rgb(0.95, 0.65, 0.2)),
+                    text(if !has_plex_token {
+                        self.t("settings.plex_auth_not_configured")
+                    } else {
+                        self.t("settings.plex_disabled")
+                    })
+                    .size(11)
+                    .color(iced::Color::WHITE),
+                ]
+                .spacing(5)
+                .align_y(Alignment::Center),
+            )
+            .style(|_theme: &Theme, status| {
+                let bg = match status {
+                    button::Status::Hovered => iced::Color::from_rgba(0.95, 0.65, 0.2, 0.25),
+                    button::Status::Pressed => iced::Color::from_rgba(0.95, 0.65, 0.2, 0.35),
+                    _ => iced::Color::from_rgba(0.95, 0.65, 0.2, 0.12),
+                };
+                button::Style {
+                    background: Some(iced::Background::Color(bg)),
+                    border: iced::Border {
+                        radius: 10.0.into(),
+                        width: 1.0,
+                        color: iced::Color::from_rgba(0.95, 0.65, 0.2, 0.4),
+                    },
+                    ..Default::default()
+                }
+            })
+            .padding([2, 8])
+            .on_press(Message::OpenPlexSettingsModal);
+
+            header_row = header_row.push(auth_warning_pill);
+        }
+
+        header_row = header_row
+            .push(Space::new().width(Length::Fill))
+            .push(
+                button(text("✕").size(14))
+                    .style(theme::window_control_button_style)
+                    .on_press(Message::ClosePlexExplorerModal),
+            );
 
         // 2. Primary Preset Tabs Bar
         let tabs = [
@@ -225,17 +272,116 @@ impl WazooApp {
 
         // 5. Content List
         let content_element: Element<'_, Message> = if items.is_empty() {
-            container(
+            let empty_col = if !has_plex_token {
+                column![
+                    text("🔒").size(28),
+                    text(self.t("settings.plex_auth_not_configured"))
+                        .size(15)
+                        .font(iced::Font {
+                            weight: iced::font::Weight::Bold,
+                            ..Default::default()
+                        })
+                        .color(iced::Color::WHITE),
+                    text(self.t("settings.plex_auth_not_configured_desc"))
+                        .size(12)
+                        .color(theme::COLOR_TEXT_DIM),
+                    Space::new().height(Length::Fixed(12.0)),
+                    button(
+                        row![
+                            text("⚙").size(13),
+                            text(self.t("settings.plex_open_settings")).size(13).font(iced::Font {
+                                weight: iced::font::Weight::Medium,
+                                ..Default::default()
+                            }),
+                        ]
+                        .spacing(8)
+                        .align_y(Alignment::Center),
+                    )
+                    .style(theme::action_button_style)
+                    .padding([8, 16])
+                    .on_press(Message::OpenPlexSettingsModal),
+                ]
+                .spacing(6)
+                .align_x(Alignment::Center)
+            } else if !is_plex_enabled {
+                column![
+                    text("⚙").size(28),
+                    text(self.t("settings.plex_disabled"))
+                        .size(15)
+                        .font(iced::Font {
+                            weight: iced::font::Weight::Bold,
+                            ..Default::default()
+                        })
+                        .color(iced::Color::WHITE),
+                    text(self.t("settings.plex_disabled_desc"))
+                        .size(12)
+                        .color(theme::COLOR_TEXT_DIM),
+                    Space::new().height(Length::Fixed(12.0)),
+                    button(
+                        row![
+                            text("⚙").size(13),
+                            text(self.t("settings.plex_open_settings")).size(13).font(iced::Font {
+                                weight: iced::font::Weight::Medium,
+                                ..Default::default()
+                            }),
+                        ]
+                        .spacing(8)
+                        .align_y(Alignment::Center),
+                    )
+                    .style(theme::action_button_style)
+                    .padding([8, 16])
+                    .on_press(Message::OpenPlexSettingsModal),
+                ]
+                .spacing(6)
+                .align_x(Alignment::Center)
+            } else if self.metadata_cache.is_empty()
+                && self.modals.plex_explorer_search.trim().is_empty()
+                && self.modals.plex_explorer_genre.is_none()
+                && self.modals.plex_explorer_decade.is_none()
+            {
+                column![
+                    text("🎬").size(28),
+                    text(self.t("settings.plex_no_synced_items"))
+                        .size(15)
+                        .font(iced::Font {
+                            weight: iced::font::Weight::Bold,
+                            ..Default::default()
+                        })
+                        .color(iced::Color::WHITE),
+                    text(self.t("settings.plex_no_synced_items_desc"))
+                        .size(12)
+                        .color(theme::COLOR_TEXT_DIM),
+                    Space::new().height(Length::Fixed(12.0)),
+                    button(
+                        row![
+                            text("⚙").size(13),
+                            text(self.t("settings.plex_open_settings")).size(13).font(iced::Font {
+                                weight: iced::font::Weight::Medium,
+                                ..Default::default()
+                            }),
+                        ]
+                        .spacing(8)
+                        .align_y(Alignment::Center),
+                    )
+                    .style(theme::action_button_style)
+                    .padding([8, 16])
+                    .on_press(Message::OpenPlexSettingsModal),
+                ]
+                .spacing(6)
+                .align_x(Alignment::Center)
+            } else {
                 column![
                     text("No matching items found for this query.")
                         .size(14)
                         .color(theme::COLOR_TEXT_DIM),
                 ]
-                .align_x(Alignment::Center),
-            )
-            .padding([40, 20])
-            .center_x(Length::Fill)
-            .into()
+                .align_x(Alignment::Center)
+            };
+
+            container(empty_col)
+                .padding([40, 20])
+                .center_x(Length::Fill)
+                .into()
         } else {
             let mut list = column![].spacing(6);
             for item in items {
@@ -455,7 +601,48 @@ impl WazooApp {
         if show_filters {
             card_col = card_col.push(genre_row).push(decade_row);
         }
-        card_col = card_col.push(search_bar).push(content_element);
+        card_col = card_col.push(search_bar);
+
+        if !is_auth_setup && !items.is_empty() {
+            let banner = container(
+                row![
+                    text("⚠")
+                        .size(13)
+                        .color(iced::Color::from_rgb(0.95, 0.65, 0.2)),
+                    text(if !has_plex_token {
+                        self.t("settings.plex_auth_not_configured_desc")
+                    } else {
+                        self.t("settings.plex_disabled_desc")
+                    })
+                    .size(11)
+                    .color(theme::COLOR_TEXT_DIM)
+                    .width(Length::Fill),
+                    button(text(self.t("settings.plex_open_settings")).size(11))
+                        .style(theme::action_button_style)
+                        .padding([4, 10])
+                        .on_press(Message::OpenPlexSettingsModal),
+                ]
+                .spacing(10)
+                .align_y(Alignment::Center),
+            )
+            .padding([8, 12])
+            .style(|_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(iced::Color::from_rgba(
+                    0.95, 0.65, 0.2, 0.08,
+                ))),
+                border: iced::Border {
+                    radius: 6.0.into(),
+                    width: 1.0,
+                    color: iced::Color::from_rgba(0.95, 0.65, 0.2, 0.25),
+                },
+                ..Default::default()
+            })
+            .width(Length::Fill);
+
+            card_col = card_col.push(banner);
+        }
+
+        card_col = card_col.push(content_element);
 
         let card = container(card_col.width(Length::Fixed(900.0)))
             .padding(20)

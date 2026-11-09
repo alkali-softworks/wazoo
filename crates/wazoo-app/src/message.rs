@@ -217,6 +217,7 @@ pub enum Message {
     TogglePlexExplorerModal,
     OpenPlexExplorerModal,
     ClosePlexExplorerModal,
+    OpenPlexSettingsModal,
     PlexExplorerSearchChanged(String),
     ClearPlexExplorerSearch,
     PlexExplorerSelectTab(wazoo_core::PlexExplorerTab),

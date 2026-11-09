@@ -158,7 +158,14 @@
     "plex_sync_library": "Sincronizar biblioteca",
     "plex_auto_sync": "Sincronização automática com o Plex",
     "plex_copy_token": "Copiar",
-    "plex_token_copied": "Token do Plex copiado para a área de transferência"
+    "plex_token_copied": "Token do Plex copiado para a área de transferência",
+    "plex_auth_not_configured": "A autenticação do Plex não está configurada",
+    "plex_auth_not_configured_desc": "Insira seu token do Plex e a URL do servidor em Configurações para explorar sua biblioteca.",
+    "plex_disabled": "A integração com o Plex está desativada",
+    "plex_disabled_desc": "Ative a integração com o Plex em Configurações para explorar sua biblioteca de mídia.",
+    "plex_no_synced_items": "Nenhum item sincronizado do Plex encontrado",
+    "plex_no_synced_items_desc": "Sincronize sua biblioteca em Configurações para navegar e pesquisar suas mídias.",
+    "plex_open_settings": "Abrir configurações do Plex"
   },
   "search": {
     "folder": "Pasta:",

@@ -158,7 +158,14 @@
     "plex_sync_library": "লাইব্রেরি সিঙ্ক করুন",
     "plex_auto_sync": "Plex-এর সাথে স্বয়ংক্রিয় সিঙ্ক",
     "plex_copy_token": "কপি করুন",
-    "plex_token_copied": "Plex টোকেন ক্লিপবোর্ডে কপি করা হয়েছে"
+    "plex_token_copied": "Plex টোকেন ক্লিপবোর্ডে কপি করা হয়েছে",
+    "plex_auth_not_configured": "Plex প্রমাণীকরণ কনফিগার করা হয়নি",
+    "plex_auth_not_configured_desc": "আপনার লাইব্রেরি ব্রাউজ করতে সেটিংসে আপনার Plex টোকেন এবং সার্ভার URL লিখুন।",
+    "plex_disabled": "Plex ইন্টিগ্রেশন নিষ্ক্রিয়",
+    "plex_disabled_desc": "আপনার মিডিয়া লাইব্রেরি অন্বেষণ করতে সেটিংসে Plex ইন্টিগ্রেশন সক্ষম করুন।",
+    "plex_no_synced_items": "কোনো সিঙ্ক করা Plex আইটেম পাওয়া যায়নি",
+    "plex_no_synced_items_desc": "আপনার মিডিয়া ব্রাউজ এবং অনুসন্ধান করতে সেটিংসে আপনার লাইব্রেরি সিঙ্ক করুন।",
+    "plex_open_settings": "Plex সেটিংস খুলুন"
   },
   "search": {
     "folder": "ফোল্ডার:",

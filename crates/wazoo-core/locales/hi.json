@@ -158,7 +158,14 @@
     "plex_sync_library": "लाइब्रेरी सिंक करें",
     "plex_auto_sync": "Plex के साथ स्वचालित सिंक",
     "plex_copy_token": "कॉपी करें",
-    "plex_token_copied": "Plex टोकन क्लिपबोर्ड पर कॉपी किया गया"
+    "plex_token_copied": "Plex टोकन क्लिपबोर्ड पर कॉपी किया गया",
+    "plex_auth_not_configured": "Plex प्रमाणीकरण कॉन्फ़िगर नहीं है",
+    "plex_auth_not_configured_desc": "अपनी लाइब्रेरी ब्राउज़ करने के लिए सेटिंग्स में अपना Plex टोकन और सर्वर URL दर्ज करें।",
+    "plex_disabled": "Plex एकीकरण अक्षम है",
+    "plex_disabled_desc": "अपनी मीडिया लाइब्रेरी का पता लगाने के लिए सेटिंग्स में Plex एकीकरण सक्षम करें।",
+    "plex_no_synced_items": "कोई समन्वयित Plex आइटम नहीं मिला",
+    "plex_no_synced_items_desc": "अपने मीडिया को ब्राउज़ और खोजने के लिए सेटिंग्स में अपनी लाइब्रेरी को सिंक करें।",
+    "plex_open_settings": "Plex सेटिंग्स खोलें"
   },
   "search": {
     "folder": "फ़ोल्डर:",

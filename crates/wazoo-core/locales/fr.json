@@ -158,7 +158,14 @@
     "plex_sync_library": "Synchroniser la bibliothèque",
     "plex_auto_sync": "Synchronisation automatique avec Plex",
     "plex_copy_token": "Copier",
-    "plex_token_copied": "Jeton Plex copié dans le presse-papiers"
+    "plex_token_copied": "Jeton Plex copié dans le presse-papiers",
+    "plex_auth_not_configured": "L'authentification Plex n'est pas configurée",
+    "plex_auth_not_configured_desc": "Saisissez votre jeton Plex et l'URL du serveur dans les Paramètres pour parcourir votre bibliothèque.",
+    "plex_disabled": "L'intégration Plex est désactivée",
+    "plex_disabled_desc": "Activez l'intégration Plex dans les Paramètres pour explorer votre médiathèque.",
+    "plex_no_synced_items": "Aucun élément Plex synchronisé trouvé",
+    "plex_no_synced_items_desc": "Synchronisez votre bibliothèque dans les Paramètres pour parcourir vos médias.",
+    "plex_open_settings": "Ouvrir les paramètres Plex"
   },
   "search": {
     "folder": "Dossier :",

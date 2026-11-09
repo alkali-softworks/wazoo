@@ -158,7 +158,14 @@
     "plex_sync_library": "Đồng bộ hóa thư viện",
     "plex_auto_sync": "Tự động đồng bộ với Plex",
     "plex_copy_token": "Sao chép",
-    "plex_token_copied": "Đã sao chép mã thông báo Plex vào khay nhớ tạm"
+    "plex_token_copied": "Đã sao chép mã thông báo Plex vào khay nhớ tạm",
+    "plex_auth_not_configured": "Xác thực Plex chưa được định cấu hình",
+    "plex_auth_not_configured_desc": "Nhập mã thông báo Plex và URL máy chủ trong Cài đặt để duyệt thư viện của bạn.",
+    "plex_disabled": "Tích hợp Plex bị tắt",
+    "plex_disabled_desc": "Bật tích hợp Plex trong Cài đặt để khám phá thư viện phương tiện của bạn.",
+    "plex_no_synced_items": "Không tìm thấy mục Plex nào được đồng bộ hóa",
+    "plex_no_synced_items_desc": "Đồng bộ hóa thư viện của bạn trong Cài đặt để duyệt và tìm kiếm phương tiện.",
+    "plex_open_settings": "Mở cài đặt Plex"
   },
   "search": {
     "folder": "Thư mục:",

@@ -158,7 +158,14 @@
     "plex_sync_library": "مزامنة المكتبة",
     "plex_auto_sync": "مزامنة تلقائية مع Plex",
     "plex_copy_token": "نسخ",
-    "plex_token_copied": "تم نسخ رمز Plex إلى الحافظة"
+    "plex_token_copied": "تم نسخ رمز Plex إلى الحافظة",
+    "plex_auth_not_configured": "لم يتم تكوين مصادقة Plex",
+    "plex_auth_not_configured_desc": "أدخل رمز Plex وعنوان URL للخادم في الإعدادات لتصفح مكتبتك.",
+    "plex_disabled": "تم تعطيل تكامل Plex",
+    "plex_disabled_desc": "قم بتمكين تكامل Plex في الإعدادات لاستكشاف مكتبة الوسائط الخاصة بك.",
+    "plex_no_synced_items": "لم يتم العثور على عناصر Plex المتزامنة",
+    "plex_no_synced_items_desc": "قم بمزامنة مكتبتك في الإعدادات لتصفح الوسائط الخاصة بك.",
+    "plex_open_settings": "فتح إعدادات Plex"
   },
   "search": {
     "folder": "مجلد:",

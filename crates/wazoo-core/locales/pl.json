@@ -158,7 +158,14 @@
     "plex_sync_library": "Synchronizuj bibliotekę",
     "plex_auto_sync": "Automatyczna synchronizacja z Plex",
     "plex_copy_token": "Kopiuj",
-    "plex_token_copied": "Token Plex skopiowany do schowka"
+    "plex_token_copied": "Token Plex skopiowany do schowka",
+    "plex_auth_not_configured": "Uwierzytelnianie Plex nie jest skonfigurowane",
+    "plex_auth_not_configured_desc": "Wprowadź token Plex i adres URL serwera w Ustawieniach, aby przeglądać bibliotekę.",
+    "plex_disabled": "Integracja z Plex jest wyłączona",
+    "plex_disabled_desc": "Włącz integrację z Plex w Ustawieniach, aby przeglądać bibliotekę multimediów.",
+    "plex_no_synced_items": "Nie znaleziono zsynchronizowanych elementów Plex",
+    "plex_no_synced_items_desc": "Zsynchronizuj bibliotekę w Ustawieniach, aby przeglądać i wyszukiwać multimedia.",
+    "plex_open_settings": "Otwórz ustawienia Plex"
   },
   "search": {
     "folder": "Folder:",

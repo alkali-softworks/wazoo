@@ -158,7 +158,14 @@
     "plex_sync_library": "Bibliotheek synchroniseren",
     "plex_auto_sync": "Automatisch synchroniseren met Plex",
     "plex_copy_token": "Kopiëren",
-    "plex_token_copied": "Plex-token gekopieerd naar klembord"
+    "plex_token_copied": "Plex-token gekopieerd naar klembord",
+    "plex_auth_not_configured": "Plex-authenticatie is niet geconfigureerd",
+    "plex_auth_not_configured_desc": "Voer uw Plex-token en server-URL in bij Instellingen om uw bibliotheek te doorzoeken.",
+    "plex_disabled": "Plex-integratie is uitgeschakeld",
+    "plex_disabled_desc": "Schakel Plex-integratie in bij Instellingen om uw mediabibliotheek te verkennen.",
+    "plex_no_synced_items": "Geen gesynchroniseerde Plex-items gevonden",
+    "plex_no_synced_items_desc": "Synchroniseer uw bibliotheek in Instellingen om uw media te bekijken.",
+    "plex_open_settings": "Plex-instellingen openen"
   },
   "search": {
     "folder": "Map:",

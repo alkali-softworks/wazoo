@@ -158,7 +158,14 @@
     "plex_sync_library": "סנכרן ספרייה",
     "plex_auto_sync": "סנכרון אוטומטי עם Plex",
     "plex_copy_token": "העתק",
-    "plex_token_copied": "אסימון Plex הועתק ללוח"
+    "plex_token_copied": "אסימון Plex הועתק ללוח",
+    "plex_auth_not_configured": "אימות Plex אינו מוגדר",
+    "plex_auth_not_configured_desc": "הזן את אסימון ה-Plex ואת כתובת ה-URL של השרת בהגדרות כדי לעיין בספרייה שלך.",
+    "plex_disabled": "שילוב Plex מושבת",
+    "plex_disabled_desc": "הפעל את שילוב Plex בהגדרות כדי לחקור את ספריית המדיה שלך.",
+    "plex_no_synced_items": "לא נמצאו פריטי Plex מסונכרנים",
+    "plex_no_synced_items_desc": "סנכרן את הספרייה שלך בהגדרות כדי לחפש ולעיין במדיה שלך.",
+    "plex_open_settings": "פתח את הגדרות Plex"
   },
   "search": {
     "folder": "תיקייה:",
