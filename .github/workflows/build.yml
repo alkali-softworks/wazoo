@@ -185,8 +185,8 @@ jobs:
             cp target/release/wazoo "dist/tmp_${PKG_NAME}/"
             chmod +x "dist/tmp_${PKG_NAME}/wazoo"
             cp README.md LICENSE "dist/tmp_${PKG_NAME}/" 2>/dev/null || true
-            tar -czf "dist/${PKG_NAME}.tar.gz" -C "dist/tmp_${PKG_NAME}" .
-            (cd "dist/tmp_${PKG_NAME}" && zip -r "../../dist/${PKG_NAME}.zip" .)
+            (cd "dist/tmp_${PKG_NAME}" && tar -czf "../${PKG_NAME}.tar.gz" *)
+            (cd "dist/tmp_${PKG_NAME}" && zip -r "../${PKG_NAME}.zip" *)
             rm -rf "dist/tmp_${PKG_NAME}"
           else
             # Linux
@@ -206,7 +206,7 @@ jobs:
             cp target/release/wazoo "dist/tmp_${PKG_NAME}/"
             chmod +x "dist/tmp_${PKG_NAME}/wazoo"
             cp README.md LICENSE "dist/tmp_${PKG_NAME}/" 2>/dev/null || true
-            tar -czf "dist/${PKG_NAME}.tar.gz" -C "dist/tmp_${PKG_NAME}" .
+            (cd "dist/tmp_${PKG_NAME}" && tar -czf "../${PKG_NAME}.tar.gz" *)
             rm -rf "dist/tmp_${PKG_NAME}"
           fi
 
