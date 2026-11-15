@@ -170,7 +170,10 @@
   "search": {
     "folder": "Folder:",
     "placeholder": "Search...",
-    "clear_search": "Clear Search"
+    "clear_search": "Clear Search",
+    "search_by": "Search by:",
+    "filename": "Filename",
+    "metadata": "Metadata"
   },
   "help": {
     "title": "Keyboard Shortcuts",

@@ -170,7 +170,10 @@
   "search": {
     "folder": "फ़ोल्डर:",
     "placeholder": "खोजें...",
-    "clear_search": "खोज साफ़ करें"
+    "clear_search": "खोज साफ़ करें",
+    "search_by": "खोजें:",
+    "filename": "फ़ाइल नाम",
+    "metadata": "मेटाडेटा"
   },
   "help": {
     "title": "कीबोर्ड शॉर्टकट",

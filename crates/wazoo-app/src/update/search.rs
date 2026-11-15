@@ -37,7 +37,11 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
 
                 let folders: Vec<String> = Vec::new();
-                if let Ok(results) = self.db.search_videos(&self.search.active_query, &folders) {
+                if let Ok(results) = self.db.search_videos_with_options(
+                    &self.search.active_query,
+                    &folders,
+                    self.settings.search_include_metadata,
+                ) {
                     let total = results.len();
                     self.available_videos = results;
                     self.drawers.file_picker_entries.clear();
@@ -70,7 +74,11 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
 
                 let folders = self.search.active_folders.clone();
-                if let Ok(results) = self.db.search_videos(&self.search.active_query, &folders) {
+                if let Ok(results) = self.db.search_videos_with_options(
+                    &self.search.active_query,
+                    &folders,
+                    self.settings.search_include_metadata,
+                ) {
                     let total = results.len();
                     self.available_videos = results;
                     self.drawers.file_picker_entries.clear();
@@ -122,6 +130,11 @@ impl WazooApp {
                 }
                 iced::widget::operation::focus("search_input")
             }
+            Message::SetSearchIncludeMetadata(include_metadata) => {
+                self.settings.search_include_metadata = include_metadata;
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
             Message::PerformSearch => {
                 let pending = self.search.input.trim();
                 if !pending.is_empty()
@@ -149,7 +162,11 @@ impl WazooApp {
 
                 let folders = self.search.active_folders.clone();
 
-                if let Ok(results) = self.db.search_videos(&self.search.active_query, &folders) {
+                if let Ok(results) = self.db.search_videos_with_options(
+                    &self.search.active_query,
+                    &folders,
+                    self.settings.search_include_metadata,
+                ) {
                     let total = results.len();
                     self.available_videos = results;
                     self.drawers.file_picker_entries.clear();
@@ -192,7 +209,11 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
 
                 let folders: Vec<String> = Vec::new();
-                if let Ok(results) = self.db.search_videos("", &folders) {
+                if let Ok(results) = self.db.search_videos_with_options(
+                    "",
+                    &folders,
+                    self.settings.search_include_metadata,
+                ) {
                     let total = results.len();
                     self.available_videos = results;
                     self.drawers.file_picker_entries.clear();
@@ -249,7 +270,11 @@ impl WazooApp {
         };
 
         let folders = self.search.active_folders.clone();
-        let search_res = self.db.search_videos(&self.search.active_query, &folders);
+        let search_res = self.db.search_videos_with_options(
+            &self.search.active_query,
+            &folders,
+            self.settings.search_include_metadata,
+        );
         let (results_opt, notice_folder) = match search_res {
             Ok(res) if !res.is_empty() || folders.is_empty() => {
                 let notice_folder = if self.search.active_folders.is_empty() {
@@ -268,7 +293,11 @@ impl WazooApp {
                 (Some(res), notice_folder)
             }
             _ => {
-                if let Ok(all_res) = self.db.search_videos(&self.search.active_query, &[]) {
+                if let Ok(all_res) = self.db.search_videos_with_options(
+                    &self.search.active_query,
+                    &[],
+                    self.settings.search_include_metadata,
+                ) {
                     if !all_res.is_empty() {
                         self.search.active_folders.clear();
                         self.search.selected_folders.clear();

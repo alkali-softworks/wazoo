@@ -170,7 +170,10 @@
   "search": {
     "folder": "Dossier :",
     "placeholder": "Rechercher...",
-    "clear_search": "Effacer la recherche"
+    "clear_search": "Effacer la recherche",
+    "search_by": "Rechercher par :",
+    "filename": "Nom de fichier",
+    "metadata": "Métadonnées"
   },
   "help": {
     "title": "Raccourcis clavier",

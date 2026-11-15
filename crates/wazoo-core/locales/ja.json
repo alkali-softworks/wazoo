@@ -170,7 +170,10 @@
   "search": {
     "folder": "フォルダー:",
     "placeholder": "検索...",
-    "clear_search": "検索をクリア"
+    "clear_search": "検索をクリア",
+    "search_by": "検索対象:",
+    "filename": "ファイル名",
+    "metadata": "メタデータ"
   },
   "help": {
     "title": "キーボードショートカット",

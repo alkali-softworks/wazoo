@@ -170,7 +170,10 @@
   "search": {
     "folder": "폴더:",
     "placeholder": "검색...",
-    "clear_search": "검색 지우기"
+    "clear_search": "검색 지우기",
+    "search_by": "검색 기준:",
+    "filename": "파일 이름",
+    "metadata": "메타데이터"
   },
   "help": {
     "title": "단축키",

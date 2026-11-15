@@ -116,6 +116,7 @@ pub enum Message {
     CloseSearchModal,
     SearchInputChanged(String),
     RemoveSearchTag(usize),
+    SetSearchIncludeMetadata(bool),
     PerformSearch,
     ClearSearch,
     SetActiveQuery(String),

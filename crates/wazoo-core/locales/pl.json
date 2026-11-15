@@ -170,7 +170,10 @@
   "search": {
     "folder": "Folder:",
     "placeholder": "Szukaj...",
-    "clear_search": "Wyczyść wyszukiwanie"
+    "clear_search": "Wyczyść wyszukiwanie",
+    "search_by": "Szukaj wg:",
+    "filename": "Nazwa pliku",
+    "metadata": "Metadane"
   },
   "help": {
     "title": "Skróty klawiszowe",

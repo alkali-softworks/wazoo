@@ -170,7 +170,10 @@
   "search": {
     "folder": "Папка:",
     "placeholder": "Пошук...",
-    "clear_search": "Очистити пошук"
+    "clear_search": "Очистити пошук",
+    "search_by": "Шукати за:",
+    "filename": "Ім’я файлу",
+    "metadata": "Метадані"
   },
   "help": {
     "title": "Гарячі клавіші",

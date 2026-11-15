@@ -218,11 +218,14 @@ fn load_initial_videos(
     db: &Database,
     active_query: &str,
     folders: &[String],
+    include_metadata: bool,
     is_cli: bool,
     has_file_to_play: bool,
 ) -> Vec<VideoRecord> {
     let mut videos = if !active_query.is_empty() {
-        let filtered = db.search_videos(active_query, folders).unwrap_or_default();
+        let filtered = db
+            .search_videos_with_options(active_query, folders, include_metadata)
+            .unwrap_or_default();
         if filtered.is_empty() {
             if is_cli {
                 Vec::new()
@@ -307,6 +310,7 @@ impl WazooApp {
             &db,
             &search.active_query,
             &search.folders,
+            settings.search_include_metadata,
             search.is_cli,
             file_to_play.is_some(),
         );

@@ -170,7 +170,10 @@
   "search": {
     "folder": "مجلد:",
     "placeholder": "بحث...",
-    "clear_search": "مسح البحث"
+    "clear_search": "مسح البحث",
+    "search_by": "البحث حسب:",
+    "filename": "اسم الملف",
+    "metadata": "البيانات الوصفية"
   },
   "help": {
     "title": "اختصارات لوحة المفاتيح",

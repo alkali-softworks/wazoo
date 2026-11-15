@@ -13,7 +13,7 @@ use crate::theme;
 use crate::wrap::Wrap;
 use iced::{
     Alignment, Element, Length,
-    widget::{Space, button, column, container, row, scrollable, text, text_input},
+    widget::{Space, button, column, container, row, scrollable, text, text_input, toggler},
 };
 
 impl WazooApp {
@@ -126,6 +126,97 @@ impl WazooApp {
         .spacing(10)
         .align_y(Alignment::Center);
 
+        let include_metadata = self.settings.search_include_metadata;
+        let switch = toggler(include_metadata)
+            .on_toggle(Message::SetSearchIncludeMetadata)
+            .size(16)
+            .style(|_theme, status| {
+                let (bg, bg_border, fg) = match status {
+                    toggler::Status::Active { is_toggled }
+                    | toggler::Status::Hovered { is_toggled } => {
+                        let is_hovered = matches!(status, toggler::Status::Hovered { .. });
+                        if is_toggled {
+                            (
+                                if is_hovered {
+                                    theme::COLOR_PRIMARY_BORDER
+                                } else {
+                                    theme::COLOR_PRIMARY
+                                },
+                                theme::COLOR_PRIMARY,
+                                iced::Color::WHITE,
+                            )
+                        } else {
+                            (
+                                if is_hovered {
+                                    theme::COLOR_BTN_HOVER
+                                } else {
+                                    theme::COLOR_BTN_BG
+                                },
+                                theme::COLOR_BORDER,
+                                iced::Color::from_rgb(0.85, 0.85, 0.85),
+                            )
+                        }
+                    }
+                    toggler::Status::Disabled { .. } => (
+                        theme::COLOR_BTN_BG,
+                        theme::COLOR_BORDER,
+                        theme::COLOR_TEXT_MUTED,
+                    ),
+                };
+                toggler::Style {
+                    background: bg.into(),
+                    background_border_width: 1.0,
+                    background_border_color: bg_border,
+                    foreground: fg.into(),
+                    foreground_border_width: 0.0,
+                    foreground_border_color: iced::Color::TRANSPARENT,
+                    text_color: None,
+                    border_radius: None,
+                    padding_ratio: 0.15,
+                }
+            });
+
+        let label_button = |label: String, is_active: bool, target: bool| {
+            button(text(label).size(12))
+                .style(move |_theme: &iced::Theme, status: button::Status| {
+                    let text_color = if is_active || matches!(status, button::Status::Hovered) {
+                        iced::Color::WHITE
+                    } else {
+                        theme::COLOR_TEXT_MUTED
+                    };
+                    button::Style {
+                        background: None,
+                        text_color,
+                        ..Default::default()
+                    }
+                })
+                .on_press(Message::SetSearchIncludeMetadata(target))
+                .padding(0)
+        };
+
+        let search_by_toggle = row![
+            text(self.t("search.search_by"))
+                .size(12)
+                .color(theme::COLOR_TEXT_MUTED),
+            label_button(self.t("search.filename"), !include_metadata, false),
+            switch,
+            label_button(self.t("search.metadata"), include_metadata, true),
+        ]
+        .spacing(8)
+        .align_y(Alignment::Center);
+
+        let footer_row = row![
+            text(self.t_with(
+                "settings.total_videos",
+                &[("count", &format::format_number(self.available_videos.len()))]
+            ))
+            .size(12)
+            .color(theme::COLOR_TEXT_MUTED),
+            Space::new().width(Length::Fill),
+            search_by_toggle,
+        ]
+        .align_y(Alignment::Center);
+
         let modal_width = 640.0;
         let card_padding = 24.0;
 
@@ -143,12 +234,7 @@ impl WazooApp {
                 .align_y(Alignment::Center),
                 folders_widget,
                 search_bar_row,
-                text(self.t_with(
-                    "settings.total_videos",
-                    &[("count", &format::format_number(self.available_videos.len()))]
-                ))
-                .size(12)
-                .color(theme::COLOR_TEXT_MUTED),
+                footer_row,
             ]
             .spacing(16)
             .width(Length::Fixed(modal_width)),

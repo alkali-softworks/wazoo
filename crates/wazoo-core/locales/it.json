@@ -170,7 +170,10 @@
   "search": {
     "folder": "Cartella:",
     "placeholder": "Cerca...",
-    "clear_search": "Cancella ricerca"
+    "clear_search": "Cancella ricerca",
+    "search_by": "Cerca per:",
+    "filename": "Nome file",
+    "metadata": "Metadati"
   },
   "help": {
     "title": "Scorciatoie da tastiera",

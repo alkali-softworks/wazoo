@@ -170,7 +170,10 @@
   "search": {
     "folder": "Папка:",
     "placeholder": "Поиск...",
-    "clear_search": "Очистить поиск"
+    "clear_search": "Очистить поиск",
+    "search_by": "Искать по:",
+    "filename": "Имя файла",
+    "metadata": "Метаданные"
   },
   "help": {
     "title": "Горячие клавиши",

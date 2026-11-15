@@ -170,7 +170,10 @@
   "search": {
     "folder": "Pasta:",
     "placeholder": "Pesquisar...",
-    "clear_search": "Limpar pesquisa"
+    "clear_search": "Limpar pesquisa",
+    "search_by": "Pesquisar por:",
+    "filename": "Nome do arquivo",
+    "metadata": "Metadados"
   },
   "help": {
     "title": "Atalhos de teclado",

@@ -170,7 +170,10 @@
   "search": {
     "folder": "Carpeta:",
     "placeholder": "Buscar...",
-    "clear_search": "Limpiar búsqueda"
+    "clear_search": "Limpiar búsqueda",
+    "search_by": "Buscar por:",
+    "filename": "Nombre",
+    "metadata": "Metadatos"
   },
   "help": {
     "title": "Atajos de Teclado",

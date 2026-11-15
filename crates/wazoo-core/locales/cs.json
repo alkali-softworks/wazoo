@@ -170,7 +170,10 @@
   "search": {
     "folder": "Složka:",
     "placeholder": "Hledat...",
-    "clear_search": "Vymazat hledání"
+    "clear_search": "Vymazat hledání",
+    "search_by": "Hledat podle:",
+    "filename": "Název souboru",
+    "metadata": "Metadata"
   },
   "help": {
     "title": "Klávesové zkratky",

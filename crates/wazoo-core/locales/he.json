@@ -170,7 +170,10 @@
   "search": {
     "folder": "תיקייה:",
     "placeholder": "חיפוש...",
-    "clear_search": "נקה חיפוש"
+    "clear_search": "נקה חיפוש",
+    "search_by": "חפש לפי:",
+    "filename": "שם קובץ",
+    "metadata": "מטא-נתונים"
   },
   "help": {
     "title": "קיצורי מקלדת",

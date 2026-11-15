@@ -170,7 +170,10 @@
   "search": {
     "folder": "Map:",
     "placeholder": "Zoeken...",
-    "clear_search": "Zoekopdracht wissen"
+    "clear_search": "Zoekopdracht wissen",
+    "search_by": "Zoeken op:",
+    "filename": "Bestandsnaam",
+    "metadata": "Metadata"
   },
   "help": {
     "title": "Sneltoetsen",

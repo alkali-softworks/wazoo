@@ -554,6 +554,15 @@ impl Database {
     }
 
     pub fn search_videos(&self, query_str: &str, folders: &[String]) -> Result<Vec<VideoRecord>> {
+        self.search_videos_with_options(query_str, folders, true)
+    }
+
+    pub fn search_videos_with_options(
+        &self,
+        query_str: &str,
+        folders: &[String],
+        include_metadata: bool,
+    ) -> Result<Vec<VideoRecord>> {
         let clauses: Vec<&str> = query_str
             .split(',')
             .map(|c| c.trim())
@@ -648,13 +657,25 @@ impl Database {
                             let p3 = param_values.len();
 
                             if is_not {
-                                negative_conditions.push(format!(
-                                    "(v.name NOT LIKE ?{p1} ESCAPE '\\' AND v.path NOT LIKE ?{p2} ESCAPE '\\' AND v.path NOT LIKE ?{p3} ESCAPE '\\' AND (m.title IS NULL OR m.title NOT LIKE ?{p1} ESCAPE '\\'))"
-                                ));
+                                let mut cond = format!(
+                                    "v.name NOT LIKE ?{p1} ESCAPE '\\' AND v.path NOT LIKE ?{p2} ESCAPE '\\' AND v.path NOT LIKE ?{p3} ESCAPE '\\'"
+                                );
+                                if include_metadata {
+                                    cond.push_str(&format!(
+                                        " AND (m.title IS NULL OR m.title NOT LIKE ?{p1} ESCAPE '\\')"
+                                    ));
+                                }
+                                negative_conditions.push(format!("({cond})"));
                             } else {
-                                positive_conditions.push(format!(
-                                    "(v.name LIKE ?{p1} ESCAPE '\\' OR v.path LIKE ?{p2} ESCAPE '\\' OR v.path LIKE ?{p3} ESCAPE '\\' OR m.title LIKE ?{p1} ESCAPE '\\')"
-                                ));
+                                let mut cond = format!(
+                                    "v.name LIKE ?{p1} ESCAPE '\\' OR v.path LIKE ?{p2} ESCAPE '\\' OR v.path LIKE ?{p3} ESCAPE '\\'"
+                                );
+                                if include_metadata {
+                                    cond.push_str(&format!(
+                                        " OR m.title LIKE ?{p1} ESCAPE '\\'"
+                                    ));
+                                }
+                                positive_conditions.push(format!("({cond})"));
                             }
                         }
                         (true, false) => {
@@ -667,13 +688,25 @@ impl Database {
                             let p3 = param_values.len();
 
                             if is_not {
-                                negative_conditions.push(format!(
-                                    "(v.name NOT LIKE ?{p1} ESCAPE '\\' AND v.path NOT LIKE ?{p2} ESCAPE '\\' AND v.path NOT LIKE ?{p3} ESCAPE '\\' AND (m.title IS NULL OR m.title NOT LIKE ?{p1} ESCAPE '\\'))"
-                                ));
+                                let mut cond = format!(
+                                    "v.name NOT LIKE ?{p1} ESCAPE '\\' AND v.path NOT LIKE ?{p2} ESCAPE '\\' AND v.path NOT LIKE ?{p3} ESCAPE '\\'"
+                                );
+                                if include_metadata {
+                                    cond.push_str(&format!(
+                                        " AND (m.title IS NULL OR m.title NOT LIKE ?{p1} ESCAPE '\\')"
+                                    ));
+                                }
+                                negative_conditions.push(format!("({cond})"));
                             } else {
-                                positive_conditions.push(format!(
-                                    "(v.name LIKE ?{p1} ESCAPE '\\' OR v.path LIKE ?{p2} ESCAPE '\\' OR v.path LIKE ?{p3} ESCAPE '\\' OR m.title LIKE ?{p1} ESCAPE '\\')"
-                                ));
+                                let mut cond = format!(
+                                    "v.name LIKE ?{p1} ESCAPE '\\' OR v.path LIKE ?{p2} ESCAPE '\\' OR v.path LIKE ?{p3} ESCAPE '\\'"
+                                );
+                                if include_metadata {
+                                    cond.push_str(&format!(
+                                        " OR m.title LIKE ?{p1} ESCAPE '\\'"
+                                    ));
+                                }
+                                positive_conditions.push(format!("({cond})"));
                             }
                         }
                         (false, true) => {
@@ -684,29 +717,53 @@ impl Database {
                             let p2 = param_values.len();
 
                             if is_not {
-                                negative_conditions.push(format!(
-                                    "(v.name NOT LIKE ?{p1} ESCAPE '\\' AND v.path NOT LIKE ?{p2} ESCAPE '\\' AND v.path NOT LIKE ?{p1} ESCAPE '\\' AND (m.title IS NULL OR m.title NOT LIKE ?{p1} ESCAPE '\\'))"
-                                ));
+                                let mut cond = format!(
+                                    "v.name NOT LIKE ?{p1} ESCAPE '\\' AND v.path NOT LIKE ?{p2} ESCAPE '\\' AND v.path NOT LIKE ?{p1} ESCAPE '\\'"
+                                );
+                                if include_metadata {
+                                    cond.push_str(&format!(
+                                        " AND (m.title IS NULL OR m.title NOT LIKE ?{p1} ESCAPE '\\')"
+                                    ));
+                                }
+                                negative_conditions.push(format!("({cond})"));
                             } else {
-                                positive_conditions.push(format!(
-                                    "(v.name LIKE ?{p1} ESCAPE '\\' OR v.path LIKE ?{p2} ESCAPE '\\' OR v.path LIKE ?{p1} ESCAPE '\\' OR m.title LIKE ?{p1} ESCAPE '\\')"
-                                ));
+                                let mut cond = format!(
+                                    "v.name LIKE ?{p1} ESCAPE '\\' OR v.path LIKE ?{p2} ESCAPE '\\' OR v.path LIKE ?{p1} ESCAPE '\\'"
+                                );
+                                if include_metadata {
+                                    cond.push_str(&format!(
+                                        " OR m.title LIKE ?{p1} ESCAPE '\\'"
+                                    ));
+                                }
+                                positive_conditions.push(format!("({cond})"));
                             }
                         }
                         (false, false) => {
-                            // Standard unanchored search matching path, name, and rich metadata
+                            // Standard unanchored search matching path, name, and optionally rich metadata
                             let wildcard = format!("%{words}%");
                             param_values.push(wildcard);
                             let p_idx = param_values.len();
 
                             if is_not {
-                                negative_conditions.push(format!(
-                                    "(v.path NOT LIKE ?{p_idx} ESCAPE '\\' AND (m.genres IS NULL OR m.genres NOT LIKE ?{p_idx} ESCAPE '\\') AND (m.title IS NULL OR m.title NOT LIKE ?{p_idx} ESCAPE '\\') AND (m.series_title IS NULL OR m.series_title NOT LIKE ?{p_idx} ESCAPE '\\') AND (m.directors IS NULL OR m.directors NOT LIKE ?{p_idx} ESCAPE '\\'))"
-                                ));
+                                let mut cond = format!(
+                                    "v.path NOT LIKE ?{p_idx} ESCAPE '\\' AND v.name NOT LIKE ?{p_idx} ESCAPE '\\'"
+                                );
+                                if include_metadata {
+                                    cond.push_str(&format!(
+                                        " AND (m.genres IS NULL OR m.genres NOT LIKE ?{p_idx} ESCAPE '\\') AND (m.title IS NULL OR m.title NOT LIKE ?{p_idx} ESCAPE '\\') AND (m.series_title IS NULL OR m.series_title NOT LIKE ?{p_idx} ESCAPE '\\') AND (m.directors IS NULL OR m.directors NOT LIKE ?{p_idx} ESCAPE '\\')"
+                                    ));
+                                }
+                                negative_conditions.push(format!("({cond})"));
                             } else {
-                                positive_conditions.push(format!(
-                                    "(v.path LIKE ?{p_idx} ESCAPE '\\' OR v.name LIKE ?{p_idx} ESCAPE '\\' OR m.title LIKE ?{p_idx} ESCAPE '\\' OR m.series_title LIKE ?{p_idx} ESCAPE '\\' OR m.genres LIKE ?{p_idx} ESCAPE '\\' OR CAST(m.year AS TEXT) LIKE ?{p_idx} ESCAPE '\\' OR m.directors LIKE ?{p_idx} ESCAPE '\\' OR m.actors LIKE ?{p_idx} ESCAPE '\\' OR m.summary LIKE ?{p_idx} ESCAPE '\\')"
-                                ));
+                                let mut cond = format!(
+                                    "v.path LIKE ?{p_idx} ESCAPE '\\' OR v.name LIKE ?{p_idx} ESCAPE '\\'"
+                                );
+                                if include_metadata {
+                                    cond.push_str(&format!(
+                                        " OR m.title LIKE ?{p_idx} ESCAPE '\\' OR m.series_title LIKE ?{p_idx} ESCAPE '\\' OR m.genres LIKE ?{p_idx} ESCAPE '\\' OR CAST(m.year AS TEXT) LIKE ?{p_idx} ESCAPE '\\' OR m.directors LIKE ?{p_idx} ESCAPE '\\' OR m.actors LIKE ?{p_idx} ESCAPE '\\' OR m.summary LIKE ?{p_idx} ESCAPE '\\'"
+                                    ));
+                                }
+                                positive_conditions.push(format!("({cond})"));
                             }
                         }
                     }
@@ -749,11 +806,17 @@ impl Database {
             where_conditions.push(format!("({})", folder_conditions.join(" OR ")));
         }
 
+        let from_clause = if include_metadata {
+            "FROM Video v LEFT JOIN VideoMetadata m ON v.id = m.video_id"
+        } else {
+            "FROM Video v"
+        };
+
         let query = if where_conditions.is_empty() {
-            "SELECT DISTINCT v.id, v.name, v.path, v.folder FROM Video v LEFT JOIN VideoMetadata m ON v.id = m.video_id ORDER BY v.path ASC".to_string()
+            format!("SELECT DISTINCT v.id, v.name, v.path, v.folder {from_clause} ORDER BY v.path ASC")
         } else {
             format!(
-                "SELECT DISTINCT v.id, v.name, v.path, v.folder FROM Video v LEFT JOIN VideoMetadata m ON v.id = m.video_id WHERE {} ORDER BY v.path ASC",
+                "SELECT DISTINCT v.id, v.name, v.path, v.folder {from_clause} WHERE {} ORDER BY v.path ASC",
                 where_conditions.join(" AND ")
             )
         };

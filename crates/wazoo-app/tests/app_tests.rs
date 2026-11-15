@@ -2817,3 +2817,42 @@ fn test_tv_static_crops_to_previous_video_aspect_ratio() {
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_toggle_search_metadata() {
+    let (mut app, _) = new_test_app();
+    assert!(app.settings.search_include_metadata);
+
+    let v1 = wazoo_core::VideoRecord::new(1, "movie1", "/media/movies/matrix.mkv");
+    let id1 = app.db.insert_or_update_video(&v1).unwrap();
+    app.db
+        .upsert_metadata(&wazoo_core::models::MediaMetadata {
+            video_id: id1,
+            title: "The Matrix".to_string(),
+            genres: vec!["Sci-Fi".to_string()],
+            ..Default::default()
+        })
+        .unwrap();
+
+    // Render search modal with toggle enabled
+    {
+        let _modal = app.view_search_modal();
+    }
+
+    // Search by metadata genre while enabled
+    let _ = app.update(Message::SearchInputChanged("Sci-Fi".to_string()));
+    let _ = app.update(Message::PerformSearch);
+    assert_eq!(app.available_videos.len(), 1);
+
+    // Switch to Filename-only and re-search
+    let _ = app.update(Message::SetSearchIncludeMetadata(false));
+    assert!(!app.settings.search_include_metadata);
+    let _ = app.update(Message::PerformSearch);
+    assert!(app.available_videos.is_empty());
+
+    // Switch back to Metadata and re-search
+    let _ = app.update(Message::SetSearchIncludeMetadata(true));
+    assert!(app.settings.search_include_metadata);
+    let _ = app.update(Message::PerformSearch);
+    assert_eq!(app.available_videos.len(), 1);
+}

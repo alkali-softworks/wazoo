@@ -170,7 +170,10 @@
   "search": {
     "folder": "Klasör:",
     "placeholder": "Ara...",
-    "clear_search": "Aramayı Temizle"
+    "clear_search": "Aramayı Temizle",
+    "search_by": "Arama ölçütü:",
+    "filename": "Dosya adı",
+    "metadata": "Meta veri"
   },
   "help": {
     "title": "Klavye Kısayolları",

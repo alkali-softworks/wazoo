@@ -249,6 +249,8 @@ pub struct WazooSettings {
     pub last_query: String,
     #[serde(default)]
     pub last_folders: Vec<String>,
+    #[serde(default = "default_true")]
+    pub search_include_metadata: bool,
     #[serde(default = "default_buffer_duration_secs")]
     pub buffer_duration_secs: u32,
     #[serde(default = "default_buffer_size_mb")]
@@ -527,6 +529,7 @@ impl Default for WazooSettings {
             scroll_mode_muted: true,
             last_query: String::new(),
             last_folders: Vec::new(),
+            search_include_metadata: true,
             buffer_duration_secs: 10,
             buffer_size_mb: 32,
             language: "en".to_string(),

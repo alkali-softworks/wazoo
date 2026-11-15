@@ -170,7 +170,10 @@
   "search": {
     "folder": "ফোল্ডার:",
     "placeholder": "অনুসন্ধান...",
-    "clear_search": "অনুসন্ধান মুছুন"
+    "clear_search": "অনুসন্ধান মুছুন",
+    "search_by": "খুঁজুন:",
+    "filename": "ফাইলের নাম",
+    "metadata": "মেটাডেটা"
   },
   "help": {
     "title": "কীবোর্ড শর্টকাট",

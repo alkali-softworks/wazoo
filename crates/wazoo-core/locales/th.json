@@ -170,7 +170,10 @@
   "search": {
     "folder": "โฟลเดอร์:",
     "placeholder": "ค้นหา...",
-    "clear_search": "ล้างการค้นหา"
+    "clear_search": "ล้างการค้นหา",
+    "search_by": "ค้นหาตาม:",
+    "filename": "ชื่อไฟล์",
+    "metadata": "เมตาดาตา"
   },
   "help": {
     "title": "ปุ่มลัดคีย์บอร์ด",

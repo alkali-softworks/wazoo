@@ -99,5 +99,28 @@ fn test_search_with_metadata() {
     let res = db.search_videos("movies, not crime", &[]).expect("search neg");
     assert_eq!(res.len(), 1);
     assert_eq!(res[0].id, id1);
+
+    // Filename-only search (include_metadata = false) ignores Plex metadata
+    let res = db
+        .search_videos_with_options("Sci-Fi", &[], false)
+        .expect("filename-only Sci-Fi");
+    assert!(res.is_empty());
+
+    let res = db
+        .search_videos_with_options("tarantino", &[], false)
+        .expect("filename-only tarantino");
+    assert!(res.is_empty());
+
+    let res = db
+        .search_videos_with_options("movies, not crime", &[], false)
+        .expect("filename-only neg");
+    assert_eq!(res.len(), 2);
+
+    // Filename-only search still matches filename/path
+    let res = db
+        .search_videos_with_options("matrix", &[], false)
+        .expect("filename-only matrix");
+    assert_eq!(res.len(), 1);
+    assert_eq!(res[0].id, id1);
 }
 

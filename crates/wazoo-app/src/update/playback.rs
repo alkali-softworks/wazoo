@@ -949,7 +949,11 @@ impl WazooApp {
                 // 3. Query the database using the updated search query
                 let folders = self.search.active_folders.clone();
 
-                if let Ok(results) = self.db.search_videos(&self.search.active_query, &folders) {
+                if let Ok(results) = self.db.search_videos_with_options(
+                    &self.search.active_query,
+                    &folders,
+                    self.settings.search_include_metadata,
+                ) {
                     self.last_total_videos = results.len();
                     self.available_videos = results;
                     self.drawers.file_picker_entries.clear();

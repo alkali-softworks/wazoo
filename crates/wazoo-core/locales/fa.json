@@ -170,7 +170,10 @@
   "search": {
     "folder": "پوشه:",
     "placeholder": "جستجو...",
-    "clear_search": "پاک کردن جستجو"
+    "clear_search": "پاک کردن جستجو",
+    "search_by": "جستجو بر اساس:",
+    "filename": "نام فایل",
+    "metadata": "فراداده"
   },
   "help": {
     "title": "کلیدهای میانبر",

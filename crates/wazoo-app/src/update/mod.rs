@@ -219,6 +219,7 @@ impl WazooApp {
             | Message::RemoveActiveSearchFolder(_)
             | Message::SearchInputChanged(_)
             | Message::RemoveSearchTag(_)
+            | Message::SetSearchIncludeMetadata(_)
             | Message::PerformSearch
             | Message::ClearSearch
             | Message::FolderInputChanged(_)

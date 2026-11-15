@@ -170,7 +170,10 @@
   "search": {
     "folder": "Ordner:",
     "placeholder": "Suchen...",
-    "clear_search": "Suche löschen"
+    "clear_search": "Suche löschen",
+    "search_by": "Suchen nach:",
+    "filename": "Dateiname",
+    "metadata": "Metadaten"
   },
   "help": {
     "title": "Tastenkombinationen",

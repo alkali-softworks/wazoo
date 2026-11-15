@@ -99,7 +99,11 @@ impl WazooApp {
                     };
                     self.available_videos = self
                         .db
-                        .search_videos(&self.search.active_query, &folders)
+                        .search_videos_with_options(
+                            &self.search.active_query,
+                            &folders,
+                            self.settings.search_include_metadata,
+                        )
                         .unwrap_or_default();
                 } else {
                     self.available_videos = self.db.get_all_videos().unwrap_or_default();
@@ -167,7 +171,11 @@ impl WazooApp {
                     let folders = self.search.active_folders.clone();
                     self.available_videos = self
                         .db
-                        .search_videos(&self.search.active_query, &folders)
+                        .search_videos_with_options(
+                            &self.search.active_query,
+                            &folders,
+                            self.settings.search_include_metadata,
+                        )
                         .unwrap_or_default();
                 } else {
                     self.available_videos = self.db.get_all_videos().unwrap_or_default();
@@ -274,9 +282,11 @@ impl WazooApp {
                 match res {
                     Ok(_count) => {
                         let folders = self.search.active_folders.clone();
-                        if let Ok(videos) =
-                            self.db.search_videos(&self.search.active_query, &folders)
-                        {
+                        if let Ok(videos) = self.db.search_videos_with_options(
+                            &self.search.active_query,
+                            &folders,
+                            self.settings.search_include_metadata,
+                        ) {
                             let total = videos.len();
                             self.available_videos = videos;
                             self.drawers.file_picker_entries.clear();
