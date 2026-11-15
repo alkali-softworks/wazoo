@@ -18,3 +18,7 @@ libloading.workspace = true
 miniz_oxide.workspace = true
 directories.workspace = true
 
+[target.'cfg(target_os = "windows")'.build-dependencies]
+miniz_oxide = { workspace = true }
+sha2 = "0.10"
+
