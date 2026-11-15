@@ -134,7 +134,8 @@ impl WazooApp {
                         self.settings.plex.last_synced_at = Some(now);
                         let _ = self.config_mgr.save_settings(&self.settings);
 
-                        // Reload in-memory metadata cache from SQLite
+                        // Reload in-memory video list and metadata cache from SQLite
+                        self.all_videos = self.db.get_all_videos().unwrap_or_default();
                         self.metadata_cache = self.db.get_all_metadata_map().unwrap_or_default();
 
                         let matched_str = summary.matched_and_updated.to_string();

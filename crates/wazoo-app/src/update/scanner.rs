@@ -90,7 +90,8 @@ impl WazooApp {
                     removed_count
                 );
 
-                // 2. Immediately refresh in-memory available_videos from DB
+                // 2. Immediately refresh in-memory all_videos and available_videos from DB
+                self.all_videos = self.db.get_all_videos().unwrap_or_default();
                 if !self.search.active_query.is_empty() {
                     let folders = if self.search.active_folders.is_empty() {
                         self.settings.media_folders.clone()
@@ -102,7 +103,7 @@ impl WazooApp {
                         .search_videos(&self.search.active_query, &folders)
                         .unwrap_or_default();
                 } else {
-                    self.available_videos = self.db.get_all_videos().unwrap_or_default();
+                    self.available_videos = self.all_videos.clone();
                 }
                 self.drawers.file_picker_entries.clear();
                 self.apply_file_picker_search();
@@ -162,7 +163,8 @@ impl WazooApp {
                 let removed_count = self.db.clear_misc_videos().unwrap_or(0);
                 log::info!("Cleared {} Misc videos from database", removed_count);
 
-                // Refresh available_videos
+                // Refresh all_videos and available_videos
+                self.all_videos = self.db.get_all_videos().unwrap_or_default();
                 if !self.search.active_query.is_empty() || !self.search.active_folders.is_empty() {
                     let folders = self.search.active_folders.clone();
                     self.available_videos = self
@@ -170,7 +172,7 @@ impl WazooApp {
                         .search_videos(&self.search.active_query, &folders)
                         .unwrap_or_default();
                 } else {
-                    self.available_videos = self.db.get_all_videos().unwrap_or_default();
+                    self.available_videos = self.all_videos.clone();
                 }
 
                 self.drawers.file_picker_entries.clear();
@@ -273,6 +275,7 @@ impl WazooApp {
                 self.scanner.scan_cancel = None;
                 match res {
                     Ok(_count) => {
+                        self.all_videos = self.db.get_all_videos().unwrap_or_default();
                         let folders = self.search.active_folders.clone();
                         if let Ok(videos) =
                             self.db.search_videos(&self.search.active_query, &folders)

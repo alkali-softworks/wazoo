@@ -2321,7 +2321,9 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     let v5 = wazoo_core::VideoRecord::new(5, "Dark Star (1974)", &p5);
     let v6 = wazoo_core::VideoRecord::new(6, "Nosferatu (1922)", &p6);
 
-    app.available_videos = vec![v1.clone(), v2.clone(), v3.clone(), v4.clone(), v5.clone(), v6.clone()];
+    let videos = vec![v1.clone(), v2.clone(), v3.clone(), v4.clone(), v5.clone(), v6.clone()];
+    app.available_videos = videos.clone();
+    app.all_videos = videos;
     app.metadata_cache.insert(
         1,
         wazoo_core::MediaMetadata {
@@ -2597,6 +2599,50 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     {
         let _el = app.view_plex_explorer_modal();
     }
+
+    // 9b. Narrowing available_videos (main global query) must NOT limit Plex Explorer
+    app.available_videos = vec![v1.clone()];
+    app.modals.plex_explorer_genre = None;
+    app.modals.plex_explorer_decade = None;
+    app.modals.plex_explorer_search.clear();
+
+    app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::All;
+    assert_eq!(app.plex_explorer_items().len(), 6);
+
+    app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::TopRated;
+    assert_eq!(app.plex_explorer_items().len(), 6);
+
+    app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::RecentlyAdded;
+    assert_eq!(app.plex_explorer_items().len(), 6);
+
+    app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::Random;
+    assert_eq!(app.plex_explorer_items().len(), 6);
+
+    let live_raw = vec![wazoo_core::PlexRawItem {
+        rating_key: "rk2".to_string(),
+        title: "The Matrix".to_string(),
+        series_title: None,
+        season_number: None,
+        episode_number: None,
+        year: Some(1999),
+        tagline: None,
+        summary: None,
+        content_rating: None,
+        duration_ms: None,
+        view_offset_ms: Some(120_000),
+        rating: Some(8.7),
+        studio: None,
+        genres: vec![],
+        directors: vec![],
+        actors: vec![],
+        thumb_url: None,
+        art_url: None,
+        file_paths: vec![p2.clone()],
+    }];
+    let mapped_live =
+        WazooApp::map_plex_live_items(live_raw, &app.all_videos, &app.metadata_cache);
+    assert_eq!(mapped_live.len(), 1);
+    assert_eq!(mapped_live[0].title, "The Matrix");
 
     // 10. Press Escape closes the modal and clears filters
     let _ = app.update(Message::EscapePressed);
