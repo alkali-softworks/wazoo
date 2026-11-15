@@ -225,7 +225,7 @@ pub enum Message {
     PlexExplorerToggleDecade(Option<u32>),
     PlexExplorerSubmit,
     PlayPlexExplorerItem(String, Option<u64>),
-    PlexExplorerLiveLoaded(wazoo_core::PlexExplorerTab, Vec<wazoo_core::PlexExplorerItem>),
+    PlexExplorerLiveLoaded(wazoo_core::PlexExplorerTab, Vec<wazoo_core::PlexRawItem>),
 
     // Timers & Ticks
     Tick,

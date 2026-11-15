@@ -2321,13 +2321,15 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     let v5 = wazoo_core::VideoRecord::new(5, "Dark Star (1974)", &p5);
     let v6 = wazoo_core::VideoRecord::new(6, "Nosferatu (1922)", &p6);
 
-    let videos = vec![v1.clone(), v2.clone(), v3.clone(), v4.clone(), v5.clone(), v6.clone()];
+    let mut videos = vec![v1.clone(), v2.clone(), v3.clone(), v4.clone(), v5.clone(), v6.clone()];
+    for v in &mut videos {
+        v.id = app.db.insert_or_update_video(v).unwrap();
+    }
     app.available_videos = videos.clone();
-    app.all_videos = videos;
-    app.metadata_cache.insert(
-        1,
+
+    let metas = vec![
         wazoo_core::MediaMetadata {
-            video_id: 1,
+            video_id: videos[0].id,
             title: "Frailty".to_string(),
             year: Some(2001),
             rating: Some(7.6),
@@ -2337,11 +2339,8 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
             tagline: Some("No soul is safe.".to_string()),
             ..Default::default()
         },
-    );
-    app.metadata_cache.insert(
-        2,
         wazoo_core::MediaMetadata {
-            video_id: 2,
+            video_id: videos[1].id,
             title: "The Matrix".to_string(),
             year: Some(1999),
             rating: Some(8.7),
@@ -2351,11 +2350,8 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
             tagline: Some("Welcome to the Real World.".to_string()),
             ..Default::default()
         },
-    );
-    app.metadata_cache.insert(
-        3,
         wazoo_core::MediaMetadata {
-            video_id: 3,
+            video_id: videos[2].id,
             title: "The Shining".to_string(),
             year: Some(1980),
             rating: Some(8.4),
@@ -2365,11 +2361,8 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
             tagline: Some("A masterpiece of modern horror.".to_string()),
             ..Default::default()
         },
-    );
-    app.metadata_cache.insert(
-        4,
         wazoo_core::MediaMetadata {
-            video_id: 4,
+            video_id: videos[3].id,
             title: "Blade Runner".to_string(),
             year: Some(1982),
             rating: Some(8.1),
@@ -2379,11 +2372,8 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
             tagline: Some("Man has made his match... now it's his problem.".to_string()),
             ..Default::default()
         },
-    );
-    app.metadata_cache.insert(
-        5,
         wazoo_core::MediaMetadata {
-            video_id: 5,
+            video_id: videos[4].id,
             title: "Dark Star".to_string(),
             year: Some(1974),
             rating: Some(7.4),
@@ -2391,11 +2381,8 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
             directors: vec!["John Carpenter".to_string()],
             ..Default::default()
         },
-    );
-    app.metadata_cache.insert(
-        6,
         wazoo_core::MediaMetadata {
-            video_id: 6,
+            video_id: videos[5].id,
             title: "Nosferatu".to_string(),
             year: Some(1922),
             rating: Some(7.9),
@@ -2403,7 +2390,11 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
             directors: vec!["F.W. Murnau".to_string()],
             ..Default::default()
         },
-    );
+    ];
+    for m in &metas {
+        app.db.upsert_metadata(m).unwrap();
+        app.metadata_cache.insert(m.video_id, m.clone());
+    }
 
     let _ = app.update(Message::SetPlayerCount(1));
     assert!(!app.modals.plex_explorer);
@@ -2606,16 +2597,24 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
     app.modals.plex_explorer_decade = None;
     app.modals.plex_explorer_search.clear();
 
-    app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::All;
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::All,
+    ));
     assert_eq!(app.plex_explorer_items().len(), 6);
 
-    app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::TopRated;
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::TopRated,
+    ));
     assert_eq!(app.plex_explorer_items().len(), 6);
 
-    app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::RecentlyAdded;
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::RecentlyAdded,
+    ));
     assert_eq!(app.plex_explorer_items().len(), 6);
 
-    app.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::Random;
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::Random,
+    ));
     assert_eq!(app.plex_explorer_items().len(), 6);
 
     let live_raw = vec![wazoo_core::PlexRawItem {
@@ -2639,10 +2638,16 @@ fn test_plex_explorer_modal_e_key_escape_and_actions() {
         art_url: None,
         file_paths: vec![p2.clone()],
     }];
-    let mapped_live =
-        WazooApp::map_plex_live_items(live_raw, &app.all_videos, &app.metadata_cache);
-    assert_eq!(mapped_live.len(), 1);
-    assert_eq!(mapped_live[0].title, "The Matrix");
+    let _ = app.update(Message::PlexExplorerSelectTab(
+        wazoo_core::PlexExplorerTab::OnDeck,
+    ));
+    let _ = app.update(Message::PlexExplorerLiveLoaded(
+        wazoo_core::PlexExplorerTab::OnDeck,
+        live_raw,
+    ));
+    let on_deck_items = app.plex_explorer_items();
+    assert_eq!(on_deck_items.len(), 1);
+    assert_eq!(on_deck_items[0].title, "The Matrix");
 
     // 10. Press Escape closes the modal and clears filters
     let _ = app.update(Message::EscapePressed);

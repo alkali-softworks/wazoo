@@ -18,6 +18,7 @@ pub struct PlexState {
     pub sync_result: Option<Result<PlexSyncSummary, String>>,
     pub current_sync_id: u64,
     pub live_items: HashMap<PlexExplorerTab, Vec<PlexExplorerItem>>,
+    pub explorer_items: Vec<PlexExplorerItem>,
     pub is_fetching_live: bool,
 }
 

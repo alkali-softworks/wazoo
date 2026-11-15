@@ -499,14 +499,16 @@ impl WazooApp {
             }
             Message::PlexExplorerSearchChanged(val) => {
                 self.modals.plex_explorer_search = val;
+                self.refresh_plex_explorer_items();
                 Task::none()
             }
             Message::ClearPlexExplorerSearch => {
                 self.modals.plex_explorer_search.clear();
+                self.refresh_plex_explorer_items();
                 iced::widget::operation::focus("plex_explorer_search_input")
             }
             Message::PlexExplorerSelectTab(tab) => {
-                match tab {
+                let task = match tab {
                     wazoo_core::PlexExplorerTab::Decade(dec) => {
                         self.modals.plex_explorer_tab = wazoo_core::PlexExplorerTab::All;
                         self.modals.plex_explorer_decade = Some(dec);
@@ -528,7 +530,9 @@ impl WazooApp {
                         self.modals.plex_explorer_tab = tab.clone();
                         self.fetch_plex_live_items(tab)
                     }
-                }
+                };
+                self.refresh_plex_explorer_items();
+                task
             }
             Message::PlexExplorerToggleGenre(genre) => {
                 if genre.is_none() || self.modals.plex_explorer_genre == genre {
@@ -536,6 +540,7 @@ impl WazooApp {
                 } else {
                     self.modals.plex_explorer_genre = genre;
                 }
+                self.refresh_plex_explorer_items();
                 Task::none()
             }
             Message::PlexExplorerToggleDecade(decade) => {
@@ -544,6 +549,7 @@ impl WazooApp {
                 } else {
                     self.modals.plex_explorer_decade = decade;
                 }
+                self.refresh_plex_explorer_items();
                 Task::none()
             }
             Message::PlexExplorerSubmit => {
@@ -574,8 +580,10 @@ impl WazooApp {
                 }
                 play_task
             }
-            Message::PlexExplorerLiveLoaded(tab, items) => {
+            Message::PlexExplorerLiveLoaded(tab, raw_items) => {
+                let items = self.db.match_plex_raw_items(&raw_items).unwrap_or_default();
                 self.plex.live_items.insert(tab, items);
+                self.refresh_plex_explorer_items();
                 Task::none()
             }
             Message::EscapePressed => {
