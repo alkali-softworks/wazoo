@@ -1,5 +1,6 @@
 use wazoo_app::format::{
-    clean_name, folder_basename, format_descriptive_title, format_title_lines, format_video_title,
+    clean_metadata_title, clean_name, folder_basename, format_descriptive_title,
+    format_title_lines, format_video_title,
 };
 
 #[test]
@@ -99,5 +100,36 @@ fn test_season_episode_recognition() {
     assert_eq!(
         format_descriptive_title("Kare Kano s01e18.mkv"),
         "Kare Kano — S01E18"
+    );
+}
+
+#[test]
+fn test_clean_metadata_title() {
+    assert_eq!(
+        clean_metadata_title("Blade.Runner.2049.2017.1080p.BluRay.H264.AAC-RARBG"),
+        "Blade Runner 2049 2017"
+    );
+    assert_eq!(
+        clean_metadata_title("Interstellar.2014.1080p.mkv"),
+        "Interstellar 2014"
+    );
+    assert_eq!(
+        clean_metadata_title("Blade Runner 2049 (2017) [1080p] [HEVC]"),
+        "Blade Runner 2049 (2017)"
+    );
+    // Legitimate titles should remain untouched
+    assert_eq!(clean_metadata_title("Mr. Robot"), "Mr. Robot");
+    assert_eq!(
+        clean_metadata_title("Agents of S.H.I.E.L.D."),
+        "Agents of S.H.I.E.L.D."
+    );
+    assert_eq!(
+        clean_metadata_title("A Complete Unknown"),
+        "A Complete Unknown"
+    );
+    assert_eq!(clean_metadata_title("X-Men"), "X-Men");
+    assert_eq!(
+        clean_metadata_title("Blade Runner 2049"),
+        "Blade Runner 2049"
     );
 }

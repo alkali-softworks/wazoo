@@ -16,6 +16,9 @@ static RE_SEASON_PATTERN: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)\(
 static RE_MULTIPLE_SPACES: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
 static RE_TRAILING_GROUP: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"-[A-Z0-9]{2,}$").unwrap());
+static RE_RAW_METADATA_TAG: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)(?:^|[\s._\-\[\(])(dvdrip|bdrip|bluray|webrip|hdrip|x264|x265|h264|h265|hevc|1080p|720p|480p|2160p|aac|dts|ac3|flac)(?:$|[\s._\-\]\)])").unwrap()
+});
 
 static METADATA_TAGS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     vec![
@@ -226,6 +229,49 @@ pub fn clean_name(name: &str) -> String {
     trimmed
         .trim_matches(|c: char| c == '-' || c == '.' || c == ' ' || c == ':')
         .to_string()
+}
+
+/// Cleans a metadata title (e.g. from Plex) only if it looks like an uncleaned
+/// filename or scene release string, leaving legitimate titles intact.
+pub fn clean_metadata_title(title: &str) -> String {
+    let trimmed = title.trim();
+    if trimmed.is_empty() {
+        return String::new();
+    }
+
+    let has_underscore = trimmed.contains('_');
+    let has_no_spaces_multi_dot = !trimmed.contains(char::is_whitespace)
+        && trimmed.split('.').filter(|seg| seg.len() >= 2).count() >= 2;
+    let has_raw_tag = RE_RAW_METADATA_TAG.is_match(trimmed);
+    let has_trailing_group = RE_TRAILING_GROUP.is_match(trimmed)
+        && (trimmed.contains('.') || trimmed.contains('_') || !trimmed.contains(' '));
+
+    if !(has_underscore || has_no_spaces_multi_dot || has_raw_tag || has_trailing_group) {
+        return trimmed.to_string();
+    }
+
+    // Strip known video file extension if present before cleaning
+    let without_ext = match trimmed.rfind('.') {
+        Some(pos) => {
+            let ext = trimmed[pos + 1..].to_ascii_lowercase();
+            if matches!(
+                ext.as_str(),
+                "mkv" | "mp4" | "avi" | "mov" | "wmv" | "flv" | "webm" | "m4v" | "ts"
+            ) {
+                &trimmed[..pos]
+            } else {
+                trimmed
+            }
+        }
+        None => trimmed,
+    };
+
+    let cleaned = clean_name(without_ext);
+    if cleaned.is_empty() {
+        trimmed.to_string()
+    } else {
+        cleaned
+    }
 }
 
 pub fn is_generic_folder(name: &str) -> bool {

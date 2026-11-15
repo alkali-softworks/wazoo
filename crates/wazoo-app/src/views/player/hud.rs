@@ -28,13 +28,18 @@ impl WazooApp {
         let meta = self.get_metadata_for_path(path);
         let (primary, secondary, badges) = if let Some(m) = meta {
             let p = if let Some(ref st) = m.series_title {
-                st.clone()
+                format::clean_metadata_title(st)
             } else {
-                m.title.clone()
+                format::clean_metadata_title(&m.title)
             };
 
             let s = if let (Some(sn), Some(en)) = (m.season_number, m.episode_number) {
-                Some(format!("S{:02}E{:02} - {}", sn, en, m.title))
+                Some(format!(
+                    "S{:02}E{:02} - {}",
+                    sn,
+                    en,
+                    format::clean_metadata_title(&m.title)
+                ))
             } else if let Some(ref tag) = m.tagline {
                 Some(tag.clone())
             } else {
