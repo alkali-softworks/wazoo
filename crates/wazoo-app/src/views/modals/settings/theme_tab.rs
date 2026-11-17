@@ -25,22 +25,22 @@ use wazoo_core::{
 };
 
 const QUICK_SWATCHES_ACCENT: &[&str] = &[
-    "#42b883", "#38bdf8", "#a855f7", "#bd93f9", "#f43f5e", "#f59e0b", "#84cc16", "#14b8a6",
-    "#fb923c", "#ff2e97", "#88c0d0", "#e2e8f0",
+    "#42b883", "#89b4fa", "#008080", "#000080", "#fb2872", "#9fe22c", "#61dcf5", "#fbbd2d",
+    "#ee9d2b", "#eb477e", "#ff2e97", "#33cc66",
 ];
 
 const QUICK_SWATCHES_SURFACE: &[&str] = &[
-    "#1f1f1f", "#141414", "#0f172a", "#1e1f29", "#282a36", "#18181b", "#1c1917", "#2e3440",
-    "#1a1025", "#262626", "#d1d5db", "#e5e7eb",
+    "#1f1f1f", "#141414", "#1e1e2e", "#181825", "#c0c0c0", "#20211c", "#25231d", "#3f3b31",
+    "#f6e4ea", "#eed3dc", "#d1d5db", "#e5e7eb",
 ];
 
 const QUICK_SWATCHES_TITLEBAR: &[&str] = &[
-    "#1f092f", "#0b1120", "#1e1f29", "#2a0813", "#271a0c", "#242933", "#2b0f4a", "#0f2922",
+    "#1f092f", "#181825", "#000080", "#151613", "#1d1b16", "#25231d", "#e4c8d1", "#2b0f4a",
     "#1f1f1f", "#000000", "#312e81", "#e5e7eb",
 ];
 
 const QUICK_SWATCHES_TEXT: &[&str] = &[
-    "#ffffff", "#f1f5f9", "#f8f8f2", "#fef3c7", "#eceff4", "#e2e8f0", "#d4d4d8", "#a1a1aa",
+    "#ffffff", "#f7f7f2", "#cdd6f4", "#eadcb3", "#a99866", "#aaaa92", "#661a33", "#b6778c",
     "#334155", "#1f2937", "#111827", "#000000",
 ];
 
@@ -53,13 +53,12 @@ pub fn view_theme_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     // 2. Presets Card
     let preset_items: Vec<(ThemePreset, &'static str, String)> = vec![
         (ThemePreset::Default, "🌿", app.t("settings.theme_preset_default")),
-        (ThemePreset::Midnight, "🌌", app.t("settings.theme_preset_midnight")),
-        (ThemePreset::Dracula, "🧛", app.t("settings.theme_preset_dracula")),
-        (ThemePreset::Crimson, "🌹", app.t("settings.theme_preset_crimson")),
         (ThemePreset::Amber, "🔥", app.t("settings.theme_preset_amber")),
-        (ThemePreset::Nord, "❄️", app.t("settings.theme_preset_nord")),
-        (ThemePreset::Synthwave, "🌆", app.t("settings.theme_preset_synthwave")),
+        (ThemePreset::Mocha, "☕", app.t("settings.theme_preset_mocha")),
         (ThemePreset::FrostLight, "☀️", app.t("settings.theme_preset_frost")),
+        (ThemePreset::Monokai, "🎨", app.t("settings.theme_preset_monokai")),
+        (ThemePreset::Turtle, "🐢", app.t("settings.theme_preset_turtle")),
+        (ThemePreset::Strawberry, "🍓", app.t("settings.theme_preset_strawberry")),
     ];
 
     let preset_buttons: Vec<Element<'a, Message>> = preset_items

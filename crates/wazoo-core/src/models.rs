@@ -432,25 +432,23 @@ impl Default for ThemeSettings {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ThemePreset {
     Default,
-    Midnight,
-    Dracula,
-    Crimson,
     Amber,
-    Nord,
-    Synthwave,
+    Mocha,
     FrostLight,
+    Monokai,
+    Turtle,
+    Strawberry,
 }
 
 impl ThemePreset {
     pub const ALL: &'static [ThemePreset] = &[
         ThemePreset::Default,
-        ThemePreset::Midnight,
-        ThemePreset::Dracula,
-        ThemePreset::Crimson,
         ThemePreset::Amber,
-        ThemePreset::Nord,
-        ThemePreset::Synthwave,
+        ThemePreset::Mocha,
         ThemePreset::FrostLight,
+        ThemePreset::Monokai,
+        ThemePreset::Turtle,
+        ThemePreset::Strawberry,
     ];
 }
 
@@ -489,71 +487,60 @@ impl ThemeSettings {
             ThemePreset::Default => {
                 *self = Self::default();
             }
-            ThemePreset::Midnight => {
-                self.accent_color = "#38bdf8".to_string();
-                self.surface_color = "#0f172a".to_string();
-                self.titlebar_color = "#0b1120".to_string();
-                self.titlebar_badge_color = "#020617".to_string();
-                self.hud_color = "#0b1222".to_string();
-                self.text_color = "#f1f5f9".to_string();
+            ThemePreset::Mocha => {
+                self.accent_color = "#89b4fa".to_string();
+                self.surface_color = "#1e1e2e".to_string();
+                self.titlebar_color = "#181825".to_string();
+                self.titlebar_badge_color = "#11111b".to_string();
+                self.hud_color = "#181825".to_string();
+                self.text_color = "#cdd6f4".to_string();
                 self.hud_opacity = 0.88;
                 self.corner_radius = 1.0;
                 self.focus_ring_width = 3.0;
             }
-            ThemePreset::Dracula => {
-                self.accent_color = "#bd93f9".to_string();
-                self.surface_color = "#282a36".to_string();
-                self.titlebar_color = "#1e1f29".to_string();
-                self.titlebar_badge_color = "#191a21".to_string();
-                self.hud_color = "#21222c".to_string();
-                self.text_color = "#f8f8f2".to_string();
-                self.hud_opacity = 0.90;
+            ThemePreset::Turtle => {
+                self.accent_color = "#65d05a".to_string();
+                self.surface_color = "#151615".to_string();
+                self.titlebar_color = "#22153b".to_string();
+                self.titlebar_badge_color = "#060409".to_string();
+                self.hud_color = "#0f120f".to_string();
+                self.text_color = "#ffffff".to_string();
+                self.hud_opacity = 0.88;
                 self.corner_radius = 1.0;
                 self.focus_ring_width = 3.0;
             }
-            ThemePreset::Crimson => {
-                self.accent_color = "#f43f5e".to_string();
-                self.surface_color = "#18181b".to_string();
-                self.titlebar_color = "#2a0813".to_string();
-                self.titlebar_badge_color = "#09090b".to_string();
-                self.hud_color = "#141418".to_string();
-                self.text_color = "#fafafa".to_string();
+            ThemePreset::Monokai => {
+                self.accent_color = "#fb2872".to_string();
+                self.surface_color = "#20211c".to_string();
+                self.titlebar_color = "#151613".to_string();
+                self.titlebar_badge_color = "#20211c".to_string();
+                self.hud_color = "#151613".to_string();
+                self.text_color = "#f7f7f2".to_string();
                 self.hud_opacity = 0.88;
                 self.corner_radius = 1.0;
                 self.focus_ring_width = 3.0;
             }
             ThemePreset::Amber => {
-                self.accent_color = "#f59e0b".to_string();
-                self.surface_color = "#1c1917".to_string();
-                self.titlebar_color = "#271a0c".to_string();
-                self.titlebar_badge_color = "#0c0a09".to_string();
-                self.hud_color = "#161210".to_string();
-                self.text_color = "#fef3c7".to_string();
+                self.accent_color = "#fbbd2d".to_string();
+                self.surface_color = "#25231d".to_string();
+                self.titlebar_color = "#1d1b16".to_string();
+                self.titlebar_badge_color = "#25231d".to_string();
+                self.hud_color = "#1d1b16".to_string();
+                self.text_color = "#eadcb3".to_string();
                 self.hud_opacity = 0.88;
                 self.corner_radius = 0.75;
                 self.focus_ring_width = 3.0;
             }
-            ThemePreset::Nord => {
-                self.accent_color = "#88c0d0".to_string();
-                self.surface_color = "#2e3440".to_string();
-                self.titlebar_color = "#242933".to_string();
-                self.titlebar_badge_color = "#1e222a".to_string();
-                self.hud_color = "#242933".to_string();
-                self.text_color = "#eceff4".to_string();
+            ThemePreset::Strawberry => {
+                self.accent_color = "#eb477e".to_string();
+                self.surface_color = "#f6e4ea".to_string();
+                self.titlebar_color = "#e4c8d1".to_string();
+                self.titlebar_badge_color = "#661a33".to_string();
+                self.hud_color = "#eed3dc".to_string();
+                self.text_color = "#661a33".to_string();
                 self.hud_opacity = 0.90;
                 self.corner_radius = 1.0;
                 self.focus_ring_width = 3.0;
-            }
-            ThemePreset::Synthwave => {
-                self.accent_color = "#ff2e97".to_string();
-                self.surface_color = "#1a1025".to_string();
-                self.titlebar_color = "#2b0f4a".to_string();
-                self.titlebar_badge_color = "#0d0514".to_string();
-                self.hud_color = "#160b24".to_string();
-                self.text_color = "#fdf4ff".to_string();
-                self.hud_opacity = 0.88;
-                self.corner_radius = 1.25;
-                self.focus_ring_width = 3.5;
             }
             ThemePreset::FrostLight => {
                 self.accent_color = "#10b981".to_string();

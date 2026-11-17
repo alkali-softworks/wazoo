@@ -635,9 +635,43 @@ fn test_theme_settings_hex_parsing_clamping_and_presets() {
 
     // Presets roundtrip
     let mut themed = ThemeSettings::default();
-    themed.apply_preset(ThemePreset::Midnight);
-    assert!(themed.matches_preset(ThemePreset::Midnight));
+    themed.apply_preset(ThemePreset::Mocha);
+    assert!(themed.matches_preset(ThemePreset::Mocha));
     assert!(!themed.matches_preset(ThemePreset::Default));
+    assert_eq!(themed.accent_color, "#89b4fa");
+    assert_eq!(themed.surface_color, "#1e1e2e");
+    assert_eq!(themed.titlebar_color, "#181825");
+    assert_eq!(themed.text_color, "#cdd6f4");
+
+    themed.apply_preset(ThemePreset::Amber);
+    assert!(themed.matches_preset(ThemePreset::Amber));
+    assert_eq!(themed.accent_color, "#fbbd2d");
+    assert_eq!(themed.surface_color, "#25231d");
+    assert_eq!(themed.titlebar_color, "#1d1b16");
+    assert_eq!(themed.text_color, "#eadcb3");
+
+    themed.apply_preset(ThemePreset::Strawberry);
+    assert!(themed.matches_preset(ThemePreset::Strawberry));
+    assert_eq!(themed.accent_color, "#eb477e");
+    assert_eq!(themed.surface_color, "#f6e4ea");
+    assert_eq!(themed.titlebar_color, "#e4c8d1");
+    assert_eq!(themed.text_color, "#661a33");
+
+    themed.apply_preset(ThemePreset::Monokai);
+    assert!(themed.matches_preset(ThemePreset::Monokai));
+    assert_eq!(themed.accent_color, "#fb2872");
+    assert_eq!(themed.surface_color, "#20211c");
+    assert_eq!(themed.titlebar_color, "#151613");
+    assert_eq!(themed.text_color, "#f7f7f2");
+
+    themed.apply_preset(ThemePreset::Turtle);
+    assert!(themed.matches_preset(ThemePreset::Turtle));
+    assert_eq!(themed.accent_color, "#65d05a");
+    assert_eq!(themed.surface_color, "#151615");
+    assert_eq!(themed.titlebar_color, "#22153b");
+    assert_eq!(themed.titlebar_badge_color, "#060409");
+    assert_eq!(themed.hud_color, "#0f120f");
+    assert_eq!(themed.text_color, "#ffffff");
 
     // Clamping & sanitization
     let mut bad = ThemeSettings {

@@ -93,7 +93,7 @@ Press <kbd>P</kbd> to cycle through 4 overlay modes:
 
 ### 🎨 Customizable Themes
 - **Interactive Color Pickers**: Override the accent color, UI grey surface, titlebar, titlebar badge, HUD overlay, and text color using a 2D Saturation/Value pad, rainbow hue bar, hex input, or quick swatches.
-- **Presets & Randomizer**: Switch between 8 built-in presets (*Default*, *Midnight*, *Dracula*, *Crimson*, *Amber*, *Nord*, *Synthwave*, *Frost Light*) or roll a random palette with a live titlebar & HUD preview.
+- **Presets & Randomizer**: Switch between 7 built-in presets (*Default*, *Amber*, *Mocha*, *Frost*, *Monokai*, *Turtle*, *Strawberry*) or roll a random palette with a live titlebar & HUD preview.
 - **Appearance & Geometry**: Fine-tune HUD overlay opacity, UI corner roundness, and player focus ring width, persisted in `settings.json`.
 
 ### 🌐 Internationalization & Localization
