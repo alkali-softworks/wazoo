@@ -47,11 +47,15 @@ impl WazooApp {
                     self.drawers.file_picker_entries.clear();
                     self.apply_file_picker_search();
                     self.show_video_totals_notice(total, &all_label);
-                    self.reconcile_players_with_available_videos(None);
+                    let reconcile_task = self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
                     if self.drawers.show_transcript {
-                        return self.load_transcript_for_focused_player();
+                        return Task::batch([
+                            reconcile_task,
+                            self.load_transcript_for_focused_player(),
+                        ]);
                     }
+                    return reconcile_task;
                 }
                 Task::none()
             }
@@ -97,11 +101,15 @@ impl WazooApp {
                         names.join(", ")
                     };
                     self.show_video_totals_notice(total, &notice_folder);
-                    self.reconcile_players_with_available_videos(None);
+                    let reconcile_task = self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
                     if self.drawers.show_transcript {
-                        return self.load_transcript_for_focused_player();
+                        return Task::batch([
+                            reconcile_task,
+                            self.load_transcript_for_focused_player(),
+                        ]);
                     }
+                    return reconcile_task;
                 }
                 Task::none()
             }
@@ -186,11 +194,16 @@ impl WazooApp {
                     };
                     self.show_video_totals_notice(total, &notice_folder);
 
-                    self.reconcile_players_with_available_videos(None);
+                    let reconcile_task = self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
+                    self.modals.search = false;
                     if self.drawers.show_transcript {
-                        return self.load_transcript_for_focused_player();
+                        return Task::batch([
+                            reconcile_task,
+                            self.load_transcript_for_focused_player(),
+                        ]);
                     }
+                    return reconcile_task;
                 }
                 self.modals.search = false;
                 Task::none()
@@ -219,11 +232,15 @@ impl WazooApp {
                     self.drawers.file_picker_entries.clear();
                     self.apply_file_picker_search();
                     self.show_video_totals_notice(total, &all_label);
-                    self.reconcile_players_with_available_videos(None);
+                    let reconcile_task = self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
                     if self.drawers.show_transcript {
-                        return self.load_transcript_for_focused_player();
+                        return Task::batch([
+                            reconcile_task,
+                            self.load_transcript_for_focused_player(),
+                        ]);
                     }
+                    return reconcile_task;
                 }
                 Task::none()
             }
@@ -322,11 +339,13 @@ impl WazooApp {
             self.drawers.file_picker_entries.clear();
             self.apply_file_picker_search();
             self.show_video_totals_notice(total, &notice_folder);
-            self.reconcile_players_with_available_videos(skip_id);
+            let reconcile_task = self.reconcile_players_with_available_videos(skip_id);
             self.save_session_state();
+            self.modals.search = false;
             if self.drawers.show_transcript {
-                return self.load_transcript_for_focused_player();
+                return Task::batch([reconcile_task, self.load_transcript_for_focused_player()]);
             }
+            return reconcile_task;
         }
         self.modals.search = false;
         Task::none()

@@ -38,6 +38,14 @@ pub struct MpvEvent {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct MpvEventProperty {
+    pub name: *const c_char,
+    pub format: c_int,
+    pub data: *mut c_void,
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct MpvEventEndFile {
     pub reason: c_int,
     pub error: c_int,
@@ -104,10 +112,23 @@ pub struct MpvApi {
         format: c_int,
         data: *mut c_void,
     ) -> c_int,
+    pub mpv_set_property_async: unsafe extern "C" fn(
+        ctx: *mut MpvHandle,
+        reply_userdata: u64,
+        name: *const c_char,
+        format: c_int,
+        data: *mut c_void,
+    ) -> c_int,
     pub mpv_set_property_string: unsafe extern "C" fn(
         ctx: *mut MpvHandle,
         name: *const c_char,
         data: *const c_char,
+    ) -> c_int,
+    pub mpv_observe_property: unsafe extern "C" fn(
+        ctx: *mut MpvHandle,
+        reply_userdata: u64,
+        name: *const c_char,
+        format: c_int,
     ) -> c_int,
     pub mpv_get_property: unsafe extern "C" fn(
         ctx: *mut MpvHandle,
@@ -171,7 +192,9 @@ unsafe fn load_symbols(lib: Library) -> Option<MpvApi> {
             mpv_terminate_destroy: get_sym!(mpv_terminate_destroy),
             mpv_set_option_string: get_sym!(mpv_set_option_string),
             mpv_set_property: get_sym!(mpv_set_property),
+            mpv_set_property_async: get_sym!(mpv_set_property_async),
             mpv_set_property_string: get_sym!(mpv_set_property_string),
+            mpv_observe_property: get_sym!(mpv_observe_property),
             mpv_get_property: get_sym!(mpv_get_property),
             mpv_get_property_string: get_sym!(mpv_get_property_string),
             mpv_free: get_sym!(mpv_free),
@@ -541,6 +564,37 @@ pub unsafe fn mpv_set_property_string(
     unsafe {
         if let Some(api) = get_mpv_api() {
             (api.mpv_set_property_string)(ctx, name, data)
+        } else {
+            -1
+        }
+    }
+}
+
+pub unsafe fn mpv_set_property_async(
+    ctx: *mut MpvHandle,
+    reply_userdata: u64,
+    name: *const c_char,
+    format: c_int,
+    data: *mut c_void,
+) -> c_int {
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_set_property_async)(ctx, reply_userdata, name, format, data)
+        } else {
+            -1
+        }
+    }
+}
+
+pub unsafe fn mpv_observe_property(
+    ctx: *mut MpvHandle,
+    reply_userdata: u64,
+    name: *const c_char,
+    format: c_int,
+) -> c_int {
+    unsafe {
+        if let Some(api) = get_mpv_api() {
+            (api.mpv_observe_property)(ctx, reply_userdata, name, format)
         } else {
             -1
         }

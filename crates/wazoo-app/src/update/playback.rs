@@ -545,10 +545,12 @@ impl WazooApp {
                 } else {
                     Task::none()
                 };
-                if self.settings.playback_mode == PlaybackMode::Scroll {
+                let restore_task = if self.settings.playback_mode == PlaybackMode::Scroll {
                     self.cleanup_scroll_mode();
-                    self.restore_grid_players_to_target(self.settings.player_count);
-                }
+                    self.restore_grid_players_to_target(self.settings.player_count)
+                } else {
+                    Task::none()
+                };
                 self.settings.layout = match self.settings.layout {
                     LayoutMode::Grid => LayoutMode::Row,
                     LayoutMode::Row => LayoutMode::Column,
@@ -561,7 +563,7 @@ impl WazooApp {
                 });
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                 let _ = self.config_mgr.save_settings(&self.settings);
-                exit_task
+                Task::batch([exit_task, restore_task])
             }
             Message::SetPlayerCount(count) => {
                 let exit_task = if self.cube.desktop_overlay {
@@ -576,7 +578,7 @@ impl WazooApp {
                 }
 
                 self.settings.player_count = target;
-                self.restore_grid_players_to_target(target);
+                let restore_task = self.restore_grid_players_to_target(target);
 
                 if self.settings.playback_mode == PlaybackMode::Flip {
                     self.stagger_flip_countdowns();
@@ -591,7 +593,7 @@ impl WazooApp {
                 ));
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                 self.save_session_state();
-                exit_task
+                Task::batch([exit_task, restore_task])
             }
             Message::ToggleScrollMode => {
                 self.modals.menu = false;
@@ -616,8 +618,10 @@ impl WazooApp {
                         .filter_map(|(i, p)| if !p.is_cube { Some(i) } else { None })
                         .collect();
 
+                    let mut scroll_tasks = Vec::new();
                     if grid_indices.is_empty() {
-                        self.add_player_internal();
+                        let (_, task) = self.add_player_internal();
+                        scroll_tasks.push(task);
                     } else {
                         let keep_grid_idx = if !self.players.is_empty()
                             && self.focused_idx < self.players.len()
@@ -655,7 +659,9 @@ impl WazooApp {
                         .init_stack_with_heights(&items_with_heights);
 
                     while let Some(spawn_y) = self.scroll_engine.needs_new_player() {
-                        if let Some(id) = self.add_player_internal() {
+                        let (added, task) = self.add_player_internal();
+                        if let Some(id) = added {
+                            scroll_tasks.push(task);
                             let item_h = self
                                 .players
                                 .player(id)
@@ -679,21 +685,25 @@ impl WazooApp {
                     self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                     let _ = self.config_mgr.save_settings(&self.settings);
 
-                    return Task::batch([exit_task, self.trigger_preload_task()]);
+                    scroll_tasks.push(exit_task);
+                    scroll_tasks.push(self.trigger_preload_task());
+                    return Task::batch(scroll_tasks);
                 } else {
                     self.cleanup_scroll_mode();
-                    self.restore_grid_players_to_target(self.settings.player_count);
+                    let restore_task = self.restore_grid_players_to_target(self.settings.player_count);
                     self.overlay.toast_message = Some(self.t("wazoo.scroll_mode_disabled"));
+                    self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
+                    let _ = self.config_mgr.save_settings(&self.settings);
+                    return Task::batch([exit_task, restore_task]);
                 }
-                self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
-                let _ = self.config_mgr.save_settings(&self.settings);
-                exit_task
             }
             Message::ToggleFlipMode => {
-                if self.settings.playback_mode == PlaybackMode::Scroll {
+                let restore_task = if self.settings.playback_mode == PlaybackMode::Scroll {
                     self.cleanup_scroll_mode();
-                    self.restore_grid_players_to_target(self.settings.player_count);
-                }
+                    self.restore_grid_players_to_target(self.settings.player_count)
+                } else {
+                    Task::none()
+                };
                 self.settings.playback_mode = match self.settings.playback_mode {
                     PlaybackMode::Flip => PlaybackMode::Normal,
                     _ => PlaybackMode::Flip,
@@ -706,7 +716,7 @@ impl WazooApp {
                     _ => self.t("wazoo.flip_mode_disabled"),
                 });
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
-                Task::none()
+                restore_task
             }
             Message::SetScrollSpeed(speed) => {
                 self.settings.scroll_speed = speed.clamp(0.1, 10.0);
@@ -787,17 +797,19 @@ impl WazooApp {
                         return self.update(Message::RemoveCube);
                     }
                 }
-                if self.settings.playback_mode == PlaybackMode::Scroll {
+                let restore_task = if self.settings.playback_mode == PlaybackMode::Scroll {
                     self.cleanup_scroll_mode();
-                    self.restore_grid_players_to_target(self.settings.player_count);
-                }
+                    self.restore_grid_players_to_target(self.settings.player_count)
+                } else {
+                    Task::none()
+                };
                 let exit_task = if self.cube.desktop_overlay {
                     self.dismiss_all_cubes()
                 } else {
                     Task::none()
                 };
                 if self.players.iter().filter(|p| !p.is_cube).count() <= 1 {
-                    return exit_task;
+                    return Task::batch([exit_task, restore_task]);
                 }
                 if let Some(id) = self.focused_player_id() {
                     self.players.retain(|p| p.id != id);
@@ -818,11 +830,15 @@ impl WazooApp {
                     self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                     let _ = self.config_mgr.save_settings(&self.settings);
                     if self.drawers.show_transcript {
-                        return Task::batch([exit_task, self.load_transcript_for_focused_player()]);
+                        return Task::batch([
+                            exit_task,
+                            restore_task,
+                            self.load_transcript_for_focused_player(),
+                        ]);
                     }
-                    return exit_task;
+                    return Task::batch([exit_task, restore_task]);
                 }
-                exit_task
+                Task::batch([exit_task, restore_task])
             }
             Message::CycleFocusedPlayer => {
                 if !self.players.is_empty() {
@@ -961,58 +977,54 @@ impl WazooApp {
                 }
 
                 // 4. Load the bookmarked video and position in the focused player
+                let mut tasks = Vec::new();
                 let focused_id = if let Some(id) = self.focused_player_id() {
                     if let Some(p) = self.players.player_mut(id) {
-                        p.start_loading();
                         p.nav_history.forward_stack.clear();
+                        p.load_retry_count = 0;
                     }
-                    self.update_static_frame();
                     self.record_current_player_nav_position(id);
                     let title = format::format_video_title(&b.path);
-                    let curr_player = self.players.player(id);
-                    let prev_muted = curr_player.map(|p| p.state.is_muted);
-                    let prev_volume = curr_player.map(|p| p.state.volume);
-
-                    if let Ok(mut handle) = self.create_video_handle_with_start(
+                    tasks.push(self.start_async_player_load(
                         id,
                         &b.path,
                         &title,
                         Some(b.position_secs),
-                    ) {
-                        handle.set_muted(prev_muted.unwrap_or(false));
-                        if let Some(vol) = prev_volume {
-                            handle.set_volume(vol);
-                        }
-                        handle.set_subtitles_visible(self.subtitles_enabled);
-                        self.push_player_nav_entry(id, b.path.clone(), Some(b.position_secs));
-                        if let Some(p) = self.players.player_mut(id) {
-                            p.handle = handle;
-                        }
-                    }
+                    ));
+                    self.push_player_nav_entry(id, b.path.clone(), Some(b.position_secs));
                     Some(id)
                 } else {
                     let id = self.next_player_id;
                     self.next_player_id += 1;
                     let title = format::format_video_title(&b.path);
-                    if let Ok(mut handle) = self.create_video_handle_with_start(
+                    let start_time = wazoo_media::StartTime::from(Some(b.position_secs));
+                    let mut placeholder = wazoo_media::VideoHandle::new_placeholder(
                         id,
                         &b.path,
                         &title,
-                        Some(b.position_secs),
-                    ) {
-                        handle.set_muted(false);
-                        handle.set_subtitles_visible(self.subtitles_enabled);
-                        self.push_player_nav_entry(id, b.path.clone(), Some(b.position_secs));
-                        self.players.push(AppPlayer::new(handle, b.is_shuffle));
-                        self.focused_idx = 0;
-                        Some(id)
-                    } else {
-                        None
-                    }
+                        self.buffer_config(),
+                        start_time,
+                    );
+                    placeholder.state.is_muted = false;
+                    let mut player = AppPlayer::new(placeholder, b.is_shuffle);
+                    player.load_generation = 1;
+                    player.start_loading();
+                    self.push_player_nav_entry(id, b.path.clone(), Some(b.position_secs));
+                    self.players.push(player);
+                    self.focused_idx = 0;
+                    self.update_static_frame();
+                    tasks.push(self.spawn_player_load_task(
+                        id,
+                        1,
+                        b.path.clone(),
+                        title,
+                        start_time,
+                    ));
+                    Some(id)
                 };
 
                 // 5. Reconcile other players if what they are playing does not exist in the new queried list of files
-                self.reconcile_players_with_available_videos(focused_id);
+                tasks.push(self.reconcile_players_with_available_videos(focused_id));
                 self.save_session_state();
 
                 let mode_str = if b.is_shuffle {
@@ -1028,9 +1040,9 @@ impl WazooApp {
                 self.overlay.toast_time_remaining = LONG_TOAST_SECS;
                 self.modals.bookmarks = false;
                 if self.drawers.show_transcript {
-                    return self.load_transcript_for_focused_player();
+                    tasks.push(self.load_transcript_for_focused_player());
                 }
-                Task::none()
+                Task::batch(tasks)
             }
             Message::RandomSeekFocused => {
                 self.trigger_player_overlay();
@@ -1077,9 +1089,10 @@ impl WazooApp {
     }
 
     /// Restores regular (non-cube) player count to the target count without affecting active 3D cube players.
-    pub(crate) fn restore_grid_players_to_target(&mut self, target: usize) {
+    pub(crate) fn restore_grid_players_to_target(&mut self, target: usize) -> Task<Message> {
         let target_count = target.clamp(1, 12);
         let grid_count = self.players.iter().filter(|p| !p.is_cube).count();
+        let mut tasks = Vec::new();
         if grid_count > target_count {
             let mut remove_needed = grid_count - target_count;
             let mut i = self.players.len();
@@ -1093,13 +1106,16 @@ impl WazooApp {
             }
         } else if grid_count < target_count {
             while self.players.iter().filter(|p| !p.is_cube).count() < target_count {
-                if self.add_player_internal().is_none() {
+                let (added, task) = self.add_player_internal();
+                if added.is_none() {
                     break;
                 }
+                tasks.push(task);
             }
         }
         if self.focused_idx >= self.players.len() && !self.players.is_empty() {
             self.focused_idx = self.players.len() - 1;
         }
+        Task::batch(tasks)
     }
 }

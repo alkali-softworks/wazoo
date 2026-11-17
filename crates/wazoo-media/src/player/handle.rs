@@ -54,6 +54,13 @@ pub struct VideoHandle {
     pub is_seeking: bool,
     seek_restart_received: bool,
     crossfade_volume: f64,
+    cached_dwidth: Option<u32>,
+    cached_dheight: Option<u32>,
+    cached_eof_reached: bool,
+    cached_paused_for_cache: bool,
+    file_loaded: bool,
+    needs_render_dim_refresh: bool,
+    is_network_source: bool,
 }
 
 unsafe impl Send for VideoHandle {}
@@ -182,6 +189,123 @@ impl VideoHandle {
         Self::with_buffering_and_start(0, "", "", config, StartTime::Beginning)
     }
 
+    /// Creates a lightweight placeholder VideoHandle with no libmpv instance or disk/network I/O.
+    /// Used while the real libmpv handle is initialized asynchronously on a background thread.
+    pub fn new_placeholder(
+        id: PlayerId,
+        file_path: &str,
+        name: &str,
+        config: BufferConfig,
+        start_time: impl Into<StartTime>,
+    ) -> Self {
+        let start_time = start_time.into();
+        let mut state = PlayerState::new(id, file_path.to_string(), name.to_string());
+        let (pending_seek, last_seek_time) = match start_time {
+            StartTime::Beginning => (None, None),
+            StartTime::Seconds(start) => {
+                if start > 0.05 {
+                    state.position = Duration::from_secs_f64(start);
+                    (Some(Duration::from_secs_f64(start)), Some(Instant::now()))
+                } else {
+                    (None, None)
+                }
+            }
+            StartTime::Percent(_) | StartTime::Random => (None, Some(Instant::now())),
+        };
+        Self {
+            id,
+            state,
+            mpv: std::ptr::null_mut(),
+            render_ctx: std::ptr::null_mut(),
+            render_width: 0,
+            render_height: 0,
+            pixel_buffer: Vec::new(),
+            frame: Arc::new(Mutex::new(FrameData {
+                width: 0,
+                height: 0,
+                pixels: Vec::new(),
+                new_frame: false,
+                frame_seq: 0,
+            })),
+            alive: Arc::new(AtomicBool::new(true)),
+            is_eos: false,
+            is_failed: false,
+            last_seek_time,
+            pending_seek,
+            pending_seek_random: false,
+            tracks_loaded: false,
+            preferred_audio_language: config.preferred_audio_language,
+            preferred_subtitle_language: config.preferred_subtitle_language,
+            i18n_language: config.i18n_language,
+            gamma: config.gamma,
+            contrast: config.contrast,
+            brightness: config.brightness,
+            saturation: config.saturation,
+            speed: config.playback_speed,
+            crt_enabled: config.crt_enabled,
+            wavy_enabled: config.wavy_enabled,
+            fog_enabled: config.fog_enabled,
+            crt_settings: config.crt_settings,
+            is_seeking: false,
+            seek_restart_received: false,
+            crossfade_volume: 1.0,
+            cached_dwidth: None,
+            cached_dheight: None,
+            cached_eof_reached: false,
+            cached_paused_for_cache: false,
+            file_loaded: false,
+            needs_render_dim_refresh: false,
+            is_network_source: Self::is_network_path(file_path),
+        }
+    }
+
+    #[inline]
+    fn is_network_path(path: &str) -> bool {
+        let lower = path.trim().to_ascii_lowercase();
+        lower.starts_with("http://")
+            || lower.starts_with("https://")
+            || lower.starts_with("smb://")
+            || lower.starts_with("nfs://")
+    }
+
+    #[inline]
+    pub fn is_placeholder(&self) -> bool {
+        self.mpv.is_null()
+    }
+
+    #[inline]
+    pub fn is_network_stream(&self) -> bool {
+        self.is_network_source
+    }
+
+    #[inline]
+    pub fn is_buffering_for_cache(&self) -> bool {
+        self.cached_paused_for_cache || self.is_placeholder()
+    }
+
+    #[inline]
+    pub fn pending_seek(&self) -> Option<Duration> {
+        self.pending_seek
+    }
+
+    unsafe fn observe_core_properties(mpv: *mut mpv_ffi::MpvHandle) {
+        let observed = [
+            ("dwidth", mpv_ffi::MPV_FORMAT_INT64),
+            ("dheight", mpv_ffi::MPV_FORMAT_INT64),
+            ("time-pos", mpv_ffi::MPV_FORMAT_DOUBLE),
+            ("duration", mpv_ffi::MPV_FORMAT_DOUBLE),
+            ("eof-reached", mpv_ffi::MPV_FORMAT_FLAG),
+            ("paused-for-cache", mpv_ffi::MPV_FORMAT_FLAG),
+        ];
+        for (idx, (name, fmt)) in observed.iter().enumerate() {
+            if let Ok(c_name) = CString::new(*name) {
+                unsafe {
+                    mpv_ffi::mpv_observe_property(mpv, (idx + 1) as u64, c_name.as_ptr(), *fmt);
+                }
+            }
+        }
+    }
+
     pub fn with_buffering_and_start(
         id: PlayerId,
         file_path: &str,
@@ -240,6 +364,7 @@ impl VideoHandle {
             set_opt("keep-open", "yes");
             set_opt("idle", "yes");
             set_opt("terminal", "no");
+            set_opt("volume", "100");
 
             let eq_filter = Self::build_eq_filter_string(
                 config.gamma,
@@ -304,6 +429,8 @@ impl VideoHandle {
                 return Err(format!("Failed to initialize libmpv (code {res})"));
             }
 
+            Self::observe_core_properties(mpv);
+
             let api_type = CString::new("sw").unwrap();
             let mut params = [
                 mpv_ffi::MpvRenderParam {
@@ -342,7 +469,7 @@ impl VideoHandle {
                 let path_arg = CString::new(clean_path).map_err(|e| e.to_string())?;
                 let mut args: [*const std::ffi::c_char; 3] =
                     [cmd_loadfile.as_ptr(), path_arg.as_ptr(), std::ptr::null()];
-                mpv_ffi::mpv_command(mpv, args.as_mut_ptr());
+                mpv_ffi::mpv_command_async(mpv, 0, args.as_mut_ptr());
             }
 
             let initial_duration = Duration::ZERO;
@@ -374,7 +501,7 @@ impl VideoHandle {
                 StartTime::Percent(_) | StartTime::Random => (None, Some(Instant::now())),
             };
 
-            let mut handle = Self {
+            let handle = Self {
                 id,
                 state,
                 mpv,
@@ -405,10 +532,15 @@ impl VideoHandle {
                 is_seeking: false,
                 seek_restart_received: false,
                 crossfade_volume: 1.0,
+                cached_dwidth: None,
+                cached_dheight: None,
+                cached_eof_reached: false,
+                cached_paused_for_cache: false,
+                file_loaded: false,
+                needs_render_dim_refresh: false,
+                is_network_source: Self::is_network_path(file_path),
             };
 
-            handle.set_volume(1.0);
-            handle.refresh_audio_tracks();
             Ok(handle)
         }
     }
@@ -489,12 +621,21 @@ impl VideoHandle {
                 replace_arg.as_ptr(),
                 std::ptr::null(),
             ];
-            let res = mpv_ffi::mpv_command(self.mpv, args.as_mut_ptr());
+            let res = mpv_ffi::mpv_command_async(self.mpv, 0, args.as_mut_ptr());
             if res < 0 {
                 return Err(format!("Failed to load file: {res}"));
             }
 
-            self.set_property_string("pause", "no");
+            let mut pause_flag: c_int = 0;
+            if let Ok(c_pause) = CString::new("pause") {
+                mpv_ffi::mpv_set_property_async(
+                    self.mpv,
+                    0,
+                    c_pause.as_ptr(),
+                    mpv_ffi::MPV_FORMAT_FLAG,
+                    &mut pause_flag as *mut _ as *mut _,
+                );
+            }
             self.render_width = 0;
             self.render_height = 0;
             self.state.path = file_path.to_string();
@@ -505,6 +646,13 @@ impl VideoHandle {
             self.is_eos = false;
             self.is_failed = false;
             self.tracks_loaded = false;
+            self.cached_dwidth = None;
+            self.cached_dheight = None;
+            self.cached_eof_reached = false;
+            self.cached_paused_for_cache = false;
+            self.file_loaded = false;
+            self.needs_render_dim_refresh = false;
+            self.is_network_source = Self::is_network_path(file_path);
             self.state.audio_tracks.clear();
             self.state.subtitle_tracks.clear();
             self.state.current_audio_track_id = None;
@@ -534,6 +682,9 @@ impl VideoHandle {
 
     /// Update video frame if mpv has decoded a new presentation frame
     pub fn update_frame(&mut self) -> bool {
+        if self.mpv.is_null() {
+            return false;
+        }
         unsafe {
             // Process pending mpv events with a safety limit to prevent UI thread lockups
             let mut event_count = 0;
@@ -547,6 +698,10 @@ impl VideoHandle {
                 if (*event).event_id == mpv_ffi::MPV_EVENT_START_FILE {
                     self.is_eos = false;
                     self.is_failed = false;
+                    self.file_loaded = false;
+                    self.cached_dwidth = None;
+                    self.cached_dheight = None;
+                    self.cached_eof_reached = false;
                 }
                 if (*event).event_id == mpv_ffi::MPV_EVENT_SEEK {
                     self.is_seeking = true;
@@ -571,23 +726,77 @@ impl VideoHandle {
                     }
                 }
                 if (*event).event_id == mpv_ffi::MPV_EVENT_FILE_LOADED {
+                    self.file_loaded = true;
                     self.is_eos = false;
                     self.is_failed = false;
                     needs_refresh_tracks = true;
+                    self.needs_render_dim_refresh = true;
                 } else if (*event).event_id == mpv_ffi::MPV_EVENT_TRACKS_CHANGED
                     || (*event).event_id == mpv_ffi::MPV_EVENT_VIDEO_RECONFIG
                 {
                     self.is_eos = false;
                     self.is_failed = false;
                     needs_refresh_tracks = true;
+                    self.needs_render_dim_refresh = true;
                 } else if (*event).event_id == mpv_ffi::MPV_EVENT_PLAYBACK_RESTART {
                     self.is_eos = false;
                     self.is_failed = false;
                     needs_refresh_tracks = true;
+                    self.needs_render_dim_refresh = true;
                     if self.is_seeking {
                         self.seek_restart_received = true;
                         if let Ok(mut frame) = self.frame.lock() {
                             frame.frame_seq = 0;
+                        }
+                    }
+                } else if (*event).event_id == mpv_ffi::MPV_EVENT_PROPERTY_CHANGE
+                    && !(*event).data.is_null()
+                {
+                    let prop = &*((*event).data as *const mpv_ffi::MpvEventProperty);
+                    if !prop.name.is_null() && !prop.data.is_null() {
+                        let name = std::ffi::CStr::from_ptr(prop.name).to_string_lossy();
+                        match (name.as_ref(), prop.format) {
+                            ("dwidth", mpv_ffi::MPV_FORMAT_INT64) => {
+                                let v = *(prop.data as *const i64);
+                                if v > 0 {
+                                    self.cached_dwidth = Some(v as u32);
+                                    self.needs_render_dim_refresh = true;
+                                }
+                            }
+                            ("dheight", mpv_ffi::MPV_FORMAT_INT64) => {
+                                let v = *(prop.data as *const i64);
+                                if v > 0 {
+                                    self.cached_dheight = Some(v as u32);
+                                    self.needs_render_dim_refresh = true;
+                                }
+                            }
+                            ("duration", mpv_ffi::MPV_FORMAT_DOUBLE) => {
+                                let dur = *(prop.data as *const f64);
+                                if dur > 0.0 && dur.is_finite() {
+                                    self.state.duration = Duration::from_secs_f64(dur);
+                                }
+                            }
+                            ("time-pos", mpv_ffi::MPV_FORMAT_DOUBLE) => {
+                                let pos = *(prop.data as *const f64);
+                                if pos >= 0.0 && pos.is_finite() && self.pending_seek.is_none() {
+                                    let within_seek_grace = self
+                                        .last_seek_time
+                                        .map(|t| t.elapsed() < Duration::from_millis(1500))
+                                        .unwrap_or(false);
+                                    if !within_seek_grace {
+                                        self.state.position = Duration::from_secs_f64(pos);
+                                    }
+                                }
+                            }
+                            ("eof-reached", mpv_ffi::MPV_FORMAT_FLAG) => {
+                                let flag = *(prop.data as *const c_int);
+                                self.cached_eof_reached = flag != 0;
+                            }
+                            ("paused-for-cache", mpv_ffi::MPV_FORMAT_FLAG) => {
+                                let flag = *(prop.data as *const c_int);
+                                self.cached_paused_for_cache = flag != 0;
+                            }
+                            _ => {}
                         }
                     }
                 }
@@ -604,10 +813,19 @@ impl VideoHandle {
 
             if needs_refresh_tracks {
                 self.refresh_audio_tracks();
-            } else if !self.tracks_loaded {
-                let count = self.get_property_i64("track-list/count").unwrap_or(0);
-                if count > 0 {
-                    self.refresh_audio_tracks();
+                if self.file_loaded && self.state.duration == Duration::ZERO {
+                    let mut dur: f64 = 0.0;
+                    if let Ok(prop) = CString::new("duration") {
+                        let res = mpv_ffi::mpv_get_property(
+                            self.mpv,
+                            prop.as_ptr(),
+                            mpv_ffi::MPV_FORMAT_DOUBLE,
+                            &mut dur as *mut _ as *mut _,
+                        );
+                        if res == 0 && dur > 0.0 && dur.is_finite() {
+                            self.state.duration = Duration::from_secs_f64(dur);
+                        }
+                    }
                 }
             }
 
@@ -648,8 +866,9 @@ impl VideoHandle {
                 return false;
             }
 
-            if needs_refresh_tracks || self.render_width == 0 || self.render_height == 0 {
+            if self.needs_render_dim_refresh {
                 self.check_update_render_dimensions();
+                self.needs_render_dim_refresh = false;
             }
 
             let flags = mpv_ffi::mpv_render_context_update(self.render_ctx);
@@ -822,15 +1041,16 @@ impl VideoHandle {
         let clamped = volume.clamp(0.0, 1.0);
         self.state.volume = clamped;
         let effective_vol = (clamped * self.crossfade_volume).clamp(0.0, 1.0);
-        let mpv_vol = effective_vol * 100.0;
+        let mut mpv_vol = effective_vol * 100.0;
         unsafe {
             if !self.mpv.is_null() {
                 let prop = CString::new("volume").unwrap();
-                mpv_ffi::mpv_set_property(
+                mpv_ffi::mpv_set_property_async(
                     self.mpv,
+                    0,
                     prop.as_ptr(),
                     mpv_ffi::MPV_FORMAT_DOUBLE,
-                    &mpv_vol as *const _ as *mut _,
+                    &mut mpv_vol as *mut _ as *mut _,
                 );
             }
         }
@@ -842,15 +1062,16 @@ impl VideoHandle {
         let clamped = factor.clamp(0.0, 1.0);
         self.crossfade_volume = clamped;
         let effective_vol = (self.state.volume * clamped).clamp(0.0, 1.0);
-        let mpv_vol = effective_vol * 100.0;
+        let mut mpv_vol = effective_vol * 100.0;
         unsafe {
             if !self.mpv.is_null() {
                 let prop = CString::new("volume").unwrap();
-                mpv_ffi::mpv_set_property(
+                mpv_ffi::mpv_set_property_async(
                     self.mpv,
+                    0,
                     prop.as_ptr(),
                     mpv_ffi::MPV_FORMAT_DOUBLE,
-                    &mpv_vol as *const _ as *mut _,
+                    &mut mpv_vol as *mut _ as *mut _,
                 );
             }
         }
@@ -869,15 +1090,18 @@ impl VideoHandle {
 
     pub fn set_muted(&mut self, muted: bool) {
         self.state.is_muted = muted;
-        let flag: c_int = if muted { 1 } else { 0 };
+        let mut flag: c_int = if muted { 1 } else { 0 };
         unsafe {
-            let prop = CString::new("mute").unwrap();
-            mpv_ffi::mpv_set_property(
-                self.mpv,
-                prop.as_ptr(),
-                mpv_ffi::MPV_FORMAT_FLAG,
-                &flag as *const _ as *mut _,
-            );
+            if !self.mpv.is_null() {
+                let prop = CString::new("mute").unwrap();
+                mpv_ffi::mpv_set_property_async(
+                    self.mpv,
+                    0,
+                    prop.as_ptr(),
+                    mpv_ffi::MPV_FORMAT_FLAG,
+                    &mut flag as *mut _ as *mut _,
+                );
+            }
         }
     }
 
@@ -929,28 +1153,34 @@ impl VideoHandle {
 
     fn set_pause_internal(&mut self, paused: bool) {
         self.state.is_playing = !paused;
-        let flag: c_int = if paused { 1 } else { 0 };
+        let mut flag: c_int = if paused { 1 } else { 0 };
         unsafe {
-            let prop = CString::new("pause").unwrap();
-            mpv_ffi::mpv_set_property(
-                self.mpv,
-                prop.as_ptr(),
-                mpv_ffi::MPV_FORMAT_FLAG,
-                &flag as *const _ as *mut _,
-            );
+            if !self.mpv.is_null() {
+                let prop = CString::new("pause").unwrap();
+                mpv_ffi::mpv_set_property_async(
+                    self.mpv,
+                    0,
+                    prop.as_ptr(),
+                    mpv_ffi::MPV_FORMAT_FLAG,
+                    &mut flag as *mut _ as *mut _,
+                );
+            }
         }
     }
 
     pub fn set_subtitles_visible(&mut self, visible: bool) {
-        let flag: c_int = if visible { 1 } else { 0 };
+        let mut flag: c_int = if visible { 1 } else { 0 };
         unsafe {
-            let prop = CString::new("sub-visibility").unwrap();
-            mpv_ffi::mpv_set_property(
-                self.mpv,
-                prop.as_ptr(),
-                mpv_ffi::MPV_FORMAT_FLAG,
-                &flag as *const _ as *mut _,
-            );
+            if !self.mpv.is_null() {
+                let prop = CString::new("sub-visibility").unwrap();
+                mpv_ffi::mpv_set_property_async(
+                    self.mpv,
+                    0,
+                    prop.as_ptr(),
+                    mpv_ffi::MPV_FORMAT_FLAG,
+                    &mut flag as *mut _ as *mut _,
+                );
+            }
         }
     }
 
@@ -1093,14 +1323,18 @@ impl VideoHandle {
             return;
         }
         self.speed = clamped;
+        let mut val = clamped;
         unsafe {
-            let prop = CString::new("speed").unwrap();
-            mpv_ffi::mpv_set_property(
-                self.mpv,
-                prop.as_ptr(),
-                mpv_ffi::MPV_FORMAT_DOUBLE,
-                &clamped as *const _ as *mut _,
-            );
+            if !self.mpv.is_null() {
+                let prop = CString::new("speed").unwrap();
+                mpv_ffi::mpv_set_property_async(
+                    self.mpv,
+                    0,
+                    prop.as_ptr(),
+                    mpv_ffi::MPV_FORMAT_DOUBLE,
+                    &mut val as *mut _ as *mut _,
+                );
+            }
         }
     }
 
@@ -1266,10 +1500,12 @@ impl VideoHandle {
             }
         };
 
-        let cmd = format!("no-osd seek {} {}", val, mode);
-        if let Ok(c_cmd) = CString::new(cmd) {
-            unsafe {
-                mpv_ffi::mpv_command_string(self.mpv, c_cmd.as_ptr());
+        if !self.mpv.is_null() {
+            let cmd = format!("no-osd seek {} {}", val, mode);
+            if let Ok(c_cmd) = CString::new(cmd) {
+                unsafe {
+                    mpv_ffi::mpv_command_string(self.mpv, c_cmd.as_ptr());
+                }
             }
         }
     }
@@ -1282,44 +1518,11 @@ impl VideoHandle {
         if let Some(target) = self.pending_seek {
             return target;
         }
-        if let Some(seek_time) = self.last_seek_time {
-            if seek_time.elapsed() < Duration::from_millis(1500) {
-                return self.state.position;
-            }
-        }
-        unsafe {
-            let mut pos: f64 = 0.0;
-            let prop = CString::new("time-pos").unwrap();
-            let res = mpv_ffi::mpv_get_property(
-                self.mpv,
-                prop.as_ptr(),
-                mpv_ffi::MPV_FORMAT_DOUBLE,
-                &mut pos as *mut _ as *mut _,
-            );
-            if res == 0 && pos >= 0.0 {
-                Duration::from_secs_f64(pos)
-            } else {
-                self.state.position
-            }
-        }
+        self.state.position
     }
 
     pub fn duration(&self) -> Duration {
-        unsafe {
-            let mut dur: f64 = 0.0;
-            let prop = CString::new("duration").unwrap();
-            let res = mpv_ffi::mpv_get_property(
-                self.mpv,
-                prop.as_ptr(),
-                mpv_ffi::MPV_FORMAT_DOUBLE,
-                &mut dur as *mut _ as *mut _,
-            );
-            if res == 0 && dur > 0.0 {
-                Duration::from_secs_f64(dur)
-            } else {
-                self.state.duration
-            }
-        }
+        self.state.duration
     }
 
     pub fn mark_in(&self) -> Option<Duration> {
@@ -1432,21 +1635,8 @@ impl VideoHandle {
         if dur < Duration::from_millis(500) {
             return false;
         }
-        unsafe {
-            if !self.mpv.is_null() {
-                let mut eof: std::ffi::c_int = 0;
-                if let Ok(prop) = CString::new("eof-reached") {
-                    let res = mpv_ffi::mpv_get_property(
-                        self.mpv,
-                        prop.as_ptr(),
-                        mpv_ffi::MPV_FORMAT_FLAG,
-                        &mut eof as *mut _ as *mut _,
-                    );
-                    if res == 0 && eof != 0 {
-                        return true;
-                    }
-                }
-            }
+        if self.cached_eof_reached {
+            return true;
         }
         let pos = self.position();
         if pos >= dur || dur.saturating_sub(pos) <= Duration::from_millis(150) {
@@ -1933,6 +2123,14 @@ impl VideoHandle {
     }
 
     pub fn video_dimensions(&self) -> Option<(u32, u32)> {
+        if let (Some(w), Some(h)) = (self.cached_dwidth, self.cached_dheight) {
+            if w > 0 && h > 0 {
+                return Some((w, h));
+            }
+        }
+        if self.mpv.is_null() || !self.file_loaded {
+            return None;
+        }
         if let (Some(w), Some(h)) = (
             self.get_property_i64("dwidth").filter(|&v| v > 0),
             self.get_property_i64("dheight").filter(|&v| v > 0),
@@ -1960,16 +2158,19 @@ impl VideoHandle {
                 return Some(w as f32 / h as f32);
             }
         }
+        if let Ok(guard) = self.frame.lock() {
+            if guard.width > 0 && guard.height > 0 {
+                return Some(guard.width as f32 / guard.height as f32);
+            }
+        }
+        if self.mpv.is_null() || !self.file_loaded {
+            return None;
+        }
         if let Some(s) = self.get_property_string("video-params/aspect") {
             if let Ok(val) = s.parse::<f32>() {
                 if val > 0.05 {
                     return Some(val);
                 }
-            }
-        }
-        if let Ok(guard) = self.frame.lock() {
-            if guard.width > 0 && guard.height > 0 {
-                return Some(guard.width as f32 / guard.height as f32);
             }
         }
         None

@@ -1183,3 +1183,49 @@ fn test_mode_9_realtime_tick_deduplication_and_watchdog_isolation() {
     );
 }
 
+#[test]
+fn test_async_cube_spawn_keeps_existing_cube_animating() {
+    let (mut app, _) = wazoo_app::app::new_test_app();
+    app.settings.use_standby_player = false;
+    app.available_videos = vec![
+        wazoo_core::VideoRecord::new(1, "Stream 1", "http://127.0.0.1:9/c1.mp4"),
+        wazoo_core::VideoRecord::new(2, "Stream 2", "http://127.0.0.1:9/c2.mp4"),
+    ];
+
+    // Spawn 1st cube and mark it ready so it actively animates
+    let _ = app.update(wazoo_app::message::Message::ToggleCubeScreensaver);
+    assert_eq!(app.cube.cubes.len(), 1);
+    app.cube.cubes[0].is_ready = true;
+    let x_before = app.cube.cubes[0].x;
+
+    // Spawn 2nd cube asynchronously without standby: must attach placeholder immediately
+    // while keeping the 1st cube animating smoothly on Tick
+    let _ = app.update(wazoo_app::message::Message::SpawnCube);
+    assert_eq!(app.cube.cubes.len(), 2);
+    let second_pid = app.cube.cubes[1].player_id.unwrap();
+    let second_player = app.players.player(second_pid).unwrap();
+    assert!(second_player.is_cube);
+    assert!(second_player.is_placeholder());
+    assert!(second_player.is_loading);
+    assert!(second_player.state.is_muted);
+    assert!(second_player.state.is_playing);
+
+    let _ = app.update(wazoo_app::message::Message::Tick);
+    assert_ne!(
+        app.cube.cubes[0].x, x_before,
+        "Existing cube must continue animating while new cube initializes asynchronously"
+    );
+    assert!(!app.cube.cubes[1].is_ready);
+
+    // Delivering PlayerHandleReady attaches the real handle cleanly
+    let gen_id = app.players.player(second_pid).unwrap().load_generation;
+    let ready_handle = wazoo_media::VideoHandle::new_idle(wazoo_media::BufferConfig::default())
+        .expect("idle libmpv handle");
+    let _ = app.update(wazoo_app::message::Message::PlayerHandleReady {
+        player_id: second_pid,
+        generation: gen_id,
+        result: std::sync::Arc::new(std::sync::Mutex::new(Some(Ok(ready_handle)))),
+    });
+    assert!(!app.players.player(second_pid).unwrap().is_placeholder());
+}
+

@@ -60,6 +60,10 @@ pub struct AppPlayer {
     pub last_aspect_ratio: Option<f32>,
     /// Player-specific frame buffer for animated loading indicators (e.g. TV static).
     pub static_frame: Arc<std::sync::Mutex<wazoo_media::pipeline::FrameData>>,
+    /// Monotonic generation counter for asynchronous handle replacement.
+    pub load_generation: u64,
+    /// Consecutive failed load attempts for this player (prevents infinite auto-advance loops).
+    pub load_retry_count: usize,
 }
 
 pub type Player = AppPlayer;
@@ -86,6 +90,8 @@ impl AppPlayer {
                 new_frame: false,
                 frame_seq: 0,
             })),
+            load_generation: 0,
+            load_retry_count: 0,
         }
     }
 
@@ -105,7 +111,7 @@ impl AppPlayer {
     /// Marks this player as loading and blanks its frame to solid black while preserving previous aspect ratio.
     #[inline]
     pub fn start_loading(&mut self) {
-        if !self.is_cube {
+        if !self.is_cube && !self.is_loading && !self.handle.is_placeholder() {
             if let Some(ar) = self.handle.aspect_ratio() {
                 self.last_aspect_ratio = Some(ar);
             }

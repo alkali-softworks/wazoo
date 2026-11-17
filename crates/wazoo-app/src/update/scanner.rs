@@ -112,13 +112,15 @@ impl WazooApp {
                 self.apply_file_picker_search();
 
                 // 3. Immediately update active players
-                if self.available_videos.is_empty() {
+                let reconcile_task = if self.available_videos.is_empty() {
                     self.players.clear();
                     self.focused_idx = 0;
+                    Task::none()
                 } else {
-                    self.reconcile_players_with_available_videos(None);
+                    let t = self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
-                }
+                    t
+                };
 
                 let all_label = self.t("common.all");
                 self.search.active_folders.retain(|f| f != &folder);
@@ -158,9 +160,9 @@ impl WazooApp {
                 self.last_total_videos = self.available_videos.len();
 
                 if was_scanning {
-                    return self.update(Message::StartScan);
+                    return Task::batch([reconcile_task, self.update(Message::StartScan)]);
                 }
-                Task::none()
+                reconcile_task
             }
             Message::ClearMiscVideos => {
                 let removed_count = self.db.clear_misc_videos().unwrap_or(0);
@@ -185,13 +187,15 @@ impl WazooApp {
                 self.apply_file_picker_search();
 
                 // Reconcile players if any were playing a Misc video
-                if self.available_videos.is_empty() {
+                let reconcile_task = if self.available_videos.is_empty() {
                     self.players.clear();
                     self.focused_idx = 0;
+                    Task::none()
                 } else {
-                    self.reconcile_players_with_available_videos(None);
+                    let t = self.reconcile_players_with_available_videos(None);
                     self.save_session_state();
-                }
+                    t
+                };
 
                 self.search.active_folders.retain(|f| f != "Misc");
                 self.search.selected_folders.retain(|f| f != "Misc");
@@ -203,7 +207,7 @@ impl WazooApp {
                     Some(self.t_with("settings.misc_cleared", &[("count", &count_str)]));
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
                 self.last_total_videos = self.available_videos.len();
-                Task::none()
+                reconcile_task
             }
             Message::StartScan => {
                 // Cancel any currently running scan task
@@ -305,18 +309,21 @@ impl WazooApp {
                                 names.join(", ")
                             };
                             self.show_video_totals_notice(total, &notice_folder);
+                            let mut tasks = Vec::new();
                             if self.players.is_empty() && !self.available_videos.is_empty() {
                                 let count = self.settings.player_count.clamp(1, 12);
                                 for _ in 0..count {
-                                    self.add_player_internal();
+                                    let (_, t) = self.add_player_internal();
+                                    tasks.push(t);
                                 }
                             }
-                            self.reconcile_players_with_available_videos(None);
+                            tasks.push(self.reconcile_players_with_available_videos(None));
                             self.save_session_state();
 
                             if self.settings.plex.enabled && self.settings.plex.auto_sync_on_scan {
-                                return self.update(Message::StartPlexSync);
+                                tasks.push(self.update(Message::StartPlexSync));
                             }
+                            return Task::batch(tasks);
                         }
                     }
                     Err(err) => {

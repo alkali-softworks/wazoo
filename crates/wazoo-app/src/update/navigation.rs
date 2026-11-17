@@ -7,9 +7,7 @@
  * and seamless player state replacement.
  */
 
-use crate::app::{
-    FOCUS_BORDER_TICKS, MAX_PLAYER_NAV_HISTORY_ENTRIES, MAX_VIDEO_LOAD_RETRIES, WazooApp,
-};
+use crate::app::{FOCUS_BORDER_TICKS, MAX_PLAYER_NAV_HISTORY_ENTRIES, WazooApp};
 use crate::format;
 use crate::message::Message;
 use iced::Task;
@@ -69,6 +67,7 @@ impl WazooApp {
         if request_focus {
             if let Some(p) = self.players.player_mut(id) {
                 p.flip.reset(self.settings.flip_interval_secs);
+                p.load_retry_count = 0;
             }
         }
         self.focus_player_for_navigation(id, request_focus);
@@ -81,6 +80,8 @@ impl WazooApp {
         let curr_path = curr_player.map(|p| p.state.path.clone());
         let prev_muted = curr_player.map(|p| p.state.is_muted);
         let prev_volume = curr_player.map(|p| p.state.volume);
+
+        let mut tasks = Vec::new();
 
         // 1. Check forward_stack for undone videos from previous navigation
         let forward_candidate = self
@@ -97,24 +98,25 @@ impl WazooApp {
                 .map(|v| v.name.clone())
                 .unwrap_or_else(|| format::format_video_title(&target.path));
 
-            if let Ok(new_handle) =
-                self.create_video_handle_with_start(id, &target.path, &name, target.position_secs)
-            {
-                let path_clone = target.path.clone();
-                self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
-                self.push_player_nav_entry(id, path_clone.clone(), target.position_secs);
-                if let Some(p) = self.players.player(id) {
-                    if p.is_cube {
-                        let (primary, _) = format::format_title_lines(&path_clone);
-                        self.overlay
-                            .show_toast(self.t_with("toast.cube_playing", &[("title", &primary)]));
-                    }
+            let path_clone = target.path.clone();
+            tasks.push(self.start_async_player_load(
+                id,
+                &target.path,
+                &name,
+                target.position_secs,
+            ));
+            self.push_player_nav_entry(id, path_clone.clone(), target.position_secs);
+            if let Some(p) = self.players.player(id) {
+                if p.is_cube {
+                    let (primary, _) = format::format_title_lines(&path_clone);
+                    self.overlay
+                        .show_toast(self.t_with("toast.cube_playing", &[("title", &primary)]));
                 }
-                loaded = true;
             }
+            loaded = true;
         }
 
-        // 2. If forward_stack had no entries (or loading failed), generate next video (random or sequential)
+        // 2. If forward_stack had no entries, generate next video (random or sequential)
         if !loaded {
             let start_time = if self.settings.playback_mode == PlaybackMode::Scroll
                 || self.settings.playback_mode == PlaybackMode::Flip
@@ -134,58 +136,48 @@ impl WazooApp {
                 (!is_same || self.available_videos.len() <= 1) && allowed_by_filter
             });
 
-            let handle_and_path = if let Some(mut handle) = standby_candidate {
+            if let Some(mut handle) = standby_candidate {
                 handle.id = id;
                 handle.state.id = id;
                 handle.set_paused(false);
                 let path = handle.state.path.clone();
-                Some((handle, path, true))
-            } else {
-                let mut candidate_curr_path = curr_path;
-                let mut generated = None;
-                for _ in 0..MAX_VIDEO_LOAD_RETRIES {
-                    if let Some(video_rec) = self.get_next_video_rec_for_navigation(
-                        candidate_curr_path.as_deref(),
-                        self.is_player_shuffle(id),
-                    ) {
-                        if let Ok(new_handle) = self.create_video_handle_with_start_time(
-                            id,
-                            &video_rec.path,
-                            &video_rec.name,
-                            start_time,
-                        ) {
-                            generated = Some((new_handle, video_rec.path, false));
-                            break;
-                        }
-                        candidate_curr_path = Some(video_rec.path);
-                    }
-                }
-                generated
-            };
-
-            if let Some((new_handle, path, from_standby)) = handle_and_path {
-                self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
-                if from_standby {
-                    if let Some(p) = self.players.player_mut(id) {
-                        p.stop_loading();
-                    }
+                self.apply_playback_state_and_replace(id, handle, prev_muted, prev_volume);
+                if let Some(p) = self.players.player_mut(id) {
+                    p.stop_loading();
                 }
                 self.push_player_nav_entry(id, path.clone(), None);
                 if let Some(p) = self.players.player(id) {
                     if p.is_cube {
                         let (primary, _) = format::format_title_lines(&path);
-                        self.overlay.show_toast(self.t_with(
-                            "toast.cube_playing",
-                            &[("title", &primary)],
-                        ));
+                        self.overlay
+                            .show_toast(self.t_with("toast.cube_playing", &[("title", &primary)]));
+                    }
+                }
+            } else if let Some(video_rec) = self.get_next_video_rec_for_navigation(
+                curr_path.as_deref(),
+                self.is_player_shuffle(id),
+            ) {
+                let path = video_rec.path.clone();
+                tasks.push(self.start_async_player_load(
+                    id,
+                    &video_rec.path,
+                    &video_rec.name,
+                    start_time,
+                ));
+                self.push_player_nav_entry(id, path.clone(), None);
+                if let Some(p) = self.players.player(id) {
+                    if p.is_cube {
+                        let (primary, _) = format::format_title_lines(&path);
+                        self.overlay
+                            .show_toast(self.t_with("toast.cube_playing", &[("title", &primary)]));
                     }
                 }
             }
         }
         if self.drawers.show_transcript && self.focused_player_id() == Some(id) {
-            return self.load_transcript_for_focused_player();
+            tasks.push(self.load_transcript_for_focused_player());
         }
-        Task::none()
+        Task::batch(tasks)
     }
 
     /// Steps a player back to the previously played video, popping from the back navigation history
@@ -198,6 +190,7 @@ impl WazooApp {
         if request_focus {
             if let Some(p) = self.players.player_mut(id) {
                 p.flip.reset(self.settings.flip_interval_secs);
+                p.load_retry_count = 0;
             }
         }
         self.focus_player_for_navigation(id, request_focus);
@@ -206,10 +199,8 @@ impl WazooApp {
             p.stop();
         }
 
-        let curr_player = self.players.player(id);
-        let curr_path = curr_player.map(|p| p.state.path.clone());
-        let prev_muted = curr_player.map(|p| p.state.is_muted);
-        let prev_volume = curr_player.map(|p| p.state.volume);
+        let curr_path = self.players.player(id).map(|p| p.state.path.clone());
+        let mut tasks = Vec::new();
 
         // 1. Adjust navigation history:
         // Pop the current video from back_stack and push onto forward_stack
@@ -240,12 +231,38 @@ impl WazooApp {
                 .map(|v| v.name.clone())
                 .unwrap_or_else(|| format::format_video_title(&target.path));
 
-            if let Ok(new_handle) =
-                self.create_video_handle_with_start(id, &target.path, &name, target.position_secs)
-            {
-                let path_clone = target.path.clone();
-                self.apply_playback_state_and_replace(id, new_handle, prev_muted, prev_volume);
-                self.record_play_history(&path_clone);
+            let path_clone = target.path.clone();
+            tasks.push(self.start_async_player_load(
+                id,
+                &target.path,
+                &name,
+                target.position_secs,
+            ));
+            self.record_play_history(&path_clone);
+            if let Some(p) = self.players.player(id) {
+                if p.is_cube {
+                    let (primary, _) = format::format_title_lines(&path_clone);
+                    self.overlay
+                        .show_toast(self.t_with("toast.cube_playing", &[("title", &primary)]));
+                }
+            }
+            loaded = true;
+        }
+
+        // 3. Fallback if back_stack had no earlier entries
+        if !loaded {
+            if let Some(video_rec) = self.get_prev_video_rec_for_navigation(
+                curr_path.as_deref(),
+                self.is_player_shuffle(id),
+            ) {
+                let path_clone = video_rec.path.clone();
+                tasks.push(self.start_async_player_load(
+                    id,
+                    &video_rec.path,
+                    &video_rec.name,
+                    StartTime::Beginning,
+                ));
+                self.push_player_nav_entry(id, path_clone.clone(), None);
                 if let Some(p) = self.players.player(id) {
                     if p.is_cube {
                         let (primary, _) = format::format_title_lines(&path_clone);
@@ -253,48 +270,12 @@ impl WazooApp {
                             .show_toast(self.t_with("toast.cube_playing", &[("title", &primary)]));
                     }
                 }
-                loaded = true;
-            }
-        }
-
-        // 3. Fallback if back_stack had no earlier entries (or loading failed)
-        if !loaded {
-            let mut candidate_curr_path = curr_path;
-            for _ in 0..MAX_VIDEO_LOAD_RETRIES {
-                if let Some(video_rec) = self.get_prev_video_rec_for_navigation(
-                    candidate_curr_path.as_deref(),
-                    self.is_player_shuffle(id),
-                ) {
-                    if let Ok(new_handle) =
-                        self.create_video_handle(id, &video_rec.path, &video_rec.name)
-                    {
-                        let path_clone = video_rec.path.clone();
-                        self.apply_playback_state_and_replace(
-                            id,
-                            new_handle,
-                            prev_muted,
-                            prev_volume,
-                        );
-                        self.push_player_nav_entry(id, path_clone.clone(), None);
-                        if let Some(p) = self.players.player(id) {
-                            if p.is_cube {
-                                let (primary, _) = format::format_title_lines(&path_clone);
-                                self.overlay.show_toast(self.t_with(
-                                    "toast.cube_playing",
-                                    &[("title", &primary)],
-                                ));
-                            }
-                        }
-                        break;
-                    }
-                    candidate_curr_path = Some(video_rec.path);
-                }
             }
         }
 
         if self.drawers.show_transcript && self.focused_player_id() == Some(id) {
-            return self.load_transcript_for_focused_player();
+            tasks.push(self.load_transcript_for_focused_player());
         }
-        Task::none()
+        Task::batch(tasks)
     }
 }

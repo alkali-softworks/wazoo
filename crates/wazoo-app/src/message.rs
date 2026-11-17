@@ -25,6 +25,11 @@ pub enum Message {
     ModifiersChanged(iced::keyboard::Modifiers),
     GainWindowFocus,
     PreloadedPlayerReady(Arc<Mutex<Option<Result<VideoHandle, String>>>>),
+    PlayerHandleReady {
+        player_id: PlayerId,
+        generation: u64,
+        result: Arc<Mutex<Option<Result<VideoHandle, String>>>>,
+    },
     CursorMoved(Id, Point),
     CursorLeft,
     RightClickPressed(Id),

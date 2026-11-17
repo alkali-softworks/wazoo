@@ -80,7 +80,13 @@ impl WazooApp {
                     }
                     if p.is_loading {
                         p.loading_ticks += 1;
-                        if p.loading_ticks >= 10 {
+                        let max_loading_ticks =
+                            if p.is_network_stream() || p.is_buffering_for_cache() {
+                                30
+                            } else {
+                                15
+                            };
+                        if p.loading_ticks >= max_loading_ticks {
                             p.stop_loading();
                             stuck_ids.push(p.id);
                         }
@@ -93,10 +99,12 @@ impl WazooApp {
                     }
                 }
 
+                let mut tasks = Vec::new();
+
                 // Automatically advance ended videos to keep the continuous playback experience seamless
                 for id in finished_ids {
                     log::info!("Player {id} video reached end, advancing to next video");
-                    let _ = self.update(Message::AutoAdvanceVideo(id));
+                    tasks.push(self.update(Message::AutoAdvanceVideo(id)));
                 }
 
                 // Skip stalled pipelines or failed videos that refuse to play
@@ -105,7 +113,15 @@ impl WazooApp {
                         "Player {id} playback stuck (>={}s) or failed to play, skipping to next video",
                         VideoHandle::STUCK_THRESHOLD_SECONDS
                     );
-                    let _ = self.update(Message::AutoAdvanceVideo(id));
+                    if let Some(p) = self.players.player_mut(id) {
+                        p.load_retry_count += 1;
+                        if p.load_retry_count >= crate::app::MAX_VIDEO_LOAD_RETRIES
+                            || self.available_videos.len() <= 1
+                        {
+                            continue;
+                        }
+                    }
+                    tasks.push(self.update(Message::AutoAdvanceVideo(id)));
                 }
 
                 // Decrement active toast notification countdown
@@ -143,7 +159,7 @@ impl WazooApp {
                         if let Some(p) = self.players.player_mut(id) {
                             p.start_loading();
                         }
-                        let _ = self.advance_player_to_next_video(id, false);
+                        tasks.push(self.advance_player_to_next_video(id, false));
                     }
                     self.update_static_frame();
                 }
@@ -152,7 +168,72 @@ impl WazooApp {
                 if !self.cube.desktop_overlay {
                     self.save_session_state();
                 }
-                Task::none()
+                Task::batch(tasks)
+            }
+
+            Message::PlayerHandleReady {
+                player_id,
+                generation,
+                result,
+            } => {
+                let Some(res) = result.lock().ok().and_then(|mut g| g.take()) else {
+                    return Task::none();
+                };
+
+                let is_current = self
+                    .players
+                    .player(player_id)
+                    .map(|p| p.load_generation == generation)
+                    .unwrap_or(false);
+
+                if !is_current {
+                    if let Ok(handle) = res {
+                        std::thread::spawn(move || drop(handle));
+                    }
+                    return Task::none();
+                }
+
+                match res {
+                    Ok(mut new_handle) => {
+                        let subtitles_enabled = self.subtitles_enabled;
+                        if let Some(p) = self.players.player_mut(player_id) {
+                            new_handle.id = player_id;
+                            new_handle.state.id = player_id;
+                            new_handle.set_muted(p.state.is_muted);
+                            new_handle.set_volume(p.state.volume);
+                            new_handle.set_crossfade_volume(p.handle.crossfade_volume());
+                            new_handle.set_subtitles_visible(subtitles_enabled);
+                            if !p.state.is_playing {
+                                new_handle.set_paused(true);
+                            }
+                            if let Some(seek_target) = p.handle.pending_seek() {
+                                new_handle.seek(seek_target);
+                            } else if p.handle.is_pending_seek_random() {
+                                new_handle.seek_random();
+                            }
+                            p.handle = new_handle;
+                            p.loading_ticks = 0;
+                        }
+                        self.replenish_standby_player();
+                        Task::none()
+                    }
+                    Err(err) => {
+                        log::error!("Failed to initialize VideoHandle for player {player_id}: {err}");
+                        let should_retry = if let Some(p) = self.players.player_mut(player_id) {
+                            p.stop_loading();
+                            p.load_retry_count += 1;
+                            p.load_retry_count < crate::app::MAX_VIDEO_LOAD_RETRIES
+                                && self.available_videos.len() > 1
+                        } else {
+                            false
+                        };
+                        if should_retry {
+                            self.advance_player_to_next_video(player_id, false)
+                        } else {
+                            Task::none()
+                        }
+                    }
+                }
             }
 
             // =========================================================================
@@ -466,6 +547,7 @@ impl WazooApp {
         for p in &mut self.players {
             if p.update_frame() {
                 p.stop_loading();
+                p.load_retry_count = 0;
                 if let Some(ar) = p.handle.aspect_ratio() {
                     p.last_aspect_ratio = Some(ar);
                 }

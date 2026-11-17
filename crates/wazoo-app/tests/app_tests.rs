@@ -2856,3 +2856,208 @@ fn test_toggle_search_metadata() {
     let _ = app.update(Message::PerformSearch);
     assert_eq!(app.available_videos.len(), 1);
 }
+
+#[test]
+fn test_async_four_players_animate_tv_static_while_buffering_network_streams() {
+    let (mut app, _) = new_test_app();
+    app.settings.loading_indicator = wazoo_core::LoadingIndicator::TvStatic;
+    app.settings.use_standby_player = false;
+    app.available_videos = vec![
+        wazoo_core::VideoRecord::new(1, "Stream 1", "http://127.0.0.1:9/v1.mp4"),
+        wazoo_core::VideoRecord::new(2, "Stream 2", "http://127.0.0.1:9/v2.mp4"),
+        wazoo_core::VideoRecord::new(3, "Stream 3", "http://127.0.0.1:9/v3.mp4"),
+        wazoo_core::VideoRecord::new(4, "Stream 4", "http://127.0.0.1:9/v4.mp4"),
+    ];
+
+    // Pressing 4 immediately spawns 4 loading players with placeholder handles (no UI blocking)
+    let _ = app.update(Message::SetPlayerCount(4));
+    assert_eq!(app.players.len(), 4);
+    for p in &app.players {
+        assert!(p.is_loading);
+        assert!(p.is_placeholder());
+        assert!(p.is_network_stream());
+    }
+
+    // Record initial static frame sequence & pixels for all 4 players
+    let initial_seqs: Vec<u64> = app
+        .players
+        .iter()
+        .map(|p| p.static_frame.lock().unwrap().frame_seq)
+        .collect();
+    let initial_pixels: Vec<Vec<u8>> = app
+        .players
+        .iter()
+        .map(|p| p.static_frame.lock().unwrap().pixels.clone())
+        .collect();
+
+    // Advance several 60Hz ticks while streams are still buffering
+    for _ in 0..8 {
+        let _ = app.update(Message::Tick);
+    }
+
+    // All 4 players must still be loading, and every player's TV static frame must have animated
+    for (idx, p) in app.players.iter().enumerate() {
+        assert!(p.is_loading);
+        let guard = p.static_frame.lock().unwrap();
+        assert!(
+            guard.frame_seq > initial_seqs[idx],
+            "Player {idx} static frame_seq did not advance ({} -> {})",
+            initial_seqs[idx],
+            guard.frame_seq
+        );
+        assert_ne!(
+            guard.pixels, initial_pixels[idx],
+            "Player {idx} static pixel buffer did not change across ticks"
+        );
+    }
+
+    // Watchdog should tolerate slow WiFi buffering past 10s (up to 30s) without skipping
+    for _ in 0..12 {
+        let _ = app.update(Message::WatchdogTick);
+    }
+    for p in &app.players {
+        assert!(p.is_loading);
+        assert_eq!(p.loading_ticks, 12);
+    }
+}
+
+#[test]
+fn test_player_handle_ready_preserves_state_and_rejects_stale_generation() {
+    let (mut app, _) = new_test_app();
+    app.settings.use_standby_player = false;
+    app.available_videos = vec![
+        wazoo_core::VideoRecord::new(1, "Stream 1", "http://127.0.0.1:9/v1.mp4"),
+        wazoo_core::VideoRecord::new(2, "Stream 2", "http://127.0.0.1:9/v2.mp4"),
+    ];
+
+    let _ = app.update(Message::SetPlayerCount(1));
+    assert_eq!(app.players.len(), 1);
+    let pid = app.players[0].id;
+    let initial_path = app.players[0].state.path.clone();
+    let generation = app.players[0].load_generation;
+
+    // User lowers volume, mutes, and pauses while loading is still in flight
+    let _ = app.update(Message::SetVolume(pid, 0.35));
+    let _ = app.update(Message::TogglePlayerMute(pid));
+    let _ = app.update(Message::TogglePlay(pid));
+    assert!(app.players[0].state.is_muted);
+    assert!((app.players[0].state.volume - 0.35).abs() < 0.001);
+    assert!(!app.players[0].state.is_playing);
+
+    // Stale generation result is ignored
+    let stale_handle = wazoo_media::VideoHandle::new_placeholder(
+        pid,
+        "http://127.0.0.1:9/stale.mp4",
+        "Stale",
+        wazoo_media::BufferConfig::default(),
+        wazoo_media::StartTime::Beginning,
+    );
+    let _ = app.update(Message::PlayerHandleReady {
+        player_id: pid,
+        generation: generation.wrapping_add(99),
+        result: std::sync::Arc::new(std::sync::Mutex::new(Some(Ok(stale_handle)))),
+    });
+    assert_eq!(app.players[0].state.path, initial_path);
+
+    // Matching generation result attaches and inherits user state
+    let ready_handle = wazoo_media::VideoHandle::new_idle(wazoo_media::BufferConfig::default())
+        .expect("idle libmpv handle");
+    let _ = app.update(Message::PlayerHandleReady {
+        player_id: pid,
+        generation,
+        result: std::sync::Arc::new(std::sync::Mutex::new(Some(Ok(ready_handle)))),
+    });
+    assert!(!app.players[0].is_placeholder());
+    assert!(app.players[0].state.is_muted);
+    assert!((app.players[0].state.volume - 0.35).abs() < 0.001);
+    assert!(!app.players[0].state.is_playing);
+}
+
+#[test]
+fn test_next_video_loads_in_playing_state() {
+    let (mut app, _) = new_test_app();
+    app.settings.use_standby_player = false;
+    app.default_shuffle_mode = false;
+    app.available_videos = vec![
+        wazoo_core::VideoRecord::new(1, "Stream 1", "http://127.0.0.1:9/v1.mp4"),
+        wazoo_core::VideoRecord::new(2, "Stream 2", "http://127.0.0.1:9/v2.mp4"),
+    ];
+
+    let _ = app.update(Message::SetPlayerCount(1));
+    let pid = app.players[0].id;
+
+    // Pressing Up (NextVideo) stops old playback before starting async load of next video;
+    // the newly loaded video must start playing (not paused).
+    let _ = app.update(Message::NextVideo(pid));
+    assert!(app.players[0].is_loading);
+    assert!(app.players[0].state.is_playing);
+
+    let generation = app.players[0].load_generation;
+    let ready_handle = wazoo_media::VideoHandle::new_idle(wazoo_media::BufferConfig::default())
+        .expect("idle libmpv handle");
+    let _ = app.update(Message::PlayerHandleReady {
+        player_id: pid,
+        generation,
+        result: std::sync::Arc::new(std::sync::Mutex::new(Some(Ok(ready_handle)))),
+    });
+    assert!(app.players[0].state.is_playing);
+}
+
+#[test]
+fn test_boot_restored_session_shows_loading_static_immediately() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "wazoo_boot_static_{}_{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&temp_dir);
+
+    let config_mgr = wazoo_core::ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
+    let db = wazoo_core::Database::open_in_memory().expect("in-memory db");
+
+    let stream_url = "http://127.0.0.1:9/boot_stream.mp4".to_string();
+    db.insert_or_update_video(&wazoo_core::VideoRecord::new(1, "Boot Stream", &stream_url))
+        .unwrap();
+
+    let mut settings = config_mgr.load_settings();
+    settings.loading_indicator = wazoo_core::LoadingIndicator::TvStatic;
+    settings.player_count = 1;
+    settings.session_videos = vec![wazoo_core::VideoSession {
+        path: stream_url.clone(),
+        position_secs: 42.0,
+        is_muted: true,
+        volume: 0.6,
+        is_shuffle: false,
+    }];
+    config_mgr.save_settings(&settings).unwrap();
+
+    let (mut app, _) = WazooApp::new_with_backend(None, config_mgr, db);
+    assert_eq!(app.players.len(), 1);
+    assert!(
+        app.players[0].is_loading,
+        "Booted session player must immediately enter loading state instead of showing black"
+    );
+    assert!(app.players[0].is_placeholder());
+    assert_eq!(app.players[0].state.path, stream_url);
+    assert!(app.players[0].state.is_muted);
+    assert!((app.players[0].state.volume - 0.6).abs() < 0.001);
+
+    let static_guard = app.players[0].static_frame.lock().unwrap();
+    assert!(
+        static_guard.width > 0 && static_guard.height > 0 && !static_guard.pixels.is_empty(),
+        "First-frame static buffer must be populated immediately on boot"
+    );
+    let seq0 = static_guard.frame_seq;
+    drop(static_guard);
+
+    for _ in 0..4 {
+        let _ = app.update(Message::Tick);
+    }
+    let seq1 = app.players[0].static_frame.lock().unwrap().frame_seq;
+    assert!(seq1 > seq0, "Boot static must animate across ticks");
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}

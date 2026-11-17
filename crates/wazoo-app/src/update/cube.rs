@@ -24,16 +24,18 @@ impl WazooApp {
                     self.overlay.show_toast(self.t("toast.cube_removed"));
                     return exit_task;
                 } else {
-                    if self.settings.playback_mode == PlaybackMode::Scroll {
+                    let restore_task = if self.settings.playback_mode == PlaybackMode::Scroll {
                         self.cleanup_scroll_mode();
                         self.settings.playback_mode = PlaybackMode::Normal;
-                        self.restore_grid_players_to_target(self.settings.player_count);
-                    }
+                        self.restore_grid_players_to_target(self.settings.player_count)
+                    } else {
+                        Task::none()
+                    };
                     let spawn_task = self.spawn_new_cube();
                     let key = self.settings.keybinds.menu_hint(&self.settings.keybinds.toggle_cube);
                     self.overlay
                         .show_toast(self.t_with("toast.cube_added", &[("key", &key)]));
-                    return spawn_task;
+                    return Task::batch([restore_task, spawn_task]);
                 }
             }
             Message::ToggleDesktopCubeScreensaver => {
@@ -45,11 +47,13 @@ impl WazooApp {
                     self.exit_desktop_cube_overlay()
                 } else {
                     // Clean up scroll mode if active so Scroll Mode never runs invisibly behind Mode 9
-                    if self.settings.playback_mode == PlaybackMode::Scroll {
+                    let restore_task = if self.settings.playback_mode == PlaybackMode::Scroll {
                         self.cleanup_scroll_mode();
                         self.settings.playback_mode = PlaybackMode::Normal;
-                        self.restore_grid_players_to_target(self.settings.player_count);
-                    }
+                        self.restore_grid_players_to_target(self.settings.player_count)
+                    } else {
+                        Task::none()
+                    };
 
                     // Save pre-desktop window bounds and maximized state so we can restore them upon exit
                     self.cube.pre_desktop_bounds = Some(self.settings.window_bounds.clone());
@@ -103,9 +107,16 @@ impl WazooApp {
                             iced::window::set_level(id, iced::window::Level::AlwaysOnTop);
                         let passthrough_task = iced::window::enable_mouse_passthrough(id);
                         let maximize_task = iced::window::maximize(id, true);
-                        Task::batch([exit_fullscreen_task, level_task, passthrough_task, maximize_task, spawn_task])
+                        Task::batch([
+                            restore_task,
+                            exit_fullscreen_task,
+                            level_task,
+                            passthrough_task,
+                            maximize_task,
+                            spawn_task,
+                        ])
                     } else {
-                        Task::batch([exit_fullscreen_task, spawn_task])
+                        Task::batch([restore_task, exit_fullscreen_task, spawn_task])
                     }
                 }
             }
@@ -202,7 +213,9 @@ impl WazooApp {
 
                     let timeout = if let Some(pid) = cube.player_id {
                         if let Some(p) = self.players.player(pid) {
-                            !p.handle.is_seeking() && cube.ready_ticks >= 60
+                            !p.handle.is_placeholder()
+                                && !p.handle.is_seeking()
+                                && cube.ready_ticks >= 60
                         } else {
                             cube.ready_ticks >= 60
                         }
@@ -229,7 +242,7 @@ impl WazooApp {
     pub(crate) fn spawn_new_cube(&mut self) -> Task<Message> {
         let w = self.settings.window_bounds.width as f32;
         let h = self.settings.window_bounds.height as f32;
-        let cube_pid = self.spawn_cube_player();
+        let (cube_pid, load_task) = self.spawn_cube_player();
         let count = self.cube.cubes.len();
         self.cube.spawn_cube_with_player(w, h, count, cube_pid);
         if let Some(pid) = cube_pid {
@@ -246,7 +259,7 @@ impl WazooApp {
         }
         // Do not flash the green focus outline when spawning a cube
         self.overlay.focus_border_ticks = 0;
-        Task::none()
+        load_task
     }
 
     /// Completely dismisses all 3D cubes, cleans up their players, and exits Mode 9 if active.

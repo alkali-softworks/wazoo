@@ -318,7 +318,7 @@ impl WazooApp {
         let is_cli = search.is_cli;
         let mut app = Self::build_initial_app(config_mgr, db, settings, search, videos);
 
-        app.init_initial_players(file_to_play.as_deref(), is_cli);
+        let init_task = app.init_initial_players(file_to_play.as_deref(), is_cli);
         app.replenish_standby_player();
         app.apply_file_picker_search();
 
@@ -332,7 +332,7 @@ impl WazooApp {
             Task::none()
         };
 
-        (app, Task::batch([preload_task, boot_focus_task()]))
+        (app, Task::batch([init_task, preload_task, boot_focus_task()]))
     }
 
     fn build_initial_app(
@@ -433,7 +433,7 @@ impl WazooApp {
             .and_then(|v| self.metadata_cache.get(&v.id))
     }
 
-    fn init_initial_players(&mut self, file_to_play: Option<&str>, is_cli: bool) {
+    fn init_initial_players(&mut self, file_to_play: Option<&str>, is_cli: bool) -> Task<Message> {
         let count = self.settings.player_count.clamp(1, 12);
         let restored_sessions = if is_cli || file_to_play.is_some() {
             Vec::new()
@@ -442,25 +442,43 @@ impl WazooApp {
         };
 
         let mut direct_file_player_id: Option<PlayerId> = None;
+        let mut tasks: Vec<Task<Message>> = Vec::new();
 
         if let Some(path) = file_to_play {
             let id = self.next_player_id;
             self.next_player_id += 1;
             direct_file_player_id = Some(id);
             let name = format::format_video_title(path);
-            if let Ok(mut handle) = self.create_video_handle_with_start(id, path, &name, Some(0.0))
-            {
-                handle.set_muted(false);
-                handle.set_volume(1.0);
-                handle.set_subtitles_visible(self.subtitles_enabled);
-                self.players
-                    .push(AppPlayer::new(handle, self.default_shuffle_mode));
-                self.push_player_nav_entry(id, path.to_string(), Some(0.0));
-            }
+            let start_time = StartTime::from(Some(0.0));
+            let mut placeholder = VideoHandle::new_placeholder(
+                id,
+                path,
+                &name,
+                self.buffer_config(),
+                start_time,
+            );
+            placeholder.state.is_muted = false;
+            placeholder.state.volume = 1.0;
+            let mut player = AppPlayer::new(placeholder, self.default_shuffle_mode);
+            player.flip.reset(self.settings.flip_interval_secs);
+            player.load_generation = 1;
+            player.start_loading();
+            self.players.push(player);
+            self.push_player_nav_entry(id, path.to_string(), Some(0.0));
+            tasks.push(self.spawn_player_load_task(
+                id,
+                1,
+                path.to_string(),
+                name,
+                start_time,
+            ));
             self.overlay.title_pill_ticks = 240;
         } else {
             for session in restored_sessions.into_iter().take(count) {
-                if std::path::Path::new(&session.path).exists() {
+                let is_http = session.path.starts_with("http://")
+                    || session.path.starts_with("https://");
+                let in_library = self.available_videos.iter().any(|v| v.path == session.path);
+                if is_http || in_library || std::path::Path::new(&session.path).exists() {
                     let id = self.next_player_id;
                     self.next_player_id += 1;
                     if self.players.is_empty() {
@@ -472,15 +490,31 @@ impl WazooApp {
                     } else {
                         None
                     };
-                    if let Ok(mut handle) =
-                        self.create_video_handle_with_start(id, &session.path, &name, start_secs)
-                    {
-                        handle.set_muted(session.is_muted);
-                        handle.set_volume(session.volume);
-                        handle.set_subtitles_visible(self.subtitles_enabled);
-                        self.players
-                            .push(AppPlayer::new(handle, session.is_shuffle));
-                        self.push_player_nav_entry(id, session.path.clone(), start_secs);
+                    let start_time = StartTime::from(start_secs);
+                    let mut placeholder = VideoHandle::new_placeholder(
+                        id,
+                        &session.path,
+                        &name,
+                        self.buffer_config(),
+                        start_time,
+                    );
+                    placeholder.state.is_muted = session.is_muted;
+                    placeholder.state.volume = session.volume;
+                    let mut player = AppPlayer::new(placeholder, session.is_shuffle);
+                    player.flip.reset(self.settings.flip_interval_secs);
+                    player.load_generation = 1;
+                    player.start_loading();
+                    self.players.push(player);
+                    self.push_player_nav_entry(id, session.path.clone(), start_secs);
+                    let will_reconcile = !self.settings.last_query.is_empty() && !in_library;
+                    if !will_reconcile {
+                        tasks.push(self.spawn_player_load_task(
+                            id,
+                            1,
+                            session.path,
+                            name,
+                            start_time,
+                        ));
                     }
                 }
             }
@@ -488,22 +522,27 @@ impl WazooApp {
 
         // Fill remaining players if any
         while self.players.len() < count {
-            if self.add_player_internal().is_none() {
+            let (added, task) = self.add_player_internal();
+            if added.is_none() {
                 break;
             }
+            tasks.push(task);
         }
 
         // If a last_query was active, reconcile active players so any player playing a video
         // not in the queried files list switches to a matching video from available_videos.
         // If playing a direct file, do not reconcile that player!
         if !self.settings.last_query.is_empty() {
-            self.reconcile_players_with_available_videos(direct_file_player_id);
+            tasks.push(self.reconcile_players_with_available_videos(direct_file_player_id));
         }
+
+        self.update_static_frame();
 
         // Save session state if CLI query or direct file successfully populated players
         if (is_cli || file_to_play.is_some()) && !self.players.is_empty() {
             self.save_session_state();
         }
+        Task::batch(tasks)
     }
 
     fn init_scroll_mode(&mut self) -> Task<Message> {
@@ -514,8 +553,11 @@ impl WazooApp {
             .collect();
         self.scroll_engine
             .init_stack_with_heights(&items_with_heights);
+        let mut tasks = Vec::new();
         while let Some(spawn_y) = self.scroll_engine.needs_new_player() {
-            if let Some(id) = self.add_player_internal() {
+            let (added, task) = self.add_player_internal();
+            if let Some(id) = added {
+                tasks.push(task);
                 let item_h = self
                     .players
                     .player(id)
@@ -530,7 +572,8 @@ impl WazooApp {
             let vol = self.scroll_engine.calculate_player_volume(p.id);
             p.set_crossfade_volume(vol);
         }
-        self.trigger_preload_task()
+        tasks.push(self.trigger_preload_task());
+        Task::batch(tasks)
     }
 
     pub(crate) fn is_any_modal_open(&self) -> bool {
@@ -1247,70 +1290,6 @@ impl WazooApp {
         }
     }
 
-    pub(crate) fn create_video_handle(
-        &self,
-        id: PlayerId,
-        path: &str,
-        name: &str,
-    ) -> Result<VideoHandle, String> {
-        self.create_video_handle_with_start_time(id, path, name, StartTime::Beginning)
-    }
-
-    pub(crate) fn create_video_handle_with_start(
-        &self,
-        id: PlayerId,
-        path: &str,
-        name: &str,
-        start_secs: Option<f64>,
-    ) -> Result<VideoHandle, String> {
-        self.create_video_handle_with_start_time(id, path, name, start_secs)
-    }
-
-    pub(crate) fn create_video_handle_with_start_time(
-        &self,
-        id: PlayerId,
-        path: &str,
-        name: &str,
-        start_time: impl Into<StartTime>,
-    ) -> Result<VideoHandle, String> {
-        let start_time = start_time.into();
-        let standby = if !path.is_empty() {
-            self.take_standby_player_if(|h| h.state.path == path)
-        } else {
-            let handle = self.standby_player.lock().ok().and_then(|mut g| {
-                if let Some(ref h) = *g {
-                    if h.state.path.is_empty() {
-                        return g.take();
-                    }
-                }
-                None
-            });
-            if handle.is_some() {
-                self.replenish_standby_player();
-            }
-            handle
-        };
-
-        if let Some(mut h) = standby {
-            h.id = id;
-            h.state.id = id;
-            if start_time == StartTime::Random {
-                h.seek_random();
-            }
-            Ok(h)
-        } else {
-            let handle = VideoHandle::with_buffering_and_start(
-                id,
-                path,
-                name,
-                self.buffer_config(),
-                start_time,
-            )?;
-            self.replenish_standby_player();
-            Ok(handle)
-        }
-    }
-
     /// Pre-warms a standby player in a background worker thread with the next video and its initial
     /// presentation frame already decoded off-thread, so the next player or 3D cube added attaches
     /// in microseconds without freezing the UI thread or hitching active video playback/animations.
@@ -1428,7 +1407,82 @@ impl WazooApp {
         }
     }
 
-    pub(crate) fn add_player_internal(&mut self) -> Option<PlayerId> {
+    /// Spawns background libmpv initialization for a player so the UI thread and loading static
+    /// animation never stall while opening or probing streams over slow storage or WiFi.
+    pub(crate) fn spawn_player_load_task(
+        &self,
+        id: PlayerId,
+        generation: u64,
+        path: String,
+        name: String,
+        start_time: StartTime,
+    ) -> Task<Message> {
+        let buffer_config = self.buffer_config();
+        let holder = Arc::new(Mutex::new(None));
+        let holder_clone = Arc::clone(&holder);
+
+        Task::perform(
+            async move {
+                let res = tokio::task::spawn_blocking(move || {
+                    VideoHandle::with_buffering_and_start(
+                        id,
+                        &path,
+                        &name,
+                        buffer_config,
+                        start_time,
+                    )
+                })
+                .await;
+                let final_res = match res {
+                    Ok(inner) => inner,
+                    Err(e) => Err(format!("Player load task join error: {e}")),
+                };
+                if let Ok(mut g) = holder_clone.lock() {
+                    *g = Some(final_res);
+                }
+            },
+            move |_| Message::PlayerHandleReady {
+                player_id: id,
+                generation,
+                result: holder,
+            },
+        )
+    }
+
+    /// Transitions an existing player into loading state with a zero-blocking placeholder handle
+    /// and schedules off-thread libmpv initialization for the target media path.
+    pub(crate) fn start_async_player_load(
+        &mut self,
+        id: PlayerId,
+        path: &str,
+        name: &str,
+        start_time: impl Into<StartTime>,
+    ) -> Task<Message> {
+        let start_time = start_time.into();
+        let config = self.buffer_config();
+        let mut generation = 0;
+
+        if let Some(p) = self.players.player_mut(id) {
+            p.cancel_seek_debounce();
+            p.start_loading();
+            p.load_generation = p.load_generation.wrapping_add(1);
+            generation = p.load_generation;
+
+            let prev_muted = p.state.is_muted;
+            let prev_volume = p.state.volume;
+            let prev_crossfade = p.handle.crossfade_volume();
+
+            let mut placeholder = VideoHandle::new_placeholder(id, path, name, config, start_time);
+            placeholder.state.is_muted = prev_muted;
+            placeholder.state.volume = prev_volume;
+            placeholder.set_crossfade_volume(prev_crossfade);
+            p.handle = placeholder;
+        }
+        self.update_static_frame();
+        self.spawn_player_load_task(id, generation, path.to_string(), name.to_string(), start_time)
+    }
+
+    pub(crate) fn add_player_internal(&mut self) -> (Option<PlayerId>, Task<Message>) {
         let id = self.next_player_id;
         self.next_player_id += 1;
 
@@ -1462,43 +1516,34 @@ impl WazooApp {
             player.flip.reset(self.settings.flip_interval_secs);
             self.push_player_nav_entry(id, path, None);
             self.players.push(player);
-            return Some(id);
+            return (Some(id), Task::none());
         }
 
-        for _ in 0..MAX_VIDEO_LOAD_RETRIES {
-            if let Some(video_rec) = self.get_next_video_rec(None) {
-                match self.create_video_handle_with_start_time(
-                    id,
-                    &video_rec.path,
-                    &video_rec.name,
-                    start_time,
-                ) {
-                    Ok(mut handle) => {
-                        handle.set_muted(initial_muted);
-                        handle.set_subtitles_visible(self.subtitles_enabled);
-                        let mut player = AppPlayer::new(handle, self.default_shuffle_mode);
-                        player.flip.reset(self.settings.flip_interval_secs);
-                        player.start_loading();
-                        self.push_player_nav_entry(id, video_rec.path.clone(), None);
-                        self.players.push(player);
-                        self.update_static_frame();
-                        return Some(id);
-                    }
-                    Err(err) => {
-                        log::error!(
-                            "Failed to create VideoHandle for {}: {}",
-                            video_rec.path,
-                            err
-                        );
-                    }
-                }
-            }
+        if let Some(video_rec) = self.get_next_video_rec(None) {
+            let mut placeholder = VideoHandle::new_placeholder(
+                id,
+                &video_rec.path,
+                &video_rec.name,
+                self.buffer_config(),
+                start_time,
+            );
+            placeholder.state.is_muted = initial_muted;
+            let mut player = AppPlayer::new(placeholder, self.default_shuffle_mode);
+            player.flip.reset(self.settings.flip_interval_secs);
+            player.load_generation = 1;
+            player.start_loading();
+            self.push_player_nav_entry(id, video_rec.path.clone(), None);
+            self.players.push(player);
+            self.update_static_frame();
+            let task =
+                self.spawn_player_load_task(id, 1, video_rec.path, video_rec.name, start_time);
+            return (Some(id), task);
         }
-        None
+        (None, Task::none())
     }
 
     /// Spawns an independent video player dedicated to the 3D cube.
-    pub(crate) fn spawn_cube_player(&mut self) -> Option<PlayerId> {
+    pub(crate) fn spawn_cube_player(&mut self) -> (Option<PlayerId>, Task<Message>) {
         let id = self.next_player_id;
         self.next_player_id += 1;
 
@@ -1519,39 +1564,30 @@ impl WazooApp {
             player.flip.reset(self.settings.flip_interval_secs);
             self.push_player_nav_entry(id, path, None);
             self.players.push(player);
-            return Some(id);
+            return (Some(id), Task::none());
         }
 
-        for _ in 0..MAX_VIDEO_LOAD_RETRIES {
-            if let Some(video_rec) = self.get_next_video_rec(None) {
-                match self.create_video_handle_with_start_time(
-                    id,
-                    &video_rec.path,
-                    &video_rec.name,
-                    start_time,
-                ) {
-                    Ok(mut handle) => {
-                        handle.set_muted(initial_muted);
-                        handle.set_subtitles_visible(self.subtitles_enabled);
-                        handle.set_paused(false);
-                        let mut player = AppPlayer::new_cube(handle, self.default_shuffle_mode);
-                        player.flip.reset(self.settings.flip_interval_secs);
-                        self.push_player_nav_entry(id, video_rec.path.clone(), None);
-                        self.players.push(player);
-                        self.replenish_standby_player();
-                        return Some(id);
-                    }
-                    Err(err) => {
-                        log::error!(
-                            "Failed to create VideoHandle for 3D cube {}: {}",
-                            video_rec.path,
-                            err
-                        );
-                    }
-                }
-            }
+        // 2. Otherwise attach a zero-blocking placeholder and initialize libmpv off-thread
+        if let Some(video_rec) = self.get_next_video_rec(None) {
+            let mut placeholder = VideoHandle::new_placeholder(
+                id,
+                &video_rec.path,
+                &video_rec.name,
+                self.buffer_config(),
+                start_time,
+            );
+            placeholder.state.is_muted = initial_muted;
+            let mut player = AppPlayer::new_cube(placeholder, self.default_shuffle_mode);
+            player.flip.reset(self.settings.flip_interval_secs);
+            player.load_generation = 1;
+            player.start_loading();
+            self.push_player_nav_entry(id, video_rec.path.clone(), None);
+            self.players.push(player);
+            let task =
+                self.spawn_player_load_task(id, 1, video_rec.path, video_rec.name, start_time);
+            return (Some(id), task);
         }
-        None
+        (None, Task::none())
     }
 
     /// Cleans up and stops all independent 3D cube players.
@@ -1625,41 +1661,47 @@ impl WazooApp {
     /// Any player currently playing a file that does NOT exist in `self.available_videos`
     /// is switched to play a video that DOES exist in `self.available_videos`.
     /// Each switching player is assigned a distinct video when possible.
-    pub fn reconcile_players_with_available_videos(&mut self, skip_player_id: Option<PlayerId>) {
+    pub fn reconcile_players_with_available_videos(
+        &mut self,
+        skip_player_id: Option<PlayerId>,
+    ) -> Task<Message> {
         if self.available_videos.is_empty() {
-            return;
+            return Task::none();
         }
 
         if self.players.is_empty() {
             let target_count = self.settings.player_count.clamp(1, 12);
+            let mut tasks = Vec::new();
             for _ in 0..target_count {
-                self.add_player_internal();
+                let (_, task) = self.add_player_internal();
+                tasks.push(task);
             }
-            return;
+            return Task::batch(tasks);
         }
 
-        let needs_switch: Vec<(PlayerId, bool, f64)> = self
+        let needs_switch: Vec<PlayerId> = self
             .players
             .iter()
             .filter(|p| skip_player_id != Some(p.id))
             .filter(|p| !self.available_videos.iter().any(|v| v.path == p.state.path))
-            .map(|p| (p.id, p.state.is_muted, p.state.volume))
+            .map(|p| p.id)
             .collect();
 
         if needs_switch.is_empty() {
-            return;
+            return Task::none();
         }
 
         // Track paths already being played by players that are NOT switching
         let mut used_paths: HashSet<String> =
             self.players.iter().map(|p| p.state.path.clone()).collect();
-        for &(id, _, _) in &needs_switch {
+        for &id in &needs_switch {
             if let Some(p) = self.players.player(id) {
                 used_paths.remove(&p.state.path);
             }
         }
 
-        for (idx, (id, prev_muted, prev_volume)) in needs_switch.into_iter().enumerate() {
+        let mut tasks = Vec::new();
+        for (idx, id) in needs_switch.into_iter().enumerate() {
             let unused: Vec<&VideoRecord> = self
                 .available_videos
                 .iter()
@@ -1689,19 +1731,12 @@ impl WazooApp {
                 used_paths.insert(rec_path.clone());
 
                 if let Some(p) = self.players.player_mut(id) {
-                    p.start_loading();
+                    p.load_retry_count = 0;
                 }
-                self.update_static_frame();
-
-                if let Ok(mut new_handle) = self.create_video_handle(id, &rec_path, &rec_name) {
-                    new_handle.set_muted(prev_muted);
-                    new_handle.set_volume(prev_volume);
-                    new_handle.set_subtitles_visible(self.subtitles_enabled);
-                    self.push_player_nav_entry(id, rec_path.clone(), None);
-                    if let Some(p) = self.players.player_mut(id) {
-                        p.handle = new_handle;
-                    }
-                }
+                let task =
+                    self.start_async_player_load(id, &rec_path, &rec_name, StartTime::Beginning);
+                self.push_player_nav_entry(id, rec_path, None);
+                tasks.push(task);
             }
         }
 
@@ -1724,6 +1759,7 @@ impl WazooApp {
             }
             self.is_preloading = false;
         }
+        Task::batch(tasks)
     }
 
     /// Triggers an asynchronous background preload task for the next video in scroll mode

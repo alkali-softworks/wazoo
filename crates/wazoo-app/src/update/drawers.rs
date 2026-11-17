@@ -220,33 +220,25 @@ impl WazooApp {
                 if let Some(id) = self.focused_player_id() {
                     if let Some(p) = self.players.player_mut(id) {
                         p.flip.reset(self.settings.flip_interval_secs);
-                        p.start_loading();
                         p.nav_history.forward_stack.clear();
+                        p.load_retry_count = 0;
                     }
-                    self.update_static_frame();
                     self.record_current_player_nav_position(id);
                     let title = format::format_video_title(&path);
-                    let curr_player = self.players.player(id);
-                    let prev_muted = curr_player.map(|p| p.state.is_muted);
-                    let prev_volume = curr_player.map(|p| p.state.volume);
-
-                    if let Ok(mut handle) = self.create_video_handle(id, &path, &title) {
-                        handle.set_muted(prev_muted.unwrap_or(false));
-                        if let Some(vol) = prev_volume {
-                            handle.set_volume(vol);
-                        }
-                        handle.set_subtitles_visible(self.subtitles_enabled);
-                        self.push_player_nav_entry(id, path.clone(), None);
-                        if let Some(p) = self.players.player_mut(id) {
-                            p.handle = handle;
-                        }
-                        self.overlay.toast_message =
-                            Some(self.t_with("player.playing", &[("title", &title)]));
-                        self.overlay.toast_time_remaining = LONG_TOAST_SECS;
-                        if self.drawers.show_transcript {
-                            return self.load_transcript_for_focused_player();
-                        }
+                    let load_task = self.start_async_player_load(
+                        id,
+                        &path,
+                        &title,
+                        wazoo_media::StartTime::Beginning,
+                    );
+                    self.push_player_nav_entry(id, path, None);
+                    self.overlay.toast_message =
+                        Some(self.t_with("player.playing", &[("title", &title)]));
+                    self.overlay.toast_time_remaining = LONG_TOAST_SECS;
+                    if self.drawers.show_transcript {
+                        return Task::batch([load_task, self.load_transcript_for_focused_player()]);
                     }
+                    return load_task;
                 }
                 Task::none()
             }
