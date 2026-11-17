@@ -16,10 +16,11 @@ use wazoo_core::Language;
 use wazoo_scanner::ScanStage;
 
 pub fn view_general_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
+    let pal = app.theme_palette;
     let mut folders_col = column![
         text(app.t("settings.media_folders"))
             .size(14)
-            .color(theme::COLOR_TEXT_MUTED)
+            .color(pal.text_muted)
     ]
     .spacing(6);
 
@@ -28,19 +29,19 @@ pub fn view_general_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         folders_col = folders_col.push(
             container(
                 row![
-                    text(folder).size(13).color(iced::Color::WHITE),
+                    text(folder).size(13).color(pal.text),
                     Space::new().width(Length::Fill),
                     button(text("✕").size(12))
-                        .style(theme::close_window_button_style)
+                        .style(theme::close_window_button_style(pal))
                         .on_press(Message::RemoveMediaFolder(f)),
                 ]
                 .align_y(Alignment::Center),
             )
             .padding([6, 10])
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
+            .style(move |_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(pal.card_bg)),
                 border: iced::Border {
-                    radius: 4.0.into(),
+                    radius: pal.radius(4.0).into(),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -55,7 +56,7 @@ pub fn view_general_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 row![
                     text(app.t("common.miscellaneous"))
                         .size(13)
-                        .color(iced::Color::WHITE),
+                        .color(pal.text),
                     Space::new().width(Length::Fixed(8.0)),
                     text(format!(
                         "({} {})",
@@ -63,19 +64,19 @@ pub fn view_general_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                         app.t("common.files").to_lowercase()
                     ))
                     .size(12)
-                    .color(theme::COLOR_TEXT_MUTED),
+                    .color(pal.text_muted),
                     Space::new().width(Length::Fill),
                     button(text("✕").size(12))
-                        .style(theme::close_window_button_style)
+                        .style(theme::close_window_button_style(pal))
                         .on_press(Message::ClearMiscVideos),
                 ]
                 .align_y(Alignment::Center),
             )
             .padding([6, 10])
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
+            .style(move |_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(pal.card_bg)),
                 border: iced::Border {
-                    radius: 4.0.into(),
+                    radius: pal.radius(4.0).into(),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -120,11 +121,11 @@ pub fn view_general_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
 
     let scan_btn = if app.scanner.is_scanning {
         button(text(scan_btn_text))
-            .style(theme::action_button_style)
+            .style(theme::action_button_style(pal))
             .padding([8, 14])
     } else {
         button(text(scan_btn_text))
-            .style(theme::action_button_style)
+            .style(theme::action_button_style(pal))
             .on_press(Message::StartScan)
             .padding([8, 14])
     };
@@ -132,7 +133,7 @@ pub fn view_general_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     let mut scan_controls = column![
         row![
             button(text(app.t("settings.add_folder")))
-                .style(theme::action_button_style)
+                .style(theme::action_button_style(pal))
                 .on_press(Message::PickFolders)
                 .padding([8, 14]),
             scan_btn,
@@ -147,7 +148,7 @@ pub fn view_general_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 scan_controls = scan_controls.push(
                     text(&progress.current_name)
                         .size(12)
-                        .color(theme::COLOR_PRIMARY),
+                        .color(pal.primary),
                 );
             }
         }
@@ -158,15 +159,15 @@ pub fn view_general_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     let language_dropdown = pick_list(Language::ALL, Some(current_lang), |lang| {
         Message::SetLanguage(lang.code.to_string())
     })
-    .style(theme::dark_pick_list_style)
-    .menu_style(theme::dark_pick_list_menu_style)
+    .style(theme::dark_pick_list_style(pal))
+    .menu_style(theme::dark_pick_list_menu_style(pal))
     .width(Length::Fill)
     .padding([8, 12]);
 
     let language_group = column![
         text(app.t("settings.language"))
             .size(14)
-            .color(theme::COLOR_TEXT_MUTED),
+            .color(pal.text_muted),
         language_dropdown,
     ]
     .spacing(8);
@@ -180,7 +181,7 @@ pub fn view_general_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             &[("count", &format::format_number(app.total_video_count()))]
         ))
         .size(13)
-        .color(theme::COLOR_TEXT_MUTED),
+        .color(pal.text_muted),
     ]
     .spacing(16)
     .into()

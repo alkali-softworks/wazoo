@@ -20,6 +20,7 @@ use iced::{
 
 impl WazooApp {
     pub fn view_titlebar(&self) -> Element<'_, Message> {
+        let pal = self.theme_palette;
         let alpha = self.titlebar_alpha();
 
         let badge_btn = button(
@@ -30,12 +31,12 @@ impl WazooApp {
                     .opacity(alpha),
                 text("Wazoo")
                     .size(16)
-                    .color(theme::with_alpha(iced::Color::WHITE, alpha)),
+                    .color(theme::with_alpha(pal.badge_text, alpha)),
             ]
             .spacing(6)
             .align_y(Alignment::Center),
         )
-        .style(theme::titlebar_badge_style_with_alpha(alpha))
+        .style(theme::titlebar_badge_style_with_alpha(pal, alpha))
         .on_press(Message::ToggleDropdownMenu)
         .padding(iced::Padding {
             top: 2.0,
@@ -45,7 +46,7 @@ impl WazooApp {
         });
 
         let alkali_btn = button(text("ALKALI").size(11).font(theme::FONT_BOLD))
-            .style(theme::titlebar_brand_link_style_with_alpha(alpha))
+            .style(theme::titlebar_brand_link_style_with_alpha(pal, alpha))
             .on_press(Message::OpenAlkaliWebsite)
             .padding(iced::Padding {
                 top: 6.0,
@@ -63,13 +64,16 @@ impl WazooApp {
         .on_press(Message::TitleBarPressed)
         .on_double_click(Message::MaximizeWindow);
 
+        let icon_color = theme::with_alpha(pal.titlebar_icon_color, alpha);
         let window_buttons = row![
             button(
                 container(
                     svg(svg::Handle::from_memory(SVG_WINDOW_MINIMIZE))
                         .width(Length::Fixed(10.0))
                         .height(Length::Fixed(10.0))
-                        .opacity(alpha)
+                        .style(move |_theme, _status| svg::Style {
+                            color: Some(icon_color),
+                        })
                 )
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -78,7 +82,7 @@ impl WazooApp {
             )
             .width(Length::Fixed(42.0))
             .height(Length::Fixed(30.0))
-            .style(theme::window_control_button_style_with_alpha(alpha))
+            .style(theme::window_control_button_style_with_alpha(pal, alpha))
             .on_press(Message::MinimizeWindow)
             .padding(0),
             button(
@@ -86,7 +90,9 @@ impl WazooApp {
                     svg(svg::Handle::from_memory(SVG_WINDOW_MAXIMIZE))
                         .width(Length::Fixed(10.0))
                         .height(Length::Fixed(10.0))
-                        .opacity(alpha)
+                        .style(move |_theme, _status| svg::Style {
+                            color: Some(icon_color),
+                        })
                 )
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -95,7 +101,7 @@ impl WazooApp {
             )
             .width(Length::Fixed(42.0))
             .height(Length::Fixed(30.0))
-            .style(theme::window_control_button_style_with_alpha(alpha))
+            .style(theme::window_control_button_style_with_alpha(pal, alpha))
             .on_press(Message::MaximizeWindow)
             .padding(0),
             button(
@@ -103,7 +109,9 @@ impl WazooApp {
                     svg(svg::Handle::from_memory(SVG_WINDOW_CLOSE))
                         .width(Length::Fixed(10.0))
                         .height(Length::Fixed(10.0))
-                        .opacity(alpha)
+                        .style(move |_theme, _status| svg::Style {
+                            color: Some(icon_color),
+                        })
                 )
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -112,7 +120,7 @@ impl WazooApp {
             )
             .width(Length::Fixed(42.0))
             .height(Length::Fixed(30.0))
-            .style(theme::close_window_button_style_with_alpha(alpha))
+            .style(theme::close_window_button_style_with_alpha(pal, alpha))
             .on_press(Message::CloseApp)
             .padding(0),
         ]
@@ -134,7 +142,7 @@ impl WazooApp {
         .height(Length::Fixed(30.0))
         .style(move |_theme: &Theme| container::Style {
             background: Some(iced::Background::Color(theme::with_alpha(
-                theme::COLOR_TITLEBAR_BG,
+                pal.titlebar_bg,
                 alpha,
             ))),
             ..Default::default()
@@ -150,7 +158,7 @@ impl WazooApp {
                     .width(Length::Fixed(240.0)),
             )
             .padding(4)
-            .style(theme::menu_dropdown_style);
+            .style(theme::menu_dropdown_style(pal));
 
             let animated_dropdown = SlideDown::new(menu_dropdown, dp, true);
             let titlebar_content = column![titlebar_row, animated_dropdown];
@@ -161,17 +169,18 @@ impl WazooApp {
     }
 
     fn menu_item(
+        pal: theme::ThemePalette,
         label: String,
         hint: Option<String>,
         msg: Message,
         padding: [u16; 2],
     ) -> Element<'static, Message> {
         let mut row_children: Vec<Element<'static, Message>> = vec![
-            text(label).size(13).color(iced::Color::WHITE).into(),
+            text(label).size(13).color(pal.text).into(),
             Space::new().width(Length::Fill).into(),
         ];
         if let Some(h) = hint {
-            row_children.push(text(h).size(11).color(theme::COLOR_TEXT_MUTED).into());
+            row_children.push(text(h).size(11).color(pal.text_muted).into());
         }
         cursor::PointerCursor::new(
             button(
@@ -179,7 +188,7 @@ impl WazooApp {
                     .align_y(Alignment::Center)
                     .width(Length::Fill),
             )
-            .style(theme::menu_item_style)
+            .style(theme::menu_item_style(pal))
             .on_press(msg)
             .padding(padding)
             .width(Length::Fill),
@@ -191,45 +200,53 @@ impl WazooApp {
         &self,
         padding: [u16; 2],
     ) -> iced::widget::Column<'_, Message> {
+        let pal = self.theme_palette;
         let kb = &self.settings.keybinds;
         column![
             Self::menu_item(
+                pal,
                 self.t("common.search"),
                 Some(kb.menu_hint(&kb.search_videos)),
                 Message::OpenSearchModal,
                 padding,
             ),
             Self::menu_item(
+                pal,
                 self.t("common.add_player"),
                 Some(kb.menu_hint(&kb.add_player)),
                 Message::AddNewPlayer,
                 padding,
             ),
             Self::menu_item(
+                pal,
                 self.t("common.toggle_layout"),
                 Some(kb.menu_hint(&kb.toggle_layout)),
                 Message::CycleLayout,
                 padding,
             ),
             Self::menu_item(
+                pal,
                 self.t("common.toggle_files"),
                 Some(kb.menu_hint(&kb.toggle_file_picker)),
                 Message::ToggleFilePicker,
                 padding,
             ),
             Self::menu_item(
+                pal,
                 self.t("transcript.title"),
                 Some(kb.menu_hint(&kb.toggle_transcript)),
                 Message::ToggleTranscript,
                 padding,
             ),
             Self::menu_item(
+                pal,
                 self.t("bookmarks.title"),
                 Some(kb.menu_hint(&kb.toggle_bookmarks)),
                 Message::ToggleBookmarksModal,
                 padding,
             ),
             Self::menu_item(
+                pal,
                 if self.settings.is_always_on_top {
                     self.t("common.unpin_window")
                 } else {
@@ -240,18 +257,21 @@ impl WazooApp {
                 padding,
             ),
             Self::menu_item(
+                pal,
                 self.t("common.settings"),
                 Some(kb.menu_hint(&kb.open_settings)),
                 Message::OpenSettingsModal,
                 padding,
             ),
             Self::menu_item(
+                pal,
                 self.t("common.help"),
                 Some(kb.menu_hint(&kb.open_help)),
                 Message::OpenHelpModal,
                 padding,
             ),
             Self::menu_item(
+                pal,
                 self.t("common.quit"),
                 Some(kb.menu_hint(&kb.close_app)),
                 Message::CloseApp,

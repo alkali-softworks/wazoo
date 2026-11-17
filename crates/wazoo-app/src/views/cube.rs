@@ -55,14 +55,14 @@ impl WazooApp {
                 false
             };
 
-            let edge_color = if is_this_cube_focused && is_flashing_focus {
+            let edge_color = if is_this_cube_focused && is_flashing_focus && self.theme_palette.focus_ring_width > 0.0 {
                 let alpha = if self.overlay.focus_border_ticks > 4 {
                     1.0
                 } else {
                     self.overlay.focus_border_ticks as f32 / 4.0
                 };
-                // Emerald green matching COLOR_PRIMARY [0.26, 0.72, 0.51] (#42b883)
-                [0.26, 0.72, 0.51, alpha]
+                let c = self.theme_palette.primary;
+                [c.r, c.g, c.b, alpha]
             } else {
                 [0.0, 0.0, 0.0, 0.0]
             };

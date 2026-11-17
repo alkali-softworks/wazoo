@@ -307,6 +307,280 @@ pub struct WazooSettings {
     pub crt: CrtSettings,
     #[serde(default)]
     pub plex: PlexSettings,
+    #[serde(default)]
+    pub theme: ThemeSettings,
+}
+
+pub const DEFAULT_THEME_ACCENT_COLOR: &str = "#42b883";
+pub const DEFAULT_THEME_SURFACE_COLOR: &str = "#1f1f1f";
+pub const DEFAULT_THEME_TITLEBAR_COLOR: &str = "#1f092f";
+pub const DEFAULT_THEME_TITLEBAR_BADGE_COLOR: &str = "#000000";
+pub const DEFAULT_THEME_HUD_COLOR: &str = "#14141a";
+pub const DEFAULT_THEME_TEXT_COLOR: &str = "#ffffff";
+pub const DEFAULT_THEME_HUD_OPACITY: f32 = 0.88;
+pub const DEFAULT_THEME_CORNER_RADIUS: f32 = 1.0;
+pub const DEFAULT_THEME_FOCUS_RING_WIDTH: f32 = 3.0;
+
+fn default_theme_accent_color() -> String {
+    DEFAULT_THEME_ACCENT_COLOR.to_string()
+}
+
+fn default_theme_surface_color() -> String {
+    DEFAULT_THEME_SURFACE_COLOR.to_string()
+}
+
+fn default_theme_titlebar_color() -> String {
+    DEFAULT_THEME_TITLEBAR_COLOR.to_string()
+}
+
+fn default_theme_titlebar_badge_color() -> String {
+    DEFAULT_THEME_TITLEBAR_BADGE_COLOR.to_string()
+}
+
+fn default_theme_hud_color() -> String {
+    DEFAULT_THEME_HUD_COLOR.to_string()
+}
+
+fn default_theme_text_color() -> String {
+    DEFAULT_THEME_TEXT_COLOR.to_string()
+}
+
+fn default_theme_hud_opacity() -> f32 {
+    DEFAULT_THEME_HUD_OPACITY
+}
+
+fn default_theme_corner_radius() -> f32 {
+    DEFAULT_THEME_CORNER_RADIUS
+}
+
+fn default_theme_focus_ring_width() -> f32 {
+    DEFAULT_THEME_FOCUS_RING_WIDTH
+}
+
+/// Parses a `#RRGGBB`, `RRGGBB`, `#RGB`, or `RGB` hex color string into `(r, g, b)`.
+pub fn parse_hex_rgb(input: &str) -> Option<(u8, u8, u8)> {
+    let hex = input.trim().strip_prefix('#').unwrap_or(input.trim());
+    match hex.len() {
+        6 => {
+            let r = u8::from_str_radix(&hex[0..2], 16).ok()?;
+            let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
+            let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
+            Some((r, g, b))
+        }
+        3 => {
+            let r = u8::from_str_radix(&hex[0..1], 16).ok()?;
+            let g = u8::from_str_radix(&hex[1..2], 16).ok()?;
+            let b = u8::from_str_radix(&hex[2..3], 16).ok()?;
+            Some((r * 17, g * 17, b * 17))
+        }
+        _ => None,
+    }
+}
+
+/// Formats an `(r, g, b)` tuple as canonical lowercase `#rrggbb`.
+pub fn format_hex_rgb(r: u8, g: u8, b: u8) -> String {
+    format!("#{r:02x}{g:02x}{b:02x}")
+}
+
+/// Normalizes a hex color string to `#rrggbb`, or falls back to `default`.
+pub fn sanitize_hex_or_default(input: &str, default: &str) -> String {
+    match parse_hex_rgb(input) {
+        Some((r, g, b)) => format_hex_rgb(r, g, b),
+        None => default.to_string(),
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ThemeSettings {
+    #[serde(default = "default_theme_accent_color")]
+    pub accent_color: String,
+    #[serde(default = "default_theme_surface_color")]
+    pub surface_color: String,
+    #[serde(default = "default_theme_titlebar_color")]
+    pub titlebar_color: String,
+    #[serde(default = "default_theme_titlebar_badge_color")]
+    pub titlebar_badge_color: String,
+    #[serde(default = "default_theme_hud_color")]
+    pub hud_color: String,
+    #[serde(default = "default_theme_text_color")]
+    pub text_color: String,
+    #[serde(default = "default_theme_hud_opacity")]
+    pub hud_opacity: f32,
+    #[serde(default = "default_theme_corner_radius")]
+    pub corner_radius: f32,
+    #[serde(default = "default_theme_focus_ring_width")]
+    pub focus_ring_width: f32,
+}
+
+impl Default for ThemeSettings {
+    fn default() -> Self {
+        Self {
+            accent_color: default_theme_accent_color(),
+            surface_color: default_theme_surface_color(),
+            titlebar_color: default_theme_titlebar_color(),
+            titlebar_badge_color: default_theme_titlebar_badge_color(),
+            hud_color: default_theme_hud_color(),
+            text_color: default_theme_text_color(),
+            hud_opacity: DEFAULT_THEME_HUD_OPACITY,
+            corner_radius: DEFAULT_THEME_CORNER_RADIUS,
+            focus_ring_width: DEFAULT_THEME_FOCUS_RING_WIDTH,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ThemePreset {
+    Default,
+    Midnight,
+    Dracula,
+    Crimson,
+    Amber,
+    Nord,
+    Synthwave,
+    FrostLight,
+}
+
+impl ThemePreset {
+    pub const ALL: &'static [ThemePreset] = &[
+        ThemePreset::Default,
+        ThemePreset::Midnight,
+        ThemePreset::Dracula,
+        ThemePreset::Crimson,
+        ThemePreset::Amber,
+        ThemePreset::Nord,
+        ThemePreset::Synthwave,
+        ThemePreset::FrostLight,
+    ];
+}
+
+impl ThemeSettings {
+    pub fn clamp_all(&mut self) {
+        self.accent_color = sanitize_hex_or_default(&self.accent_color, DEFAULT_THEME_ACCENT_COLOR);
+        self.surface_color =
+            sanitize_hex_or_default(&self.surface_color, DEFAULT_THEME_SURFACE_COLOR);
+        self.titlebar_color =
+            sanitize_hex_or_default(&self.titlebar_color, DEFAULT_THEME_TITLEBAR_COLOR);
+        self.titlebar_badge_color = sanitize_hex_or_default(
+            &self.titlebar_badge_color,
+            DEFAULT_THEME_TITLEBAR_BADGE_COLOR,
+        );
+        self.hud_color = sanitize_hex_or_default(&self.hud_color, DEFAULT_THEME_HUD_COLOR);
+        self.text_color = sanitize_hex_or_default(&self.text_color, DEFAULT_THEME_TEXT_COLOR);
+        self.hud_opacity = if self.hud_opacity.is_finite() {
+            self.hud_opacity.clamp(0.25, 1.0)
+        } else {
+            DEFAULT_THEME_HUD_OPACITY
+        };
+        self.corner_radius = if self.corner_radius.is_finite() {
+            self.corner_radius.clamp(0.0, 2.0)
+        } else {
+            DEFAULT_THEME_CORNER_RADIUS
+        };
+        self.focus_ring_width = if self.focus_ring_width.is_finite() {
+            self.focus_ring_width.clamp(0.0, 8.0)
+        } else {
+            DEFAULT_THEME_FOCUS_RING_WIDTH
+        };
+    }
+
+    pub fn apply_preset(&mut self, preset: ThemePreset) {
+        match preset {
+            ThemePreset::Default => {
+                *self = Self::default();
+            }
+            ThemePreset::Midnight => {
+                self.accent_color = "#38bdf8".to_string();
+                self.surface_color = "#0f172a".to_string();
+                self.titlebar_color = "#0b1120".to_string();
+                self.titlebar_badge_color = "#020617".to_string();
+                self.hud_color = "#0b1222".to_string();
+                self.text_color = "#f1f5f9".to_string();
+                self.hud_opacity = 0.88;
+                self.corner_radius = 1.0;
+                self.focus_ring_width = 3.0;
+            }
+            ThemePreset::Dracula => {
+                self.accent_color = "#bd93f9".to_string();
+                self.surface_color = "#282a36".to_string();
+                self.titlebar_color = "#1e1f29".to_string();
+                self.titlebar_badge_color = "#191a21".to_string();
+                self.hud_color = "#21222c".to_string();
+                self.text_color = "#f8f8f2".to_string();
+                self.hud_opacity = 0.90;
+                self.corner_radius = 1.0;
+                self.focus_ring_width = 3.0;
+            }
+            ThemePreset::Crimson => {
+                self.accent_color = "#f43f5e".to_string();
+                self.surface_color = "#18181b".to_string();
+                self.titlebar_color = "#2a0813".to_string();
+                self.titlebar_badge_color = "#09090b".to_string();
+                self.hud_color = "#141418".to_string();
+                self.text_color = "#fafafa".to_string();
+                self.hud_opacity = 0.88;
+                self.corner_radius = 1.0;
+                self.focus_ring_width = 3.0;
+            }
+            ThemePreset::Amber => {
+                self.accent_color = "#f59e0b".to_string();
+                self.surface_color = "#1c1917".to_string();
+                self.titlebar_color = "#271a0c".to_string();
+                self.titlebar_badge_color = "#0c0a09".to_string();
+                self.hud_color = "#161210".to_string();
+                self.text_color = "#fef3c7".to_string();
+                self.hud_opacity = 0.88;
+                self.corner_radius = 0.75;
+                self.focus_ring_width = 3.0;
+            }
+            ThemePreset::Nord => {
+                self.accent_color = "#88c0d0".to_string();
+                self.surface_color = "#2e3440".to_string();
+                self.titlebar_color = "#242933".to_string();
+                self.titlebar_badge_color = "#1e222a".to_string();
+                self.hud_color = "#242933".to_string();
+                self.text_color = "#eceff4".to_string();
+                self.hud_opacity = 0.90;
+                self.corner_radius = 1.0;
+                self.focus_ring_width = 3.0;
+            }
+            ThemePreset::Synthwave => {
+                self.accent_color = "#ff2e97".to_string();
+                self.surface_color = "#1a1025".to_string();
+                self.titlebar_color = "#2b0f4a".to_string();
+                self.titlebar_badge_color = "#0d0514".to_string();
+                self.hud_color = "#160b24".to_string();
+                self.text_color = "#fdf4ff".to_string();
+                self.hud_opacity = 0.88;
+                self.corner_radius = 1.25;
+                self.focus_ring_width = 3.5;
+            }
+            ThemePreset::FrostLight => {
+                self.accent_color = "#10b981".to_string();
+                self.surface_color = "#e5e7eb".to_string();
+                self.titlebar_color = "#312e81".to_string();
+                self.titlebar_badge_color = "#1e1b4b".to_string();
+                self.hud_color = "#f3f4f6".to_string();
+                self.text_color = "#111827".to_string();
+                self.hud_opacity = 0.90;
+                self.corner_radius = 1.0;
+                self.focus_ring_width = 3.0;
+            }
+        }
+    }
+
+    pub fn matches_preset(&self, preset: ThemePreset) -> bool {
+        let mut target = Self::default();
+        target.apply_preset(preset);
+        self.accent_color.eq_ignore_ascii_case(&target.accent_color)
+            && self.surface_color.eq_ignore_ascii_case(&target.surface_color)
+            && self.titlebar_color.eq_ignore_ascii_case(&target.titlebar_color)
+            && self
+                .titlebar_badge_color
+                .eq_ignore_ascii_case(&target.titlebar_badge_color)
+            && self.hud_color.eq_ignore_ascii_case(&target.hud_color)
+            && self.text_color.eq_ignore_ascii_case(&target.text_color)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -558,6 +832,7 @@ impl Default for WazooSettings {
             use_standby_player: false,
             crt: CrtSettings::default(),
             plex: PlexSettings::default(),
+            theme: ThemeSettings::default(),
         }
     }
 }

@@ -8,17 +8,18 @@ use super::colors::*;
 use iced::{Background, Border, Color, Theme, widget::slider};
 
 pub fn progress_slider_style_with_alpha(
+    pal: ThemePalette,
     alpha: f32,
 ) -> impl Fn(&Theme, slider::Status) -> slider::Style {
     move |_theme, _status| slider::Style {
         rail: slider::Rail {
             backgrounds: (
-                Background::Color(with_alpha(COLOR_PRIMARY, alpha)),
-                Background::Color(with_alpha(COLOR_TRACK_BG, alpha)),
+                Background::Color(with_alpha(pal.primary, alpha)),
+                Background::Color(with_alpha(pal.track_bg, alpha)),
             ),
             width: 24.0,
             border: Border {
-                radius: 3.0.into(),
+                radius: pal.radius(3.0).into(),
                 ..Default::default()
             },
         },
@@ -31,44 +32,48 @@ pub fn progress_slider_style_with_alpha(
     }
 }
 
-// Settings Modal Slider Style (with visible handle thumb and emerald rail)
-pub fn settings_slider_style(_theme: &Theme, status: slider::Status) -> slider::Style {
-    let handle_color = match status {
-        slider::Status::Hovered | slider::Status::Dragged => Color::WHITE,
-        _ => Color::from_rgb(0.9, 0.9, 0.9),
-    };
-    slider::Style {
-        rail: slider::Rail {
-            backgrounds: (
-                Background::Color(COLOR_PRIMARY),
-                Background::Color(Color::from_rgb(0.24, 0.24, 0.24)),
-            ),
-            width: 6.0,
-            border: Border {
-                radius: 3.0.into(),
-                ..Default::default()
+// Settings Modal Slider Style (with visible handle thumb and accent rail)
+pub fn settings_slider_style(
+    pal: ThemePalette,
+) -> impl Fn(&Theme, slider::Status) -> slider::Style {
+    move |_theme: &Theme, status: slider::Status| {
+        let handle_color = match status {
+            slider::Status::Hovered | slider::Status::Dragged => pal.text,
+            _ => pal.text_dim,
+        };
+        slider::Style {
+            rail: slider::Rail {
+                backgrounds: (
+                    Background::Color(pal.primary),
+                    Background::Color(pal.border),
+                ),
+                width: 6.0,
+                border: Border {
+                    radius: pal.radius(3.0).into(),
+                    ..Default::default()
+                },
             },
-        },
-        handle: slider::Handle {
-            shape: slider::HandleShape::Circle { radius: 6.0 },
-            background: Background::Color(handle_color),
-            border_width: 2.0,
-            border_color: COLOR_PRIMARY,
-        },
+            handle: slider::Handle {
+                shape: slider::HandleShape::Circle { radius: 6.0 },
+                background: Background::Color(handle_color),
+                border_width: 2.0,
+                border_color: pal.primary,
+            },
+        }
     }
 }
 
-// Volume Bar Slider Style (Vue emerald green #42b883)
-pub fn volume_slider_style(_theme: &Theme, _status: slider::Status) -> slider::Style {
-    slider::Style {
+// Volume Bar Slider Style
+pub fn volume_slider_style(pal: ThemePalette) -> impl Fn(&Theme, slider::Status) -> slider::Style {
+    move |_theme: &Theme, _status: slider::Status| slider::Style {
         rail: slider::Rail {
             backgrounds: (
-                Background::Color(COLOR_PRIMARY),
-                Background::Color(COLOR_TRACK_BG),
+                Background::Color(pal.primary),
+                Background::Color(pal.track_bg),
             ),
             width: 8.0,
             border: Border {
-                radius: 3.0.into(),
+                radius: pal.radius(3.0).into(),
                 ..Default::default()
             },
         },
@@ -82,17 +87,18 @@ pub fn volume_slider_style(_theme: &Theme, _status: slider::Status) -> slider::S
 }
 
 pub fn volume_slider_style_with_alpha(
+    pal: ThemePalette,
     alpha: f32,
 ) -> impl Fn(&Theme, slider::Status) -> slider::Style {
     move |_theme, _status| slider::Style {
         rail: slider::Rail {
             backgrounds: (
-                Background::Color(with_alpha(COLOR_PRIMARY, alpha)),
-                Background::Color(with_alpha(COLOR_TRACK_BG, alpha)),
+                Background::Color(with_alpha(pal.primary, alpha)),
+                Background::Color(with_alpha(pal.track_bg, alpha)),
             ),
             width: 8.0,
             border: Border {
-                radius: 3.0.into(),
+                radius: pal.radius(3.0).into(),
                 ..Default::default()
             },
         },

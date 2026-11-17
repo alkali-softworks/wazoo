@@ -134,12 +134,16 @@ impl WazooApp {
             stack_children.push(Element::from(pill_view));
         }
 
-        let show_border = !is_resizing && !is_scroll_mode && is_focused && self.overlay.focus_border_ticks > 0;
+        let show_border = !is_resizing
+            && !is_scroll_mode
+            && is_focused
+            && self.overlay.focus_border_ticks > 0
+            && self.theme_palette.focus_ring_width > 0.0;
         if show_border {
             let focus_ring = container(Space::new().width(Length::Fill).height(Length::Fill))
                 .width(Length::Fill)
                 .height(Length::Fill)
-                .style(theme::focus_ring_style);
+                .style(theme::focus_ring_style(self.theme_palette));
             stack_children.push(Element::from(focus_ring));
         }
 

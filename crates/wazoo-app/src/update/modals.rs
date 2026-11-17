@@ -259,6 +259,129 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
             }
+            Message::SelectThemeColorTarget(target) => {
+                self.modals.active_color_picker = target;
+                self.modals.sync_picker_from_theme(&self.settings.theme);
+                Task::none()
+            }
+            Message::SetThemeColorHsv(target, h, s, v) => {
+                let h = h.rem_euclid(360.0);
+                let s = s.clamp(0.0, 1.0);
+                let v = v.clamp(0.0, 1.0);
+                self.modals.theme_picker_hsv = (h, s, v);
+                let (r, g, b) = crate::color_picker::hsv_to_rgb(h, s, v);
+                let hex = wazoo_core::format_hex_rgb(r, g, b);
+                target.set_hex(&mut self.settings.theme, hex.clone());
+                self.modals.theme_hex_drafts[crate::state::ModalState::target_index(target)] = hex;
+                self.sync_theme_palette();
+                Task::none()
+            }
+            Message::CommitThemeColor => {
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::ThemeHexInputChanged(target, input) => {
+                let idx = crate::state::ModalState::target_index(target);
+                // Keep user's in-progress text in the draft box (capped at 7 chars like #rrggbb)
+                let cleaned: String = input.chars().take(7).collect();
+                self.modals.theme_hex_drafts[idx] = cleaned.clone();
+                if let Some((r, g, b)) = wazoo_core::parse_hex_rgb(&cleaned) {
+                    let canonical = wazoo_core::format_hex_rgb(r, g, b);
+                    target.set_hex(&mut self.settings.theme, canonical);
+                    if self.modals.active_color_picker == Some(target) {
+                        self.modals.theme_picker_hsv = crate::color_picker::rgb_to_hsv(r, g, b);
+                    }
+                    self.sync_theme_palette();
+                    let _ = self.config_mgr.save_settings(&self.settings);
+                }
+                Task::none()
+            }
+            Message::ResetThemeColor(target) => {
+                target.set_hex(&mut self.settings.theme, target.default_hex().to_string());
+                self.sync_theme_palette();
+                self.modals.sync_picker_from_theme(&self.settings.theme);
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetThemeHudOpacity(val) => {
+                self.settings.theme.hud_opacity = val.clamp(0.25, 1.0);
+                self.sync_theme_palette();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetThemeCornerRadius(val) => {
+                self.settings.theme.corner_radius = val.clamp(0.0, 2.0);
+                self.sync_theme_palette();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetThemeFocusRingWidth(val) => {
+                self.settings.theme.focus_ring_width = val.clamp(0.0, 8.0);
+                self.sync_theme_palette();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::ApplyThemePreset(preset) => {
+                self.settings.theme.apply_preset(preset);
+                self.sync_theme_palette();
+                self.modals.sync_picker_from_theme(&self.settings.theme);
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::RandomizeTheme => {
+                use rand::Rng;
+                let mut rng = rand::thread_rng();
+                let base_hue = rng.gen_range(0.0_f32..360.0);
+                let accent_rgb = crate::color_picker::hsv_to_rgb(
+                    base_hue,
+                    rng.gen_range(0.55_f32..0.90),
+                    rng.gen_range(0.75_f32..0.96),
+                );
+                let titlebar_hue = (base_hue + rng.gen_range(90.0_f32..240.0)).rem_euclid(360.0);
+                let titlebar_rgb = crate::color_picker::hsv_to_rgb(
+                    titlebar_hue,
+                    rng.gen_range(0.45_f32..0.85),
+                    rng.gen_range(0.14_f32..0.28),
+                );
+                let surface_rgb = crate::color_picker::hsv_to_rgb(
+                    base_hue,
+                    rng.gen_range(0.04_f32..0.22),
+                    rng.gen_range(0.09_f32..0.18),
+                );
+                let badge_rgb = crate::color_picker::hsv_to_rgb(
+                    titlebar_hue,
+                    rng.gen_range(0.30_f32..0.70),
+                    rng.gen_range(0.03_f32..0.10),
+                );
+                let hud_rgb = crate::color_picker::hsv_to_rgb(
+                    base_hue,
+                    rng.gen_range(0.08_f32..0.25),
+                    rng.gen_range(0.06_f32..0.13),
+                );
+                self.settings.theme.accent_color =
+                    wazoo_core::format_hex_rgb(accent_rgb.0, accent_rgb.1, accent_rgb.2);
+                self.settings.theme.surface_color =
+                    wazoo_core::format_hex_rgb(surface_rgb.0, surface_rgb.1, surface_rgb.2);
+                self.settings.theme.titlebar_color =
+                    wazoo_core::format_hex_rgb(titlebar_rgb.0, titlebar_rgb.1, titlebar_rgb.2);
+                self.settings.theme.titlebar_badge_color =
+                    wazoo_core::format_hex_rgb(badge_rgb.0, badge_rgb.1, badge_rgb.2);
+                self.settings.theme.hud_color =
+                    wazoo_core::format_hex_rgb(hud_rgb.0, hud_rgb.1, hud_rgb.2);
+                self.settings.theme.text_color =
+                    wazoo_core::DEFAULT_THEME_TEXT_COLOR.to_string();
+                self.sync_theme_palette();
+                self.modals.sync_picker_from_theme(&self.settings.theme);
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::ResetThemeSettings => {
+                self.settings.theme = wazoo_core::ThemeSettings::default();
+                self.sync_theme_palette();
+                self.modals.sync_picker_from_theme(&self.settings.theme);
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
             Message::ToggleWavyFilter => {
                 let new_state = !self.settings.filter_wavy;
                 self.settings.filter_wavy = new_state;

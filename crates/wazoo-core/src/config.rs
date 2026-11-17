@@ -76,6 +76,7 @@ impl ConfigManager {
                     settings.cube_speed = settings.cube_speed.clamp(0.2, 4.0);
                     settings.cube_size = settings.cube_size.clamp(0.4, 3.0);
                     settings.crt.clamp_all();
+                    settings.theme.clamp_all();
                     settings.keybinds.reconcile_with_defaults();
                     settings
                 } else {

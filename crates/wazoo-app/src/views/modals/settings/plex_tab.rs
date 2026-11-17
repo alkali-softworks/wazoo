@@ -15,6 +15,7 @@ use iced::{
 };
 
 pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
+    let pal = app.theme_palette;
     let is_enabled = app.settings.plex.enabled;
 
     // 1. Enable / Disable integration toggle
@@ -31,52 +32,24 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                     column![
                         text(app.t("settings.plex_enable"))
                             .size(13)
-                            .color(if is_active {
-                                theme::COLOR_PRIMARY
-                            } else {
-                                iced::Color::WHITE
-                            }),
+                            .color(if is_active { pal.primary } else { pal.text }),
                         text(app.t("settings.plex_enable_desc"))
                             .size(11)
-                            .color(theme::COLOR_TEXT_MUTED),
+                            .color(pal.text_muted),
                     ]
                     .spacing(2),
                     Space::new().width(Length::Fill),
-                    badge_with_reset(badge_text, is_active, Message::SetPlexEnabled(!is_active)),
+                    badge_with_reset(
+                        pal,
+                        badge_text,
+                        is_active,
+                        Message::SetPlexEnabled(!is_active)
+                    ),
                 ]
                 .spacing(12)
                 .align_y(Alignment::Center),
             )
-            .style(move |_theme: &iced::Theme, status| {
-                let bg = if is_active {
-                    match status {
-                        button::Status::Hovered => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.22),
-                        button::Status::Pressed => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.3),
-                        _ => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.12),
-                    }
-                } else {
-                    match status {
-                        button::Status::Hovered => theme::COLOR_BTN_HOVER,
-                        button::Status::Pressed => iced::Color::from_rgb(0.15, 0.15, 0.15),
-                        _ => theme::COLOR_BTN_BG,
-                    }
-                };
-                button::Style {
-                    background: Some(iced::Background::Color(bg)),
-                    text_color: iced::Color::WHITE,
-                    border: iced::Border {
-                        radius: 8.0.into(),
-                        width: 1.0,
-                        color: if is_active {
-                            theme::COLOR_PRIMARY
-                        } else {
-                            iced::Color::from_rgb(0.25, 0.25, 0.28)
-                        },
-                    },
-                    shadow: iced::Shadow::default(),
-                    ..Default::default()
-                }
-            })
+            .style(theme::settings_toggle_card_style(pal, is_active))
             .on_press(Message::SetPlexEnabled(!is_active))
             .padding([12, 16])
             .width(Length::Fill),
@@ -87,7 +60,7 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     let url_input = column![
         text(app.t("settings.plex_server_url"))
             .size(13)
-            .color(theme::COLOR_TEXT_MUTED),
+            .color(pal.text_muted),
         text_input(
             "http://192.168.1.100:32400",
             &app.settings.plex.server_url
@@ -95,7 +68,7 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         .on_input(Message::PlexServerUrlChanged)
         .padding([8, 12])
         .size(13)
-        .style(theme::dark_input_style),
+        .style(theme::dark_input_style(pal)),
     ]
     .spacing(6);
 
@@ -104,23 +77,20 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         row![
             text(app.t("settings.plex_token"))
                 .size(13)
-                .color(theme::COLOR_TEXT_MUTED),
+                .color(pal.text_muted),
             Space::new().width(Length::Fill),
             text(app.t("settings.plex_token_desc"))
                 .size(11)
-                .color(theme::COLOR_TEXT_MUTED),
+                .color(pal.text_muted),
         ]
         .align_y(Alignment::Center),
         row![
-            text_input(
-                "X-Plex-Token",
-                &app.settings.plex.token
-            )
-            .on_input(Message::PlexTokenChanged)
-            .padding([8, 12])
-            .size(13)
-            .style(theme::dark_input_style)
-            .width(Length::Fill),
+            text_input("X-Plex-Token", &app.settings.plex.token)
+                .on_input(Message::PlexTokenChanged)
+                .padding([8, 12])
+                .size(13)
+                .style(theme::dark_input_style(pal))
+                .width(Length::Fill),
             button(
                 text(app.t("settings.plex_copy_token"))
                     .size(13)
@@ -129,7 +99,7 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                         ..Default::default()
                     })
             )
-            .style(theme::action_button_style)
+            .style(theme::action_button_style(pal))
             .padding([8, 16])
             .on_press(Message::CopyPlexToken),
         ]
@@ -141,11 +111,11 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     // 4. Test connection button & feedback
     let test_btn = if app.plex.is_testing {
         button(text("Connecting...").size(13))
-            .style(theme::action_button_style)
+            .style(theme::action_button_style(pal))
             .padding([8, 14])
     } else {
         button(text(app.t("settings.plex_test_connection")).size(13))
-            .style(theme::action_button_style)
+            .style(theme::action_button_style(pal))
             .on_press(Message::TestPlexConnection)
             .padding([8, 14])
     };
@@ -157,7 +127,7 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             } else {
                 format!("✓ Connected (v{})", info.version)
             };
-            text(label).size(12).color(theme::COLOR_PRIMARY).into()
+            text(label).size(12).color(pal.primary).into()
         }
         Some(Err(err)) => text(format!("✕ {}", err))
             .size(12)
@@ -173,11 +143,11 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     // 5. Sync library button & progress
     let sync_btn = if app.plex.is_syncing {
         button(text("Syncing...").size(13))
-            .style(theme::action_button_style)
+            .style(theme::action_button_style(pal))
             .padding([8, 14])
     } else {
         button(text(app.t("settings.plex_sync_library")).size(13))
-            .style(theme::action_button_style)
+            .style(theme::action_button_style(pal))
             .on_press(Message::StartPlexSync)
             .padding([8, 14])
     };
@@ -193,12 +163,9 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             } else {
                 prog.stage.clone()
             };
-            text(label).size(12).color(theme::COLOR_PRIMARY).into()
+            text(label).size(12).color(pal.primary).into()
         } else {
-            text("Starting sync...")
-                .size(12)
-                .color(theme::COLOR_PRIMARY)
-                .into()
+            text("Starting sync...").size(12).color(pal.primary).into()
         }
     } else if let Some(Ok(ref summary)) = app.plex.sync_result {
         text(format!(
@@ -206,7 +173,7 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             summary.total_plex_items, summary.matched_and_updated
         ))
         .size(12)
-        .color(theme::COLOR_PRIMARY)
+        .color(pal.primary)
         .into()
     } else if let Some(Err(ref err)) = app.plex.sync_result {
         text(format!("✕ {}", err))
@@ -216,7 +183,7 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     } else if metadata_count > 0 {
         text(format!("{} videos have enriched metadata", metadata_count))
             .size(12)
-            .color(theme::COLOR_TEXT_MUTED)
+            .color(pal.text_muted)
             .into()
     } else {
         Space::new().width(Length::Shrink).into()
@@ -239,18 +206,15 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 column![
                     text(app.t("settings.plex_auto_sync"))
                         .size(13)
-                        .color(if is_auto_sync {
-                            theme::COLOR_PRIMARY
-                        } else {
-                            iced::Color::WHITE
-                        }),
+                        .color(if is_auto_sync { pal.primary } else { pal.text }),
                     text("Sync Plex metadata automatically after local folder scans")
                         .size(11)
-                        .color(theme::COLOR_TEXT_MUTED),
+                        .color(pal.text_muted),
                 ]
                 .spacing(2),
                 Space::new().width(Length::Fill),
                 badge_with_reset(
+                    pal,
                     auto_sync_badge,
                     is_auto_sync,
                     Message::SetPlexAutoSync(!is_auto_sync),
@@ -259,36 +223,7 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             .spacing(12)
             .align_y(Alignment::Center),
         )
-        .style(move |_theme: &iced::Theme, status| {
-            let bg = if is_auto_sync {
-                match status {
-                    button::Status::Hovered => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.22),
-                    button::Status::Pressed => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.3),
-                    _ => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.12),
-                }
-            } else {
-                match status {
-                    button::Status::Hovered => theme::COLOR_BTN_HOVER,
-                    button::Status::Pressed => iced::Color::from_rgb(0.15, 0.15, 0.15),
-                    _ => theme::COLOR_BTN_BG,
-                }
-            };
-            button::Style {
-                background: Some(iced::Background::Color(bg)),
-                text_color: iced::Color::WHITE,
-                border: iced::Border {
-                    radius: 8.0.into(),
-                    width: 1.0,
-                    color: if is_auto_sync {
-                        theme::COLOR_PRIMARY
-                    } else {
-                        iced::Color::from_rgb(0.25, 0.25, 0.28)
-                    },
-                },
-                shadow: iced::Shadow::default(),
-                ..Default::default()
-            }
-        })
+        .style(theme::settings_toggle_card_style(pal, is_auto_sync))
         .on_press(Message::SetPlexAutoSync(!is_auto_sync))
         .padding([12, 16])
         .width(Length::Fill),
@@ -306,4 +241,3 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
 
     container(content).padding(10).width(Length::Fill).into()
 }
-

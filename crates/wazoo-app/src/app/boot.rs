@@ -210,8 +210,13 @@ impl WazooApp {
         let (toast_message, toast_time_remaining) =
             build_initial_toast(search.is_cli, &settings.language, total_videos);
 
+        let theme_palette = crate::theme::ThemePalette::from_settings(&settings.theme);
+        let mut modals = crate::state::ModalState::default();
+        modals.sync_picker_from_theme(&settings.theme);
+
         Self {
             settings: settings.clone(),
+            theme_palette,
             config_mgr,
             db,
             players: PlayerList::new(),
@@ -233,7 +238,7 @@ impl WazooApp {
                 active_folder: search.selected_folder.clone(),
                 selected_folder: search.selected_folder,
             },
-            modals: crate::state::ModalState::default(),
+            modals,
             drawers: crate::state::DrawerState::default(),
             titlebar: crate::state::TitlebarState::default(),
             overlay: crate::state::OverlayState {

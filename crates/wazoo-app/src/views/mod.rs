@@ -41,11 +41,12 @@ impl WazooApp {
                 overlay_stack.push(self.view_cube_overlay());
             }
             if let Some(ref toast) = self.overlay.toast_message {
+                let pal = self.theme_palette;
                 let toast_widget = container(
-                    text(toast).size(16).color(iced::Color::WHITE),
+                    text(toast).size(16).color(pal.hud_text),
                 )
                 .padding([6, 18])
-                .style(theme::notice_pill_style);
+                .style(theme::notice_pill_style(pal));
 
                 let toast_layer = container(
                     column![Space::new().height(Length::Fixed(35.0)), toast_widget,]
@@ -166,11 +167,12 @@ impl WazooApp {
 
             // 3. Floating Notice (Matches Electron Notice.vue)
             if let Some(ref toast) = self.overlay.toast_message {
+                let pal = self.theme_palette;
                 let toast_widget = container(
-                    text(toast).size(16).color(iced::Color::WHITE),
+                    text(toast).size(16).color(pal.hud_text),
                 )
                 .padding([6, 18])
-                .style(theme::notice_pill_style);
+                .style(theme::notice_pill_style(pal));
 
                 let toast_layer = container(
                     column![Space::new().height(Length::Fixed(35.0)), toast_widget,]
@@ -221,38 +223,40 @@ impl WazooApp {
                     )
                 };
 
+                let pal = self.theme_palette;
                 let scan_banner = container(
                     row![
-                        text(label).size(13).color(iced::Color::WHITE),
+                        text(label).size(13).color(pal.hud_text),
                         Space::new().width(Length::Fill),
-                        text(status_text).size(13).color(theme::COLOR_PRIMARY),
+                        text(status_text).size(13).color(pal.primary),
                     ]
                     .padding([4, 24])
                     .align_y(Alignment::Center),
                 )
                 .width(Length::Fill)
                 .height(Length::Fixed(28.0))
-                .style(theme::scan_toast_banner_style);
+                .style(theme::scan_toast_banner_style(pal));
 
                 root_stack_children.push(Element::from(scan_banner));
             }
 
             // 5. Alt Drag Overlay (Matches Electron Alt overlay)
             if self.window.is_alt_pressed {
+                let pal = self.theme_palette;
                 let drag_card = container(
                     column![
                         text(self.t("app.drag_to_move"))
                             .size(22)
-                            .color(iced::Color::WHITE),
+                            .color(pal.hud_text),
                         text(self.t("app.x_to_quit"))
                             .size(16)
-                            .color(theme::COLOR_TEXT_DIM),
+                            .color(theme::with_alpha(pal.hud_text, 0.75)),
                     ]
                     .spacing(8)
                     .align_x(Alignment::Center),
                 )
                 .padding([20, 36])
-                .style(theme::drag_overlay_card_style);
+                .style(theme::drag_overlay_card_style(pal));
 
                 let alt_overlay = container(drag_card)
                     .width(Length::Fill)

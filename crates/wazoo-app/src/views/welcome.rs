@@ -17,17 +17,18 @@ use iced::{
 
 impl WazooApp {
     pub(crate) fn view_welcome(&self) -> Element<'_, Message> {
+        let pal = self.theme_palette;
         let card = container(
             column![
                 text("📁").size(48),
                 text(self.t("wazoo.welcome"))
                     .size(24)
-                    .color(iced::Color::WHITE),
+                    .color(pal.text),
                 text(self.t("wazoo.no_folders_msg"))
                     .size(14)
-                    .color(theme::COLOR_TEXT_MUTED),
+                    .color(pal.text_muted),
                 button(text(self.t("wazoo.open_settings_to_add")))
-                    .style(theme::action_button_style)
+                    .style(theme::action_button_style(pal))
                     .on_press(Message::OpenSettingsModal)
                     .padding([10, 20]),
             ]
@@ -35,7 +36,7 @@ impl WazooApp {
             .align_x(Alignment::Center),
         )
         .padding(40)
-        .style(theme::welcome_card_style);
+        .style(theme::welcome_card_style(pal));
 
         container(card)
             .width(Length::Fill)
@@ -46,12 +47,13 @@ impl WazooApp {
     }
 
     pub(crate) fn view_no_matches(&self) -> Element<'_, Message> {
+        let pal = self.theme_palette;
         let total_in_db = self.db.get_video_count().unwrap_or(0);
         let mut content = column![
             text("🔍").size(48),
             text(self.t("wazoo.no_videos_found"))
                 .size(22)
-                .color(iced::Color::WHITE),
+                .color(pal.text),
         ]
         .spacing(14)
         .align_x(Alignment::Center);
@@ -61,15 +63,16 @@ impl WazooApp {
                 container(
                     text(format!("\"{}\"", self.search.active_query.trim()))
                         .size(13)
-                        .color(theme::COLOR_PRIMARY),
+                        .color(pal.primary),
                 )
                 .padding([4, 12])
-                .style(|_theme: &Theme| container::Style {
-                    background: Some(iced::Background::Color(iced::Color::from_rgba(
-                        0.2, 0.2, 0.25, 0.6,
+                .style(move |_theme: &Theme| container::Style {
+                    background: Some(iced::Background::Color(theme::with_alpha(
+                        pal.card_bg,
+                        0.75,
                     ))),
                     border: iced::Border {
-                        radius: 4.0.into(),
+                        radius: pal.radius(4.0).into(),
                         ..Default::default()
                     },
                     ..Default::default()
@@ -79,7 +82,7 @@ impl WazooApp {
 
         let mut buttons_row = row![
             button(text(self.t("common.search")).size(13))
-                .style(theme::action_button_style)
+                .style(theme::action_button_style(pal))
                 .on_press(Message::OpenSearchModal)
                 .padding([8, 16]),
         ]
@@ -89,14 +92,14 @@ impl WazooApp {
         if total_in_db > 0 {
             buttons_row = buttons_row.push(
                 button(text(self.t("search.clear_search")).size(13))
-                    .style(theme::menu_item_style)
+                    .style(theme::menu_item_style(pal))
                     .on_press(Message::ClearSearch)
                     .padding([8, 16]),
             );
         } else {
             buttons_row = buttons_row.push(
                 button(text(self.t("wazoo.open_settings_to_add")).size(13))
-                    .style(theme::menu_item_style)
+                    .style(theme::menu_item_style(pal))
                     .on_press(Message::OpenSettingsModal)
                     .padding([8, 16]),
             );
@@ -107,7 +110,7 @@ impl WazooApp {
 
         let card = container(content)
             .padding(40)
-            .style(theme::welcome_card_style);
+            .style(theme::welcome_card_style(pal));
 
         container(card)
             .width(Length::Fill)

@@ -15,6 +15,7 @@ use iced::{
 };
 
 pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
+    let pal = app.theme_palette;
     let gamma_val = app.settings.gamma.round() as i32;
     let gamma_str = if gamma_val > 0 {
         format!("+{gamma_val}")
@@ -25,15 +26,15 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         row![
             text(app.t("settings.gamma"))
                 .size(14)
-                .color(theme::COLOR_TEXT_MUTED),
+                .color(pal.text_muted),
             Space::new().width(Length::Fill),
-            badge_with_reset(gamma_str, gamma_val != 0, Message::SetGamma(0.0)),
+            badge_with_reset(pal, gamma_str, gamma_val != 0, Message::SetGamma(0.0)),
         ]
         .align_y(Alignment::Center),
         cursor::PointerCursor::new(
             slider(-100.0..=100.0, app.settings.gamma, Message::SetGamma)
                 .step(1.0_f32)
-                .style(theme::settings_slider_style)
+                .style(theme::settings_slider_style(pal))
                 .width(Length::Fill),
         ),
     ]
@@ -49,15 +50,15 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         row![
             text(app.t("settings.contrast"))
                 .size(14)
-                .color(theme::COLOR_TEXT_MUTED),
+                .color(pal.text_muted),
             Space::new().width(Length::Fill),
-            badge_with_reset(contrast_str, contrast_val != 0, Message::SetContrast(0.0)),
+            badge_with_reset(pal, contrast_str, contrast_val != 0, Message::SetContrast(0.0)),
         ]
         .align_y(Alignment::Center),
         cursor::PointerCursor::new(
             slider(-100.0..=100.0, app.settings.contrast, Message::SetContrast)
                 .step(1.0_f32)
-                .style(theme::settings_slider_style)
+                .style(theme::settings_slider_style(pal))
                 .width(Length::Fill),
         ),
     ]
@@ -73,9 +74,10 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         row![
             text(app.t("settings.brightness"))
                 .size(14)
-                .color(theme::COLOR_TEXT_MUTED),
+                .color(pal.text_muted),
             Space::new().width(Length::Fill),
             badge_with_reset(
+                pal,
                 brightness_str,
                 brightness_val != 0,
                 Message::SetBrightness(0.0)
@@ -89,7 +91,7 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 Message::SetBrightness
             )
             .step(1.0_f32)
-            .style(theme::settings_slider_style)
+            .style(theme::settings_slider_style(pal))
             .width(Length::Fill),
         ),
     ]
@@ -105,9 +107,10 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         row![
             text(app.t("settings.saturation"))
                 .size(14)
-                .color(theme::COLOR_TEXT_MUTED),
+                .color(pal.text_muted),
             Space::new().width(Length::Fill),
             badge_with_reset(
+                pal,
                 saturation_str,
                 saturation_val != 0,
                 Message::SetSaturation(0.0)
@@ -121,7 +124,7 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 Message::SetSaturation
             )
             .step(1.0_f32)
-            .style(theme::settings_slider_style)
+            .style(theme::settings_slider_style(pal))
             .width(Length::Fill),
         ),
     ]
@@ -133,9 +136,9 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         row![
             text(app.t("settings.playback_speed"))
                 .size(14)
-                .color(theme::COLOR_TEXT_MUTED),
+                .color(pal.text_muted),
             Space::new().width(Length::Fill),
-            badge_with_reset(speed_str, speed_active, Message::SetPlaybackSpeed(1.0)),
+            badge_with_reset(pal, speed_str, speed_active, Message::SetPlaybackSpeed(1.0)),
         ]
         .align_y(Alignment::Center),
         cursor::PointerCursor::new(
@@ -145,7 +148,7 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 Message::SetPlaybackSpeed
             )
             .step(0.05_f32)
-            .style(theme::settings_slider_style)
+            .style(theme::settings_slider_style(pal))
             .width(Length::Fill),
         ),
     ]
@@ -168,7 +171,7 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 Default::default()
             }),
         )
-        .style(theme::folder_chip_style(is_tv_static))
+        .style(theme::folder_chip_style(pal, is_tv_static))
         .on_press(Message::SetLoadingIndicator(
             wazoo_core::LoadingIndicator::TvStatic,
         ))
@@ -189,7 +192,7 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 Default::default()
             }),
         )
-        .style(theme::folder_chip_style(is_spinner))
+        .style(theme::folder_chip_style(pal, is_spinner))
         .on_press(Message::SetLoadingIndicator(
             wazoo_core::LoadingIndicator::Spinner,
         ))
@@ -201,10 +204,10 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             column![
                 text(app.t("settings.loading_indicator"))
                     .size(14)
-                    .color(iced::Color::WHITE),
+                    .color(pal.text),
                 text(app.t("settings.loading_indicator_desc"))
                     .size(12)
-                    .color(theme::COLOR_TEXT_MUTED),
+                    .color(pal.text_muted),
             ]
             .spacing(2),
             Space::new().width(Length::Fill),
@@ -213,12 +216,12 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         .align_y(Alignment::Center),
     )
     .padding([12, 14])
-    .style(|_theme: &Theme| container::Style {
-        background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
+    .style(move |_theme: &Theme| container::Style {
+        background: Some(iced::Background::Color(pal.card_bg)),
         border: iced::Border {
-            radius: 6.0.into(),
+            radius: pal.radius(6.0).into(),
             width: 1.0,
-            color: theme::COLOR_BORDER,
+            color: pal.border,
         },
         ..Default::default()
     });
@@ -231,7 +234,7 @@ pub fn view_playback_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         .spacing(6)
         .align_y(Alignment::Center),
     )
-    .style(theme::action_button_style)
+    .style(theme::action_button_style(pal))
     .on_press(Message::ResetPlaybackOptions)
     .padding([8, 16]);
     column![

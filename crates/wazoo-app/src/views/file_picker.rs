@@ -239,6 +239,7 @@ impl WazooApp {
     }
 
     pub fn view_file_picker(&self) -> Element<'_, Message> {
+        let pal = self.theme_palette;
         let groups = &self.drawers.file_picker_groups;
 
         let playing_paths: std::collections::HashSet<&str> = self
@@ -262,18 +263,18 @@ impl WazooApp {
 
             let header_btn = button(
                 row![
-                    text(chevron).size(10).color(theme::COLOR_PRIMARY),
-                    text(display_name).size(13).color(iced::Color::WHITE),
+                    text(chevron).size(10).color(pal.primary),
+                    text(display_name).size(13).color(pal.text),
                     Space::new().width(Length::Fill),
                     text(format!("({})", format::format_number(count)))
                         .size(12)
-                        .color(theme::COLOR_TEXT_MUTED),
+                        .color(pal.text_muted),
                     Space::new().width(Length::Fixed(4.0)),
                 ]
                 .spacing(8)
                 .align_y(Alignment::Center),
             )
-            .style(theme::folder_group_header_style)
+            .style(theme::folder_group_header_style(pal))
             .on_press(Message::ToggleFolderCollapse(group.folder.clone()))
             .padding([7, 10])
             .width(Length::Fill);
@@ -295,11 +296,11 @@ impl WazooApp {
                         row![
                             text("▶")
                                 .size(9)
-                                .color(theme::COLOR_PRIMARY)
+                                .color(pal.primary)
                                 .width(Length::Fixed(12.0)),
                             text(&f.title)
                                 .size(12)
-                                .color(iced::Color::WHITE)
+                                .color(pal.text)
                                 .font(iced::Font {
                                     weight: iced::font::Weight::Bold,
                                     ..Default::default()
@@ -312,7 +313,7 @@ impl WazooApp {
                             Space::new().width(Length::Fixed(12.0)),
                             text(&f.title)
                                 .size(12)
-                                .color(iced::Color::from_rgb(0.85, 0.85, 0.85)),
+                                .color(pal.text_dim),
                         ]
                         .spacing(4)
                         .align_y(Alignment::Center)
@@ -323,13 +324,13 @@ impl WazooApp {
                         row_content = row_content.push(
                             text(y_str.to_string())
                                 .size(10)
-                                .color(theme::COLOR_TEXT_DIM),
+                                .color(pal.text_dim),
                         );
                     }
 
                     files_list = files_list.push(
                         button(row_content)
-                            .style(theme::transcript_cue_button_style(is_playing))
+                            .style(theme::transcript_cue_button_style(pal, is_playing))
                             .on_press(Message::PlayFileInFocused(p_clone))
                             .padding([4, 8])
                             .width(Length::Fill),
@@ -359,7 +360,7 @@ impl WazooApp {
                 &[("count", &format::format_number(self.available_videos.len()))]
             ))
             .size(17)
-            .color(iced::Color::WHITE)
+            .color(pal.text)
             .into(),
         );
 
@@ -391,15 +392,15 @@ impl WazooApp {
 
                 let badge = button(
                     row![
-                        text(display_name).size(13).color(iced::Color::WHITE),
+                        text(display_name).size(13).color(pal.text),
                         text("✕")
                             .size(12)
-                            .color(iced::Color::from_rgba(1.0, 1.0, 1.0, 0.8)),
+                            .color(theme::with_alpha(pal.text, 0.8)),
                     ]
                     .spacing(5)
                     .align_y(Alignment::Center),
                 )
-                .style(theme::folder_chip_style(true))
+                .style(theme::folder_chip_style(pal, true))
                 .on_press(Message::RemoveActiveSearchFolder(folder.clone()))
                 .padding([3, 8]);
 
@@ -414,7 +415,7 @@ impl WazooApp {
             .width(Length::Fill);
 
         let close_btn = button(text("✕").size(14))
-            .style(theme::window_control_button_style)
+            .style(theme::window_control_button_style(pal))
             .on_press(Message::ToggleFilePicker);
 
         let header_row = row![
@@ -432,7 +433,7 @@ impl WazooApp {
         .id("file_picker_search_input")
         .on_input(Message::FilePickerSearchChanged)
         .on_submit(Message::ApplyFilePickerSearch)
-        .style(theme::dark_input_style)
+        .style(theme::dark_input_style(pal))
         .padding(iced::Padding {
             top: 8.0,
             right: 28.0,
@@ -445,7 +446,7 @@ impl WazooApp {
 
         if !search_is_empty {
             let clear_btn = button(text("✕").size(11))
-                .style(theme::search_clear_button_style)
+                .style(theme::search_clear_button_style(pal))
                 .on_press(Message::ClearFilePickerSearch)
                 .padding([2, 5]);
 
@@ -478,7 +479,7 @@ impl WazooApp {
         container(content)
             .width(Length::Fixed(420.0))
             .height(Length::Fill)
-            .style(theme::file_picker_drawer_style)
+            .style(theme::file_picker_drawer_style(pal))
             .into()
     }
 }

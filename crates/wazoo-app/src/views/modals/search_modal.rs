@@ -18,13 +18,14 @@ use iced::{
 
 impl WazooApp {
     pub fn view_search_modal(&self) -> Element<'_, Message> {
+        let pal = self.theme_palette;
         let mut folder_chips: Vec<Element<'_, Message>> = Vec::new();
 
         let all_label = self.t("common.all");
         let is_all_selected = self.is_all_search_selected();
         folder_chips.push(
             button(text(all_label.clone()).size(13))
-                .style(theme::folder_chip_style(is_all_selected))
+                .style(theme::folder_chip_style(pal, is_all_selected))
                 .on_press(Message::SelectSearchFolder(all_label))
                 .padding([4, 12])
                 .into(),
@@ -35,7 +36,7 @@ impl WazooApp {
             let is_selected = self.search.selected_folders.contains(folder);
             folder_chips.push(
                 button(text(label).size(13))
-                    .style(theme::folder_chip_style(is_selected))
+                    .style(theme::folder_chip_style(pal, is_selected))
                     .on_press(Message::ToggleSearchFolder(folder.clone()))
                     .padding([4, 12])
                     .into(),
@@ -47,7 +48,7 @@ impl WazooApp {
             let misc_label = self.t("common.miscellaneous");
             folder_chips.push(
                 button(text(misc_label).size(13))
-                    .style(theme::folder_chip_style(is_misc_selected))
+                    .style(theme::folder_chip_style(pal, is_misc_selected))
                     .on_press(Message::ToggleSearchFolder("Misc".to_string()))
                     .padding([4, 12])
                     .into(),
@@ -75,9 +76,9 @@ impl WazooApp {
         for (idx, tag) in self.search.tags.iter().enumerate() {
             let chip = container(
                 row![
-                    text(tag).size(13).color(iced::Color::WHITE),
+                    text(tag).size(13).color(pal.text),
                     button(text("✕").size(10))
-                        .style(theme::tag_delete_button_style)
+                        .style(theme::tag_delete_button_style(pal))
                         .on_press(Message::RemoveSearchTag(idx))
                         .padding([0, 2]),
                 ]
@@ -85,7 +86,7 @@ impl WazooApp {
                 .align_y(Alignment::Center),
             )
             .padding([2, 6])
-            .style(theme::tag_chip_style);
+            .style(theme::tag_chip_style(pal));
 
             tag_elements.push(chip.into());
         }
@@ -100,7 +101,7 @@ impl WazooApp {
             .id("search_input")
             .on_input(Message::SearchInputChanged)
             .on_submit(Message::PerformSearch)
-            .style(theme::transparent_input_style)
+            .style(theme::transparent_input_style(pal))
             .padding([4, 6]);
 
         tag_elements.push(input_widget.into());
@@ -113,13 +114,13 @@ impl WazooApp {
 
         let tag_box = container(tags_wrap)
             .padding([6, 8])
-            .style(theme::tag_input_box_style)
+            .style(theme::tag_input_box_style(pal))
             .width(Length::Fill);
 
         let search_bar_row = row![
             tag_box,
             button(text("🔍").size(16))
-                .style(theme::search_button_style)
+                .style(theme::search_button_style(pal))
                 .on_press(Message::PerformSearch)
                 .padding([8, 12]),
         ]
@@ -130,7 +131,7 @@ impl WazooApp {
         let switch = toggler(include_metadata)
             .on_toggle(Message::SetSearchIncludeMetadata)
             .size(16)
-            .style(|_theme, status| {
+            .style(move |_theme, status| {
                 let (bg, bg_border, fg) = match status {
                     toggler::Status::Active { is_toggled }
                     | toggler::Status::Hovered { is_toggled } => {
@@ -138,30 +139,22 @@ impl WazooApp {
                         if is_toggled {
                             (
                                 if is_hovered {
-                                    theme::COLOR_PRIMARY_BORDER
+                                    pal.primary_border
                                 } else {
-                                    theme::COLOR_PRIMARY
+                                    pal.primary
                                 },
-                                theme::COLOR_PRIMARY,
-                                iced::Color::WHITE,
+                                pal.primary,
+                                pal.primary_on_text,
                             )
                         } else {
                             (
-                                if is_hovered {
-                                    theme::COLOR_BTN_HOVER
-                                } else {
-                                    theme::COLOR_BTN_BG
-                                },
-                                theme::COLOR_BORDER,
-                                iced::Color::from_rgb(0.85, 0.85, 0.85),
+                                if is_hovered { pal.btn_hover } else { pal.btn_bg },
+                                pal.border,
+                                pal.text_dim,
                             )
                         }
                     }
-                    toggler::Status::Disabled { .. } => (
-                        theme::COLOR_BTN_BG,
-                        theme::COLOR_BORDER,
-                        theme::COLOR_TEXT_MUTED,
-                    ),
+                    toggler::Status::Disabled { .. } => (pal.btn_bg, pal.border, pal.text_muted),
                 };
                 toggler::Style {
                     background: bg.into(),
@@ -180,9 +173,9 @@ impl WazooApp {
             button(text(label).size(12))
                 .style(move |_theme: &iced::Theme, status: button::Status| {
                     let text_color = if is_active || matches!(status, button::Status::Hovered) {
-                        iced::Color::WHITE
+                        pal.text
                     } else {
-                        theme::COLOR_TEXT_MUTED
+                        pal.text_muted
                     };
                     button::Style {
                         background: None,
@@ -197,7 +190,7 @@ impl WazooApp {
         let search_by_toggle = row![
             text(self.t("search.search_by"))
                 .size(12)
-                .color(theme::COLOR_TEXT_MUTED),
+                .color(pal.text_muted),
             label_button(self.t("search.filename"), !include_metadata, false),
             switch,
             label_button(self.t("search.metadata"), include_metadata, true),
@@ -211,7 +204,7 @@ impl WazooApp {
                 &[("count", &format::format_number(self.available_videos.len()))]
             ))
             .size(12)
-            .color(theme::COLOR_TEXT_MUTED),
+            .color(pal.text_muted),
             Space::new().width(Length::Fill),
             search_by_toggle,
         ]
@@ -225,10 +218,10 @@ impl WazooApp {
                 row![
                     text(self.t("search.folder"))
                         .size(14)
-                        .color(theme::COLOR_TEXT_MUTED),
+                        .color(pal.text_muted),
                     Space::new().width(Length::Fill),
                     button(text("✕").size(14))
-                        .style(theme::window_control_button_style)
+                        .style(theme::window_control_button_style(pal))
                         .on_press(Message::CloseSearchModal),
                 ]
                 .align_y(Alignment::Center),
@@ -240,7 +233,7 @@ impl WazooApp {
             .width(Length::Fixed(modal_width)),
         )
         .padding(card_padding)
-        .style(theme::modal_card_style);
+        .style(theme::modal_card_style(pal));
 
         Self::wrap_modal_with_backdrop(card, Message::CloseSearchModal)
     }

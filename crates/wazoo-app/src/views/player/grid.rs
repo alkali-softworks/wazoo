@@ -8,7 +8,6 @@ use crate::app::WazooApp;
 use crate::message::Message;
 use crate::scroll_view;
 use crate::state::AppPlayer;
-use crate::theme;
 use iced::{
     Element, Length,
     widget::{column, container, row, text},
@@ -22,7 +21,7 @@ impl WazooApp {
             return container(
                 text(self.t("wazoo.no_players"))
                     .size(18)
-                    .color(theme::COLOR_TEXT_MUTED),
+                    .color(self.theme_palette.text_muted),
             )
             .width(Length::Fill)
             .height(Length::Fill)

@@ -608,3 +608,87 @@ fn test_crt_settings_serialization_and_clamping() {
 
     let _ = fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_theme_settings_hex_parsing_clamping_and_presets() {
+    use wazoo_core::{
+        DEFAULT_THEME_ACCENT_COLOR, DEFAULT_THEME_SURFACE_COLOR, DEFAULT_THEME_TITLEBAR_COLOR,
+        ThemePreset, ThemeSettings, format_hex_rgb, parse_hex_rgb, sanitize_hex_or_default,
+    };
+
+    // Hex parser tests
+    assert_eq!(parse_hex_rgb("#42b883"), Some((0x42, 0xb8, 0x83)));
+    assert_eq!(parse_hex_rgb("1F092F"), Some((0x1f, 0x09, 0x2f)));
+    assert_eq!(parse_hex_rgb("#fff"), Some((255, 255, 255)));
+    assert_eq!(parse_hex_rgb("#abc"), Some((0xaa, 0xbb, 0xcc)));
+    assert_eq!(parse_hex_rgb("#zzzzzz"), None);
+    assert_eq!(parse_hex_rgb("#12"), None);
+    assert_eq!(format_hex_rgb(0x42, 0xb8, 0x83), "#42b883");
+    assert_eq!(sanitize_hex_or_default("not-a-color", "#1f1f1f"), "#1f1f1f");
+
+    // Default values match original Wazoo palette
+    let def = ThemeSettings::default();
+    assert_eq!(def.accent_color, DEFAULT_THEME_ACCENT_COLOR);
+    assert_eq!(def.surface_color, DEFAULT_THEME_SURFACE_COLOR);
+    assert_eq!(def.titlebar_color, DEFAULT_THEME_TITLEBAR_COLOR);
+    assert!(def.matches_preset(ThemePreset::Default));
+
+    // Presets roundtrip
+    let mut themed = ThemeSettings::default();
+    themed.apply_preset(ThemePreset::Midnight);
+    assert!(themed.matches_preset(ThemePreset::Midnight));
+    assert!(!themed.matches_preset(ThemePreset::Default));
+
+    // Clamping & sanitization
+    let mut bad = ThemeSettings {
+        accent_color: "bad_hex".to_string(),
+        surface_color: " #333 ".to_string(),
+        titlebar_color: "invalid".to_string(),
+        titlebar_badge_color: "000".to_string(),
+        hud_color: "oops".to_string(),
+        text_color: "FAFAFA".to_string(),
+        hud_opacity: 5.0,
+        corner_radius: -2.0,
+        focus_ring_width: 99.0,
+    };
+    bad.clamp_all();
+    assert_eq!(bad.accent_color, DEFAULT_THEME_ACCENT_COLOR);
+    assert_eq!(bad.surface_color, "#333333");
+    assert_eq!(bad.titlebar_color, DEFAULT_THEME_TITLEBAR_COLOR);
+    assert_eq!(bad.titlebar_badge_color, "#000000");
+    assert_eq!(bad.text_color, "#fafafa");
+    assert_eq!(bad.hud_opacity, 1.0);
+    assert_eq!(bad.corner_radius, 0.0);
+    assert_eq!(bad.focus_ring_width, 8.0);
+
+    // Persistence roundtrip + backward compatibility when missing
+    let empty_loaded: WazooSettings = serde_json::from_str("{}").unwrap();
+    assert_eq!(empty_loaded.theme, ThemeSettings::default());
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "wazoo_theme_persist_{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = fs::create_dir_all(&temp_dir);
+    let mgr = ConfigManager {
+        config_dir: temp_dir.clone(),
+        data_dir: temp_dir.clone(),
+    };
+    let mut custom = WazooSettings::default();
+    custom.theme.accent_color = "#ff5500".to_string();
+    custom.theme.surface_color = "#101820".to_string();
+    custom.theme.titlebar_color = "#3b0764".to_string();
+    custom.theme.corner_radius = 1.5;
+    mgr.save_settings(&custom).unwrap();
+
+    let reloaded = mgr.load_settings();
+    assert_eq!(reloaded.theme.accent_color, "#ff5500");
+    assert_eq!(reloaded.theme.surface_color, "#101820");
+    assert_eq!(reloaded.theme.titlebar_color, "#3b0764");
+    assert_eq!(reloaded.theme.corner_radius, 1.5);
+
+    let _ = fs::remove_dir_all(&temp_dir);
+}

@@ -19,6 +19,7 @@ use iced::{
 
 impl WazooApp {
     pub(crate) fn view_transcript_drawer(&self) -> Element<'_, Message> {
+        let pal = self.theme_palette;
         let (video_title, current_pos) = if let Some(player) = self.focused_player() {
             (
                 format::format_video_title(&player.state.path),
@@ -38,7 +39,7 @@ impl WazooApp {
                     weight: iced::font::Weight::Bold,
                     ..Default::default()
                 })
-                .color(iced::Color::WHITE),
+                .color(pal.text),
         ]
         .spacing(8)
         .align_y(Alignment::Center);
@@ -55,7 +56,7 @@ impl WazooApp {
                 .size(11),
             )
             .padding([2, 8])
-            .style(theme::transcript_count_badge_style);
+            .style(theme::transcript_count_badge_style(pal));
             header_left = header_left.push(badge);
         }
 
@@ -63,13 +64,13 @@ impl WazooApp {
             header_left,
             Space::new().width(Length::Fill),
             button(text("✕").size(14))
-                .style(theme::window_control_button_style)
+                .style(theme::window_control_button_style(pal))
                 .on_press(Message::CloseTranscript),
         ]
         .align_y(Alignment::Center);
 
         // 2. Video Title Subheading
-        let video_subheading = text(video_title).size(12).color(theme::COLOR_TEXT_MUTED);
+        let video_subheading = text(video_title).size(12).color(pal.text_muted);
 
         // 2b. Subtitle Track Selector (if more than 1 subtitle stream available)
         let sub_tracks = self
@@ -95,16 +96,17 @@ impl WazooApp {
             let track_btn_content = row![
                 text(self.t("transcript.subtitle_track"))
                     .size(12)
-                    .color(theme::COLOR_TEXT_MUTED),
+                    .color(pal.text_muted),
                 text(format!("{active_sub_label} {arrow}"))
                     .size(12)
-                    .color(iced::Color::WHITE),
+                    .color(pal.text),
             ]
             .spacing(6)
             .align_y(Alignment::Center);
 
             let track_btn = button(track_btn_content)
                 .style(theme::transcript_track_button_style(
+                    pal,
                     self.drawers.show_transcript_menu,
                 ))
                 .on_press(Message::ToggleTranscriptSubtitleMenu)
@@ -124,26 +126,22 @@ impl WazooApp {
                             text(if is_selected { "✓" } else { "" })
                                 .size(13)
                                 .color(if is_selected {
-                                    theme::COLOR_PRIMARY
+                                    pal.primary
                                 } else {
                                     iced::Color::TRANSPARENT
                                 })
                                 .width(Length::Fixed(14.0)),
                             text(label).size(12).color(if is_selected {
-                                theme::COLOR_PRIMARY
+                                pal.primary
                             } else {
-                                iced::Color::WHITE
+                                pal.hud_text
                             }),
                         ]
                         .spacing(6)
                         .align_y(Alignment::Center);
 
                         let item_btn = button(item_row)
-                            .style(if is_selected {
-                                theme::audio_menu_selected_item_style
-                            } else {
-                                theme::audio_menu_item_style
-                            })
+                            .style(theme::audio_menu_item_style(pal, is_selected))
                             .on_press(Message::SelectTranscriptSubtitleTrack(i, track_id))
                             .padding([6, 10])
                             .width(Length::Fill);
@@ -154,7 +152,7 @@ impl WazooApp {
 
                 let sub_menu_card = container(column(menu_items).spacing(2).width(Length::Fill))
                     .padding(4)
-                    .style(theme::audio_menu_card_style);
+                    .style(theme::audio_menu_card_style(pal));
 
                 selector_col = selector_col.push(sub_menu_card);
             }
@@ -170,7 +168,7 @@ impl WazooApp {
             &self.drawers.transcript_search,
         )
         .on_input(Message::TranscriptSearchChanged)
-        .style(theme::dark_input_style)
+        .style(theme::dark_input_style(pal))
         .padding(8);
 
         // 4. Content Area: Loading, Empty, or Scrollable Cues List
@@ -179,10 +177,10 @@ impl WazooApp {
                 column![
                     text(self.t("transcript.extracting"))
                         .size(14)
-                        .color(theme::COLOR_PRIMARY),
+                        .color(pal.primary),
                     text(self.t("transcript.loading_subtitles"))
                         .size(12)
-                        .color(theme::COLOR_TEXT_MUTED),
+                        .color(pal.text_muted),
                 ]
                 .spacing(8)
                 .align_x(Alignment::Center),
@@ -201,11 +199,11 @@ impl WazooApp {
                             weight: iced::font::Weight::Bold,
                             ..Default::default()
                         })
-                        .color(iced::Color::WHITE),
+                        .color(pal.text),
                     Space::new().height(Length::Fixed(4.0)),
                     text(self.t("transcript.no_subtitles_desc"))
                         .size(12)
-                        .color(theme::COLOR_TEXT_MUTED),
+                        .color(pal.text_muted),
                 ]
                 .spacing(4)
                 .align_x(Alignment::Center),
@@ -216,8 +214,6 @@ impl WazooApp {
             .center_y(Length::Fill)
             .into()
         } else {
-            // Determine the single active cue for the current playback position.
-            // If cues overlap or share boundaries, select the one with the latest start_secs <= current_pos.
             let active_cue_idx = self
                 .drawers
                 .transcript_cues
@@ -252,12 +248,12 @@ impl WazooApp {
                     ..Default::default()
                 }))
                 .padding([2, 6])
-                .style(theme::transcript_time_badge_style(is_active));
+                .style(theme::transcript_time_badge_style(pal, is_active));
 
                 let cue_text = text(&cue.text).size(13).color(if is_active {
-                    iced::Color::WHITE
+                    pal.text
                 } else {
-                    iced::Color::from_rgb(0.85, 0.85, 0.85)
+                    pal.text_dim
                 });
 
                 let row_content = row![time_badge, cue_text,]
@@ -265,7 +261,7 @@ impl WazooApp {
                     .align_y(Alignment::Center);
 
                 let cue_btn = button(row_content)
-                    .style(theme::transcript_cue_button_style(is_active))
+                    .style(theme::transcript_cue_button_style(pal, is_active))
                     .on_press(Message::SeekToSubtitle(cue.start_secs))
                     .padding([6, 10])
                     .width(Length::Fill);
@@ -280,7 +276,7 @@ impl WazooApp {
                         &[("query", &self.drawers.transcript_search)],
                     ))
                     .size(13)
-                    .color(theme::COLOR_TEXT_MUTED),
+                    .color(pal.text_muted),
                 )
                 .width(Length::Fill)
                 .height(Length::Fill)
@@ -291,7 +287,7 @@ impl WazooApp {
                 let scrollable_cues = container(cues_column)
                     .padding(iced::Padding {
                         top: 0.0,
-                        right: 20.0, // Dedicated gutter so vertical scrollbar never overlaps dialogue
+                        right: 20.0,
                         bottom: 0.0,
                         left: 0.0,
                     })
@@ -320,7 +316,7 @@ impl WazooApp {
         container(content)
             .width(Length::Fixed(440.0))
             .height(Length::Fill)
-            .style(theme::file_picker_drawer_style)
+            .style(theme::file_picker_drawer_style(pal))
             .into()
     }
 }

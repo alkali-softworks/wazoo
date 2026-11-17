@@ -91,6 +91,11 @@ Press <kbd>P</kbd> to cycle through 4 overlay modes:
 - **Cube Overlay Mode**: Float 3D cubes seamlessly on top of your desktop with click-through (<kbd>9</kbd>).
 - **Customizable**: Adjust movement speed, cube size, 3D light toggle, and spawn multiple cubes with independent video streams.
 
+### 🎨 Customizable Themes
+- **Interactive Color Pickers**: Override the accent color, UI grey surface, titlebar, titlebar badge, HUD overlay, and text color using a 2D Saturation/Value pad, rainbow hue bar, hex input, or quick swatches.
+- **Presets & Randomizer**: Switch between 8 built-in presets (*Default*, *Midnight*, *Dracula*, *Crimson*, *Amber*, *Nord*, *Synthwave*, *Frost Light*) or roll a random palette with a live titlebar & HUD preview.
+- **Appearance & Geometry**: Fine-tune HUD overlay opacity, UI corner roundness, and player focus ring width, persisted in `settings.json`.
+
 ### 🌐 Internationalization & Localization
 - **23 Supported Languages**: Complete UI translations for English (`en`), Dutch (`nl`), Spanish (`es`), French (`fr`), Italian (`it`), Portuguese (`pt`), German (`de`), Czech (`cs`), Polish (`pl`), Ukrainian (`uk`), Russian (`ru`), Swedish (`sv`), Turkish (`tr`), Arabic (`ar`), Hebrew (`he`), Persian (`fa`), Hindi (`hi`), Bengali (`bn`), Thai (`th`), Vietnamese (`vi`), Simplified Chinese (`zh`), Japanese (`ja`), and Korean (`ko`).
 

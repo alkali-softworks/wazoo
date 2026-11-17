@@ -3061,3 +3061,129 @@ fn test_boot_restored_session_shows_loading_static_immediately() {
 
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_theme_settings_tab_color_pickers_presets_and_persistence() {
+    use wazoo_app::state::ThemeColorTarget;
+    use wazoo_app::theme;
+
+    let temp_dir = std::env::temp_dir().join(format!(
+        "wazoo_theme_app_{}_{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let config_mgr = wazoo_core::ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
+    let db = wazoo_core::Database::open_in_memory().expect("in-memory db");
+
+    let (mut app, _) = WazooApp::new_with_backend(None, config_mgr, db);
+
+    // Default palette matches original hardcoded constants
+    assert!((app.theme_palette.primary.r - theme::COLOR_PRIMARY.r).abs() < 0.01);
+    assert!((app.theme_palette.primary.g - theme::COLOR_PRIMARY.g).abs() < 0.01);
+    assert!((app.theme_palette.primary.b - theme::COLOR_PRIMARY.b).abs() < 0.01);
+    assert!((app.theme_palette.titlebar_bg.r - theme::COLOR_TITLEBAR_BG.r).abs() < 0.01);
+    assert!((app.theme_palette.modal_bg.r - theme::COLOR_MODAL_BG.r).abs() < 0.01);
+
+    // Open Settings -> Theme tab (all color pickers start collapsed until clicked)
+    let _ = app.update(Message::OpenSettingsModal);
+    let _ = app.update(Message::SetSettingsTab(SettingsTab::Theme));
+    assert_eq!(app.modals.settings_tab, SettingsTab::Theme);
+    assert_eq!(app.modals.active_color_picker, None);
+    {
+        let _view_theme = app.view_settings_modal();
+    }
+
+    // Select each color picker target and render expanded picker
+    for &target in ThemeColorTarget::ALL {
+        let _ = app.update(Message::SelectThemeColorTarget(Some(target)));
+        assert_eq!(app.modals.active_color_picker, Some(target));
+        let _view_target = app.view_settings_modal();
+    }
+
+    // Partial/invalid hex draft does not corrupt saved hex, valid hex updates palette immediately
+    let _ = app.update(Message::ThemeHexInputChanged(
+        ThemeColorTarget::Accent,
+        "#ff".to_string(),
+    ));
+    assert_eq!(
+        app.settings.theme.accent_color,
+        wazoo_core::DEFAULT_THEME_ACCENT_COLOR
+    );
+    let _ = app.update(Message::ThemeHexInputChanged(
+        ThemeColorTarget::Accent,
+        "#FF5500".to_string(),
+    ));
+    assert_eq!(app.settings.theme.accent_color, "#ff5500");
+    assert!((app.theme_palette.primary.r - 1.0).abs() < 0.01);
+    assert!((app.theme_palette.primary.b - 0.0).abs() < 0.01);
+
+    // Override UI grey (Surface) and purple titlebar via HSV & Hex
+    let _ = app.update(Message::SetThemeColorHsv(
+        ThemeColorTarget::Surface,
+        210.0,
+        0.4,
+        0.15,
+    ));
+    assert_ne!(
+        app.settings.theme.surface_color,
+        wazoo_core::DEFAULT_THEME_SURFACE_COLOR
+    );
+    let _ = app.update(Message::ThemeHexInputChanged(
+        ThemeColorTarget::Titlebar,
+        "#0d3b66".to_string(),
+    ));
+    assert_eq!(app.settings.theme.titlebar_color, "#0d3b66");
+    assert!((app.theme_palette.titlebar_bg.b - (0x66 as f32 / 255.0)).abs() < 0.01);
+
+    // Adjust extra appearance sliders
+    let _ = app.update(Message::SetThemeHudOpacity(0.65));
+    assert_eq!(app.settings.theme.hud_opacity, 0.65);
+    let _ = app.update(Message::SetThemeCornerRadius(1.75));
+    assert_eq!(app.settings.theme.corner_radius, 1.75);
+    let _ = app.update(Message::SetThemeFocusRingWidth(5.5));
+    assert_eq!(app.settings.theme.focus_ring_width, 5.5);
+    let _ = app.update(Message::CommitThemeColor);
+
+    // Verify titlebar & modal render with customized theme
+    {
+        let _tb = app.view_titlebar();
+        let _modal = app.view_settings_modal();
+    }
+
+    // Verify persistence across reload
+    let reloaded_mgr = wazoo_core::ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
+    let reloaded = reloaded_mgr.load_settings();
+    assert_eq!(reloaded.theme.accent_color, "#ff5500");
+    assert_eq!(reloaded.theme.titlebar_color, "#0d3b66");
+    assert_eq!(reloaded.theme.hud_opacity, 0.65);
+    assert_eq!(reloaded.theme.corner_radius, 1.75);
+    assert_eq!(reloaded.theme.focus_ring_width, 5.5);
+
+    // Reset single color
+    let _ = app.update(Message::ResetThemeColor(ThemeColorTarget::Titlebar));
+    assert_eq!(
+        app.settings.theme.titlebar_color,
+        wazoo_core::DEFAULT_THEME_TITLEBAR_COLOR
+    );
+
+    // Apply light preset & check light surface shifts darker instead of clipping white
+    let _ = app.update(Message::ApplyThemePreset(wazoo_core::ThemePreset::FrostLight));
+    assert!(app.settings.theme.matches_preset(wazoo_core::ThemePreset::FrostLight));
+    assert!(app.theme_palette.card_bg.r < app.theme_palette.modal_bg.r);
+    {
+        let _view_light = app.view_settings_modal();
+    }
+
+    // Randomize & Reset all
+    let _ = app.update(Message::RandomizeTheme);
+    let _ = app.update(Message::ResetThemeSettings);
+    assert_eq!(app.settings.theme, wazoo_core::ThemeSettings::default());
+    assert!(app.settings.theme.matches_preset(wazoo_core::ThemePreset::Default));
+
+    let _ = app.update(Message::CloseSettingsModal);
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}

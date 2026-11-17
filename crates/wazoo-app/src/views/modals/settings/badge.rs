@@ -6,13 +6,14 @@
 
 use crate::cursor;
 use crate::message::Message;
-use crate::theme;
+use crate::theme::{self, ThemePalette};
 use iced::{
     Alignment, Element, Length, Theme,
     widget::{Space, button, container, row, text},
 };
 
 pub fn badge_with_reset(
+    pal: ThemePalette,
     val_text: String,
     is_active: bool,
     reset_msg: Message,
@@ -26,21 +27,21 @@ pub fn badge_with_reset(
                 Default::default()
             })
             .color(if is_active {
-                theme::COLOR_PRIMARY
+                pal.primary
             } else {
-                theme::COLOR_TEXT_DIM
+                pal.text_dim
             }),
     )
     .padding([2, 8])
     .style(move |_theme: &Theme| container::Style {
-        background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
+        background: Some(iced::Background::Color(pal.card_bg)),
         border: iced::Border {
-            radius: 4.0.into(),
+            radius: pal.radius(4.0).into(),
             width: 1.0,
             color: if is_active {
-                theme::COLOR_PRIMARY_BORDER
+                pal.primary_border
             } else {
-                theme::COLOR_BORDER
+                pal.border
             },
         },
         ..Default::default()
@@ -49,7 +50,7 @@ pub fn badge_with_reset(
     if is_active {
         let reset_btn = cursor::PointerCursor::new(
             button(text("↺").size(11))
-                .style(theme::settings_reset_button_style)
+                .style(theme::settings_reset_button_style(pal))
                 .on_press(reset_msg)
                 .padding([2, 5]),
         );

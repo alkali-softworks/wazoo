@@ -9,6 +9,7 @@
 pub mod app;
 pub mod assets;
 pub mod cli;
+pub mod color_picker;
 pub mod cursor;
 pub mod format;
 pub mod keybinds;
@@ -95,9 +96,9 @@ pub fn run() -> iced::Result {
         background_color: if app.cube.desktop_overlay || !app.available_videos.is_empty() {
             Color::TRANSPARENT
         } else {
-            Color::from_rgba(0.05, 0.05, 0.05, app.current_opacity())
+            crate::theme::with_alpha(app.theme_palette.empty_bg, app.current_opacity())
         },
-        text_color: Color::WHITE,
+        text_color: app.theme_palette.text,
     })
     .window(iced::window::Settings {
         size: iced::Size::new(win_w, win_h),

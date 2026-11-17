@@ -19,7 +19,7 @@ pub mod window;
 pub use cube::{BouncingCube, CubeState};
 pub use drawers::DrawerState;
 pub use flip::FlipState;
-pub use modals::ModalState;
+pub use modals::{ModalState, ThemeColorTarget};
 pub use overlay::OverlayState;
 pub use plex::PlexState;
 pub use player::{AppPlayer, Player, PlayerList, SeekDebounce};

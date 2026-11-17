@@ -17,6 +17,7 @@ use wazoo_core::{HelpCategory, HelpShortcut, KeyDisplay};
 
 impl WazooApp {
     pub fn view_help_modal(&self) -> Element<'_, Message> {
+        let pal = self.theme_palette;
         let or_text = self.t("common.or");
         let categories = self.settings.keybinds.help_categories(|k| self.t(k));
         let query = self.modals.help_search.trim().to_lowercase();
@@ -50,9 +51,9 @@ impl WazooApp {
                         self.modals.help_search.trim()
                     ))
                     .size(13)
-                    .color(theme::COLOR_TEXT_MUTED),
+                    .color(pal.text_muted),
                     button(text(self.t("search.clear_search")).size(12))
-                        .style(theme::folder_chip_style(false))
+                        .style(theme::folder_chip_style(pal, false))
                         .on_press(Message::ClearHelpSearch)
                         .padding([4, 12]),
                 ]
@@ -66,7 +67,7 @@ impl WazooApp {
             .into()
         } else if matching_categories.len() == 1 {
             // When only a single category matches, display it full width
-            column![render_category_card(&matching_categories[0], &or_text)]
+            column![render_category_card(pal, &matching_categories[0], &or_text)]
                 .width(Length::Fill)
                 .into()
         } else {
@@ -77,18 +78,18 @@ impl WazooApp {
                 // Default systemic 2-column layout (Playback + Layout on Left; Drawers + Audio + System on Right)
                 for (idx, cat) in categories.iter().enumerate() {
                     if idx == 0 || idx == 2 {
-                        left_col = left_col.push(render_category_card(cat, &or_text));
+                        left_col = left_col.push(render_category_card(pal, cat, &or_text));
                     } else {
-                        right_col = right_col.push(render_category_card(cat, &or_text));
+                        right_col = right_col.push(render_category_card(pal, cat, &or_text));
                     }
                 }
             } else {
                 // Filtered results: distribute evenly across columns
                 for (idx, cat) in matching_categories.iter().enumerate() {
                     if idx % 2 == 0 {
-                        left_col = left_col.push(render_category_card(cat, &or_text));
+                        left_col = left_col.push(render_category_card(pal, cat, &or_text));
                     } else {
-                        right_col = right_col.push(render_category_card(cat, &or_text));
+                        right_col = right_col.push(render_category_card(pal, cat, &or_text));
                     }
                 }
             }
@@ -110,7 +111,7 @@ impl WazooApp {
         let search_input = text_input(&self.t("search.placeholder"), &self.modals.help_search)
             .id("help_search_input")
             .on_input(Message::HelpSearchChanged)
-            .style(theme::dark_input_style)
+            .style(theme::dark_input_style(pal))
             .size(12)
             .padding(iced::Padding {
                 top: 5.0,
@@ -124,7 +125,7 @@ impl WazooApp {
 
         if search_has_text {
             let clear_btn = button(text("✕").size(9))
-                .style(theme::search_clear_button_style)
+                .style(theme::search_clear_button_style(pal))
                 .on_press(Message::ClearHelpSearch)
                 .padding([1, 4]);
 
@@ -147,14 +148,15 @@ impl WazooApp {
             row![
                 container(text("⌨️").size(18))
                     .padding([4, 6])
-                    .style(|_theme: &Theme| container::Style {
-                        background: Some(iced::Background::Color(iced::Color::from_rgba(
-                            0.259, 0.722, 0.514, 0.15,
+                    .style(move |_theme: &Theme| container::Style {
+                        background: Some(iced::Background::Color(theme::with_alpha(
+                            pal.primary,
+                            0.15,
                         ))),
                         border: iced::Border {
-                            radius: 6.0.into(),
+                            radius: pal.radius(6.0).into(),
                             width: 1.0,
-                            color: iced::Color::from_rgba(0.259, 0.722, 0.514, 0.4),
+                            color: theme::with_alpha(pal.primary, 0.4),
                         },
                         ..Default::default()
                     }),
@@ -162,10 +164,10 @@ impl WazooApp {
                     text(self.t("help.title"))
                         .size(17)
                         .font(theme::FONT_BOLD)
-                        .color(iced::Color::WHITE),
+                        .color(pal.text),
                     text(self.t("help.subtitle"))
                         .size(11)
-                        .color(theme::COLOR_TEXT_MUTED),
+                        .color(pal.text_muted),
                 ]
                 .spacing(2),
             ]
@@ -176,7 +178,7 @@ impl WazooApp {
                 search_bar,
                 Space::new().width(Length::Fixed(8.0)),
                 button(text("✕").size(14))
-                    .style(theme::window_control_button_style)
+                    .style(theme::window_control_button_style(pal))
                     .on_press(Message::CloseHelpModal),
             ]
             .align_y(Alignment::Center),
@@ -197,7 +199,7 @@ impl WazooApp {
             .width(Length::Fixed(700.0)),
         )
         .padding(20)
-        .style(theme::modal_card_style);
+        .style(theme::modal_card_style(pal));
 
         Self::wrap_modal_with_backdrop(card, Message::CloseHelpModal)
     }
@@ -264,22 +266,20 @@ fn shortcut_matches(
     false
 }
 
-fn view_keycap(key_str: &str) -> Element<'static, Message> {
+fn view_keycap(pal: theme::ThemePalette, key_str: &str) -> Element<'static, Message> {
     container(
         text(key_str.to_string())
             .size(11)
             .font(theme::FONT_BOLD)
-            .color(iced::Color::from_rgb(0.95, 0.95, 0.95)),
+            .color(pal.text),
     )
     .padding([3, 7])
-    .style(|_theme: &Theme| container::Style {
-        background: Some(iced::Background::Color(iced::Color::from_rgb(
-            0.18, 0.18, 0.20,
-        ))),
+    .style(move |_theme: &Theme| container::Style {
+        background: Some(iced::Background::Color(pal.btn_bg)),
         border: iced::Border {
-            radius: 4.0.into(),
+            radius: pal.radius(4.0).into(),
             width: 1.0,
-            color: iced::Color::from_rgb(0.32, 0.32, 0.36),
+            color: pal.border_hover,
         },
         shadow: iced::Shadow {
             color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.45),
@@ -291,9 +291,13 @@ fn view_keycap(key_str: &str) -> Element<'static, Message> {
     .into()
 }
 
-fn render_key_display(display: &KeyDisplay, or_text: &str) -> Element<'static, Message> {
+fn render_key_display(
+    pal: theme::ThemePalette,
+    display: &KeyDisplay,
+    or_text: &str,
+) -> Element<'static, Message> {
     match display {
-        KeyDisplay::Single(k) => view_keycap(k),
+        KeyDisplay::Single(k) => view_keycap(pal, k),
         KeyDisplay::Alternatives(keys) => {
             let mut r = row![].spacing(5).align_y(Alignment::Center);
             for (idx, k) in keys.iter().enumerate() {
@@ -301,14 +305,14 @@ fn render_key_display(display: &KeyDisplay, or_text: &str) -> Element<'static, M
                     r = r.push(
                         text(or_text.to_string())
                             .size(10)
-                            .color(theme::COLOR_TEXT_MUTED),
+                            .color(pal.text_muted),
                     );
                 }
-                r = r.push(view_keycap(k));
+                r = r.push(view_keycap(pal, k));
             }
             r.into()
         }
-        KeyDisplay::Pair(k1, k2) => row![view_keycap(k1), view_keycap(k2)]
+        KeyDisplay::Pair(k1, k2) => row![view_keycap(pal, k1), view_keycap(pal, k2)]
             .spacing(4)
             .align_y(Alignment::Center)
             .into(),
@@ -316,36 +320,40 @@ fn render_key_display(display: &KeyDisplay, or_text: &str) -> Element<'static, M
             let mut r = row![].spacing(4).align_y(Alignment::Center);
             for (idx, k) in keys.iter().enumerate() {
                 if idx > 0 {
-                    r = r.push(text("+").size(10).color(theme::COLOR_TEXT_MUTED));
+                    r = r.push(text("+").size(10).color(pal.text_muted));
                 }
-                r = r.push(view_keycap(k));
+                r = r.push(view_keycap(pal, k));
             }
             r.into()
         }
     }
 }
 
-fn render_category_card(cat: &HelpCategory, or_text: &str) -> Element<'static, Message> {
+fn render_category_card(
+    pal: theme::ThemePalette,
+    cat: &HelpCategory,
+    or_text: &str,
+) -> Element<'static, Message> {
     let header = row![
         text(cat.icon).size(13),
         text(cat.title.clone())
             .size(12)
             .font(theme::FONT_BOLD)
-            .color(theme::COLOR_PRIMARY),
+            .color(pal.primary),
     ]
     .spacing(6)
     .align_y(Alignment::Center);
 
     let mut items_col = column![].spacing(6);
     for item in &cat.shortcuts {
-        let key_el = render_key_display(&item.key, or_text);
+        let key_el = render_key_display(pal, &item.key, or_text);
         let key_container = container(key_el)
             .width(Length::Fixed(110.0))
             .align_x(iced::alignment::Horizontal::Left);
 
         let desc_text = text(item.description.clone())
             .size(12)
-            .color(theme::COLOR_TEXT_DIM);
+            .color(pal.text_dim);
 
         items_col = items_col.push(
             row![
@@ -359,14 +367,15 @@ fn render_category_card(cat: &HelpCategory, or_text: &str) -> Element<'static, M
 
     container(column![header, items_col].spacing(8))
         .padding([11, 14])
-        .style(|_theme: &Theme| container::Style {
-            background: Some(iced::Background::Color(iced::Color::from_rgba(
-                0.14, 0.14, 0.15, 0.7,
+        .style(move |_theme: &Theme| container::Style {
+            background: Some(iced::Background::Color(theme::with_alpha(
+                pal.card_bg,
+                0.78,
             ))),
             border: iced::Border {
-                radius: 6.0.into(),
+                radius: pal.radius(6.0).into(),
                 width: 1.0,
-                color: iced::Color::from_rgb(0.24, 0.24, 0.26),
+                color: pal.border,
             },
             ..Default::default()
         })

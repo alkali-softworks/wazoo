@@ -16,7 +16,7 @@ impl WazooApp {
         let card = container(self.view_app_menu_list([8, 12]).spacing(4))
             .width(Length::Fixed(260.0))
             .padding(10)
-            .style(theme::modal_card_style);
+            .style(theme::modal_card_style(self.theme_palette));
 
         Self::wrap_modal_with_backdrop(card, Message::CloseMenuModal)
     }

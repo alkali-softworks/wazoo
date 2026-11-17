@@ -8,75 +8,82 @@ use super::colors::*;
 use iced::{Background, Border, Color, Shadow, Theme, Vector, overlay::menu, widget::text_input};
 
 // Text Input Style
-pub fn dark_input_style(_theme: &Theme, status: text_input::Status) -> text_input::Style {
-    let border_color = match status {
-        text_input::Status::Focused { .. } => COLOR_PRIMARY,
-        text_input::Status::Hovered => Color::from_rgb(0.35, 0.35, 0.35),
-        _ => Color::from_rgb(0.27, 0.27, 0.27),
-    };
-    text_input::Style {
-        background: Background::Color(Color::from_rgb(0.165, 0.165, 0.165)),
-        border: Border {
-            radius: 4.0.into(),
-            width: 1.0,
-            color: border_color,
-        },
-        icon: COLOR_TEXT_MUTED,
-        placeholder: COLOR_TEXT_MUTED,
-        value: Color::WHITE,
-        selection: Color::from_rgba(0.26, 0.72, 0.51, 0.4),
+pub fn dark_input_style(
+    pal: ThemePalette,
+) -> impl Fn(&Theme, text_input::Status) -> text_input::Style {
+    move |_theme: &Theme, status: text_input::Status| {
+        let border_color = match status {
+            text_input::Status::Focused { .. } => pal.primary,
+            text_input::Status::Hovered => pal.border_hover,
+            _ => pal.border,
+        };
+        text_input::Style {
+            background: Background::Color(pal.card_bg),
+            border: Border {
+                radius: pal.radius(4.0).into(),
+                width: 1.0,
+                color: border_color,
+            },
+            icon: pal.text_muted,
+            placeholder: pal.text_muted,
+            value: pal.text,
+            selection: with_alpha(pal.primary, 0.4),
+        }
     }
 }
 
 // Transparent Text Input (inside tag input box)
-pub fn transparent_input_style(_theme: &Theme, _status: text_input::Status) -> text_input::Style {
-    text_input::Style {
+pub fn transparent_input_style(
+    pal: ThemePalette,
+) -> impl Fn(&Theme, text_input::Status) -> text_input::Style {
+    move |_theme: &Theme, _status: text_input::Status| text_input::Style {
         background: Background::Color(Color::TRANSPARENT),
         border: Border {
             radius: 0.0.into(),
             width: 0.0,
             color: Color::TRANSPARENT,
         },
-        icon: Color::from_rgb8(0x71, 0x71, 0x7a),
-        placeholder: Color::from_rgb8(0x71, 0x71, 0x7a),
-        value: Color::WHITE,
-        selection: Color::from_rgba(0.26, 0.72, 0.51, 0.4),
+        icon: pal.text_muted,
+        placeholder: pal.text_muted,
+        value: pal.text,
+        selection: with_alpha(pal.primary, 0.4),
     }
 }
 
 pub fn dark_pick_list_style(
-    _theme: &Theme,
-    status: iced::widget::pick_list::Status,
-) -> iced::widget::pick_list::Style {
-    let border_color = match status {
-        iced::widget::pick_list::Status::Opened { .. } => COLOR_PRIMARY,
-        iced::widget::pick_list::Status::Hovered => Color::from_rgb(0.35, 0.35, 0.35),
-        _ => Color::from_rgb(0.27, 0.27, 0.27),
-    };
-    iced::widget::pick_list::Style {
-        text_color: Color::WHITE,
-        placeholder_color: COLOR_TEXT_MUTED,
-        handle_color: Color::from_rgb(0.7, 0.7, 0.7),
-        background: Background::Color(Color::from_rgb(0.165, 0.165, 0.165)),
-        border: Border {
-            radius: 4.0.into(),
-            width: 1.0,
-            color: border_color,
-        },
+    pal: ThemePalette,
+) -> impl Fn(&Theme, iced::widget::pick_list::Status) -> iced::widget::pick_list::Style {
+    move |_theme: &Theme, status: iced::widget::pick_list::Status| {
+        let border_color = match status {
+            iced::widget::pick_list::Status::Opened { .. } => pal.primary,
+            iced::widget::pick_list::Status::Hovered => pal.border_hover,
+            _ => pal.border,
+        };
+        iced::widget::pick_list::Style {
+            text_color: pal.text,
+            placeholder_color: pal.text_muted,
+            handle_color: pal.text_dim,
+            background: Background::Color(pal.card_bg),
+            border: Border {
+                radius: pal.radius(4.0).into(),
+                width: 1.0,
+                color: border_color,
+            },
+        }
     }
 }
 
-pub fn dark_pick_list_menu_style(_theme: &Theme) -> menu::Style {
-    menu::Style {
-        background: Background::Color(COLOR_MODAL_BG),
+pub fn dark_pick_list_menu_style(pal: ThemePalette) -> impl Fn(&Theme) -> menu::Style {
+    move |_theme: &Theme| menu::Style {
+        background: Background::Color(pal.modal_bg),
         border: Border {
-            radius: 6.0.into(),
+            radius: pal.radius(6.0).into(),
             width: 1.0,
-            color: COLOR_BORDER,
+            color: pal.border,
         },
-        text_color: Color::WHITE,
-        selected_text_color: Color::from_rgb(0.06, 0.06, 0.06),
-        selected_background: Background::Color(COLOR_PRIMARY),
+        text_color: pal.text,
+        selected_text_color: pal.primary_on_text,
+        selected_background: Background::Color(pal.primary),
         shadow: Shadow {
             color: Color::from_rgba(0.0, 0.0, 0.0, 0.6),
             offset: Vector::new(0.0, 6.0),

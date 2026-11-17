@@ -8,22 +8,24 @@ use super::badge::badge_with_reset;
 use crate::app::WazooApp;
 use crate::cursor;
 use crate::message::Message;
-use crate::theme;
+use crate::theme::{self, ThemePalette};
 use iced::{
     Alignment, Element, Length,
     widget::{Space, button, column, row, slider, text},
 };
 
 pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
+    let pal = app.theme_palette;
     let opacity_val = (app.settings.window_opacity * 100.0).round() as u32;
     let opacity_active = (app.settings.window_opacity - 1.0).abs() > 0.01;
     let opacity_group = column![
         row![
             text(app.t("settings.window_opacity"))
                 .size(14)
-                .color(theme::COLOR_TEXT_MUTED),
+                .color(pal.text_muted),
             Space::new().width(Length::Fill),
             badge_with_reset(
+                pal,
                 format!("{opacity_val}%"),
                 opacity_active,
                 Message::SetWindowOpacity(1.0)
@@ -37,7 +39,7 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 Message::SetWindowOpacity
             )
             .step(0.01_f32)
-            .style(theme::settings_slider_style)
+            .style(theme::settings_slider_style(pal))
             .width(Length::Fill),
         ),
     ]
@@ -49,9 +51,10 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         row![
             text(app.t("settings.buffer_duration"))
                 .size(14)
-                .color(theme::COLOR_TEXT_MUTED),
+                .color(pal.text_muted),
             Space::new().width(Length::Fill),
             badge_with_reset(
+                pal,
                 buffer_dur_str,
                 buffer_dur_active,
                 Message::SetBufferDuration(10)
@@ -65,7 +68,7 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 Message::SetBufferDuration
             )
             .step(1_u32)
-            .style(theme::settings_slider_style)
+            .style(theme::settings_slider_style(pal))
             .width(Length::Fill),
         ),
     ]
@@ -77,9 +80,10 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         row![
             text(app.t("settings.buffer_size"))
                 .size(14)
-                .color(theme::COLOR_TEXT_MUTED),
+                .color(pal.text_muted),
             Space::new().width(Length::Fill),
             badge_with_reset(
+                pal,
                 buffer_size_str,
                 buffer_size_active,
                 Message::SetBufferSize(32)
@@ -89,7 +93,7 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         cursor::PointerCursor::new(
             slider(8..=512, app.settings.buffer_size_mb, Message::SetBufferSize)
                 .step(8_u32)
-                .style(theme::settings_slider_style)
+                .style(theme::settings_slider_style(pal))
                 .width(Length::Fill),
         ),
     ]
@@ -98,6 +102,7 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     let is_pinned = app.settings.is_always_on_top;
     let always_on_top_group = system_toggle_button(
         app,
+        pal,
         if is_pinned { "📌" } else { "📍" },
         app.t("settings.always_on_top"),
         app.t("settings.always_on_top_desc"),
@@ -113,6 +118,7 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     };
     let default_player_group = system_toggle_button(
         app,
+        pal,
         if is_default { "🎬" } else { "🎞️" },
         app.t("settings.default_player"),
         default_player_desc,
@@ -127,9 +133,10 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         row![
             text(app.t("settings.flip_interval"))
                 .size(14)
-                .color(theme::COLOR_TEXT_MUTED),
+                .color(pal.text_muted),
             Space::new().width(Length::Fill),
             badge_with_reset(
+                pal,
                 flip_interval_str,
                 flip_interval_active,
                 Message::SetFlipInterval(wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS),
@@ -143,7 +150,7 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 |secs| Message::SetFlipInterval(secs as u64),
             )
             .step(1_u32)
-            .style(theme::settings_slider_style)
+            .style(theme::settings_slider_style(pal))
             .width(Length::Fill),
         ),
     ]
@@ -152,6 +159,7 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
     let is_standby = app.settings.use_standby_player;
     let standby_player_group = system_toggle_button(
         app,
+        pal,
         if is_standby { "⚡" } else { "💤" },
         app.t("settings.standby_player"),
         app.t("settings.standby_player_desc"),
@@ -174,6 +182,7 @@ pub fn view_system_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
 
 fn system_toggle_button<'a>(
     app: &'a WazooApp,
+    pal: ThemePalette,
     icon: &'static str,
     title: String,
     desc: String,
@@ -194,54 +203,17 @@ fn system_toggle_button<'a>(
                     text(title)
                         .size(13)
                         .font(theme::FONT_BOLD)
-                        .color(if is_active {
-                            theme::COLOR_PRIMARY
-                        } else {
-                            iced::Color::WHITE
-                        }),
-                    text(desc).size(11).color(theme::COLOR_TEXT_MUTED),
+                        .color(if is_active { pal.primary } else { pal.text }),
+                    text(desc).size(11).color(pal.text_muted),
                 ]
                 .spacing(2),
                 Space::new().width(Length::Fill),
-                badge_with_reset(
-                    badge_text,
-                    is_active,
-                    toggle_msg.clone(),
-                ),
+                badge_with_reset(pal, badge_text, is_active, toggle_msg.clone()),
             ]
             .spacing(12)
             .align_y(Alignment::Center),
         )
-        .style(move |_theme: &iced::Theme, status| {
-            let bg = if is_active {
-                match status {
-                    button::Status::Hovered => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.22),
-                    button::Status::Pressed => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.3),
-                    _ => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.12),
-                }
-            } else {
-                match status {
-                    button::Status::Hovered => theme::COLOR_BTN_HOVER,
-                    button::Status::Pressed => iced::Color::from_rgb(0.15, 0.15, 0.15),
-                    _ => theme::COLOR_BTN_BG,
-                }
-            };
-            button::Style {
-                background: Some(iced::Background::Color(bg)),
-                text_color: iced::Color::WHITE,
-                border: iced::Border {
-                    radius: 8.0.into(),
-                    width: 1.0,
-                    color: if is_active {
-                        theme::COLOR_PRIMARY
-                    } else {
-                        iced::Color::from_rgb(0.25, 0.25, 0.28)
-                    },
-                },
-                shadow: iced::Shadow::default(),
-                ..Default::default()
-            }
-        })
+        .style(theme::settings_toggle_card_style(pal, is_active))
         .on_press(toggle_msg)
         .padding([12, 16])
         .width(Length::Fill),

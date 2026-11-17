@@ -17,6 +17,7 @@ use iced::{
 
 impl WazooApp {
     pub fn view_quick_picker_modal(&self) -> Element<'_, Message> {
+        let pal = self.theme_palette;
         let (folder_opt, candidate_videos) = self.quick_picker_videos();
 
         // 1. Header Row
@@ -26,7 +27,6 @@ impl WazooApp {
             None => self.t("quick_picker.title"),
         };
 
-        // Filter candidate videos by search query if any
         let query = self.modals.quick_picker_search.trim().to_lowercase();
         let filtered_videos: Vec<(String, String)> = if query.is_empty() {
             candidate_videos.clone()
@@ -42,9 +42,9 @@ impl WazooApp {
                     if is_whole_anchored {
                         crate::views::file_picker::pattern_matches(&query, &t_lower)
                     } else {
-                        words.iter().all(|w| {
-                            crate::views::file_picker::pattern_matches(w, &t_lower)
-                        })
+                        words
+                            .iter()
+                            .all(|w| crate::views::file_picker::pattern_matches(w, &t_lower))
                     }
                 })
                 .cloned()
@@ -57,24 +57,24 @@ impl WazooApp {
             text("📁").size(18),
             text(display_folder_name)
                 .size(18)
-                .color(iced::Color::WHITE),
+                .color(pal.text),
             container(
                 text(format::format_number(count))
                     .size(12)
-                    .color(theme::COLOR_TEXT_DIM)
+                    .color(pal.text_dim)
             )
             .padding([2, 8])
-            .style(|_theme: &Theme| container::Style {
-                background: Some(iced::Background::Color(theme::COLOR_BTN_BG)),
+            .style(move |_theme: &Theme| container::Style {
+                background: Some(iced::Background::Color(pal.btn_bg)),
                 border: iced::Border {
-                    radius: 10.0.into(),
+                    radius: pal.radius(10.0).into(),
                     ..Default::default()
                 },
                 ..Default::default()
             }),
             Space::new().width(Length::Fill),
             button(text("✕").size(14))
-                .style(theme::window_control_button_style)
+                .style(theme::window_control_button_style(pal))
                 .on_press(Message::CloseQuickPickerModal),
         ]
         .spacing(10)
@@ -89,7 +89,7 @@ impl WazooApp {
         .id("quick_picker_search_input")
         .on_input(Message::QuickPickerSearchChanged)
         .on_submit(Message::QuickPickerSubmit)
-        .style(theme::dark_input_style)
+        .style(theme::dark_input_style(pal))
         .padding(iced::Padding {
             top: 8.0,
             right: 28.0,
@@ -102,7 +102,7 @@ impl WazooApp {
 
         if !search_is_empty {
             let clear_btn = button(text("✕").size(11))
-                .style(theme::search_clear_button_style)
+                .style(theme::search_clear_button_style(pal))
                 .on_press(Message::ClearQuickPickerSearch)
                 .padding([2, 5]);
 
@@ -127,7 +127,7 @@ impl WazooApp {
                 column![
                     text(self.t("wazoo.no_files_found"))
                         .size(15)
-                        .color(theme::COLOR_TEXT_DIM),
+                        .color(pal.text_dim),
                 ]
                 .align_x(Alignment::Center),
             )
@@ -151,11 +151,9 @@ impl WazooApp {
                 let mut row_items = row![
                     text("▶")
                         .size(11)
-                        .color(theme::COLOR_PRIMARY)
+                        .color(pal.primary)
                         .width(Length::Fixed(14.0)),
-                    text(title)
-                        .size(13)
-                        .color(iced::Color::WHITE),
+                    text(title).size(13).color(pal.text),
                 ]
                 .spacing(8)
                 .align_y(Alignment::Center);
@@ -163,14 +161,15 @@ impl WazooApp {
                 if let Some(b) = badge_label {
                     row_items = row_items.push(Space::new().width(Length::Fill));
                     row_items = row_items.push(
-                        container(text(b).size(10).color(theme::COLOR_TEXT_MUTED))
+                        container(text(b).size(10).color(pal.text_muted))
                             .padding([2, 6])
-                            .style(|_| container::Style {
-                                background: Some(iced::Background::Color(iced::Color::from_rgba(
-                                    1.0, 1.0, 1.0, 0.08,
+                            .style(move |_| container::Style {
+                                background: Some(iced::Background::Color(theme::with_alpha(
+                                    pal.text,
+                                    0.08,
                                 ))),
                                 border: iced::Border {
-                                    radius: 4.0.into(),
+                                    radius: pal.radius(4.0).into(),
                                     ..Default::default()
                                 },
                                 ..Default::default()
@@ -179,7 +178,7 @@ impl WazooApp {
                 }
 
                 let item_btn = button(row_items)
-                    .style(theme::bookmark_item_button_style)
+                    .style(theme::bookmark_item_button_style(pal))
                     .padding([8, 12])
                     .width(Length::Fill)
                     .on_press(Message::PlayQuickPickerFile(path));
@@ -208,7 +207,7 @@ impl WazooApp {
                 .width(Length::Fixed(580.0)),
         )
         .padding(20)
-        .style(theme::modal_card_style);
+        .style(theme::modal_card_style(pal));
 
         Self::wrap_modal_with_backdrop(card, Message::CloseQuickPickerModal)
     }

@@ -13,13 +13,14 @@
 use crate::app::WazooApp;
 use crate::cursor;
 use crate::message::Message;
-use crate::theme;
+use crate::theme::{self, ThemePalette};
 use iced::{
     Alignment, Element, Length, Theme,
     widget::{Space, button, column, container, row, text},
 };
 
 pub fn view_filters_tab(app: &WazooApp) -> Element<'_, Message> {
+    let pal = app.theme_palette;
     let master_active = app.settings.filters_enabled;
     let shortcut_hint = app.settings.keybinds.toggle_filters.to_uppercase();
 
@@ -33,29 +34,27 @@ pub fn view_filters_tab(app: &WazooApp) -> Element<'_, Message> {
                         text(app.t("settings.master_filters"))
                             .size(14)
                             .font(theme::FONT_BOLD)
-                            .color(if master_active {
-                                theme::COLOR_PRIMARY
-                            } else {
-                                iced::Color::WHITE
-                            }),
+                            .color(if master_active { pal.primary } else { pal.text }),
                         Space::new().width(Length::Fixed(6.0)),
                         container(
                             text(format!("[{}]", shortcut_hint))
                                 .size(10)
                                 .font(theme::FONT_BOLD)
                                 .color(if master_active {
-                                    theme::COLOR_PRIMARY
+                                    pal.primary
                                 } else {
-                                    theme::COLOR_TEXT_DIM
+                                    pal.text_dim
                                 })
                         )
                         .padding([1, 5])
-                        .style(|_theme: &Theme| container::Style {
-                            background: Some(iced::Background::Color(iced::Color::from_rgba(0.0, 0.0, 0.0, 0.3))),
+                        .style(move |_theme: &Theme| container::Style {
+                            background: Some(iced::Background::Color(iced::Color::from_rgba(
+                                0.0, 0.0, 0.0, 0.3
+                            ))),
                             border: iced::Border {
-                                radius: 4.0.into(),
+                                radius: pal.radius(4.0).into(),
                                 width: 1.0,
-                                color: iced::Color::from_rgba(1.0, 1.0, 1.0, 0.1),
+                                color: theme::with_alpha(pal.text, 0.12),
                             },
                             ..Default::default()
                         }),
@@ -63,45 +62,16 @@ pub fn view_filters_tab(app: &WazooApp) -> Element<'_, Message> {
                     .align_y(Alignment::Center),
                     text(app.t("settings.master_filters_desc"))
                         .size(11)
-                        .color(theme::COLOR_TEXT_MUTED),
+                        .color(pal.text_muted),
                 ]
                 .spacing(2),
                 Space::new().width(Length::Fill),
-                view_status_pill(master_active, true),
+                view_status_pill(pal, master_active, true),
             ]
             .spacing(12)
             .align_y(Alignment::Center),
         )
-        .style(move |_theme: &iced::Theme, status| {
-            let bg = if master_active {
-                match status {
-                    button::Status::Hovered => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.25),
-                    button::Status::Pressed => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.35),
-                    _ => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.14),
-                }
-            } else {
-                match status {
-                    button::Status::Hovered => theme::COLOR_BTN_HOVER,
-                    button::Status::Pressed => iced::Color::from_rgb(0.15, 0.15, 0.15),
-                    _ => theme::COLOR_BTN_BG,
-                }
-            };
-            button::Style {
-                background: Some(iced::Background::Color(bg)),
-                text_color: iced::Color::WHITE,
-                border: iced::Border {
-                    radius: 8.0.into(),
-                    width: 1.0,
-                    color: if master_active {
-                        theme::COLOR_PRIMARY
-                    } else {
-                        iced::Color::from_rgb(0.25, 0.25, 0.28)
-                    },
-                },
-                shadow: iced::Shadow::default(),
-                ..Default::default()
-            }
-        })
+        .style(theme::settings_toggle_card_style(pal, master_active))
         .on_press(Message::ToggleFilters)
         .padding([12, 14])
         .width(Length::Fill),
@@ -110,6 +80,7 @@ pub fn view_filters_tab(app: &WazooApp) -> Element<'_, Message> {
     // 2. Individual Filter Cards
     let crt_active = app.settings.filter_crt;
     let crt_card = build_filter_card(
+        pal,
         if crt_active { "📺" } else { "🖥" },
         app.t("settings.crt_filter"),
         app.t("settings.crt_filter_desc"),
@@ -120,6 +91,7 @@ pub fn view_filters_tab(app: &WazooApp) -> Element<'_, Message> {
 
     let wavy_active = app.settings.filter_wavy;
     let wavy_card = build_filter_card(
+        pal,
         "🌊",
         app.t("settings.wavy_filter"),
         app.t("settings.wavy_filter_desc"),
@@ -130,6 +102,7 @@ pub fn view_filters_tab(app: &WazooApp) -> Element<'_, Message> {
 
     let fog_active = app.settings.filter_fog;
     let fog_card = build_filter_card(
+        pal,
         "🌫️",
         app.t("settings.fog_filter"),
         app.t("settings.fog_filter_desc"),
@@ -145,6 +118,7 @@ pub fn view_filters_tab(app: &WazooApp) -> Element<'_, Message> {
 
 /// Renders a toggleable filter card with icon, title, description, and status pill.
 fn build_filter_card<'a>(
+    pal: ThemePalette,
     icon: &'static str,
     title: String,
     desc: String,
@@ -161,17 +135,17 @@ fn build_filter_card<'a>(
                         .size(13)
                         .font(theme::FONT_BOLD)
                         .color(if is_active && master_active {
-                            theme::COLOR_PRIMARY
+                            pal.primary
                         } else if is_active {
                             iced::Color::from_rgb(0.7, 0.85, 1.0)
                         } else {
-                            iced::Color::WHITE
+                            pal.text
                         }),
-                    text(desc).size(11).color(theme::COLOR_TEXT_MUTED),
+                    text(desc).size(11).color(pal.text_muted),
                 ]
                 .spacing(2),
                 Space::new().width(Length::Fill),
-                view_status_pill(is_active, master_active),
+                view_status_pill(pal, is_active, master_active),
             ]
             .spacing(12)
             .align_y(Alignment::Center),
@@ -179,9 +153,9 @@ fn build_filter_card<'a>(
         .style(move |_theme: &iced::Theme, status| {
             let bg = if is_active && master_active {
                 match status {
-                    button::Status::Hovered => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.22),
-                    button::Status::Pressed => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.3),
-                    _ => iced::Color::from_rgba(0.26, 0.72, 0.51, 0.10),
+                    button::Status::Hovered => theme::with_alpha(pal.primary, 0.22),
+                    button::Status::Pressed => theme::with_alpha(pal.primary, 0.30),
+                    _ => theme::with_alpha(pal.primary, 0.10),
                 }
             } else if is_active {
                 match status {
@@ -191,23 +165,23 @@ fn build_filter_card<'a>(
                 }
             } else {
                 match status {
-                    button::Status::Hovered => theme::COLOR_BTN_HOVER,
-                    button::Status::Pressed => iced::Color::from_rgb(0.15, 0.15, 0.15),
-                    _ => theme::COLOR_BTN_BG,
+                    button::Status::Hovered => pal.btn_hover,
+                    button::Status::Pressed => pal.btn_pressed,
+                    _ => pal.btn_bg,
                 }
             };
             button::Style {
                 background: Some(iced::Background::Color(bg)),
-                text_color: iced::Color::WHITE,
+                text_color: pal.text,
                 border: iced::Border {
-                    radius: 8.0.into(),
+                    radius: pal.radius(8.0).into(),
                     width: 1.0,
                     color: if is_active && master_active {
-                        theme::COLOR_PRIMARY
+                        pal.primary
                     } else if is_active {
                         iced::Color::from_rgb(0.3, 0.45, 0.6)
                     } else {
-                        iced::Color::from_rgb(0.25, 0.25, 0.28)
+                        pal.border
                     },
                 },
                 shadow: iced::Shadow::default(),
@@ -222,22 +196,26 @@ fn build_filter_card<'a>(
 }
 
 /// Renders a neat ON/OFF pill badge.
-fn view_status_pill<'a>(is_active: bool, master_active: bool) -> Element<'a, Message> {
+fn view_status_pill<'a>(
+    pal: ThemePalette,
+    is_active: bool,
+    master_active: bool,
+) -> Element<'a, Message> {
     let pill_text = if is_active { "ON" } else { "OFF" };
     let text_color = if is_active && master_active {
-        theme::COLOR_PRIMARY
+        pal.primary
     } else if is_active {
         iced::Color::from_rgb(0.7, 0.85, 1.0)
     } else {
-        theme::COLOR_TEXT_DIM
+        pal.text_dim
     };
 
     let border_color = if is_active && master_active {
-        theme::COLOR_PRIMARY_BORDER
+        pal.primary_border
     } else if is_active {
         iced::Color::from_rgba(0.4, 0.6, 0.9, 0.5)
     } else {
-        theme::COLOR_BORDER
+        pal.border
     };
 
     container(
@@ -250,11 +228,11 @@ fn view_status_pill<'a>(is_active: bool, master_active: bool) -> Element<'a, Mes
             })
             .color(text_color),
     )
-    .padding([3, 10])
+    .padding([2, 10])
     .style(move |_theme: &Theme| container::Style {
-        background: Some(iced::Background::Color(theme::COLOR_CARD_BG)),
+        background: Some(iced::Background::Color(pal.card_bg)),
         border: iced::Border {
-            radius: 4.0.into(),
+            radius: pal.radius(12.0).into(),
             width: 1.0,
             color: border_color,
         },

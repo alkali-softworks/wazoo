@@ -95,11 +95,13 @@ pub enum SettingsTab {
     Crt,
     Cube,
     Plex,
+    Theme,
     System,
 }
 
 pub struct WazooApp {
     pub settings: WazooSettings,
+    pub theme_palette: crate::theme::ThemePalette,
     pub config_mgr: ConfigManager,
     pub db: Database,
     pub players: PlayerList,
@@ -196,7 +198,12 @@ impl WazooApp {
     }
 
     pub fn theme(&self) -> Theme {
-        Theme::Dark
+        self.theme_palette.to_iced_theme()
+    }
+
+    pub fn sync_theme_palette(&mut self) {
+        self.settings.theme.clamp_all();
+        self.theme_palette = crate::theme::ThemePalette::from_settings(&self.settings.theme);
     }
 
     #[inline]

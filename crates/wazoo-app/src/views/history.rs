@@ -19,6 +19,7 @@ use iced::{
 
 impl WazooApp {
     pub fn view_history_drawer(&self) -> Element<'_, Message> {
+        let pal = self.theme_palette;
         let filter = self.drawers.history_search.trim().to_lowercase();
 
         // 1. Header row
@@ -29,7 +30,7 @@ impl WazooApp {
                     weight: iced::font::Weight::Bold,
                     ..Default::default()
                 })
-                .color(iced::Color::WHITE),
+                .color(pal.text),
         ]
         .spacing(8)
         .align_y(Alignment::Center);
@@ -46,7 +47,7 @@ impl WazooApp {
                 .size(11),
             )
             .padding([2, 8])
-            .style(theme::transcript_count_badge_style);
+            .style(theme::transcript_count_badge_style(pal));
             header_left = header_left.push(badge);
         }
 
@@ -57,7 +58,7 @@ impl WazooApp {
         if !self.drawers.play_history.is_empty() {
             header_row = header_row.push(
                 button(text(self.t("history.clear")).size(11))
-                    .style(theme::tag_delete_button_style)
+                    .style(theme::tag_delete_button_style(pal))
                     .on_press(Message::ClearPlayHistory)
                     .padding([3, 8]),
             );
@@ -65,7 +66,7 @@ impl WazooApp {
 
         header_row = header_row.push(
             button(text("✕").size(14))
-                .style(theme::window_control_button_style)
+                .style(theme::window_control_button_style(pal))
                 .on_press(Message::CloseHistoryDrawer),
         );
 
@@ -75,7 +76,7 @@ impl WazooApp {
             &self.drawers.history_search,
         )
         .on_input(Message::HistorySearchChanged)
-        .style(theme::dark_input_style)
+        .style(theme::dark_input_style(pal))
         .padding(8);
 
         // 3. History list (reverse-chronological: most recent at top)
@@ -102,7 +103,7 @@ impl WazooApp {
                 container(
                     text(self.t("history.empty"))
                         .size(13)
-                        .color(theme::COLOR_TEXT_MUTED),
+                        .color(pal.text_muted),
                 )
                 .padding([20, 0])
                 .center_x(Length::Fill),
@@ -115,7 +116,7 @@ impl WazooApp {
                         &[("query", &self.drawers.history_search)],
                     ))
                     .size(13)
-                    .color(theme::COLOR_TEXT_MUTED),
+                    .color(pal.text_muted),
                 )
                 .padding([20, 0])
                 .center_x(Length::Fill),
@@ -123,23 +124,22 @@ impl WazooApp {
         } else {
             // Render in reverse chronological order
             for (idx, item) in filtered_items.into_iter().rev() {
-                let item_number = idx + 1; // 1-based original index
+                let item_number = idx + 1;
                 let p_clone = item.path.clone();
 
-                let mut item_info = column![text(&item.title).size(13).color(iced::Color::WHITE),]
+                let mut item_info = column![text(&item.title).size(13).color(pal.text),]
                     .spacing(2)
                     .width(Length::Fill);
 
                 if !item.folder.is_empty() {
-                    item_info =
-                        item_info.push(text(&item.folder).size(11).color(theme::COLOR_TEXT_MUTED));
+                    item_info = item_info.push(text(&item.folder).size(11).color(pal.text_muted));
                 }
 
                 let row_content = row![
                     container(
                         text(format!("#{}", item_number))
                             .size(11)
-                            .color(theme::COLOR_PRIMARY)
+                            .color(pal.primary)
                     )
                     .width(Length::Fixed(36.0)),
                     item_info,
@@ -148,7 +148,7 @@ impl WazooApp {
                 .align_y(Alignment::Center);
 
                 let item_btn = button(row_content)
-                    .style(theme::menu_item_style)
+                    .style(theme::menu_item_style(pal))
                     .on_press(Message::PlayFileInFocused(p_clone))
                     .padding([6, 10])
                     .width(Length::Fill);
@@ -160,7 +160,7 @@ impl WazooApp {
         let scrollable_list = container(list_col)
             .padding(iced::Padding {
                 top: 0.0,
-                right: 16.0, // Dedicated gutter so vertical scrollbar never overlaps text
+                right: 16.0,
                 bottom: 0.0,
                 left: 0.0,
             })
@@ -180,7 +180,7 @@ impl WazooApp {
         container(content)
             .width(Length::Fixed(420.0))
             .height(Length::Fill)
-            .style(theme::file_picker_drawer_style)
+            .style(theme::file_picker_drawer_style(pal))
             .into()
     }
 }

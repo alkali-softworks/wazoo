@@ -352,6 +352,17 @@ impl WazooApp {
             | Message::SetCrtCornerRounding(_)
             | Message::ApplyCrtPreset(_)
             | Message::ResetCrtSettings
+            | Message::SelectThemeColorTarget(_)
+            | Message::SetThemeColorHsv(_, _, _, _)
+            | Message::CommitThemeColor
+            | Message::ThemeHexInputChanged(_, _)
+            | Message::ResetThemeColor(_)
+            | Message::SetThemeHudOpacity(_)
+            | Message::SetThemeCornerRadius(_)
+            | Message::SetThemeFocusRingWidth(_)
+            | Message::ApplyThemePreset(_)
+            | Message::RandomizeTheme
+            | Message::ResetThemeSettings
             | Message::ToggleWavyFilter
             | Message::SetWavyFilter(_)
             | Message::ToggleFogFilter

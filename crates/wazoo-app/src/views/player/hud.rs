@@ -25,6 +25,7 @@ use wazoo_core::PlaybackMode;
 
 impl WazooApp {
     pub fn view_title_pill<'a>(&self, path: &str, alpha: f32) -> Element<'a, Message> {
+        let pal = self.theme_palette;
         let meta = self.get_metadata_for_path(path);
         let (primary, secondary, badges) = if let Some(m) = meta {
             let p = if let Some(ref st) = m.series_title {
@@ -76,7 +77,7 @@ impl WazooApp {
                     weight: iced::font::Weight::Bold,
                     ..Default::default()
                 })
-                .color(theme::with_alpha(iced::Color::WHITE, alpha))
+                .color(theme::with_alpha(pal.hud_text, alpha))
         ]
         .spacing(4);
 
@@ -88,10 +89,7 @@ impl WazooApp {
                         weight: iced::font::Weight::Semibold,
                         ..Default::default()
                     })
-                    .color(theme::with_alpha(
-                        iced::Color::from_rgb(0.90, 0.90, 0.94),
-                        alpha,
-                    )),
+                    .color(theme::with_alpha(pal.hud_text, 0.88 * alpha)),
             );
         }
 
@@ -106,15 +104,16 @@ impl WazooApp {
                                 weight: iced::font::Weight::Medium,
                                 ..Default::default()
                             })
-                            .color(theme::with_alpha(iced::Color::WHITE, alpha)),
+                            .color(theme::with_alpha(pal.hud_text, alpha)),
                     )
                     .padding([2, 6])
                     .style(move |_| container::Style {
-                        background: Some(iced::Background::Color(iced::Color::from_rgba(
-                            1.0, 1.0, 1.0, 0.12 * alpha,
+                        background: Some(iced::Background::Color(theme::with_alpha(
+                            pal.hud_text,
+                            0.12 * alpha,
                         ))),
                         border: iced::Border {
-                            radius: 4.0.into(),
+                            radius: pal.radius(4.0).into(),
                             ..Default::default()
                         },
                         ..Default::default()
@@ -134,7 +133,7 @@ impl WazooApp {
                 bottom: 10.0,
                 left: 16.0,
             })
-            .style(theme::title_pill_button_style_with_alpha(alpha));
+            .style(theme::title_pill_button_style_with_alpha(pal, alpha));
 
         if !query.is_empty() {
             pill_btn = pill_btn.on_press(Message::SetActiveQuery(query));
@@ -144,13 +143,15 @@ impl WazooApp {
     }
 
     pub(crate) fn view_loading_spinner<'a>(&self) -> Element<'a, Message> {
+        let pal = self.theme_palette;
         let angle = self.overlay.spinner_angle() as u32;
+        let accent_hex = pal.accent_hex();
         let spinner_svg = format!(
             r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none">
 <circle cx="18" cy="18" r="14" stroke="rgba(255,255,255,0.15)" stroke-width="3"/>
-<path d="M18 4 A14 14 0 0 1 32 18" stroke="#42b883" stroke-width="3" stroke-linecap="round" transform="rotate({} 18 18)"/>
+<path d="M18 4 A14 14 0 0 1 32 18" stroke="{}" stroke-width="3" stroke-linecap="round" transform="rotate({} 18 18)"/>
 </svg>"##,
-            angle
+            accent_hex, angle
         );
 
         let loading_card = container(
@@ -160,20 +161,21 @@ impl WazooApp {
                     .height(Length::Fixed(40.0)),
                 text(self.t("common.loading"))
                     .size(13)
-                    .color(iced::Color::from_rgb(0.9, 0.9, 0.9)),
+                    .color(pal.hud_text),
             ]
             .spacing(12)
             .align_x(Alignment::Center),
         )
         .padding([16, 24])
-        .style(|_theme: &Theme| container::Style {
-            background: Some(iced::Background::Color(iced::Color::from_rgba(
-                0.08, 0.08, 0.08, 0.88,
+        .style(move |_theme: &Theme| container::Style {
+            background: Some(iced::Background::Color(theme::with_alpha(
+                pal.hud_bg,
+                pal.hud_opacity,
             ))),
             border: iced::Border {
-                radius: 12.0.into(),
+                radius: pal.radius(12.0).into(),
                 width: 1.0,
-                color: iced::Color::from_rgba(0.26, 0.72, 0.51, 0.4),
+                color: theme::with_alpha(pal.primary, 0.4),
             },
             shadow: iced::Shadow {
                 color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.5),
@@ -200,6 +202,7 @@ impl WazooApp {
         video_x: f32,
         video_y: f32,
     ) -> Element<'a, Message> {
+        let pal = self.theme_palette;
         let player_id = p.id;
         let pos = p.position();
         let dur = p.duration();
@@ -261,7 +264,7 @@ impl WazooApp {
         })
         .step(0.001_f32)
         .height(24.0)
-        .style(theme::progress_slider_style_with_alpha(overlay_alpha))
+        .style(theme::progress_slider_style_with_alpha(pal, overlay_alpha))
         .width(Length::Fill);
 
         let time_display = theme::diffuse_shadowed_text(time_str, 14, overlay_alpha);
@@ -276,28 +279,37 @@ impl WazooApp {
             ),
         );
 
+        let hud_icon_col = theme::with_alpha(pal.hud_text, overlay_alpha);
         let play_pause_icon = if p.state.is_playing {
             svg(svg::Handle::from_memory(SVG_PLAYER_PAUSE))
                 .width(Length::Fixed(20.0))
                 .height(Length::Fixed(20.0))
-                .opacity(overlay_alpha)
+                .style(move |_, _| svg::Style {
+                    color: Some(hud_icon_col),
+                })
         } else {
             svg(svg::Handle::from_memory(SVG_PLAYER_PLAY))
                 .width(Length::Fixed(20.0))
                 .height(Length::Fixed(20.0))
-                .opacity(overlay_alpha)
+                .style(move |_, _| svg::Style {
+                    color: Some(hud_icon_col),
+                })
         };
 
         let volume_icon = if p.state.is_muted {
             svg(svg::Handle::from_memory(SVG_PLAYER_MUTE))
                 .width(Length::Fixed(20.0))
                 .height(Length::Fixed(20.0))
-                .opacity(overlay_alpha)
+                .style(move |_, _| svg::Style {
+                    color: Some(hud_icon_col),
+                })
         } else {
             svg(svg::Handle::from_memory(SVG_PLAYER_VOLUME))
                 .width(Length::Fixed(20.0))
                 .height(Length::Fixed(20.0))
-                .opacity(overlay_alpha)
+                .style(move |_, _| svg::Style {
+                    color: Some(hud_icon_col),
+                })
         };
 
         let is_shuffle = p.shuffle;
@@ -305,23 +317,31 @@ impl WazooApp {
             svg(svg::Handle::from_memory(SVG_PLAYER_SHUFFLE))
                 .width(Length::Fixed(20.0))
                 .height(Length::Fixed(20.0))
-                .opacity(overlay_alpha)
+                .style(move |_, _| svg::Style {
+                    color: Some(hud_icon_col),
+                })
         } else {
             svg(svg::Handle::from_memory(SVG_PLAYER_REPEAT))
                 .width(Length::Fixed(20.0))
                 .height(Length::Fixed(20.0))
-                .opacity(overlay_alpha)
+                .style(move |_, _| svg::Style {
+                    color: Some(hud_icon_col),
+                })
         };
 
         let prev_icon = svg(svg::Handle::from_memory(SVG_PLAYER_PREV))
             .width(Length::Fixed(20.0))
             .height(Length::Fixed(20.0))
-            .opacity(overlay_alpha);
+            .style(move |_, _| svg::Style {
+                color: Some(hud_icon_col),
+            });
 
         let next_icon = svg(svg::Handle::from_memory(SVG_PLAYER_NEXT))
             .width(Length::Fixed(20.0))
             .height(Length::Fixed(20.0))
-            .opacity(overlay_alpha);
+            .style(move |_, _| svg::Style {
+                color: Some(hud_icon_col),
+            });
 
         let mut controls_row = row![
             button(
@@ -333,6 +353,7 @@ impl WazooApp {
                 .center_y(Length::Shrink),
             )
             .style(theme::cc_button_style_with_alpha(
+                pal,
                 self.subtitles_enabled,
                 overlay_alpha
             ))
@@ -347,13 +368,17 @@ impl WazooApp {
                 .center_y(Length::Shrink),
             )
             .style(theme::transcript_button_style_with_alpha(
+                pal,
                 self.drawers.show_transcript && is_focused,
                 overlay_alpha
             ))
             .on_press(Message::ToggleTranscriptForPlayer(player_id))
             .padding([4, 8]),
             button(volume_icon)
-                .style(theme::player_control_button_style_with_alpha(overlay_alpha))
+                .style(theme::player_control_button_style_with_alpha(
+                    pal,
+                    overlay_alpha
+                ))
                 .on_press(Message::TogglePlayerMute(player_id))
                 .padding([4, 6]),
             cursor::PointerCursor::new(
@@ -361,7 +386,7 @@ impl WazooApp {
                     Message::SetVolume(player_id, v as f64)
                 },)
                 .step(0.01_f32)
-                .style(theme::volume_slider_style_with_alpha(overlay_alpha))
+                .style(theme::volume_slider_style_with_alpha(pal, overlay_alpha))
                 .width(Length::Fixed(80.0)),
             ),
         ]
@@ -390,6 +415,7 @@ impl WazooApp {
                     .center_y(Length::Shrink),
             )
             .style(theme::audio_track_button_style_with_alpha(
+                pal,
                 is_audio_menu_open,
                 overlay_alpha,
             ))
@@ -402,10 +428,13 @@ impl WazooApp {
         let mut controls_row = controls_row.push(Space::new().width(Length::Fill));
 
         if self.settings.playback_mode == PlaybackMode::Flip {
+            let flip_col = theme::with_alpha(pal.primary, overlay_alpha);
             let flip_icon = svg(svg::Handle::from_memory(SVG_PLAYER_FLIP))
                 .width(Length::Fixed(18.0))
                 .height(Length::Fixed(18.0))
-                .opacity(overlay_alpha);
+                .style(move |_, _| svg::Style {
+                    color: Some(flip_col),
+                });
 
             let flip_content = row![
                 flip_icon,
@@ -421,7 +450,10 @@ impl WazooApp {
 
             controls_row = controls_row.push(cursor::PointerCursor::new(
                 button(flip_content)
-                    .style(theme::player_control_button_style_with_alpha(overlay_alpha))
+                    .style(theme::player_control_button_style_with_alpha(
+                        pal,
+                        overlay_alpha
+                    ))
                     .on_press(Message::ToggleFlipMode)
                     .padding([4, 8]),
             ));
@@ -461,6 +493,7 @@ impl WazooApp {
                     .center_y(Length::Shrink),
                 )
                 .style(theme::audio_track_button_style_with_alpha(
+                    pal,
                     true,
                     overlay_alpha,
                 ))
@@ -472,25 +505,37 @@ impl WazooApp {
         let controls_row = controls_row
             .push(
                 button(play_mode_icon)
-                    .style(theme::player_control_button_style_with_alpha(overlay_alpha))
+                    .style(theme::player_control_button_style_with_alpha(
+                        pal,
+                        overlay_alpha
+                    ))
                     .on_press(Message::TogglePlayerShuffle(player_id))
                     .padding([4, 8]),
             )
             .push(
                 button(prev_icon)
-                    .style(theme::player_control_button_style_with_alpha(overlay_alpha))
+                    .style(theme::player_control_button_style_with_alpha(
+                        pal,
+                        overlay_alpha
+                    ))
                     .on_press(Message::PrevVideo(player_id))
                     .padding([4, 8]),
             )
             .push(
                 button(play_pause_icon)
-                    .style(theme::player_control_button_style_with_alpha(overlay_alpha))
+                    .style(theme::player_control_button_style_with_alpha(
+                        pal,
+                        overlay_alpha
+                    ))
                     .on_press(Message::TogglePlay(player_id))
                     .padding([4, 8]),
             )
             .push(
                 button(next_icon)
-                    .style(theme::player_control_button_style_with_alpha(overlay_alpha))
+                    .style(theme::player_control_button_style_with_alpha(
+                        pal,
+                        overlay_alpha
+                    ))
                     .on_press(Message::NextVideo(player_id))
                     .padding([4, 8]),
             );
@@ -522,26 +567,22 @@ impl WazooApp {
                         text(if is_selected { "✓" } else { "" })
                             .size(13)
                             .color(if is_selected {
-                                theme::COLOR_PRIMARY
+                                pal.primary
                             } else {
                                 iced::Color::TRANSPARENT
                             })
                             .width(Length::Fixed(14.0)),
                         text(label).size(12).color(if is_selected {
-                            theme::COLOR_PRIMARY
+                            pal.primary
                         } else {
-                            iced::Color::WHITE
+                            pal.hud_text
                         }),
                     ]
                     .spacing(6)
                     .align_y(Alignment::Center);
 
                     let item_btn = button(item_row)
-                        .style(if is_selected {
-                            theme::audio_menu_selected_item_style
-                        } else {
-                            theme::audio_menu_item_style
-                        })
+                        .style(theme::audio_menu_item_style(pal, is_selected))
                         .on_press(Message::SelectAudioTrack(player_id, track_id))
                         .padding([6, 10])
                         .width(Length::Fill);
@@ -556,7 +597,7 @@ impl WazooApp {
                     .width(Length::Fixed(card_width)),
             )
             .padding(4)
-            .style(theme::audio_menu_card_style);
+            .style(theme::audio_menu_card_style(pal));
 
             let menu_row = row![
                 Space::new().width(Length::Fixed(230.0)),
@@ -580,7 +621,7 @@ impl WazooApp {
             })
             .max_width(PLAYER_CONTROLS_MAX_WIDTH)
             .width(Length::Fill)
-            .style(theme::controls_overlay_style_with_alpha(overlay_alpha));
+            .style(theme::controls_overlay_style_with_alpha(pal, overlay_alpha));
 
         let centered_overlay = container(controls_overlay)
             .width(Length::Fill)

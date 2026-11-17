@@ -3,7 +3,7 @@
  *
  * Settings Modal Subsystem
  *
- * Modular settings tabs: General, Playback, and System.
+ * Modular settings tabs: General, Playback, Filters, CRT, 3D Cube, Plex, Theme, and System.
  */
 
 pub mod badge;
@@ -14,10 +14,12 @@ pub mod general_tab;
 pub mod playback_tab;
 pub mod plex_tab;
 pub mod system_tab;
+pub mod theme_tab;
 
 use crate::app::{SettingsTab, WazooApp};
 use crate::message::Message;
 use crate::theme;
+use crate::wrap::Wrap;
 use iced::{
     Alignment, Element, Length,
     widget::{Space, button, column, container, row, scrollable, text},
@@ -25,54 +27,40 @@ use iced::{
 
 impl WazooApp {
     pub fn view_settings_modal(&self) -> Element<'_, Message> {
-        let is_general = self.modals.settings_tab == SettingsTab::General;
-        let is_playback = self.modals.settings_tab == SettingsTab::Playback;
-        let is_filters = self.modals.settings_tab == SettingsTab::Filters;
-        let is_crt = self.modals.settings_tab == SettingsTab::Crt;
-        let is_cube = self.modals.settings_tab == SettingsTab::Cube;
-        let is_plex = self.modals.settings_tab == SettingsTab::Plex;
-        let is_system = self.modals.settings_tab == SettingsTab::System;
+        let pal = self.theme_palette;
+        let tabs = [
+            (SettingsTab::General, self.t("settings.tab_general")),
+            (SettingsTab::Playback, self.t("settings.tab_playback")),
+            (SettingsTab::Filters, self.t("settings.tab_filters")),
+            (SettingsTab::Crt, self.t("settings.tab_crt")),
+            (SettingsTab::Cube, self.t("settings.tab_cube")),
+            (SettingsTab::Plex, self.t("settings.tab_plex")),
+            (SettingsTab::Theme, self.t("settings.tab_theme")),
+            (SettingsTab::System, self.t("settings.tab_system")),
+        ];
 
-        let tabs_bar = row![
-            button(text(self.t("settings.tab_general")).size(13))
-                .style(theme::settings_tab_button_style(is_general))
-                .on_press(Message::SetSettingsTab(SettingsTab::General))
-                .padding([7, 12]),
-            button(text(self.t("settings.tab_playback")).size(13))
-                .style(theme::settings_tab_button_style(is_playback))
-                .on_press(Message::SetSettingsTab(SettingsTab::Playback))
-                .padding([7, 12]),
-            button(text(self.t("settings.tab_filters")).size(13))
-                .style(theme::settings_tab_button_style(is_filters))
-                .on_press(Message::SetSettingsTab(SettingsTab::Filters))
-                .padding([7, 12]),
-            button(text(self.t("settings.tab_crt")).size(13))
-                .style(theme::settings_tab_button_style(is_crt))
-                .on_press(Message::SetSettingsTab(SettingsTab::Crt))
-                .padding([7, 12]),
-            button(text(self.t("settings.tab_cube")).size(13))
-                .style(theme::settings_tab_button_style(is_cube))
-                .on_press(Message::SetSettingsTab(SettingsTab::Cube))
-                .padding([7, 12]),
-            button(text(self.t("settings.tab_plex")).size(13))
-                .style(theme::settings_tab_button_style(is_plex))
-                .on_press(Message::SetSettingsTab(SettingsTab::Plex))
-                .padding([7, 12]),
-            button(text(self.t("settings.tab_system")).size(13))
-                .style(theme::settings_tab_button_style(is_system))
-                .on_press(Message::SetSettingsTab(SettingsTab::System))
-                .padding([7, 12]),
-        ]
-        .spacing(6)
-        .align_y(Alignment::Center);
+        let tab_buttons: Vec<Element<'_, Message>> = tabs
+            .into_iter()
+            .map(|(tab, label)| {
+                let is_active = self.modals.settings_tab == tab;
+                button(text(label).size(13))
+                    .style(theme::settings_tab_button_style(pal, is_active))
+                    .on_press(Message::SetSettingsTab(tab))
+                    .padding([7, 11])
+                    .into()
+            })
+            .collect();
+
+        let tabs_bar = Wrap::with_elements(tab_buttons)
+            .spacing(5)
+            .vertical_spacing(6)
+            .align_items(Alignment::Center);
 
         let header = row![
-            text(self.t("settings.title"))
-                .size(20)
-                .color(iced::Color::WHITE),
+            text(self.t("settings.title")).size(20).color(pal.text),
             Space::new().width(Length::Fill),
             button(text("✕").size(14))
-                .style(theme::window_control_button_style)
+                .style(theme::window_control_button_style(pal))
                 .on_press(Message::CloseSettingsModal),
         ]
         .align_y(Alignment::Center);
@@ -84,6 +72,7 @@ impl WazooApp {
             SettingsTab::Crt => crt_tab::view_crt_tab(self),
             SettingsTab::Cube => cube_tab::view_cube_tab(self),
             SettingsTab::Plex => plex_tab::view_plex_tab(self),
+            SettingsTab::Theme => theme_tab::view_theme_tab(self),
             SettingsTab::System => system_tab::view_system_tab(self),
         };
 
@@ -111,7 +100,7 @@ impl WazooApp {
             .width(Length::Fixed(640.0)),
         )
         .padding(24)
-        .style(theme::modal_card_style);
+        .style(theme::modal_card_style(pal));
 
         Self::wrap_modal_with_backdrop(card, Message::CloseSettingsModal)
     }
