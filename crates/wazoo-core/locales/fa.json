@@ -26,7 +26,9 @@
     "click_through": "عبور کلیک",
     "opacity": "شفافیت",
     "active": "فعال",
-    "off": "غیرفعال"
+    "off": "غیرفعال",
+    "none": "هیچ",
+    "never": "هرگز"
   },
   "app": {
     "drag_to_move": "برای جابجایی بکشید",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "نواقص آنالوگ",
     "crt_chromatic_aberration": "انحراف رنگی",
     "crt_noise": "نویز رادیویی RF",
+    "crt_glitch_intensity": "شدت پرش تصویر",
+    "crt_glitch_frequency": "بسامد پرش تصویر",
     "crt_reset_all": "بازنشانی تمام تنظیمات CRT",
     "tab_plex": "Plex",
     "plex_enable": "فعال‌سازی ادغام با Plex",

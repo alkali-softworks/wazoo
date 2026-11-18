@@ -26,7 +26,9 @@
     "click_through": "Prokliknutí",
     "opacity": "Průhlednost",
     "active": "Aktivní",
-    "off": "Vypnuto"
+    "off": "Vypnuto",
+    "none": "Žádné",
+    "never": "Nikdy"
   },
   "app": {
     "drag_to_move": "Přetažením přesuňte",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "Analogové artefakty",
     "crt_chromatic_aberration": "Barevná vada",
     "crt_noise": "RF statický šum",
+    "crt_glitch_intensity": "Intenzita poruch sledování",
+    "crt_glitch_frequency": "Frekvence poruch sledování",
     "crt_reset_all": "Obnovit všechny parametry CRT",
     "tab_plex": "Plex",
     "plex_enable": "Povolit integraci Plex",

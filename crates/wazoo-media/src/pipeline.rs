@@ -42,8 +42,8 @@ struct Uniforms {
     crt_chromatic_aberration: f32,
     crt_noise: f32,
     crt_corner_rounding: f32,
-    _pad1: f32,
-    _pad2: f32,
+    crt_glitch_intensity: f32,
+    crt_glitch_frequency: f32,
 }
 
 pub struct FrameData {
@@ -111,8 +111,8 @@ struct Uniforms {
     crt_chromatic_aberration: f32,
     crt_noise: f32,
     crt_corner_rounding: f32,
-    _pad1: f32,
-    _pad2: f32,
+    crt_glitch_intensity: f32,
+    crt_glitch_frequency: f32,
 }
 
 @group(0) @binding(0)
@@ -186,8 +186,8 @@ struct Uniforms {
     crt_chromatic_aberration: f32,
     crt_noise: f32,
     crt_corner_rounding: f32,
-    _pad1: f32,
-    _pad2: f32,
+    crt_glitch_intensity: f32,
+    crt_glitch_frequency: f32,
 }
 
 @group(0) @binding(0)
@@ -346,20 +346,24 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         var glitch_offset = 0.0;
         var shift = 0.0018;
 
-        if glitch_chance > 0.84 {
+        if uniforms.crt_glitch_intensity > 0.001
+            && uniforms.crt_glitch_frequency > 0.001
+            && glitch_chance >= (1.0 - uniforms.crt_glitch_frequency)
+        {
+            let glitch_scale = uniforms.crt_glitch_intensity * 4.0;
             let band_start = hash(vec2<f32>(time_step, 42.0));
             let band_end = band_start + 0.02 + hash(vec2<f32>(time_step, 99.0)) * 0.08;
 
             if screen_uv.y >= band_start && screen_uv.y <= band_end {
-                glitch_offset = (hash(vec2<f32>(time_step, floor(screen_uv.y * 50.0))) - 0.5) * 0.004;
-                shift += 0.0045 * hash(vec2<f32>(time_step, 88.0));
+                glitch_offset = (hash(vec2<f32>(time_step, floor(screen_uv.y * 50.0))) - 0.5) * 0.004 * glitch_scale;
+                shift += 0.0045 * hash(vec2<f32>(time_step, 88.0)) * glitch_scale;
             }
 
             let roll = fract(uniforms.time * 0.2);
             let roll_dist = abs(screen_uv.y - roll);
             if roll_dist < 0.04 {
-                glitch_offset += sin((screen_uv.y - roll) * 50.0) * 0.0015;
-                shift += 0.0025;
+                glitch_offset += sin((screen_uv.y - roll) * 50.0) * 0.0015 * glitch_scale;
+                shift += 0.0025 * glitch_scale;
             }
         }
 
@@ -812,8 +816,8 @@ impl Primitive for VideoPrimitive {
             crt_chromatic_aberration: self.crt_settings.chromatic_aberration,
             crt_noise: self.crt_settings.noise,
             crt_corner_rounding: self.crt_settings.corner_rounding,
-            _pad1: 0.0,
-            _pad2: 0.0,
+            crt_glitch_intensity: self.crt_settings.glitch_intensity,
+            crt_glitch_frequency: self.crt_settings.glitch_frequency,
         };
         queue.write_buffer(&entry.uniform_buffer, 0, bytemuck::bytes_of(&uniforms));
     }

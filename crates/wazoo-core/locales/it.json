@@ -26,7 +26,9 @@
     "click_through": "Clic attraverso",
     "opacity": "Opacità",
     "active": "Attivo",
-    "off": "Disattivo"
+    "off": "Disattivo",
+    "none": "Nessuno",
+    "never": "Mai"
   },
   "app": {
     "drag_to_move": "Trascina per spostare",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "Artefatti analogici",
     "crt_chromatic_aberration": "Aberrazione cromatica",
     "crt_noise": "Rumore statico RF",
+    "crt_glitch_intensity": "Intensità disturbi tracking",
+    "crt_glitch_frequency": "Frequenza disturbi tracking",
     "crt_reset_all": "Ripristina tutti i parametri CRT",
     "tab_plex": "Plex",
     "plex_enable": "Abilita integrazione Plex",

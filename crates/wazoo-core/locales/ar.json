@@ -26,7 +26,9 @@
     "click_through": "النقر عبر النافذة",
     "opacity": "الشفافية",
     "active": "نشط",
-    "off": "معطل"
+    "off": "معطل",
+    "none": "لا شيء",
+    "never": "أبداً"
   },
   "app": {
     "drag_to_move": "اسحب للتحريك",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "تشوهات تناظرية",
     "crt_chromatic_aberration": "زيغ لوني",
     "crt_noise": "ضوضاء تردد لاسلكي",
+    "crt_glitch_intensity": "شدة تشويش التتبع",
+    "crt_glitch_frequency": "تكرار تشويش التتبع",
     "crt_reset_all": "إعادة تعيين جميع معلمات CRT",
     "tab_plex": "Plex",
     "plex_enable": "تفعيل تكامل Plex",

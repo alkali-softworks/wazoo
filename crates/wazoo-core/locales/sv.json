@@ -26,7 +26,9 @@
     "click_through": "Klicka igenom",
     "opacity": "Opacitet",
     "active": "Aktiv",
-    "off": "Av"
+    "off": "Av",
+    "none": "Ingen",
+    "never": "Aldrig"
   },
   "app": {
     "drag_to_move": "Dra för att flytta",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "Analoga artefakter",
     "crt_chromatic_aberration": "Kromatisk aberration",
     "crt_noise": "RF-brus",
+    "crt_glitch_intensity": "Störningsintensitet (tracking)",
+    "crt_glitch_frequency": "Störningsfrekvens (tracking)",
     "crt_reset_all": "Återställ alla CRT-parametrar",
     "tab_plex": "Plex",
     "plex_enable": "Aktivera Plex-integrering",

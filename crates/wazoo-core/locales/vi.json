@@ -26,7 +26,9 @@
     "click_through": "Nhấp xuyên qua",
     "opacity": "Độ mờ",
     "active": "Hoạt động",
-    "off": "Tắt"
+    "off": "Tắt",
+    "none": "Không có",
+    "never": "Không bao giờ"
   },
   "app": {
     "drag_to_move": "Kéo để di chuyển",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "Nhiễu tín hiệu tương tự",
     "crt_chromatic_aberration": "Quang sai màu",
     "crt_noise": "Nhiễu sóng RF",
+    "crt_glitch_intensity": "Cường độ nhiễu đồng bộ",
+    "crt_glitch_frequency": "Tần suất nhiễu đồng bộ",
     "crt_reset_all": "Đặt lại tất cả thông số CRT",
     "tab_plex": "Plex",
     "plex_enable": "Bật tích hợp Plex",

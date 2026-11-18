@@ -157,6 +157,8 @@ pub enum Message {
     SetCrtChromaticAberration(f32),
     SetCrtNoise(f32),
     SetCrtCornerRounding(f32),
+    SetCrtGlitchIntensity(f32),
+    SetCrtGlitchFrequency(f32),
     ApplyCrtPreset(wazoo_core::CrtPreset),
     ResetCrtSettings,
 

@@ -26,7 +26,9 @@
     "click_through": "מעבר לחיצות",
     "opacity": "שקיפות",
     "active": "פעיל",
-    "off": "כבוי"
+    "off": "כבוי",
+    "none": "ללא",
+    "never": "לעולם לא"
   },
   "app": {
     "drag_to_move": "גרור להזזה",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "עיוותים אנלוגיים",
     "crt_chromatic_aberration": "עיוות צבעוני",
     "crt_noise": "רעש סטטי RF",
+    "crt_glitch_intensity": "עוצמת הפרעות מעקב",
+    "crt_glitch_frequency": "תדירות הפרעות מעקב",
     "crt_reset_all": "אפס את כל מאפייני ה-CRT",
     "tab_plex": "Plex",
     "plex_enable": "הפעל שילוב Plex",

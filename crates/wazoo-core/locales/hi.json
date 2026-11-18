@@ -26,7 +26,9 @@
     "click_through": "क्लिक-थ्रू",
     "opacity": "पारदर्शिता",
     "active": "सक्रिय",
-    "off": "बंद"
+    "off": "बंद",
+    "none": "कोई नहीं",
+    "never": "कभी नहीं"
   },
   "app": {
     "drag_to_move": "स्थानांतरित करने के लिए खींचें",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "एनालॉग आर्टिफैक्ट",
     "crt_chromatic_aberration": "रंगीन विपथन",
     "crt_noise": "आरएफ स्टेटिक शोर",
+    "crt_glitch_intensity": "ट्रैकिंग ग्लिच तीव्रता",
+    "crt_glitch_frequency": "ट्रैकिंग ग्लिच आवृत्ति",
     "crt_reset_all": "सभी CRT पैरामीटर रीसेट करें",
     "tab_plex": "Plex",
     "plex_enable": "Plex एकीकरण सक्षम करें",

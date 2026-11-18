@@ -711,6 +711,10 @@ fn test_settings_modal_tabs_and_playback_options() {
     assert_eq!(app.settings.crt.chromatic_aberration, 0.35);
     let _ = app.update(Message::SetCrtNoise(0.15));
     assert_eq!(app.settings.crt.noise, 0.15);
+    let _ = app.update(Message::SetCrtGlitchIntensity(0.70));
+    assert_eq!(app.settings.crt.glitch_intensity, 0.70);
+    let _ = app.update(Message::SetCrtGlitchFrequency(0.45));
+    assert_eq!(app.settings.crt.glitch_frequency, 0.45);
 
     {
         let _view_crt_configured = app.view_settings_modal();
@@ -721,6 +725,8 @@ fn test_settings_modal_tabs_and_playback_options() {
     assert_eq!(app.settings.crt.gamma, 1.25);
     assert_eq!(app.settings.crt.saturation, 1.20);
     assert_eq!(app.settings.crt.scanline_darkness, 0.15);
+    assert_eq!(app.settings.crt.glitch_intensity, 0.15);
+    assert_eq!(app.settings.crt.glitch_frequency, 0.10);
     {
         let _view_crt_preset = app.view_settings_modal();
     }
@@ -730,6 +736,8 @@ fn test_settings_modal_tabs_and_playback_options() {
     assert_eq!(app.settings.crt.scanline_darkness, 0.20);
     assert_eq!(app.settings.crt.gamma, 1.00);
     assert_eq!(app.settings.crt.saturation, 1.00);
+    assert_eq!(app.settings.crt.glitch_intensity, 0.25);
+    assert_eq!(app.settings.crt.glitch_frequency, 0.16);
 
     // Switch to System tab (Window Opacity & Default Player)
     let _ = app.update(Message::SetSettingsTab(SettingsTab::System));

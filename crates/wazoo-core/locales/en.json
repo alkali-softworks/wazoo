@@ -26,7 +26,9 @@
     "click_through": "Click-Through",
     "opacity": "Opacity",
     "active": "Active",
-    "off": "Off"
+    "off": "Off",
+    "none": "None",
+    "never": "Never"
   },
   "app": {
     "drag_to_move": "Drag to Move",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "Analog Artifacts",
     "crt_chromatic_aberration": "Chromatic Aberration",
     "crt_noise": "RF Static Noise",
+    "crt_glitch_intensity": "Tracking Glitch Intensity",
+    "crt_glitch_frequency": "Tracking Glitch Frequency",
     "crt_reset_all": "Reset All CRT Parameters",
     "tab_plex": "Plex",
     "plex_enable": "Enable Plex Integration",

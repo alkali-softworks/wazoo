@@ -26,7 +26,9 @@
     "click_through": "Doorklikken",
     "opacity": "Dekking",
     "active": "Actief",
-    "off": "Uit"
+    "off": "Uit",
+    "none": "Geen",
+    "never": "Nooit"
   },
   "app": {
     "drag_to_move": "Slepen om te verplaatsen",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "Analoge artefacten",
     "crt_chromatic_aberration": "Chromatische aberratie",
     "crt_noise": "RF-ruis",
+    "crt_glitch_intensity": "Tracking-storing sterkte",
+    "crt_glitch_frequency": "Tracking-storing frequentie",
     "crt_reset_all": "Alle CRT-parameters herstellen",
     "tab_plex": "Plex",
     "plex_enable": "Plex-integratie inschakelen",

@@ -26,7 +26,9 @@
     "click_through": "クリック透過",
     "opacity": "不透明度",
     "active": "有効",
-    "off": "無効"
+    "off": "無効",
+    "none": "なし",
+    "never": "なし"
   },
   "app": {
     "drag_to_move": "ドラッグして移動",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "アナログアーティファクト",
     "crt_chromatic_aberration": "色収差",
     "crt_noise": "RF静電気ノイズ",
+    "crt_glitch_intensity": "トラッキング歪みの強さ",
+    "crt_glitch_frequency": "トラッキング歪みの頻度",
     "crt_reset_all": "すべてのCRT設定をリセット",
     "tab_plex": "Plex",
     "plex_enable": "Plex連携を有効化",

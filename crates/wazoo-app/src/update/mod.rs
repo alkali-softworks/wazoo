@@ -354,6 +354,8 @@ impl WazooApp {
             | Message::SetCrtChromaticAberration(_)
             | Message::SetCrtNoise(_)
             | Message::SetCrtCornerRounding(_)
+            | Message::SetCrtGlitchIntensity(_)
+            | Message::SetCrtGlitchFrequency(_)
             | Message::ApplyCrtPreset(_)
             | Message::ResetCrtSettings
             | Message::SelectThemeColorTarget(_)

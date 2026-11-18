@@ -26,7 +26,9 @@
     "click_through": "Tıklama Geçişi",
     "opacity": "Saydamlık",
     "active": "Aktif",
-    "off": "Kapalı"
+    "off": "Kapalı",
+    "none": "Yok",
+    "never": "Asla"
   },
   "app": {
     "drag_to_move": "Taşımak için Sürükleyin",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "Analog Kusurlar",
     "crt_chromatic_aberration": "Renk Sapması",
     "crt_noise": "RF Parazit Gürültüsü",
+    "crt_glitch_intensity": "İzleme Bozulma Şiddeti",
+    "crt_glitch_frequency": "İzleme Bozulma Sıklığı",
     "crt_reset_all": "Tüm CRT Parametrelerini Sıfırla",
     "tab_plex": "Plex",
     "plex_enable": "Plex Entegrasyonunu Etkinleştir",

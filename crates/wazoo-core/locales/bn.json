@@ -26,7 +26,9 @@
     "click_through": "ক্লিক-থ্রু",
     "opacity": "অস্বচ্ছতা",
     "active": "সক্রিয়",
-    "off": "বন্ধ"
+    "off": "বন্ধ",
+    "none": "কিছুই না",
+    "never": "কখনোই না"
   },
   "app": {
     "drag_to_move": "সরানোর জন্য টেনে আনুন",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "অ্যানালগ ত্রুটি",
     "crt_chromatic_aberration": "বর্ণীয় অপথিক বিচ্যুতি",
     "crt_noise": "আরএফ স্ট্যাটিক নয়েজ",
+    "crt_glitch_intensity": "ট্র্যাকিং গ্লিচের তীব্রতা",
+    "crt_glitch_frequency": "ট্র্যাকিং গ্লিচের হার",
     "crt_reset_all": "সব সিআরটি পরামিতি রিসেট করুন",
     "tab_plex": "Plex",
     "plex_enable": "Plex ইন্টিগ্রেশন সক্রিয় করুন",

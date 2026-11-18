@@ -26,7 +26,9 @@
     "click_through": "穿透点击",
     "opacity": "不透明度",
     "active": "已启用",
-    "off": "已关闭"
+    "off": "已关闭",
+    "none": "无",
+    "never": "从不"
   },
   "app": {
     "drag_to_move": "拖动以移动",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "模拟瑕疵",
     "crt_chromatic_aberration": "色差",
     "crt_noise": "射频噪点",
+    "crt_glitch_intensity": "磁迹故障强度",
+    "crt_glitch_frequency": "磁迹故障频率",
     "crt_reset_all": "重置所有 CRT 参数",
     "tab_plex": "Plex",
     "plex_enable": "启用 Plex 集成",

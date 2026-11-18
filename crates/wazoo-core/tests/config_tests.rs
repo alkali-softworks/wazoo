@@ -562,22 +562,30 @@ fn test_crt_settings_serialization_and_clamping() {
     assert_eq!(default_settings.crt.gamma, 1.00);
     assert_eq!(default_settings.crt.saturation, 1.00);
     assert_eq!(default_settings.crt.brightness, 1.00);
+    assert_eq!(default_settings.crt.glitch_intensity, 0.25);
+    assert_eq!(default_settings.crt.glitch_frequency, 0.16);
 
     let mut settings = WazooSettings::default();
     settings.crt.scanline_darkness = 0.45;
     settings.crt.gamma = 1.25;
     settings.crt.saturation = 1.30;
+    settings.crt.glitch_intensity = 0.80;
+    settings.crt.glitch_frequency = 0.50;
 
     let json = serde_json::to_string(&settings).unwrap();
     let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.crt.scanline_darkness, 0.45);
     assert_eq!(deserialized.crt.gamma, 1.25);
     assert_eq!(deserialized.crt.saturation, 1.30);
+    assert_eq!(deserialized.crt.glitch_intensity, 0.80);
+    assert_eq!(deserialized.crt.glitch_frequency, 0.50);
 
     // Fallback default on empty/missing JSON
     let loaded: WazooSettings = serde_json::from_str("{}").unwrap();
     assert_eq!(loaded.crt.scanline_darkness, 0.20);
     assert_eq!(loaded.crt.gamma, 1.00);
+    assert_eq!(loaded.crt.glitch_intensity, 0.25);
+    assert_eq!(loaded.crt.glitch_frequency, 0.16);
 
     // Test clamping
     let temp_dir = std::env::temp_dir().join(format!(
@@ -596,6 +604,8 @@ fn test_crt_settings_serialization_and_clamping() {
     let mut extreme_crt = wazoo_core::CrtSettings::default();
     extreme_crt.scanline_darkness = 99.0;
     extreme_crt.gamma = -10.0;
+    extreme_crt.glitch_intensity = 5.0;
+    extreme_crt.glitch_frequency = -2.0;
     let extreme_settings = WazooSettings {
         crt: extreme_crt,
         ..Default::default()
@@ -605,6 +615,8 @@ fn test_crt_settings_serialization_and_clamping() {
     let loaded = mgr.load_settings();
     assert_eq!(loaded.crt.scanline_darkness, 1.0);
     assert_eq!(loaded.crt.gamma, 0.2);
+    assert_eq!(loaded.crt.glitch_intensity, 1.0);
+    assert_eq!(loaded.crt.glitch_frequency, 0.0);
 
     let _ = fs::remove_dir_all(&temp_dir);
 }

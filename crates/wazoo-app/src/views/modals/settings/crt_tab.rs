@@ -5,7 +5,8 @@
  *
  * Dedicated tab to configure real-time CRT post-processing shader parameters:
  * scanline darkness, density, speed, gamma compensation, saturation, phosphor glow,
- * tube curvature, glass corner rounding, vignette falloff, chromatic aberration, and RF noise.
+ * tube curvature, glass corner rounding, vignette falloff, chromatic aberration, RF noise,
+ * and tracking distortion glitch intensity and frequency.
  */
 
 use super::badge::badge_with_reset;
@@ -262,7 +263,7 @@ pub fn view_crt_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         pal,
         app.t("settings.crt_vignette"),
         if vig_pct == 0 {
-            "None".to_string()
+            app.t("common.none")
         } else {
             format!("{vig_pct}%")
         },
@@ -296,7 +297,7 @@ pub fn view_crt_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         pal,
         app.t("settings.crt_chromatic_aberration"),
         if ca_pct == 0 {
-            "None".to_string()
+            app.t("common.none")
         } else {
             format!("{ca_pct}%")
         },
@@ -327,6 +328,42 @@ pub fn view_crt_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         Message::SetCrtNoise(wazoo_core::default_crt_noise()),
     );
 
+    let glitch_int_pct = (app.settings.crt.glitch_intensity * 100.0).round() as i32;
+    let glitch_intensity_group = crt_slider(
+        pal,
+        app.t("settings.crt_glitch_intensity"),
+        if glitch_int_pct == 0 {
+            app.t("common.none")
+        } else {
+            format!("{glitch_int_pct}%")
+        },
+        (app.settings.crt.glitch_intensity - wazoo_core::default_crt_glitch_intensity()).abs()
+            > 0.005,
+        0.0..=1.0,
+        app.settings.crt.glitch_intensity,
+        0.01,
+        Message::SetCrtGlitchIntensity,
+        Message::SetCrtGlitchIntensity(wazoo_core::default_crt_glitch_intensity()),
+    );
+
+    let glitch_freq_pct = (app.settings.crt.glitch_frequency * 100.0).round() as i32;
+    let glitch_frequency_group = crt_slider(
+        pal,
+        app.t("settings.crt_glitch_frequency"),
+        if glitch_freq_pct == 0 {
+            app.t("common.never")
+        } else {
+            format!("{glitch_freq_pct}%")
+        },
+        (app.settings.crt.glitch_frequency - wazoo_core::default_crt_glitch_frequency()).abs()
+            > 0.005,
+        0.0..=1.0,
+        app.settings.crt.glitch_frequency,
+        0.01,
+        Message::SetCrtGlitchFrequency,
+        Message::SetCrtGlitchFrequency(wazoo_core::default_crt_glitch_frequency()),
+    );
+
     let artifacts_box = container(
         column![
             text(format!("📻 {}", app.t("settings.crt_section_artifacts")))
@@ -335,6 +372,8 @@ pub fn view_crt_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 .color(pal.primary),
             ca_group,
             noise_group,
+            glitch_intensity_group,
+            glitch_frequency_group,
         ]
         .spacing(10),
     )

@@ -26,7 +26,9 @@
     "click_through": "คลิกทะลุ",
     "opacity": "ความโปร่งใส",
     "active": "เปิดใช้งาน",
-    "off": "ปิด"
+    "off": "ปิด",
+    "none": "ไม่มี",
+    "never": "ไม่เลย"
   },
   "app": {
     "drag_to_move": "ลากเพื่อย้าย",
@@ -147,6 +149,8 @@
     "crt_section_artifacts": "สัญญาณรบกวนแอนะล็อก",
     "crt_chromatic_aberration": "ความคลาดเคลื่อนสี",
     "crt_noise": "สัญญาณรบกวนคลื่นวิทยุ",
+    "crt_glitch_intensity": "ความแรงสัญญาณแทร็กกิ้งรบกวน",
+    "crt_glitch_frequency": "ความถี่สัญญาณแทร็กกิ้งรบกวน",
     "crt_reset_all": "รีเซ็ตพารามิเตอร์ CRT ทั้งหมด",
     "tab_plex": "Plex",
     "plex_enable": "เปิดใช้งานการผสานการทำงานกับ Plex",

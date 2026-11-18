@@ -247,6 +247,18 @@ impl WazooApp {
                 let _ = self.config_mgr.save_settings(&self.settings);
                 Task::none()
             }
+            Message::SetCrtGlitchIntensity(val) => {
+                self.settings.crt.glitch_intensity = val.clamp(0.0, 1.0);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
+            Message::SetCrtGlitchFrequency(val) => {
+                self.settings.crt.glitch_frequency = val.clamp(0.0, 1.0);
+                self.sync_player_filters();
+                let _ = self.config_mgr.save_settings(&self.settings);
+                Task::none()
+            }
             Message::ApplyCrtPreset(preset) => {
                 self.settings.crt.apply_preset(preset);
                 self.sync_player_filters();

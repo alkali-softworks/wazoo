@@ -594,6 +594,10 @@ pub struct CrtSettings {
     pub noise: f32,
     #[serde(default = "default_crt_corner_rounding")]
     pub corner_rounding: f32,
+    #[serde(default = "default_crt_glitch_intensity")]
+    pub glitch_intensity: f32,
+    #[serde(default = "default_crt_glitch_frequency")]
+    pub glitch_frequency: f32,
 }
 
 pub fn default_crt_scanline_darkness() -> f32 {
@@ -640,6 +644,14 @@ pub fn default_crt_corner_rounding() -> f32 {
     0.50
 }
 
+pub fn default_crt_glitch_intensity() -> f32 {
+    0.25
+}
+
+pub fn default_crt_glitch_frequency() -> f32 {
+    0.16
+}
+
 impl Default for CrtSettings {
     fn default() -> Self {
         Self {
@@ -654,6 +666,8 @@ impl Default for CrtSettings {
             chromatic_aberration: default_crt_chromatic_aberration(),
             noise: default_crt_noise(),
             corner_rounding: default_crt_corner_rounding(),
+            glitch_intensity: default_crt_glitch_intensity(),
+            glitch_frequency: default_crt_glitch_frequency(),
         }
     }
 }
@@ -681,6 +695,8 @@ impl CrtSettings {
         self.chromatic_aberration = self.chromatic_aberration.clamp(0.0, 1.0);
         self.noise = self.noise.clamp(0.0, 1.0);
         self.corner_rounding = self.corner_rounding.clamp(0.0, 1.0);
+        self.glitch_intensity = self.glitch_intensity.clamp(0.0, 1.0);
+        self.glitch_frequency = self.glitch_frequency.clamp(0.0, 1.0);
     }
 
     pub fn apply_preset(&mut self, preset: CrtPreset) {
@@ -700,6 +716,8 @@ impl CrtSettings {
                 self.chromatic_aberration = 0.05;
                 self.noise = 0.08;
                 self.corner_rounding = 0.20;
+                self.glitch_intensity = 0.10;
+                self.glitch_frequency = 0.08;
             }
             CrtPreset::Arcade => {
                 self.scanline_darkness = 0.35;
@@ -713,6 +731,8 @@ impl CrtSettings {
                 self.chromatic_aberration = 0.25;
                 self.noise = 0.20;
                 self.corner_rounding = 0.55;
+                self.glitch_intensity = 0.20;
+                self.glitch_frequency = 0.12;
             }
             CrtPreset::WarmPhosphor => {
                 self.scanline_darkness = 0.15;
@@ -726,6 +746,8 @@ impl CrtSettings {
                 self.chromatic_aberration = 0.15;
                 self.noise = 0.15;
                 self.corner_rounding = 0.45;
+                self.glitch_intensity = 0.15;
+                self.glitch_frequency = 0.10;
             }
             CrtPreset::Monochrome => {
                 self.scanline_darkness = 0.25;
@@ -739,6 +761,8 @@ impl CrtSettings {
                 self.chromatic_aberration = 0.00;
                 self.noise = 0.35;
                 self.corner_rounding = 0.60;
+                self.glitch_intensity = 0.30;
+                self.glitch_frequency = 0.20;
             }
             CrtPreset::Vhs => {
                 self.scanline_darkness = 0.22;
@@ -752,6 +776,8 @@ impl CrtSettings {
                 self.chromatic_aberration = 0.60;
                 self.noise = 0.55;
                 self.corner_rounding = 0.40;
+                self.glitch_intensity = 0.75;
+                self.glitch_frequency = 0.45;
             }
         }
     }
