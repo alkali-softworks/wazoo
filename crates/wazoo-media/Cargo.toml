@@ -15,6 +15,8 @@ rand.workspace = true
 log.workspace = true
 serde.workspace = true
 libloading.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
 miniz_oxide.workspace = true
 directories.workspace = true
 

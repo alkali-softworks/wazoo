@@ -5215,7 +5215,6 @@ dependencies = [
  "env_logger",
  "iced",
  "image",
- "libc",
  "log",
  "mimalloc",
  "rand 0.8.8",
@@ -5277,7 +5276,6 @@ dependencies = [
  "log",
  "rfd",
  "rusqlite",
- "serde",
  "tokio",
  "walkdir",
 ]
