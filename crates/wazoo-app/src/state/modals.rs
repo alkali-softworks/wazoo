@@ -67,6 +67,25 @@ impl ThemeColorTarget {
     }
 }
 
+/// Precomputed sibling video entry for the Quick Picker modal so per-frame
+/// rendering and live search avoid scanning `available_videos`, running regex
+/// formatters, or touching the filesystem.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct QuickPickerEntry {
+    pub path: String,
+    pub title: String,
+    pub title_lower: String,
+    pub badge: Option<String>,
+}
+
+/// Cached Quick Picker candidate list bound to the focused player's path.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct QuickPickerCache {
+    pub source_path: String,
+    pub folder: Option<String>,
+    pub entries: Vec<QuickPickerEntry>,
+}
+
 /// Tracks the visibility state of centered modal dialog overlays.
 #[derive(Debug, Clone)]
 pub struct ModalState {
@@ -79,6 +98,7 @@ pub struct ModalState {
     pub bookmarks: bool,
     pub quick_picker: bool,
     pub quick_picker_search: String,
+    pub quick_picker_cache: Option<QuickPickerCache>,
     pub plex_explorer: bool,
     pub plex_explorer_search: String,
     pub plex_explorer_tab: PlexExplorerTab,
@@ -103,6 +123,7 @@ impl Default for ModalState {
             bookmarks: false,
             quick_picker: false,
             quick_picker_search: String::new(),
+            quick_picker_cache: None,
             plex_explorer: false,
             plex_explorer_search: String::new(),
             plex_explorer_tab: PlexExplorerTab::default(),
@@ -166,6 +187,7 @@ impl ModalState {
         self.menu = false;
         self.quick_picker = false;
         self.quick_picker_search.clear();
+        self.quick_picker_cache = None;
         self.plex_explorer = false;
         self.plex_explorer_search.clear();
         self.plex_explorer_genre = None;

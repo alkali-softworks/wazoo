@@ -9,48 +9,78 @@
 use crate::app::WazooApp;
 use crate::format;
 use crate::message::Message;
+use crate::state::modals::QuickPickerEntry;
 use crate::theme;
 use iced::{
     Alignment, Element, Length, Theme,
     widget::{Space, button, column, container, row, scrollable, text, text_input},
 };
 
+/// Maximum number of item rows rendered at once in Quick Picker so large folders
+/// remain smooth to open, type in, and render every frame.
+const MAX_QUICK_PICKER_DISPLAY: usize = 200;
+
+/// Filters precomputed Quick Picker entries using the same space/wildcard/anchor
+/// rules as the main file picker search.
+pub(crate) fn filter_quick_picker_entries<'a>(
+    entries: &'a [QuickPickerEntry],
+    raw_query: &str,
+) -> Vec<&'a QuickPickerEntry> {
+    let query = raw_query.trim().to_lowercase();
+    if query.is_empty() {
+        return entries.iter().collect();
+    }
+
+    let clean = query.replace(['_', '-'], " ");
+    let words: Vec<&str> = clean.split_whitespace().collect();
+    let is_whole_anchored = (query.starts_with('^') && !query.starts_with("^^"))
+        || (query.ends_with('$') && !query.ends_with("$$"));
+
+    entries
+        .iter()
+        .filter(|entry| {
+            if is_whole_anchored {
+                crate::views::file_picker::pattern_matches(&query, &entry.title_lower)
+            } else {
+                words.iter().all(|w| {
+                    crate::views::file_picker::pattern_matches(w, &entry.title_lower)
+                })
+            }
+        })
+        .collect()
+}
+
 impl WazooApp {
     pub fn view_quick_picker_modal(&self) -> Element<'_, Message> {
         let pal = self.theme_palette;
-        let (folder_opt, candidate_videos) = self.quick_picker_videos();
+        let current_path = self
+            .focused_player()
+            .map(|p| p.state.path.as_str())
+            .unwrap_or("");
+
+        let owned_cache;
+        let cache = match self
+            .modals
+            .quick_picker_cache
+            .as_ref()
+            .filter(|c| c.source_path == current_path)
+        {
+            Some(c) => c,
+            None => {
+                owned_cache = self.build_quick_picker_cache();
+                &owned_cache
+            }
+        };
 
         // 1. Header Row
-        let display_folder_name = match &folder_opt {
+        let display_folder_name = match &cache.folder {
             Some(folder) if folder == "Misc" => self.t("common.miscellaneous"),
             Some(folder) => folder.clone(),
             None => self.t("quick_picker.title"),
         };
 
-        let query = self.modals.quick_picker_search.trim().to_lowercase();
-        let filtered_videos: Vec<(String, String)> = if query.is_empty() {
-            candidate_videos.clone()
-        } else {
-            let clean = query.replace(['_', '-'], " ");
-            let words: Vec<&str> = clean.split_whitespace().collect();
-            candidate_videos
-                .iter()
-                .filter(|(_, title)| {
-                    let t_lower = title.to_lowercase();
-                    let is_whole_anchored = (query.starts_with('^') && !query.starts_with("^^"))
-                        || (query.ends_with('$') && !query.ends_with("$$"));
-                    if is_whole_anchored {
-                        crate::views::file_picker::pattern_matches(&query, &t_lower)
-                    } else {
-                        words
-                            .iter()
-                            .all(|w| crate::views::file_picker::pattern_matches(w, &t_lower))
-                    }
-                })
-                .cloned()
-                .collect()
-        };
-
+        let filtered_videos =
+            filter_quick_picker_entries(&cache.entries, &self.modals.quick_picker_search);
         let count = filtered_videos.len();
 
         let header_row = row![
@@ -136,32 +166,21 @@ impl WazooApp {
             .into()
         } else {
             let mut list = column![].spacing(6);
-            for (path, title) in filtered_videos {
-                let meta = self.get_metadata_for_path(&path);
-                let badge_label: Option<String> = if let Some(m) = meta {
-                    if let Some(y) = m.year {
-                        Some(y.to_string())
-                    } else {
-                        m.genres.first().cloned()
-                    }
-                } else {
-                    None
-                };
-
+            for entry in filtered_videos.iter().take(MAX_QUICK_PICKER_DISPLAY) {
                 let mut row_items = row![
                     text("▶")
                         .size(11)
                         .color(pal.primary)
                         .width(Length::Fixed(14.0)),
-                    text(title).size(13).color(pal.text),
+                    text(entry.title.clone()).size(13).color(pal.text),
                 ]
                 .spacing(8)
                 .align_y(Alignment::Center);
 
-                if let Some(b) = badge_label {
+                if let Some(ref b) = entry.badge {
                     row_items = row_items.push(Space::new().width(Length::Fill));
                     row_items = row_items.push(
-                        container(text(b).size(10).color(pal.text_muted))
+                        container(text(b.clone()).size(10).color(pal.text_muted))
                             .padding([2, 6])
                             .style(move |_| container::Style {
                                 background: Some(iced::Background::Color(theme::with_alpha(
@@ -181,9 +200,25 @@ impl WazooApp {
                     .style(theme::bookmark_item_button_style(pal))
                     .padding([8, 12])
                     .width(Length::Fill)
-                    .on_press(Message::PlayQuickPickerFile(path));
+                    .on_press(Message::PlayQuickPickerFile(entry.path.clone()));
 
                 list = list.push(item_btn);
+            }
+
+            if count > MAX_QUICK_PICKER_DISPLAY {
+                list = list.push(
+                    container(
+                        text(format!(
+                            "{} / {}",
+                            format::format_number(MAX_QUICK_PICKER_DISPLAY),
+                            format::format_number(count),
+                        ))
+                        .size(11)
+                        .color(pal.text_muted),
+                    )
+                    .padding([6, 0])
+                    .center_x(Length::Fill),
+                );
             }
 
             let scrollable_content = container(list)

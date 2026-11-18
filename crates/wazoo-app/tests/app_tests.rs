@@ -2282,6 +2282,68 @@ fn test_quick_picker_modal_render() {
 }
 
 #[test]
+fn test_quick_picker_large_library_caches_and_filters_fast() {
+    let (mut app, _) = new_test_app();
+
+    let mut videos = Vec::with_capacity(5_000);
+    let mut id: i64 = 1;
+    // 500 siblings in target folder (above display cap) + 4,500 across 45 other folders
+    for i in 0..500 {
+        let path = format!("http://127.0.0.1:32400/Big%20Series/ep_{i:04}.mp4");
+        let mut meta = wazoo_core::MediaMetadata::default();
+        meta.video_id = id;
+        meta.title = format!("Episode {i}");
+        meta.year = Some(2024);
+        app.metadata_cache.insert(id, meta);
+        videos.push(wazoo_core::VideoRecord::new(id, format!("Ep {i}"), path));
+        id += 1;
+    }
+    for folder_idx in 0..45 {
+        for i in 0..100 {
+            let path = format!("http://127.0.0.1:32400/Other%20Show%20{folder_idx}/ep_{i:03}.mp4");
+            videos.push(wazoo_core::VideoRecord::new(id, format!("Other {i}"), path));
+            id += 1;
+        }
+    }
+
+    app.available_videos = videos;
+    let _ = app.update(Message::SetPlayerCount(1));
+    let target_first = app.available_videos[0].path.clone();
+    let target_last = app.available_videos[499].path.clone();
+    app.players[0].state.path = target_first;
+
+    let start = std::time::Instant::now();
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("k".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.modals.quick_picker);
+    let cache = app
+        .modals
+        .quick_picker_cache
+        .as_ref()
+        .expect("quick picker should populate entry cache on open");
+    assert_eq!(cache.entries.len(), 499);
+    assert_eq!(cache.entries[0].badge.as_deref(), Some("2024"));
+
+    // Multiple renders and typing should reuse the cached snapshot without timing out.
+    for _ in 0..5 {
+        let _el = app.view_quick_picker_modal();
+    }
+    // Search for an item past the 200-row display cap; full cache must still be searchable.
+    let _ = app.update(Message::QuickPickerSearchChanged("0499".to_string()));
+    let _ = app.update(Message::QuickPickerSubmit);
+    assert!(!app.modals.quick_picker);
+    assert!(app.modals.quick_picker_cache.is_none());
+    assert_eq!(app.players[0].state.path, target_last);
+    assert!(
+        start.elapsed() < std::time::Duration::from_secs(2),
+        "opening and filtering quick picker took too long: {:?}",
+        start.elapsed()
+    );
+}
+
+#[test]
 fn test_plex_explorer_modal_e_key_escape_and_actions() {
     let (mut app, _) = new_test_app();
     let temp_dir = std::env::temp_dir().join(format!(

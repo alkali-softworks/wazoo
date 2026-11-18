@@ -532,6 +532,7 @@ impl WazooApp {
                 if self.modals.quick_picker {
                     self.modals.quick_picker = false;
                     self.modals.quick_picker_search.clear();
+                    self.modals.quick_picker_cache = None;
                     Task::none()
                 } else {
                     self.open_quick_picker()
@@ -541,6 +542,7 @@ impl WazooApp {
             Message::CloseQuickPickerModal => {
                 self.modals.quick_picker = false;
                 self.modals.quick_picker_search.clear();
+                self.modals.quick_picker_cache = None;
                 Task::none()
             }
             Message::QuickPickerSearchChanged(val) => {
@@ -552,31 +554,23 @@ impl WazooApp {
                 iced::widget::operation::focus("quick_picker_search_input")
             }
             Message::QuickPickerSubmit => {
-                let (_, candidates) = self.quick_picker_videos();
-                let query = self.modals.quick_picker_search.trim().to_lowercase();
-                let filtered: Vec<_> = if query.is_empty() {
-                    candidates
+                let first_match = if let Some(cache) = self.modals.quick_picker_cache.as_ref() {
+                    crate::views::modals::quick_picker_modal::filter_quick_picker_entries(
+                        &cache.entries,
+                        &self.modals.quick_picker_search,
+                    )
+                    .first()
+                    .map(|e| e.path.clone())
                 } else {
-                    let clean = query.replace(['_', '-'], " ");
-                    let words: Vec<&str> = clean.split_whitespace().collect();
-                    candidates
-                        .into_iter()
-                        .filter(|(_, title)| {
-                            let t_lower = title.to_lowercase();
-                            let is_whole_anchored = (query.starts_with('^') && !query.starts_with("^^"))
-                                || (query.ends_with('$') && !query.ends_with("$$"));
-                            if is_whole_anchored {
-                                crate::views::file_picker::pattern_matches(&query, &t_lower)
-                            } else {
-                                words.iter().all(|w| {
-                                    crate::views::file_picker::pattern_matches(w, &t_lower)
-                                })
-                            }
-                        })
-                        .collect()
+                    let cache = self.build_quick_picker_cache();
+                    crate::views::modals::quick_picker_modal::filter_quick_picker_entries(
+                        &cache.entries,
+                        &self.modals.quick_picker_search,
+                    )
+                    .first()
+                    .map(|e| e.path.clone())
                 };
-                if let Some((path, _)) = filtered.first() {
-                    let p = path.clone();
+                if let Some(p) = first_match {
                     return self.update(Message::PlayQuickPickerFile(p));
                 }
                 Task::none()
@@ -584,7 +578,16 @@ impl WazooApp {
             Message::PlayQuickPickerFile(path) => {
                 self.modals.quick_picker = false;
                 self.modals.quick_picker_search.clear();
+                self.modals.quick_picker_cache = None;
                 self.update(Message::PlayFileInFocused(path))
+            }
+            Message::QuickPickerDiskSiblingsLoaded {
+                source_path,
+                folder_name,
+                candidates,
+            } => {
+                self.merge_quick_picker_disk_siblings(&source_path, folder_name, candidates);
+                Task::none()
             }
             Message::TogglePlexExplorerModal => {
                 if self.modals.plex_explorer {

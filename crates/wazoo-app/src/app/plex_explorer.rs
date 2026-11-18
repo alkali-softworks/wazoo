@@ -14,11 +14,28 @@ use iced::Task;
 impl WazooApp {
     /// Retrieves cached Plex metadata for a given video file path.
     pub fn get_metadata_for_path(&self, path: &str) -> Option<&wazoo_core::MediaMetadata> {
-        let norm_target = path.replace('\\', "/");
+        if self.metadata_cache.is_empty() {
+            return None;
+        }
         self.available_videos
             .iter()
-            .find(|v| v.path == path || v.path.replace('\\', "/") == norm_target)
+            .find(|v| paths_match_normalized(&v.path, path))
             .and_then(|v| self.metadata_cache.get(&v.id))
+    }
+
+    /// Builds a one-pass path -> metadata lookup map for batch callers.
+    pub(crate) fn metadata_by_path(&self) -> std::collections::HashMap<&str, &wazoo_core::MediaMetadata> {
+        if self.metadata_cache.is_empty() {
+            return std::collections::HashMap::new();
+        }
+        self.available_videos
+            .iter()
+            .filter_map(|v| {
+                self.metadata_cache
+                    .get(&v.id)
+                    .map(|meta| (v.path.as_str(), meta))
+            })
+            .collect()
     }
 
     pub(crate) fn open_plex_explorer(&mut self) -> Task<Message> {
@@ -226,4 +243,18 @@ impl WazooApp {
                 || year_str.contains(w)
         })
     }
+}
+
+/// Compares two paths while treating `/` and `\\` identically without allocating.
+#[inline]
+fn paths_match_normalized(a: &str, b: &str) -> bool {
+    if a == b {
+        return true;
+    }
+    if a.len() != b.len() {
+        return false;
+    }
+    a.bytes().zip(b.bytes()).all(|(ca, cb)| {
+        ca == cb || ((ca == b'/' || ca == b'\\') && (cb == b'/' || cb == b'\\'))
+    })
 }

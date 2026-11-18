@@ -20,29 +20,9 @@ static RE_RAW_METADATA_TAG: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?i)(?:^|[\s._\-\[\(])(dvdrip|bdrip|bluray|webrip|hdrip|x264|x265|h264|h265|hevc|1080p|720p|480p|2160p|aac|dts|ac3|flac)(?:$|[\s._\-\]\)])").unwrap()
 });
 
-static METADATA_TAGS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
-    vec![
-        Regex::new(r"(?i)dvdrip").unwrap(),
-        Regex::new(r"(?i)bdrip").unwrap(),
-        Regex::new(r"(?i)bluray").unwrap(),
-        Regex::new(r"(?i)webrip").unwrap(),
-        Regex::new(r"(?i)hdrip").unwrap(),
-        Regex::new(r"(?i)x264").unwrap(),
-        Regex::new(r"(?i)x265").unwrap(),
-        Regex::new(r"(?i)h264").unwrap(),
-        Regex::new(r"(?i)h265").unwrap(),
-        Regex::new(r"(?i)hevc").unwrap(),
-        Regex::new(r"(?i)1080p").unwrap(),
-        Regex::new(r"(?i)720p").unwrap(),
-        Regex::new(r"(?i)480p").unwrap(),
-        Regex::new(r"(?i)2160p").unwrap(),
-        Regex::new(r"(?i)4k").unwrap(),
-        Regex::new(r"(?i)aac").unwrap(),
-        Regex::new(r"(?i)dts").unwrap(),
-        Regex::new(r"(?i)ac3").unwrap(),
-        Regex::new(r"(?i)flac").unwrap(),
-        Regex::new(r"(?i)complete").unwrap(),
-    ]
+static RE_METADATA_TAGS: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)(?:dvdrip|bdrip|bluray|webrip|hdrip|x264|x265|h264|h265|hevc|1080p|720p|480p|2160p|4k|aac|dts|ac3|flac|complete)")
+        .unwrap()
 });
 
 static GENERIC_FOLDER_REGEXES: LazyLock<Vec<Regex>> = LazyLock::new(|| {
@@ -193,15 +173,20 @@ pub fn clean_name(name: &str) -> String {
     // Normalize backticks and acute accents into standard apostrophes (e.g. Gin`yoku -> Gin'yoku)
     let with_apostrophes = name.replace(['`', '´'], "'");
 
-    // Replace dots and underscores with spaces
-    let mut cleaned = with_apostrophes.replace(['.', '_'], " ");
+    let mut cleaned = if with_apostrophes.contains(['.', '_']) {
+        with_apostrophes.replace(['.', '_'], " ")
+    } else {
+        with_apostrophes
+    };
 
     // Remove square brackets content
-    cleaned = RE_SQUARE_BRACKETS.replace_all(&cleaned, "").to_string();
+    if let std::borrow::Cow::Owned(s) = RE_SQUARE_BRACKETS.replace_all(&cleaned, "") {
+        cleaned = s;
+    }
 
     // Keep parentheses ONLY if they contain a 4-digit year (e.g., (1994)) or season/episode marker
-    cleaned = RE_PARENS
-        .replace_all(&cleaned, |caps: &regex::Captures| {
+    if cleaned.contains('(') {
+        if let std::borrow::Cow::Owned(s) = RE_PARENS.replace_all(&cleaned, |caps: &regex::Captures| {
             let inner = &caps[1];
             if inner.len() == 4 && inner.chars().all(|c| c.is_ascii_digit()) {
                 format!("({inner})")
@@ -210,19 +195,27 @@ pub fn clean_name(name: &str) -> String {
             } else {
                 String::new()
             }
-        })
-        .to_string();
+        }) {
+            cleaned = s;
+        }
+    }
 
-    // Remove metadata tags
-    for tag in METADATA_TAGS.iter() {
-        cleaned = tag.replace_all(&cleaned, "").to_string();
+    // Remove metadata tags in a single regex pass
+    if let std::borrow::Cow::Owned(s) = RE_METADATA_TAGS.replace_all(&cleaned, "") {
+        cleaned = s;
     }
 
     // Collapse multiple spaces
-    cleaned = RE_MULTIPLE_SPACES.replace_all(&cleaned, " ").to_string();
+    if let std::borrow::Cow::Owned(s) = RE_MULTIPLE_SPACES.replace_all(&cleaned, " ") {
+        cleaned = s;
+    }
 
     // Remove trailing release group names (e.g. -VXT)
-    cleaned = RE_TRAILING_GROUP.replace_all(&cleaned, "").to_string();
+    if cleaned.contains('-') {
+        if let std::borrow::Cow::Owned(s) = RE_TRAILING_GROUP.replace_all(&cleaned, "") {
+            cleaned = s;
+        }
+    }
 
     // Trim leading/trailing punctuation and whitespace
     let trimmed = cleaned.trim();

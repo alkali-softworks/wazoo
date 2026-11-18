@@ -231,6 +231,11 @@ pub enum Message {
     ClearQuickPickerSearch,
     QuickPickerSubmit,
     PlayQuickPickerFile(String),
+    QuickPickerDiskSiblingsLoaded {
+        source_path: String,
+        folder_name: String,
+        candidates: Vec<(String, String)>,
+    },
 
     // Plex Explorer Modal
     TogglePlexExplorerModal,
