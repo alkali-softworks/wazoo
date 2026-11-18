@@ -26,4 +26,4 @@ pub use player::{AppPlayer, Player, PlayerList, SeekDebounce};
 pub use scanner::ScannerState;
 pub use search::SearchState;
 pub use titlebar::TitlebarState;
-pub use window::WindowState;
+pub use window::{PipCorner, WindowState};

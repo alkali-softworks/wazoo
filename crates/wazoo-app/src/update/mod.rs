@@ -240,6 +240,7 @@ impl WazooApp {
             // Window Lifecycle, Geometry & Input
             // =========================================================================
             Message::WindowIdReceived(_)
+            | Message::MonitorSizeReceived(_)
             | Message::GainWindowFocus
             | Message::WindowFocused
             | Message::WindowUnfocused
@@ -255,6 +256,7 @@ impl WazooApp {
             | Message::CloseApp
             | Message::ModifiersChanged(_)
             | Message::KeyPressed(_, _)
+            | Message::KeyPressedWithModifiers(_, _, _)
             | Message::KeyReleased(_)
             | Message::CursorMoved(_, _)
             | Message::CursorLeft
@@ -266,7 +268,9 @@ impl WazooApp {
             | Message::CloseDropdownMenu
             | Message::SetWindowOpacity(_)
             | Message::ToggleAlwaysOnTop
-            | Message::CyclePinMode => self.update_window(message),
+            | Message::CyclePinMode
+            | Message::CyclePipCorner
+            | Message::ApplyPipMonitorSize { .. } => self.update_window(message),
 
             // =========================================================================
             // Drawers (File Picker, Transcript, History)

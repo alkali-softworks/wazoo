@@ -9,8 +9,8 @@ use crate::app::{
     TITLEBAR_HIDE_TICKS, TITLEBAR_SHOW_DELAY_TICKS, TITLEBAR_SLIDE_TICKS, WazooApp,
 };
 use crate::message::Message;
-use crate::state::AppPlayer;
-use iced::{Point, Task, keyboard::Key};
+use crate::state::{AppPlayer, PipCorner};
+use iced::{Point, Size, Task, keyboard::Key};
 use std::time::{Duration, Instant};
 use wazoo_core::PlaybackMode;
 
@@ -27,7 +27,15 @@ impl WazooApp {
                 } else {
                     Task::none()
                 };
-                Task::batch([focus_task, level_task])
+                let monitor_task =
+                    iced::window::monitor_size(id).map(Message::MonitorSizeReceived);
+                Task::batch([focus_task, level_task, monitor_task])
+            }
+            Message::MonitorSizeReceived(maybe_size) => {
+                if let Some(size) = maybe_size {
+                    self.window.monitor_size = Some(size);
+                }
+                Task::none()
             }
             Message::GainWindowFocus => {
                 if let Some(id) = self.window.id {
@@ -46,6 +54,7 @@ impl WazooApp {
                 self.window.is_focused = true;
                 self.window.unfocused_frame_ticks = 0;
                 self.window.is_alt_pressed = false;
+                self.window.is_shift_pressed = false;
                 if self.cube.desktop_overlay {
                     if let Some(id) = self.window.id {
                         return iced::window::enable_mouse_passthrough(id);
@@ -63,6 +72,7 @@ impl WazooApp {
             Message::WindowUnfocused => {
                 self.window.is_focused = false;
                 self.window.is_alt_pressed = false;
+                self.window.is_shift_pressed = false;
                 if !self.window.is_dragging {
                     self.window.cursor_position = Point::new(-1000.0, -1000.0);
                     self.titlebar.drag_pending = false;
@@ -169,6 +179,9 @@ impl WazooApp {
                 self.titlebar.drag_pending = false;
                 self.titlebar.press_origin = None;
                 self.window.is_maximized = !self.window.is_maximized;
+                if self.window.is_maximized {
+                    self.window.pip_corner = None;
+                }
                 if let Some(id) = self.window.id {
                     iced::window::toggle_maximize(id)
                 } else {
@@ -180,6 +193,9 @@ impl WazooApp {
                 self.titlebar.drag_pending = false;
                 self.titlebar.press_origin = None;
                 self.window.is_fullscreen = !self.window.is_fullscreen;
+                if self.window.is_fullscreen {
+                    self.window.pip_corner = None;
+                }
                 let mode = if self.window.is_fullscreen {
                     iced::window::Mode::Fullscreen
                 } else {
@@ -206,58 +222,9 @@ impl WazooApp {
                     return Task::none();
                 }
 
-                let grid_players: Vec<&AppPlayer> =
-                    self.players.iter().filter(|p| !p.is_cube).collect();
-                if grid_players.is_empty() {
-                    return Task::none();
-                }
-
-                let player_aspect = self
-                    .focused_player()
-                    .filter(|p| !p.is_cube)
-                    .and_then(|p| p.aspect_ratio())
-                    .or_else(|| grid_players.iter().find_map(|p| p.aspect_ratio()));
-
-                let Some(tile_ar) = player_aspect else {
+                let Some(target_player_ar) = self.active_player_aspect_ratio() else {
                     return Task::none();
                 };
-
-                if tile_ar <= 0.05 {
-                    return Task::none();
-                }
-
-                let (cols, rows) = match self.settings.playback_mode {
-                    PlaybackMode::Scroll => (1, 1),
-                    _ => match self.settings.layout {
-                        wazoo_core::LayoutMode::Row => (grid_players.len().max(1), 1),
-                        wazoo_core::LayoutMode::Column => (1, grid_players.len().max(1)),
-                        wazoo_core::LayoutMode::Grid => {
-                            let count = grid_players.len();
-                            if count <= 1 {
-                                (1, 1)
-                            } else if count == 2 {
-                                (2, 1)
-                            } else if count == 3 {
-                                (1, 1)
-                            } else {
-                                let cols = if count <= 4 {
-                                    2
-                                } else if count <= 9 {
-                                    3
-                                } else {
-                                    4
-                                };
-                                let rows = count.div_ceil(cols);
-                                (cols, rows)
-                            }
-                        }
-                    },
-                };
-
-                let target_player_ar = tile_ar * (cols as f32 / rows as f32);
-                if target_player_ar <= 0.05 {
-                    return Task::none();
-                }
 
                 let drawer_width = if self.drawers.show_file_picker || self.drawers.show_history_drawer {
                     420.0
@@ -364,14 +331,22 @@ impl WazooApp {
             }
             Message::ModifiersChanged(modifiers) => {
                 self.window.is_alt_pressed = modifiers.alt();
+                self.window.is_shift_pressed = modifiers.shift();
                 Task::none()
             }
             Message::KeyPressed(key, status) => self.handle_key_pressed(key, status),
+            Message::KeyPressedWithModifiers(key, status, modifiers) => {
+                self.window.is_alt_pressed = modifiers.alt();
+                self.window.is_shift_pressed = modifiers.shift();
+                self.handle_key_pressed(key, status)
+            }
             Message::KeyReleased(key) => {
                 if key == Key::Named(iced::keyboard::key::Named::Alt)
                     || key == Key::Named(iced::keyboard::key::Named::AltGraph)
                 {
                     self.window.is_alt_pressed = false;
+                } else if key == Key::Named(iced::keyboard::key::Named::Shift) {
+                    self.window.is_shift_pressed = false;
                 }
                 Task::none()
             }
@@ -539,6 +514,9 @@ impl WazooApp {
 
                 self.settings.is_always_on_top = next_pinned;
                 self.settings.window_opacity = next_opacity;
+                if !next_pinned {
+                    self.window.pip_corner = None;
+                }
                 if !next_pinned || !clickthru {
                     self.window.clickthru = false;
                 }
@@ -555,31 +533,13 @@ impl WazooApp {
                 });
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
 
-                if let Some(id) = self.window.id {
-                    let level = if next_pinned {
-                        iced::window::Level::AlwaysOnTop
-                    } else {
-                        iced::window::Level::Normal
-                    };
-                    let level_task = iced::window::set_level(id, level);
-                    let passthrough_task = if next_pinned && clickthru {
-                        if !self.window.is_focused && !self.is_modal_or_menu_open() {
-                            self.window.clickthru = true;
-                            iced::window::enable_mouse_passthrough(id)
-                        } else {
-                            Task::none()
-                        }
-                    } else {
-                        iced::window::disable_mouse_passthrough(id)
-                    };
-                    return Task::batch([level_task, passthrough_task]);
-                }
-                Task::none()
+                self.always_on_top_tasks(next_pinned, next_pinned && clickthru)
             }
             Message::ToggleAlwaysOnTop => {
                 self.settings.is_always_on_top = !self.settings.is_always_on_top;
                 if !self.settings.is_always_on_top {
                     self.window.clickthru = false;
+                    self.window.pip_corner = None;
                     self.settings.window_opacity = 1.0;
                 }
                 let _ = self.config_mgr.save_settings(&self.settings);
@@ -603,27 +563,112 @@ impl WazooApp {
                 });
                 self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
 
-                if let Some(id) = self.window.id {
-                    let level = if is_pinned {
-                        iced::window::Level::AlwaysOnTop
-                    } else {
-                        iced::window::Level::Normal
-                    };
-                    let level_task = iced::window::set_level(id, level);
-                    let passthrough_task = if has_clickthru {
-                        if !self.window.is_focused && !self.is_modal_or_menu_open() {
-                            self.window.clickthru = true;
-                            iced::window::enable_mouse_passthrough(id)
-                        } else {
-                            Task::none()
-                        }
-                    } else {
-                        self.window.clickthru = false;
-                        iced::window::disable_mouse_passthrough(id)
-                    };
-                    return Task::batch([level_task, passthrough_task]);
+                self.always_on_top_tasks(is_pinned, has_clickthru)
+            }
+            Message::CyclePipCorner => {
+                if self.cube.desktop_overlay {
+                    return Task::none();
                 }
-                Task::none()
+
+                let should_resize = self.window.pip_corner.is_none();
+                let corner = match self.window.pip_corner {
+                    None => PipCorner::BottomLeft,
+                    Some(current) => current.next(),
+                };
+                self.window.pip_corner = Some(corner);
+
+                let was_pinned = self.settings.is_always_on_top;
+                self.settings.is_always_on_top = true;
+                if !was_pinned {
+                    self.settings.window_opacity = 1.0;
+                    self.window.clickthru = false;
+                }
+
+                self.titlebar.last_click = None;
+                self.titlebar.drag_pending = false;
+                self.titlebar.press_origin = None;
+
+                let mode_task = if self.window.is_fullscreen {
+                    self.window.is_fullscreen = false;
+                    if let Some(id) = self.window.id {
+                        iced::window::set_mode(id, iced::window::Mode::Windowed)
+                    } else {
+                        Task::none()
+                    }
+                } else {
+                    Task::none()
+                };
+
+                let unmaximize_task = if self.window.is_maximized {
+                    self.window.is_maximized = false;
+                    if let Some(id) = self.window.id {
+                        iced::window::maximize(id, false)
+                    } else {
+                        Task::none()
+                    }
+                } else {
+                    Task::none()
+                };
+
+                let mon_size = self
+                    .window
+                    .monitor_size
+                    .unwrap_or(Self::DEFAULT_MONITOR_SIZE);
+                let geometry_task = self.apply_pip_bounds(corner, should_resize, mon_size);
+                let _ = self.config_mgr.save_settings(&self.settings);
+
+                self.overlay.toast_message = Some(format!(
+                    "{} (PiP: {})",
+                    self.t("wazoo.always_on_top_enabled"),
+                    corner.label()
+                ));
+                self.overlay.toast_time_remaining = DEFAULT_TOAST_SECS;
+
+                let has_clickthru = self.settings.window_opacity < 0.99;
+                let pin_tasks = self.always_on_top_tasks(true, has_clickthru);
+                let monitor_task = if let Some(id) = self.window.id {
+                    iced::window::monitor_size(id).map(move |monitor_size| {
+                        Message::ApplyPipMonitorSize {
+                            corner,
+                            resize: should_resize,
+                            monitor_size,
+                        }
+                    })
+                } else {
+                    Task::none()
+                };
+
+                Task::batch([
+                    mode_task,
+                    unmaximize_task,
+                    pin_tasks,
+                    geometry_task,
+                    monitor_task,
+                ])
+            }
+            Message::ApplyPipMonitorSize {
+                corner,
+                resize,
+                monitor_size,
+            } => {
+                if self.window.pip_corner != Some(corner) {
+                    return Task::none();
+                }
+                let Some(actual_mon_size) = monitor_size else {
+                    return Task::none();
+                };
+                let prev_mon_size = self.window.monitor_size.unwrap_or(Self::DEFAULT_MONITOR_SIZE);
+                self.window.monitor_size = Some(actual_mon_size);
+
+                if (actual_mon_size.width - prev_mon_size.width).abs() < 1.0
+                    && (actual_mon_size.height - prev_mon_size.height).abs() < 1.0
+                {
+                    return Task::none();
+                }
+
+                let geometry_task = self.apply_pip_bounds(corner, resize, actual_mon_size);
+                let _ = self.config_mgr.save_settings(&self.settings);
+                geometry_task
             }
             _ => Task::none(),
         }
@@ -758,5 +803,184 @@ impl WazooApp {
             }
             _ => iced::window::Direction::SouthEast,
         }
+    }
+
+    const PIP_SCREEN_MARGIN: f32 = 0.0;
+    const DEFAULT_MONITOR_SIZE: Size = Size::new(1920.0, 1080.0);
+
+    fn always_on_top_tasks(&mut self, is_pinned: bool, has_clickthru: bool) -> Task<Message> {
+        let Some(id) = self.window.id else {
+            return Task::none();
+        };
+        let level = if is_pinned {
+            iced::window::Level::AlwaysOnTop
+        } else {
+            iced::window::Level::Normal
+        };
+        let level_task = iced::window::set_level(id, level);
+        let passthrough_task = if has_clickthru {
+            if !self.window.is_focused && !self.is_modal_or_menu_open() {
+                self.window.clickthru = true;
+                iced::window::enable_mouse_passthrough(id)
+            } else {
+                Task::none()
+            }
+        } else {
+            self.window.clickthru = false;
+            iced::window::disable_mouse_passthrough(id)
+        };
+        Task::batch([level_task, passthrough_task])
+    }
+
+    fn active_player_aspect_ratio(&self) -> Option<f32> {
+        let grid_players: Vec<&AppPlayer> =
+            self.players.iter().filter(|p| !p.is_cube).collect();
+        if grid_players.is_empty() {
+            return None;
+        }
+
+        let player_aspect = self
+            .focused_player()
+            .filter(|p| !p.is_cube)
+            .and_then(|p| p.aspect_ratio())
+            .or_else(|| grid_players.iter().find_map(|p| p.aspect_ratio()));
+
+        let tile_ar = player_aspect?;
+        if tile_ar <= 0.05 {
+            return None;
+        }
+
+        let (cols, rows) = match self.settings.playback_mode {
+            PlaybackMode::Scroll => (1, 1),
+            _ => match self.settings.layout {
+                wazoo_core::LayoutMode::Row => (grid_players.len().max(1), 1),
+                wazoo_core::LayoutMode::Column => (1, grid_players.len().max(1)),
+                wazoo_core::LayoutMode::Grid => {
+                    let count = grid_players.len();
+                    if count <= 1 {
+                        (1, 1)
+                    } else if count == 2 {
+                        (2, 1)
+                    } else if count == 3 {
+                        (1, 1)
+                    } else {
+                        let cols = if count <= 4 {
+                            2
+                        } else if count <= 9 {
+                            3
+                        } else {
+                            4
+                        };
+                        let rows = count.div_ceil(cols);
+                        (cols, rows)
+                    }
+                }
+            },
+        };
+
+        let target_player_ar = tile_ar * (cols as f32 / rows as f32);
+        if target_player_ar <= 0.05 {
+            None
+        } else {
+            Some(target_player_ar)
+        }
+    }
+
+    fn calculate_pip_size(&self, monitor_size: Size) -> (u32, u32) {
+        let mon_w = monitor_size.width.max(320.0);
+        let mon_h = monitor_size.height.max(240.0);
+        let target_ar = self.active_player_aspect_ratio().unwrap_or(16.0 / 9.0);
+
+        let max_w = (mon_w - 2.0 * Self::PIP_SCREEN_MARGIN).max(200.0);
+        let max_h = (mon_h * 0.60)
+            .clamp(270.0, 720.0)
+            .min((mon_h - 2.0 * Self::PIP_SCREEN_MARGIN).max(150.0));
+        let base_w = (mon_w * 0.375).clamp(480.0, 960.0).min(max_w);
+
+        let mut w = base_w;
+        let mut h = w / target_ar;
+
+        if h > max_h {
+            h = max_h;
+            w = h * target_ar;
+        }
+        if h < 150.0 {
+            h = 150.0;
+            w = (h * target_ar).min((mon_w * 0.75).max(200.0)).min(max_w);
+        }
+        if w < 200.0 {
+            w = 200.0;
+            h = (w / target_ar).min(max_h);
+        }
+
+        let clamped_w = (w.round() as u32).clamp(200, 7680);
+        let clamped_h = (h.round() as u32).clamp(150, 4320);
+        (clamped_w, clamped_h)
+    }
+
+    fn calculate_pip_position(
+        corner: PipCorner,
+        monitor_size: Size,
+        win_w: u32,
+        win_h: u32,
+    ) -> (i32, i32) {
+        let margin = Self::PIP_SCREEN_MARGIN;
+        let max_x = (monitor_size.width - win_w as f32).max(0.0);
+        let max_y = (monitor_size.height - win_h as f32).max(0.0);
+
+        let left_x = margin.min(max_x);
+        let right_x = (max_x - margin).max(0.0);
+        let top_y = margin.min(max_y);
+        let bottom_y = (max_y - margin).max(0.0);
+
+        let (x, y) = match corner {
+            PipCorner::BottomLeft => (left_x, bottom_y),
+            PipCorner::TopLeft => (left_x, top_y),
+            PipCorner::TopRight => (right_x, top_y),
+            PipCorner::BottomRight => (right_x, bottom_y),
+        };
+
+        (x.round() as i32, y.round() as i32)
+    }
+
+    fn apply_pip_bounds(
+        &mut self,
+        corner: PipCorner,
+        resize: bool,
+        monitor_size: Size,
+    ) -> Task<Message> {
+        let (win_w, win_h) = if resize {
+            self.calculate_pip_size(monitor_size)
+        } else {
+            (
+                self.settings.window_bounds.width.clamp(200, 7680),
+                self.settings.window_bounds.height.clamp(150, 4320),
+            )
+        };
+        let (win_x, win_y) = Self::calculate_pip_position(corner, monitor_size, win_w, win_h);
+
+        self.settings.window_bounds.x = win_x;
+        self.settings.window_bounds.y = win_y;
+        self.settings.window_bounds.width = win_w;
+        self.settings.window_bounds.height = win_h;
+        self.window.bounds_dirty = true;
+
+        if resize {
+            self.window.mark_resized();
+            self.scroll_engine
+                .set_window_size(win_w as f32, win_h as f32);
+        }
+
+        let Some(id) = self.window.id else {
+            return Task::none();
+        };
+
+        let resize_task = if resize {
+            iced::window::resize(id, Size::new(win_w as f32, win_h as f32))
+        } else {
+            Task::none()
+        };
+        let move_task = iced::window::move_to(id, Point::new(win_x as f32, win_y as f32));
+        Task::batch([resize_task, move_task])
     }
 }

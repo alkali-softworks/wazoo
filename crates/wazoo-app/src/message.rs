@@ -18,6 +18,7 @@ use wazoo_scanner::ScanProgress;
 pub enum Message {
     // Window management & Events
     WindowIdReceived(Id),
+    MonitorSizeReceived(Option<Size>),
     WindowMoved(Id, Point),
     WindowResized(Id, Size),
     WindowFocused,
@@ -34,6 +35,7 @@ pub enum Message {
     CursorLeft,
     RightClickPressed(Id),
     KeyPressed(Key, Status),
+    KeyPressedWithModifiers(Key, Status, iced::keyboard::Modifiers),
     KeyReleased(Key),
     MinimizeWindow,
     MaximizeWindow,
@@ -109,6 +111,12 @@ pub enum Message {
     ToggleFlipMode,
     ToggleAlwaysOnTop,
     CyclePinMode,
+    CyclePipCorner,
+    ApplyPipMonitorSize {
+        corner: crate::state::PipCorner,
+        resize: bool,
+        monitor_size: Option<Size>,
+    },
     SetScrollSpeed(f32),
     AdjustScrollSpeed(f32),
     AddNewPlayer,

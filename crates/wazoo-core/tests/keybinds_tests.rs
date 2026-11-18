@@ -96,6 +96,13 @@ fn test_help_shortcuts_generation() {
         ("P".to_string(), "help.shortcuts.toggle_pin".to_string())
     );
     assert_eq!(
+        shortcuts[31],
+        (
+            "Shift + P".to_string(),
+            "help.shortcuts.pip_corners".to_string()
+        )
+    );
+    assert_eq!(
         shortcuts[32],
         ("W".to_string(), "help.shortcuts.fit_window".to_string())
     );

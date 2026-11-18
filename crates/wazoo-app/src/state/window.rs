@@ -4,8 +4,39 @@
  * Window Lifecycle & Cursor State
  */
 
-use iced::Point;
+use iced::{Point, Size};
 use std::time::{Duration, Instant};
+
+/// Screen corners for Picture-in-Picture (PiP) window placement.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PipCorner {
+    BottomLeft,
+    TopLeft,
+    TopRight,
+    BottomRight,
+}
+
+impl PipCorner {
+    /// Advances clockwise to the next screen corner.
+    pub fn next(self) -> Self {
+        match self {
+            Self::BottomLeft => Self::TopLeft,
+            Self::TopLeft => Self::TopRight,
+            Self::TopRight => Self::BottomRight,
+            Self::BottomRight => Self::BottomLeft,
+        }
+    }
+
+    /// Human-readable label for toast notifications.
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::BottomLeft => "Bottom-Left",
+            Self::TopLeft => "Top-Left",
+            Self::TopRight => "Top-Right",
+            Self::BottomRight => "Bottom-Right",
+        }
+    }
+}
 
 /// Tracks host window ID, geometry state, cursor coordinates, and input interaction flags.
 #[derive(Debug, Clone)]
@@ -28,6 +59,12 @@ pub struct WindowState {
     pub clickthru: bool,
     /// Whether the Alt modifier key is currently held down.
     pub is_alt_pressed: bool,
+    /// Whether the Shift modifier key is currently held down.
+    pub is_shift_pressed: bool,
+    /// Current screen corner when Picture-in-Picture (PiP) positioning is active.
+    pub pip_corner: Option<PipCorner>,
+    /// Cached logical dimensions of the monitor containing the window.
+    pub monitor_size: Option<Size>,
     /// Timestamp of the most recent window resize event.
     pub last_resize_time: Option<Instant>,
     /// Whether the application window is currently in fullscreen display mode.
@@ -68,6 +105,9 @@ impl Default for WindowState {
             bounds_dirty: false,
             clickthru: false,
             is_alt_pressed: false,
+            is_shift_pressed: false,
+            pip_corner: None,
+            monitor_size: None,
             last_resize_time: None,
             is_fullscreen: false,
             is_maximized: false,

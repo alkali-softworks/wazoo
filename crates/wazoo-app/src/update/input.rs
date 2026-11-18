@@ -23,9 +23,13 @@ impl WazooApp {
         key: Key,
         status: iced::event::Status,
     ) -> Task<Message> {
-        // If Alt key pressed
+        // If Alt or Shift modifier key pressed
         if key == Key::Named(Named::Alt) || key == Key::Named(Named::AltGraph) {
             self.window.is_alt_pressed = true;
+            return Task::none();
+        }
+        if key == Key::Named(Named::Shift) {
+            self.window.is_shift_pressed = true;
             return Task::none();
         }
 
@@ -120,7 +124,12 @@ impl WazooApp {
                         return self.update(Message::AddBookmarkFocused);
                     }
                 }
-                KeyAction::ToggleAlwaysOnTop => return self.update(Message::CyclePinMode),
+                KeyAction::ToggleAlwaysOnTop => {
+                    if self.window.is_shift_pressed && !self.window.is_alt_pressed {
+                        return self.update(Message::CyclePipCorner);
+                    }
+                    return self.update(Message::CyclePinMode);
+                }
                 KeyAction::MarkIn => return self.update(Message::MarkInFocused),
                 KeyAction::MarkOut => return self.update(Message::MarkOutFocused),
                 KeyAction::ClearMarkIn => return self.update(Message::ClearMarkInFocused),

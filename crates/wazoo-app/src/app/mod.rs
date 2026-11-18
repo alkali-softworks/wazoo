@@ -236,9 +236,9 @@ impl WazooApp {
                 iced::Event::Window(iced::window::Event::Opened { .. }) => {
                     Some(Message::WindowIdReceived(window_id))
                 }
-                iced::Event::Keyboard(iced::keyboard::Event::KeyPressed { key, .. }) => {
-                    Some(Message::KeyPressed(key, status))
-                }
+                iced::Event::Keyboard(iced::keyboard::Event::KeyPressed {
+                    key, modifiers, ..
+                }) => Some(Message::KeyPressedWithModifiers(key, status, modifiers)),
                 iced::Event::Keyboard(iced::keyboard::Event::KeyReleased { key, .. }) => {
                     Some(Message::KeyReleased(key))
                 }

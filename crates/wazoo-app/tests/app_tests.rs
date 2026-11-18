@@ -3249,3 +3249,208 @@ fn test_theme_settings_tab_color_pickers_presets_and_persistence() {
     let _ = app.update(Message::CloseSettingsModal);
     let _ = std::fs::remove_dir_all(&temp_dir);
 }
+
+#[test]
+fn test_shift_p_pip_always_on_top_and_corner_cycling() {
+    let (mut app, _) = new_test_app();
+    app.window.monitor_size = Some(iced::Size::new(1920.0, 1080.0));
+    app.settings.window_bounds = wazoo_core::WindowBounds {
+        x: 100,
+        y: 100,
+        width: 1280,
+        height: 720,
+    };
+    app.window.is_fullscreen = true;
+    app.window.is_maximized = true;
+
+    assert!(!app.settings.is_always_on_top);
+    assert_eq!(app.window.pip_corner, None);
+
+    // 1st Shift+P: activates always-on-top, exits fullscreen/maximized, resizes to PiP (720x405), moves to Bottom-Left
+    let shift_mods = iced::keyboard::Modifiers::SHIFT;
+    let _ = app.update(Message::KeyPressedWithModifiers(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+        shift_mods,
+    ));
+
+    assert!(app.settings.is_always_on_top);
+    assert_eq!(app.settings.window_opacity, 1.0);
+    assert!(!app.window.clickthru);
+    assert!(!app.window.is_fullscreen);
+    assert!(!app.window.is_maximized);
+    assert_eq!(
+        app.window.pip_corner,
+        Some(wazoo_app::state::PipCorner::BottomLeft)
+    );
+    assert_eq!(app.settings.window_bounds.width, 720);
+    assert_eq!(app.settings.window_bounds.height, 405);
+    assert_eq!(app.settings.window_bounds.x, 0);
+    assert_eq!(app.settings.window_bounds.y, 1080 - 405);
+    assert_eq!(
+        app.overlay.toast_message.as_deref(),
+        Some("Always on top enabled (PiP: Bottom-Left)")
+    );
+
+    // 2nd Shift+P: moves to Top-Left, keeps always-on-top active
+    let _ = app.update(Message::KeyPressedWithModifiers(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+        shift_mods,
+    ));
+    assert!(app.settings.is_always_on_top);
+    assert_eq!(
+        app.window.pip_corner,
+        Some(wazoo_app::state::PipCorner::TopLeft)
+    );
+    assert_eq!(app.settings.window_bounds.x, 0);
+    assert_eq!(app.settings.window_bounds.y, 0);
+
+    // 3rd Shift+P: moves to Top-Right
+    let _ = app.update(Message::KeyPressedWithModifiers(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+        shift_mods,
+    ));
+    assert!(app.settings.is_always_on_top);
+    assert_eq!(
+        app.window.pip_corner,
+        Some(wazoo_app::state::PipCorner::TopRight)
+    );
+    assert_eq!(app.settings.window_bounds.x, 1920 - 720);
+    assert_eq!(app.settings.window_bounds.y, 0);
+
+    // 4th Shift+P: moves to Bottom-Right
+    let _ = app.update(Message::KeyPressedWithModifiers(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+        shift_mods,
+    ));
+    assert!(app.settings.is_always_on_top);
+    assert_eq!(
+        app.window.pip_corner,
+        Some(wazoo_app::state::PipCorner::BottomRight)
+    );
+    assert_eq!(app.settings.window_bounds.x, 1920 - 720);
+    assert_eq!(app.settings.window_bounds.y, 1080 - 405);
+
+    // 5th Shift+P: wraps back to Bottom-Left
+    let _ = app.update(Message::KeyPressedWithModifiers(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+        shift_mods,
+    ));
+    assert!(app.settings.is_always_on_top);
+    assert_eq!(
+        app.window.pip_corner,
+        Some(wazoo_app::state::PipCorner::BottomLeft)
+    );
+    assert_eq!(app.settings.window_bounds.x, 0);
+    assert_eq!(app.settings.window_bounds.y, 1080 - 405);
+
+    // Plain 'p' (Shift released) cycles pin opacity and eventually disables always-on-top, resetting pip_corner
+    let _ = app.update(Message::ModifiersChanged(
+        iced::keyboard::Modifiers::empty(),
+    ));
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.settings.is_always_on_top);
+    assert_eq!(app.settings.window_opacity, 0.40);
+
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert_eq!(app.settings.window_opacity, 0.15);
+
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(!app.settings.is_always_on_top);
+    assert_eq!(app.window.pip_corner, None);
+}
+
+#[test]
+fn test_shift_p_pip_aspect_ratio_monitor_update_and_modal_guard() {
+    let temp_dir = std::env::temp_dir().join(format!(
+        "wazoo_pip_test_{}_{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let _ = std::fs::create_dir_all(&temp_dir);
+    let config_mgr = ConfigManager::with_dirs(temp_dir.clone(), temp_dir.clone());
+    let db = Database::open_in_memory().expect("in-memory db");
+    let (mut app, _) = WazooApp::new_with_backend(None, config_mgr, db);
+
+    let f1 = temp_dir.join("vertical.mp4");
+    let _ = std::fs::File::create(&f1);
+    app.available_videos = vec![VideoRecord::new(1, "V1", f1.to_string_lossy().to_string())];
+    app.default_shuffle_mode = false;
+    let _ = app.update(Message::SetPlayerCount(1));
+    assert_eq!(app.players.len(), 1);
+
+    // Simulate 9:16 vertical video frame
+    {
+        let frame_arc = app.players[0].frame();
+        let mut guard = frame_arc.lock().unwrap();
+        guard.width = 1080;
+        guard.height = 1920;
+    }
+
+    // Modal open should block Shift+P shortcut
+    app.modals.search = true;
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Named(iced::keyboard::key::Named::Shift),
+        iced::event::Status::Ignored,
+    ));
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(!app.settings.is_always_on_top);
+    assert_eq!(app.window.pip_corner, None);
+    app.modals.search = false;
+
+    // Trigger Shift+P with Shift held (via Named::Shift) using fallback 1920x1080 monitor
+    let _ = app.update(Message::KeyPressed(
+        iced::keyboard::Key::Character("p".into()),
+        iced::event::Status::Ignored,
+    ));
+    assert!(app.settings.is_always_on_top);
+    assert_eq!(
+        app.window.pip_corner,
+        Some(wazoo_app::state::PipCorner::BottomLeft)
+    );
+    // Vertical 9:16 video caps at 60% of 1080 = 648 height, width = 648 * 9/16 = 365
+    assert_eq!(app.settings.window_bounds.width, 365);
+    assert_eq!(app.settings.window_bounds.height, 648);
+    assert_eq!(app.settings.window_bounds.x, 0);
+    assert_eq!(app.settings.window_bounds.y, 1080 - 648);
+
+    // Async monitor_size callback updates bounds when actual monitor is 2560x1440
+    let _ = app.update(Message::ApplyPipMonitorSize {
+        corner: wazoo_app::state::PipCorner::BottomLeft,
+        resize: true,
+        monitor_size: Some(iced::Size::new(2560.0, 1440.0)),
+    });
+    assert_eq!(app.window.monitor_size, Some(iced::Size::new(2560.0, 1440.0)));
+    // On 2560x1440, max_h = clamp(1440*0.6, 270, 720) = 720, width = 720 * 9/16 = 405
+    assert_eq!(app.settings.window_bounds.width, 405);
+    assert_eq!(app.settings.window_bounds.height, 720);
+    assert_eq!(app.settings.window_bounds.x, 0);
+    assert_eq!(app.settings.window_bounds.y, 1440 - 720);
+
+    // KeyReleased(Shift) clears shift state
+    let _ = app.update(Message::KeyReleased(iced::keyboard::Key::Named(
+        iced::keyboard::key::Named::Shift,
+    )));
+    assert!(!app.window.is_shift_pressed);
+
+    let _ = std::fs::remove_dir_all(&temp_dir);
+}

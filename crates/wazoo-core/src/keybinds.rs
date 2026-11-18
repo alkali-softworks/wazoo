@@ -614,8 +614,11 @@ impl KeybindSettings {
                         description: t("help.shortcuts.toggle_pin"),
                     },
                     HelpShortcut {
-                        key: KeyDisplay::Combo(vec!["Alt".to_string(), "Drag".to_string()]),
-                        description: t("help.shortcuts.move_window"),
+                        key: KeyDisplay::Combo(vec![
+                            "Shift".to_string(),
+                            self.menu_hint(&self.toggle_pin),
+                        ]),
+                        description: t("help.shortcuts.pip_corners"),
                     },
                     HelpShortcut {
                         key: KeyDisplay::single(&self.fit_window),
