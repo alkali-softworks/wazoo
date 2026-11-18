@@ -73,7 +73,7 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - **Alt + Drag** to reposition the window anywhere on screen.
 - Configurable **Window Opacity** (in System Settings).
 
-### 📌 Always on Top, Click-Through & Picture-in-Picture (<kbd>P</kbd> / <kbd>Shift+P</kbd>)
+### 📌 Picture-in-Picture (<kbd>P</kbd> / <kbd>Shift+P</kbd>)
 Press <kbd>P</kbd> to cycle through 4 overlay modes:
 1. **Always on Top (100% Opacity)**: Classic Always-on-Top window without click-through.
 2. **Click-Through (40% Opacity)**: Semi-transparent floating video with click-through passthrough when unfocused.
@@ -93,9 +93,9 @@ Press <kbd>P</kbd> to cycle through 4 overlay modes:
 - **Customizable**: Adjust movement speed, cube size, 3D light toggle, and spawn multiple cubes with independent video streams.
 
 ### 🎨 Customizable Themes
-- **Interactive Color Pickers**: Override the accent color, UI grey surface, titlebar, titlebar badge, HUD overlay, and text color using a 2D Saturation/Value pad, rainbow hue bar, hex input, or quick swatches.
-- **Presets & Randomizer**: Switch between 7 built-in presets or roll a random palette with a live titlebar & HUD preview.
-- **Appearance & Geometry**: Fine-tune HUD overlay opacity, UI corner roundness, and player focus ring width, persisted in `settings.json`.
+- **Color Pickers**: Override any UI colors using Saturation/Value pad, rainbow hue bar, or hex codes.
+- **Presets & Randomizer**: 7 built-in presets or roll a random palette with live preview.
+- **Appearance & Geometry**: Fine-tune HUD overlay opacity, UI corner roundness, etc.
 
 ### 🌐 Internationalization & Localization
 - **23 Supported Languages**: Complete UI translations for English (`en`), Dutch (`nl`), Spanish (`es`), French (`fr`), Italian (`it`), Portuguese (`pt`), German (`de`), Czech (`cs`), Polish (`pl`), Ukrainian (`uk`), Russian (`ru`), Swedish (`sv`), Turkish (`tr`), Arabic (`ar`), Hebrew (`he`), Persian (`fa`), Hindi (`hi`), Bengali (`bn`), Thai (`th`), Vietnamese (`vi`), Simplified Chinese (`zh`), Japanese (`ja`), and Korean (`ko`).
