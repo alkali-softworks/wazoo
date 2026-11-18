@@ -55,7 +55,7 @@ graph LR
 To handle large libraries (50,000+ files) smoothly without memory spikes or freezing the UI, [`Scanner::scan_and_index_with_cancel`] executes in two distinct phases:
 
 1. **Phase 1: Listing (`ScanStage::Listing`)**: Quickly counts total video files across immediate roots and subdirectories without touching SQLite or cleaning titles. Provides an accurate total count for smooth percentage calculations and immediate UI feedback.
-2. **Phase 2: Indexing (`ScanStage::Indexing`)**: Performs deduplication against visited paths, applies [`clean_video_name`], chunks discovered records, executes batch SQLite transactions (`batch_insert_videos`), and emits real-time progress updates (`files_found`, `percent`, `current_name`).
+2. **Phase 2: Indexing (`ScanStage::Indexing`)**: Performs deduplication against visited paths, applies [`clean_video_name`], builds `VideoRecord` entries, executes batch SQLite transactions (`batch_insert_videos`), prunes deleted files (`prune_missing_videos`), and emits real-time progress updates (`files_found`, `percent`, `current_name`).
 
 ```mermaid
 sequenceDiagram

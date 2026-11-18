@@ -246,7 +246,7 @@ pub struct PlexSettings {
 ## 7. User Interface Additions (`wazoo-app`)
 
 ### 1. Plex Tab in Settings Modal
-A dedicated navigation button in the settings modal tabs bar: `[General] [Playback] [Filters] [CRT] [3D Cube] [Plex] [System]`. Clean text labels without emojis are used for optimal cross-language layout parity.
+A dedicated navigation button in the settings modal tabs bar: `[General] [Playback] [Filters] [CRT] [3D Cube] [Plex] [Theme] [System]`. Clean text labels without emojis are used for optimal cross-language layout parity.
 
 #### Controls within the Plex Tab:
 * **Toggle Integration**: Enable/disable Plex metadata enrichment with live localized status badge (`Active` / `Off`).
@@ -258,9 +258,10 @@ A dedicated navigation button in the settings modal tabs bar: `[General] [Playba
 
 ### 2. Player Card HUD Enhancements
 * **Rich Title Pill**:
+  * Cleans raw release filenames from Plex metadata titles via `format::clean_metadata_title`.
   * Line 1: `Movie Title` or `Series Name`
   * Line 2: `S01E05 - Gray Matter` (for episodic series)
-  * Badge Row: Subtle pills showing `[1999] [PG-13] [★ 8.7] [Sci-Fi] [Action]`
+  * Badge Row: Subtle pills showing `[1999] [PG-13] [Sci-Fi] [Action] [★ 8.7]`
 * **Plot Synopsis Tooltip**:
   * Hovering or clicking an info badge reveals a frosted backdrop card displaying the movie tagline, synopsis, director, and lead cast.
 
@@ -275,16 +276,18 @@ A dedicated navigation button in the settings modal tabs bar: `[General] [Playba
   - `Recently Added`: Pulls the newest additions across your library (live from `/library/recentlyAdded` or local cache).
   - `On Deck`: Displays continue-watching and in-progress movies/episodes with resume timestamps and progress bars (live from `/library/onDeck`).
   - `Top Rated`: Instant leaderboard of highest-rated films and shows (sorted by rating descending, then release year).
-  - `Surprise Me`: Curated random shuffle of films with metadata. Every click on the `Surprise Me` tab immediately re-rolls a fresh random batch of up to 60 titles across your library, while keeping the list stable during search and browsing.
-* **Simultaneous Genre & Decade Multi-Filtering (All Tab)**:
+  - `Surprise Me`: Curated random shuffle of films with metadata. Opening the explorer or selecting `Surprise Me` rolls a fresh random seed and returns up to 150 titles across your library, while keeping the list stable during search and browsing.
+* **Simultaneous Genre & Decade Multi-Filtering (All / Genre / Decade Views)**:
   - **Genres Row**: `[All] [Sci-Fi] [Horror] [Action] [Thriller] [Comedy] [Drama] [Crime] [Animation]`.
   - **Decades Row**: Placed directly below Genres: `[All] [pre-30s] [30s] [40s] [50s] [60s] [70s] [80s] [90s] [00s] [10s] [20s]`.
-  - Users can combine any genre and decade simultaneously on the `All` tab (e.g., **70s Sci-Fi**, **80s Horror**, **60s Horror**).
+  - Users can combine any genre and decade simultaneously (e.g., **70s Sci-Fi**, **80s Horror**, **60s Horror**).
   - Clicking an active filter toggles it off, or clicking `[All]` clears that filter. Toggling filters preserves the current tab without jumping.
   - **Comprehensive Decades Reach**: Extends back through classic and modern cinema eras (`pre-30s` through `20s`). Live search queries also recognize decade tokens (e.g. typing `70s` or `1970s`).
   - **Robust Genre Normalization**: Standardizes Plex's `"Science Fiction"` category with `"Sci-Fi"` / `"scifi"` aliases across both filter buttons and live instant text search, correctly matching all cataloged films.
 * **Isolated Filter Scope**:
-  - The `Genres:` and `Decades:` filter controls are isolated strictly to the **All** tab. Preset tabs (`Top Rated`, `Recently Added`, `On Deck`, and `Surprise Me`) remain uncluttered and focused on their specialized feeds.
+  - The `Genres:` and `Decades:` filter controls are hidden on specialized preset feeds (`Top Rated`, `Recently Added`, `On Deck`, and `Surprise Me`) so those tabs remain focused and uncluttered.
+* **Unconfigured Auth Notice**:
+  - When Plex authentication or integration is not yet configured, the explorer displays a warning banner/empty state with one-click navigation straight to the `Plex` tab in Settings.
 * **Optimized Card Typography & Badges**:
   - Movie titles occupy line 1 alongside right-aligned badges (`Year`, `Content Rating`, `★ Rating`, `Genres`). Badges are guaranteed natural width and never get clipped.
   - TV episodes display season and episode designations (`S01E02 - Episode Name`) next to the series title.
@@ -293,8 +296,8 @@ A dedicated navigation button in the settings modal tabs bar: `[General] [Playba
   - Plex stores genre tags and audience ratings at the TV series (grandparent) level rather than repeating them on every episode.
   - During synchronization, Wazoo queries section series definitions and inherits series genres, release year, and audience rating onto all child episodes.
   - Ensures television episodes (e.g. 1960s classic animation, anime) are 100% discoverable within genre and decade filter views.
-* **Full-Library Instant Search & Higher Capacity**:
-  - Search queries are evaluated across the full library matching the active genre/decade criteria before result pagination, returning up to 250 matching items without premature truncation.
+* **Direct SQLite Querying & High Capacity**:
+  - Explorer queries (`db.query_plex_explorer`) run directly against SQLite across the full indexed library rather than holding `all_videos` in memory, returning up to 250 matching items (`All`, `Top Rated`, `Recently Added`) or 150 shuffled picks (`Surprise Me`).
   - Live instant search queries titles, subtitles, series names, directors, actors, genres, years, and summaries.
 * **One-Click Play & Resume**: Clicking any item immediately begins playback in the focused player, automatically seeking to any saved `viewOffset` from Plex.
 

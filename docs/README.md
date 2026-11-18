@@ -69,8 +69,8 @@ sequenceDiagram
    - Detaches from console on Windows/Linux GUI launches (unless `--foreground` is specified).
    - Enforces `ICED_PRESENT_MODE="fifo"` and `__GL_SYNC_TO_VBLANK=1` for tear-free display swaps.
    - Detects Linux dual-GPU hybrid laptops to prevent PRIME DRI3 swapchain deadlocks by selecting the low-power GPU.
-3. **Configuration & DB**: Opens SQLite database with WAL mode and indices, restores `settings.json`, and loads persisted window geometry and volume levels. Reconciles complete default keybinds if missing.
-4. **Player Initialization**: Spawns initial [`VideoHandle`] instances with staggered random offsets or saved session timestamps, and pre-warms a standby player in the background for zero-latency video switching.
+3. **Configuration & DB**: Opens SQLite database (`wazoo.db`), restores `settings.json`, initializes the resolved `ThemePalette`, and loads persisted window geometry and volume levels. Reconciles complete default keybinds if missing.
+4. **Player Initialization**: Immediately attaches zero-blocking placeholder handles (`VideoHandle::new_placeholder`) and initializes real [`VideoHandle`] instances asynchronously off-thread (`Message::PlayerHandleReady`), while pre-warming a standby player in the background for zero-latency switching.
 
 ---
 
@@ -99,7 +99,7 @@ sequenceDiagram
 
 - **Clean Parsing**: Bracketed tags (`[1080p]`, `[DualAudio]`) and underscores are stripped for clean UI display while preserving canonical filesystem paths.
 - **Atomic Transactions**: Video records are batched into SQLite transactions for high throughput when indexing tens of thousands of files.
-- **Search Logic**: Supports comma-separated multi-clause filtering, negation (`!term` or `not term`), and instant folder scoping.
+- **Search Logic**: Supports comma-separated multi-clause filtering, negation (`!term` or `not term`), `*` wildcards, `^`/`$` anchors, optional Plex metadata matching (`search_include_metadata`), and instant folder scoping.
 
 ---
 
@@ -180,6 +180,6 @@ Dive deeper into specific subsystem implementations:
 3. [**`wazoo-scanner` Architecture**](wazoo-scanner.md)
    - Media discovery, directory recursion, filename normalization, and streaming channels.
 4. [**`wazoo-app` Architecture**](wazoo-app.md)
-   - TEA application state, modular message reducers, multi-tile layout engines, slide drawers, frameless titlebar, and unified 60 FPS engine subscriptions.
+   - TEA application state, `app/` submodules, modular message reducers, multi-tile layout engines, custom theme & HSV picker, PiP/fullscreen windowing, async player loading, and unified 60 FPS engine subscriptions.
 5. [**Plex Media Server Integration**](Plex-Integration.md)
-   - REST protocol, zero-config NAS suffix path matching, `VideoMetadata` schema, multi-field semantic search, and player HUD badges.
+   - REST protocol, zero-config NAS suffix path matching, `VideoMetadata` schema, multi-field semantic search, SQLite-backed Plex Explorer (`E`), and player HUD badges.

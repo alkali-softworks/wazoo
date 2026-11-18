@@ -9,11 +9,12 @@ The [`wazoo-core`] crate serves as the foundation for the Wazoo ecosystem. It en
 ```
 crates/wazoo-core/src/
 ├── config.rs    # Persistent configuration manager (atomic JSON writes & validation)
-├── db.rs        # SQLite database operations, schema migrations, and search query builder
+├── db.rs        # SQLite database operations, schema migrations, Plex metadata, and search query builder
 ├── i18n.rs      # Internationalization engine (23 languages, interpolation, RTL support)
 ├── keybinds.rs  # Keyboard action mappings, custom keybindings, and help categories
 ├── lib.rs       # Crate root and public re-exports
-└── models.rs    # Canonical domain types and data transfer objects
+├── models.rs    # Canonical domain types, ThemeSettings/Presets, PlexSettings, and DTOs
+└── plex.rs      # Plex Media Server REST client, sync orchestrator, and path suffix matcher
 ```
 
 ---
@@ -35,11 +36,38 @@ CREATE TABLE IF NOT EXISTS Video (
 CREATE INDEX IF NOT EXISTS path_idx ON Video(path);
 CREATE INDEX IF NOT EXISTS name_idx ON Video(name);
 CREATE INDEX IF NOT EXISTS folder_idx ON Video(folder);
+
+CREATE TABLE IF NOT EXISTS VideoMetadata (
+    video_id INTEGER PRIMARY KEY,
+    plex_rating_key TEXT,
+    title TEXT NOT NULL,
+    series_title TEXT,
+    season_number INTEGER,
+    episode_number INTEGER,
+    year INTEGER,
+    tagline TEXT,
+    summary TEXT,
+    content_rating TEXT,
+    duration_ms INTEGER,
+    rating REAL,
+    studio TEXT,
+    genres TEXT,
+    directors TEXT,
+    actors TEXT,
+    thumb_url TEXT,
+    art_url TEXT,
+    updated_at INTEGER,
+    FOREIGN KEY (video_id) REFERENCES Video(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS meta_year_idx ON VideoMetadata(year);
+CREATE INDEX IF NOT EXISTS meta_title_idx ON VideoMetadata(title);
+CREATE INDEX IF NOT EXISTS meta_series_idx ON VideoMetadata(series_title);
 ```
 
-### Search Query Compilation Logic
+### Search & Explorer Query Compilation Logic
 
-The [`search_videos`] method implements a custom search engine designed to handle complex human queries across large video libraries:
+[`search_videos`] delegates to [`search_videos_with_options`] (defaulting `include_metadata = true`), implementing a custom query engine designed for large video libraries, while [`query_plex_explorer`] queries `Video` joined with `VideoMetadata` directly from SQLite (returning up to 250 matches, or all matches for `PlexExplorerTab::Random`):
 
 ```mermaid
 graph TD
@@ -60,8 +88,10 @@ graph TD
 #### Query Features:
 1. **Multi-term OR**: Comma-separated positive clauses match if *any* positive term is present.
 2. **Negation Filtering**: Terms prefixed with `not ` or `!` ensure excluded words never appear.
-3. **Punctuation Normalization**: Hyphens are transformed to spaces and multi-word terms are wildcard-delimited (`%word1%word2%`) to match messy torrent filenames.
-4. **Folder Scoping**: Supports filtering across specific folders, sub-paths, or the virtual `Misc` folder.
+3. **Wildcards & Anchors**: Supports `*` as a wildcard and `^`/`$` start/end anchors.
+4. **Punctuation Normalization**: Hyphens are transformed to spaces and multi-word terms are wildcard-delimited (`%word1%word2%`) to match messy filenames.
+5. **Optional Metadata Join**: When `include_metadata` is enabled, queries also match `VideoMetadata` fields (title, series, genres, year, directors, actors, summary) via `LEFT JOIN`.
+6. **Folder Scoping**: Supports filtering across specific folders, sub-paths, or the virtual `Misc` folder.
 
 ---
 
@@ -79,13 +109,13 @@ Resolved via the `directories` crate:
 ### Atomic File Write Pattern
 
 To prevent corrupted settings if the app or OS terminates abruptly, `save_settings` uses atomic replacement:
-1. Serialize settings into a temporary file: `settings.json_new`.
-2. Flush and sync file contents to disk.
-3. Call `std::fs::rename("settings.json_new", "settings.json")` to atomically swap the file pointer at the filesystem level.
+1. Reconcile `keybinds` and normalize transient `playback_mode` (`Flip` / `Scroll` are saved as `Normal`, and `load_settings` always initializes `playback_mode` to `Normal`).
+2. Serialize settings into a temporary file: `settings.tmp` (`path.with_extension("tmp")`).
+3. Call `std::fs::rename(temp_path, path)` to atomically swap the file at the filesystem level.
 
 ### Value Clamping & Sanitization
 
-All incoming values are clamped to safe ranges on load and save:
+All incoming values are clamped to safe ranges on load:
 - `flip_interval_secs`: `1..=3600` (default: `45`s)
 - `buffer_duration_secs`: `2..=300` (default: `10`s)
 - `buffer_size_mb`: `8..=4096` (default: `32` MB)
@@ -96,6 +126,7 @@ All incoming values are clamped to safe ranges on load and save:
 - `cube_speed`: `0.2..=4.0` (default: `1.0`)
 - `cube_size`: `0.4..=3.0` (default: `1.0`)
 - `crt`: `CrtSettings` with scanline darkness (`0.0..=1.0`), density (`50..=2000`), speed (`0.0..=20.0`), curvature (`0.0..=1.0`), gamma (`0.2..=3.0`), saturation (`0.0..=3.0`), brightness (`0.2..=3.0`), vignette (`0.0..=1.0`), chromatic aberration (`0.0..=1.0`), noise (`0.0..=1.0`), and corner rounding (`0.0..=1.0`).
+- `theme`: `ThemeSettings` (`clamp_all()`) sanitizes hex colors (`accent_color`, `surface_color`, `titlebar_color`, `titlebar_badge_color`, `hud_color`, `text_color`) and clamps `hud_opacity` (`0.25..=1.0`), `corner_radius` (`0.0..=2.0`), and `focus_ring_width` (`0.0..=8.0`), with 7 built-in `ThemePreset` themes (`Default`, `Amber`, `Mocha`, `FrostLight`, `Monokai`, `Turtle`, `Strawberry`).
 - `keybinds`: Automatically reconciles with complete defaults via `reconcile_with_defaults()` if keys are missing from older config versions.
 
 ---
@@ -132,9 +163,9 @@ Wazoo contains 100% offline, embedded localization files for 23 languages:
 
 ### Interpolation & Fallback Logic
 
-- [`t(key)`]: Looks up the translation key in the active language catalog. If missing, it automatically falls back to English (`en`).
-- [`t_with(key, &[("name", val)])`]: Replaces `{name}` placeholders inside translated strings dynamically.
-- [`is_rtl()`]: Returns true for Arabic (`ar`), Hebrew (`he`), and Persian (`fa`), enabling right-to-left layout alignment in UI widgets.
+- [`t(lang, key)`]: Looks up the translation key in the active language catalog. If missing, it automatically falls back to English (`en`), then the raw key.
+- [`t_with(lang, key, &[("name", val)])`]: Replaces `{name}` placeholders inside translated strings dynamically.
+- [`Language::is_rtl_code(code)`]: Returns true for Arabic (`ar`), Hebrew (`he`), and Persian (`fa`), enabling right-to-left layout alignment in UI widgets.
 
 ---
 
@@ -142,6 +173,6 @@ Wazoo contains 100% offline, embedded localization files for 23 languages:
 
 The [`KeybindSettings`] structure manages physical keyboard mappings:
 
-- **Action Enum ([`KeyAction`])**: Exhaustive list of bindable application commands (`PlayPause`, `ToggleMute`, `VolumeUp`, `VolumeDown`, `NextVideo`, `PrevVideo`, `AddPlayer`, `RemovePlayer`, `CycleLayout`, `ToggleFilePicker`, `ToggleSearch`, `ToggleFlipMode`, `ToggleScrollMode`, `MarkIn`, `MarkOut`, etc.).
+- **Action Enum ([`KeyAction`])**: Exhaustive list of bindable application commands (`TogglePlayPause`, `ToggleMute`, `VolumeUp`, `VolumeDown`, `NextVideo`, `PrevVideo`, `AddNewPlayer`, `RemovePlayer`, `CycleLayout`, `ToggleFilePicker`, `ToggleQuickPicker`, `TogglePlexExplorer`, `SearchVideos`, `ToggleFlip`, `ToggleScroll`, `ToggleFilters`, `ToggleCube`, `ToggleCubeOverlay`, `ToggleAlwaysOnTop`, `FitWindow`, `ToggleFullscreen`, `MarkIn`, `MarkOut`, etc.).
 - **User Customization**: Overrides are stored in `settings.json` under `"keybinds": { ... }`.
 - **Help Documentation Generator**: Automatically categorizes shortcuts into structured groups ([`HelpCategory`]) for the in-app help modal.

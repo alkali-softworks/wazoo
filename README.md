@@ -73,12 +73,13 @@ Keeps background visuals fresh by rotating videos on staggered timers (<kbd>6</k
 - **Alt + Drag** to reposition the window anywhere on screen.
 - Configurable **Window Opacity** (in System Settings).
 
-### 📌 Always on Top & Click-Through (<kbd>P</kbd>)
+### 📌 Always on Top, Click-Through & Picture-in-Picture (<kbd>P</kbd> / <kbd>Shift+P</kbd>)
 Press <kbd>P</kbd> to cycle through 4 overlay modes:
-1. **Always on Top (100% Opacity)**: Classic Picture-in-Picture (PiP) without click-through.
+1. **Always on Top (100% Opacity)**: Classic Always-on-Top window without click-through.
 2. **Click-Through (40% Opacity)**: Semi-transparent floating video with click-through passthrough when unfocused.
 3. **Click-Through (15% Opacity)**: Subtle background reference overlay with click-through passthrough.
 4. **Normal Window**: Returns to standard window behavior and 100% opacity.
+- **Picture-in-Picture Corner Cycling (<kbd>Shift+P</kbd>)**: Snaps the window to an aspect-ratio-fitted Picture-in-Picture size and cycles clockwise across screen corners (**Bottom-Left** ➔ **Top-Left** ➔ **Top-Right** ➔ **Bottom-Right**).
 - **Escape Hatch**: Focusing Wazoo on your OS taskbar disables click-through.
 
 ### ✨ GPU Shader Effects
@@ -93,7 +94,7 @@ Press <kbd>P</kbd> to cycle through 4 overlay modes:
 
 ### 🎨 Customizable Themes
 - **Interactive Color Pickers**: Override the accent color, UI grey surface, titlebar, titlebar badge, HUD overlay, and text color using a 2D Saturation/Value pad, rainbow hue bar, hex input, or quick swatches.
-- **Presets & Randomizer**: Switch between 7 built-in presets (*Default*, *Amber*, *Mocha*, *Frost*, *Monokai*, *Turtle*, *Strawberry*) or roll a random palette with a live titlebar & HUD preview.
+- **Presets & Randomizer**: Switch between 7 built-in presets or roll a random palette with a live titlebar & HUD preview.
 - **Appearance & Geometry**: Fine-tune HUD overlay opacity, UI corner roundness, and player focus ring width, persisted in `settings.json`.
 
 ### 🌐 Internationalization & Localization
@@ -191,9 +192,14 @@ scoop install ffmpeg
 | <kbd>L</kbd> | Cycle Layout (**Grid** ➔ **Row** ➔ **Column**) |
 | <kbd>Tab</kbd> | Focus next player |
 | <kbd>J</kbd> / <kbd>/</kbd> | Open **Find / Search** modal |
+| <kbd>K</kbd> | Toggle **Quick Picker** modal (folder siblings) |
+| <kbd>E</kbd> | Toggle **Plex Explorer** modal |
 | <kbd>H</kbd> / <kbd>F</kbd> | Toggle **File Browser** drawer |
 | <kbd>S</kbd> | Toggle **Shuffle** vs. **Sequential** playback |
 | <kbd>P</kbd> | Cycle **Pin Mode** (100% ➔ 40% ➔ 15% ➔ Off) |
+| <kbd>Shift+P</kbd> | Cycle **Picture-in-Picture** screen corners |
+| <kbd>W</kbd> | **Fit Window** to active video aspect ratio |
+| <kbd>F11</kbd> | Toggle **Fullscreen** |
 | <kbd>V</kbd> | Toggle **Interactive Subtitle Transcript** drawer |
 | <kbd>B</kbd> | Toggle **Bookmarks** modal |
 | <kbd>Y</kbd> | Toggle **Play History** drawer |
@@ -206,6 +212,8 @@ scoop install ffmpeg
 | <kbd>5</kbd> | Toggle **Scroll Mode** (vertical feed) |
 | <kbd>6</kbd> | Toggle **Flip Mode** (staggered auto-shuffle) |
 | <kbd>7</kbd> | Toggle **Shader Filters** (Master switch) |
+| <kbd>8</kbd> | Toggle **3D Cube** screensaver |
+| <kbd>9</kbd> | Toggle **Desktop Cube Overlay** |
 | <kbd>+</kbd> / <kbd>=</kbd> | Add Bookmark (or increase Scroll Speed in Scroll Mode) |
 | <kbd>-</kbd> | Remove Bookmark (or decrease Scroll Speed in Scroll Mode) |
 | <kbd>I</kbd> / <kbd>O</kbd> — Set **Mark In** / **Mark Out** (A-B loop) |
@@ -242,7 +250,7 @@ Key properties configurable in `settings.json`:
 }
 ```
 - **`buffer_duration_secs`**: Demuxer readahead buffer duration in seconds (range: 2–300s, default: `10`).
-- **`buffer_size_mb`**: Maximum demuxer cache size in megabytes (range: 16–4096 MB, default: `32`).
+- **`buffer_size_mb`**: Maximum demuxer cache size in megabytes (range: 8–4096 MB, default: `32`).
 
 ### Environment Variables
 
