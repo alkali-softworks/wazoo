@@ -66,6 +66,52 @@ pub fn contrast_text(bg: Color) -> Color {
 }
 
 #[inline]
+pub fn srgb_channel_linear(c: f32) -> f32 {
+    if c <= 0.03928 {
+        c / 12.92
+    } else {
+        ((c + 0.055) / 1.055).powf(2.4)
+    }
+}
+
+#[inline]
+pub fn wcag_luminance(c: Color) -> f32 {
+    0.2126 * srgb_channel_linear(c.r)
+        + 0.7152 * srgb_channel_linear(c.g)
+        + 0.0722 * srgb_channel_linear(c.b)
+}
+
+#[inline]
+pub fn contrast_ratio(a: Color, b: Color) -> f32 {
+    let la = wcag_luminance(a);
+    let lb = wcag_luminance(b);
+    let (hi, lo) = if la >= lb { (la, lb) } else { (lb, la) };
+    (hi + 0.05) / (lo + 0.05)
+}
+
+/// Computes a muted text color that blends toward the surface while preserving readable
+/// WCAG AA contrast on light themes (where gamma-encoded sRGB mixes wash out much faster).
+fn compute_muted_text(text: Color, modal_bg: Color, card_bg: Color, surface_light: bool) -> Color {
+    let base_mix = if surface_light { 0.26 } else { 0.53 };
+    let candidate = mix_color(text, modal_bg, base_mix);
+    if !surface_light || contrast_ratio(candidate, card_bg) >= 4.5 || contrast_ratio(text, card_bg) < 4.5 {
+        return candidate;
+    }
+
+    let mut lo = 0.0f32;
+    let mut hi = base_mix;
+    for _ in 0..12 {
+        let mid = (lo + hi) * 0.5;
+        if contrast_ratio(mix_color(text, modal_bg, mid), card_bg) >= 4.5 {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    mix_color(text, modal_bg, lo)
+}
+
+#[inline]
 pub fn shift_surface(base: Color, amount: f32) -> Color {
     if is_light_color(base) {
         mix_color(base, Color::BLACK, amount)
@@ -159,8 +205,8 @@ impl ThemePalette {
         let badge_text = contrast_text(badge_bg);
 
         let text = color_from_hex_or(&theme.text_color, Color::WHITE);
-        let text_dim = mix_color(text, modal_bg, 0.15);
-        let text_muted = mix_color(text, modal_bg, 0.53);
+        let text_dim = mix_color(text, modal_bg, if surface_light { 0.12 } else { 0.15 });
+        let text_muted = compute_muted_text(text, modal_bg, card_bg, surface_light);
 
         let hud_bg = color_from_hex_or(&theme.hud_color, Color::from_rgb(0.08, 0.08, 0.10));
         let hud_hover = shift_surface(hud_bg, 0.08);
@@ -335,4 +381,29 @@ pub fn diffuse_shadowed_text<'a, Message: 'a>(
     stack = stack.push(foreground);
 
     stack.into()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use wazoo_core::ThemePreset;
+
+    #[test]
+    fn test_light_theme_muted_text_contrast() {
+        for preset in [ThemePreset::Strawberry, ThemePreset::FrostLight] {
+            let mut settings = ThemeSettings::default();
+            settings.apply_preset(preset);
+            let pal = ThemePalette::from_settings(&settings);
+            assert!(
+                contrast_ratio(pal.text_muted, pal.modal_bg) >= 4.5,
+                "{preset:?} text_muted contrast on modal_bg too low: {}",
+                contrast_ratio(pal.text_muted, pal.modal_bg)
+            );
+            assert!(
+                contrast_ratio(pal.text_muted, pal.card_bg) >= 4.5,
+                "{preset:?} text_muted contrast on card_bg too low: {}",
+                contrast_ratio(pal.text_muted, pal.card_bg)
+            );
+        }
+    }
 }
