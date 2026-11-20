@@ -95,6 +95,7 @@ pub enum Message {
     GlobalUnmute,
     ToggleShuffleMode,
     TogglePlayerShuffle(PlayerId),
+    CopyPlayerInfo(PlayerId),
     MarkInFocused,
     MarkOutFocused,
     ClearMarkInFocused,

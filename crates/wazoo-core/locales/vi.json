@@ -277,7 +277,8 @@
     "mark_in_set": "Trình phát {player} Điểm bắt đầu: {time}",
     "mark_out_set": "Trình phát {player} Điểm kết thúc: {time}",
     "loop_range": "Trình phát {player} Lặp đoạn: {start} → {end}",
-    "loop_cleared": "Trình phát {player} Đã xóa lặp đoạn"
+    "loop_cleared": "Trình phát {player} Đã xóa lặp đoạn",
+    "info_copied": "Đã sao chép thông tin đang phát vào khay nhớ tạm"
   },
   "transcript": {
     "title": "Bản chép lời",

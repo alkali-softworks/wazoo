@@ -277,7 +277,8 @@
     "mark_in_set": "Reproductor {player} Punto de entrada: {time}",
     "mark_out_set": "Reproductor {player} Punto de salida: {time}",
     "loop_range": "Reproductor {player} Bucle: {start} → {end}",
-    "loop_cleared": "Reproductor {player} Bucle borrado"
+    "loop_cleared": "Reproductor {player} Bucle borrado",
+    "info_copied": "Información de reproducción copiada al portapapeles"
   },
   "transcript": {
     "title": "Transcripción",

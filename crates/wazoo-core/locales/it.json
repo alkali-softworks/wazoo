@@ -277,7 +277,8 @@
     "mark_in_set": "Player {player} Punto iniziale: {time}",
     "mark_out_set": "Player {player} Punto finale: {time}",
     "loop_range": "Player {player} Loop: {start} → {end}",
-    "loop_cleared": "Player {player} Loop cancellato"
+    "loop_cleared": "Player {player} Loop cancellato",
+    "info_copied": "Informazioni di riproduzione copiate negli appunti"
   },
   "transcript": {
     "title": "Trascrizione",

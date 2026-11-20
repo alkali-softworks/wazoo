@@ -277,7 +277,8 @@
     "mark_in_set": "پخش‌کننده {player} نقطه شروع: {time}",
     "mark_out_set": "پخش‌کننده {player} نقطه پایان: {time}",
     "loop_range": "پخش‌کننده {player} تکرار: {start} → {end}",
-    "loop_cleared": "پخش‌کننده {player} تکرار پاک شد"
+    "loop_cleared": "پخش‌کننده {player} تکرار پاک شد",
+    "info_copied": "اطلاعات پخش در کلیپ‌بورد کپی شد"
   },
   "transcript": {
     "title": "متن گفتگو",

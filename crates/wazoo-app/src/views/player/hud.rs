@@ -9,8 +9,8 @@ use crate::app::{
     WazooApp,
 };
 use crate::assets::{
-    SVG_PLAYER_FLIP, SVG_PLAYER_MUTE, SVG_PLAYER_NEXT, SVG_PLAYER_PAUSE, SVG_PLAYER_PLAY,
-    SVG_PLAYER_PREV, SVG_PLAYER_REPEAT, SVG_PLAYER_SHUFFLE, SVG_PLAYER_VOLUME,
+    SVG_PLAYER_COPY, SVG_PLAYER_FLIP, SVG_PLAYER_MUTE, SVG_PLAYER_NEXT, SVG_PLAYER_PAUSE,
+    SVG_PLAYER_PLAY, SVG_PLAYER_PREV, SVG_PLAYER_REPEAT, SVG_PLAYER_SHUFFLE, SVG_PLAYER_VOLUME,
 };
 use crate::cursor;
 use crate::format;
@@ -343,6 +343,13 @@ impl WazooApp {
                 color: Some(hud_icon_col),
             });
 
+        let copy_icon = svg(svg::Handle::from_memory(SVG_PLAYER_COPY))
+            .width(Length::Fixed(20.0))
+            .height(Length::Fixed(20.0))
+            .style(move |_, _| svg::Style {
+                color: Some(hud_icon_col),
+            });
+
         let mut controls_row = row![
             button(
                 container(text("CC").size(13).font(iced::Font {
@@ -503,6 +510,15 @@ impl WazooApp {
         }
 
         let controls_row = controls_row
+            .push(
+                button(copy_icon)
+                    .style(theme::player_control_button_style_with_alpha(
+                        pal,
+                        overlay_alpha
+                    ))
+                    .on_press(Message::CopyPlayerInfo(player_id))
+                    .padding([4, 8]),
+            )
             .push(
                 button(play_mode_icon)
                     .style(theme::player_control_button_style_with_alpha(

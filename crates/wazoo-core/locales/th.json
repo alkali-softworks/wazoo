@@ -277,7 +277,8 @@
     "mark_in_set": "โปรแกรมเล่น {player} จุดเริ่มต้น: {time}",
     "mark_out_set": "โปรแกรมเล่น {player} จุดสิ้นสุด: {time}",
     "loop_range": "โปรแกรมเล่น {player} วนซ้ำ: {start} → {end}",
-    "loop_cleared": "โปรแกรมเล่น {player} ล้างการวนซ้ำแล้ว"
+    "loop_cleared": "โปรแกรมเล่น {player} ล้างการวนซ้ำแล้ว",
+    "info_copied": "คัดลอกข้อมูลที่กำลังเล่นไปยังคลิปบอร์ดแล้ว"
   },
   "transcript": {
     "title": "บทสนทนา",

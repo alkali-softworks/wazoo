@@ -277,7 +277,8 @@
     "mark_in_set": "प्लेयर {player} मार्क इन: {time}",
     "mark_out_set": "प्लेयर {player} मार्क आउट: {time}",
     "loop_range": "प्लेयर {player} लूप: {start} → {end}",
-    "loop_cleared": "प्लेयर {player} लूप साफ़ किया गया"
+    "loop_cleared": "प्लेयर {player} लूप साफ़ किया गया",
+    "info_copied": "चल रही जानकारी क्लिपबोर्ड पर कॉपी की गई"
   },
   "transcript": {
     "title": "प्रतिलेख",

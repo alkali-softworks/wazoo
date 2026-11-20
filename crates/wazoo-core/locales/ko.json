@@ -277,7 +277,8 @@
     "mark_in_set": "플레이어 {player} 시작점: {time}",
     "mark_out_set": "플레이어 {player} 종료점: {time}",
     "loop_range": "플레이어 {player} 구간 반복: {start} → {end}",
-    "loop_cleared": "플레이어 {player} 구간 반복 해제됨"
+    "loop_cleared": "플레이어 {player} 구간 반복 해제됨",
+    "info_copied": "재생 중인 정보가 클립보드에 복사되었습니다"
   },
   "transcript": {
     "title": "스크립트",

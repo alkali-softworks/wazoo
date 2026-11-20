@@ -663,4 +663,155 @@ impl WazooApp {
             }
         }
     }
+
+    /// Formats concise playing info (header, file path, and Plex metadata) for copying to clipboard.
+    pub fn format_player_copy_info(&self, id: PlayerId) -> Option<String> {
+        let p = self.players.player(id)?;
+        let path = p.state.path.trim();
+        if path.is_empty() {
+            return None;
+        }
+
+        let meta = self
+            .get_metadata_for_path(path)
+            .cloned()
+            .or_else(|| self.db.get_metadata_by_path(path).ok().flatten());
+
+        let header_title = format_copy_header_title(path, &p.state.name, meta.as_ref());
+        let mut lines = vec![header_title, format!("File: {path}")];
+
+        if let Some(ref m) = meta {
+            append_plex_metadata_lines(&mut lines, m);
+        }
+
+        Some(lines.join("\n"))
+    }
+}
+
+fn format_copy_header_title(
+    path: &str,
+    fallback_name: &str,
+    meta: Option<&wazoo_core::MediaMetadata>,
+) -> String {
+    if let Some(m) = meta {
+        if let Some(ref st) = m.series_title {
+            let series = crate::format::clean_metadata_title(st);
+            if !series.is_empty() {
+                let ep_title = crate::format::clean_metadata_title(&m.title);
+                return match (m.season_number, m.episode_number) {
+                    (Some(sn), Some(en)) if !ep_title.is_empty() => {
+                        format!("{series} — S{sn:02}E{en:02} - {ep_title}")
+                    }
+                    (Some(sn), Some(en)) => format!("{series} — S{sn:02}E{en:02}"),
+                    _ if !ep_title.is_empty() => format!("{series} — {ep_title}"),
+                    _ => series,
+                };
+            }
+        }
+
+        let title = crate::format::clean_metadata_title(&m.title);
+        if !title.is_empty() {
+            if let Some(year) = m.year {
+                let year_tag = format!("({year})");
+                if !title.contains(&year_tag) {
+                    return format!("{title} {year_tag}");
+                }
+            }
+            return title;
+        }
+    }
+
+    let desc = crate::format::format_descriptive_title(path);
+    if !desc.trim().is_empty() {
+        desc
+    } else if !fallback_name.trim().is_empty() {
+        fallback_name.trim().to_string()
+    } else {
+        path.to_string()
+    }
+}
+
+fn append_plex_metadata_lines(lines: &mut Vec<String>, m: &wazoo_core::MediaMetadata) {
+    let mut meta_lines = Vec::new();
+
+    if !m.title.trim().is_empty() {
+        meta_lines.push(format!("Title: {}", m.title.trim()));
+    }
+    if let Some(ref series) = m.series_title {
+        if !series.trim().is_empty() {
+            meta_lines.push(format!("Series: {}", series.trim()));
+        }
+    }
+    match (m.season_number, m.episode_number) {
+        (Some(sn), Some(en)) => meta_lines.push(format!("Episode: S{sn:02}E{en:02}")),
+        (Some(sn), None) => meta_lines.push(format!("Season: {sn}")),
+        (None, Some(en)) => meta_lines.push(format!("Episode: {en}")),
+        (None, None) => {}
+    }
+    if let Some(year) = m.year {
+        meta_lines.push(format!("Year: {year}"));
+    }
+    if let Some(duration_ms) = m.duration_ms {
+        if duration_ms > 0 {
+            meta_lines.push(format!(
+                "Duration: {}",
+                crate::format::format_time_str((duration_ms as f64) / 1000.0)
+            ));
+        }
+    }
+    if let Some(ref studio) = m.studio {
+        if !studio.trim().is_empty() {
+            meta_lines.push(format!("Studio: {}", studio.trim()));
+        }
+    }
+    if !m.genres.is_empty() {
+        meta_lines.push(format!("Genres: {}", m.genres.join(", ")));
+    }
+    if !m.directors.is_empty() {
+        meta_lines.push(format!("Directors: {}", m.directors.join(", ")));
+    }
+    if !m.actors.is_empty() {
+        meta_lines.push(format!("Cast: {}", m.actors.join(", ")));
+    }
+    if let Some(ref tagline) = m.tagline {
+        if !tagline.trim().is_empty() {
+            meta_lines.push(format!("Tagline: {}", tagline.trim()));
+        }
+    }
+    if let Some(ref summary) = m.summary {
+        if !summary.trim().is_empty() {
+            meta_lines.push(format!("Summary: {}", summary.trim()));
+        }
+    }
+
+    if !meta_lines.is_empty() {
+        lines.push(String::new());
+        lines.extend(meta_lines);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use wazoo_core::MediaMetadata;
+
+    fn make_placeholder_player(id: PlayerId, path: &str, name: &str) -> AppPlayer {
+        let handle = VideoHandle::new_placeholder(
+            id,
+            path,
+            name,
+            BufferConfig::default(),
+            StartTime::Beginning,
+        );
+        AppPlayer::new(handle, true)
+    }
+
+    #[test]
+    fn copy_info_returns_none_for_missing_or_empty_player() {
+        let (mut app, _) = WazooApp::new_test_app();
+        assert!(app.format_player_copy_info(999).is_none());
+
+        app.players.push(make_placeholder_player(1, "", ""));
+        assert!(app.format_player_copy_info(1).is_none());
+    }
 }

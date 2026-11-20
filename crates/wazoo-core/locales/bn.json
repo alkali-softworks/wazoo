@@ -277,7 +277,8 @@
     "mark_in_set": "প্লেয়ার {player} মার্ক ইন: {time}",
     "mark_out_set": "প্লেয়ার {player} মার্ক আউট: {time}",
     "loop_range": "প্লেয়ার {player} লুপ: {start} → {end}",
-    "loop_cleared": "প্লেয়ার {player} লুপ মুছে ফেলা হয়েছে"
+    "loop_cleared": "প্লেয়ার {player} লুপ মুছে ফেলা হয়েছে",
+    "info_copied": "চলমান তথ্য ক্লিপবোর্ডে কপি করা হয়েছে"
   },
   "transcript": {
     "title": "অনুলিপি",

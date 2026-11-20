@@ -1084,6 +1084,14 @@ impl WazooApp {
                 self.overlay.show_toast(msg);
                 Task::none()
             }
+            Message::CopyPlayerInfo(id) => {
+                if let Some(info) = self.format_player_copy_info(id) {
+                    self.overlay.show_toast(self.t("player.info_copied"));
+                    iced::clipboard::write(info)
+                } else {
+                    Task::none()
+                }
+            }
             _ => Task::none(),
         }
     }

@@ -277,7 +277,8 @@
     "mark_in_set": "播放器 {player} 入点: {time}",
     "mark_out_set": "播放器 {player} 出点: {time}",
     "loop_range": "播放器 {player} 循环: {start} → {end}",
-    "loop_cleared": "播放器 {player} 已清除循环"
+    "loop_cleared": "播放器 {player} 已清除循环",
+    "info_copied": "已将播放信息复制到剪贴板"
   },
   "transcript": {
     "title": "字幕记录",

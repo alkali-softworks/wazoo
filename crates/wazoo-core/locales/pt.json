@@ -277,7 +277,8 @@
     "mark_in_set": "Reprodutor {player} Ponto inicial: {time}",
     "mark_out_set": "Reprodutor {player} Ponto final: {time}",
     "loop_range": "Reprodutor {player} Repetição: {start} → {end}",
-    "loop_cleared": "Reprodutor {player} Repetição limpa"
+    "loop_cleared": "Reprodutor {player} Repetição limpa",
+    "info_copied": "Informações da reprodução copiadas para a área de transferência"
   },
   "transcript": {
     "title": "Transcrição",

@@ -277,7 +277,8 @@
     "mark_in_set": "Player {player} Startmarke: {time}",
     "mark_out_set": "Player {player} Endmarke: {time}",
     "loop_range": "Player {player} Schleife: {start} → {end}",
-    "loop_cleared": "Player {player} Schleife gelöscht"
+    "loop_cleared": "Player {player} Schleife gelöscht",
+    "info_copied": "Wiedergabeinformationen in die Zwischenablage kopiert"
   },
   "transcript": {
     "title": "Transkript",

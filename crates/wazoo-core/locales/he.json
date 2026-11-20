@@ -277,7 +277,8 @@
     "mark_in_set": "נגן {player} נקודת התחלה: {time}",
     "mark_out_set": "נגן {player} נקודת סיום: {time}",
     "loop_range": "נגן {player} לולאה: {start} ← {end}",
-    "loop_cleared": "נגן {player} הלולאה נוקתה"
+    "loop_cleared": "נגן {player} הלולאה נוקתה",
+    "info_copied": "פרטי הניגון הועתקו ללוח"
   },
   "transcript": {
     "title": "תמליל",

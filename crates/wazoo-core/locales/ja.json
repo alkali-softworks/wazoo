@@ -277,7 +277,8 @@
     "mark_in_set": "プレイヤー {player} イン点: {time}",
     "mark_out_set": "プレイヤー {player} アウト点: {time}",
     "loop_range": "プレイヤー {player} ループ: {start} → {end}",
-    "loop_cleared": "プレイヤー {player} ループを解除しました"
+    "loop_cleared": "プレイヤー {player} ループを解除しました",
+    "info_copied": "再生中の情報をクリップボードにコピーしました"
   },
   "transcript": {
     "title": "トランスクリプト",

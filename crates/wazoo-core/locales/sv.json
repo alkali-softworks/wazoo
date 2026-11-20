@@ -277,7 +277,8 @@
     "mark_in_set": "Spelare {player} Startpunkt: {time}",
     "mark_out_set": "Spelare {player} Slutpunkt: {time}",
     "loop_range": "Spelare {player} Slinga: {start} → {end}",
-    "loop_cleared": "Spelare {player} Slinga rensad"
+    "loop_cleared": "Spelare {player} Slinga rensad",
+    "info_copied": "Uppspelningsinformation kopierad till urklipp"
   },
   "transcript": {
     "title": "Transkript",

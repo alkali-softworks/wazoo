@@ -277,7 +277,8 @@
     "mark_in_set": "Плеер {player} Начальная метка: {time}",
     "mark_out_set": "Плеер {player} Конечная метка: {time}",
     "loop_range": "Плеер {player} Зацикливание: {start} → {end}",
-    "loop_cleared": "Плеер {player} Зацикливание сброшено"
+    "loop_cleared": "Плеер {player} Зацикливание сброшено",
+    "info_copied": "Информация о воспроизведении скопирована в буфер обмена"
   },
   "transcript": {
     "title": "Транскрипт",

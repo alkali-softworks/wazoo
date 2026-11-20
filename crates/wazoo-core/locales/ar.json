@@ -277,7 +277,8 @@
     "mark_in_set": "المشغل {player} نقطة البداية: {time}",
     "mark_out_set": "المشغل {player} نقطة النهاية: {time}",
     "loop_range": "المشغل {player} تكرار: {start} ← {end}",
-    "loop_cleared": "المشغل {player} تم مسح التكرار"
+    "loop_cleared": "المشغل {player} تم مسح التكرار",
+    "info_copied": "تم نسخ معلومات التشغيل إلى الحافظة"
   },
   "transcript": {
     "title": "النص المكتوب",

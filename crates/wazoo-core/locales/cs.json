@@ -277,7 +277,8 @@
     "mark_in_set": "Přehrávač {player} Bod In: {time}",
     "mark_out_set": "Přehrávač {player} Bod Out: {time}",
     "loop_range": "Přehrávač {player} Smyčka: {start} → {end}",
-    "loop_cleared": "Přehrávač {player} Smyčka zrušena"
+    "loop_cleared": "Přehrávač {player} Smyčka zrušena",
+    "info_copied": "Informace o přehrávání zkopírovány do schránky"
   },
   "transcript": {
     "title": "Přepis",

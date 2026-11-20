@@ -277,7 +277,8 @@
     "mark_in_set": "Player {player} Mark In: {time}",
     "mark_out_set": "Player {player} Mark Out: {time}",
     "loop_range": "Player {player} Loop: {start} → {end}",
-    "loop_cleared": "Player {player} Loop Cleared"
+    "loop_cleared": "Player {player} Loop Cleared",
+    "info_copied": "Copied playing info to clipboard"
   },
   "transcript": {
     "title": "Transcript",

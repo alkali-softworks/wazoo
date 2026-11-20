@@ -277,7 +277,8 @@
     "mark_in_set": "Odtwarzacz {player} Punkt początkowy: {time}",
     "mark_out_set": "Odtwarzacz {player} Punkt końcowy: {time}",
     "loop_range": "Odtwarzacz {player} Pętla: {start} → {end}",
-    "loop_cleared": "Odtwarzacz {player} Pętla wyczyszczona"
+    "loop_cleared": "Odtwarzacz {player} Pętla wyczyszczona",
+    "info_copied": "Informacje o odtwarzaniu skopiowane do schowka"
   },
   "transcript": {
     "title": "Transkrypcja",
