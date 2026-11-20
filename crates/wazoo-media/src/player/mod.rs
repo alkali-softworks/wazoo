@@ -7,8 +7,13 @@
  * player state & buffer configuration, and the libmpv VideoHandle playback engine.
  */
 
+mod equalizer;
 pub mod handle;
+mod mpv_client;
+mod playback;
+mod render;
 pub mod state;
+mod track_control;
 pub mod tracks;
 
 pub use handle::*;
