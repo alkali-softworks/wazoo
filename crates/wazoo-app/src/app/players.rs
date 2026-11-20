@@ -793,7 +793,6 @@ fn append_plex_metadata_lines(lines: &mut Vec<String>, m: &wazoo_core::MediaMeta
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wazoo_core::MediaMetadata;
 
     fn make_placeholder_player(id: PlayerId, path: &str, name: &str) -> AppPlayer {
         let handle = VideoHandle::new_placeholder(
