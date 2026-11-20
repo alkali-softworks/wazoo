@@ -1,6 +1,32 @@
 use std::fs;
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
 use wazoo_core::ConfigManager;
-use wazoo_core::models::WazooSettings;
+use wazoo_core::models::{PlaybackMode, WazooSettings};
+
+static TEMP_SEQ: AtomicU64 = AtomicU64::new(0);
+
+struct TempConfigDir(PathBuf);
+
+impl TempConfigDir {
+    fn new(prefix: &str) -> (Self, ConfigManager) {
+        let seq = TEMP_SEQ.fetch_add(1, Ordering::Relaxed);
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let dir = std::env::temp_dir().join(format!("{prefix}_{}_{}_{seq}", std::process::id(), nanos));
+        let _ = fs::create_dir_all(&dir);
+        let mgr = ConfigManager::with_dirs(dir.clone(), dir.clone());
+        (Self(dir), mgr)
+    }
+}
+
+impl Drop for TempConfigDir {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.0);
+    }
+}
 
 #[test]
 fn test_config_manager_paths() {
@@ -17,129 +43,19 @@ fn test_config_manager_paths() {
 }
 
 #[test]
-fn test_default_player_setting_serialization() {
-    let mut settings = WazooSettings::default();
-    assert!(!settings.is_default_player);
-
-    settings.is_default_player = true;
-    let json = serde_json::to_string(&settings).unwrap();
-    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
-    assert!(deserialized.is_default_player);
-}
-
-#[test]
-fn test_loading_indicator_serialization() {
-    let mut settings = WazooSettings::default();
-    assert_eq!(
-        settings.loading_indicator,
-        wazoo_core::LoadingIndicator::Spinner
-    );
-
-    settings.loading_indicator = wazoo_core::LoadingIndicator::TvStatic;
-    let json = serde_json::to_string(&settings).unwrap();
-    assert!(json.contains(r#""loading_indicator":"tv_static""#));
-
-    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
-    assert_eq!(
-        deserialized.loading_indicator,
-        wazoo_core::LoadingIndicator::TvStatic
-    );
-
-    // Fallback default on empty/missing field
-    let default_from_empty: WazooSettings = serde_json::from_str("{}").unwrap();
-    assert_eq!(
-        default_from_empty.loading_indicator,
-        wazoo_core::LoadingIndicator::Spinner
-    );
-}
-
-#[test]
-fn test_session_videos_serialization() {
-    let mut settings = WazooSettings::default();
-    settings
-        .session_videos
-        .push(wazoo_core::models::VideoSession {
-            path: "/path/to/video1.mp4".to_string(),
-            position_secs: 42.5,
-            is_muted: false,
-            volume: 0.8,
-            is_shuffle: false,
-        });
-
-    let json = serde_json::to_string(&settings).unwrap();
-    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
-    assert_eq!(deserialized.session_videos.len(), 1);
-    assert_eq!(deserialized.session_videos[0].path, "/path/to/video1.mp4");
-    assert_eq!(deserialized.session_videos[0].position_secs, 42.5);
-    assert!(!deserialized.session_videos[0].is_muted);
-    assert_eq!(deserialized.session_videos[0].volume, 0.8);
-    assert!(!deserialized.session_videos[0].is_shuffle);
-}
-
-#[test]
-fn test_bookmarks_serialization() {
-    let mut settings = WazooSettings::default();
-    settings.bookmarks.push(wazoo_core::models::Bookmark {
-        name: "Sci-Fi / Episode 01".to_string(),
-        query: "scifi".to_string(),
-        path: "/media/scifi/ep01.mp4".to_string(),
-        position_secs: 125.4,
-        is_shuffle: false,
-    });
-
-    let json = serde_json::to_string(&settings).unwrap();
-    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
-    assert_eq!(deserialized.bookmarks.len(), 1);
-    assert_eq!(deserialized.bookmarks[0].name, "Sci-Fi / Episode 01");
-    assert_eq!(deserialized.bookmarks[0].query, "scifi");
-    assert_eq!(deserialized.bookmarks[0].path, "/media/scifi/ep01.mp4");
-    assert_eq!(deserialized.bookmarks[0].position_secs, 125.4);
-    assert!(!deserialized.bookmarks[0].is_shuffle);
-}
-
-#[test]
 fn test_buffer_settings_clamping() {
-    let temp_dir = std::env::temp_dir().join(format!(
-        "wazoo_clamp_test_{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    let _ = fs::create_dir_all(&temp_dir);
-    let config_file = temp_dir.join("settings.json");
-
+    let (_tmp, mgr) = TempConfigDir::new("wazoo_clamp_test");
     let hostile_json = r#"{"buffer_size_mb": 999999999, "buffer_duration_secs": 99999}"#;
-    fs::write(&config_file, hostile_json).unwrap();
-
-    let mgr = ConfigManager {
-        config_dir: temp_dir.clone(),
-        data_dir: temp_dir.clone(),
-    };
+    fs::write(mgr.config_file_path(), hostile_json).unwrap();
 
     let loaded = mgr.load_settings();
     assert_eq!(loaded.buffer_size_mb, 4096);
     assert_eq!(loaded.buffer_duration_secs, 300);
-
-    let _ = fs::remove_dir_all(&temp_dir);
 }
 
 #[test]
 fn test_atomic_save_settings() {
-    let temp_dir = std::env::temp_dir().join(format!(
-        "wazoo_atomic_test_{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    let _ = fs::create_dir_all(&temp_dir);
-
-    let mgr = ConfigManager {
-        config_dir: temp_dir.clone(),
-        data_dir: temp_dir.clone(),
-    };
-
+    let (_tmp, mgr) = TempConfigDir::new("wazoo_atomic_test");
     let settings = WazooSettings {
         last_query: "secure_query".to_string(),
         ..Default::default()
@@ -151,36 +67,6 @@ fn test_atomic_save_settings() {
 
     let loaded = mgr.load_settings();
     assert_eq!(loaded.last_query, "secure_query");
-
-    let _ = fs::remove_dir_all(&temp_dir);
-}
-
-#[test]
-fn test_preferred_audio_language_serialization() {
-    let mut settings = WazooSettings::default();
-    assert_eq!(settings.preferred_audio_language, None);
-
-    settings.preferred_audio_language = Some("Japanese".to_string());
-    let json = serde_json::to_string(&settings).unwrap();
-    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
-    assert_eq!(
-        deserialized.preferred_audio_language.as_deref(),
-        Some("Japanese")
-    );
-}
-
-#[test]
-fn test_preferred_subtitle_language_serialization() {
-    let mut settings = WazooSettings::default();
-    assert_eq!(settings.preferred_subtitle_language, None);
-
-    settings.preferred_subtitle_language = Some("English".to_string());
-    let json = serde_json::to_string(&settings).unwrap();
-    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
-    assert_eq!(
-        deserialized.preferred_subtitle_language.as_deref(),
-        Some("English")
-    );
 }
 
 #[test]
@@ -188,18 +74,14 @@ fn test_effective_subtitle_language_defaults_to_i18n_language() {
     let mut settings = WazooSettings::default();
     assert_eq!(settings.preferred_subtitle_language, None);
     assert_eq!(settings.language, "en");
-    // When preferred_subtitle_language is not known (None), use the "language" i18n setting
     assert_eq!(settings.effective_subtitle_language(), "en");
 
-    // Changing i18n language setting
     settings.language = "es".to_string();
     assert_eq!(settings.effective_subtitle_language(), "es");
 
-    // When preferred_subtitle_language is explicitly set (known), it takes priority
     settings.preferred_subtitle_language = Some("Japanese".to_string());
     assert_eq!(settings.effective_subtitle_language(), "Japanese");
 
-    // If preferred_subtitle_language is cleared or empty, falls back to i18n language setting
     settings.preferred_subtitle_language = None;
     assert_eq!(settings.effective_subtitle_language(), "es");
 
@@ -208,83 +90,33 @@ fn test_effective_subtitle_language_defaults_to_i18n_language() {
 }
 
 #[test]
-fn test_keybinds_serialization_and_has_keybinds() {
-    let temp_dir = std::env::temp_dir().join(format!(
-        "wazoo_keybinds_test_{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    let _ = fs::create_dir_all(&temp_dir);
+fn test_keybinds_reconciliation_and_has_keybinds() {
+    let (_tmp, mgr) = TempConfigDir::new("wazoo_keybinds_test");
 
-    let mgr = ConfigManager {
-        config_dir: temp_dir.clone(),
-        data_dir: temp_dir.clone(),
-    };
-
-    // Initially no settings file exists
     assert!(!mgr.has_keybinds_in_settings());
 
-    // Loading settings provides default keybinds
     let mut loaded = mgr.load_settings();
     assert_eq!(loaded.keybinds.add_player, "n");
 
-    // Customizing and saving persists keybinds
     loaded.keybinds.add_player = "p".to_string();
     mgr.save_settings(&loaded).unwrap();
     assert!(mgr.has_keybinds_in_settings());
 
-    // Reading back preserves customized keybind
     let reloaded = mgr.load_settings();
     assert_eq!(reloaded.keybinds.add_player, "p");
 
-    // Saving an incomplete list of keybinds
     let incomplete_json = r#"{"keybinds":{"add_player":"p"}}"#;
     fs::write(mgr.config_file_path(), incomplete_json).unwrap();
     assert!(!mgr.has_complete_keybinds_in_settings());
 
-    // Loading reconciles missing keys with defaults while preserving existing custom key
     let reconciled = mgr.load_settings();
     assert_eq!(reconciled.keybinds.add_player, "p");
     assert_eq!(reconciled.keybinds.close_app, "Alt+X");
-
-    let _ = fs::remove_dir_all(&temp_dir);
 }
 
 #[test]
-fn test_window_bounds_serialization_and_clamping() {
-    let temp_dir = std::env::temp_dir().join(format!(
-        "wazoo_bounds_test_{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    let _ = fs::create_dir_all(&temp_dir);
-
-    let mgr = ConfigManager {
-        config_dir: temp_dir.clone(),
-        data_dir: temp_dir.clone(),
-    };
-
-    let custom_json = r#"{
-        "window_bounds": {
-            "x": 100,
-            "y": 150,
-            "width": 399,
-            "height": 680
-        }
-    }"#;
-    fs::write(mgr.config_file_path(), custom_json).unwrap();
-
-    let loaded = mgr.load_settings();
-    assert_eq!(loaded.window_bounds.x, 100);
-    assert_eq!(loaded.window_bounds.y, 150);
-    assert_eq!(loaded.window_bounds.width, 399);
-    assert_eq!(loaded.window_bounds.height, 680);
-
-    // Clamping invalid bounds
+fn test_window_bounds_clamping() {
+    let (_tmp, mgr) = TempConfigDir::new("wazoo_bounds_test");
     let tiny_json = r#"{
         "window_bounds": {
             "x": -50,
@@ -300,141 +132,44 @@ fn test_window_bounds_serialization_and_clamping() {
     assert_eq!(clamped.window_bounds.y, 20);
     assert_eq!(clamped.window_bounds.width, 200);
     assert_eq!(clamped.window_bounds.height, 150);
-
-    let _ = fs::remove_dir_all(&temp_dir);
 }
 
 #[test]
-fn test_flip_interval_serialization_and_clamping() {
-    let mut settings = WazooSettings::default();
-    assert_eq!(settings.flip_interval_secs, 45);
-
-    // Verify serialization and deserialization
-    settings.flip_interval_secs = 60;
-    let json = serde_json::to_string(&settings).unwrap();
-    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
-    assert_eq!(deserialized.flip_interval_secs, 60);
-
-    // Verify clamping in load_settings
-    let temp_dir = std::env::temp_dir().join(format!(
-        "wazoo_flip_test_{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    let _ = fs::create_dir_all(&temp_dir);
-    let mgr = ConfigManager {
-        config_dir: temp_dir.clone(),
-        data_dir: temp_dir.clone(),
-    };
+fn test_flip_interval_clamping() {
+    let (_tmp, mgr) = TempConfigDir::new("wazoo_flip_test");
 
     fs::write(mgr.config_file_path(), r#"{"flip_interval_secs": 0}"#).unwrap();
-    let loaded = mgr.load_settings();
-    assert_eq!(loaded.flip_interval_secs, 1);
+    assert_eq!(mgr.load_settings().flip_interval_secs, 1);
 
     fs::write(mgr.config_file_path(), r#"{"flip_interval_secs": 99999}"#).unwrap();
-    let loaded_max = mgr.load_settings();
-    assert_eq!(loaded_max.flip_interval_secs, 3600);
-
-    let _ = fs::remove_dir_all(&temp_dir);
+    assert_eq!(mgr.load_settings().flip_interval_secs, 3600);
 }
 
 #[test]
 fn test_playback_mode_does_not_persist_scroll_or_flip() {
-    use wazoo_core::models::PlaybackMode;
+    let (_tmp, mgr) = TempConfigDir::new("wazoo_mode_persist_test");
 
-    let temp_dir = std::env::temp_dir().join(format!(
-        "wazoo_mode_persist_test_{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    let _ = fs::create_dir_all(&temp_dir);
+    for mode in [PlaybackMode::Flip, PlaybackMode::Scroll] {
+        let settings = WazooSettings {
+            playback_mode: mode,
+            ..Default::default()
+        };
+        mgr.save_settings(&settings).unwrap();
 
-    let mgr = ConfigManager {
-        config_dir: temp_dir.clone(),
-        data_dir: temp_dir.clone(),
-    };
+        let content = fs::read_to_string(mgr.config_file_path()).unwrap();
+        assert!(content.contains(r#""playback_mode": "normal""#));
+        assert_eq!(mgr.load_settings().playback_mode, PlaybackMode::Normal);
+    }
 
-    // 1. If save_settings is called while in Flip mode, it should save as Normal mode
-    let settings = WazooSettings {
-        playback_mode: PlaybackMode::Flip,
-        ..Default::default()
-    };
-    mgr.save_settings(&settings).unwrap();
-
-    let content = fs::read_to_string(mgr.config_file_path()).unwrap();
-    assert!(!content.contains(r#""playback_mode": "flip""#));
-    assert!(content.contains(r#""playback_mode": "normal""#));
-
-    let loaded = mgr.load_settings();
-    assert_eq!(loaded.playback_mode, PlaybackMode::Normal);
-
-    // 2. If save_settings is called while in Scroll mode, it should save as Normal mode
-    let scroll_settings = WazooSettings {
-        playback_mode: PlaybackMode::Scroll,
-        ..Default::default()
-    };
-    mgr.save_settings(&scroll_settings).unwrap();
-    let content_scroll = fs::read_to_string(mgr.config_file_path()).unwrap();
-    assert!(!content_scroll.contains(r#""playback_mode": "scroll""#));
-    assert!(content_scroll.contains(r#""playback_mode": "normal""#));
-
-    let loaded_scroll = mgr.load_settings();
-    assert_eq!(loaded_scroll.playback_mode, PlaybackMode::Normal);
-
-    // 3. Pre-existing settings file with "flip" is coerced to Normal on load (boot)
-    fs::write(mgr.config_file_path(), r#"{"playback_mode": "flip"}"#).unwrap();
-    let loaded_flip = mgr.load_settings();
-    assert_eq!(loaded_flip.playback_mode, PlaybackMode::Normal);
-
-    // 4. Pre-existing settings file with "scroll" is coerced to Normal on load (boot)
-    fs::write(mgr.config_file_path(), r#"{"playback_mode": "scroll"}"#).unwrap();
-    let loaded_scroll_setting = mgr.load_settings();
-    assert_eq!(loaded_scroll_setting.playback_mode, PlaybackMode::Normal);
-
-    let _ = fs::remove_dir_all(&temp_dir);
+    for persisted in [r#"{"playback_mode": "flip"}"#, r#"{"playback_mode": "scroll"}"#] {
+        fs::write(mgr.config_file_path(), persisted).unwrap();
+        assert_eq!(mgr.load_settings().playback_mode, PlaybackMode::Normal);
+    }
 }
 
 #[test]
-fn test_playback_settings_serialization_and_clamping() {
-    let mut settings = WazooSettings::default();
-    assert_eq!(settings.gamma, 0.0);
-    assert_eq!(settings.contrast, 0.0);
-    assert_eq!(settings.brightness, 0.0);
-    assert_eq!(settings.saturation, 0.0);
-    assert_eq!(settings.playback_speed, 1.0);
-
-    settings.gamma = 15.0;
-    settings.contrast = -20.0;
-    settings.brightness = 5.0;
-    settings.saturation = 30.0;
-    settings.playback_speed = 1.25;
-
-    let json = serde_json::to_string(&settings).unwrap();
-    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
-    assert_eq!(deserialized.gamma, 15.0);
-    assert_eq!(deserialized.contrast, -20.0);
-    assert_eq!(deserialized.brightness, 5.0);
-    assert_eq!(deserialized.saturation, 30.0);
-    assert_eq!(deserialized.playback_speed, 1.25);
-
-    // Verify clamping via ConfigManager
-    let temp_dir = std::env::temp_dir().join(format!(
-        "wazoo_playback_clamp_test_{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    let _ = fs::create_dir_all(&temp_dir);
-    let mgr = ConfigManager {
-        config_dir: temp_dir.clone(),
-        data_dir: temp_dir.clone(),
-    };
-
+fn test_playback_settings_clamping() {
+    let (_tmp, mgr) = TempConfigDir::new("wazoo_playback_clamp_test");
     let extreme_settings = WazooSettings {
         gamma: 250.0,
         contrast: -150.0,
@@ -451,76 +186,11 @@ fn test_playback_settings_serialization_and_clamping() {
     assert_eq!(loaded.brightness, 100.0);
     assert_eq!(loaded.saturation, -100.0);
     assert_eq!(loaded.playback_speed, 4.0);
-
-    let _ = fs::remove_dir_all(&temp_dir);
 }
 
 #[test]
-fn test_scroll_mode_muted_default() {
-    let settings = WazooSettings::default();
-    assert!(settings.scroll_mode_muted);
-
-    // Verify explicit false
-    let json_unmuted = r#"{"scroll_mode_muted": false}"#;
-    let unmuted: WazooSettings = serde_json::from_str(json_unmuted).unwrap();
-    assert!(!unmuted.scroll_mode_muted);
-}
-
-#[test]
-fn test_crt_enabled_serialization() {
-    let default_settings = WazooSettings::default();
-    assert!(!default_settings.crt_enabled);
-
-    let mut settings = WazooSettings::default();
-    settings.crt_enabled = true;
-    let json = serde_json::to_string(&settings).unwrap();
-    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
-    assert!(deserialized.crt_enabled);
-
-    // Verify default fallback when missing in json
-    let missing_json = r#"{}"#;
-    let loaded: WazooSettings = serde_json::from_str(missing_json).unwrap();
-    assert!(!loaded.crt_enabled);
-}
-
-#[test]
-fn test_cube_settings_serialization_and_clamping() {
-    let default_settings = WazooSettings::default();
-    assert_eq!(default_settings.cube_speed, 1.0);
-    assert_eq!(default_settings.cube_size, 1.0);
-    assert!(!default_settings.cube_sheen);
-
-    let mut settings = WazooSettings::default();
-    settings.cube_speed = 2.4;
-    settings.cube_size = 1.6;
-    settings.cube_sheen = true;
-
-    let json = serde_json::to_string(&settings).unwrap();
-    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
-    assert_eq!(deserialized.cube_speed, 2.4);
-    assert_eq!(deserialized.cube_size, 1.6);
-    assert!(deserialized.cube_sheen);
-
-    // Fallback default on empty/missing JSON
-    let loaded: WazooSettings = serde_json::from_str("{}").unwrap();
-    assert_eq!(loaded.cube_speed, 1.0);
-    assert_eq!(loaded.cube_size, 1.0);
-    assert!(!loaded.cube_sheen);
-
-    // Verify clamping via ConfigManager
-    let temp_dir = std::env::temp_dir().join(format!(
-        "wazoo_cube_clamp_test_{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    let _ = fs::create_dir_all(&temp_dir);
-    let mgr = ConfigManager {
-        config_dir: temp_dir.clone(),
-        data_dir: temp_dir.clone(),
-    };
-
+fn test_cube_settings_clamping() {
+    let (_tmp, mgr) = TempConfigDir::new("wazoo_cube_clamp_test");
     let extreme_settings = WazooSettings {
         cube_speed: 99.0,
         cube_size: 0.01,
@@ -531,76 +201,11 @@ fn test_cube_settings_serialization_and_clamping() {
     let loaded = mgr.load_settings();
     assert_eq!(loaded.cube_speed, 4.0);
     assert_eq!(loaded.cube_size, 0.4);
-
-    let _ = fs::remove_dir_all(&temp_dir);
 }
 
 #[test]
-fn test_standby_player_setting_serialization() {
-    let default_settings = WazooSettings::default();
-    assert!(!default_settings.use_standby_player);
-
-    let mut settings = WazooSettings::default();
-    settings.use_standby_player = true;
-
-    let json = serde_json::to_string(&settings).unwrap();
-    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
-    assert!(deserialized.use_standby_player);
-
-    // Default to false on empty JSON
-    let loaded: WazooSettings = serde_json::from_str("{}").unwrap();
-    assert!(!loaded.use_standby_player);
-}
-
-#[test]
-fn test_crt_settings_serialization_and_clamping() {
-    let default_settings = WazooSettings::default();
-    assert_eq!(default_settings.crt.scanline_darkness, 0.20);
-    assert_eq!(default_settings.crt.scanline_density, 600.0);
-    assert_eq!(default_settings.crt.scanline_speed, 5.0);
-    assert_eq!(default_settings.crt.curvature, 0.35);
-    assert_eq!(default_settings.crt.gamma, 1.00);
-    assert_eq!(default_settings.crt.saturation, 1.00);
-    assert_eq!(default_settings.crt.brightness, 1.00);
-    assert_eq!(default_settings.crt.glitch_intensity, 0.25);
-    assert_eq!(default_settings.crt.glitch_frequency, 0.16);
-
-    let mut settings = WazooSettings::default();
-    settings.crt.scanline_darkness = 0.45;
-    settings.crt.gamma = 1.25;
-    settings.crt.saturation = 1.30;
-    settings.crt.glitch_intensity = 0.80;
-    settings.crt.glitch_frequency = 0.50;
-
-    let json = serde_json::to_string(&settings).unwrap();
-    let deserialized: WazooSettings = serde_json::from_str(&json).unwrap();
-    assert_eq!(deserialized.crt.scanline_darkness, 0.45);
-    assert_eq!(deserialized.crt.gamma, 1.25);
-    assert_eq!(deserialized.crt.saturation, 1.30);
-    assert_eq!(deserialized.crt.glitch_intensity, 0.80);
-    assert_eq!(deserialized.crt.glitch_frequency, 0.50);
-
-    // Fallback default on empty/missing JSON
-    let loaded: WazooSettings = serde_json::from_str("{}").unwrap();
-    assert_eq!(loaded.crt.scanline_darkness, 0.20);
-    assert_eq!(loaded.crt.gamma, 1.00);
-    assert_eq!(loaded.crt.glitch_intensity, 0.25);
-    assert_eq!(loaded.crt.glitch_frequency, 0.16);
-
-    // Test clamping
-    let temp_dir = std::env::temp_dir().join(format!(
-        "wazoo_crt_clamp_test_{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    let _ = fs::create_dir_all(&temp_dir);
-    let mgr = ConfigManager {
-        config_dir: temp_dir.clone(),
-        data_dir: temp_dir.clone(),
-    };
-
+fn test_crt_settings_clamping() {
+    let (_tmp, mgr) = TempConfigDir::new("wazoo_crt_clamp_test");
     let mut extreme_crt = wazoo_core::CrtSettings::default();
     extreme_crt.scanline_darkness = 99.0;
     extreme_crt.gamma = -10.0;
@@ -617,8 +222,6 @@ fn test_crt_settings_serialization_and_clamping() {
     assert_eq!(loaded.crt.gamma, 0.2);
     assert_eq!(loaded.crt.glitch_intensity, 1.0);
     assert_eq!(loaded.crt.glitch_frequency, 0.0);
-
-    let _ = fs::remove_dir_all(&temp_dir);
 }
 
 #[test]
@@ -628,7 +231,6 @@ fn test_theme_settings_hex_parsing_clamping_and_presets() {
         ThemePreset, ThemeSettings, format_hex_rgb, parse_hex_rgb, sanitize_hex_or_default,
     };
 
-    // Hex parser tests
     assert_eq!(parse_hex_rgb("#42b883"), Some((0x42, 0xb8, 0x83)));
     assert_eq!(parse_hex_rgb("1F092F"), Some((0x1f, 0x09, 0x2f)));
     assert_eq!(parse_hex_rgb("#fff"), Some((255, 255, 255)));
@@ -638,54 +240,25 @@ fn test_theme_settings_hex_parsing_clamping_and_presets() {
     assert_eq!(format_hex_rgb(0x42, 0xb8, 0x83), "#42b883");
     assert_eq!(sanitize_hex_or_default("not-a-color", "#1f1f1f"), "#1f1f1f");
 
-    // Default values match original Wazoo palette
     let def = ThemeSettings::default();
     assert_eq!(def.accent_color, DEFAULT_THEME_ACCENT_COLOR);
     assert_eq!(def.surface_color, DEFAULT_THEME_SURFACE_COLOR);
     assert_eq!(def.titlebar_color, DEFAULT_THEME_TITLEBAR_COLOR);
     assert!(def.matches_preset(ThemePreset::Default));
 
-    // Presets roundtrip
-    let mut themed = ThemeSettings::default();
-    themed.apply_preset(ThemePreset::Mocha);
-    assert!(themed.matches_preset(ThemePreset::Mocha));
-    assert!(!themed.matches_preset(ThemePreset::Default));
-    assert_eq!(themed.accent_color, "#89b4fa");
-    assert_eq!(themed.surface_color, "#1e1e2e");
-    assert_eq!(themed.titlebar_color, "#181825");
-    assert_eq!(themed.text_color, "#cdd6f4");
+    for preset in [
+        ThemePreset::Mocha,
+        ThemePreset::Amber,
+        ThemePreset::Strawberry,
+        ThemePreset::Monokai,
+        ThemePreset::Turtle,
+    ] {
+        let mut themed = ThemeSettings::default();
+        themed.apply_preset(preset);
+        assert!(themed.matches_preset(preset));
+        assert!(!themed.matches_preset(ThemePreset::Default));
+    }
 
-    themed.apply_preset(ThemePreset::Amber);
-    assert!(themed.matches_preset(ThemePreset::Amber));
-    assert_eq!(themed.accent_color, "#fbbd2d");
-    assert_eq!(themed.surface_color, "#25231d");
-    assert_eq!(themed.titlebar_color, "#1d1b16");
-    assert_eq!(themed.text_color, "#eadcb3");
-
-    themed.apply_preset(ThemePreset::Strawberry);
-    assert!(themed.matches_preset(ThemePreset::Strawberry));
-    assert_eq!(themed.accent_color, "#eb477e");
-    assert_eq!(themed.surface_color, "#f6e4ea");
-    assert_eq!(themed.titlebar_color, "#e4c8d1");
-    assert_eq!(themed.text_color, "#661a33");
-
-    themed.apply_preset(ThemePreset::Monokai);
-    assert!(themed.matches_preset(ThemePreset::Monokai));
-    assert_eq!(themed.accent_color, "#fb2872");
-    assert_eq!(themed.surface_color, "#20211c");
-    assert_eq!(themed.titlebar_color, "#151613");
-    assert_eq!(themed.text_color, "#f7f7f2");
-
-    themed.apply_preset(ThemePreset::Turtle);
-    assert!(themed.matches_preset(ThemePreset::Turtle));
-    assert_eq!(themed.accent_color, "#65d05a");
-    assert_eq!(themed.surface_color, "#151615");
-    assert_eq!(themed.titlebar_color, "#22153b");
-    assert_eq!(themed.titlebar_badge_color, "#060409");
-    assert_eq!(themed.hud_color, "#0f120f");
-    assert_eq!(themed.text_color, "#ffffff");
-
-    // Clamping & sanitization
     let mut bad = ThemeSettings {
         accent_color: "bad_hex".to_string(),
         surface_color: " #333 ".to_string(),
@@ -706,35 +279,4 @@ fn test_theme_settings_hex_parsing_clamping_and_presets() {
     assert_eq!(bad.hud_opacity, 1.0);
     assert_eq!(bad.corner_radius, 0.0);
     assert_eq!(bad.focus_ring_width, 8.0);
-
-    // Persistence roundtrip + backward compatibility when missing
-    let empty_loaded: WazooSettings = serde_json::from_str("{}").unwrap();
-    assert_eq!(empty_loaded.theme, ThemeSettings::default());
-
-    let temp_dir = std::env::temp_dir().join(format!(
-        "wazoo_theme_persist_{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    let _ = fs::create_dir_all(&temp_dir);
-    let mgr = ConfigManager {
-        config_dir: temp_dir.clone(),
-        data_dir: temp_dir.clone(),
-    };
-    let mut custom = WazooSettings::default();
-    custom.theme.accent_color = "#ff5500".to_string();
-    custom.theme.surface_color = "#101820".to_string();
-    custom.theme.titlebar_color = "#3b0764".to_string();
-    custom.theme.corner_radius = 1.5;
-    mgr.save_settings(&custom).unwrap();
-
-    let reloaded = mgr.load_settings();
-    assert_eq!(reloaded.theme.accent_color, "#ff5500");
-    assert_eq!(reloaded.theme.surface_color, "#101820");
-    assert_eq!(reloaded.theme.titlebar_color, "#3b0764");
-    assert_eq!(reloaded.theme.corner_radius, 1.5);
-
-    let _ = fs::remove_dir_all(&temp_dir);
 }

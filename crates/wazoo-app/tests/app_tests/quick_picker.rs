@@ -165,54 +165,6 @@ fn test_quick_picker_modal_k_key_escape_and_actions() {
 }
 
 #[test]
-fn test_quick_picker_modal_render() {
-    let (mut app, _) = new_test_app();
-    let temp_dir = TempTestDir::new("test_qp_render");
-    let show_dir = temp_dir.path().join("Anime");
-    let _ = std::fs::create_dir_all(&show_dir);
-    let ep1 = show_dir.join("ep01.mp4");
-    let ep2 = show_dir.join("ep02.mp4");
-    let _ = std::fs::File::create(&ep1);
-    let _ = std::fs::File::create(&ep2);
-
-    let p1 = ep1.to_string_lossy().to_string();
-    let p2 = ep2.to_string_lossy().to_string();
-
-    app.available_videos = vec![
-        VideoRecord::new(1, "Anime - EP 01", &p1),
-        VideoRecord::new(2, "Anime - EP 02", &p2),
-    ];
-    let _ = app.update(Message::SetPlayerCount(1));
-    assert_eq!(app.players.len(), 1);
-
-    // Render with video playing and other video in folder
-    app.players[0].state.path = p1.clone();
-    app.modals.quick_picker = true;
-    {
-        let _el = app.view_quick_picker_modal();
-    }
-
-    // Render with no matches for search query
-    app.modals.quick_picker_search = "nonexistent_query_xyz".to_string();
-    {
-        let _el = app.view_quick_picker_modal();
-    }
-
-    // Render when folder has only 1 video (no other videos in folder)
-    app.available_videos = vec![VideoRecord::new(1, "Anime - EP 01", &p1)];
-    app.modals.quick_picker_search.clear();
-    {
-        let _el = app.view_quick_picker_modal();
-    }
-
-    // Render when no video is playing
-    app.players[0].state.path.clear();
-    {
-        let _el = app.view_quick_picker_modal();
-    }
-}
-
-#[test]
 fn test_quick_picker_large_library_caches_and_filters_fast() {
     let (mut app, _) = new_test_app();
 

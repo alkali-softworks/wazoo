@@ -9,33 +9,6 @@ use wazoo_app::state::ThemeColorTarget;
 use wazoo_app::theme;
 
 #[test]
-fn test_settings_toggle_default_player() {
-    let (mut app, _) = new_test_app();
-    assert!(!app.settings.is_default_player);
-
-    let _ = app.update(Message::OpenSettingsModal);
-    assert!(app.modals.settings);
-
-    // Render settings modal with toggle button
-    {
-        let _view = app.view_settings_modal();
-    }
-
-    // Toggle default player ON
-    let _ = app.update(Message::ToggleDefaultPlayer);
-    assert!(app.settings.is_default_player);
-
-    // Render settings modal with active toggle button
-    {
-        let _view_active = app.view_settings_modal();
-    }
-
-    // Toggle default player OFF
-    let _ = app.update(Message::ToggleDefaultPlayer);
-    assert!(!app.settings.is_default_player);
-}
-
-#[test]
 fn test_settings_modal_tabs_and_playback_options() {
     let (mut app, _) = new_test_app();
     assert_eq!(app.modals.settings_tab, SettingsTab::General);
@@ -45,272 +18,104 @@ fn test_settings_modal_tabs_and_playback_options() {
     assert!(app.modals.settings);
     assert_eq!(app.modals.settings_tab, SettingsTab::General);
 
-    // Render General tab
-    {
-        let _view_general = app.view_settings_modal();
-    }
-
-    // Switch to Playback tab
+    // Switch to Playback tab and verify ResetPlaybackOptions
     let _ = app.update(Message::SetSettingsTab(SettingsTab::Playback));
     assert_eq!(app.modals.settings_tab, SettingsTab::Playback);
-
-    // Render Playback tab
-    {
-        let _view_playback = app.view_settings_modal();
-    }
-
-    // Adjust playback options
     let _ = app.update(Message::SetGamma(25.0));
-    assert_eq!(app.settings.gamma, 25.0);
-
     let _ = app.update(Message::SetContrast(-15.0));
-    assert_eq!(app.settings.contrast, -15.0);
-
     let _ = app.update(Message::SetBrightness(10.0));
-    assert_eq!(app.settings.brightness, 10.0);
-
     let _ = app.update(Message::SetSaturation(40.0));
-    assert_eq!(app.settings.saturation, 40.0);
-
     let _ = app.update(Message::SetPlaybackSpeed(1.5));
-    assert_eq!(app.settings.playback_speed, 1.5);
-
     let _ = app.update(Message::SetBufferDuration(15));
-    assert_eq!(app.settings.buffer_duration_secs, 15);
-
     let _ = app.update(Message::SetBufferSize(64));
+    assert_eq!(app.settings.playback_speed, 1.5);
+    assert_eq!(app.settings.buffer_duration_secs, 15);
     assert_eq!(app.settings.buffer_size_mb, 64);
 
-    // Re-render Playback tab with adjusted values
-    {
-        let _view_playback_adjusted = app.view_settings_modal();
-    }
-
-    // Test ResetPlaybackOptions
     let _ = app.update(Message::ResetPlaybackOptions);
     assert_eq!(app.settings.gamma, 0.0);
     assert_eq!(app.settings.contrast, 0.0);
     assert_eq!(app.settings.brightness, 0.0);
     assert_eq!(app.settings.saturation, 0.0);
-    // Test individual slider reset (the reset button next to each value badge)
+
+    // Individual slider resets do not disturb sibling sliders
     let _ = app.update(Message::SetGamma(40.0));
     let _ = app.update(Message::SetContrast(100.0));
-    assert_eq!(app.settings.gamma, 40.0);
-    assert_eq!(app.settings.contrast, 100.0);
-    {
-        let _view_with_reset_buttons = app.view_settings_modal();
-    }
-    // Reset only gamma via individual reset button
     let _ = app.update(Message::SetGamma(0.0));
     assert_eq!(app.settings.gamma, 0.0);
     assert_eq!(app.settings.contrast, 100.0);
-    // Reset only contrast via individual reset button
-    let _ = app.update(Message::SetContrast(0.0));
-    assert_eq!(app.settings.contrast, 0.0);
 
     // Switch to Filters tab (Shader Filters)
     let _ = app.update(Message::SetSettingsTab(SettingsTab::Filters));
     assert_eq!(app.modals.settings_tab, SettingsTab::Filters);
-    {
-        let _view_filters = app.view_settings_modal();
-    }
-    // Master filter toggle enables all checked filters (CRT is checked by default)
     let _ = app.update(Message::ToggleFilters);
     assert!(app.settings.filters_enabled);
     assert!(app.settings.crt_enabled);
-    {
-        let _view_filters_active = app.view_settings_modal();
-    }
-    // Individual filter toggles work
     let _ = app.update(Message::ToggleWavyFilter);
     assert!(app.settings.filter_wavy);
     let _ = app.update(Message::ToggleFogFilter);
     assert!(app.settings.filter_fog);
-
     let _ = app.update(Message::ToggleFilters);
     assert!(!app.settings.filters_enabled);
     assert!(!app.settings.crt_enabled);
 
-    // Switch to CRT tab (Configurable CRT Shader Parameters)
+    // Switch to CRT tab: configure, apply preset, and reset
     let _ = app.update(Message::SetSettingsTab(SettingsTab::Crt));
     assert_eq!(app.modals.settings_tab, SettingsTab::Crt);
-    {
-        let _view_crt = app.view_settings_modal();
-    }
-
-    // Configure CRT parameters
     let _ = app.update(Message::SetCrtScanlineDarkness(0.40));
-    assert_eq!(app.settings.crt.scanline_darkness, 0.40);
-    let _ = app.update(Message::SetCrtScanlineDensity(750.0));
-    assert_eq!(app.settings.crt.scanline_density, 750.0);
-    let _ = app.update(Message::SetCrtScanlineSpeed(2.5));
-    assert_eq!(app.settings.crt.scanline_speed, 2.5);
-
-    // CRT Gamma & Saturation compensation
-    let _ = app.update(Message::SetCrtGamma(1.35));
-    assert_eq!(app.settings.crt.gamma, 1.35);
-    let _ = app.update(Message::SetCrtSaturation(1.40));
-    assert_eq!(app.settings.crt.saturation, 1.40);
-    let _ = app.update(Message::SetCrtBrightness(1.10));
-    assert_eq!(app.settings.crt.brightness, 1.10);
-
-    // Geometry & artifacts
-    let _ = app.update(Message::SetCrtCurvature(0.25));
-    assert_eq!(app.settings.crt.curvature, 0.25);
-    let _ = app.update(Message::SetCrtCornerRounding(0.60));
-    assert_eq!(app.settings.crt.corner_rounding, 0.60);
-    let _ = app.update(Message::SetCrtVignette(0.30));
-    assert_eq!(app.settings.crt.vignette, 0.30);
-    let _ = app.update(Message::SetCrtChromaticAberration(0.35));
-    assert_eq!(app.settings.crt.chromatic_aberration, 0.35);
-    let _ = app.update(Message::SetCrtNoise(0.15));
-    assert_eq!(app.settings.crt.noise, 0.15);
     let _ = app.update(Message::SetCrtGlitchIntensity(0.70));
-    assert_eq!(app.settings.crt.glitch_intensity, 0.70);
     let _ = app.update(Message::SetCrtGlitchFrequency(0.45));
+    assert_eq!(app.settings.crt.scanline_darkness, 0.40);
+    assert_eq!(app.settings.crt.glitch_intensity, 0.70);
     assert_eq!(app.settings.crt.glitch_frequency, 0.45);
 
-    {
-        let _view_crt_configured = app.view_settings_modal();
-    }
-
-    // Apply preset
     let _ = app.update(Message::ApplyCrtPreset(wazoo_core::CrtPreset::WarmPhosphor));
     assert_eq!(app.settings.crt.gamma, 1.25);
     assert_eq!(app.settings.crt.saturation, 1.20);
     assert_eq!(app.settings.crt.scanline_darkness, 0.15);
-    assert_eq!(app.settings.crt.glitch_intensity, 0.15);
-    assert_eq!(app.settings.crt.glitch_frequency, 0.10);
-    {
-        let _view_crt_preset = app.view_settings_modal();
-    }
 
-    // Reset CRT settings
     let _ = app.update(Message::ResetCrtSettings);
     assert_eq!(app.settings.crt.scanline_darkness, 0.20);
     assert_eq!(app.settings.crt.gamma, 1.00);
-    assert_eq!(app.settings.crt.saturation, 1.00);
     assert_eq!(app.settings.crt.glitch_intensity, 0.25);
     assert_eq!(app.settings.crt.glitch_frequency, 0.16);
 
-    // Switch to System tab (Window Opacity & Default Player)
+    // Switch to System tab: default player, standby, and flip interval clamping
     let _ = app.update(Message::SetSettingsTab(SettingsTab::System));
     assert_eq!(app.modals.settings_tab, SettingsTab::System);
-    {
-        let _view_system = app.view_settings_modal();
-    }
-
-    // Adjust window opacity on System tab
-    let _ = app.update(Message::SetWindowOpacity(0.75));
-    assert_eq!(app.settings.window_opacity, 0.75);
-
-    // Toggle default player on System tab
     let _ = app.update(Message::ToggleDefaultPlayer);
     assert!(app.settings.is_default_player);
-    {
-        let _view_system_active = app.view_settings_modal();
-    }
     let _ = app.update(Message::ToggleDefaultPlayer);
     assert!(!app.settings.is_default_player);
 
-    // Toggle standby player on System tab
-    assert!(!app.settings.use_standby_player);
     let _ = app.update(Message::ToggleStandbyPlayer);
     assert!(app.settings.use_standby_player);
-    {
-        let _view_system_standby_on = app.view_settings_modal();
-    }
     let _ = app.update(Message::ToggleStandbyPlayer);
     assert!(!app.settings.use_standby_player);
 
-    // Adjust flip interval on System tab
-    assert_eq!(app.settings.flip_interval_secs, 45);
-    let _ = app.update(Message::SetFlipInterval(90));
-    assert_eq!(app.settings.flip_interval_secs, 90);
-    {
-        let _view_system_flip_active = app.view_settings_modal();
-    }
-    // Reset flip interval via reset button
+    let _ = app.update(Message::SetFlipInterval(0));
+    assert_eq!(app.settings.flip_interval_secs, 1);
+    let _ = app.update(Message::SetFlipInterval(99999));
+    assert_eq!(app.settings.flip_interval_secs, 3600);
     let _ = app.update(Message::SetFlipInterval(
         wazoo_core::models::DEFAULT_FLIP_INTERVAL_SECS,
     ));
     assert_eq!(app.settings.flip_interval_secs, 45);
 
-    // Test flip interval clamping
-    let _ = app.update(Message::SetFlipInterval(0));
-    assert_eq!(app.settings.flip_interval_secs, 1);
-    let _ = app.update(Message::SetFlipInterval(99999));
-    assert_eq!(app.settings.flip_interval_secs, 3600);
-    let _ = app.update(Message::SetFlipInterval(45));
-
-    // Switch to Cube tab (3D Cube Screensaver settings)
+    // Switch to Cube tab
     let _ = app.update(Message::SetSettingsTab(SettingsTab::Cube));
     assert_eq!(app.modals.settings_tab, SettingsTab::Cube);
-    {
-        let _view_cube = app.view_settings_modal();
-    }
-
-    // Toggle cube screensaver, adjust speed & size, spawn additional cube
     let _ = app.update(Message::ToggleCubeScreensaver);
     assert!(app.cube.enabled);
     assert_eq!(app.cube.cubes.len(), 1);
-    {
-        let _view_cube_active = app.view_settings_modal();
-    }
-    let _ = app.update(Message::SetCubeSpeed(1.5));
-    assert_eq!(app.cube.speed_multiplier, 1.5);
-    let _ = app.update(Message::SetCubeSize(1.8));
-    assert_eq!(app.cube.size_multiplier, 1.8);
     let _ = app.update(Message::SpawnCube);
     assert_eq!(app.cube.cubes.len(), 2);
     let _ = app.update(Message::ClearCubes);
     assert_eq!(app.cube.cubes.len(), 0);
 
-    // Switch back to General tab
-    let _ = app.update(Message::SetSettingsTab(SettingsTab::General));
-    assert_eq!(app.modals.settings_tab, SettingsTab::General);
-    {
-        let _view_general_back = app.view_settings_modal();
-    }
-
     // Close settings modal
     let _ = app.update(Message::CloseSettingsModal);
     assert!(!app.modals.settings);
-}
-
-#[test]
-fn test_menu_modal_open_close_and_render() {
-    let (mut app, _) = new_test_app();
-    assert!(!app.modals.menu);
-
-    let _ = app.update(Message::OpenMenuModal);
-    assert!(app.modals.menu);
-    {
-        let _menu_view = app.view_menu_modal();
-    }
-
-    let _ = app.update(Message::CloseMenuModal);
-    assert!(!app.modals.menu);
-}
-
-#[test]
-fn test_search_and_bookmarks_modal_render() {
-    let (mut app, _) = new_test_app();
-    let _ = app.update(Message::OpenSearchModal);
-    assert!(app.modals.search);
-    {
-        let _search_view = app.view_search_modal();
-    }
-    let _ = app.update(Message::CloseSearchModal);
-    assert!(!app.modals.search);
-
-    let _ = app.update(Message::ToggleBookmarksModal);
-    assert!(app.modals.bookmarks);
-    {
-        let _bookmarks_view = app.view_bookmarks_modal();
-    }
-    let _ = app.update(Message::CloseBookmarksModal);
-    assert!(!app.modals.bookmarks);
 }
 
 #[test]

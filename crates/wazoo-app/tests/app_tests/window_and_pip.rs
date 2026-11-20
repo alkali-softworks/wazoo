@@ -25,12 +25,6 @@ fn test_is_point_in_titlebar() {
 }
 
 #[test]
-fn test_view_titlebar() {
-    let (app, _) = new_test_app();
-    let _elem = app.view_titlebar();
-}
-
-#[test]
 fn test_pin_keybind_dispatch() {
     let (mut app, _) = new_test_app();
     assert!(!app.settings.is_always_on_top);

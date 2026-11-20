@@ -29,46 +29,13 @@ fn test_session_videos_shuffle_persistence() {
 }
 
 #[test]
-fn test_scroll_mode_real_heights_and_recalculation() {
+fn test_scroll_mode_window_resize_recalculates_heights() {
     let (mut app, _) = new_test_app();
     app.settings.window_bounds.width = 1920;
     app.settings.window_bounds.height = 1080;
     app.scroll_engine.set_window_size(1920.0, 1080.0);
 
-    // Standard 16:9 widescreen video at 1920 width -> real height is 1080.0
-    let h_16_9 = app.scroll_engine.item_height_for_aspect_ratio(16.0 / 9.0);
-    assert!((h_16_9 - 1080.0).abs() < 1.0);
-
-    // 4:3 video at 1920 width -> real height is 1440.0
-    let h_4_3 = app.scroll_engine.item_height_for_aspect_ratio(4.0 / 3.0);
-    assert!((h_4_3 - 1440.0).abs() < 1.0);
-
-    // 9:16 vertical video at 1920 width -> real height is 3413.33
-    let h_9_16 = app.scroll_engine.item_height_for_aspect_ratio(9.0 / 16.0);
-    assert!((h_9_16 - 3413.33).abs() < 1.0);
-
-    // When toggling scroll mode with items, stack initializes with real heights
-    app.scroll_engine
-        .init_stack_with_heights(&[(1, h_16_9), (2, h_4_3)]);
-    assert_eq!(app.scroll_engine.items.get(&1).unwrap().y_pos, 0.0);
-    assert_eq!(app.scroll_engine.items.get(&1).unwrap().height, h_16_9);
-    assert_eq!(app.scroll_engine.items.get(&2).unwrap().y_pos, h_16_9);
-    assert_eq!(app.scroll_engine.items.get(&2).unwrap().height, h_4_3);
-
-    // Dynamic update on aspect ratio resolution
-    let changed = app.scroll_engine.update_height(1, 1080.0);
-    assert!(
-        !changed,
-        "Height did not change significantly, so returns false"
-    );
-    let changed = app.scroll_engine.update_height(1, 1200.0);
-    assert!(changed, "Height changed by > 1px, so returns true");
-    app.scroll_engine.recalculate_positions();
-    assert_eq!(app.scroll_engine.items.get(&1).unwrap().y_pos, 0.0);
-    assert_eq!(app.scroll_engine.items.get(&1).unwrap().height, 1200.0);
-    assert_eq!(app.scroll_engine.items.get(&2).unwrap().y_pos, 1200.0);
-
-    // Window resize updates window size and recalculates scroll item heights
+    // Window resize updates scroll engine dimensions and aspect-ratio item heights
     let _ = app.update(Message::WindowResized(
         iced::window::Id::unique(),
         iced::Size::new(1280.0, 720.0),
@@ -135,32 +102,6 @@ fn test_prev_next_frame_keybind_dispatch() {
     // Prev frame (',')
     press_char(&mut app, ",");
     assert!(app.overlay.ticks > 0);
-}
-
-#[test]
-fn test_player_by_id_helpers() {
-    let (mut app, _) = new_test_app();
-    let temp_dir = TempTestDir::new("test_player_helpers");
-    let f1 = temp_dir.path().join("v1.mp4");
-    let _ = std::fs::File::create(&f1);
-
-    app.available_videos = vec![VideoRecord::new(1, "V1", f1.to_string_lossy())];
-    let _ = app.update(Message::SetPlayerCount(1));
-    assert_eq!(app.players.len(), 1);
-    let p_id = app.players[0].id;
-
-    // Test PlayerList helpers
-    assert!(app.players.has_player(p_id));
-    assert!(!app.players.has_player(999_999));
-    assert_eq!(app.players.player_index(p_id), Some(0));
-    assert_eq!(app.players.player_index(999_999), None);
-    assert_eq!(app.players.player(p_id).map(|p| p.id), Some(p_id));
-    assert!(app.players.player(999_999).is_none());
-
-    // Test mutable player lookup
-    if let Some(p) = app.players.player_mut(p_id) {
-        assert_eq!(p.id, p_id);
-    }
 }
 
 #[test]

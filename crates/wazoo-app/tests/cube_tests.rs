@@ -51,33 +51,6 @@ fn test_cube_state_spawn_and_toggle() {
 }
 
 #[test]
-fn test_cube_multi_spawn_and_clear() {
-    let mut state = CubeState::new();
-    state.spawn_cube(1920.0, 1080.0, 0);
-    state.spawn_cube(1920.0, 1080.0, 1);
-    state.spawn_cube(1920.0, 1080.0, 2);
-
-    assert_eq!(state.cubes.len(), 3);
-    assert_eq!(state.cubes[0].player_index, 0);
-    assert_eq!(state.cubes[1].player_index, 1);
-    assert_eq!(state.cubes[2].player_index, 2);
-
-    // Each cube has a unique ID and varied trajectory
-    assert_ne!(state.cubes[0].id, state.cubes[1].id);
-    assert_ne!(state.cubes[1].id, state.cubes[2].id);
-
-    // Remove one cube
-    state.remove_cube();
-    assert_eq!(state.cubes.len(), 2);
-    assert!(state.enabled);
-
-    // Clear all
-    state.clear();
-    assert!(state.cubes.is_empty());
-    assert!(!state.enabled);
-}
-
-#[test]
 fn test_cube_screensaver_bounce_physics() {
     let mut state = CubeState::new();
     let win_w = 1000.0;
@@ -153,32 +126,6 @@ fn test_cube_speed_and_size_multipliers() {
 }
 
 #[test]
-fn test_cube_messages_and_state_transitions() {
-    let mut state = CubeState::new();
-
-    // Toggle message simulation
-    assert!(!state.enabled);
-    state.toggle(1920.0, 1080.0, 0);
-    assert!(state.enabled);
-    assert_eq!(state.cubes.len(), 1);
-
-    // Spawn another
-    state.spawn_cube(1920.0, 1080.0, 1);
-    assert_eq!(state.cubes.len(), 2);
-
-    // Set speed & size
-    state.speed_multiplier = 2.5;
-    assert_eq!(state.speed_multiplier, 2.5);
-    state.size_multiplier = 1.5;
-    assert_eq!(state.size_multiplier, 1.5);
-
-    // Clear
-    state.clear();
-    assert!(!state.enabled);
-    assert!(state.cubes.is_empty());
-}
-
-#[test]
 fn test_cube_independent_player_support() {
     let mut state = CubeState::new();
     state.spawn_cube_with_player(1920.0, 1080.0, 0, Some(42));
@@ -189,13 +136,16 @@ fn test_cube_independent_player_support() {
     state.spawn_cube_with_player(1920.0, 1080.0, 1, Some(43));
     assert_eq!(state.cubes.len(), 2);
     assert_eq!(state.cubes[1].player_id, Some(43));
+    assert_ne!(state.cubes[0].id, state.cubes[1].id);
 
     state.remove_cube();
     assert_eq!(state.cubes.len(), 1);
     assert_eq!(state.cubes[0].player_id, Some(42));
+    assert!(state.enabled);
 
     state.clear();
     assert!(state.cubes.is_empty());
+    assert!(!state.enabled);
 }
 
 #[test]
@@ -379,25 +329,6 @@ fn test_desktop_cube_screensaver_toggle_key_9_and_escape() {
 
     // Escape exits desktop overlay
     let _ = app.update(wazoo_app::message::Message::EscapePressed);
-    assert!(!app.cube.desktop_overlay);
-}
-
-#[test]
-fn test_desktop_cube_key_event_routing() {
-    let (mut app, _) = wazoo_app::app::new_test_app();
-
-    // Send key '9'
-    let _ = app.update(wazoo_app::message::Message::KeyPressed(
-        iced::keyboard::Key::Character("9".into()),
-        iced::event::Status::Ignored,
-    ));
-    assert!(app.cube.desktop_overlay);
-
-    // Send key '9' again
-    let _ = app.update(wazoo_app::message::Message::KeyPressed(
-        iced::keyboard::Key::Character("9".into()),
-        iced::event::Status::Ignored,
-    ));
     assert!(!app.cube.desktop_overlay);
 }
 

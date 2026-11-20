@@ -239,28 +239,6 @@ fn test_file_picker_multiple_confined_folder_chips_wrap() {
 }
 
 #[test]
-fn test_file_picker_highlights_playing_video() {
-    let (mut app, _) = new_test_app();
-    app.available_videos = vec![
-        VideoRecord::new(1, "Anime 1", "/media/anime/a1.mp4"),
-        VideoRecord::new(2, "Movie 1", "/media/movies/m1.mp4"),
-    ];
-    let _ = app.update(Message::ToggleFilePicker);
-    let _ = app.update(Message::ToggleFolderCollapse("anime".to_string()));
-
-    {
-        let _view_before = app.view_file_picker();
-    }
-
-    if let Some(p) = app.players.first_mut() {
-        p.state.path = "/media/videos/clip1.mp4".to_string();
-    }
-    {
-        let _view_playing = app.view_file_picker();
-    }
-}
-
-#[test]
 fn test_query_zero_matches_shows_no_matches_view_and_clear_search() {
     let (mut app, _) = new_test_app();
     let temp_dir = TempTestDir::new("wazoo_test_no_match");
