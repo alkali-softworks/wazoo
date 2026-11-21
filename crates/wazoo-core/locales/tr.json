@@ -290,7 +290,10 @@
     "no_subtitles_found": "Altyazı Bulunamadı",
     "no_subtitles_desc": "Videoda gömülü altyazı veya harici .srt dosyası yok",
     "no_match": "\"{query}\" ile eşleşen diyalog yok",
-    "no_active_player": "Aktif Oynatıcı Yok"
+    "no_active_player": "Aktif Oynatıcı Yok",
+    "browse_subtitle": "Altyazı Yükle...",
+    "browse_dialog_title": "Altyazı Dosyası Seç",
+    "subtitle_files_filter": "Altyazı Dosyaları"
   },
   "bookmarks": {
     "title": "Yer İmleri",

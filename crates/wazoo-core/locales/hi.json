@@ -290,7 +290,10 @@
     "no_subtitles_found": "कोई उपशीर्षक नहीं मिला",
     "no_subtitles_desc": "वीडियो में कोई एम्बेडेड उपशीर्षक या बाहरी .srt फ़ाइल नहीं है",
     "no_match": "\"{query}\" से मेल खाने वाला कोई संवाद नहीं",
-    "no_active_player": "कोई सक्रिय प्लेयर नहीं"
+    "no_active_player": "कोई सक्रिय प्लेयर नहीं",
+    "browse_subtitle": "सबटाइटल लोड करें...",
+    "browse_dialog_title": "सबटाइटल फ़ाइल चुनें",
+    "subtitle_files_filter": "सबटाइटल फ़ाइलें"
   },
   "bookmarks": {
     "title": "बुकमार्क",

@@ -290,7 +290,10 @@
     "no_subtitles_found": "未找到字幕",
     "no_subtitles_desc": "视频没有内嵌字幕或外部 .srt 文件",
     "no_match": "没有与 \"{query}\" 匹配的对白",
-    "no_active_player": "无活动播放器"
+    "no_active_player": "无活动播放器",
+    "browse_subtitle": "加载字幕...",
+    "browse_dialog_title": "选择字幕文件",
+    "subtitle_files_filter": "字幕文件"
   },
   "bookmarks": {
     "title": "书签",

@@ -290,7 +290,10 @@
     "no_subtitles_found": "Inga undertexter hittades",
     "no_subtitles_desc": "Videon saknar inbäddade undertexter eller extern .srt-fil",
     "no_match": "Ingen dialog matchar \"{query}\"",
-    "no_active_player": "Ingen aktiv spelare"
+    "no_active_player": "Ingen aktiv spelare",
+    "browse_subtitle": "Ladda undertext...",
+    "browse_dialog_title": "Välj undertextfil",
+    "subtitle_files_filter": "Undertextfiler"
   },
   "bookmarks": {
     "title": "Bokmärken",

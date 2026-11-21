@@ -9,12 +9,14 @@
  */
 
 use crate::app::WazooApp;
+use crate::assets::SVG_FOLDER_OPEN;
 use crate::format;
 use crate::message::Message;
 use crate::theme;
+use crate::wrap::Wrap;
 use iced::{
     Alignment, Element, Length,
-    widget::{Space, button, column, container, row, scrollable, text, text_input},
+    widget::{Space, button, column, container, row, scrollable, svg, text, text_input},
 };
 
 impl WazooApp {
@@ -72,11 +74,36 @@ impl WazooApp {
         // 2. Video Title Subheading
         let video_subheading = text(video_title).size(12).color(pal.text_muted);
 
-        // 2b. Subtitle Track Selector (if more than 1 subtitle stream available)
+        // 2b. Subtitle Track Selector & External Subtitle Browser
+        let has_active_video = self
+            .focused_player()
+            .is_some_and(|p| !p.state.path.is_empty());
         let sub_tracks = self
             .focused_player()
             .map(|p| p.subtitle_tracks())
             .unwrap_or(&[]);
+        let make_browse_btn = || {
+            let browse_icon = svg(svg::Handle::from_memory(SVG_FOLDER_OPEN))
+                .width(Length::Fixed(13.0))
+                .height(Length::Fixed(13.0))
+                .style(move |_, _| svg::Style {
+                    color: Some(pal.primary),
+                });
+            button(
+                row![
+                    browse_icon,
+                    text(self.t("transcript.browse_subtitle"))
+                        .size(12)
+                        .color(pal.text),
+                ]
+                .spacing(6)
+                .align_y(Alignment::Center),
+            )
+            .style(theme::transcript_track_button_style(pal, false))
+            .on_press(Message::PickSubtitleFile)
+            .padding([5, 10])
+        };
+
         let subtitle_selector: Option<Element<'_, Message>> = if sub_tracks.len() > 1 {
             let current_track_idx = if self.drawers.transcript_track_index < sub_tracks.len() {
                 self.drawers.transcript_track_index
@@ -112,7 +139,16 @@ impl WazooApp {
                 .on_press(Message::ToggleTranscriptSubtitleMenu)
                 .padding([5, 10]);
 
-            let mut selector_col = column![track_btn].spacing(4);
+            let controls_wrap = Wrap::with_elements(vec![
+                track_btn.into(),
+                make_browse_btn().into(),
+            ])
+            .spacing(8)
+            .vertical_spacing(6)
+            .align_items(Alignment::Center)
+            .width(Length::Fill);
+
+            let mut selector_col = column![controls_wrap].spacing(4);
 
             if self.drawers.show_transcript_menu {
                 let menu_items: Vec<Element<'_, Message>> = sub_tracks
@@ -158,6 +194,8 @@ impl WazooApp {
             }
 
             Some(selector_col.into())
+        } else if has_active_video {
+            Some(make_browse_btn().into())
         } else {
             None
         };
@@ -191,28 +229,34 @@ impl WazooApp {
             .center_y(Length::Fill)
             .into()
         } else if self.drawers.transcript_cues.is_empty() {
-            container(
-                column![
-                    text(self.t("transcript.no_subtitles_found"))
-                        .size(15)
-                        .font(iced::Font {
-                            weight: iced::font::Weight::Bold,
-                            ..Default::default()
-                        })
-                        .color(pal.text),
-                    Space::new().height(Length::Fixed(4.0)),
-                    text(self.t("transcript.no_subtitles_desc"))
-                        .size(12)
-                        .color(pal.text_muted),
-                ]
-                .spacing(4)
-                .align_x(Alignment::Center),
-            )
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .center_x(Length::Fill)
-            .center_y(Length::Fill)
-            .into()
+            let mut empty_col = column![
+                text(self.t("transcript.no_subtitles_found"))
+                    .size(15)
+                    .font(iced::Font {
+                        weight: iced::font::Weight::Bold,
+                        ..Default::default()
+                    })
+                    .color(pal.text),
+                Space::new().height(Length::Fixed(4.0)),
+                text(self.t("transcript.no_subtitles_desc"))
+                    .size(12)
+                    .color(pal.text_muted),
+            ]
+            .spacing(4)
+            .align_x(Alignment::Center);
+
+            if has_active_video {
+                empty_col = empty_col
+                    .push(Space::new().height(Length::Fixed(8.0)))
+                    .push(make_browse_btn());
+            }
+
+            container(empty_col)
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center_x(Length::Fill)
+                .center_y(Length::Fill)
+                .into()
         } else {
             let active_cue_idx = self
                 .drawers

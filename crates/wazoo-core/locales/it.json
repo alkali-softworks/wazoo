@@ -290,7 +290,10 @@
     "no_subtitles_found": "Nessun sottotitolo trovato",
     "no_subtitles_desc": "Il video non ha sottotitoli incorporati o file .srt esterno",
     "no_match": "Nessun dialogo corrispondente a \"{query}\"",
-    "no_active_player": "Nessun lettore attivo"
+    "no_active_player": "Nessun lettore attivo",
+    "browse_subtitle": "Carica sottotitoli...",
+    "browse_dialog_title": "Seleziona file sottotitoli",
+    "subtitle_files_filter": "File sottotitoli"
   },
   "bookmarks": {
     "title": "Segnalibri",

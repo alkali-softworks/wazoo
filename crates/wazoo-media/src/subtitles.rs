@@ -349,6 +349,20 @@ pub async fn run_ffmpeg_subtitle_extract_async(
     None
 }
 
+/// Asynchronously reads and parses subtitle cues from an external subtitle file.
+pub async fn load_subtitles_from_file(path: String) -> Vec<SubtitleCue> {
+    if let Ok(meta) = tokio::fs::metadata(&path).await {
+        if meta.is_file() && meta.len() <= MAX_SUBTITLE_FILE_BYTES {
+            if let Ok(content) = tokio::fs::read_to_string(&path).await {
+                return tokio::task::spawn_blocking(move || parse_subtitles(&content))
+                    .await
+                    .unwrap_or_default();
+            }
+        }
+    }
+    Vec::new()
+}
+
 /// Asynchronously loads subtitles for a given track, prioritizing external sidecar files if specified,
 /// followed by container stream extraction (`ff_index`), then stream index fallback (`sub_index`).
 pub async fn load_subtitles_for_track_details(
@@ -359,17 +373,9 @@ pub async fn load_subtitles_for_track_details(
 ) -> Vec<SubtitleCue> {
     // 1. If an external subtitle file is explicitly specified, load and parse it asynchronously off-thread
     if let Some(ext_file) = external_filename {
-        if let Ok(meta) = tokio::fs::metadata(&ext_file).await {
-            if meta.is_file() && meta.len() <= MAX_SUBTITLE_FILE_BYTES {
-                if let Ok(content) = tokio::fs::read_to_string(&ext_file).await {
-                    let cues = tokio::task::spawn_blocking(move || parse_subtitles(&content))
-                        .await
-                        .unwrap_or_default();
-                    if !cues.is_empty() {
-                        return cues;
-                    }
-                }
-            }
+        let cues = load_subtitles_from_file(ext_file).await;
+        if !cues.is_empty() {
+            return cues;
         }
     }
 

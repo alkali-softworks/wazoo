@@ -290,7 +290,10 @@
     "no_subtitles_found": "لم يتم العثور على ترجمة",
     "no_subtitles_desc": "لا يحتوي الفيديو على ترجمة مدمجة أو ملف .srt خارجي",
     "no_match": "لا يوجد حوار يطابق \"{query}\"",
-    "no_active_player": "لا يوجد مشغل نشط"
+    "no_active_player": "لا يوجد مشغل نشط",
+    "browse_subtitle": "تحميل ترجمة...",
+    "browse_dialog_title": "اختر ملف الترجمة",
+    "subtitle_files_filter": "ملفات الترجمة"
   },
   "bookmarks": {
     "title": "الإشارات المرجعية",

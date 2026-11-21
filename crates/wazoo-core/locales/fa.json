@@ -290,7 +290,10 @@
     "no_subtitles_found": "هیچ زیرنویسی یافت نشد",
     "no_subtitles_desc": "ویدیو دارای زیرنویس داخلی یا پرونده .srt نیست",
     "no_match": "هیچ گفتگویی مطابق با \"{query}\" یافت نشد",
-    "no_active_player": "هیچ پخش‌کننده فعالی وجود ندارد"
+    "no_active_player": "هیچ پخش‌کننده فعالی وجود ندارد",
+    "browse_subtitle": "بارگذاری زیرنویس...",
+    "browse_dialog_title": "انتخاب فایل زیرنویس",
+    "subtitle_files_filter": "فایل‌های زیرنویس"
   },
   "bookmarks": {
     "title": "نشانک‌ها",

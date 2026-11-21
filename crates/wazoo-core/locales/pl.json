@@ -290,7 +290,10 @@
     "no_subtitles_found": "Nie znaleziono napisów",
     "no_subtitles_desc": "Film nie zawiera wbudowanych napisów ani zewnętrznego pliku .srt",
     "no_match": "Brak dialogów pasujących do \"{query}\"",
-    "no_active_player": "Brak aktywnego odtwarzacza"
+    "no_active_player": "Brak aktywnego odtwarzacza",
+    "browse_subtitle": "Wczytaj napisy...",
+    "browse_dialog_title": "Wybierz plik napisów",
+    "subtitle_files_filter": "Pliki napisów"
   },
   "bookmarks": {
     "title": "Zakładki",

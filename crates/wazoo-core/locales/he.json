@@ -290,7 +290,10 @@
     "no_subtitles_found": "לא נמצאו כתוביות",
     "no_subtitles_desc": "לווידאו אין כתוביות מוטמעות או קובץ .srt חיצוני",
     "no_match": "אין דיאלוג התואם ל-\"{query}\"",
-    "no_active_player": "אין נגן פעיל"
+    "no_active_player": "אין נגן פעיל",
+    "browse_subtitle": "טען כתוביות...",
+    "browse_dialog_title": "בחר קובץ כתוביות",
+    "subtitle_files_filter": "קבצי כתוביות"
   },
   "bookmarks": {
     "title": "סימניות",

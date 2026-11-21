@@ -508,3 +508,84 @@ fn test_file_picker_folder_collapse_and_expand_render() {
         let _expanded_view = app.view_file_picker();
     }
 }
+
+#[test]
+fn test_transcript_external_subtitle_selection_and_view_render() {
+    let (mut app, _) = new_test_app();
+    let temp = TempTestDir::new("transcript_sub_test");
+    let video_path = "/media/Shows/Ep1.mp4".to_string();
+    let sub_path = temp.path().join("external.srt");
+    std::fs::write(
+        &sub_path,
+        "1\n00:00:01,000 --> 00:00:03,000\nHello from external subtitle!\n",
+    )
+    .unwrap();
+    let sub_str = sub_path.to_string_lossy().to_string();
+
+    app.available_videos = vec![VideoRecord::new(1, "Ep1", &video_path)];
+    let _ = app.update(Message::SetPlayerCount(1));
+    assert_eq!(app.players.len(), 1);
+    app.subtitles_enabled = false;
+    app.drawers.show_transcript = true;
+
+    // Empty state renders cleanly with browse button
+    {
+        let _empty_transcript = app.view();
+    }
+
+    // Stale selection for a different video path is ignored
+    let _ = app.update(Message::SubtitleFileSelected(
+        "/media/Shows/Other.mp4".to_string(),
+        Some(sub_str.clone()),
+    ));
+    assert!(app.players[0].subtitle_tracks().is_empty());
+
+    // Valid selection attaches the subtitle track, enables subtitles, and primes transcript loading
+    let _ = app.update(Message::SubtitleFileSelected(
+        video_path.clone(),
+        Some(sub_str.clone()),
+    ));
+    assert!(app.subtitles_enabled);
+    assert_eq!(app.drawers.transcript_track_index, 0);
+    assert_eq!(
+        app.drawers.transcript_video_path.as_deref(),
+        Some(video_path.as_str())
+    );
+    assert!(app.drawers.transcript_loading);
+    assert_eq!(app.players[0].subtitle_tracks().len(), 1);
+    assert_eq!(
+        app.players[0].subtitle_tracks()[0]
+            .external_filename
+            .as_deref(),
+        Some(sub_str.as_str())
+    );
+
+    // Add a second subtitle file so the multi-track dropdown + browse wrap both render
+    let sub_path2 = temp.path().join("external2.vtt");
+    std::fs::write(
+        &sub_path2,
+        "WEBVTT\n\n00:00:04.000 --> 00:00:06.000\nSecond track.\n",
+    )
+    .unwrap();
+    let _ = app.update(Message::SubtitleFileSelected(
+        video_path.clone(),
+        Some(sub_path2.to_string_lossy().to_string()),
+    ));
+    assert_eq!(app.drawers.transcript_track_index, 1);
+    assert_eq!(app.players[0].subtitle_tracks().len(), 2);
+
+    let _ = app.update(Message::TranscriptLoaded(
+        video_path,
+        1,
+        vec![wazoo_media::SubtitleCue {
+            start_secs: 4.0,
+            end_secs: 6.0,
+            text: "Second track.".to_string(),
+        }],
+    ));
+    assert!(!app.drawers.transcript_loading);
+    assert_eq!(app.drawers.transcript_cues.len(), 1);
+    {
+        let _populated_transcript = app.view();
+    }
+}

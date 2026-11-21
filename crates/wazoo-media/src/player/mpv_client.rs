@@ -472,14 +472,29 @@ impl MpvClient {
         }
     }
 
+    fn build_c_args(args: &[&str]) -> Result<Vec<CString>, String> {
+        args.iter()
+            .map(|a| CString::new(*a).map_err(|e| e.to_string()))
+            .collect()
+    }
+
+    pub(super) fn command(&self, args: &[&str]) -> Result<i32, String> {
+        if self.mpv.is_null() {
+            return Err("mpv handle is null".to_string());
+        }
+        let c_args = Self::build_c_args(args)?;
+        let mut ptrs: Vec<*const std::ffi::c_char> =
+            c_args.iter().map(|c| c.as_ptr()).collect();
+        ptrs.push(std::ptr::null());
+        let res = unsafe { mpv_ffi::mpv_command(self.mpv, ptrs.as_mut_ptr()) };
+        Ok(res)
+    }
+
     pub(super) fn command_async(&self, args: &[&str]) -> Result<i32, String> {
         if self.mpv.is_null() {
             return Err("mpv handle is null".to_string());
         }
-        let c_args: Vec<CString> = args
-            .iter()
-            .map(|a| CString::new(*a).map_err(|e| e.to_string()))
-            .collect::<Result<_, _>>()?;
+        let c_args = Self::build_c_args(args)?;
         let mut ptrs: Vec<*const std::ffi::c_char> =
             c_args.iter().map(|c| c.as_ptr()).collect();
         ptrs.push(std::ptr::null());

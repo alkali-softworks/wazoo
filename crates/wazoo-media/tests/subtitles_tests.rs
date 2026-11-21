@@ -160,3 +160,61 @@ fn test_max_cues_limit() {
         "Cue parsing should be bounded by MAX_SUBTITLE_CUES"
     );
 }
+
+#[tokio::test]
+async fn test_load_subtitles_from_file_parses_external_srt() {
+    let dir = std::env::temp_dir().join(format!("wazoo_sub_direct_{}", rand::random::<u32>()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let srt_path = dir.join("custom.srt");
+    std::fs::write(
+        &srt_path,
+        "1\n00:00:02,500 --> 00:00:05,000\nDirect subtitle file.\n",
+    )
+    .unwrap();
+
+    let cues = wazoo_media::load_subtitles_from_file(srt_path.to_string_lossy().to_string()).await;
+    assert_eq!(cues.len(), 1);
+    assert_eq!(cues[0].start_secs, 2.5);
+    assert_eq!(cues[0].end_secs, 5.0);
+    assert_eq!(cues[0].text, "Direct subtitle file.");
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn test_add_external_subtitle_headless_tracks_and_deduplicates() {
+    let mut handle = wazoo_media::VideoHandle::new_placeholder(
+        0,
+        "/tmp/video.mp4",
+        "test",
+        wazoo_media::BufferConfig::default(),
+        wazoo_media::StartTime::Beginning,
+    );
+    let idx1 = handle
+        .add_external_subtitle("/tmp/example.en.srt")
+        .expect("should add first external subtitle");
+    assert_eq!(idx1, 0);
+    assert_eq!(handle.subtitle_tracks().len(), 1);
+    assert!(handle.subtitle_tracks()[0].is_selected);
+    assert_eq!(
+        handle.subtitle_tracks()[0].external_filename.as_deref(),
+        Some("/tmp/example.en.srt")
+    );
+
+    let idx2 = handle
+        .add_external_subtitle("/tmp/example.ja.ass")
+        .expect("should add second external subtitle");
+    assert_eq!(idx2, 1);
+    assert_eq!(handle.subtitle_tracks().len(), 2);
+    assert!(!handle.subtitle_tracks()[0].is_selected);
+    assert!(handle.subtitle_tracks()[1].is_selected);
+
+    // Re-adding an already registered external subtitle selects it without duplicating
+    let idx_repeat = handle
+        .add_external_subtitle("/tmp/example.en.srt")
+        .expect("should re-select existing external subtitle");
+    assert_eq!(idx_repeat, 0);
+    assert_eq!(handle.subtitle_tracks().len(), 2);
+    assert!(handle.subtitle_tracks()[0].is_selected);
+    assert!(!handle.subtitle_tracks()[1].is_selected);
+}

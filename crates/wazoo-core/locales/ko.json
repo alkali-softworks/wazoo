@@ -290,7 +290,10 @@
     "no_subtitles_found": "자막을 찾을 수 없음",
     "no_subtitles_desc": "비디오에 내장 자막이나 외부 .srt 파일이 없습니다",
     "no_match": "\"{query}\"와 일치하는 대화 없음",
-    "no_active_player": "활성 플레이어 없음"
+    "no_active_player": "활성 플레이어 없음",
+    "browse_subtitle": "자막 불러오기...",
+    "browse_dialog_title": "자막 파일 선택",
+    "subtitle_files_filter": "자막 파일"
   },
   "bookmarks": {
     "title": "북마크",

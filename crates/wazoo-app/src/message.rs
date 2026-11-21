@@ -224,6 +224,8 @@ pub enum Message {
     ToggleTranscriptSubtitleMenu,
     CloseTranscriptSubtitleMenu,
     SelectTranscriptSubtitleTrack(usize, i64),
+    PickSubtitleFile,
+    SubtitleFileSelected(String, Option<String>),
     EscapePressed,
 
     // Bookmarks

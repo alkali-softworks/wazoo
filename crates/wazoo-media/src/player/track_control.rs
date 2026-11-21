@@ -87,6 +87,96 @@ impl VideoHandle {
         }
     }
 
+    /// Loads an external subtitle file (`.srt`, `.vtt`, `.ass`, `.ssa`) into the active player
+    /// and selects it as the active subtitle track, returning its index in `subtitle_tracks()`.
+    pub fn add_external_subtitle(&mut self, sub_path: &str) -> Result<usize, String> {
+        let trimmed = sub_path.trim();
+        if trimmed.is_empty() {
+            return Err("Subtitle path is empty".to_string());
+        }
+
+        if let Some(existing_idx) = self
+            .state
+            .subtitle_tracks
+            .iter()
+            .position(|t| t.external_filename.as_deref() == Some(trimmed))
+        {
+            let track_id = self.state.subtitle_tracks[existing_idx].id;
+            if self.mpv.is_some() {
+                self.set_subtitle_track(track_id);
+            } else {
+                for (i, t) in self.state.subtitle_tracks.iter_mut().enumerate() {
+                    t.is_selected = i == existing_idx;
+                }
+                self.state.current_subtitle_track_id = Some(track_id);
+            }
+            return Ok(existing_idx);
+        }
+
+        if let Some(ref mpv) = self.mpv {
+            let res = mpv.command(&["sub-add", trimmed, "select"])?;
+            if res < 0 {
+                return Err(format!(
+                    "Failed to load subtitle file: {trimmed} (mpv error {res})"
+                ));
+            }
+            let (audio_tracks, mut sub_tracks) = self.collect_track_list();
+            let idx = sub_tracks
+                .iter()
+                .position(|t| t.external_filename.as_deref() == Some(trimmed))
+                .or_else(|| sub_tracks.iter().position(|t| t.is_selected))
+                .or_else(|| sub_tracks.len().checked_sub(1))
+                .ok_or_else(|| format!("Subtitle track did not register in mpv: {trimmed}"))?;
+            let selected_id = sub_tracks[idx].id;
+            for t in &mut sub_tracks {
+                t.is_selected = t.id == selected_id;
+            }
+            self.state.audio_tracks = audio_tracks;
+            self.state.subtitle_tracks = sub_tracks;
+            self.state.current_subtitle_track_id = Some(selected_id);
+            self.tracks_loaded = true;
+            self.set_subtitles_visible(true);
+            if let Some(ref mpv) = self.mpv {
+                mpv.command_string("no-osd seek 0 relative+exact");
+            }
+            Ok(idx)
+        } else {
+            let new_id = self
+                .state
+                .subtitle_tracks
+                .iter()
+                .map(|t| t.id)
+                .max()
+                .unwrap_or(0)
+                + 1;
+            let path_obj = std::path::Path::new(trimmed);
+            let title = path_obj
+                .file_name()
+                .and_then(|n| n.to_str())
+                .map(|s| s.to_string());
+            let codec = path_obj
+                .extension()
+                .and_then(|e| e.to_str())
+                .map(|s| s.to_ascii_lowercase());
+            for t in &mut self.state.subtitle_tracks {
+                t.is_selected = false;
+            }
+            self.state.subtitle_tracks.push(SubtitleTrack {
+                id: new_id,
+                title,
+                lang: None,
+                codec,
+                is_selected: true,
+                is_default: false,
+                is_forced: false,
+                external_filename: Some(trimmed.to_string()),
+                ff_index: None,
+            });
+            self.state.current_subtitle_track_id = Some(new_id);
+            Ok(self.state.subtitle_tracks.len() - 1)
+        }
+    }
+
     fn collect_track_list(&self) -> (Vec<AudioTrack>, Vec<SubtitleTrack>) {
         let count = self.get_property_i64("track-list/count").unwrap_or(0);
         let mut audio_tracks = Vec::new();

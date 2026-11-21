@@ -289,6 +289,8 @@ impl WazooApp {
             | Message::ToggleTranscriptSubtitleMenu
             | Message::CloseTranscriptSubtitleMenu
             | Message::SelectTranscriptSubtitleTrack(_, _)
+            | Message::PickSubtitleFile
+            | Message::SubtitleFileSelected(_, _)
             | Message::ToggleFolderCollapse(_)
             | Message::FilePickerSearchChanged(_)
             | Message::ClearFilePickerSearch

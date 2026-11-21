@@ -290,7 +290,10 @@
     "no_subtitles_found": "Keine Untertitel gefunden",
     "no_subtitles_desc": "Video hat keine integrierten Untertitel oder externe .srt-Datei",
     "no_match": "Kein Dialog passend zu \"{query}\"",
-    "no_active_player": "Kein aktiver Player"
+    "no_active_player": "Kein aktiver Player",
+    "browse_subtitle": "Untertitel laden...",
+    "browse_dialog_title": "Untertiteldatei auswählen",
+    "subtitle_files_filter": "Untertiteldateien"
   },
   "bookmarks": {
     "title": "Lesezeichen",

@@ -290,7 +290,10 @@
     "no_subtitles_found": "Không tìm thấy phụ đề",
     "no_subtitles_desc": "Video không có phụ đề nhúng hoặc tệp .srt bên ngoài",
     "no_match": "Không có lời thoại nào khớp với \"{query}\"",
-    "no_active_player": "Không có trình phát nào đang hoạt động"
+    "no_active_player": "Không có trình phát nào đang hoạt động",
+    "browse_subtitle": "Tải phụ đề...",
+    "browse_dialog_title": "Chọn tệp phụ đề",
+    "subtitle_files_filter": "Tệp phụ đề"
   },
   "bookmarks": {
     "title": "Dấu trang",

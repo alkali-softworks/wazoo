@@ -290,7 +290,10 @@
     "no_subtitles_found": "Субтитрів не знайдено",
     "no_subtitles_desc": "Відео не має вбудованих субтитрів або зовнішнього файлу .srt",
     "no_match": "Немає діалогів, що відповідають \"{query}\"",
-    "no_active_player": "Немає активного плеєра"
+    "no_active_player": "Немає активного плеєра",
+    "browse_subtitle": "Завантажити субтитри...",
+    "browse_dialog_title": "Виберіть файл субтитрів",
+    "subtitle_files_filter": "Файли субтитрів"
   },
   "bookmarks": {
     "title": "Закладки",

@@ -290,7 +290,10 @@
     "no_subtitles_found": "No se encontraron subtítulos",
     "no_subtitles_desc": "El video no tiene subtítulos integrados ni archivo .srt externo",
     "no_match": "Ningún diálogo coincide con \"{query}\"",
-    "no_active_player": "Sin reproductor activo"
+    "no_active_player": "Sin reproductor activo",
+    "browse_subtitle": "Cargar subtítulos...",
+    "browse_dialog_title": "Seleccionar archivo de subtítulos",
+    "subtitle_files_filter": "Archivos de subtítulos"
   },
   "bookmarks": {
     "title": "Marcadores",

@@ -290,7 +290,10 @@
     "no_subtitles_found": "কোনো সাবটাইটেল পাওয়া যায়নি",
     "no_subtitles_desc": "ভিডিওতে কোনো এমবেড করা সাবটাইটেল বা বাহ্যিক .srt ফাইল নেই",
     "no_match": "\"{query}\"-এর সাথে মিল থাকা কোনো সংলাপ নেই",
-    "no_active_player": "কোনো সক্রিয় প্লেয়ার নেই"
+    "no_active_player": "কোনো সক্রিয় প্লেয়ার নেই",
+    "browse_subtitle": "সাবটাইটেল লোড করুন...",
+    "browse_dialog_title": "সাবটাইটেল ফাইল নির্বাচন করুন",
+    "subtitle_files_filter": "সাবটাইটেল ফাইল"
   },
   "bookmarks": {
     "title": "বুকমার্ক",

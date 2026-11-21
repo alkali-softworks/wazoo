@@ -290,7 +290,10 @@
     "no_subtitles_found": "字幕が見つかりません",
     "no_subtitles_desc": "動画に埋め込み字幕または外部 .srt ファイルがありません",
     "no_match": "「{query}」に一致する対話はありません",
-    "no_active_player": "アクティブなプレイヤーがありません"
+    "no_active_player": "アクティブなプレイヤーがありません",
+    "browse_subtitle": "字幕を読み込む...",
+    "browse_dialog_title": "字幕ファイルを選択",
+    "subtitle_files_filter": "字幕ファイル"
   },
   "bookmarks": {
     "title": "ブックマーク",

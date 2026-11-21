@@ -290,7 +290,10 @@
     "no_subtitles_found": "Aucun sous-titre trouvé",
     "no_subtitles_desc": "La vidéo n'a pas de sous-titre intégré ni de fichier .srt externe",
     "no_match": "Aucun dialogue correspondant à \"{query}\"",
-    "no_active_player": "Aucun lecteur actif"
+    "no_active_player": "Aucun lecteur actif",
+    "browse_subtitle": "Charger un sous-titre...",
+    "browse_dialog_title": "Sélectionner un fichier de sous-titres",
+    "subtitle_files_filter": "Fichiers de sous-titres"
   },
   "bookmarks": {
     "title": "Signets",

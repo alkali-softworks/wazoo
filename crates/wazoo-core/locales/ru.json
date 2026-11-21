@@ -290,7 +290,10 @@
     "no_subtitles_found": "Субтитры не найдены",
     "no_subtitles_desc": "У видео нет встроенных субтитров или внешнего файла .srt",
     "no_match": "Нет диалогов, совпадающих с \"{query}\"",
-    "no_active_player": "Нет активного плеера"
+    "no_active_player": "Нет активного плеера",
+    "browse_subtitle": "Загрузить субтитры...",
+    "browse_dialog_title": "Выберите файл субтитров",
+    "subtitle_files_filter": "Файлы субтитров"
   },
   "bookmarks": {
     "title": "Закладки",

@@ -185,6 +185,69 @@ impl WazooApp {
                 }
                 Task::none()
             }
+            Message::PickSubtitleFile => {
+                let Some(player) = self.focused_player() else {
+                    return Task::none();
+                };
+                let video_path = player.state.path.clone();
+                if video_path.is_empty() {
+                    return Task::none();
+                }
+                let starting_dir = std::path::Path::new(&video_path)
+                    .parent()
+                    .filter(|p| p.is_dir())
+                    .map(|p| p.to_path_buf());
+                let dialog_title = self.t("transcript.browse_dialog_title");
+                let filter_name = self.t("transcript.subtitle_files_filter");
+                Task::perform(
+                    async move {
+                        let mut dialog = rfd::AsyncFileDialog::new()
+                            .set_title(&dialog_title)
+                            .add_filter(&filter_name, &["srt", "vtt", "ass", "ssa"]);
+                        if let Some(ref dir) = starting_dir {
+                            dialog = dialog.set_directory(dir);
+                        }
+                        dialog
+                            .pick_file()
+                            .await
+                            .map(|h| h.path().to_string_lossy().to_string())
+                    },
+                    move |selected| Message::SubtitleFileSelected(video_path, selected),
+                )
+            }
+            Message::SubtitleFileSelected(target_video_path, Some(sub_path)) => {
+                let add_result = {
+                    let Some(player) = self.focused_player_mut() else {
+                        return Task::none();
+                    };
+                    if player.state.path != target_video_path {
+                        return Task::none();
+                    }
+                    player.add_external_subtitle(&sub_path)
+                };
+                match add_result {
+                    Ok(track_idx) => {
+                        self.subtitles_enabled = true;
+                        self.drawers.show_transcript_menu = false;
+                        self.drawers.transcript_track_index = track_idx;
+                        self.drawers.transcript_video_path = Some(target_video_path.clone());
+                        self.drawers.transcript_loading = true;
+                        self.drawers.transcript_cues.clear();
+                        let path_clone = target_video_path.clone();
+                        Task::perform(
+                            wazoo_media::load_subtitles_from_file(sub_path),
+                            move |cues| Message::TranscriptLoaded(path_clone, track_idx, cues),
+                        )
+                    }
+                    Err(err) => {
+                        log::warn!("Failed to load external subtitle: {err}");
+                        self.overlay.toast_message = Some(err);
+                        self.overlay.toast_time_remaining = LONG_TOAST_SECS;
+                        Task::none()
+                    }
+                }
+            }
+            Message::SubtitleFileSelected(_, None) => Task::none(),
             Message::ToggleFolderCollapse(folder) => {
                 if self.drawers.expanded_folders.contains(&folder) {
                     self.drawers.expanded_folders.remove(&folder);

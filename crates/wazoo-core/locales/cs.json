@@ -290,7 +290,10 @@
     "no_subtitles_found": "Nebyly nalezeny žádné titulky",
     "no_subtitles_desc": "Video neobsahuje vložené titulky ani externí soubor .srt",
     "no_match": "Žádné dialogy neodpovídají dotazu \"{query}\"",
-    "no_active_player": "Žádný aktivní přehrávač"
+    "no_active_player": "Žádný aktivní přehrávač",
+    "browse_subtitle": "Načíst titulky...",
+    "browse_dialog_title": "Vyberte soubor titulků",
+    "subtitle_files_filter": "Soubory titulků"
   },
   "bookmarks": {
     "title": "Záložky",
