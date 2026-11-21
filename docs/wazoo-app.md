@@ -87,7 +87,11 @@ Incoming [`Message`] events are dispatched through domain-specific reducers in [
 | :--- | :--- |
 | [**`mod.rs`**] | Primary match dispatcher, `Message::Tick`, `Message::WatchdogTick`, and async `Message::PlayerHandleReady` handle attachment & retry handling. |
 | [**`window.rs`**] | Window focus, resize, move, Alt-drag (`3x3` zone detection), dropdown menu, 4-stage pin/opacity/click-through cycling, PiP corner cycling (`Shift+P` / `CyclePipCorner` + `ApplyPipMonitorSize`), window aspect-ratio fitting (`FitWindow`), titlebar animations, and Fullscreen Mode (`F11`). |
-| [**`playback.rs`**] | Multi-tile playback commands, volume, mute, seek, A-B loop, speed, layout cycling, audio tracks, and scroll mode toggling. |
+| [**`playback/mod.rs`**] | Playback reducer dispatcher (`update_playback`), plus shared `focus_player_by_id` and `show_toast_for` helpers. |
+| [**`playback/transport.rs`**] | Play/pause, seeking, frame-stepping, A-B loop marks (`MarkIn`/`MarkOut`), title overlay, subtitle toggle, and clipboard info copy (`CopyPlayerInfo`). |
+| [**`playback/audio.rs`**] | Per-player volume, per-player and global mute, and audio track menu/selection. |
+| [**`playback/layout.rs`**] | Multi-tile player count, layout cycling (`Grid`/`Row`/`Column`), focus cycling, shuffle mode, scroll mode, and flip mode transitions. |
+| [**`playback/bookmarks.rs`**] | Bookmark creation/removal (`AddBookmarkFocused`, `RemoveBookmark*`) and `JumpToBookmark` navigation. |
 | [**`navigation.rs`**] | Next/prev video, bi-directional navigation history stacks, and video auto-advancement. |
 | [**`cube.rs`**] | 3D Video Cube screensaver (Mode 8), Desktop Overlay Mode (Mode 9), cube spawning/clearing, speed/size adjustments, and fullscreen coordination. |
 | [**`drawers.rs`**] | File picker navigation, folder collapsing, transcript cues, and play history clearing. |
@@ -158,7 +162,7 @@ Wazoo's user interface is fully custom, frameless, and themeable:
   - **Interactive Sheen & Focus Flashes**: Specular sheen lighting bands sweep across cube faces, and clicking a cube focuses its independent player with a brief focus border flash.
 - **GPU Post-Processing Shader Filters (`views/modals/settings/filters_tab.rs`, `crt_tab.rs`):**
   - Centralized master filter toggle (`7` key) applying all enabled GPU filters simultaneously across video quads:
-    - **CRT Scanline & Phosphor Glow**: Configurable via the dedicated `CRT` settings tab (`crt_tab.rs`) with presets (`Default`, `Subtle`, `Arcade`, `WarmPhosphor`, `Monochrome`, `Vhs`) and sliders for scanline darkness/density/speed, tube curvature, corner rounding, gamma, saturation, brightness, vignette, chromatic aberration, and RF noise.
+    - **CRT Scanline & Phosphor Glow**: Configurable via the dedicated `CRT` settings tab (`crt_tab.rs`) with presets (`Default`, `Subtle`, `Arcade`, `WarmPhosphor`, `Monochrome`, `Vhs`) and sliders for scanline darkness/density/speed, tube curvature, corner rounding, gamma, saturation, brightness, vignette, chromatic aberration, RF noise, and tracking glitch intensity/frequency.
     - **Wavy Fluid Displacement**: Procedural sinusoidal UV distortion creating liquid rippling effects.
     - **Volumetric Fog**: Multi-octave fractional Brownian motion (fBm) procedural noise generating ambient drifting smoke across the frame.
     - **Aspect-Ratio Border Protection**: Clamping against normalized content boundaries (`target_aspect`) prevents edge-smear artifacts on non-16:9 content.
@@ -184,7 +188,7 @@ Wazoo's user interface is fully custom, frameless, and themeable:
   - **Drawers**: **File Picker** (`views/file_picker.rs`), **Transcript** (`views/transcript.rs`), and **Play History** (`views/history.rs`).
   - **Modals**: **Search** (`views/modals/search_modal.rs`, with tag chips, multi-folder chips, and `Filename` / `Metadata` search toggle), **Bookmarks** (`bookmarks_modal.rs`), **Help** (`help_modal.rs`), **Context Menu** (`menu_modal.rs`), and 8-tab **Settings** (`General`, `Playback`, `Filters`, `Crt`, `Cube`, `Plex`, `Theme`, `System`).
 - **HUD Overlays (`views/player/hud.rs`):**
-  - Transport controls, A-B loop badges, toast notifications, and clickable title pills displaying cleaned Plex metadata (`format::clean_metadata_title`, `SxxExx`, year, content rating, genres, star rating) when synced metadata is present.
+  - Transport controls, A-B loop badges, one-click clipboard info copy (`CopyPlayerInfo` / `format_player_copy_info` for title, file path, and Plex metadata), toast notifications, and clickable title pills displaying cleaned Plex metadata (`format::clean_metadata_title`, `SxxExx`, year, content rating, genres, star rating) when synced metadata is present.
 
 ---
 

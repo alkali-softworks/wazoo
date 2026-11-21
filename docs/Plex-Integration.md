@@ -148,7 +148,7 @@ pub fn match_plex_path(
 
 ---
 
-## 5. Database Schema Extensions (`wazoo-core/src/db.rs`)
+## 5. Database Schema Extensions (`wazoo-core/src/db/`)
 
 ### New Table: `VideoMetadata`
 A dedicated table storing structured metadata associated 1-to-1 with `Video(id)`:
@@ -183,7 +183,7 @@ CREATE INDEX IF NOT EXISTS meta_series_idx ON VideoMetadata(series_title);
 ```
 
 ### Enhanced Multi-Field Search
-Wazoo's query parser in `db.rs` is upgraded with a `LEFT JOIN VideoMetadata m ON Video.id = m.video_id`:
+Wazoo's query parser in `wazoo-core/src/db/search.rs` is upgraded with a `LEFT JOIN VideoMetadata m ON Video.id = m.video_id`:
 * Positive query terms match against:
   - `Video.path` (existing)
   - `Video.name` (existing)
@@ -315,7 +315,7 @@ flowchart TD
 
 | Phase | Milestone | Deliverables | Status |
 | :--- | :--- | :--- | :--- |
-| **Phase 1** | **Data Models & Schema** | Add `MediaMetadata` & `PlexSettings` models. Create `VideoMetadata` table in `wazoo-core/src/db.rs`. Extend `search_videos` to query metadata fields. | **Completed** (`dcbc38e`) |
+| **Phase 1** | **Data Models & Schema** | Add `MediaMetadata` & `PlexSettings` models. Create `VideoMetadata` table in `wazoo-core/src/db.rs` (since refactored into `wazoo-core/src/db/`). Extend `search_videos` to query metadata fields. | **Completed** (`dcbc38e`) |
 | **Phase 2** | **Plex Client & Sync Engine** | Implement `wazoo-core/src/plex.rs` with `reqwest`. Add `/identity`, `/library/sections`, `/library/recentlyAdded`, `/library/onDeck`, and bulk `/all` ingestion. Implement path suffix matcher. | **Completed** (`dcbc38e`) |
 | **Phase 3** | **UI Settings & Sync Flow** | Add `SettingsTab::Plex` in `wazoo-app`. Implement unmasked token with Copy button, Test Connection, and live sync (19,932 items indexed in seconds). | **Completed** (`23189de`, `873f84e`) |
 | **Phase 4** | **Plex Explorer Modal (`E`)** | Implement 900px wide modal, `[All]` preset, simultaneous genre & decade filtering (e.g. 80s Horror), Science Fiction / Sci-Fi normalization, filter isolation to All tab, and one-click play/resume. | **Completed** (`927c15a`, `9b07b08`, `4ee4992`, `35b8005`, `dcf4277`) |

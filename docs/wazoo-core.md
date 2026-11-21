@@ -8,8 +8,13 @@ The [`wazoo-core`] crate serves as the foundation for the Wazoo ecosystem. It en
 
 ```
 crates/wazoo-core/src/
-├── config.rs    # Persistent configuration manager (atomic JSON writes & validation)
-├── db.rs        # SQLite database operations, schema migrations, Plex metadata, and search query builder
+├── config.rs         # Persistent configuration manager (atomic JSON writes & validation)
+├── db/               # SQLite database layer partitioned by concern
+│   ├── metadata.rs   # VideoMetadata upserts and lookups
+│   ├── mod.rs        # Database connection lifecycle & schema migrations
+│   ├── plex_explorer.rs # Plex Explorer SQLite queries and live path matching
+│   ├── search.rs     # Search query parser (clauses, anchors, wildcards) and SQL builder
+│   └── videos.rs     # Video inventory CRUD, Misc folder handling, and stale-path pruning
 ├── i18n.rs      # Internationalization engine (23 languages, interpolation, RTL support)
 ├── keybinds.rs  # Keyboard action mappings, custom keybindings, and help categories
 ├── lib.rs       # Crate root and public re-exports
@@ -19,9 +24,9 @@ crates/wazoo-core/src/
 
 ---
 
-## 🗄️ SQLite Database & Search Engine (`db.rs`)
+## 🗄️ SQLite Database & Search Engine (`db/`)
 
-The [`Database`] struct manages the local SQLite database (`wazoo.db`) using `rusqlite`.
+The [`Database`] struct in `db/mod.rs` manages the local SQLite database (`wazoo.db`) using `rusqlite`, with domain operations split across `videos.rs`, `metadata.rs`, `search.rs`, and `plex_explorer.rs`.
 
 ### Schema & Indexing
 
@@ -125,7 +130,7 @@ All incoming values are clamped to safe ranges on load:
 - `playback_speed`: `0.25..=4.0` (default: `1.0`)
 - `cube_speed`: `0.2..=4.0` (default: `1.0`)
 - `cube_size`: `0.4..=3.0` (default: `1.0`)
-- `crt`: `CrtSettings` with scanline darkness (`0.0..=1.0`), density (`50..=2000`), speed (`0.0..=20.0`), curvature (`0.0..=1.0`), gamma (`0.2..=3.0`), saturation (`0.0..=3.0`), brightness (`0.2..=3.0`), vignette (`0.0..=1.0`), chromatic aberration (`0.0..=1.0`), noise (`0.0..=1.0`), and corner rounding (`0.0..=1.0`).
+- `crt`: `CrtSettings` with scanline darkness (`0.0..=1.0`), density (`50..=2000`), speed (`0.0..=20.0`), curvature (`0.0..=1.0`), gamma (`0.2..=3.0`), saturation (`0.0..=3.0`), brightness (`0.2..=3.0`), vignette (`0.0..=1.0`), chromatic aberration (`0.0..=1.0`), noise (`0.0..=1.0`), corner rounding (`0.0..=1.0`), glitch intensity (`0.0..=1.0`), and glitch frequency (`0.0..=1.0`).
 - `theme`: `ThemeSettings` (`clamp_all()`) sanitizes hex colors (`accent_color`, `surface_color`, `titlebar_color`, `titlebar_badge_color`, `hud_color`, `text_color`) and clamps `hud_opacity` (`0.25..=1.0`), `corner_radius` (`0.0..=2.0`), and `focus_ring_width` (`0.0..=8.0`), with 7 built-in `ThemePreset` themes (`Default`, `Amber`, `Mocha`, `FrostLight`, `Monokai`, `Turtle`, `Strawberry`).
 - `keybinds`: Automatically reconciles with complete defaults via `reconcile_with_defaults()` if keys are missing from older config versions.
 

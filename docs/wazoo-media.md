@@ -12,11 +12,16 @@ crates/wazoo-media/src/
 ├── lib.rs            # Crate root and high-level re-exports
 ├── mpv_ffi.rs        # Low-level C FFI bindings & dynamic loader for libmpv
 ├── pipeline.rs       # Custom WGPU multi-shader pipeline (CRT, Wavy, Fog) and texture cache
-├── player/           # High-level video playback handles & track controls
-│   ├── handle.rs     # VideoHandle implementation (libmpv lifecycle, frames, playback)
-│   ├── mod.rs        # Player module root
-│   ├── state.rs      # PlayerState and BufferConfig structures
-│   └── tracks.rs     # Audio and Subtitle track management & preference matching
+├── player/               # High-level video playback handles, FFI ownership, & track controls
+│   ├── equalizer.rs      # FFmpeg `eq` filter string builder & VO equalizer sync
+│   ├── handle.rs         # VideoHandle struct, lifecycle, placeholder promotion, & property forwarding
+│   ├── mod.rs            # Player module root and public re-exports
+│   ├── mpv_client.rs     # MpvClient FFI ownership, MpvEvent/MpvProperty translation, & async teardown
+│   ├── playback.rs       # Event tick, transport, seek, A-B loop, & stuck-player watchdog
+│   ├── render.rs         # Software frame/pixel buffers, dimensions, & Iced GPU shader view helpers
+│   ├── state.rs          # PlayerState and BufferConfig structures
+│   ├── track_control.rs  # libmpv track discovery, language matching/i18n fallback, & track switching
+│   └── tracks.rs         # Audio/Subtitle track types, token-boundary alias matching, & formatting
 ├── scroll.rs         # Continuous scroll feed physics and volume falloff engine
 └── subtitles.rs      # Subtitle transcript parsing (.srt, .ass) & FFmpeg extraction
 ```
@@ -84,19 +89,19 @@ The [`cube.rs`] module provides real-time 3D projected video cube rendering insi
 
 ---
 
-## 🎮 Video Player Handle (`player/handle.rs`)
+## 🎮 Video Player Handle (`player/`)
 
-The [`VideoHandle`] struct provides the ergonomic, safe Rust API for managing an active video stream:
+The [`VideoHandle`] struct (defined in `player/handle.rs`, with methods organized across `mpv_client.rs`, `playback.rs`, `track_control.rs`, `render.rs`, and `equalizer.rs`) provides the ergonomic, safe Rust API for managing an active video stream:
 
 ### Key Features:
-- **Playback Controls**: `play()`, `pause()`, `toggle_pause()`, `seek_relative(seconds)`, `seek_percent(pct)`, `seek_random()`.
-- **A-B Looping**: `set_mark_in()`, `set_mark_out()`, `clear_mark_in()`, `clear_mark_out()`. When active, `libmpv` automatically loops between marked timestamps.
-- **Software Video Equalizer**: Constructs FFmpeg `eq` video filter strings dynamically for `gamma`, `contrast`, `brightness`, and `saturation`.
-- **Watchdog Protection**: `check_stuck()` detects when a player is supposed to be playing but has not advanced its playback timestamp for 16 seconds (`STUCK_THRESHOLD_SECONDS`), triggering an automatic recovery or advance.
-- **Non-Blocking Handle Creation & Placeholders**: `VideoHandle::new_placeholder()` constructs a lightweight handle with no `libmpv` instance or I/O so `wazoo-app` can keep the UI responsive while initializing real `VideoHandle` instances off-thread. Real `VideoHandle` creation avoids synchronous `mpv_get_property` calls during initialization, populating default dimensions (`1280x720`) and duration `0` immediately while resolving real dimensions and durations asynchronously via `update_frame()`.
-- **Pre-warmed Standby Player**: `VideoHandle::new_idle()` and `standby_player` keep an initialized handle pre-warmed with the upcoming media track so new players or 3D cubes attach in microseconds.
-- **Asynchronous Lifecycle & Background Teardown**: `VideoHandle::drop()` halts audio and video immediately via non-blocking `mpv_command_async("stop")` and offloads `mpv_render_context_free` and `mpv_terminate_destroy` to a dedicated `wazoo-mpv-teardown` background thread. This eliminates UI freezes while `libmpv` joins demuxer worker threads during rapid navigation.
-- **Token-Boundary Track Matching (`player/tracks.rs`)**: `matches_alias_token()` matches short 2-character language codes (`en`, `es`) at discrete word boundaries rather than arbitrary substrings, preventing false positives (e.g. matching `Clean Audio` or `French` as English). Untagged tracks preserve container stream IDs (`Track 1`, `Track 2`), and generic numbers are guarded from overwriting global language preferences.
+- **Playback Controls (`player/playback.rs`)**: `play()`, `pause()`, `toggle_pause()`, `seek_relative(seconds)`, `seek_percent(pct)`, `seek_random()`.
+- **A-B Looping (`player/playback.rs`)**: `set_mark_in()`, `set_mark_out()`, `clear_mark_in()`, `clear_mark_out()`. When active, `libmpv` automatically loops between marked timestamps.
+- **Software Video Equalizer (`player/equalizer.rs`)**: Constructs FFmpeg `eq` video filter strings dynamically (`build_eq_filter_string`) for `gamma`, `contrast`, `brightness`, and `saturation`, and syncs VO properties (`update_equalizer`).
+- **Watchdog Protection (`player/playback.rs`)**: `check_stuck()` detects when a player is supposed to be playing but has not advanced its playback timestamp for 16 seconds (`STUCK_THRESHOLD_SECONDS`), triggering an automatic recovery or advance.
+- **Non-Blocking Handle Creation & Placeholders (`player/handle.rs`)**: `VideoHandle::new_placeholder()` constructs a lightweight handle with no `libmpv` instance or I/O so `wazoo-app` can keep the UI responsive while initializing real `VideoHandle` instances off-thread. Real `VideoHandle` creation avoids synchronous `mpv_get_property` calls during initialization, populating default dimensions (`1280x720`) and duration `0` immediately while resolving real dimensions and durations asynchronously via `update_frame()`.
+- **Pre-warmed Standby Player (`player/handle.rs`)**: `VideoHandle::new_idle()` and `standby_player` keep an initialized handle pre-warmed with the upcoming media track so new players or 3D cubes attach in microseconds.
+- **Asynchronous Lifecycle & Background Teardown (`player/mpv_client.rs`)**: `VideoHandle::drop()` marks `alive = false` and drops its `MpvClient`, which halts audio and video immediately via non-blocking `mpv_command_async("stop")` and offloads `mpv_render_context_free` and `mpv_terminate_destroy` to a dedicated `wazoo-mpv-teardown` background thread. This eliminates UI freezes while `libmpv` joins demuxer worker threads during rapid navigation.
+- **Token-Boundary Track Matching (`player/tracks.rs`, `player/track_control.rs`)**: `matches_alias_token()` matches short 2-character language codes (`en`, `es`) at discrete word boundaries rather than arbitrary substrings, preventing false positives (e.g. matching `Clean Audio` or `French` as English). Untagged tracks preserve container stream IDs (`Track 1`, `Track 2`), and generic numbers are guarded from overwriting global language preferences.
 
 ---
 
