@@ -339,7 +339,7 @@ fn render_category_card(
         text(cat.title.clone())
             .size(12)
             .font(theme::FONT_BOLD)
-            .color(pal.primary),
+            .color(theme::readable_accent_on(pal, pal.card_bg)),
     ]
     .spacing(6)
     .align_y(Alignment::Center);

@@ -228,7 +228,9 @@ impl WazooApp {
                     row![
                         text(label).size(13).color(pal.hud_text),
                         Space::new().width(Length::Fill),
-                        text(status_text).size(13).color(pal.primary),
+                        text(status_text)
+                            .size(13)
+                            .color(theme::readable_hud_accent_on(pal, pal.hud_bg)),
                     ]
                     .padding([4, 24])
                     .align_y(Alignment::Center),

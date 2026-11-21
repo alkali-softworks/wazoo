@@ -158,17 +158,21 @@ impl WazooApp {
                         let is_selected = i == current_track_idx;
                         let label = wazoo_media::format_subtitle_track_label(t, i);
                         let track_id = t.id;
+                        let selected_fg = theme::readable_hud_accent_on(
+                            pal,
+                            theme::mix_color(pal.hud_bg, pal.primary, 0.20),
+                        );
                         let item_row = row![
                             text(if is_selected { "✓" } else { "" })
                                 .size(13)
                                 .color(if is_selected {
-                                    pal.primary
+                                    selected_fg
                                 } else {
                                     iced::Color::TRANSPARENT
                                 })
                                 .width(Length::Fixed(14.0)),
                             text(label).size(12).color(if is_selected {
-                                pal.primary
+                                selected_fg
                             } else {
                                 pal.hud_text
                             }),
@@ -215,7 +219,7 @@ impl WazooApp {
                 column![
                     text(self.t("transcript.extracting"))
                         .size(14)
-                        .color(pal.primary),
+                        .color(theme::readable_accent_on(pal, pal.drawer_bg)),
                     text(self.t("transcript.loading_subtitles"))
                         .size(12)
                         .color(pal.text_muted),

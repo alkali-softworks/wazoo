@@ -80,20 +80,22 @@ impl WazooApp {
                 let time_str = format::format_time_str(b.position_secs);
                 let bookmark_clone = b.clone();
 
+                let time_bg = theme::mix_color(pal.card_bg, pal.primary, 0.15);
                 let mut meta_row = row![
-                    container(text(time_str).size(11).color(pal.primary))
-                        .padding([2, 6])
-                        .style(move |_theme: &Theme| container::Style {
-                            background: Some(iced::Background::Color(theme::with_alpha(
-                                pal.primary,
-                                0.15,
-                            ))),
-                            border: iced::Border {
-                                radius: pal.radius(4.0).into(),
-                                ..Default::default()
-                            },
+                    container(
+                        text(time_str)
+                            .size(11)
+                            .color(theme::readable_accent_on(pal, time_bg)),
+                    )
+                    .padding([2, 6])
+                    .style(move |_theme: &Theme| container::Style {
+                        background: Some(iced::Background::Color(time_bg)),
+                        border: iced::Border {
+                            radius: pal.radius(4.0).into(),
                             ..Default::default()
-                        }),
+                        },
+                        ..Default::default()
+                    }),
                 ]
                 .spacing(6)
                 .align_y(Alignment::Center);

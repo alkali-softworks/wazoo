@@ -462,7 +462,8 @@ pub fn settings_tab_button_style(
 ) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_theme: &Theme, status: button::Status| {
         let (bg, text_color, border_color) = if is_active {
-            (with_alpha(pal.primary, 0.16), pal.primary, pal.primary)
+            let bg = mix_color(pal.modal_bg, pal.primary, 0.16);
+            (bg, readable_accent_on(pal, bg), pal.primary)
         } else {
             match status {
                 button::Status::Hovered => (pal.btn_hover, pal.text, pal.border),
@@ -492,9 +493,9 @@ pub fn settings_toggle_card_style(
     move |_theme: &Theme, status: button::Status| {
         let bg = if is_active {
             match status {
-                button::Status::Hovered => with_alpha(pal.primary, 0.22),
-                button::Status::Pressed => with_alpha(pal.primary, 0.30),
-                _ => with_alpha(pal.primary, 0.12),
+                button::Status::Hovered => mix_color(pal.btn_bg, pal.primary, 0.22),
+                button::Status::Pressed => mix_color(pal.btn_bg, pal.primary, 0.30),
+                _ => mix_color(pal.btn_bg, pal.primary, 0.14),
             }
         } else {
             match status {
@@ -503,9 +504,14 @@ pub fn settings_toggle_card_style(
                 _ => pal.btn_bg,
             }
         };
+        let text_color = if contrast_ratio(pal.text, bg) >= 4.5 {
+            pal.text
+        } else {
+            contrast_text(bg)
+        };
         button::Style {
             background: Some(Background::Color(bg)),
-            text_color: pal.text,
+            text_color,
             border: Border {
                 radius: pal.radius(8.0).into(),
                 width: 1.0,
@@ -523,8 +529,16 @@ pub fn settings_reset_button_style(
 ) -> impl Fn(&Theme, button::Status) -> button::Style {
     move |_theme: &Theme, status: button::Status| {
         let (bg, text_color, border_color) = match status {
-            button::Status::Hovered => (pal.btn_hover, pal.primary, pal.primary_border),
-            button::Status::Pressed => (pal.btn_bg, pal.primary, pal.primary),
+            button::Status::Hovered => (
+                pal.btn_hover,
+                readable_accent_on(pal, pal.btn_hover),
+                pal.primary_border,
+            ),
+            button::Status::Pressed => (
+                pal.btn_bg,
+                readable_accent_on(pal, pal.btn_bg),
+                pal.primary,
+            ),
             _ => (pal.card_bg, pal.text_dim, pal.border),
         };
         button::Style {
@@ -710,12 +724,12 @@ pub fn audio_menu_item_style(
     move |_theme: &Theme, status: button::Status| {
         if is_selected {
             let bg = match status {
-                button::Status::Hovered => Background::Color(with_alpha(pal.primary, 0.35)),
-                _ => Background::Color(with_alpha(pal.primary, 0.20)),
+                button::Status::Hovered => mix_color(pal.hud_bg, pal.primary, 0.35),
+                _ => mix_color(pal.hud_bg, pal.primary, 0.20),
             };
             button::Style {
-                background: Some(bg),
-                text_color: pal.primary,
+                background: Some(Background::Color(bg)),
+                text_color: readable_hud_accent_on(pal, bg),
                 border: Border {
                     radius: pal.radius(4.0).into(),
                     width: 1.0,
@@ -732,7 +746,7 @@ pub fn audio_menu_item_style(
                 ),
                 button::Status::Pressed => (
                     Background::Color(with_alpha(pal.hud_pressed, 0.95)),
-                    pal.primary,
+                    readable_hud_accent_on(pal, pal.hud_pressed),
                 ),
                 _ => (
                     Background::Color(Color::TRANSPARENT),

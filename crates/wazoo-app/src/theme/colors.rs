@@ -89,6 +89,31 @@ pub fn contrast_ratio(a: Color, b: Color) -> f32 {
     (hi + 0.05) / (lo + 0.05)
 }
 
+/// Returns `accent` when it meets WCAG AA contrast (>= 4.5:1) against `bg`,
+/// otherwise falls back to `preferred_text` (if readable) or `contrast_text(bg)`.
+#[inline]
+pub fn readable_accent_with_fallback(accent: Color, preferred_text: Color, bg: Color) -> Color {
+    if contrast_ratio(accent, bg) >= 4.5 {
+        accent
+    } else if contrast_ratio(preferred_text, bg) >= 4.5 {
+        preferred_text
+    } else {
+        contrast_text(bg)
+    }
+}
+
+/// Returns `pal.primary` when readable on `bg` (>= 4.5:1), otherwise falls back to `pal.text` or `contrast_text(bg)`.
+#[inline]
+pub fn readable_accent_on(pal: ThemePalette, bg: Color) -> Color {
+    readable_accent_with_fallback(pal.primary, pal.text, bg)
+}
+
+/// Returns `pal.primary` when readable on `hud_bg` (>= 4.5:1), otherwise falls back to `pal.hud_text` or `contrast_text(hud_bg)`.
+#[inline]
+pub fn readable_hud_accent_on(pal: ThemePalette, hud_bg: Color) -> Color {
+    readable_accent_with_fallback(pal.primary, pal.hud_text, hud_bg)
+}
+
 /// Computes a muted text color that blends toward the surface while preserving readable
 /// WCAG AA contrast on light themes (where gamma-encoded sRGB mixes wash out much faster).
 fn compute_muted_text(text: Color, modal_bg: Color, card_bg: Color, surface_light: bool) -> Color {

@@ -598,17 +598,21 @@ impl WazooApp {
                 .into_iter()
                 .map(|(track_id, label)| {
                     let is_selected = Some(track_id) == p.state.current_audio_track_id;
+                    let selected_fg = theme::readable_hud_accent_on(
+                        pal,
+                        theme::mix_color(pal.hud_bg, pal.primary, 0.20),
+                    );
                     let item_row = row![
                         text(if is_selected { "✓" } else { "" })
                             .size(13)
                             .color(if is_selected {
-                                pal.primary
+                                selected_fg
                             } else {
                                 iced::Color::TRANSPARENT
                             })
                             .width(Length::Fixed(14.0)),
                         text(label).size(12).color(if is_selected {
-                            pal.primary
+                            selected_fg
                         } else {
                             pal.hud_text
                         }),

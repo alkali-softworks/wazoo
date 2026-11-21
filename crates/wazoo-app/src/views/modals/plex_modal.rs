@@ -43,7 +43,7 @@ impl WazooApp {
                     weight: iced::font::Weight::Light,
                     ..Default::default()
                 })
-                .color(pal.primary),
+                .color(theme::readable_accent_on(pal, pal.modal_bg)),
             container(
                 text(format::format_number(count))
                     .size(12)
@@ -410,6 +410,7 @@ impl WazooApp {
                         format!("▶ {}", format::format_time_str(resume_secs as f64))
                     };
 
+                    let resume_bg = theme::mix_color(pal.card_bg, pal.primary, 0.15);
                     chips_row = chips_row.push(
                         container(
                             text(resume_str)
@@ -418,14 +419,11 @@ impl WazooApp {
                                     weight: iced::font::Weight::Bold,
                                     ..Default::default()
                                 })
-                                .color(pal.primary),
+                                .color(theme::readable_accent_on(pal, resume_bg)),
                         )
                         .padding([2, 6])
                         .style(move |_| container::Style {
-                            background: Some(iced::Background::Color(theme::with_alpha(
-                                pal.primary,
-                                0.15,
-                            ))),
+                            background: Some(iced::Background::Color(resume_bg)),
                             border: iced::Border {
                                 radius: pal.radius(4.0).into(),
                                 ..Default::default()
@@ -474,20 +472,22 @@ impl WazooApp {
                 }
 
                 if let Some(r) = item.rating {
+                    let rating_bg = theme::mix_color(pal.card_bg, pal.primary, 0.12);
                     chips_row = chips_row.push(
-                        container(text(format!("★ {:.1}", r)).size(10).color(pal.primary))
-                            .padding([2, 5])
-                            .style(move |_| container::Style {
-                                background: Some(iced::Background::Color(theme::with_alpha(
-                                    pal.primary,
-                                    0.12,
-                                ))),
-                                border: iced::Border {
-                                    radius: pal.radius(4.0).into(),
-                                    ..Default::default()
-                                },
+                        container(
+                            text(format!("★ {:.1}", r))
+                                .size(10)
+                                .color(theme::readable_accent_on(pal, rating_bg)),
+                        )
+                        .padding([2, 5])
+                        .style(move |_| container::Style {
+                            background: Some(iced::Background::Color(rating_bg)),
+                            border: iced::Border {
+                                radius: pal.radius(4.0).into(),
                                 ..Default::default()
-                            }),
+                            },
+                            ..Default::default()
+                        }),
                     );
                 }
 

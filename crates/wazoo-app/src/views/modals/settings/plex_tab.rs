@@ -127,7 +127,10 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             } else {
                 format!("✓ Connected (v{})", info.version)
             };
-            text(label).size(12).color(pal.primary).into()
+            text(label)
+                .size(12)
+                .color(theme::readable_accent_on(pal, pal.modal_bg))
+                .into()
         }
         Some(Err(err)) => text(format!("✕ {}", err))
             .size(12)
@@ -163,9 +166,15 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             } else {
                 prog.stage.clone()
             };
-            text(label).size(12).color(pal.primary).into()
+            text(label)
+                .size(12)
+                .color(theme::readable_accent_on(pal, pal.modal_bg))
+                .into()
         } else {
-            text("Starting sync...").size(12).color(pal.primary).into()
+            text("Starting sync...")
+                .size(12)
+                .color(theme::readable_accent_on(pal, pal.modal_bg))
+                .into()
         }
     } else if let Some(Ok(ref summary)) = app.plex.sync_result {
         text(format!(
@@ -173,7 +182,7 @@ pub fn view_plex_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             summary.total_plex_items, summary.matched_and_updated
         ))
         .size(12)
-        .color(pal.primary)
+        .color(theme::readable_accent_on(pal, pal.modal_bg))
         .into()
     } else if let Some(Err(ref err)) = app.plex.sync_result {
         text(format!("✕ {}", err))

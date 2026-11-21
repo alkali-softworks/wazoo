@@ -148,7 +148,7 @@ pub fn view_general_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
                 scan_controls = scan_controls.push(
                     text(&progress.current_name)
                         .size(12)
-                        .color(pal.primary),
+                        .color(theme::readable_accent_on(pal, pal.modal_bg)),
                 );
             }
         }

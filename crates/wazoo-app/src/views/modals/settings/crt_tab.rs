@@ -156,7 +156,7 @@ pub fn view_crt_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             text(format!("📺 {}", app.t("settings.crt_section_scanlines")))
                 .size(12)
                 .font(theme::FONT_BOLD)
-                .color(pal.primary),
+                .color(theme::readable_accent_on(pal, pal.card_bg)),
             darkness_group,
             density_group,
             speed_group,
@@ -212,7 +212,7 @@ pub fn view_crt_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             text(format!("🌈 {}", app.t("settings.crt_section_color")))
                 .size(12)
                 .font(theme::FONT_BOLD)
-                .color(pal.primary),
+                .color(theme::readable_accent_on(pal, pal.card_bg)),
             gamma_group,
             sat_group,
             bright_group,
@@ -280,7 +280,7 @@ pub fn view_crt_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             text(format!("🔲 {}", app.t("settings.crt_section_geometry")))
                 .size(12)
                 .font(theme::FONT_BOLD)
-                .color(pal.primary),
+                .color(theme::readable_accent_on(pal, pal.card_bg)),
             curv_group,
             corner_group,
             vig_group,
@@ -369,7 +369,7 @@ pub fn view_crt_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             text(format!("📻 {}", app.t("settings.crt_section_artifacts")))
                 .size(12)
                 .font(theme::FONT_BOLD)
-                .color(pal.primary),
+                .color(theme::readable_accent_on(pal, pal.card_bg)),
             ca_group,
             noise_group,
             glitch_intensity_group,

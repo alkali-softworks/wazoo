@@ -126,6 +126,13 @@ fn build_filter_card<'a>(
     master_active: bool,
     toggle_msg: Message,
 ) -> Element<'a, Message> {
+    let active_card_bg = theme::mix_color(pal.btn_bg, pal.primary, 0.12);
+    let active_title_color = theme::readable_accent_on(pal, active_card_bg);
+    let standby_title_color = theme::readable_accent_with_fallback(
+        iced::Color::from_rgb(0.7, 0.85, 1.0),
+        pal.text,
+        pal.card_bg,
+    );
     cursor::PointerCursor::new(
         button(
             row![
@@ -135,9 +142,9 @@ fn build_filter_card<'a>(
                         .size(13)
                         .font(theme::FONT_BOLD)
                         .color(if is_active && master_active {
-                            pal.primary
+                            active_title_color
                         } else if is_active {
-                            iced::Color::from_rgb(0.7, 0.85, 1.0)
+                            standby_title_color
                         } else {
                             pal.text
                         }),
@@ -153,9 +160,9 @@ fn build_filter_card<'a>(
         .style(move |_theme: &iced::Theme, status| {
             let bg = if is_active && master_active {
                 match status {
-                    button::Status::Hovered => theme::with_alpha(pal.primary, 0.22),
-                    button::Status::Pressed => theme::with_alpha(pal.primary, 0.30),
-                    _ => theme::with_alpha(pal.primary, 0.10),
+                    button::Status::Hovered => theme::mix_color(pal.btn_bg, pal.primary, 0.22),
+                    button::Status::Pressed => theme::mix_color(pal.btn_bg, pal.primary, 0.30),
+                    _ => active_card_bg,
                 }
             } else if is_active {
                 match status {
@@ -203,9 +210,13 @@ fn view_status_pill<'a>(
 ) -> Element<'a, Message> {
     let pill_text = if is_active { "ON" } else { "OFF" };
     let text_color = if is_active && master_active {
-        pal.primary
+        theme::readable_accent_on(pal, pal.card_bg)
     } else if is_active {
-        iced::Color::from_rgb(0.7, 0.85, 1.0)
+        theme::readable_accent_with_fallback(
+            iced::Color::from_rgb(0.7, 0.85, 1.0),
+            pal.text,
+            pal.card_bg,
+        )
     } else {
         pal.text_dim
     };

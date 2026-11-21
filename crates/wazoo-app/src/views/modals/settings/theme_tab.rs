@@ -109,7 +109,7 @@ pub fn view_theme_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
         text(format!("🎨 {}", app.t("settings.theme_section_colors")))
             .size(12)
             .font(theme::FONT_BOLD)
-            .color(pal.primary),
+            .color(theme::readable_accent_on(pal, pal.modal_bg)),
         view_color_slot(
             app,
             pal,
@@ -264,7 +264,7 @@ pub fn view_theme_tab<'a>(app: &'a WazooApp) -> Element<'a, Message> {
             text(format!("✨ {}", app.t("settings.theme_section_appearance")))
                 .size(12)
                 .font(theme::FONT_BOLD)
-                .color(pal.primary),
+                .color(theme::readable_accent_on(pal, pal.card_bg)),
             hud_opacity_group,
             corner_radius_group,
             focus_ring_group,
@@ -405,7 +405,10 @@ fn view_live_preview<'a>(app: &'a WazooApp, pal: theme::ThemePalette) -> Element
     let mini_hud = container(
         column![
             row![
-                text("CC").size(9).font(theme::FONT_BOLD).color(pal.primary),
+                text("CC")
+                    .size(9)
+                    .font(theme::FONT_BOLD)
+                    .color(theme::readable_hud_accent_on(pal, pal.hud_bg)),
                 Space::new().width(Length::Fill),
                 text("▶  01:24 / 03:45").size(9).color(pal.hud_text),
             ]

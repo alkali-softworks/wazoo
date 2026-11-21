@@ -63,7 +63,7 @@ impl WazooApp {
                 container(
                     text(format!("\"{}\"", self.search.active_query.trim()))
                         .size(13)
-                        .color(pal.primary),
+                        .color(theme::readable_accent_on(pal, pal.card_bg)),
                 )
                 .padding([4, 12])
                 .style(move |_theme: &Theme| container::Style {

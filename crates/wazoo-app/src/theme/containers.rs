@@ -313,14 +313,108 @@ pub fn transcript_time_badge_style(
 
 // Transcript Count Pill Badge Style
 pub fn transcript_count_badge_style(pal: ThemePalette) -> impl Fn(&Theme) -> container::Style {
-    move |_theme: &Theme| container::Style {
-        background: Some(Background::Color(with_alpha(pal.primary, 0.15))),
-        border: Border {
-            radius: pal.radius(12.0).into(),
-            width: 1.0,
-            color: with_alpha(pal.primary, 0.35),
-        },
-        text_color: Some(pal.primary),
-        ..Default::default()
+    move |_theme: &Theme| {
+        let bg = mix_color(pal.drawer_bg, pal.primary, 0.18);
+        container::Style {
+            background: Some(Background::Color(bg)),
+            border: Border {
+                radius: pal.radius(12.0).into(),
+                width: 1.0,
+                color: with_alpha(pal.primary, 0.55),
+            },
+            text_color: Some(readable_accent_on(pal, bg)),
+            ..Default::default()
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::theme::buttons::{
+        audio_menu_item_style, settings_reset_button_style, settings_tab_button_style,
+        settings_toggle_card_style,
+    };
+    use iced::widget::button;
+    use wazoo_core::{ThemePreset, ThemeSettings};
+
+    #[test]
+    fn test_accent_badges_and_tabs_contrast_across_themes() {
+        let mut custom_dark = ThemeSettings::default();
+        custom_dark.accent_color = "#b01078".to_string();
+        let mut custom_light = ThemeSettings::default();
+        custom_light.apply_preset(ThemePreset::FrostLight);
+        custom_light.accent_color = "#ffea00".to_string();
+
+        let mut palettes: Vec<ThemePalette> = ThemePreset::ALL
+            .iter()
+            .map(|&preset| {
+                let mut settings = ThemeSettings::default();
+                settings.apply_preset(preset);
+                ThemePalette::from_settings(&settings)
+            })
+            .collect();
+        palettes.push(ThemePalette::from_settings(&custom_dark));
+        palettes.push(ThemePalette::from_settings(&custom_light));
+
+        let theme = Theme::Dark;
+        for pal in palettes {
+            let badge = transcript_count_badge_style(pal)(&theme);
+            let Some(Background::Color(bg)) = badge.background else {
+                panic!("expected solid color background on transcript count badge");
+            };
+            let fg = badge.text_color.expect("expected text color");
+            assert!(
+                contrast_ratio(fg, bg) >= 4.5,
+                "transcript_count_badge_style contrast too low: {}",
+                contrast_ratio(fg, bg)
+            );
+
+            for status in [
+                button::Status::Active,
+                button::Status::Hovered,
+                button::Status::Pressed,
+            ] {
+                let tab = settings_tab_button_style(pal, true)(&theme, status);
+                let Some(Background::Color(tab_bg)) = tab.background else {
+                    panic!("expected solid background on active settings tab");
+                };
+                assert!(
+                    contrast_ratio(tab.text_color, tab_bg) >= 4.5,
+                    "settings_tab_button_style contrast too low: {}",
+                    contrast_ratio(tab.text_color, tab_bg)
+                );
+
+                let card = settings_toggle_card_style(pal, true)(&theme, status);
+                let Some(Background::Color(card_bg)) = card.background else {
+                    panic!("expected solid background on active settings toggle card");
+                };
+                assert!(
+                    contrast_ratio(card.text_color, card_bg) >= 4.5,
+                    "settings_toggle_card_style contrast too low: {}",
+                    contrast_ratio(card.text_color, card_bg)
+                );
+
+                let reset = settings_reset_button_style(pal)(&theme, status);
+                let Some(Background::Color(reset_bg)) = reset.background else {
+                    panic!("expected solid background on reset button");
+                };
+                assert!(
+                    contrast_ratio(reset.text_color, reset_bg) >= 4.5,
+                    "settings_reset_button_style contrast too low: {}",
+                    contrast_ratio(reset.text_color, reset_bg)
+                );
+
+                let menu = audio_menu_item_style(pal, true)(&theme, status);
+                let Some(Background::Color(menu_bg)) = menu.background else {
+                    panic!("expected solid background on selected audio menu item");
+                };
+                assert!(
+                    contrast_ratio(menu.text_color, menu_bg) >= 4.5,
+                    "audio_menu_item_style contrast too low: {}",
+                    contrast_ratio(menu.text_color, menu_bg)
+                );
+            }
+        }
     }
 }
