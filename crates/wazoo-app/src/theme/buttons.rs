@@ -111,6 +111,42 @@ pub fn title_pill_button_style_with_alpha(
     }
 }
 
+pub fn title_pill_genre_button_style_with_alpha(
+    pal: ThemePalette,
+    alpha: f32,
+) -> impl Fn(&Theme, button::Status) -> button::Style {
+    move |_theme: &Theme, status: button::Status| {
+        let (bg, border_width, border_color) = match status {
+            button::Status::Hovered => (
+                with_alpha(pal.hud_text, 0.24 * alpha),
+                1.0,
+                with_alpha(pal.hud_text, 0.35 * alpha),
+            ),
+            button::Status::Pressed => (
+                with_alpha(pal.hud_text, 0.32 * alpha),
+                1.0,
+                with_alpha(pal.hud_text, 0.50 * alpha),
+            ),
+            _ => (
+                with_alpha(pal.hud_text, 0.12 * alpha),
+                0.0,
+                Color::TRANSPARENT,
+            ),
+        };
+        button::Style {
+            background: Some(Background::Color(bg)),
+            text_color: with_alpha(pal.hud_text, alpha),
+            border: Border {
+                radius: pal.radius(4.0).into(),
+                width: border_width,
+                color: border_color,
+            },
+            shadow: Shadow::default(),
+            ..Default::default()
+        }
+    }
+}
+
 // Titlebar Brand Link Style ("ALKALI" button)
 pub fn titlebar_brand_link_style(
     pal: ThemePalette,

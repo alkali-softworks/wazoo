@@ -434,3 +434,77 @@ fn test_toggle_search_metadata() {
     let _ = app.update(Message::PerformSearch);
     assert_eq!(app.available_videos.len(), 1);
 }
+
+#[test]
+fn test_title_pill_with_genres_renders_and_genre_query_filters() {
+    let (mut app, _) = new_test_app();
+    let v1 = VideoRecord::new(
+        1,
+        "Hidamari Sketch - S02E02",
+        "/media/Shows/Hidamari Sketch - S02E02.mp4",
+    );
+    let id1 = app.db.insert_or_update_video(&v1).unwrap();
+    app.db
+        .upsert_metadata(&wazoo_core::models::MediaMetadata {
+            video_id: id1,
+            title: "February 6th: Cherry Blossom, Cherry Blossom".to_string(),
+            series_title: Some("Hidamari Sketch".to_string()),
+            season_number: Some(2),
+            episode_number: Some(2),
+            year: Some(2008),
+            content_rating: Some("TV-PG".to_string()),
+            genres: vec!["Animation".to_string(), "Comedy".to_string()],
+            rating: Some(6.0),
+            ..Default::default()
+        })
+        .unwrap();
+
+    let v2 = VideoRecord::new(2, "Drama Show", "/media/Shows/Drama Show - S01E01.mp4");
+    let id2 = app.db.insert_or_update_video(&v2).unwrap();
+    app.db
+        .upsert_metadata(&wazoo_core::models::MediaMetadata {
+            video_id: id2,
+            title: "Pilot".to_string(),
+            series_title: Some("Drama Show".to_string()),
+            genres: vec!["Drama".to_string()],
+            ..Default::default()
+        })
+        .unwrap();
+
+    // Refresh metadata cache and available_videos so view_title_pill reads the inserted metadata
+    app.metadata_cache = app.db.get_all_metadata_map().unwrap_or_default();
+    app.available_videos = app.db.search_videos("", &[]).unwrap();
+    assert!(app.get_metadata_for_path(&v1.path).is_some());
+    {
+        let _pill = app.view_title_pill(&v1.path, 1.0);
+    }
+
+    let _ = app.update(Message::SetActiveQuery("Comedy".to_string()));
+    assert_eq!(app.search.active_query, "Comedy");
+    assert_eq!(app.search.tags, vec!["Comedy"]);
+    assert_eq!(app.available_videos.len(), 1);
+    assert_eq!(app.available_videos[0].path, v1.path);
+}
+
+#[test]
+fn test_file_picker_folder_collapse_and_expand_render() {
+    let (mut app, _) = new_test_app();
+    app.available_videos = vec![
+        VideoRecord::new(1, "Ep1", "/media/Shows/Ep1.mp4"),
+        VideoRecord::new(2, "Ep2", "/media/Shows/Ep2.mp4"),
+    ];
+    let _ = app.update(Message::ToggleFilePicker);
+    assert!(app.drawers.show_file_picker);
+
+    let folder_name = wazoo_app::format::format_video_folder("/media/Shows/Ep1.mp4");
+    assert!(!app.drawers.expanded_folders.contains(&folder_name));
+    {
+        let _collapsed_view = app.view_file_picker();
+    }
+
+    let _ = app.update(Message::ToggleFolderCollapse(folder_name.clone()));
+    assert!(app.drawers.expanded_folders.contains(&folder_name));
+    {
+        let _expanded_view = app.view_file_picker();
+    }
+}

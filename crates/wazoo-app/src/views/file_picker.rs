@@ -8,13 +8,14 @@
  */
 
 use crate::app::WazooApp;
+use crate::assets::{SVG_FOLDER, SVG_FOLDER_OPEN};
 use crate::format;
 use crate::message::Message;
 use crate::theme;
 use crate::wrap::Wrap;
 use iced::{
     Alignment, Element, Length,
-    widget::{Space, Stack, button, column, container, row, scrollable, text, text_input},
+    widget::{Space, Stack, button, column, container, row, scrollable, svg, text, text_input},
 };
 use std::collections::BTreeMap;
 
@@ -253,7 +254,17 @@ impl WazooApp {
         for group in groups {
             let count = group.files.len();
             let is_expanded = self.drawers.expanded_folders.contains(&group.folder);
-            let chevron = if is_expanded { "▼" } else { "▶" };
+            let folder_svg = if is_expanded {
+                SVG_FOLDER_OPEN
+            } else {
+                SVG_FOLDER
+            };
+            let folder_icon = svg(svg::Handle::from_memory(folder_svg))
+                .width(Length::Fixed(14.0))
+                .height(Length::Fixed(14.0))
+                .style(move |_, _| svg::Style {
+                    color: Some(pal.primary),
+                });
 
             let display_name = if group.folder == "Misc" {
                 self.t("common.miscellaneous")
@@ -263,7 +274,7 @@ impl WazooApp {
 
             let header_btn = button(
                 row![
-                    text(chevron).size(10).color(pal.primary),
+                    folder_icon,
                     text(display_name).size(13).color(pal.text),
                     Space::new().width(Length::Fill),
                     text(format!("({})", format::format_number(count)))

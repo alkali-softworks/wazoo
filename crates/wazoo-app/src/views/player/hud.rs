@@ -23,6 +23,11 @@ use iced::{
 };
 use wazoo_core::PlaybackMode;
 
+enum TitlePillBadge {
+    Static(String),
+    Genre(String),
+}
+
 impl WazooApp {
     pub fn view_title_pill<'a>(&self, path: &str, alpha: f32) -> Element<'a, Message> {
         let pal = self.theme_palette;
@@ -50,18 +55,24 @@ impl WazooApp {
 
             let mut b = Vec::new();
             if let Some(y) = m.year {
-                b.push(y.to_string());
+                b.push(TitlePillBadge::Static(y.to_string()));
             }
             if let Some(ref cr) = m.content_rating {
                 if !cr.is_empty() {
-                    b.push(cr.clone());
+                    b.push(TitlePillBadge::Static(cr.clone()));
                 }
             }
-            for g in m.genres.iter().take(2) {
-                b.push(g.clone());
+            for g in m
+                .genres
+                .iter()
+                .map(|g| g.trim())
+                .filter(|g| !g.is_empty())
+                .take(2)
+            {
+                b.push(TitlePillBadge::Genre(g.to_string()));
             }
             if let Some(r) = m.rating {
-                b.push(format!("★ {:.1}", r));
+                b.push(TitlePillBadge::Static(format!("★ {:.1}", r)));
             }
 
             (p, s, b)
@@ -94,31 +105,39 @@ impl WazooApp {
         }
 
         if !badges.is_empty() {
+            let badge_text = |label: String| {
+                text(label)
+                    .size(10)
+                    .font(iced::Font {
+                        weight: iced::font::Weight::Medium,
+                        ..Default::default()
+                    })
+                    .color(theme::with_alpha(pal.hud_text, alpha))
+            };
             let mut badge_row = row![].spacing(6).align_y(Alignment::Center);
             for b in badges {
-                badge_row = badge_row.push(
-                    container(
-                        text(b)
-                            .size(10)
-                            .font(iced::Font {
-                                weight: iced::font::Weight::Medium,
+                let badge_el: Element<'a, Message> = match b {
+                    TitlePillBadge::Static(label) => container(badge_text(label))
+                        .padding([2, 6])
+                        .style(move |_| container::Style {
+                            background: Some(iced::Background::Color(theme::with_alpha(
+                                pal.hud_text,
+                                0.12 * alpha,
+                            ))),
+                            border: iced::Border {
+                                radius: pal.radius(4.0).into(),
                                 ..Default::default()
-                            })
-                            .color(theme::with_alpha(pal.hud_text, alpha)),
-                    )
-                    .padding([2, 6])
-                    .style(move |_| container::Style {
-                        background: Some(iced::Background::Color(theme::with_alpha(
-                            pal.hud_text,
-                            0.12 * alpha,
-                        ))),
-                        border: iced::Border {
-                            radius: pal.radius(4.0).into(),
+                            },
                             ..Default::default()
-                        },
-                        ..Default::default()
-                    }),
-                );
+                        })
+                        .into(),
+                    TitlePillBadge::Genre(genre) => button(badge_text(genre.clone()))
+                        .padding([2, 6])
+                        .style(theme::title_pill_genre_button_style_with_alpha(pal, alpha))
+                        .on_press(Message::SetActiveQuery(genre))
+                        .into(),
+                };
+                badge_row = badge_row.push(badge_el);
             }
             title_col = title_col.push(badge_row);
         }
